@@ -35,15 +35,18 @@ interface Props {
 
 export function Kirish({ xabar }: Props) {
   const [bot, setBot] = useState<string | null>(null);
+  // Mini App ichida tugma ko'rsatilmaydi: u odamni Telegram ichidan
+  // yana Telegram'ga yuboradigan halqa bo'lardi. Bu yerga tushish
+  // o'zi g'ayrioddiy holat — ichkarida kirish `initData` bilan
+  // avtomatik bo'ladi — shuning uchun sabab boshqacha yoziladi.
+  const ichkarida = miniAppda();
 
   useEffect(() => {
-    // Mini App ichida bola allaqachon Telegram orqali kirgan — tugma
-    // o'zini o'zi ochadigan halqa bo'lib qolardi.
-    if (miniAppda()) return setBot("");
+    if (ichkarida) return setBot("");
     let bekor = false;
     botNomi().then((b) => { if (!bekor) setBot(b); });
     return () => { bekor = true; };
-  }, []);
+  }, [ichkarida]);
 
   return (
     <div className="mx-auto grid min-h-dvh w-full max-w-[430px] place-items-center px-4 py-8">
@@ -75,6 +78,11 @@ export function Kirish({ xabar }: Props) {
               </span>
               Telegram bilan kirish
             </a>
+          ) : ichkarida ? (
+            <p className="px-2 text-[13px] leading-snug text-ink-soft">
+              Telegram ma'lumoti kelmadi. Ilovani yopib, botdagi tugma
+              orqali qaytadan oching.
+            </p>
           ) : (
             <p className="px-2 text-[13px] leading-snug text-ink-soft">
               Telegram orqali kirish sozlanmagan. Iltimos, keyinroq urinib

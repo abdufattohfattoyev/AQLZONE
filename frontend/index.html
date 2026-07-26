@@ -21,6 +21,24 @@
         } catch (e) { /* manzil g'alati — standart tema qoladi */ }
       })();
     </script>
+    <!--
+      Telegram Mini App ko'prigi.
+
+      BUSIZ Mini App UMUMAN ISHLAMAYDI va nosozlik jim o'tadi: kod
+      `window.Telegram.WebApp.initData` ni o'qiydi, u esa faqat shu
+      skript yuklaganda paydo bo'ladi. Bo'lmasa ilova ichkarida ham
+      o'zini oddiy brauzerdek tutadi — foydalanuvchini anonim deb
+      hisoblab, Telegram ichida "Telegram bilan kiring" deb turadi.
+
+      `async` YO'Q: React ishga tushganda obyekt ALLAQACHON turgan
+      bo'lishi kerak, aks holda birinchi kirish qurilma id bilan ketadi
+      va Telegram hisobi bog'lanmay qoladi.
+
+      Oddiy brauzerda skript shunchaki hech narsa qilmaydi; internet
+      yo'q bo'lsa yuklanmaydi va ilova avvalgidek anonim ishlayveradi.
+    -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <title>Aql Zone — bilim va o'yin platformasi</title>
