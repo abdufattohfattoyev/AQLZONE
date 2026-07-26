@@ -207,29 +207,36 @@ def kod_bilan_kir(kod: str) -> Pupil | None:
     """
     Kodni hisobga almashtiradi. Yaroqsiz yoki eskirgan bo'lsa `None`.
 
-    Kod HAR QANDAY holatda o'chiriladi — eskirgani ham. Bazada yotib
-    qolgan kod hech kimga foyda bermaydi, lekin o'g'irlangan bazada
-    keraksiz ma'lumot bo'lib turadi.
+    KOD MUDDATI DAVOMIDA QAYTA ISHLATILADI. Avval u bir martalik edi va
+    bu amalda ishlamadi — havolani bir marta ochish deyarli hech qachon
+    bir so'rov bilan tugamaydi:
 
-    G'OLIBNI O'CHIRISH ANIQLAYDI, o'qish emas. Bitta havola bo'yicha ikki
-    so'rov bir vaqtda kelishi mumkin — brauzer havolani oldindan yuklab
-    qo'yadi, React ishlab chiqish rejimida effektni ikki marta chaqiradi,
-    odam esa tugmani ikki marta bosadi. Ikkalasi ham qatorni o'qib ulgursa,
-    ikkalasi ham "kirdim" deb hisoblardi va IKKINCHISI hisoblarni qayta
-    birlashtirishga tushib, 500 qaytarardi (shu xato bo'lgan).
-    O'chirish esa bazada ketma-ket bajariladi: `delete()` nechta qator
-    o'chirganini aytadi va faqat 1 olgan so'rov davom etadi.
+      * Telegram havolani O'Z brauzerida ochadi. Odam keyin "boshqa
+        brauzerda ochish" ni bossa, kod allaqachon ishlatilgan bo'ladi.
+      * Suhbatdagi tugma joyida turaveradi va unga qayta bosiladi.
+      * Brauzer havolani oldindan yuklab qo'yadi.
+
+    Har uchalasida ham natija bir xil edi: odam tugmani bosadi, sayt esa
+    "kiring" deb qaytaradi. Ya'ni himoya foydalanuvchini o'z hisobidan
+    to'sardi.
+
+    Endi kodni CHEKLAYDIGAN narsa — vaqt (`KirishKodi.DAQIQA`) va yangi
+    `/start`: u eski kodlarni darhol o'chiradi. Havola shaxsiy suhbatda
+    turadi va bir soatdan keyin baribir ishlamaydi.
+
+    Eskirgan kod SHU YERDA o'chiriladi. Bazada yotib qolgan kod hech
+    kimga foyda bermaydi, lekin o'g'irlangan nusxada keraksiz ma'lumot
+    bo'lib turardi.
     """
     if not kod or not isinstance(kod, str):
         return None
-    kod_hash = sha256(kod)
-    row = KirishKodi.objects.select_related("pupil").filter(kod_hash=kod_hash).first()
+    row = KirishKodi.objects.select_related("pupil").filter(kod_hash=sha256(kod)).first()
     if row is None:
         return None
-    soni, _ = KirishKodi.objects.filter(kod_hash=kod_hash).delete()
-    if not soni:
-        return None                      # boshqa so'rov ilgariroq oldi
-    return None if row.eskirgan else row.pupil
+    if row.eskirgan:
+        row.delete()
+        return None
+    return row.pupil
 
 
 class BearerTokenAuthentication(authentication.BaseAuthentication):

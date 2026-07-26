@@ -292,15 +292,18 @@ Ism-familiya faqat ro'yxatdan o'tmagan hisobdan so'raladi. Botdagi havola
 kirishning odatiy yo'li va odam uni har kuni bosishi mumkin — har safar
 to'ldirilgan maydonlarni tasdiqlatish keraksiz bosqich bo'lardi.
 
-Kod bir marta ishlaydi va bir soatdan keyin kuchini yo'qotadi
+Kod bir soat amal qiladi va shu muddat ichida QAYTA ishlatiladi
 (`KirishKodi`). Bazada faqat uning sha256 xeshi turadi, xuddi sessiya
 tokeni kabi. Yangi `/start` eski havolani darhol bekor qiladi — suhbatda
 yotib qolgan havola bilan hech kim kira olmaydi.
 
-G'olibni O'CHIRISH aniqlaydi, o'qish emas (`auth.kod_bilan_kir`): bitta
-havola bo'yicha ikki so'rov bir vaqtda kelishi mumkin (brauzer havolani
-oldindan yuklaydi, odam tugmani ikki marta bosadi) va faqat qatorni
-o'chira olgani davom etadi.
+**Kod avval bir martalik edi va bu amalda ishlamadi.** Havolani bir marta
+ochish deyarli hech qachon bir so'rov bilan tugamaydi: Telegram uni O'Z
+brauzerida ochadi, odam keyin "boshqa brauzerda ochish" ni bosadi,
+suhbatdagi tugmaga qayta bosiladi, brauzer havolani oldindan yuklaydi.
+Har birida natija bir xil edi — odam tugmani bosadi, sayt esa "kiring"
+deb qaytaradi. Ya'ni himoya foydalanuvchini o'z hisobidan to'sardi.
+Endi cheklov faqat vaqt va yangi `/start`.
 
 Bot nomi frontendga yig'ish paytida emas, `/api/health` orqali boradi —
 botni almashtirish uchun ilovani qayta yig'ish shart emas.

@@ -104,7 +104,7 @@ export function KodKirish() {
   // Telegram tugmasi bilan birga.
   if (holat === "xato") {
     return (
-      <Kirish xabar="Havola bir marta ishlaydi va bir soatdan keyin kuchini yo'qotadi. Yangisini olish uchun tugmani bosing." />
+      <Kirish xabar="Havolaning muddati tugagan — u bir soat amal qiladi. Yangisini olish uchun tugmani bosing." />
     );
   }
 

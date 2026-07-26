@@ -252,10 +252,16 @@ class KirishKodi(models.Model):
 
     1. **Kodning o'zi saqlanmaydi** — faqat sha256 xeshi, xuddi `Session`
        kabi. Baza o'g'irlansa ham kodlar bilan kirib bo'lmaydi.
-    2. **Bir marta ishlaydi** — ishlatilgach o'chiriladi. Havola Telegram
-       tarixida qolib ketadi; uni keyin topgan odam kira olmasligi kerak.
-    3. **Bir soatdan keyin kuchini yo'qotadi.** Havola ulashib yuborilishi
-       yoki telefon boshqa qo'lga tushishi mumkin.
+    2. **Bir soatdan keyin kuchini yo'qotadi.** Havola Telegram tarixida
+       qolib ketadi; uni keyin topgan odam kira olmasligi kerak.
+    3. **Yangi `/start` eskisini darhol bekor qiladi** — suhbatda faqat
+       oxirgi havola ishlaydi.
+
+    Muddat ichida kod QAYTA ishlatiladi. Avval u bir martalik edi va bu
+    amalda ishlamadi: Telegram havolani o'z brauzerida ochadi, odam esa
+    keyin uni oddiy brauzerda ham ochadi — ikkinchisida kod allaqachon
+    "ishlatilgan" bo'lib, sayt egasini o'z hisobiga kiritmay qo'yardi.
+    Sabab: kirish `auth.kod_bilan_kir()` da.
     """
 
     #: Kod necha daqiqa amal qiladi. Bot xabarida ham shu yoziladi.

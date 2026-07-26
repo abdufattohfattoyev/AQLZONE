@@ -19,7 +19,7 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from . import auth as A
-from .models import Identity, LessonResult, Progress, Pupil
+from .models import Identity, KirishKodi, LessonResult, Progress, Pupil
 
 BOT = "123456:TEST_TOKEN_FAQAT_SINOV_UCHUN"
 
@@ -835,3 +835,45 @@ class ReytingTest(TestCase):
         self.assertEqual(len(j["top"]), 1)
         self.assertEqual(j["men"]["orin"], 3)        # ro'yxatda yo'q, o'rni bor
         self.assertEqual(j["qatnashchilar"], 3)
+
+
+class KirishKodiTest(TestCase):
+    """
+    Botdagi «Saytga kirish» havolasi.
+
+    Bu testlar borligining sababi aniq: kod avval BIR MARTALIK edi va
+    shuning uchun haqiqiy hayotda ishlamadi — Telegram havolani o'z
+    brauzerida ochgach, odam uni oddiy brauzerda ham ochardi va o'sha
+    yerda "kiring" degan ekranga tushardi.
+    """
+
+    def setUp(self):
+        self.pupil = Pupil.objects.create(first_name="Olim")
+
+    def test_muddat_ichida_qayta_ishlatiladi(self):
+        kod = A.kirish_kodi_yasa(self.pupil)
+        self.assertEqual(A.kod_bilan_kir(kod).pk, self.pupil.pk)
+        # Ikkinchi marta — xuddi shu natija. Telegram brauzeri ochgandan
+        # keyin odam havolani oddiy brauzerda ham ochadi.
+        self.assertEqual(A.kod_bilan_kir(kod).pk, self.pupil.pk)
+
+    def test_eskirgan_kod_ishlamaydi_va_ochiriladi(self):
+        kod = A.kirish_kodi_yasa(self.pupil)
+        eski = timezone.now() - timedelta(minutes=KirishKodi.DAQIQA + 1)
+        KirishKodi.objects.filter(pupil=self.pupil).update(created_at=eski)
+
+        self.assertIsNone(A.kod_bilan_kir(kod))
+        # Yaroqsiz qator bazada yotib qolmasin.
+        self.assertFalse(KirishKodi.objects.filter(pupil=self.pupil).exists())
+
+    def test_yangi_kod_eskisini_bekor_qiladi(self):
+        eski = A.kirish_kodi_yasa(self.pupil)
+        yangi = A.kirish_kodi_yasa(self.pupil)
+
+        self.assertIsNone(A.kod_bilan_kir(eski))
+        self.assertEqual(A.kod_bilan_kir(yangi).pk, self.pupil.pk)
+
+    def test_notogri_kod(self):
+        A.kirish_kodi_yasa(self.pupil)
+        self.assertIsNone(A.kod_bilan_kir("yoq-bunday-kod"))
+        self.assertIsNone(A.kod_bilan_kir(""))
