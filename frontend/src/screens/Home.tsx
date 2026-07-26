@@ -4,7 +4,7 @@ import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { Reveal } from "../components/Reveal";
 import { RoadMap } from "../components/RoadMap";
-import { UNIT_COLORS, lessonId } from "../lib/types";
+import { UNIT_COLORS, keyingiDars, lessonId } from "../lib/types";
 import type { Progress, Unit } from "../lib/types";
 import type { Kunlik } from "../lib/progress";
 import { bugungiSoni } from "../lib/takrorlash";
@@ -30,6 +30,8 @@ interface Props {
   onDokon: () => void;
   onNishon: () => void;
   onOtaOna: () => void;
+  /** Reyting — kursga bog'liq emas, lekin pastki panelda turadi. */
+  onReyting: () => void;
 }
 
 function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -65,7 +67,7 @@ function Ring({ done, total, color }: { done: number; total: number; color: stri
 
 export function Home({
   slug, title, izoh, units, progress, kunlik, maqsad,
-  onStart, onBack, onDaftar, onDokon, onNishon, onOtaOna,
+  onStart, onBack, onDaftar, onDokon, onNishon, onOtaOna, onReyting,
 }: Props) {
   const totals = useMemo(() => {
     const total = units.reduce((s, U) => s + U.lessons.length, 0);
@@ -74,13 +76,10 @@ export function Home({
     return { total, done };
   }, [units, progress]);
 
-  // joriy dars qaysi bobda — o'sha bob ochiq turadi
-  const currentUnit = useMemo(() => {
-    for (let ui = 0; ui < units.length; ui++)
-      for (let li = 0; li < units[ui].lessons.length; li++)
-        if (!progress.done[lessonId(ui, li)]) return ui;
-    return 0;
-  }, [units, progress]);
+  // Bola turgan joy: "Davom etish" tugmasi ham, ochiq turadigan bob ham
+  // shundan kelib chiqadi.
+  const keyingi = useMemo(() => keyingiDars(units, progress), [units, progress]);
+  const currentUnit = keyingi?.ui ?? 0;
 
   const [open, setOpen] = useState<number>(currentUnit);
 
@@ -101,30 +100,28 @@ export function Home({
     /* Kenglik ekranga qarab o'sadi, ammo cheklangan: dars yo'li ilon izi
        bo'lib buriladi va juda keng ustunda uning burilishlari yassilanib,
        "yo'l" o'rniga tarqoq nuqtalarga aylanadi. */
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16 sm:max-w-[560px] sm:px-6">
-      {/* ---- yuqori panel ---- */}
+    /* Pastda yopishib turadigan panel bor — oxirgi bo'lim uning ostiga
+       kirib qolmasligi uchun sahifa oxirida bo'sh joy qoldiriladi. */
+    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-32 sm:max-w-[560px] sm:px-6">
+      {/* ---- yuqori panel ----
+          Bu yerda endi faqat "menda nima bor" turadi: yulduz va tanga.
+          O'tish tugmalari pastdagi panelga ko'chdi. Sabab: ular bir xil
+          kulrang doiralar edi va 1-sinf bolasi ular orasidan keraklisini
+          BELGIGA qarab tanlashi kerak bo'lardi. Pastda esa har birining
+          yozuvi bor.
+
+          Ota-ona tugmasi ataylab pastga TUSHMADI: u bolaga emas, kattaga
+          mo'ljallangan va bolalar qatorida turgani uchun tez-tez bexosdan
+          bosilardi. Yuqorida, chetda — ko'rinadi, lekin yo'lda turmaydi. */}
       <div className="flex items-center gap-2">
         <Pill><Icon name="star" size={19} className="text-brand-gold" />{progress.stars}</Pill>
         <Pill><Icon name="coin" size={19} className="text-brand-orange-d" />{progress.coins}</Pill>
-        <button type="button" onClick={onDokon} title="Tulkini bezash"
-          className="grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
-          <Icon name="palette" size={20} />
-        </button>
-        <button type="button" onClick={onNishon} title="Nishonlar"
-          className="relative grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
-          <Icon name="trophy" size={20} />
-          {yangiNishon > 0 && (
-            /* Yangi nishon qo'lga kiritilgan bo'lsa nuqta chiqadi — bola
-               uni ochib ko'rishga undaladi. */
-            <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
-          )}
-        </button>
         <button type="button" onClick={onOtaOna} title="Ota-ona paneli"
-          className="grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
+          className="ml-auto grid size-11 place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
           <Icon name="parent" size={20} />
         </button>
         <button type="button" onClick={onBack} title="Kurslar ro'yxati"
-          className="ml-auto grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
+          className="grid size-11 place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
           <Icon name="home" size={20} />
         </button>
       </div>
@@ -157,6 +154,17 @@ export function Home({
           />
         </div>
       </div>
+
+      {/* ---- davom etish ----
+          Ekrandagi ENG KATTA tugma va u ataylab shu yerda — ro'yxatdan
+          oldin. Ilgari darsga yetish uchun bob ochilib, yo'ldan to'g'ri
+          tugun topilishi kerak edi; endi bola ilovani ochib, bir bosishda
+          o'zi to'xtagan joydan davom etadi. Ro'yxat esa quyida turaveradi:
+          boshqa darsni tanlamoqchi bo'lganlar uchun. */}
+      {keyingi && (
+        <Davom units={units} keyingi={keyingi} boshlanmagan={totals.done === 0}
+          onStart={onStart} />
+      )}
 
       {/* ---- kunlik maqsad ---- */}
       <KunlikMaqsad kunlik={kunlik} maqsad={maqsad} />
@@ -223,7 +231,112 @@ export function Home({
           );
         })}
       </div>
+
+      <Panel yangiNishon={yangiNishon > 0}
+        onNishon={onNishon} onDokon={onDokon} onReyting={onReyting} />
     </div>
+  );
+}
+
+/**
+ * "Davom etish" — bola to'xtagan darsga bir bosishda olib boradigan tugma.
+ *
+ * Yozuv ikki qavat: harakat ("Davom etish") va MANZIL ("2-bo'lim ·
+ * Qo'shish"). Faqat harakatni yozsak, bola qayerga tushishini bilmay
+ * bosardi; faqat dars nomini yozsak, bu tugma ekanini payqamasdi.
+ *
+ * Hali bitta ham dars tugallanmagan bo'lsa yozuv "Boshlash" bo'ladi:
+ * hech narsa qilmagan bolaga "davom eting" deyish g'alati eshitiladi.
+ */
+function Davom({ units, keyingi, boshlanmagan, onStart }: {
+  units: Unit[];
+  keyingi: { ui: number; li: number };
+  boshlanmagan: boolean;
+  onStart: (ui: number, li: number) => void;
+}) {
+  const U = units[keyingi.ui];
+  const L = U.lessons[keyingi.li];
+  // Dars nomining ikkinchi qismi — darslik betlari ("Qo'shish · 42–43-bet").
+  // Tugmada faqat nomi turadi, betlar bu yerda ortiqcha shovqin.
+  const nom = L.n.split(" · ")[0];
+
+  return (
+    <button
+      type="button"
+      onClick={() => onStart(keyingi.ui, keyingi.li)}
+      className="tugma-3d az-yaltir mt-4 flex w-full items-center gap-3.5 rounded-clay
+                 bg-brand-green p-4 text-left text-white shadow-clay"
+    >
+      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20">
+        <Icon name={L.ic} size={26} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[17px] leading-tight">
+          {boshlanmagan ? "Boshlash" : "Davom etish"}
+        </span>
+        <span className="mt-0.5 block truncate text-[13px] text-white/85">
+          {U.u} · {nom}
+        </span>
+      </span>
+      <Icon name="chevron" size={22} className="shrink-0 text-white/80" />
+    </button>
+  );
+}
+
+/**
+ * Pastki panel.
+ *
+ * Ilgari bu to'rt yo'nalish yuqorida, bir xil kulrang doiralar bo'lib
+ * turardi — faqat belgi bilan. 1-sinf bolasi belgini o'qiy olmaydi va har
+ * safar birma-bir bosib ko'rardi. Endi har birining YOZUVI bor va o'rni
+ * o'zgarmaydi: bola bir marta o'rganadi.
+ *
+ * Panel pastda, chunki barmoq shu yerda turadi — telefonni bir qo'lda
+ * ushlagan bolaning ekran tepasiga yetishi qiyin.
+ */
+function Panel({ yangiNishon, onNishon, onDokon, onReyting }: {
+  yangiNishon: boolean;
+  onNishon: () => void;
+  onDokon: () => void;
+  onReyting: () => void;
+}) {
+  return (
+    /* Pastki to'ldirish xavfsiz zonadan olinadi — iPhone va Telegram
+       oynasining pastki chizig'i tugmalar ustiga chiqib qolmasin. */
+    <nav className="az-shisha fixed inset-x-0 bottom-0 z-30 border-t border-karta/45
+                    pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto flex w-full max-w-[430px] px-2 sm:max-w-[560px]">
+        {/* Bu sahifaning o'zi — bosilganda tepaga qaytaradi. */}
+        <Tab ic="map" nom="Darslar" faol
+          on={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+        <Tab ic="trophy" nom="Nishonlar" nuqta={yangiNishon} on={onNishon} />
+        <Tab ic="palette" nom="Do'kon" on={onDokon} />
+        <Tab ic="order" nom="Reyting" on={onReyting} />
+      </div>
+    </nav>
+  );
+}
+
+/** Panelning bitta tugmasi. Balandligi 56px — barmoq uchun yetarli. */
+function Tab({ ic, nom, on, faol = false, nuqta = false }: {
+  ic: "map" | "trophy" | "palette" | "order";
+  nom: string;
+  on: () => void;
+  faol?: boolean;
+  nuqta?: boolean;
+}) {
+  return (
+    <button type="button" onClick={on} title={nom}
+      className={`clay-press flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2
+                  ${faol ? "text-brand-green-d" : "text-ink-soft"}`}>
+      <span className="relative">
+        <Icon name={ic} size={23} />
+        {nuqta && (
+          <span className="absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
+        )}
+      </span>
+      <span className="text-[12px] leading-none">{nom}</span>
+    </button>
   );
 }
 

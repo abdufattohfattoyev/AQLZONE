@@ -5,7 +5,7 @@
  * noto'g'ri bo'lsa — masalan bola havolani qo'lda o'zgartirsa yoki kurs
  * o'chirilgan bo'lsa — bo'sh ekran o'rniga tushunarli sahifa ko'rsatiladi.
  */
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { Dashboard } from "./screens/Dashboard";
 import { Home } from "./screens/Home";
@@ -24,6 +24,7 @@ import type { LessonResult } from "./lib/progress";
 import { isUnlocked } from "./lib/types";
 import { temaOf, useTema } from "./lib/tema";
 import { takrorlashDarsi } from "./lib/takrorlash";
+import { oxirginiYoz } from "./lib/oxirgi";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolDaftar, yolDars, yolDokon, yolKurs, yolKurslar, yolNishon,
@@ -66,6 +67,7 @@ function KurslarSahifasi() {
     <Dashboard
       progressOf={progressOf}
       onOpen={(c) => nav(yolKurs(c))}
+      onDavom={(c, ui, li) => nav(yolDars(c, ui, li))}
       onProfillar={() => nav("/profillar")}
       onSozlama={() => nav(yolSozlama())}
       onReyting={() => nav(yolReyting())}
@@ -79,9 +81,15 @@ function KursSahifasi() {
   const nav = useNavigate();
 
   const c = courseBySlug(slug ?? "");
-  // Diqqat: hook shartdan OLDIN chaqirilishi kerak, aks holda kurs
+  // Diqqat: hooklar shartdan OLDIN chaqirilishi kerak, aks holda kurs
   // topilmagan holatda hooklar tartibi buziladi.
   useTema(c ? temaOf(c.grade) : "bosh");
+
+  // Bosh sahifadagi "Oxirgi marta shu yerda edingiz" kartasi shu yozuvga
+  // suyanadi. Aynan SHU YERDA yoziladi — ya'ni kurs ochilganda, dars
+  // tugaganda emas: bola darsni yarim tashlab ketsa ham, ertaga o'sha
+  // kursga qaytishni xohlaydi.
+  useEffect(() => { if (c) oxirginiYoz(c.slug); }, [c]);
 
   if (!c) return <NotFound nima={`"${slug}" kursi`} />;
 
@@ -100,6 +108,7 @@ function KursSahifasi() {
       onDokon={() => nav(yolDokon(c))}
       onNishon={() => nav(yolNishon(c))}
       onOtaOna={() => nav(yolOtaOna(c))}
+      onReyting={() => nav(yolReyting())}
     />
   );
 }

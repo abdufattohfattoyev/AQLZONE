@@ -15,7 +15,10 @@ export default defineConfig(({ mode }) => {
     // bunday chuqurlikda asset yo'llarini buzadi — shuning uchun ildizdan.
     base: apk ? './' : '/',
     server: {
-      port: 5180,
+      // 5180 — odatiy port. `PORT` berilgan bo'lsa u ustun turadi: bir
+      // vaqtda ikkita ishlab chiqish serveri kerak bo'lganda (masalan
+      // ikki muharrir oynasi) ikkinchisi band portga urilib to'xtardi.
+      port: Number(env.PORT) || 5180,
       // Backend /api/v1 da ishlaydi — ishlab chiqishda shu yerga uzatamiz.
       //
       // Manzil o'zgaruvchidan olinadi, chunki backend har doim ham 8787 da

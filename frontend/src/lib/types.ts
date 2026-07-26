@@ -134,3 +134,23 @@ export function nodeState(units: Unit[], p: Progress, ui: number, li: number): N
   if (p.done[lessonId(ui, li)]) return "done";
   return isUnlocked(units, p, ui, li) ? "current" : "locked";
 }
+
+/**
+ * Keyingi o'tiladigan dars — birinchi tugallanmagani.
+ *
+ * "Davom etish" tugmasi shu javobga suyanadi. Qidiruv oddiy, chunki
+ * tugallangan darslar HAR DOIM boshidan ketma-ket turadi: `isUnlocked`
+ * oldingi dars tugamaguncha keyingisini ochmaydi. Ya'ni birinchi
+ * tugallanmagan dars — aynan bola turgan joy.
+ *
+ * Hammasi tugagan bo'lsa `null`: bunda tugma ko'rsatilmaydi, chunki
+ * "davom etish" uchun joy qolmagan.
+ */
+export function keyingiDars(units: Unit[], p: Progress): { ui: number; li: number } | null {
+  for (let ui = 0; ui < units.length; ui++) {
+    for (let li = 0; li < units[ui].lessons.length; li++) {
+      if (!p.done[lessonId(ui, li)]) return { ui, li };
+    }
+  }
+  return null;
+}
