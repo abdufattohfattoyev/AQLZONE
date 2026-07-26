@@ -24,11 +24,25 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sozlamalar } from "../screens/Sozlamalar";
 import { Kirish } from "./Kirish";
+import { Kutish } from "./Kutish";
 import { getHisob } from "../lib/api";
 import type { ReactNode } from "react";
 
 /** Tekshiruv holati: hali bilmaymiz → kirish / ism so'raymiz / so'ramaymiz. */
 type Holat = "kutilyapti" | "kirish" | "ism" | "kerak-emas";
+
+/**
+ * Oxirgi safar kirgan bo'lganmi.
+ *
+ * Server javobini kutish bir necha yuz millisekund. Shu paytda nima
+ * ko'rsatish kerakligi ikki xil bo'ladi va TAXMIN QILIB bo'lmaydi:
+ * kirgan odamga ilovani, kirmaganga kirish ekranini. Noto'g'ri
+ * taxmin ko'zga tashlanadi — ilova ochilib, keyin tortib olinadi.
+ *
+ * Shuning uchun javob mahalliy eslab qolinadi. U faqat ISHORA: server
+ * baribir qayta tekshiradi va boshqacha desa, holat yangilanadi.
+ */
+const KIRGAN_KEY = "az_kirgan";
 
 export function Tanishuv({ children }: { children: ReactNode }) {
   const [holat, setHolat] = useState<Holat>("kutilyapti");
@@ -47,6 +61,11 @@ export function Tanishuv({ children }: { children: ReactNode }) {
       if (bekor) return;
 
       if (h) {
+        try {
+          if (h.royxatdan) localStorage.setItem(KIRGAN_KEY, "1");
+          else localStorage.removeItem(KIRGAN_KEY);
+        } catch { /* xotira to'lgan — faqat kutish ekrani uzunroq ko'rinadi */ }
+
         if (h.royxatdan) return setHolat("kerak-emas");
         // Telegram bog'langan, lekin ism-familiya to'liq emas — odam
         // ikki bosqich orasida qolib ketgan.
@@ -72,7 +91,13 @@ export function Tanishuv({ children }: { children: ReactNode }) {
       onTayyor={() => setHolat("kerak-emas")} />;
   }
 
-  // Tekshiruv davomida ilovani ko'rsataveramiz: bo'sh ekran ko'rsatib
-  // bolani kuttirishdan ko'ra, so'rov bir lahza kechroq chiqqani afzal.
+  // Javob hali kelmadi. Oldin kirgan bo'lsa ilovani darhol ko'rsatamiz —
+  // eng ko'p uchraydigan holat va u yerda kutish ekrani ortiqcha to'siq.
+  // Kirmagan (yoki noma'lum) bo'lsa kutamiz: ilovani ochib, keyin uni
+  // tortib olish sahifa qayta yuklanayotgandek ko'rinadi.
+  if (holat === "kutilyapti" && localStorage.getItem(KIRGAN_KEY) !== "1") {
+    return <Kutish />;
+  }
+
   return <>{children}</>;
 }

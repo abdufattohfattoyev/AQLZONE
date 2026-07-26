@@ -505,6 +505,14 @@
 @keyframes az-bob { 50% { translate: 0 -5px; } }
 .az-bob { animation: az-bob 1.7s ease-in-out infinite; }
 
+/* Kutish chizig'i (Kutish.tsx). `index.html` dagi dastlabki ekranda ham
+   xuddi shu harakat bor — ikkalasi bir xil ko'rinishi kerak. */
+@keyframes az-yur {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+.az-yur { animation: az-yur 1.1s ease-in-out infinite; }
+
 /* Ekran ochilganda ro'yxat navbat bilan chiqadi.
    Kechikish inline uslub orqali: style={{ "--az-kech": "60ms" }} */
 @keyframes az-kirish {
@@ -757,7 +765,7 @@
 /* Harakat bezovta qilsa — hammasi to'xtaydi, ilova ishlayveradi. */
 @media (prefers-reduced-motion: reduce) {
   .az-pulse::after, .az-bob, .az-yaltir::before, .az-konfetti,
-  .az-nur, .az-halqa, .az-naqsh { animation: none; }
+  .az-nur, .az-halqa, .az-naqsh, .az-yur { animation: none; }
   /* Yorug'lik yo'li harakatsiz holda "A" ustida oq dog' bo'lib qolmasin */
   .az-logo-yaltir { display: none; }
   .az-kirish, .az-yulduz, .az-tush, .az-katta, .az-belgi-kir { opacity: 1; animation: none; }
