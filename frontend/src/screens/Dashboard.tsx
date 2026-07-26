@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { Reveal } from "../components/Reveal";
-import { profilSoni } from "../lib/api";
+import { getHisob, joriyProfil, profilSoni } from "../lib/api";
+import type { Hisob } from "../lib/api";
 import { COURSES, lessonCount } from "../lib/curriculum";
 import { UNIT_COLORS } from "../lib/types";
 import type { Course } from "../lib/curriculum";
@@ -22,9 +24,33 @@ interface Props {
 /** Ro'yxat navbat bilan chiqsin — ekran "jonli" ochilgandek ko'rinadi. */
 const kech = (ms: number) => ({ "--az-kech": `${ms}ms` }) as CSSProperties;
 
+/**
+ * Joriy bolaning profili.
+ *
+ * Tanlangani bo'lmasa BIRINCHISI olinadi — server ham aynan shunday
+ * qiladi. Ikkalasi bir xil qoidaga bo'ysunmasa, ekranda bir bolaning
+ * nomi, progressda esa boshqasiniki turardi.
+ */
+function joriyBola(h: Hisob | null) {
+  const ro = h?.profillar ?? [];
+  const id = joriyProfil();
+  return ro.find((p) => String(p.id) === id) ?? ro[0] ?? null;
+}
+
 export function Dashboard({ progressOf, onOpen, onProfillar, onSozlama, onReyting }: Props) {
   // Sinxron o'qiladi (localStorage) — tugma sakrab chiqmasligi uchun.
   const kopBola = profilSoni() > 1;
+  const [hisob, setHisob] = useState<Hisob | null>(null);
+
+  // Ism serverdan keladi. Kelmaguncha tugmada "Hisobim" turadi — o'lchami
+  // deyarli bir xil, shuning uchun ism paydo bo'lganda qator sakramaydi.
+  useEffect(() => {
+    let bekor = false;
+    getHisob().then((h) => { if (!bekor) setHisob(h); });
+    return () => { bekor = true; };
+  }, []);
+
+  const bola = joriyBola(hisob);
   const jamiDars = COURSES.reduce((n, c) => n + lessonCount(c), 0);
   const jamiYulduz = COURSES.reduce((n, c) => n + progressOf(c).stars, 0);
   const maktabgacha = COURSES.filter((c) => c.grade === 0);
@@ -76,11 +102,23 @@ export function Dashboard({ progressOf, onOpen, onProfillar, onSozlama, onReytin
             <Icon name="trophy" size={15} className="text-brand-gold" />
             Reyting
           </button>
+          {/* Hisob tugmasi — ism bilan.
+              Kimning hisobida ekanini ko'rsatish shu yerda muhim: bir
+              telefonda ota-ona ham, bola ham ochadi va "bu kimning
+              yulduzlari?" degan savol doim tug'iladi. Ism kelmaguncha
+              eski matn turadi. */}
           <button type="button" onClick={onSozlama} title="Hisob sozlamalari"
-            className="clay-press flex items-center gap-1.5 rounded-full bg-karta/70
+            className="clay-press flex max-w-[190px] items-center gap-1.5 rounded-full bg-karta/70
                        px-3.5 py-1.5 text-[12.5px] text-ink-soft backdrop-blur-sm">
-            <Icon name="pencil" size={15} />
-            Hisobim
+            {bola ? (
+              <span className="grid size-[18px] shrink-0 place-items-center rounded-full
+                               bg-track text-[11px] leading-none">
+                {bola.avatar || "🦊"}
+              </span>
+            ) : (
+              <Icon name="pencil" size={15} />
+            )}
+            <span className="truncate">{hisob?.toliqIsm || "Hisobim"}</span>
           </button>
         </div>
       </header>

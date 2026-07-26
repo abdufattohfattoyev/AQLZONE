@@ -209,6 +209,35 @@ export async function postResult(p: ResultPayload): Promise<void> {
 
 export const isSignedIn = () => Boolean(token);
 
+/**
+ * Hisobdan chiqish.
+ *
+ * QURILMA ID HAM O'CHIRILADI, va bu shart. Telegram'ga bog'langanda
+ * qurilma `Identity` si o'sha hisobga KO'CHADI (`auth/link`). Ya'ni id
+ * saqlanib qolsa, chiqqandan keyingi anonim kirish xuddi o'sha hisobni
+ * qaytarardi — tugma bosiladi, hech narsa o'zgarmaydi.
+ *
+ * Mahalliy progress ham tozalanadi. Bu qurilmada boshqa odam kirsa,
+ * oldingi bolaning yulduzlari uning hisobiga yozilib ketardi: ilova
+ * localStorage dagi holatni serverga yuboradi va u yerda birlashadi.
+ * Chiqqan odamning progressi serverda turibdi — qaytib kirsa, joyida.
+ *
+ * Oxirida sahifa boshidan yuklanadi: xotirada React holati, profil
+ * tanlovi va progress konteksti qolib ketmasin.
+ */
+export function chiqish(): void {
+  token = null;
+  profilId = null;
+  try {
+    for (const k of Object.keys(localStorage)) {
+      if (k.startsWith("az_") || k.startsWith("azapp_")) localStorage.removeItem(k);
+    }
+  } catch { /* xotira bloklangan — pastdagi qayta yuklash baribir bo'ladi */ }
+
+  window.location.replace(import.meta.env.VITE_ROUTER === "hash" ? "#/" : "/");
+  if (import.meta.env.VITE_ROUTER === "hash") window.location.reload();
+}
+
 /* ------------------------------------------- Telegram orqali kirish */
 
 /**

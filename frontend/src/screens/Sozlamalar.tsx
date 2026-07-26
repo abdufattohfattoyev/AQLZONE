@@ -22,7 +22,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
-import { botHavolasi, botNomi, getHisob, hisobniSaqla, miniAppda } from "../lib/api";
+import { botHavolasi, botNomi, chiqish, getHisob, hisobniSaqla, miniAppda } from "../lib/api";
 import type { Hisob } from "../lib/api";
 
 interface Props {
@@ -54,6 +54,9 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
   const [holat, setHolat] = useState<"" | "saqlandi">("");
   const [xato, setXato] = useState("");
   const [bot, setBot] = useState("");
+  // Chiqish qaytarib bo'lmaydigan ish emas, lekin bexosdan bosilsa bola
+  // o'yin o'rtasida hisobsiz qoladi — bir savol berib qo'yamiz.
+  const [tasdiq, setTasdiq] = useState(false);
 
   useEffect(() => {
     let bekor = false;
@@ -235,6 +238,43 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
                     Telegram bilan bog'lash
                   </a>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* ---- chiqish ----
+              Mini App ichida KO'RSATILMAYDI. U yerda sessiya Telegram'ning
+              o'zinikidan kelib chiqadi: chiqqan zahoti ilova `initData`
+              bilan xuddi shu hisobga qaytadan kirardi. Tugma bosiladi,
+              hech narsa o'zgarmaydi — buzuq tugma. */}
+          {!royxat && !miniAppda() && (
+            <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
+              style={{ "--az-kech": "100ms" } as React.CSSProperties}>
+              {tasdiq ? (
+                <>
+                  <p className="text-center text-[13px] leading-snug text-ink-soft">
+                    Chiqasizmi? Yulduzlaringiz serverda qoladi — Telegram
+                    orqali qaytib kirsangiz hammasi joyida bo'ladi.
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <button type="button" onClick={() => setTasdiq(false)}
+                      className="clay-press flex-1 rounded-3xl bg-track py-2.5
+                                 font-display text-[14px] text-ink-soft">
+                      Bekor qilish
+                    </button>
+                    <button type="button" onClick={chiqish}
+                      className="clay-press flex-1 rounded-3xl bg-brand-red py-2.5
+                                 font-display text-[14px] text-white">
+                      Ha, chiqaman
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button type="button" onClick={() => setTasdiq(true)}
+                  className="clay-press w-full rounded-3xl bg-track py-2.5
+                             font-display text-[14px] text-ink-soft">
+                  Hisobdan chiqish
+                </button>
               )}
             </div>
           )}
