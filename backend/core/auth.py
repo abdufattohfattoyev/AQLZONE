@@ -60,8 +60,13 @@ def verify_telegram(init_data: str | None, bot_token: str | None = None) -> dict
 
     # strict_parsing=False: buzuq satrda ham xato ko'tarilmasin, pastda hash tutadi.
     juftlar = dict(parse_qsl(init_data, keep_blank_values=True))
+    # FAQAT `hash` chiqariladi. `signature` QOLADI va bu muhim: u Telegram'ning
+    # uchinchi tomon uchun qo'ygan Ed25519 imzosi, lekin HMAC hash'i AYNAN
+    # qolgan hamma maydon ustidan hisoblanadi — `signature` ham shu ichida.
+    # Uni tashlab yuborsak, Mini App'dan kelgan har bir kirish 401 bo'lardi
+    # ("imzo mos kelmadi") va odam Telegram ichida anonim bo'lib qolardi.
+    # Aynan shu xato bo'lgan.
     kelgan_hash = juftlar.pop("hash", "")
-    juftlar.pop("signature", None)  # hash hisobiga kirmaydi
 
     if len(kelgan_hash) != 64 or not all(c in "0123456789abcdefABCDEF" for c in kelgan_hash):
         raise TelegramXato(401, "hash noto'g'ri")

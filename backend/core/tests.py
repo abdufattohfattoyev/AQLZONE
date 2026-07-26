@@ -25,10 +25,18 @@ BOT = "123456:TEST_TOKEN_FAQAT_SINOV_UCHUN"
 
 
 def init_data(user_id: int = 777, first_name: str = "Ali", *, auth_date: int | None = None) -> str:
-    """Haqiqiy Telegram initData'ni bot tokeni bilan imzolab yasaydi."""
+    """
+    Haqiqiy Telegram initData'ni bot tokeni bilan imzolab yasaydi.
+
+    `signature` ATAYLAB shu yerda turibdi. Telegram uni har bir Mini App
+    ochilishida yuboradi VA hash hisobiga qo'shadi. Sinovda u bo'lmaganida
+    kod "signature'ni tashla" degan xato bilan ham yashil o'tardi, ishlab
+    turgan saytda esa har bir kirish 401 bo'lardi — aynan shunday bo'lgan.
+    """
     juftlar = {
         "auth_date": str(auth_date if auth_date is not None else int(time.time())),
         "query_id": "AAH",
+        "signature": "SINOV_Ed25519_IMZOSI",
         "user": json.dumps({"id": user_id, "first_name": first_name}, separators=(",", ":")),
     }
     dcs = "\n".join(f"{k}={v}" for k, v in sorted(juftlar.items()))
