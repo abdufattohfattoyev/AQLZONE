@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="uz" data-tema="bosh">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!--
+      Temani REACT'DAN OLDIN qo'yamiz.
+
+      Aks holda sahifa yangilanganda quyidagi bo'ladi: HTML keladi, CSS
+      qo'llanadi, ekran bir lahza standart (och) rangda ko'rinadi va faqat
+      shundan keyin JS ishga tushib to'g'ri temani qo'yadi. Ko'z buni "oq
+      yaltirash" sifatida ilg'aydi. Manzilning o'zi kerakli temani aytib
+      turibdi, shuning uchun uni shu yerdayoq aniqlaymiz.
+    -->
+    <script>
+      (function () {
+        try {
+          var m = /kurs\/(\d+)-sinf/.exec(location.pathname + location.hash);
+          document.documentElement.dataset.tema =
+            !m ? "bosh" : (+m[1] <= 1 ? "bolalar" : "katta");
+        } catch (e) { /* manzil g'alati — standart tema qoladi */ }
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <title>Aql Zone — bilim va o'yin platformasi</title>
+    <meta name="description" content="Aql Zone — 1–4-sinf matematikasi darslik bo'yicha: yo'l xaritasi, yulduzlar va har safar yangi savollar." />
+    <meta name="theme-color" content="#8ed6ff" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <link rel="canonical" href="https://aql-zone.uz/" />
+
+    <!-- Telegram va ijtimoiy tarmoqlarda havola chiroyli ko'rinsin.
+         Manzillar ATAYLAB to'liq yozilgan: havolani o'qiydigan robotlar
+         (Telegram, Facebook) nisbiy yo'lni ko'pincha hal qila olmaydi va
+         rasm umuman ko'rinmay qoladi. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Aql Zone" />
+    <meta property="og:description" content="1–4-sinf matematikasi — darslik bo'yicha to'liq kurs." />
+    <meta property="og:image" content="https://aql-zone.uz/logo-toliq.svg" />
+    <meta property="og:url" content="https://aql-zone.uz/" />
+    <meta property="og:site_name" content="Aql Zone" />
+    <meta property="og:locale" content="uz_UZ" />
+    <meta name="twitter:card" content="summary" />
+
+    <!-- Shrift so'rovi HTML bosqichidayoq boshlansin, CSS ni kutmasin -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Aql Zone ishlashi uchun JavaScript yoqilgan bo'lishi kerak.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

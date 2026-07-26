@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Aql Zone">
+  <!--
+    Android uchun "maskable" ikonka: tizim uni doira, squircle yoki
+    to'rtburchak qilib KESADI. Shuning uchun belgi 66% ga kichraytirilib
+    markazga qo'yilgan — kesish chizig'i qayerdan o'tsa ham shapka ham,
+    kitob ham butun qoladi. Oddiy (purpose="any") ikonka uchun logo.svg.
+  -->
+  <defs>
+    <linearGradient id="azm-fon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e8f2ff"/>
+    </linearGradient>
+    <linearGradient id="azm-a-chap" x1="0" y1="0" x2=".6" y2="1">
+      <stop offset="0" stop-color="#2f7fe4"/><stop offset="1" stop-color="#1636c4"/>
+    </linearGradient>
+    <linearGradient id="azm-a-ong" x1=".1" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f8ee6"/><stop offset="1" stop-color="#22bd6d"/>
+    </linearGradient>
+    <linearGradient id="azm-shapka" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e3a8f"/><stop offset="1" stop-color="#101f52"/>
+    </linearGradient>
+    <linearGradient id="azm-kitob" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1b45a8"/><stop offset=".5" stop-color="#122f74"/><stop offset="1" stop-color="#1b45a8"/>
+    </linearGradient>
+    <clipPath id="azm-a" clip-rule="evenodd">
+      <path d="M60 28 L109 100 H11 Z M60 58 L71.5 75 H48.5 Z M44 83 H76 L80.5 91 H39.5 Z"/>
+    </clipPath>
+  </defs>
+
+  <rect width="120" height="120" fill="url(#azm-fon)"/>
+
+  <g transform="translate(60 62) scale(.66) translate(-60 -60)">
+    <g transform="rotate(-13 60 24)">
+      <path d="M60 6 96 22 60 38 24 22Z" fill="url(#azm-shapka)"/>
+      <path d="M48 29v9c0 3.4 5.4 6 12 6s12-2.6 12-6v-9l-12 5.3z" fill="#16295e"/>
+      <path d="M93.5 22.6v16" stroke="#101f52" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+      <path d="M93.5 37c3.4 0 5.6 2 5.6 4.6 0 3.4-2.4 7-5.6 8.6-3.2-1.6-5.6-5.2-5.6-8.6 0-2.6 2.2-4.6 5.6-4.6z" fill="#16295e"/>
+    </g>
+    <g clip-path="url(#azm-a)">
+      <path d="M0 0h74L34 120H0z" fill="url(#azm-a-chap)"/>
+      <path d="M74 0h46v120H34z" fill="url(#azm-a-ong)"/>
+    </g>
+    <path d="M4 98c17-9 39-8 54 2v13c-15-10-37-11-54-4z" fill="url(#azm-kitob)"/>
+    <path d="M116 98c-17-9-39-8-54 2v13c15-10 37-11 54-4z" fill="url(#azm-kitob)"/>
+    <path d="M8 96c16-7 36-6 50 3M112 96c-16-7-36-6-50 3" stroke="#fff" stroke-width="2.4"
+          stroke-linecap="round" fill="none" opacity=".95"/>
+  </g>
+</svg>

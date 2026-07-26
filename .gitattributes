@@ -1,0 +1,9 @@
+# Shell skriptlari HAR DOIM LF bilan saqlanadi va shunday chiqariladi.
+#
+# Windows'da ishlab chiqilgan fayl CRLF bilan tushsa, Linux konteynerda
+# `/entrypoint.sh` "no such file or directory" bilan yiqiladi — sabab
+# ko'rinmaydi, chunki fayl JOYIDA turadi. Aybdor — satr oxiridagi \r,
+# uni yadro dastur nomining bir qismi deb o'qiydi.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf

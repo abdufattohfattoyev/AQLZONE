@@ -1,0 +1,769 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700;800&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   Aql Zone — dizayn tizimi
+
+   Uchta tema bor va ular ATAYLAB bir-biriga o'xshamaydi:
+
+     [data-tema="bosh"]     kurslar ro'yxati — yorug' tong, yumshoq nur va
+                            kengayuvchi halqalar. Bu o'quv ekrani emas,
+                            brendning kirish eshigi.
+     [data-tema="bolalar"]  maktabgacha va 1-sinf — quyoshli vodiy: tog'lar,
+                            o'rmon, daryo. Hamma narsa katta va yumaloq.
+     [data-tema="katta"]    2–4-sinf — tog' tuni: yulduzlar, oy, aurora,
+                            ko'l aksi. Shishasimon kartalar.
+
+   Buning sababi oddiy: 4-sinf o'quvchisi "kichkinalar o'yini" ni yoqtirmaydi,
+   1-sinf bolasi esa unga o'ta jiddiy ko'ringan ekranda o'zini yo'qotadi.
+   Bosh sahifa esa ikkalasiga ham tegishli emas — u umumiy vitrina.
+
+   Tema `<html data-tema>` da turadi va uni index.html dagi kichik skript
+   REACT'DAN OLDIN qo'yadi, aks holda sahifa yangilanganda bir lahza
+   noto'g'ri rangda ko'rinadi.
+
+   Texnik jihatdan hammasi CSS o'zgaruvchilarida. Komponentlarda `bg-karta`,
+   `text-ink`, `shadow-clay` kabi TOKEN klasslari ishlatiladi, hech qayerda
+   qo'lda yozilgan oq yoki qora rang yo'q — shuning uchun `<html data-tema>`
+   ni almashtirish butun ilovani birga o'zgartiradi.
+   ============================================================ */
+@theme {
+  --font-display: 'Fredoka', system-ui, sans-serif;
+  --font-sans: 'Baloo 2', system-ui, sans-serif;
+
+  /* brend ranglari — ikkala temada ham bir xil, brend shu bilan taniladi */
+  --color-brand-green: #48c97a;
+  --color-brand-green-d: #33a862;
+  --color-brand-orange: #ff9f43;
+  --color-brand-orange-d: #ef8620;
+  --color-brand-blue: #4fb8e0;
+  --color-brand-blue-d: #3792c9;
+  --color-brand-purple: #b07be8;
+  --color-brand-purple-d: #8f57cf;
+  --color-brand-red: #ff7a6b;
+  --color-brand-gold: #f5b301;
+
+  /* --- temaga qarab o'zgaradigan tokenlar (standarti: bolalar) --- */
+  --color-karta: #ffffff;            /* karta yuzasi */
+  --color-track: rgb(0 0 0 / 0.08);  /* to'ldirilmagan chiziq, xira yuza */
+  --color-yol: rgb(90 75 50 / 0.13); /* dars yo'li */
+  --color-yol-chiziq: rgb(255 255 255 / 0.5);
+
+  --color-ink: #3a2e22;
+  --color-ink-soft: #6b5a41;
+  /* Xira matn kartadagi "6 dars" kabi yozuvlar uchun. #9a9285 da oq
+     kartada kontrast 3.08 edi — 12px matn uchun kerakli 4.5 dan past.
+     #797163 da 4.82. */
+  --color-ink-dim: #797163;
+  --color-clay: #e2cba2;             /* 3D soyaning rangi */
+  --color-locked: #c2bbae;
+  --color-sahna: #fffdf6;            /* savol turadigan maydon */
+
+  --radius-clay: 26px;
+}
+
+/*
+ * Soyalar ATAYLAB @theme dan tashqarida.
+ *
+ * Tailwind `@theme` dagi `--shadow-*` qiymatini utility ichiga o'zgarmas
+ * qilib yozib qo'yadi — natijada `shadow-clay` temaga ERGASHMAY qolardi
+ * (quyuq temada och-bej soya qolib ketardi). Shuning uchun o'zgaruvchini
+ * boshqa nom bilan saqlaymiz va utility'ni o'zimiz var() orqali yozamiz.
+ */
+:root {
+  --az-soya: 0 6px 0 var(--color-clay), 0 10px 18px rgb(0 0 0 / 0.1);
+  --az-soya-sm: 0 4px 0 var(--color-clay), 0 6px 12px rgb(0 0 0 / 0.08);
+  --az-soya-node: 0 7px 0 rgb(0 0 0 / 0.16), 0 12px 22px rgb(0 0 0 / 0.15);
+  --az-body: #0f1436;
+}
+
+@utility shadow-clay { box-shadow: var(--az-soya); }
+@utility shadow-clay-sm { box-shadow: var(--az-soya-sm); }
+@utility shadow-node { box-shadow: var(--az-soya-node); }
+
+/* ---------------- Bosh sahifa: yorug' tong ----------------
+   Bu ekran — brendning kirish eshigi, ilovada birinchi ko'riladigan joy.
+   Ilgari u qora tun edi; qorong'i ekran ochilganda "og'ir" tuyulardi va
+   ota-ona darhol yopib qo'yardi. Endi yorug' va toza: oq kartalar, ko'k
+   va yashil yumshoq nurlar — logoning o'z ranglari. Qorong'i kayfiyat
+   "katta" temada (2–4-sinf) qoldi, u yerda u o'rinli. */
+:root[data-tema="bosh"] {
+  --az-body: #eef4ff;
+
+  --color-karta: #ffffff;
+  --color-track: rgb(26 40 90 / 0.1);
+  --color-yol: rgb(26 40 90 / 0.12);
+  --color-yol-chiziq: rgb(255 255 255 / 0.65);
+
+  --color-ink: #1a2450;
+  --color-ink-soft: #4d5a86;
+  /* Xira matn ham O'QILADIGAN bo'lishi shart: kurs tavsifi shu rangda va
+     o'lchami 12.5px. #7e8cb2 da oq kartada kontrast 3.34 edi — kichik matn
+     uchun kerakli 4.5 dan past. #5f6d8e da 5.17. */
+  --color-ink-dim: #5f6d8e;
+  --color-clay: #c4d2f0;             /* 3D soyaning rangi */
+  --color-locked: #b6c1de;
+  --color-sahna: #ffffff;
+
+  --az-soya: 0 4px 0 var(--color-clay), 0 18px 34px -12px rgb(30 50 110 / 0.26);
+  --az-soya-sm: 0 3px 0 var(--color-clay), 0 10px 20px -8px rgb(30 50 110 / 0.22);
+  --az-soya-node: 0 6px 0 rgb(163 183 224 / 0.8), 0 14px 26px rgb(30 50 110 / 0.18);
+  --radius-clay: 24px;
+
+  --az-maqsad-1: #dce7ff;
+  --az-maqsad-2: #c8daf8;
+}
+
+/* ---------------- 1-sinf: quyoshli, yumshoq, katta ---------------- */
+:root[data-tema="bolalar"] {
+  --az-body: #8ed6ff;
+  --color-karta: #ffffff;
+  --color-track: rgb(0 0 0 / 0.08);
+  --color-yol: rgb(90 75 50 / 0.13);
+  --color-yol-chiziq: rgb(255 255 255 / 0.55);
+
+  --color-ink: #3a2e22;
+  --color-ink-soft: #6b5a41;
+  /* Xira matn kartadagi "6 dars" kabi yozuvlar uchun. #9a9285 da oq
+     kartada kontrast 3.08 edi — 12px matn uchun kerakli 4.5 dan past.
+     #797163 da 4.82. */
+  --color-ink-dim: #797163;
+  --color-clay: #e8cea0;
+  --color-locked: #cfc7b6;
+  /* Savol maydoni ataylab qog'oz rangida: osmondan ham, ichidagi oq
+     kartachalardan ham farq qilib tursin. */
+  --color-sahna: #fffcf2;
+
+  /* Bu yoshda tugma "bosiladigan o'yinchoq"dek bo'lishi kerak: qalin,
+     yumaloq, ostida qalin soya. */
+  --az-soya: 0 8px 0 var(--color-clay), 0 14px 24px rgb(0 0 0 / 0.12);
+  --az-soya-sm: 0 5px 0 var(--color-clay), 0 8px 14px rgb(0 0 0 / 0.1);
+  --radius-clay: 32px;
+
+  --az-maqsad-1: #ffe0ad;
+  --az-maqsad-2: #ffcf88;
+}
+
+/* ---------------- 2–4-sinf: chuqur ko'k, shishasimon ---------------- */
+:root[data-tema="katta"] {
+  --az-body: #0d1230;
+  --color-sahna: #1a2247;
+  --color-karta: #232c52;
+  --color-track: rgb(255 255 255 / 0.13);
+  --color-yol: rgb(255 255 255 / 0.1);
+  --color-yol-chiziq: rgb(255 255 255 / 0.35);
+
+  --color-ink: #eef2ff;
+  --color-ink-soft: #b7c2e6;
+  --color-ink-dim: #8b97c2;
+  /* Quyuq fonda "loy" soyasi ham quyuq bo'ladi — shundagina karta
+     yuzadan ko'tarilgandek ko'rinadi. */
+  --color-clay: #10152e;
+  --color-locked: #46508a;
+
+  --az-soya: 0 5px 0 var(--color-clay), 0 16px 32px -8px rgb(0 0 0 / 0.55);
+  --az-soya-sm: 0 3px 0 var(--color-clay), 0 10px 20px -6px rgb(0 0 0 / 0.45);
+  --az-soya-node: 0 6px 0 rgb(0 0 0 / 0.4), 0 14px 26px rgb(0 0 0 / 0.4);
+  --radius-clay: 20px;
+
+  --az-maqsad-1: #3a2f66;
+  --az-maqsad-2: #2a2350;
+}
+
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    color: var(--color-ink);
+    /* Asosiy manzara <Fon /> komponentida. Bu yerdagi tekis rang esa
+       zaxira: rasm qavatlari chizilgunicha ekran to'g'ri rangda tursin,
+       ya'ni yangilaganda oq yaltirash bo'lmasin. */
+    background: var(--az-body);
+    min-height: 100dvh;
+    user-select: none;                       /* bola matnni belgilab olmasin */
+    padding-top: env(safe-area-inset-top);   /* iOS "notch" ostiga kirmasin */
+    transition: color 0.4s ease;
+  }
+
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
+}
+
+/* ============================================================
+   ORQA FON (components/Fon.tsx)
+
+   Bitta fixed qatlam, ichida ikkala temaning qavatlari ham turadi.
+   Ko'rinadigani faqat joriy temaniki — qolgani `display: none`.
+   `--az-scroll` (0→1) sahifa aylanishi bilan yangilanadi va parallaks
+   shundan chiqadi: uzoqdagi qavat sekin, yaqindagisi tez siljiydi.
+   ============================================================ */
+
+.az-fon {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;                      /* fon bosishga xalaqit bermaydi */
+  --az-scroll: 0;
+  transition: background 0.5s ease;
+}
+.az-fon > * { position: absolute; display: none; }
+
+/* Naqsh uchala temada ham ko'rinadi — g'oya bitta, rang boshqacha.
+   Bosh sahifadagi nur va halqalar esa faqat o'sha yerda. */
+.az-fon > .az-naqsh,
+.az-fon > .az-vinyet,
+:root[data-tema="bosh"] .az-fon > .az-nur,
+:root[data-tema="bosh"] .az-fon > .az-halqa { display: block; }
+
+/* ---------- bosh sahifa: yorug' tong, yumshoq nur va halqalar ---------- */
+
+:root[data-tema="bosh"] .az-fon {
+  background:
+    /* tepada oq yorug'lik — logo aynan shu yerda turadi va toza fonda kuchli chiqadi */
+    radial-gradient(78% 52% at 50% -4%, #ffffff 0%, transparent 64%),
+    radial-gradient(58% 46% at 10% 26%, #d4f1e2 0%, transparent 62%),   /* yashil */
+    radial-gradient(58% 46% at 92% 30%, #d8e3ff 0%, transparent 62%),   /* ko'k */
+    radial-gradient(70% 46% at 50% 104%, #efe6ff 0%, transparent 66%),  /* binafsha */
+    linear-gradient(180deg, #f3f7ff 0%, #e9f1ff 48%, #eaf7f1 100%);
+}
+
+/* Sekin aylanuvchi nur — sahnaga tushgan prozhektor kabi.
+   Yorug' fonda oltin rang yo'qoladi, shuning uchun brendning ko'k-yashili. */
+.az-nur {
+  top: 50%; left: 50%;
+  width: 190vmax; height: 190vmax;
+  margin: -95vmax 0 0 -95vmax;
+  background: conic-gradient(
+    from 0deg,
+    rgb(47 142 230 / 0.1) 0deg, transparent 42deg,
+    rgb(34 189 109 / 0.09) 130deg, transparent 190deg,
+    rgb(176 123 232 / 0.08) 268deg, transparent 320deg
+  );
+  animation: az-nur-aylan 44s linear infinite;
+}
+@keyframes az-nur-aylan { to { transform: rotate(360deg); } }
+
+/* Kengayib o'chadigan halqalar — ekran "nafas olayotgandek" ko'rinadi. */
+.az-halqa {
+  top: 50%; left: 50%;
+  width: 42vmin; height: 42vmin;
+  margin: -21vmin 0 0 -21vmin;
+  border-radius: 9999px;
+  border: 1px solid rgb(47 142 230 / 0.22);
+  animation: az-halqa-kengay 9s ease-out infinite;
+}
+.az-halqa-2 { animation-delay: 3s; }
+.az-halqa-3 { animation-delay: 6s; }
+
+@keyframes az-halqa-kengay {
+  0%   { transform: scale(0.35); opacity: 0; }
+  18%  { opacity: 0.75; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Matematik belgilar naqshi — takrorlanadigan plitka, MASK sifatida.
+   Shakl bitta, rangni har bir tema o'zi beradi (scripts emas, bir marta
+   hisoblangan qiymat). O'zgartirish kerak bo'lsa SVG ni alohida chizib,
+   URL-kodlab qo'ying (< => %3C, # => %23). */
+:root {
+  --az-belgilar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 480'%3E%3Cg fill='none' stroke='%23fff' stroke-width='0.89' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(56.2 37.0) scale(1.917)'%3E%3Crect x='5' y='2.6' width='14' height='18.8' rx='2.2'/%3E%3Crect x='8' y='5.6' width='8' height='4' rx='1'/%3E%3Ccircle cx='9' cy='13' r='.9'/%3E%3Ccircle cx='12' cy='13' r='.9'/%3E%3Ccircle cx='15' cy='13' r='.9'/%3E%3Ccircle cx='9' cy='17' r='.9'/%3E%3Ccircle cx='12' cy='17' r='.9'/%3E%3Ccircle cx='15' cy='17' r='.9'/%3E%3C/g%3E%3Cg transform='translate(176.2 37.0) scale(1.917)'%3E%3Cpath d='M4.5 7.5h15'/%3E%3Cpath d='M9.5 7.5c0 4.5-.6 8-1.8 11'/%3E%3Cpath d='M15.5 7.5v8.5c0 1.8.9 2.6 2.2 2.6'/%3E%3C/g%3E%3Cg transform='translate(296.2 37.0) scale(1.917)'%3E%3Ccircle cx='7.6' cy='7.6' r='2.7'/%3E%3Ccircle cx='16.4' cy='16.4' r='2.7'/%3E%3Cpath d='M18.2 5.8L5.8 18.2'/%3E%3C/g%3E%3Cg transform='translate(416.2 37.0) scale(1.917)'%3E%3Cpath d='M12 5.2v13.6M5.2 12h13.6'/%3E%3C/g%3E%3Cg transform='translate(17.8 157.0) scale(1.917)'%3E%3Cpath d='M5 9.4h14M5 14.6h14'/%3E%3C/g%3E%3Cg transform='translate(137.8 157.0) scale(1.917)'%3E%3Cpath d='M3.2 12.6h3.1l3.4 7.8L15.9 3.6H21'/%3E%3C/g%3E%3Cg transform='translate(257.8 157.0) scale(1.917)'%3E%3Cpath d='M6.8 6.8l10.4 10.4M17.2 6.8L6.8 17.2'/%3E%3C/g%3E%3Cg transform='translate(377.8 157.0) scale(1.917)'%3E%3Cpath d='M5 12h14'/%3E%3Ccircle cx='12' cy='7.1' r='1.35'/%3E%3Ccircle cx='12' cy='16.9' r='1.35'/%3E%3C/g%3E%3Cg transform='translate(56.2 277.0) scale(1.917)'%3E%3Crect x='5' y='2.6' width='14' height='18.8' rx='2.2'/%3E%3Crect x='8' y='5.6' width='8' height='4' rx='1'/%3E%3Ccircle cx='9' cy='13' r='.9'/%3E%3Ccircle cx='12' cy='13' r='.9'/%3E%3Ccircle cx='15' cy='13' r='.9'/%3E%3Ccircle cx='9' cy='17' r='.9'/%3E%3Ccircle cx='12' cy='17' r='.9'/%3E%3Ccircle cx='15' cy='17' r='.9'/%3E%3C/g%3E%3Cg transform='translate(176.2 277.0) scale(1.917)'%3E%3Cpath d='M4.5 7.5h15'/%3E%3Cpath d='M9.5 7.5c0 4.5-.6 8-1.8 11'/%3E%3Cpath d='M15.5 7.5v8.5c0 1.8.9 2.6 2.2 2.6'/%3E%3C/g%3E%3Cg transform='translate(296.2 277.0) scale(1.917)'%3E%3Ccircle cx='7.6' cy='7.6' r='2.7'/%3E%3Ccircle cx='16.4' cy='16.4' r='2.7'/%3E%3Cpath d='M18.2 5.8L5.8 18.2'/%3E%3C/g%3E%3Cg transform='translate(416.2 277.0) scale(1.917)'%3E%3Cpath d='M12 5.2v13.6M5.2 12h13.6'/%3E%3C/g%3E%3Cg transform='translate(17.8 397.0) scale(1.917)'%3E%3Cpath d='M5 9.4h14M5 14.6h14'/%3E%3C/g%3E%3Cg transform='translate(137.8 397.0) scale(1.917)'%3E%3Cpath d='M3.2 12.6h3.1l3.4 7.8L15.9 3.6H21'/%3E%3C/g%3E%3Cg transform='translate(257.8 397.0) scale(1.917)'%3E%3Cpath d='M6.8 6.8l10.4 10.4M17.2 6.8L6.8 17.2'/%3E%3C/g%3E%3Cg transform='translate(377.8 397.0) scale(1.917)'%3E%3Cpath d='M5 12h14'/%3E%3Ccircle cx='12' cy='7.1' r='1.35'/%3E%3Ccircle cx='12' cy='16.9' r='1.35'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ============================================================
+   NAQSH QAVATLARI
+
+   Uchta qavat bir xil plitkani ishlatadi. Farqi: o'lchami, tezligi va
+   shaffofligi. Shu uchtasi birga chuqurlik beradi — yiriklari yaqinroq,
+   maydalari uzoqroq tuyuladi.
+
+   Rang MASK orqali: shakl bitta joyda turadi, `background` esa temaga
+   qarab o'zgaradi. Aks holda har bir tema uchun alohida SVG kerak bo'lardi.
+
+   Qavat ekrandan KATTAROQ va biroz burilgan. Burilish naqshni "jadval"
+   bo'lishdan qutqaradi; kattaroq bo'lishi esa burilganda burchaklar
+   ochilib qolmasligi uchun.
+   ============================================================ */
+.az-naqsh {
+  top: -25%; left: -25%;
+  width: 150%; height: 150%;
+  -webkit-mask-image: var(--az-belgilar);
+  mask-image: var(--az-belgilar);
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  will-change: mask-position;
+}
+
+/* Yaqin qavat: yirik, to'q, tez */
+.az-naqsh-1 {
+  -webkit-mask-size: 340px 340px;
+  mask-size: 340px 340px;
+  opacity: 0.5;
+  transform: rotate(-7deg);
+  animation: az-naqsh-suz 90s linear infinite;
+  translate: 0 calc(var(--az-scroll) * -70px);
+}
+/* O'rta qavat */
+.az-naqsh-2 {
+  -webkit-mask-size: 220px 220px;
+  mask-size: 220px 220px;
+  opacity: 0.3;
+  transform: rotate(-7deg);
+  animation: az-naqsh-suz 150s linear infinite reverse;
+  translate: 0 calc(var(--az-scroll) * -38px);
+}
+/* Uzoq qavat: mayda, xira, sekin */
+.az-naqsh-3 {
+  -webkit-mask-size: 140px 140px;
+  mask-size: 140px 140px;
+  opacity: 0.16;
+  transform: rotate(-7deg);
+  animation: az-naqsh-suz 240s linear infinite;
+  translate: 0 calc(var(--az-scroll) * -16px);
+}
+
+/* Diqqat: `transform` EMAS, `mask-position`. Takrorlanadigan plitkada
+   faqat shu usul uzluksiz suriladi — transform butun qavatni joyidan
+   siljitib, chetida bo'sh joy ochib qo'yardi. Surish masofasi plitka
+   o'lchamiga KARRALI bo'lishi shart, aks holda halqa boshiga qaytganda
+   naqsh sakraydi. */
+@keyframes az-naqsh-suz {
+  to { -webkit-mask-position: 1360px -1020px; mask-position: 1360px -1020px; }
+}
+
+/* Chetlarni so'ndiruvchi qatlam. Naqsh markazda kuchli, chekkalarda
+   yo'qoladi: shunda u matnga raqobat qilmaydi va ekran chetida kesilgan
+   belgilar ko'zga tashlanmaydi. */
+.az-vinyet {
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 40%,
+    transparent 0%, transparent 42%, var(--az-vinyet-rang) 100%);
+}
+
+/* --- temalar: bir xil naqsh, boshqa rang --- */
+
+:root[data-tema="bosh"] .az-fon {
+  background:
+    radial-gradient(78% 52% at 50% -6%, #ffffff 0%, transparent 62%),
+    radial-gradient(60% 46% at 8% 26%, #d9f2e6 0%, transparent 62%),
+    radial-gradient(60% 46% at 94% 30%, #dbe6ff 0%, transparent 62%),
+    linear-gradient(180deg, #f4f8ff 0%, #e9f1ff 52%, #eaf7f2 100%);
+  --az-vinyet-rang: rgb(210 226 250 / 0.55);
+}
+:root[data-tema="bosh"] .az-naqsh { background: #4d7fc4; }
+
+:root[data-tema="bolalar"] .az-fon {
+  background:
+    radial-gradient(70% 46% at 78% 2%, rgb(255 246 214 / 0.85) 0%, transparent 58%),
+    linear-gradient(180deg, #62b6e8 0%, #8ecdf0 38%, #b8e2f6 68%, #dcf1f4 100%);
+  --az-vinyet-rang: rgb(70 140 190 / 0.35);
+}
+:root[data-tema="bolalar"] .az-naqsh { background: #ffffff; }
+
+:root[data-tema="katta"] .az-fon {
+  background:
+    radial-gradient(70% 44% at 50% -8%, #2a3a63 0%, transparent 64%),
+    linear-gradient(180deg, #1b2740 0%, #222f4c 46%, #1a2440 100%);
+  --az-vinyet-rang: rgb(8 12 26 / 0.72);
+}
+:root[data-tema="katta"] .az-naqsh { background: #7ea6d8; }
+
+/* Bosh sahifadagi aylanuvchi nur va halqalar — naqsh ustida qoladi,
+   ular brendning kirish eshigini kurs ekranlaridan ajratib turadi. */
+.az-nur {
+  top: 50%; left: 50%;
+  width: 190vmax; height: 190vmax;
+  margin: -95vmax 0 0 -95vmax;
+  background: conic-gradient(
+    from 0deg,
+    rgb(47 142 230 / 0.1) 0deg, transparent 42deg,
+    rgb(34 189 109 / 0.09) 130deg, transparent 190deg,
+    rgb(176 123 232 / 0.08) 268deg, transparent 320deg
+  );
+  animation: az-nur-aylan 44s linear infinite;
+}
+@keyframes az-nur-aylan { to { transform: rotate(360deg); } }
+
+.az-halqa {
+  top: 50%; left: 50%;
+  width: 42vmin; height: 42vmin;
+  margin: -21vmin 0 0 -21vmin;
+  border-radius: 9999px;
+  border: 1px solid rgb(47 142 230 / 0.22);
+  animation: az-halqa-kengay 9s ease-out infinite;
+}
+.az-halqa-2 { animation-delay: 3s; }
+.az-halqa-3 { animation-delay: 6s; }
+
+@keyframes az-halqa-kengay {
+  0%   { transform: scale(0.35); opacity: 0; }
+  18%  { opacity: 0.75; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* ============================================================
+   MANZARA USTIDAGI YUZALAR
+
+   Fon endi tekis rang emas — tog', o'rmon, suv. Bunday fon ustida oddiy
+   tekis karta "yopishtirilgan qog'oz"dek ko'rinadi. Ikkita nozik qo'shimcha
+   uni yuzadan ko'taradi:
+
+     az-shisha  — orqadagi manzarani biroz xiralashtiradi (shisha effekti),
+                  shuning uchun karta ostidagi tog' matnni chalg'itmaydi.
+     az-qavariq — yuqori chekkada yorug'lik, pastda ichki soya. Yorug'lik
+                  har doim tepadan tushadi, ko'z hajmni aynan shundan
+                  o'qiydi — soyaning o'zi yetarli emas.
+   ============================================================ */
+.az-shisha {
+  background: color-mix(in srgb, var(--color-karta) 45%, transparent);
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+}
+
+.az-qavariq {
+  position: relative;
+  isolation: isolate;                /* ::after karta ichida qolsin */
+}
+.az-qavariq::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),      /* tepadagi yorug' chekka */
+    inset 0 -1px 0 rgb(0 0 0 / 0.07),           /* pastdagi soya chekka */
+    inset 0 -14px 22px -18px rgb(0 0 0 / 0.5);  /* ichki chuqurlik */
+}
+/* Quyuq temada oq chiziq ko'zni qamashtiradi — kuchsizroq bo'ladi */
+:root[data-tema="katta"] .az-qavariq::after {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    inset 0 -1px 0 rgb(0 0 0 / 0.3),
+    inset 0 -14px 22px -18px rgb(0 0 0 / 0.7);
+}
+
+/* ============================================================
+   3D va harakatlar
+   ============================================================ */
+
+/* Oddiy bosish — tugma pastga "cho'kadi". */
+@utility clay-press {
+  transition: transform 0.1s, box-shadow 0.1s;
+  &:active { transform: translateY(4px); }
+}
+
+/*
+ * Javob tugmasi: haqiqiy 3D.
+ * Bosilganda yuza pastga cho'kadi VA biroz orqaga og'adi — barmoq ostida
+ * jismoniy narsa borgandek his qoladi. `perspective` ota-elementda emas,
+ * shu yerda beriladi, shunda har bir tugma mustaqil og'adi.
+ */
+@utility tugma-3d {
+  transform: perspective(680px) translateZ(0);
+  transition: transform 0.13s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.13s;
+  &:active:not(:disabled) {
+    transform: perspective(680px) translateY(5px) rotateX(9deg) scale(0.985);
+  }
+}
+
+/* Ustidan bir marta o'tadigan yorug'lik — "qimmatbaho" hissi shundan. */
+.az-yaltir { position: relative; overflow: hidden; }
+.az-yaltir::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: -140%;
+  width: 60%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.5), transparent);
+  transform: skewX(-18deg);
+  animation: az-yaltira 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes az-yaltira { 0%, 62% { left: -140%; } 88%, 100% { left: 160%; } }
+
+/* joriy darsning tirik halqasi */
+@keyframes az-pulse {
+  0%   { transform: scale(0.9);  opacity: 0.85; }
+  70%  { transform: scale(1.18); opacity: 0; }
+  100% { opacity: 0; }
+}
+.az-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 9999px;
+  border: 3px solid var(--color-brand-orange);
+  animation: az-pulse 1.9s ease-out infinite;
+  pointer-events: none;
+}
+
+/* Diqqat: bu animatsiya faqat ICHKI elementga qo'yiladi va faqat Y bo'yicha
+   siljitadi. Tashqi elementda joylashuv uchun `transform` ishlatiladi —
+   ikkisi bir elementda bo'lsa, siljishlar qo'shilib tugun markazidan chiqib
+   ketadi (avval shu xato bo'lgan). */
+@keyframes az-bob { 50% { translate: 0 -5px; } }
+.az-bob { animation: az-bob 1.7s ease-in-out infinite; }
+
+/* Ekran ochilganda ro'yxat navbat bilan chiqadi.
+   Kechikish inline uslub orqali: style={{ "--az-kech": "60ms" }} */
+@keyframes az-kirish {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+.az-kirish {
+  opacity: 0;
+  animation: az-kirish 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+  animation-delay: var(--az-kech, 0ms);
+}
+
+/*
+ * Pastga aylanganda kartalar "yotgan holatdan" ko'tariladi.
+ * Ko'rinish maydoniga kirganda `data-korindi` qo'yiladi (components/Reveal.tsx).
+ */
+.az-reveal {
+  opacity: 0;
+  transform: perspective(900px) rotateX(14deg) translateY(34px);
+  transform-origin: 50% 100%;
+  transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+.az-reveal[data-korindi="ha"] {
+  opacity: 1;
+  transform: perspective(900px) rotateX(0) translateY(0);
+}
+
+/* Savol kartasi ekranga 3D burilib kiradi. */
+@keyframes az-savol {
+  from { opacity: 0; transform: perspective(900px) rotateX(-22deg) translateY(24px) scale(0.95); }
+  to   { opacity: 1; transform: perspective(900px) rotateX(0) translateY(0) scale(1); }
+}
+.az-savol { animation: az-savol 0.42s cubic-bezier(0.2, 0.8, 0.3, 1); }
+
+/* To'g'ri javob — sakrab kattalashadi. */
+@keyframes az-sakra {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.13); }
+  70%  { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+.az-sakra { animation: az-sakra 0.45s cubic-bezier(0.3, 1.4, 0.5, 1); }
+
+/* Xato — qisqa silkinish. Jazo emas, "yana urin" degan ishora. */
+@keyframes az-silkin {
+  10%, 90% { transform: translateX(-3px); }
+  20%, 80% { transform: translateX(5px); }
+  30%, 50%, 70% { transform: translateX(-7px); }
+  40%, 60% { transform: translateX(7px); }
+}
+.az-silkin { animation: az-silkin 0.5s both; }
+
+/* Yulduzlar natijada navbat bilan aylanib chiqadi. */
+@keyframes az-yulduz {
+  from { opacity: 0; transform: rotateY(-180deg) scale(0.2); }
+  60%  { opacity: 1; transform: rotateY(20deg) scale(1.25); }
+  to   { opacity: 1; transform: rotateY(0) scale(1); }
+}
+.az-yulduz {
+  opacity: 0;
+  animation: az-yulduz 0.7s cubic-bezier(0.3, 1.2, 0.4, 1) forwards;
+  animation-delay: var(--az-kech, 0ms);
+}
+
+/* ============================================================
+ * O'git — savoldan oldingi animatsion tushuntirish.
+ * (components/Ogit.tsx). Kechikish inline: style={{ "--az-kech": "240ms" }}
+ * ============================================================ */
+
+/* Narsa yuqoridan tushib, sakrab joyiga o'tiradi. Bola shu harakatni
+   ko'zi bilan kuzatadi — aynan shu narsani sanayotganini tushunadi. */
+@keyframes az-tush {
+  0%   { opacity: 0; transform: translateY(-26px) scale(0.5); }
+  60%  { opacity: 1; transform: translateY(0) scale(1.15); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.az-tush {
+  opacity: 0;
+  animation: az-tush 0.5s cubic-bezier(0.3, 1.3, 0.5, 1) forwards;
+  animation-delay: var(--az-kech, 0ms);
+}
+
+/* Ayirishda: narsa ko'z oldida uchib ketadi. "Ketdi" so'zining ko'rinishi —
+   shuning uchun u yo'q bo'lib qolmaydi, aylanib yuqoriga chiqib ketadi. */
+@keyframes az-ketdi {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); }
+  100% { opacity: 0; transform: translate(46px, -60px) rotate(38deg) scale(0.45); }
+}
+.az-ketdi {
+  animation: az-ketdi 0.85s cubic-bezier(0.4, 0, 0.7, 0.4) forwards;
+  animation-delay: var(--az-kech, 0ms);
+}
+
+/* Natija (katta son, amal belgisi, yozuv) — e'lon qilib chiqadi. */
+@keyframes az-katta {
+  0%   { opacity: 0; transform: scale(0.3); }
+  55%  { opacity: 1; transform: scale(1.22); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.az-katta {
+  opacity: 0;
+  animation: az-katta 0.55s cubic-bezier(0.3, 1.4, 0.5, 1) forwards;
+  animation-delay: var(--az-kech, 0ms);
+}
+
+/* ============================================================
+ * Jonlilik — rasmlar o'lik turmasin.
+ * ============================================================ */
+
+/* Sekin suzish. Har bir rasm o'z kechikishi bilan tebranadi, shuning uchun
+   ular birgalikda emas, tirik guruhdek harakatlanadi. */
+@keyframes az-suzish {
+  0%, 100% { transform: translateY(0) rotate(-1.6deg); }
+  50%      { transform: translateY(-6px) rotate(1.6deg); }
+}
+.az-suzish {
+  animation: az-suzish 3.2s ease-in-out infinite;
+  animation-delay: var(--az-kech, 0ms);
+}
+
+/* --- to'g'ri javob bayrami --- */
+
+/* Tugmadan tarqaladigan halqa — "urdim!" degan zarba hissi. */
+@keyframes az-halqa-otil {
+  0%   { transform: scale(0.75); opacity: 0.55; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.az-halqa-otil {
+  animation: az-halqa-otil 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+/* Yashil belgi (✓) sakrab chiqadi va joyiga o'tiradi. */
+@keyframes az-belgi-kir {
+  0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+  55%  { transform: scale(1.3) rotate(10deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.az-belgi-kir {
+  opacity: 0;
+  animation: az-belgi-kir 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) forwards;
+}
+
+/* To'g'ri javob tugmasi: sakraydi va bir lahza kattarib qoladi. */
+@keyframes az-golib {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.12) translateY(-8px); }
+  60%  { transform: scale(0.97) translateY(0); }
+  100% { transform: scale(1.04); }
+}
+.az-golib { animation: az-golib 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) forwards; }
+
+/* Tanlanmagan variantlar orqaga chekinadi — ko'z to'g'ri javobda qoladi. */
+.az-sonik { opacity: 0.4; transform: scale(0.94); transition: all 0.35s ease; }
+
+/* Konfetti — to'g'ri javobda otiladi (components/Konfetti.tsx). */
+.az-konfetti { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.az-konfetti > i {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 9px; height: 14px;
+  border-radius: 2px;
+  animation: az-uch 0.95s cubic-bezier(0.15, 0.75, 0.4, 1) forwards;
+}
+@keyframes az-uch {
+  0%   { opacity: 1; transform: translate(-50%, -50%) rotate(0) scale(0.6); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--az-x)), calc(-50% + var(--az-y))) rotate(var(--az-burchak)) scale(1); }
+}
+
+/* ============================================================
+   BREND BELGISI (components/Logo.tsx)
+
+   Ikki ish qiladi:
+
+   1) TEMAGA MOSLASH. Logoning shapka, kitob va "Aql" qismlari to'q ko'k.
+      Oq fonda bu kuchli, lekin "bosh" va "katta" temalarning qorong'i
+      fonida belgi fonga singib ketardi — shuning uchun o'sha temalarda
+      to'q ranglar ochroqqa ko'chadi va orqasida yumshoq nur yoqiladi.
+      Nur ATAYLAB faqat qorong'ida: oq fonda u kir dog'dek ko'rinadi.
+
+   2) JONLANTIRISH. Harakat kichik va sekin: belgi ekranning eng tepasida
+      doim turadi, kuchli animatsiya u yerda tez charchatadi.
+   ============================================================ */
+.az-logo {
+  overflow: visible;              /* nur belgi chetidan tashqariga chiqadi */
+  --az-logo-nur-korin: 0;
+}
+/* Aylanish/kattalashish markazi elementning O'Z chegarasidan olinsin.
+   Bo'lmasa SVG standarti bo'yicha markaz viewBox nuqtasi (0 0) bo'ladi va
+   popuk tebranish o'rniga katta yoy bo'ylab uchib ketadi. */
+.az-logo-popuk, .az-logo-kitob, .az-logo-nur { transform-box: fill-box; }
+.az-logo-nur { opacity: var(--az-logo-nur-korin); transform-origin: center; }
+
+/* Faqat "katta" temada (2–4-sinf tungi ko'k osmoni) to'q qismlar ochroqqa
+   ko'chadi va orqasida nur yoqiladi. "bosh" va "bolalar" yorug' — u yerda
+   logo o'zining standart to'q ko'k ranglarida qoladi.
+
+   Ranglar ATAYLAB CSS qoidasida, SVG atributida emas — brauzer prezentatsiya
+   atributi ichidagi `var()` ni almashtirmaydi. */
+:root[data-tema="katta"] .az-logo       { --az-logo-nur-korin: 1; }
+:root[data-tema="katta"] .az-l-tund     { fill: #5a7fe0; }          /* shapka tagligi, popuk */
+:root[data-tema="katta"] .az-l-tund-s   { stroke: #6f92ee; }        /* popuk ipi */
+:root[data-tema="katta"] .az-l-shapka-a { stop-color: #7ea3f5; }
+:root[data-tema="katta"] .az-l-shapka-b { stop-color: #3f63c8; }
+:root[data-tema="katta"] .az-l-kitob-a  { stop-color: #5b86e8; }
+/* Kitob o'rtasi — eng to'q nuqta. #35569f da tungi fonga nisbatan kontrast
+   2.58 edi, grafik element uchun kerakli 3:1 dan past. */
+:root[data-tema="katta"] .az-l-kitob-b  { stop-color: #4a72cf; }
+/* "Aql" oqqa yaqin — "Zone" allaqachon yorqin ko'k-yashil */
+:root[data-tema="katta"] .az-l-yozuv    { fill: #dfe8ff; }
+:root[data-tema="katta"] .az-l-shior    { fill: #9fb8f0; }
+:root[data-tema="katta"] .az-l-shior-s  { stroke: #9fb8f0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Belgi butunligicha sekin suzadi.
+     Diqqat: bu ICHKI guruh. Tashqi guruhda `transform="translate(120 6)"`
+     atributi turibdi, CSS transform esa uni butunlay almashtirar edi —
+     belgi to'liq variantda burchakka sakrab chiqib ketardi. */
+  .az-logo-jonli .az-logo-belgi {
+    animation: az-logo-suz 4.6s ease-in-out infinite;
+  }
+  /* Popuk ipining boshidan tebranadi */
+  .az-logo-jonli .az-logo-popuk {
+    transform-origin: top center;
+    animation: az-logo-popuk 3.1s ease-in-out infinite;
+  }
+  /* Kitob sahifalari nafas oladi — pastki chekkasi joyida qoladi */
+  .az-logo-jonli .az-logo-kitob {
+    transform-origin: 50% 100%;
+    animation: az-logo-nafas 4.6s ease-in-out infinite;
+  }
+  /* "A" ustidan vaqti-vaqti bilan yorug'lik o'tadi */
+  .az-logo-jonli .az-logo-yaltir {
+    transform-box: view-box;
+    animation: az-logo-yaltir 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  .az-logo-jonli .az-logo-nur {
+    animation: az-logo-nur 4.6s ease-in-out infinite;
+  }
+}
+
+@keyframes az-logo-suz   { 50% { transform: translateY(-5px); } }
+@keyframes az-logo-popuk { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+@keyframes az-logo-nafas { 50% { transform: scaleY(1.07); } }
+@keyframes az-logo-nur   { 50% { transform: scale(1.07); opacity: calc(var(--az-logo-nur-korin) * 0.72); } }
+@keyframes az-logo-yaltir {
+  0%, 62%   { transform: skewX(-14deg) translateX(0); }
+  92%, 100% { transform: skewX(-14deg) translateX(200px); }
+}
+
+/* Harakat bezovta qilsa — hammasi to'xtaydi, ilova ishlayveradi. */
+@media (prefers-reduced-motion: reduce) {
+  .az-pulse::after, .az-bob, .az-yaltir::before, .az-konfetti,
+  .az-nur, .az-halqa, .az-naqsh { animation: none; }
+  /* Yorug'lik yo'li harakatsiz holda "A" ustida oq dog' bo'lib qolmasin */
+  .az-logo-yaltir { display: none; }
+  .az-kirish, .az-yulduz, .az-tush, .az-katta, .az-belgi-kir { opacity: 1; animation: none; }
+  .az-savol, .az-sakra, .az-silkin, .az-suzish, .az-golib, .az-halqa-otil { animation: none; }
+  /* Ayirishda ketgan narsa harakatsiz holda ham YO'Q bo'lishi kerak, aks
+     holda "ketdi" degani ko'rinmay qoladi va savol ma'nosiz bo'lardi. */
+  .az-ketdi { animation: none; opacity: 0; }
+  .az-reveal { opacity: 1; transform: none; transition: none; }
+}

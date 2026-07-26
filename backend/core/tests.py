@@ -1,0 +1,837 @@
+"""
+Aql Zone — API testlari.
+
+    python manage.py test
+
+Diqqat qaratilgan joylar: kirish, progressni BIRLASHTIRISH (eng nozik qism —
+bu yerda xato bo'lsa bolaning natijasi yo'qoladi) va begona kalitlarni rad etish.
+"""
+import hashlib
+import hmac
+import json
+from datetime import timedelta
+from io import StringIO
+import time
+from urllib.parse import urlencode
+
+from django.core.management import call_command
+from django.test import TestCase, override_settings
+from django.utils import timezone
+
+from . import auth as A
+from .models import Identity, LessonResult, Progress, Pupil
+
+BOT = "123456:TEST_TOKEN_FAQAT_SINOV_UCHUN"
+
+
+def init_data(user_id: int = 777, first_name: str = "Ali", *, auth_date: int | None = None) -> str:
+    """Haqiqiy Telegram initData'ni bot tokeni bilan imzolab yasaydi."""
+    juftlar = {
+        "auth_date": str(auth_date if auth_date is not None else int(time.time())),
+        "query_id": "AAH",
+        "user": json.dumps({"id": user_id, "first_name": first_name}, separators=(",", ":")),
+    }
+    dcs = "\n".join(f"{k}={v}" for k, v in sorted(juftlar.items()))
+    secret = hmac.new(b"WebAppData", BOT.encode(), hashlib.sha256).digest()
+    juftlar["hash"] = hmac.new(secret, dcs.encode(), hashlib.sha256).hexdigest()
+    return urlencode(juftlar)
+
+
+def widget_data(
+    user_id: int = 777,
+    first_name: str = "Ali",
+    last_name: str = "Valiyev",
+    *,
+    auth_date: int | None = None,
+) -> dict:
+    """
+    Veb saytdagi Login Widget yuboradigan obyekt, haqiqiy imzo bilan.
+
+    Diqqat: kalit Mini App'nikidan BOSHQACHA yasaladi — sha256(token),
+    HMAC emas. Aynan shu farq alohida funksiyaning sababi.
+    """
+    d = {
+        "id": str(user_id),
+        "first_name": first_name,
+        "last_name": last_name,
+        "username": "aliv",
+        "auth_date": str(auth_date if auth_date is not None else int(time.time())),
+    }
+    dcs = "\n".join(f"{k}={d[k]}" for k in sorted(d))
+    secret = hashlib.sha256(BOT.encode()).digest()
+    d["hash"] = hmac.new(secret, dcs.encode(), hashlib.sha256).hexdigest()
+    return d
+
+
+class ApiTest(TestCase):
+    DEVICE = "dev-0123456789abcdef0123"
+
+    def kir(self, device: str | None = None) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device",
+            {"deviceId": device or self.DEVICE, "platform": "web"},
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 200, r.content)
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    # ------------------------------------------------------------ kirish
+
+    def test_health(self):
+        r = self.client.get("/api/health")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["ok"])
+
+    def test_qurilma_kirishi_bir_xil_bolani_qaytaradi(self):
+        self.kir()
+        self.kir()
+        self.assertEqual(
+            Identity.objects.filter(provider="device", external_id=self.DEVICE).count(), 1
+        )
+
+    def test_qisqa_device_id_rad_etiladi(self):
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": "qisqa"}, content_type="application/json"
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_tokensiz_kirish_taqiqlanadi(self):
+        self.assertEqual(self.client.get("/api/v1/progress").status_code, 401)
+        self.assertEqual(
+            self.client.get("/api/v1/progress", HTTP_AUTHORIZATION="Bearer yolgon").status_code,
+            401,
+        )
+
+    # ---------------------------------------------------------- progress
+
+    def test_progress_saqlanadi_va_qaytariladi(self):
+        t = self.kir()
+        holat = {"azapp_grade1_v1": json.dumps({"stars": 12, "coins": 40, "done": {"0-0": 3}})}
+        r = self.client.put(
+            "/api/v1/progress", {"state": holat}, content_type="application/json", **self.auth(t)
+        )
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(r.json()["stars"], 12)
+
+        r = self.client.get("/api/v1/progress", **self.auth(t))
+        self.assertEqual(r.json()["state"], holat)
+
+    def test_boshqa_kursni_saqlash_avvalgisini_ochirmaydi(self):
+        t = self.kir()
+        bir = json.dumps({"stars": 5, "coins": 0, "done": {}})
+        tort = json.dumps({"stars": 9, "coins": 0, "done": {}})
+        self.client.put("/api/v1/progress", {"state": {"azapp_grade1_v1": bir}},
+                        content_type="application/json", **self.auth(t))
+        self.client.put("/api/v1/progress", {"state": {"azapp_grade4_v1": tort}},
+                        content_type="application/json", **self.auth(t))
+
+        holat = self.client.get("/api/v1/progress", **self.auth(t)).json()
+        self.assertEqual(set(holat["state"]), {"azapp_grade1_v1", "azapp_grade4_v1"})
+        self.assertEqual(holat["stars"], 14)
+
+    def test_begona_kalit_qabul_qilinmaydi(self):
+        t = self.kir()
+        r = self.client.put(
+            "/api/v1/progress",
+            {"state": {"begona_kalit": "x", "azapp_grade1_v1": json.dumps({"stars": 1})}},
+            content_type="application/json", **self.auth(t),
+        )
+        self.assertEqual(r.json()["qabul"], 1)
+        self.assertEqual(list(Progress.objects.get().state), ["azapp_grade1_v1"])
+
+    # ----------------------------------------------------------- natija
+
+    def test_natija_chegaralanadi(self):
+        t = self.kir()
+        r = self.client.post(
+            "/api/v1/results",
+            {"grade": 1, "unit": 0, "lesson": 2, "lessonName": "Sonlar nuri",
+             "asked": 6, "correct": 99, "mistakes": 1, "stars": 7},
+            content_type="application/json", **self.auth(t),
+        )
+        self.assertEqual(r.status_code, 201, r.content)
+        n = LessonResult.objects.get()
+        self.assertEqual(n.correct, 6)   # savoldan ko'p bo'lmaydi
+        self.assertEqual(n.stars, 3)     # 3 dan oshmaydi
+
+    def test_summary_aniqlikni_hisoblaydi(self):
+        t = self.kir()
+        for togri in (6, 3):
+            self.client.post(
+                "/api/v1/results",
+                {"grade": 1, "unit": 0, "lesson": 0, "asked": 6, "correct": togri, "stars": 2},
+                content_type="application/json", **self.auth(t),
+            )
+        j = self.client.get("/api/v1/summary", **self.auth(t)).json()["jami"]
+        self.assertEqual((j["darslar"], j["savollar"], j["togri"], j["aniqlik"]), (2, 12, 9, 75))
+
+
+    # --------------------------------------------------------- Telegram
+
+    @override_settings(BOT_TOKEN=BOT)
+    def test_telegram_kirishi(self):
+        r = self.client.post("/api/v1/auth/telegram", {"initData": init_data()},
+                             content_type="application/json")
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertTrue(r.json()["user"]["telegram"])
+
+    @override_settings(BOT_TOKEN=BOT)
+    def test_buzilgan_imzo_rad_etiladi(self):
+        buzuq = init_data()[:-1] + ("0" if init_data()[-1] != "0" else "1")
+        r = self.client.post("/api/v1/auth/telegram", {"initData": buzuq},
+                             content_type="application/json")
+        self.assertEqual(r.status_code, 401)
+
+    @override_settings(BOT_TOKEN=BOT)
+    def test_eskirgan_initdata_rad_etiladi(self):
+        eski = init_data(auth_date=int(time.time()) - 3 * 24 * 3600)
+        r = self.client.post("/api/v1/auth/telegram", {"initData": eski},
+                             content_type="application/json")
+        self.assertEqual(r.status_code, 401)
+
+    @override_settings(BOT_TOKEN=BOT)
+    def test_boglashda_progress_kamaymaydi(self):
+        """Anonim hisobda ko'proq yulduz bo'lsa, Telegram hisobiga o'sha ko'chadi."""
+        tg_token = self.client.post("/api/v1/auth/telegram", {"initData": init_data()},
+                                    content_type="application/json").json()["token"]
+        self.client.put(
+            "/api/v1/progress",
+            {"state": {"azapp_grade1_v1": json.dumps({"stars": 4})}},
+            content_type="application/json", **self.auth(tg_token),
+        )
+
+        qurilma = self.kir()
+        self.client.put(
+            "/api/v1/progress",
+            {"state": {"azapp_grade1_v1": json.dumps({"stars": 20}),
+                       "azapp_grade2_v1": json.dumps({"stars": 6})}},
+            content_type="application/json", **self.auth(qurilma),
+        )
+        self.client.post("/api/v1/results", {"grade": 1, "asked": 6, "correct": 6, "stars": 3},
+                         content_type="application/json", **self.auth(qurilma))
+
+        r = self.client.post("/api/v1/auth/link", {"initData": init_data()},
+                             content_type="application/json", **self.auth(qurilma))
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(r.json()["holat"], "birlashtirildi")
+
+        # Anonim token endi Telegram hisobiga ishlashi kerak — qayta kirish shart emas.
+        holat = self.client.get("/api/v1/progress", **self.auth(qurilma)).json()
+        self.assertEqual(json.loads(holat["state"]["azapp_grade1_v1"])["stars"], 20)
+        self.assertEqual(holat["stars"], 26)
+        self.assertEqual(Pupil.objects.count(), 1)
+        self.assertEqual(
+            LessonResult.objects.filter(
+                profile__pupil__identities__provider="telegram",
+                profile__pupil__identities__external_id="777",
+            ).count(),
+            1,
+        )
+
+
+class ProfilTest(TestCase):
+    """Bir qurilma — bir necha bola."""
+
+    DEVICE = "dev-profil-0123456789abcd"
+
+    def kir(self) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device",
+            {"deviceId": self.DEVICE, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def test_kirishda_bitta_profil_yaratiladi(self):
+        token = self.kir()
+        r = self.client.get("/api/v1/profiles", **self.auth(token))
+        self.assertEqual(len(r.json()["profillar"]), 1)
+
+    def test_ikki_bolaning_progressi_aralashmaydi(self):
+        token = self.kir()
+        birinchi = self.client.get("/api/v1/profiles", **self.auth(token)).json()["profillar"][0]
+
+        r = self.client.post(
+            "/api/v1/profiles", {"ism": "Zilola"},
+            content_type="application/json", **self.auth(token),
+        )
+        self.assertEqual(r.status_code, 201, r.content)
+        ikkinchi = r.json()["profil"]
+
+        # Har biriga boshqa progress yozamiz
+        for profil, yulduz in ((birinchi, 5), (ikkinchi, 11)):
+            self.client.post(
+                "/api/v1/progress",
+                {
+                    "profileId": profil["id"],
+                    "state": {"azapp_grade1_v1": json.dumps({"stars": yulduz})},
+                },
+                content_type="application/json", **self.auth(token),
+            )
+
+        for profil, yulduz in ((birinchi, 5), (ikkinchi, 11)):
+            holat = self.client.get(
+                f"/api/v1/progress?profileId={profil['id']}", **self.auth(token)
+            ).json()
+            self.assertEqual(holat["stars"], yulduz)
+
+    def test_begona_profilga_yozib_bolmaydi(self):
+        # Boshqa hisobning profili — id to'g'ri bo'lsa ham tegib bo'lmasin.
+        boshqa = Pupil.objects.create()
+        begona = boshqa.asosiy_profil()
+
+        token = self.kir()
+        self.client.post(
+            "/api/v1/progress",
+            {"profileId": begona.pk, "state": {"azapp_grade1_v1": json.dumps({"stars": 9})}},
+            content_type="application/json", **self.auth(token),
+        )
+        # Begona profil o'zgarmagan bo'lishi kerak
+        self.assertFalse(Progress.objects.filter(profile=begona).exists())
+
+    def test_oxirgi_profilni_ochirib_bolmaydi(self):
+        token = self.kir()
+        pid = self.client.get("/api/v1/profiles", **self.auth(token)).json()["profillar"][0]["id"]
+        r = self.client.delete(f"/api/v1/profiles/{pid}", **self.auth(token))
+        self.assertEqual(r.status_code, 400)
+
+    def test_profilsiz_soruv_ham_ishlaydi(self):
+        """Eski mijozlar profileId yubormaydi — ular buzilmasligi kerak."""
+        token = self.kir()
+        r = self.client.post(
+            "/api/v1/progress",
+            {"state": {"azapp_grade1_v1": json.dumps({"stars": 3})}},
+            content_type="application/json", **self.auth(token),
+        )
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(self.client.get("/api/v1/progress", **self.auth(token)).json()["stars"], 3)
+
+
+class EslatmaTest(TestCase):
+    """
+    Eslatma buyrug'i kimni tanlashi.
+
+    Bu mantiq kuniga bir marta, jimgina ishlaydi — xatosi darhol
+    ko'rinmaydi, shuning uchun test bilan qotirilgan.
+    """
+
+    def kim(self) -> str:
+        chiqish = StringIO()
+        call_command("eslatma", "--sinov", stdout=chiqish)
+        return chiqish.getvalue()
+
+    def hisob(self, tg_id: str, ism: str):
+        pupil = Pupil.objects.create(first_name=ism)
+        Identity.objects.create(pupil=pupil, provider="telegram", external_id=tg_id)
+        return pupil, pupil.asosiy_profil()
+
+    def natija(self, profil, kunlar_oldin: int):
+        r = LessonResult.objects.create(profile=profil, asked=6, correct=6, stars=3)
+        # `created_at` da default bor, shuning uchun yaratgandan keyin suramiz.
+        LessonResult.objects.filter(pk=r.pk).update(
+            created_at=timezone.now() - timedelta(days=kunlar_oldin)
+        )
+
+    def test_bugun_oynamagan_faol_bola_tanlanadi(self):
+        _, profil = self.hisob("111", "Ali")
+        self.natija(profil, 3)
+        self.assertIn("Ali", self.kim())
+
+    def test_bugun_oynagan_bolaga_yozilmaydi(self):
+        _, profil = self.hisob("222", "Zilola")
+        self.natija(profil, 0)
+        self.assertNotIn("Zilola", self.kim())
+
+    def test_tashlab_ketganga_yozilmaydi(self):
+        """20 kundan beri yo'q — bu spam bo'lardi."""
+        _, profil = self.hisob("333", "Kamol")
+        self.natija(profil, 20)
+        self.assertNotIn("Kamol", self.kim())
+
+    def test_hech_qachon_oynamaganga_yozilmaydi(self):
+        self.hisob("444", "Yangi")
+        self.assertNotIn("Yangi", self.kim())
+
+    def test_telegramsiz_hisob_chetlab_otiladi(self):
+        pupil = Pupil.objects.create(first_name="Anonim")
+        Identity.objects.create(pupil=pupil, provider="device", external_id="dev-x" * 5)
+        self.natija(pupil.asosiy_profil(), 2)
+        self.assertNotIn("Anonim", self.kim())
+
+
+class SpaTest(TestCase):
+    def test_notogri_api_yol_404(self):
+        # /api/ ostidagi noma'lum yo'l SPA'ga tushib ketmasligi kerak.
+        self.assertEqual(self.client.get("/api/v1/yoq").status_code, 404)
+
+
+class BotTest(TestCase):
+    """
+    Bot mantiqi — Telegram'ga chiqmasdan.
+
+    `yangilikni_qayta_ishla()` tarmoqdan mustaqil yozilgan, shuning uchun
+    faqat yuborish funksiyalari almashtiriladi. Shu sabab bu testlar
+    internetsiz ham, BotFather tokenisiz ham ishlaydi.
+    """
+
+    def setUp(self):
+        from core.management.commands import bot
+
+        self.bot = bot
+        self.yuborilgan: list[dict] = []
+        self._eski = bot.api
+        bot.api = lambda usul, **p: (
+            self.yuborilgan.append({"usul": usul, **p}) or {"ok": True}
+        )
+
+    def tearDown(self):
+        self.bot.api = self._eski
+
+    # --- yordamchilar ---
+
+    def xabar(self, matn: str, tg_id: int = 555):
+        return {
+            "update_id": 1,
+            "message": {
+                "chat": {"id": tg_id},
+                "from": {"id": tg_id, "first_name": "Olim", "last_name": "Salimov"},
+                "text": matn,
+            },
+        }
+
+    def kontakt(self, raqam: str, tg_id: int = 555, egasi: int | None = None):
+        return {
+            "update_id": 2,
+            "message": {
+                "chat": {"id": tg_id},
+                "from": {"id": tg_id, "first_name": "Olim", "last_name": "Salimov"},
+                "contact": {
+                    "phone_number": raqam,
+                    "user_id": tg_id if egasi is None else egasi,
+                },
+            },
+        }
+
+    def matnlar(self) -> str:
+        return " | ".join(str(x.get("text", "")) for x in self.yuborilgan)
+
+    # --- testlar ---
+
+    @override_settings(SAYT_URL="https://aql-zone.uz")
+    def test_start_kirish_havolasini_yuboradi(self):
+        self.bot.yangilikni_qayta_ishla(self.xabar("/start"))
+        tugma = self.yuborilgan[0]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertIn("Saytga kirish", tugma["text"])
+        self.assertTrue(tugma["url"].startswith("https://aql-zone.uz/kirish/"))
+        self.assertIn("Aql Zone", self.matnlar())
+
+        # Havoladagi kod HAQIQATDA ishlashi kerak — bazada uning xeshi
+        # turibdi. Bu tekshiruvsiz bot chiroyli havola yuborib, sayt esa
+        # "havola ishlamadi" deb turaverardi.
+        kod = tugma["url"].rsplit("/", 1)[1]
+        pupil = A.kod_bilan_kir(kod)
+        self.assertIsNotNone(pupil)
+        self.assertEqual(pupil.kirish(Identity.TELEGRAM), "555")
+
+    @override_settings(SAYT_URL="https://aql-zone.uz")
+    def test_start_eski_havolani_bekor_qiladi(self):
+        """Ikkinchi /start — birinchi havola endi ishlamasligi kerak."""
+        self.bot.yangilikni_qayta_ishla(self.xabar("/start"))
+        eski = self.yuborilgan[0]["reply_markup"]["inline_keyboard"][0][0]["url"]
+        self.yuborilgan.clear()
+        self.bot.yangilikni_qayta_ishla(self.xabar("/start"))
+
+        self.assertIsNone(A.kod_bilan_kir(eski.rsplit("/", 1)[1]))
+
+    @override_settings(SAYT_URL="")
+    def test_start_sayt_manzilisiz_raqam_soraydi(self):
+        """SAYT_URL yo'q — havola yasab bo'lmaydi, jim turmaymiz."""
+        self.bot.yangilikni_qayta_ishla(self.xabar("/start"))
+        tugma = self.yuborilgan[0]["reply_markup"]["keyboard"][0][0]
+        self.assertTrue(tugma["request_contact"])
+        self.assertIn("SAYT_URL", self.matnlar())
+
+    def test_raqam_buyrogi_kontakt_soraydi(self):
+        self.bot.yangilikni_qayta_ishla(self.xabar("/raqam"))
+        tugma = self.yuborilgan[0]["reply_markup"]["keyboard"][0][0]
+        self.assertTrue(tugma["request_contact"])
+
+    def test_kontakt_hisob_yasaydi_va_raqamni_saqlaydi(self):
+        self.bot.yangilikni_qayta_ishla(self.kontakt("+998 90 123 45 67"))
+        kirish = Identity.objects.get(provider="phone")
+        # Bo'shliqlar tozalanadi, aks holda bir odam ikki xil yozuvda
+        # ikki hisob ochib olardi.
+        self.assertEqual(kirish.external_id, "+998901234567")
+        self.assertEqual(kirish.pupil.first_name, "Olim")
+        self.assertEqual(kirish.pupil.last_name, "Salimov")
+
+    def test_raqam_turli_yozuvda_bir_xil_boladi(self):
+        self.bot.yangilikni_qayta_ishla(self.kontakt("998901234567"))
+        self.bot.yangilikni_qayta_ishla(self.kontakt("+998901234567"))
+        self.assertEqual(Identity.objects.filter(provider="phone").count(), 1)
+
+    def test_begona_kontakt_rad_etiladi(self):
+        """Boshqa odamning vizitkasini yuborib bo'lmaydi."""
+        self.bot.yangilikni_qayta_ishla(self.kontakt("+998901112233", egasi=999))
+        self.assertFalse(Identity.objects.filter(provider="phone").exists())
+        self.assertIn("o'z raqamingizni", self.matnlar())
+
+    def test_qolda_kiritilgan_ism_bot_tomonidan_ozgarmaydi(self):
+        """Foydalanuvchi ismini o'zi yozgan bo'lsa, bot uni qayta yozmaydi."""
+        self.bot.yangilikni_qayta_ishla(self.kontakt("+998901234567"))
+        pupil = Identity.objects.get(provider="phone").pupil
+        pupil.first_name, pupil.last_name = "Shahnoza", "Karimova"
+        pupil.ism_qolda = True
+        pupil.save()
+
+        self.bot.yangilikni_qayta_ishla(self.kontakt("+998901234567"))
+        pupil.refresh_from_db()
+        self.assertEqual(pupil.first_name, "Shahnoza")
+        self.assertEqual(pupil.last_name, "Karimova")
+
+    def test_raqam_almashsa_eskisi_qoladi_yangisi_ulanadi(self):
+        self.bot.yangilikni_qayta_ishla(self.kontakt("+998901111111"))
+        self.bot.yangilikni_qayta_ishla(self.kontakt("+998902222222"))
+        raqamlar = list(
+            Identity.objects.filter(provider="phone").values_list("external_id", flat=True)
+        )
+        self.assertEqual(raqamlar, ["+998902222222"])
+        self.assertEqual(Pupil.objects.count(), 1)
+
+    def test_notanish_xabar_yonaltiradi(self):
+        self.bot.yangilikni_qayta_ishla(self.xabar("salom"))
+        self.assertIn("/start", self.matnlar())
+
+
+@override_settings(BOT_TOKEN=BOT)
+class IsmFamiliyaTest(TestCase):
+    """Ism-familiyani tahrirlash va uning Telegram bilan to'qnashuvi."""
+
+    def kir(self, user_id: int = 777, ism: str = "Ali") -> str:
+        r = self.client.post(
+            "/api/v1/auth/telegram",
+            {"initData": init_data(user_id, ism)},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def patch(self, token: str, **body):
+        return self.client.patch(
+            "/api/v1/me", body,
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+    def test_ism_va_familiya_saqlanadi(self):
+        t = self.kir()
+        r = self.patch(t, ism="Jasur", familiya="Toshmatov")
+        self.assertEqual(r.status_code, 200)
+        u = r.json()["user"]
+        self.assertEqual(u["ism"], "Jasur")
+        self.assertEqual(u["familiya"], "Toshmatov")
+        self.assertEqual(u["toliqIsm"], "Jasur Toshmatov")
+
+    def test_faqat_familiyani_ozgartirsa_ism_qoladi(self):
+        t = self.kir(ism="Ali")
+        self.patch(t, ism="Alisher", familiya="Navoiy")
+        r = self.patch(t, familiya="Nizomiy")
+        u = r.json()["user"]
+        self.assertEqual(u["ism"], "Alisher")       # tegilmagan
+        self.assertEqual(u["familiya"], "Nizomiy")
+
+    def test_qolda_yozilgan_ism_qayta_kirganda_ochmaydi(self):
+        """
+        Eng nozik joy: Telegram'ga qayta kirish ismni o'sha yerdan
+        yangilaydi. Foydalanuvchi o'zi yozgan ism shunda o'chib ketmasligi
+        kerak.
+        """
+        t = self.kir(777, "Ali")
+        self.patch(t, ism="Alisher", familiya="Navoiy")
+
+        t2 = self.kir(777, "Ali")                   # Telegram'da hamon "Ali"
+        u = self.client.get(
+            "/api/v1/me", HTTP_AUTHORIZATION=f"Bearer {t2}"
+        ).json()["user"]
+        self.assertEqual(u["ism"], "Alisher")
+        self.assertEqual(u["familiya"], "Navoiy")
+
+    def test_tegilmagan_ism_telegramdan_yangilanadi(self):
+        """Qo'lda yozilmagan bo'lsa — Telegram manba bo'lib qolaveradi."""
+        self.kir(888, "Eski")
+        t = self.kir(888, "Yangi")
+        u = self.client.get(
+            "/api/v1/me", HTTP_AUTHORIZATION=f"Bearer {t}"
+        ).json()["user"]
+        self.assertEqual(u["ism"], "Yangi")
+
+    def test_bosh_sorov_rad_etiladi(self):
+        t = self.kir()
+        self.assertEqual(self.patch(t).status_code, 400)
+
+    def test_tokensiz_tahrirlab_bolmaydi(self):
+        r = self.client.patch(
+            "/api/v1/me", {"ism": "Kim"}, content_type="application/json"
+        )
+        self.assertEqual(r.status_code, 401)
+
+    def test_ismda_raqam_rad_etiladi(self):
+        """Reyting hammaga ko'rinadi — "asd123" o'sha yerda turmasligi kerak."""
+        t = self.kir()
+        self.assertEqual(self.patch(t, ism="asd123").status_code, 400)
+        self.assertEqual(self.patch(t, familiya="!!!").status_code, 400)
+        self.assertEqual(self.patch(t, ism="A").status_code, 400)
+
+    def test_apostrofli_ism_qabul_qilinadi(self):
+        """O'zbekcha ism uch xil apostrof bilan yozilishi mumkin."""
+        t = self.kir()
+        for ism in ("G'ulom", "G’ulom", "Gʻulom", "Abdulla-Qodiriy"):
+            self.assertEqual(self.patch(t, ism=ism).status_code, 200, ism)
+
+    def test_telefon_me_da_korinadi(self):
+        t = self.kir(999, "Sardor")
+        pupil = Identity.objects.get(provider="telegram", external_id="999").pupil
+        Identity.objects.create(pupil=pupil, provider="phone", external_id="+998901234567")
+        u = self.client.get(
+            "/api/v1/me", HTTP_AUTHORIZATION=f"Bearer {t}"
+        ).json()["user"]
+        self.assertEqual(u["telefon"], "+998901234567")
+        self.assertIn("phone", u["kirishUsullari"])
+
+
+@override_settings(BOT_TOKEN=BOT, BOT_USERNAME="aqlzone_bot")
+class WidgetKirishTest(TestCase):
+    """
+    Veb saytdagi Telegram tugmasi (Login Widget).
+
+    Mini App'dan butunlay boshqa imzo sxemasi ishlatiladi, shuning uchun
+    u alohida sinaladi: Mini App testlari o'tayotgani bu yerda hech
+    narsani kafolatlamaydi.
+    """
+
+    def post(self, body, token: str | None = None):
+        qo = {"HTTP_AUTHORIZATION": f"Bearer {token}"} if token else {}
+        return self.client.post(
+            "/api/v1/auth/telegram", body, content_type="application/json", **qo
+        )
+
+    def test_widget_orqali_kirish(self):
+        r = self.post({"tg": widget_data(), "platform": "web"})
+        self.assertEqual(r.status_code, 200, r.content)
+        u = r.json()["user"]
+        self.assertTrue(u["telegram"])
+        self.assertEqual(u["toliqIsm"], "Ali Valiyev")
+        # Telegram ism ham, familiya ham bergan — qayta so'rashning hojati yo'q.
+        self.assertTrue(u["royxatdan"])
+
+    def test_buzilgan_imzo_rad_etiladi(self):
+        d = widget_data()
+        d["first_name"] = "Boshqa"          # imzo o'sha-o'sha
+        self.assertEqual(self.post({"tg": d}).status_code, 401)
+
+    def test_mini_app_imzosi_widgetda_ishlamaydi(self):
+        """
+        Ikki sxema chalkashib ketmasligi kerak.
+
+        Mini App kaliti bilan imzolangan ma'lumot widget yo'lidan o'tsa,
+        u rad etilishi shart — aks holda sxemalardan biri bo'sh joyga
+        aylanardi.
+        """
+        d = widget_data()
+        dcs = "\n".join(f"{k}={d[k]}" for k in sorted(d) if k != "hash")
+        secret = hmac.new(b"WebAppData", BOT.encode(), hashlib.sha256).digest()
+        d["hash"] = hmac.new(secret, dcs.encode(), hashlib.sha256).hexdigest()
+        self.assertEqual(self.post({"tg": d}).status_code, 401)
+
+    def test_eskirgan_malumot_rad_etiladi(self):
+        eski = widget_data(auth_date=int(time.time()) - 3 * 24 * 3600)
+        self.assertEqual(self.post({"tg": eski}).status_code, 401)
+
+    def test_boshsiz_sorov_400(self):
+        self.assertEqual(self.post({"platform": "web"}).status_code, 400)
+
+    def test_widget_bilan_anonim_hisob_boglanadi(self):
+        """Veb'da bola avval anonim o'ynaydi, keyin Telegram'ni bosadi."""
+        anonim = self.client.post(
+            "/api/v1/auth/device",
+            {"deviceId": "dev-widget-0123456789ab", "platform": "web"},
+            content_type="application/json",
+        ).json()["token"]
+        self.client.put(
+            "/api/v1/progress",
+            {"state": {"azapp_grade1_v1": json.dumps({"stars": 15})}},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {anonim}",
+        )
+
+        r = self.client.post(
+            "/api/v1/auth/link", {"tg": widget_data()},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {anonim}",
+        )
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(r.json()["user"]["toliqIsm"], "Ali Valiyev")
+
+        # Eski token ishlashda davom etadi va yulduzlar joyida.
+        holat = self.client.get(
+            "/api/v1/progress", HTTP_AUTHORIZATION=f"Bearer {anonim}"
+        ).json()
+        self.assertEqual(holat["stars"], 15)
+
+    def test_health_bot_nomini_beradi(self):
+        """Mijoz tugmani ko'rsatish uchun bot nomini shu yerdan oladi."""
+        self.assertEqual(self.client.get("/api/health").json()["botUsername"], "aqlzone_bot")
+
+    @override_settings(BOT_TOKEN="")
+    def test_token_yoqda_bot_nomi_berilmaydi(self):
+        """Token bo'lmasa tugma ishlamaydi — nomni ham bermaymiz."""
+        self.assertEqual(self.client.get("/api/health").json()["botUsername"], "")
+
+
+class RoyxatTest(TestCase):
+    """Majburiy ro'yxatdan o'tish: ism ham, familiya ham."""
+
+    def kir(self, device: str = "dev-royxat-0123456789ab") -> str:
+        return self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        ).json()["token"]
+
+    def patch(self, token, **body):
+        return self.client.patch(
+            "/api/v1/me", body, content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+    def test_yangi_hisob_royxatdan_otmagan(self):
+        t = self.kir()
+        u = self.client.get("/api/v1/me", HTTP_AUTHORIZATION=f"Bearer {t}").json()["user"]
+        self.assertFalse(u["royxatdan"])
+
+    def test_faqat_ism_yetarli_emas(self):
+        t = self.kir()
+        self.assertFalse(self.patch(t, ism="Ali").json()["user"]["royxatdan"])
+
+    def test_ism_va_familiya_royxatni_yopadi(self):
+        t = self.kir()
+        u = self.patch(t, ism="Ali", familiya="Valiyev").json()["user"]
+        self.assertTrue(u["royxatdan"])
+
+    def test_familiyani_ochirish_royxatni_qaytarmaydi(self):
+        """
+        Bir marta o'tilgan ro'yxat qaytarilmaydi.
+
+        Aks holda foydalanuvchi familiyasini tozalab, reytingdan chiqib
+        ketardi-yu, ilova esa uni yana ro'yxat oynasiga tiqib qo'yardi —
+        chiqib bo'lmaydigan halqa.
+        """
+        t = self.kir()
+        self.patch(t, ism="Ali", familiya="Valiyev")
+        u = self.patch(t, familiya="").json()["user"]
+        self.assertTrue(u["royxatdan"])
+
+
+class ReytingTest(TestCase):
+    """Reyting: jami va haftalik, o'z o'rning bilan."""
+
+    def bola(self, device: str, ism: str, familiya: str) -> str:
+        t = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        ).json()["token"]
+        self.client.patch(
+            "/api/v1/me", {"ism": ism, "familiya": familiya},
+            content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {t}",
+        )
+        return t
+
+    def yulduz(self, token: str, n: int):
+        self.client.put(
+            "/api/v1/progress",
+            {"state": {"azapp_grade1_v1": json.dumps({"stars": n})}},
+            content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+    def dars(self, token: str, stars: int, kunlar_oldin: int = 0):
+        self.client.post(
+            "/api/v1/results",
+            {"grade": 1, "asked": 6, "correct": 6, "stars": stars},
+            content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        if kunlar_oldin:
+            r = LessonResult.objects.order_by("-pk").first()
+            LessonResult.objects.filter(pk=r.pk).update(
+                created_at=timezone.now() - timedelta(days=kunlar_oldin)
+            )
+
+    def reyting(self, token: str, davr: str = "jami") -> dict:
+        return self.client.get(
+            f"/api/v1/leaderboard?davr={davr}", HTTP_AUTHORIZATION=f"Bearer {token}"
+        ).json()
+
+    def setUp(self):
+        self.a = self.bola("dev-reyting-a0123456789", "Ali", "Valiyev")
+        self.b = self.bola("dev-reyting-b0123456789", "Zilola", "Karimova")
+        self.d = self.bola("dev-reyting-d0123456789", "Kamol", "Rustamov")
+        for t, n in ((self.a, 3), (self.b, 11), (self.d, 7)):
+            self.yulduz(t, n)
+
+    def test_yulduz_boyicha_saralanadi(self):
+        top = self.reyting(self.a)["top"]
+        self.assertEqual([x["yulduz"] for x in top], [11, 7, 3])
+
+    def test_ism_familiya_toliq_keladi(self):
+        birinchi = self.reyting(self.a)["top"][0]
+        self.assertEqual(birinchi["ism"], "Zilola")
+        self.assertEqual(birinchi["familiya"], "Karimova")
+        self.assertEqual(birinchi["toliqIsm"], "Zilola Karimova")
+
+    def test_ozini_ajratib_korsatadi(self):
+        top = self.reyting(self.a)["top"]
+        self.assertEqual([x["men"] for x in top], [False, False, True])
+
+    def test_oz_orning_alohida_keladi(self):
+        men = self.reyting(self.a)["men"]
+        self.assertEqual((men["orin"], men["yulduz"], men["toliqIsm"]), (3, 3, "Ali Valiyev"))
+
+    def test_royxatdan_otmagan_korinmaydi(self):
+        yangi = self.client.post(
+            "/api/v1/auth/device", {"deviceId": "dev-ismsiz-0123456789ab"},
+            content_type="application/json",
+        ).json()["token"]
+        self.yulduz(yangi, 99)                       # eng ko'p yulduz
+        top = self.reyting(self.a)["top"]
+        self.assertNotIn(99, [x["yulduz"] for x in top])
+        # O'zi esa jadvalda o'rinsiz ko'rinadi — ro'yxatdan o'tishi kerak.
+        self.assertIsNone(self.reyting(yangi)["men"])
+
+    def test_darslar_soni_keladi(self):
+        self.dars(self.a, 3)
+        self.dars(self.a, 2)
+        men = self.reyting(self.a)["men"]
+        self.assertEqual(men["darslar"], 2)
+
+    def test_hafta_faqat_shu_haftanikini_sanaydi(self):
+        # 20 kun oldingi dars haftalik jadvalga kirmasligi kerak.
+        self.dars(self.b, 3, kunlar_oldin=20)
+        self.dars(self.a, 2)
+        top = self.reyting(self.a, "hafta")["top"]
+        self.assertEqual([(x["toliqIsm"], x["yulduz"]) for x in top], [("Ali Valiyev", 2)])
+
+    def test_hafta_yulduzsiz_bolani_korsatmaydi(self):
+        j = self.reyting(self.a, "hafta")
+        self.assertEqual(j["top"], [])
+        self.assertIsNone(j["men"])
+
+    def test_top_tashqarisidagi_oz_orni_ham_keladi(self):
+        j = self.client.get(
+            "/api/v1/leaderboard?limit=1", HTTP_AUTHORIZATION=f"Bearer {self.a}"
+        ).json()
+        self.assertEqual(len(j["top"]), 1)
+        self.assertEqual(j["men"]["orin"], 3)        # ro'yxatda yo'q, o'rni bor
+        self.assertEqual(j["qatnashchilar"], 3)

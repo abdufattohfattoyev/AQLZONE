@@ -1,0 +1,270 @@
+import { useMemo, useState } from "react";
+import type { CSSProperties } from "react";
+import { Icon } from "../lib/icons";
+import { Logo } from "../components/Logo";
+import { Reveal } from "../components/Reveal";
+import { RoadMap } from "../components/RoadMap";
+import { UNIT_COLORS, lessonId } from "../lib/types";
+import type { Progress, Unit } from "../lib/types";
+import type { Kunlik } from "../lib/progress";
+import { bugungiSoni } from "../lib/takrorlash";
+import { nishonlar, olingan } from "../lib/nishon";
+import { buyumTop } from "../lib/dokon";
+
+interface Props {
+  /** Kurs slug'i — xatolar daftari shu kurs bo'yicha filtrlanadi. */
+  slug: string;
+  title: string;
+  /** Sarlavha ostidagi bir qatorlik izoh — "Darslik bo'yicha to'liq kurs". */
+  izoh: string;
+  units: Unit[];
+  progress: Progress;
+  /** Bugungi maqsad holati. */
+  kunlik: Kunlik;
+  /** Bir kunda nechta savol yechish kerak. */
+  maqsad: number;
+  onStart: (ui: number, li: number) => void;
+  onBack: () => void;
+  /** Xatolar daftaridagi takrorlash darsini ochadi. */
+  onDaftar: () => void;
+  onDokon: () => void;
+  onNishon: () => void;
+  onOtaOna: () => void;
+}
+
+function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`flex items-center gap-1.5 rounded-full bg-karta px-3.5 py-1.5 text-[15px] shadow-clay-sm ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+/** Bo'lim taraqqiyoti — halqa ko'rinishida. */
+function Ring({ done, total, color }: { done: number; total: number; color: string }) {
+  const r = 17;
+  const C = 2 * Math.PI * r;
+  const full = done === total;
+  return (
+    <div className="relative grid size-[42px] shrink-0 place-items-center">
+      <svg className="absolute inset-0 -rotate-90" viewBox="0 0 42 42">
+        <circle cx="21" cy="21" r={r} fill="none" stroke="var(--color-track)" strokeWidth="5" />
+        <circle
+          cx="21" cy="21" r={r} fill="none"
+          stroke={full ? "var(--color-brand-green)" : color}
+          strokeWidth="5" strokeLinecap="round"
+          strokeDasharray={C} strokeDashoffset={C * (1 - done / total)}
+        />
+      </svg>
+      <span className="relative text-[11px] leading-none text-ink-soft">
+        {full ? <Icon name="check" size={16} className="text-brand-green-d" /> : `${done}/${total}`}
+      </span>
+    </div>
+  );
+}
+
+export function Home({
+  slug, title, izoh, units, progress, kunlik, maqsad,
+  onStart, onBack, onDaftar, onDokon, onNishon, onOtaOna,
+}: Props) {
+  const totals = useMemo(() => {
+    const total = units.reduce((s, U) => s + U.lessons.length, 0);
+    const done = units.reduce(
+      (s, U, ui) => s + U.lessons.filter((_, li) => progress.done[lessonId(ui, li)]).length, 0);
+    return { total, done };
+  }, [units, progress]);
+
+  // joriy dars qaysi bobda — o'sha bob ochiq turadi
+  const currentUnit = useMemo(() => {
+    for (let ui = 0; ui < units.length; ui++)
+      for (let li = 0; li < units[ui].lessons.length; li++)
+        if (!progress.done[lessonId(ui, li)]) return ui;
+    return 0;
+  }, [units, progress]);
+
+  const [open, setOpen] = useState<number>(currentUnit);
+
+  // Daftar `localStorage` da turadi, React holatida emas. Uni bir marta
+  // o'qish yetarli: darsdan qaytilganda marshrut almashadi va bu ekran
+  // butunlay qaytadan yasaladi, ya'ni hisob o'z-o'zidan yangilanadi.
+  const daftarSoni = useMemo(() => bugungiSoni(slug), [slug]);
+
+  const nishon = useMemo(
+    () => nishonlar({ progress, kunlik, units, savollar: progress.savollar ?? 0 }),
+    [progress, kunlik, units]
+  );
+  const yangiNishon = olingan(nishon);
+
+  const kiygan = progress.kiygan ? buyumTop(progress.kiygan) : undefined;
+
+  return (
+    /* Kenglik ekranga qarab o'sadi, ammo cheklangan: dars yo'li ilon izi
+       bo'lib buriladi va juda keng ustunda uning burilishlari yassilanib,
+       "yo'l" o'rniga tarqoq nuqtalarga aylanadi. */
+    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16 sm:max-w-[560px] sm:px-6">
+      {/* ---- yuqori panel ---- */}
+      <div className="flex items-center gap-2">
+        <Pill><Icon name="star" size={19} className="text-brand-gold" />{progress.stars}</Pill>
+        <Pill><Icon name="coin" size={19} className="text-brand-orange-d" />{progress.coins}</Pill>
+        <button type="button" onClick={onDokon} title="Tulkini bezash"
+          className="grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
+          <Icon name="palette" size={20} />
+        </button>
+        <button type="button" onClick={onNishon} title="Nishonlar"
+          className="relative grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
+          <Icon name="trophy" size={20} />
+          {yangiNishon > 0 && (
+            /* Yangi nishon qo'lga kiritilgan bo'lsa nuqta chiqadi — bola
+               uni ochib ko'rishga undaladi. */
+            <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
+          )}
+        </button>
+        <button type="button" onClick={onOtaOna} title="Ota-ona paneli"
+          className="grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
+          <Icon name="parent" size={20} />
+        </button>
+        <button type="button" onClick={onBack} title="Kurslar ro'yxati"
+          className="ml-auto grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
+          <Icon name="home" size={20} />
+        </button>
+      </div>
+
+      {/* ---- sarlavha ---- */}
+      <div className="az-kirish mt-5 flex flex-col items-center text-center">
+        <span className="relative">
+          <Logo size={52} className="drop-shadow-[0_6px_12px_rgb(58_46_34/0.22)]" />
+          {kiygan && (
+            <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[22px] leading-none">
+              {kiygan.belgi}
+            </span>
+          )}
+        </span>
+        <h1 className="mt-2 text-[26px] leading-tight">{title}</h1>
+        <div className="mt-0.5 text-[13px] text-ink-soft">
+          {izoh} · {units.length} bo'lim
+        </div>
+      </div>
+
+      {/* ---- umumiy taraqqiyot ---- */}
+      <div className="mt-4">
+        <div className="mb-1.5 text-center text-[13px] text-ink-soft">
+          {totals.done} / {totals.total} dars tugallandi
+        </div>
+        <div className="h-3 overflow-hidden rounded-full bg-karta/55">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-brand-orange to-brand-gold transition-[width] duration-500"
+            style={{ width: `${Math.max(2, (totals.done / totals.total) * 100)}%` }}
+          />
+        </div>
+      </div>
+
+      {/* ---- kunlik maqsad ---- */}
+      <KunlikMaqsad kunlik={kunlik} maqsad={maqsad} />
+
+      {/* ---- xatolar daftari ----
+          Faqat takrorlash vaqti kelgan savol bo'lsa ko'rinadi. Doim
+          tursa, bola uni fon deb qabul qilib, e'tibor bermay qo'yardi. */}
+      {daftarSoni > 0 && (
+        <button type="button" onClick={onDaftar}
+          className="tugma-3d mt-3 flex w-full items-center gap-3 rounded-clay bg-karta p-4
+                     text-left shadow-clay-sm">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand-red/15 text-brand-red">
+            <Icon name="repeat" size={22} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-[15px] leading-tight">Xatolar daftari</span>
+            <span className="block text-[12.5px] text-ink-soft">
+              {daftarSoni} ta savol takrorlashni kutyapti
+            </span>
+          </span>
+          <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+        </button>
+      )}
+
+      {/* ---- boblar va yo'l ---- */}
+      <div className="mt-5 space-y-3">
+        {units.map((U, ui) => {
+          const done = U.lessons.filter((_, li) => progress.done[lessonId(ui, li)]).length;
+          const color = UNIT_COLORS[U.color];
+          const isOpen = open === ui;
+          return (
+            <Reveal key={ui} kech={Math.min(ui, 4) * 60}>
+            <section className="az-shisha overflow-hidden rounded-clay"
+              style={{ "--az-kech": `${80 + ui * 45}ms` } as CSSProperties}>
+              <button
+                type="button"
+                onClick={() => setOpen(isOpen ? -1 : ui)}
+                /* `az-qavariq` — yuqori chekkasida yorug'lik, pastida ichki
+                   soya. Manzara ustida tekis karta "yopishtirilgan qog'oz"dek
+                   ko'rinardi; bu ikkisi uni yuzadan ko'targandek qiladi. */
+                className="az-qavariq flex w-full items-center gap-3 bg-karta p-3.5 text-left shadow-clay-sm clay-press"
+              >
+                <span className={`grid size-12 shrink-0 place-items-center rounded-[15px] text-white ${color.bg}`}>
+                  <Icon name={U.ic} size={26} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-[15px] leading-tight">{U.u}</span>
+                  <span className="block text-[12px] text-ink-dim">
+                    {U.lessons.length} dars{done ? ` · ${done} tugadi` : ""}
+                  </span>
+                </span>
+                <Ring done={done} total={U.lessons.length} color={color.road} />
+                <Icon name="chevron" size={18}
+                  className={`shrink-0 text-ink-dim transition-transform ${isOpen ? "rotate-90" : ""}`} />
+              </button>
+
+              {isOpen && (
+                <div className="px-3 pt-3 pb-4">
+                  <RoadMap units={units} unitIndex={ui} progress={progress} onStart={onStart} />
+                </div>
+              )}
+            </section>
+            </Reveal>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Kunlik maqsad.
+ *
+ * Ikki ko'rsatkich bor va ular boshqa-boshqa narsani aytadi:
+ *   savollar — BUGUN nechta savol yechilgani (yarim tunda noldan boshlanadi);
+ *   kunlar   — KETMA-KET necha kun mashq qilingani (zanjir).
+ * Zanjir bolani har kuni qaytishga undaydi, shuning uchun u maqsad
+ * bajarilgandan keyin ham ko'rinib turadi.
+ */
+function KunlikMaqsad({ kunlik, maqsad }: { kunlik: Kunlik; maqsad: number }) {
+  const foiz = Math.min(100, Math.round((kunlik.savollar / maqsad) * 100));
+  const bajarildi = kunlik.savollar >= maqsad;
+
+  return (
+    <div className="mt-4 flex items-center gap-3 rounded-clay bg-[linear-gradient(135deg,var(--az-maqsad-1),var(--az-maqsad-2))] p-4 shadow-clay-sm">
+      <Icon name={bajarildi ? "trophy" : "flame"} size={26}
+        className={`shrink-0 ${bajarildi ? "text-brand-gold" : "text-[#e2571f]"}`} />
+
+      <div className="min-w-0 flex-1">
+        <div className="font-display text-[15px]">
+          {bajarildi ? "Bugungi maqsad bajarildi!" : "Kunlik maqsad"}
+        </div>
+        <div className="mt-1 flex items-center gap-2">
+          <span className="h-2 flex-1 overflow-hidden rounded-full bg-black/15">
+            <span className="block h-full rounded-full bg-gradient-to-r from-brand-orange to-brand-gold
+                             transition-[width] duration-500"
+              style={{ width: `${foiz}%` }} />
+          </span>
+          <span className="text-[12px] whitespace-nowrap text-ink-soft">
+            {Math.min(kunlik.savollar, maqsad)}/{maqsad}
+          </span>
+        </div>
+      </div>
+
+      <div className="shrink-0 rounded-xl bg-karta/70 px-3 py-1.5 text-center">
+        <div className="font-display text-[15px] leading-none">{kunlik.kunlar}</div>
+        <div className="text-[10px] text-ink-dim">kun</div>
+      </div>
+    </div>
+  );
+}

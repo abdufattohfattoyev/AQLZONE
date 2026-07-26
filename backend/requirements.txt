@@ -1,0 +1,13 @@
+# Aql Zone — backend bog'liqliklari
+#
+#   pip install -r requirements.txt
+#
+# Ataylab qisqa: CORS, statik fayl va throttling uchun tashqi paket
+# ishlatilmaydi — hammasi Django/DRF ning o'zida bor.
+Django>=5.2,<7
+djangorestframework>=3.15
+
+# Ishlab chiqarish serveri. `runserver` faqat ishlab chiqish uchun —
+# u bitta oqimda ishlaydi va Django hujjatining o'zi uni ochiq
+# internetda ishlatmaslikni aytadi.
+gunicorn>=23.0

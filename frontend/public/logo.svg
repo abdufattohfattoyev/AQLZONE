@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Aql Zone">
+  <!--
+    Aql Zone belgisi — brendning YAGONA manbasi.
+
+    Uch qism: akademik shapka (bilim), "A" harfi (Aql), ochiq kitob (ta'lim).
+    Atrofdagi bezak ikonkalar ataylab yo'q: 16px favicon'da ular loyqa
+    dog'ga aylanadi va belgini tanib bo'lmay qoladi.
+
+    Bu fayl nusxalari: frontend/public/favicon.svg, frontend/public/logo.svg.
+    Birini o'zgartirsangiz — hammasini birga o'zgartiring.
+  -->
+  <defs>
+    <linearGradient id="az-a-chap" x1="0" y1="0" x2=".6" y2="1">
+      <stop offset="0" stop-color="#2f7fe4"/>
+      <stop offset="1" stop-color="#1636c4"/>
+    </linearGradient>
+    <linearGradient id="az-a-ong" x1=".1" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f8ee6"/>
+      <stop offset="1" stop-color="#22bd6d"/>
+    </linearGradient>
+    <linearGradient id="az-shapka" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e3a8f"/>
+      <stop offset="1" stop-color="#101f52"/>
+    </linearGradient>
+    <linearGradient id="az-kitob" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1b45a8"/>
+      <stop offset=".5" stop-color="#122f74"/>
+      <stop offset="1" stop-color="#1b45a8"/>
+    </linearGradient>
+
+    <!-- "A" — tashqi uchburchak minus ikkita teshik (evenodd).
+         Teshiklar oraligi ko'ndalang chiziq bo'lib qoladi. -->
+    <clipPath id="az-a" clip-rule="evenodd">
+      <path d="M60 28 L109 100 H11 Z M60 58 L71.5 75 H48.5 Z M44 83 H76 L80.5 91 H39.5 Z"/>
+    </clipPath>
+
+    <linearGradient id="az-yaltir" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!--
+    Animatsiya SVG ICHIDA: shunda fayl <img src="logo.svg"> sifatida
+    qo'yilganda ham jonli qoladi — u yerga tashqi CSS yetib bormaydi.
+    transform-box: fill-box majburiy, aks holda aylanish markazi viewBox
+    boshi (0 0) bo'lib, popuk tebranish o'rniga yoy bo'ylab uchib ketadi.
+  -->
+  <style>
+    .az-popuk { transform-box: fill-box; transform-origin: top center;
+                animation: az-popuk 3.1s ease-in-out infinite; }
+    .az-kitob { transform-box: fill-box; transform-origin: 50% 100%;
+                animation: az-nafas 4.6s ease-in-out infinite; }
+    .az-yaltir { animation: az-yaltir 5.2s cubic-bezier(.4,0,.2,1) infinite; }
+    @keyframes az-popuk { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+    @keyframes az-nafas { 50% { transform: scaleY(1.07); } }
+    @keyframes az-yaltir {
+      0%,62%   { transform: skewX(-14deg) translateX(0); }
+      92%,100% { transform: skewX(-14deg) translateX(200px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .az-popuk, .az-kitob { animation: none; }
+      .az-yaltir { display: none; }
+    }
+  </style>
+
+  <!-- Shapka: A'ning uchini yopib turadi, shuning uchun A'dan oldin chiziladi -->
+  <g transform="rotate(-13 60 24)">
+    <path d="M60 6 96 22 60 38 24 22Z" fill="url(#az-shapka)"/>
+    <path d="M48 29v9c0 3.4 5.4 6 12 6s12-2.6 12-6v-9l-12 5.3z" fill="#16295e"/>
+    <g class="az-popuk">
+      <path d="M93.5 22.6v16" stroke="#101f52" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+      <path d="M93.5 37c3.4 0 5.6 2 5.6 4.6 0 3.4-2.4 7-5.6 8.6-3.2-1.6-5.6-5.2-5.6-8.6 0-2.6 2.2-4.6 5.6-4.6z" fill="#16295e"/>
+    </g>
+  </g>
+
+  <!-- "A": chap yelka ko'k, o'ng yelka ko'k→yashil. Ikki to'rtburchak
+       qiya chegara bo'ylab kesiladi — gradient A'ning shaklini to'liq to'ldiradi. -->
+  <g clip-path="url(#az-a)">
+    <path d="M0 0h74L34 120H0z" fill="url(#az-a-chap)"/>
+    <path d="M74 0h46v120H34z" fill="url(#az-a-ong)"/>
+    <!-- Yorug'lik shu kesim ichida — A'dan tashqariga chiqmaydi -->
+    <rect class="az-yaltir" x="-46" y="-10" width="34" height="140"
+          transform="skewX(-14)" fill="url(#az-yaltir)"/>
+  </g>
+
+  <!-- Ochiq kitob: A shu yerda "turadi" -->
+  <g class="az-kitob">
+    <path d="M4 98c17-9 39-8 54 2v13c-15-10-37-11-54-4z" fill="url(#az-kitob)"/>
+    <path d="M116 98c-17-9-39-8-54 2v13c15-10 37-11 54-4z" fill="url(#az-kitob)"/>
+    <path d="M8 96c16-7 36-6 50 3M112 96c-16-7-36-6-50 3" stroke="#fff" stroke-width="2.4"
+          stroke-linecap="round" fill="none" opacity=".95"/>
+  </g>
+</svg>

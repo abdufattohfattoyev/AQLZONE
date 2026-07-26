@@ -1,0 +1,46 @@
+# Aql Zone — aql-zone.uz
+#
+# Serverda 80/443 portlarini ALLAQACHON boshqa nginx konteyneri ushlab
+# turadi (`samsebweb-nginx-1`) va u yerda bir nechta sayt yashaydi.
+# Shuning uchun bu yerda port ochilmaydi: konteyner o'sha nginx turgan
+# tarmoqqa qo'shiladi va nginx unga NOMI bilan murojaat qiladi
+# (`proxy_pass http://aqlzone:8000`). Port ochsak, ikki nginx bir portni
+# talashib, ISHLAYOTGAN saytlar o'chib qolardi.
+
+services:
+  web:
+    build: .
+    container_name: aqlzone
+    env_file: .env
+    volumes:
+      - data:/data
+    networks:
+      - web-tarmoq
+    restart: unless-stopped
+
+  # Telegram boti — long polling. Alohida konteyner, chunki u veb
+  # so'rovlarni kutmaydi va yiqilsa sayt bilan birga o'chmasligi kerak.
+  bot:
+    build: .
+    container_name: aqlzone_bot
+    command: ["python", "manage.py", "bot"]
+    env_file: .env
+    volumes:
+      - data:/data
+    networks:
+      - web-tarmoq
+    restart: unless-stopped
+    depends_on:
+      - web
+
+volumes:
+  # SQLite fayli. Konteyner qayta qurilganda ham qoladi — ichida
+  # bolalarning butun progressi bor.
+  data:
+
+networks:
+  web-tarmoq:
+    # Oldingi nginx shu tarmoqda turadi. `external` — ya'ni uni biz
+    # yaratmaymiz va o'chirmaymiz; u boshqa loyihaga tegishli.
+    external: true
+    name: samsebweb_app-network

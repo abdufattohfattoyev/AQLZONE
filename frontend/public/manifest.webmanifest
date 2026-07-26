@@ -1,0 +1,27 @@
+{
+  "name": "Aql Zone — bilim va o'yin platformasi",
+  "short_name": "Aql Zone",
+  "description": "1–4-sinf matematikasi darslik bo'yicha: yo'l xaritasi, yulduzlar va har safar yangi savollar.",
+  "lang": "uz",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#8ed6ff",
+  "theme_color": "#8ed6ff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
