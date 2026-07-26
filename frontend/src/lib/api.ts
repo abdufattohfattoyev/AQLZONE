@@ -99,8 +99,26 @@ async function post<T>(url: string, body: unknown, auth = true): Promise<T> {
  */
 let kirishJarayoni: Promise<boolean> | null = null;
 
+/**
+ * Mini App ichida Telegram hisobi shu qurilmaga bog'landimi.
+ *
+ * Bayroq KERAK, chunki tokenning o'zi kimniki ekanini aytmaydi: u
+ * anonim hisobniki ham bo'lishi mumkin. Busiz ilova har ochilganda
+ * `auth/link` ni qayta chaqirardi — zararsiz, lekin ortiqcha so'rov.
+ */
+const TG_KEY = "az_tg_boglandi";
+
 export function signIn(): Promise<boolean> {
-  if (token) return Promise.resolve(true);
+  // Mini App ichida token BO'LGANDA ham ish qolishi mumkin.
+  //
+  // Ilova ilgari oddiy brauzerdek ochilgan bo'lsa (yoki Telegram
+  // skripti hali qo'shilmagan paytda), localStorage da ANONIM hisobning
+  // tokeni yotadi. "Token bor — demak kirdik" desak, Telegram hisobi
+  // hech qachon ulanmaydi va odam Telegram ICHIDA "kiring" degan
+  // ekranni ko'radi. Aynan shu xato bo'lgan.
+  const boglashKerak = Boolean(tg()?.initData) && localStorage.getItem(TG_KEY) !== "1";
+  if (token && !boglashKerak) return Promise.resolve(true);
+
   if (!kirishJarayoni) {
     kirishJarayoni = kirishniBoshla().finally(() => { kirishJarayoni = null; });
   }
@@ -108,26 +126,54 @@ export function signIn(): Promise<boolean> {
 }
 
 async function kirishniBoshla(): Promise<boolean> {
+  // Kirish javobi hisob bilan birga profillar ro'yxatini ham beradi —
+  // sonini shu yerdayoq eslab qolamiz, alohida so'rov kerak bo'lmaydi.
+  type Kirish = { token: string; user?: { profillar?: unknown[] } };
+  const t = tg();
+  const initData = t?.initData;
+
   try {
-    const t = tg();
-    // Kirish javobi hisob bilan birga profillar ro'yxatini ham beradi —
-    // sonini shu yerdayoq eslab qolamiz, alohida so'rov kerak bo'lmaydi.
-    type Kirish = { token: string; user?: { profillar?: unknown[] } };
-    let d: Kirish;
-    if (t?.initData) {
-      t.ready?.(); t.expand?.();
-      d = await post<Kirish>("/api/v1/auth/telegram", { initData: t.initData, platform: "tg" }, false);
-    } else {
-      d = await post<Kirish>("/api/v1/auth/device", { deviceId: deviceId(), platform: "web" }, false);
+    if (initData) {
+      t?.ready?.(); t?.expand?.();
+
+      // Anonim hisob allaqachon bor — uni Telegram'ga BOG'LAYMIZ.
+      // Yangi kirish qilsak, bola shu qurilmada yig'gan yulduzlari
+      // bilan birga eski hisobda qolib ketardi.
+      if (token) {
+        try {
+          await post("/api/v1/auth/link", { initData });
+          localStorage.setItem(TG_KEY, "1");
+          return true;
+        } catch (e) {
+          // Token yaroqsiz bo'lishi mumkin (muddati tugagan). Pastdagi
+          // oddiy kirish uni baribir hal qiladi.
+          console.warn("[api] bog'lanmadi, qaytadan kiramiz:", (e as Error).message);
+        }
+      }
+
+      const d = await post<Kirish>(
+        "/api/v1/auth/telegram", { initData, platform: "tg" }, false,
+      );
+      tokenniYoz(d.token, d.user?.profillar?.length);
+      localStorage.setItem(TG_KEY, "1");
+      return true;
     }
-    token = d.token;
-    if (d.user?.profillar) profilSoniniYoz(d.user.profillar.length);
-    localStorage.setItem(TOKEN_KEY, token);
+
+    const d = await post<Kirish>(
+      "/api/v1/auth/device", { deviceId: deviceId(), platform: "web" }, false,
+    );
+    tokenniYoz(d.token, d.user?.profillar?.length);
     return true;
   } catch (e) {
     console.warn("[api] kirish bo'lmadi:", (e as Error).message, "— faqat localStorage ishlaydi");
     return false;
   }
+}
+
+function tokenniYoz(yangi: string, profilSon?: number): void {
+  token = yangi;
+  if (typeof profilSon === "number") profilSoniniYoz(profilSon);
+  localStorage.setItem(TOKEN_KEY, yangi);
 }
 
 export interface RemoteState { state: Record<string, string>; stars: number }
@@ -251,7 +297,7 @@ export interface Reyting {
 }
 
 export async function getReyting(davr: "jami" | "hafta"): Promise<Reyting | null> {
-  if (!token && !(await signIn())) return null;
+  if (!(await signIn())) return null;
   try {
     const r = await fetch(`/api/v1/leaderboard?davr=${davr}${profilId ? `&profileId=${profilId}` : ""}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -333,10 +379,18 @@ export interface Hisob {
 }
 
 export async function getHisob(): Promise<Hisob | null> {
-  // Kirish hali tugamagan bo'lishi mumkin: ilova endi ochilgan bo'lsa
-  // token bir necha yuz millisekunddan keyin paydo bo'ladi. Kutmasak,
-  // ekran "aloqa yo'q" deb noto'g'ri xabar berardi.
-  if (!token && !(await signIn())) return null;
+  // HAR DOIM kutamiz, token bor bo'lganda ham.
+  //
+  // Ikki sabab. Birinchisi: ilova endi ochilgan bo'lsa token bir necha
+  // yuz millisekunddan keyin paydo bo'ladi va kutmasak ekran "aloqa
+  // yo'q" deb noto'g'ri xabar berardi. Ikkinchisi nozikroq: Mini App
+  // ichida token BOR bo'lsa ham u anonim hisobniki bo'lishi mumkin va
+  // `signIn()` uni Telegram'ga bog'lash bilan band. O'sha paytda /me
+  // ni so'rasak, ESKI hisob qaytadi va ekran "kiring" deb turaverardi.
+  //
+  // Bog'lash kerak bo'lmaganda `signIn()` darhol javob beradi, ya'ni bu
+  // kutish hech narsaga turmaydi.
+  if (!(await signIn())) return null;
   try {
     const r = await fetch(`/api/v1/me${profilQuery()}`, {
       headers: { Authorization: `Bearer ${token}` },
