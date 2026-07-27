@@ -1,11 +1,18 @@
 {% extends "boshqaruv/asos.html" %}
 {% block sarlavha %}Kirish{% endblock %}
 
+{% comment %}
+Bu sahifada KIRITADIGAN hech narsa yo'q — na forma, na maydon. U faqat
+yo'lni ko'rsatadi: botga /boshqaruv yozing.
+
+Parol maydoni ataylab olib tashlangan. Sabab `core/boshqaruv.py` ning
+boshida yozilgan: o'zgarmas sir bir marta sizib chiqsa panel ochiq
+qoladi, botdagi havola esa 10 daqiqada o'z-o'zidan o'ladi.
+{% endcomment %}
+
 {% block tana %}
 <div class="kirish-oram">
-  <form method="post" action="/boshqaruv/kirish" class="karta kirish-karta">
-    {% csrf_token %}
-
+  <div class="karta kirish-karta">
     <div class="nishon" style="width:44px;height:44px;border-radius:14px;font-size:16px">AZ</div>
     <div style="font-size:18px;font-weight:750;margin-top:14px;letter-spacing:-.02em">Boshqaruv paneli</div>
     <p class="izoh-matn" style="margin-top:4px">Bu sahifa faqat administrator uchun.</p>
@@ -14,38 +21,24 @@
       <div class="xato-quti">{{ xato }}</div>
     {% endif %}
 
-    {% comment %}
-      Telegram yo'li birinchi turadi: parol eslab yurish shart emas va
-      administratorning odatiy yo'li aynan shu.
+    <div class="usul">
+      <div style="font-size:13.5px;font-weight:650">Telegram orqali kiriladi</div>
+      <p class="izoh-matn" style="margin-top:4px">
+        Botga <b style="color:var(--matn)">/boshqaruv</b> yozing — u kirish
+        havolasini yuboradi. Havola 10 daqiqa amal qiladi.
+      </p>
+      {% if bot %}
+        <a class="asosiy-tugma" href="https://t.me/{{ bot }}" target="_blank" rel="noopener">
+          @{{ bot }} ni ochish
+        </a>
+      {% endif %}
+    </div>
 
-      DIQQAT: bu yerda `{# ... #}` ishlatilmaydi — u FAQAT bir qatorlik
-      bo'la oladi. Ko'p qatorli bo'lsa Django uni izoh deb bilmaydi va
-      matnni sahifaga chiqarib yuboradi.
-    {% endcomment %}
-    {% if tg_bormi %}
-      <div class="usul">
-        <div style="font-size:13.5px;font-weight:650">Telegram orqali</div>
-        <p class="izoh-matn" style="margin-top:3px">
-          Botga <b style="color:var(--matn)">/boshqaruv</b> yozing — u kirish havolasini yuboradi.
-        </p>
-        {% if bot %}
-          <a class="tugma" href="https://t.me/{{ bot }}" target="_blank" rel="noopener"
-             style="width:100%;justify-content:center;margin-top:11px">
-            @{{ bot }} ni ochish
-          </a>
-        {% endif %}
-      </div>
-    {% endif %}
-
-    {% if parol_bormi %}
-      <div style="margin-top:16px">
-        {% if tg_bormi %}<div class="ajratgich"><span>yoki parol bilan</span></div>{% endif %}
-        <input type="password" name="parol" autocomplete="current-password"
-               placeholder="Parol" class="qidiruv" style="width:100%;border-radius:12px">
-        <button type="submit" class="asosiy-tugma">Kirish</button>
-      </div>
-    {% endif %}
-  </form>
+    <p class="izoh-matn" style="margin-top:14px">
+      Parol bilan kirish yo'li yo'q. Havola qisqa muddatli bo'lgani uchun
+      u yo'qolib qolsa ham begona odam foydalana olmaydi.
+    </p>
+  </div>
 </div>
 
 <style>
@@ -62,16 +55,9 @@
     border: 1px solid var(--chegara); border-radius: var(--r-kichik);
     background: var(--fon-2);
   }
-  .ajratgich {
-    display: flex; align-items: center; gap: 10px;
-    color: var(--juda-xira); font-size: 12px; margin-bottom: 12px;
-  }
-  .ajratgich::before, .ajratgich::after {
-    content: ""; flex: 1; height: 1px; background: var(--chegara);
-  }
   .asosiy-tugma {
-    width: 100%; margin-top: 10px; padding: 11px;
-    border: 0; border-radius: 12px; cursor: pointer;
+    display: block; width: 100%; margin-top: 12px; padding: 11px;
+    border: 0; border-radius: 12px; cursor: pointer; text-align: center;
     background: linear-gradient(140deg, var(--asos), var(--binafsha));
     color: #fff; font: 600 14px/1 inherit; font-family: inherit;
     box-shadow: 0 8px 20px -10px rgba(108,140,255,.9);

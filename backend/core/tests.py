@@ -924,14 +924,19 @@ class KirishKodiTest(TestCase):
         self.assertIsNone(A.kod_bilan_kir(""))
 
 
-@override_settings(ADMIN_PAROL="sinov-parol", BOSHQARUV_YONIQ=True, ADMIN_TG=[])
+#: Sinovdagi administratorning Telegram id'si.
+ADMIN_ID = "555000111"
+
+
+@override_settings(BOSHQARUV_YONIQ=True, ADMIN_TG=[ADMIN_ID])
 class BoshqaruvTest(TestCase):
     """
     Boshqaruv paneli — /boshqaruv.
 
     Ikki narsa tekshiriladi va ikkalasi ham amalda kerak bo'lgan:
 
-    1. **Parolsiz ochilmaydi.** Panelda butun bazaning kesimi turadi.
+    1. **Faqat Telegram havolasi kiritadi.** Panelda butun bazaning
+       kesimi turadi, va parol yo'li ataylab olib tashlangan.
     2. **Ro'yxatdan o'tmaganlar SANALMAYDI.** Hisob qatori odam ilovani
        ko'rishidan oldin yaraladi (qurilma tokeni), shuning uchun ular
        hisobotga qo'shilsa raqamlar ma'nosini yo'qotadi.
@@ -960,26 +965,43 @@ class BoshqaruvTest(TestCase):
             asked=6, correct=6, stars=3,
         )
 
-    def kir(self):
-        r = self.client.post("/boshqaruv/kirish", {"parol": "sinov-parol"})
-        self.assertEqual(r.status_code, 302)
+    def kir(self, tg_id: str = ADMIN_ID):
+        """Botdagi havolani ochish — kirishning yagona yo'li."""
+        from .boshqaruv import havola_yasa
+        kod = havola_yasa(tg_id).rsplit("/", 1)[-1]
+        return self.client.get(f"/boshqaruv/havola/{kod}")
 
-    def test_parolsiz_ochilmaydi(self):
+    def test_havolasiz_ochilmaydi(self):
         r = self.client.get("/boshqaruv")
         self.assertEqual(r.status_code, 200)      # kirish sahifasi
         self.assertContains(r, "Boshqaruv paneli")
         self.assertNotContains(r, "Voronka")
 
-    def test_notogri_parol(self):
-        r = self.client.post("/boshqaruv/kirish", {"parol": "boshqa"})
-        self.assertEqual(r.status_code, 401)
+    def test_parol_maydoni_umuman_yoq(self):
+        """Forma bo'lmasa, o'g'irlanadigan sir ham bo'lmaydi."""
+        r = self.client.get("/boshqaruv")
+        self.assertNotContains(r, "<form")
+        self.assertNotContains(r, 'type="password"')
+        # Eski parol manzili endi shunchaki panelga yo'naltiradi.
+        eski = self.client.get("/boshqaruv/kirish")
+        self.assertEqual(eski.status_code, 302)
+        self.assertEqual(eski["Location"], "/boshqaruv")
 
-    def test_parol_bilan_ochiladi(self):
-        self.kir()
+    def test_havola_bilan_ochiladi(self):
+        self.assertEqual(self.kir().status_code, 302)
         r = self.client.get("/boshqaruv")
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "Voronka")
         self.assertContains(r, "Olim Salimov")
+
+    def test_begona_tg_id_kirmaydi(self):
+        """Imzo to'g'ri bo'lsa ham, ro'yxatda bo'lmagan odam o'tmaydi."""
+        self.assertEqual(self.kir("111222333").status_code, 404)
+
+    def test_buzilgan_havola(self):
+        r = self.client.get("/boshqaruv/havola/yoq-bunday-kod")
+        self.assertEqual(r.status_code, 401)
+        self.assertContains(r, "Havola eskirgan", status_code=401)
 
     def test_royxatsizlar_sanalmaydi(self):
         from .boshqaruv import statistika

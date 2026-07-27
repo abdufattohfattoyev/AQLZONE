@@ -4,37 +4,39 @@ Boshqaruv paneli — /boshqaruv.
 Nima uchun alohida sahifa, React ilova ichida emas: bu ekran BOLAGA
 tegishli emas. Ilova ichida bo'lsa, uning kodi har bir foydalanuvchining
 brauzeriga yuklanardi va manzilni topgan har kim uni ochishga urinardi.
-Server tomonda chizilgan sahifa esa parolsiz umuman javob bermaydi.
+Server tomonda chizilgan sahifa esa belgisiz umuman javob bermaydi.
 
 Nima uchun Django admin emas: loyihada `django.contrib.auth` ham,
 `admin` ham o'rnatilmagan (settings.py ga qarang). Ularni qo'shish yangi
 jadvallar, migratsiyalar va foydalanuvchi boshqaruvini olib keladi —
-bitta odam ochadigan hisobot sahifasi uchun juda katta narx. Bu yerda
-esa bitta parol yetarli.
+bitta odam ochadigan hisobot sahifasi uchun juda katta narx.
 
-Kirishning ikki yo'li bor va ikkalasi ham bir xil belgiga olib keladi:
+Kirishning YAGONA yo'li — Telegram: admin botga /boshqaruv yozadi, bot
+qisqa muddatli havola yuboradi. Telegram id `ADMIN_TG` ro'yxatida
+bo'lishi shart.
 
-  Telegram — admin botga /boshqaruv yozadi, bot havola yuboradi.
-             Telegram id `ADMIN_TG` ro'yxatida bo'lishi shart.
-  Parol    — `ADMIN_PAROL` bilan. Bot ishlamay qolgan holat uchun zaxira.
+Parol yo'li ATAYLAB yo'q. U zaxira sifatida turgan edi va aynan shu
+sababdan xavfli: o'zgarmaydigan sir bir marta sizib chiqsa (jurnal,
+skrinshot, boshqa kompyuterdagi .env nusxasi) butun foydalanuvchilar
+ro'yxati ochiq qoladi va buni hech kim sezmaydi. Telegram havolasi esa
+10 daqiqadan keyin o'z-o'zidan kuchini yo'qotadi, va admin ro'yxatidan
+chiqarilgan odam eski havola bilan qaytib kira olmaydi.
 
-Ikkalasi ham sozlanmagan bo'lsa sahifa BUTUNLAY o'chiq (404) — ya'ni
+`ADMIN_TG` sozlanmagan bo'lsa sahifa BUTUNLAY o'chiq (404) — ya'ni
 sozlashni unutgan server ochiq qolib ketmaydi. Bu ataylab shunday:
 xavfsizlikning standart holati "yopiq" bo'lishi kerak.
 """
 from __future__ import annotations
 
-import hmac
 import json
 from datetime import timedelta
 
 from django.conf import settings
 from django.core import signing
-from django.db.models import Avg, Count, F, Max, Q, Sum
+from django.db.models import Count, F, Max, Q, Sum
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_protect
 
 from .models import Identity, LessonResult, Profile, Progress, Pupil, Session
 
@@ -80,10 +82,6 @@ ROYXAT = Q(registered_at__isnull=False)
 
 #: O'sha filtrning `LessonResult`/`Progress` tomonidan ko'rinishi.
 DARS_ROYXAT = Q(profile__pupil__registered_at__isnull=False)
-
-
-def _parol() -> str:
-    return getattr(settings, "ADMIN_PAROL", "") or ""
 
 
 def _yoniq() -> bool:
@@ -145,9 +143,7 @@ def havola(request, kod: str):
     try:
         ma = signing.loads(kod, salt=HAVOLA_TUZ, max_age=HAVOLA_MUDDAT)
     except signing.BadSignature:
-        return render(request, "boshqaruv/kirish.html", {
-            "xato": "Havola eskirgan. Botga /boshqaruv yozib yangisini oling.",
-        }, status=401)
+        return kirish(request, "Havola eskirgan. Botga /boshqaruv yozib yangisini oling.")
 
     # Imzo o'zi yetarli emas: ro'yxatdan chiqarilgan admin eski havolasi
     # bilan qaytib kira olmasligi kerak.
@@ -157,28 +153,24 @@ def havola(request, kod: str):
     return _belgini_ber(HttpResponseRedirect("/boshqaruv"))
 
 
-@csrf_protect
-def kirish(request):
-    """Parol so'raydigan sahifa."""
+def kirish(request, xato: str = ""):
+    """
+    "Botga /boshqaruv yozing" degan sahifa.
+
+    Bu yerda kiritadigan hech narsa YO'Q — forma ham, maydon ham. Sahifa
+    faqat yo'lni ko'rsatadi, kirish esa botdagi havola orqali bo'ladi.
+    """
     if not _yoniq():
         raise Http404
-
-    xato = ""
-    if request.method == "POST":
-        berilgan = request.POST.get("parol", "")
-        # `compare_digest` — parolni belgima-belgi solishtirishda ketadigan
-        # vaqt farqidan ma'lumot sizib chiqmasin. Parol sozlanmagan bo'lsa
-        # bu yo'l butunlay yopiq: bo'sh parol hech qachon to'g'ri emas.
-        if _parol() and hmac.compare_digest(berilgan, _parol()):
-            return _belgini_ber(HttpResponseRedirect("/boshqaruv"))
-        xato = "Parol noto'g'ri"
-
     return render(request, "boshqaruv/kirish.html", {
         "xato": xato,
-        "parol_bormi": bool(_parol()),
-        "tg_bormi": bool(getattr(settings, "ADMIN_TG", [])),
         "bot": getattr(settings, "BOT_USERNAME", ""),
     }, status=401 if xato else 200)
+
+
+def eski_kirish(request):
+    """Parol formasi turgan eski manzil — endi shunchaki panelga yo'naltiradi."""
+    return HttpResponseRedirect("/boshqaruv")
 
 
 def chiqish(request):

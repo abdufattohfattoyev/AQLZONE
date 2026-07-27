@@ -3,7 +3,7 @@ Aql Zone — asosiy marshrutlar.
 
     /api/health          holat tekshiruvi
     /api/v1/...          REST API (core.urls)
-    /boshqaruv           administrator hisoboti (parol bilan)
+    /boshqaruv           administrator hisoboti (Telegram orqali)
     boshqa hammasi       React ilova (SPA) — /kurs/1-sinf kabi URL'lar
                          sahifa yangilanganda ham ishlashi uchun.
 
@@ -21,7 +21,11 @@ urlpatterns = [
     path("api/health", health, name="health"),
     path("api/v1/", include("core.urls")),
     path("boshqaruv", boshqaruv.panel, name="boshqaruv"),
-    path("boshqaruv/kirish", boshqaruv.kirish, name="boshqaruv-kirish"),
+    # Kirish sahifasi endi alohida manzil emas — yuboradigan forma yo'q va
+    # `panel` uni kirmagan odamga o'zi chizadi. Eski manzil saqlanib
+    # qolgan: unga qo'yilgan xatcho'p SPA'ning "bunday sahifa yo'q"
+    # ekraniga tushib qolmasin.
+    path("boshqaruv/kirish", boshqaruv.eski_kirish),
     path("boshqaruv/chiqish", boshqaruv.chiqish, name="boshqaruv-chiqish"),
     # Botdagi havola: /boshqaruv/havola/<imzolangan kod>
     path("boshqaruv/havola/<str:kod>", boshqaruv.havola, name="boshqaruv-havola"),
