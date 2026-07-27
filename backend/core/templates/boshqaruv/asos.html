@@ -1,0 +1,98 @@
+{% comment %}
+Boshqaruv panelining umumiy qobig'i.
+
+CSS shu yerda, ichkarida. Sabab: bu sahifa React ilovaning yig'ilgan
+fayllariga umuman bog'liq emas va ular o'zgarganda buzilmasligi kerak.
+Bitta fayl — bitta sahifa, tashqi bog'liqlik yo'q.
+{% endcomment %}<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% block sarlavha %}Boshqaruv{% endblock %} — Aql Zone</title>
+<style>
+  :root {
+    --fon: #0f1420;
+    --karta: #182033;
+    --chegara: #263149;
+    --matn: #e8edf7;
+    --xira: #8b97b0;
+    --yashil: #3ddc84;
+    --sariq: #f5b301;
+    --qizil: #ff6b6b;
+    --kok: #4fb8e0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fon); color: var(--matn);
+    font: 14px/1.5 ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--kok); }
+  .ichki { max-width: 1180px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  header.tepa {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 16px; border-bottom: 1px solid var(--chegara);
+    background: var(--karta); position: sticky; top: 0; z-index: 5;
+  }
+  header.tepa h1 { font-size: 16px; margin: 0; font-weight: 700; }
+  header.tepa .xira { color: var(--xira); font-size: 12.5px; }
+  .ong { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+  .tugma {
+    display: inline-block; padding: 6px 12px; border-radius: 8px;
+    border: 1px solid var(--chegara); color: var(--matn);
+    text-decoration: none; font-size: 13px; background: transparent;
+    cursor: pointer;
+  }
+  .tugma:hover { border-color: var(--kok); }
+  .tugma.faol { background: var(--kok); border-color: var(--kok); color: #0b1017; font-weight: 600; }
+
+  h2 { font-size: 14px; margin: 30px 0 10px; color: var(--xira);
+       text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+
+  .kartalar { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .karta { background: var(--karta); border: 1px solid var(--chegara); border-radius: 12px; padding: 14px; }
+  .karta .son { font-size: 26px; font-weight: 700; line-height: 1.1; }
+  .karta .nom { color: var(--xira); font-size: 12.5px; margin-top: 4px; }
+  .karta .qosh { font-size: 12px; margin-top: 6px; color: var(--xira); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--chegara); white-space: nowrap; }
+  th { color: var(--xira); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  tbody tr:hover { background: #1d2740; }
+  .jadval-oram { overflow-x: auto; background: var(--karta); border: 1px solid var(--chegara); border-radius: 12px; }
+  td.keng, th.keng { white-space: normal; min-width: 220px; }
+
+  .belgi { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; border: 1px solid var(--chegara); color: var(--xira); }
+  .belgi.yashil { color: var(--yashil); border-color: #235c3d; background: #12301f; }
+  .belgi.sariq { color: var(--sariq); border-color: #5c4a12; background: #302713; }
+  .belgi.qizil { color: var(--qizil); border-color: #5c2323; background: #301515; }
+
+  .nuqta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #384463; }
+  .nuqta.yoniq { background: var(--yashil); box-shadow: 0 0 0 3px rgba(61,220,132,.18); }
+
+  .bosqich { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .bosqich .yozuv { width: 250px; font-size: 13px; }
+  .bosqich .chiziq { flex: 1; height: 22px; background: #131a29; border-radius: 6px; overflow: hidden; }
+  .bosqich .chiziq span { display: block; height: 100%; background: linear-gradient(90deg, var(--kok), var(--yashil)); }
+  .bosqich .son { width: 92px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .grafik { display: flex; align-items: flex-end; gap: 2px; height: 130px;
+            background: var(--karta); border: 1px solid var(--chegara);
+            border-radius: 12px; padding: 12px; overflow-x: auto; }
+  .grafik .ustun { flex: 1 0 8px; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+  .grafik .ustun i { display: block; background: var(--kok); border-radius: 3px 3px 0 0; min-height: 2px; }
+  /* Darssiz kun ham ustun bo'lib turadi, lekin xira: sana o'qi uzilmasin. */
+  .grafik .ustun.quruq i { background: #2a3450; }
+
+  .bosh { color: var(--xira); padding: 18px; text-align: center; font-size: 13px; }
+  .izoh { color: var(--xira); font-size: 12.5px; margin: 6px 0 0; }
+</style>
+</head>
+<body>
+{% block tana %}{% endblock %}
+</body>
+</html>

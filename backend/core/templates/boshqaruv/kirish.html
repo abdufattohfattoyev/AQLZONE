@@ -1,0 +1,28 @@
+{% extends "boshqaruv/asos.html" %}
+{% block sarlavha %}Kirish{% endblock %}
+
+{% block tana %}
+<div style="display:grid;place-items:center;min-height:100dvh;padding:20px">
+  <form method="post" action="/boshqaruv/kirish"
+        style="background:var(--karta);border:1px solid var(--chegara);border-radius:14px;
+               padding:24px;width:100%;max-width:340px">
+    {% csrf_token %}
+    <div style="font-size:17px;font-weight:700">Aql Zone — boshqaruv</div>
+    <p class="izoh">Bu sahifa faqat administrator uchun.</p>
+
+    <input type="password" name="parol" autofocus autocomplete="current-password"
+           placeholder="Parol"
+           style="width:100%;margin-top:16px;padding:10px 12px;border-radius:9px;
+                  border:1px solid var(--chegara);background:#111826;color:var(--matn);
+                  font-size:14px">
+
+    {% if xato %}
+      <div style="color:var(--qizil);font-size:13px;margin-top:10px">{{ xato }}</div>
+    {% endif %}
+
+    <button type="submit" class="tugma faol" style="width:100%;margin-top:14px;padding:10px">
+      Kirish
+    </button>
+  </form>
+</div>
+{% endblock %}

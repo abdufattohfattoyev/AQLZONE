@@ -266,8 +266,14 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
             sess.delete()
             raise exceptions.AuthenticationFailed("sessiya muddati tugagan")
 
-        # Har so'rovda yozish o'rniga kuniga bir marta — SQLite bo'shashsin.
-        if (timezone.now() - sess.last_seen).total_seconds() > 3600:
+        # Har so'rovda yozish o'rniga ma'lum oraliqda — SQLite bo'shashsin.
+        #
+        # Oraliq soatdan ikki daqiqaga tushirildi. Sabab: boshqaruv paneli
+        # "hozir kim onlayn" degan savolga aynan shu ustunga qarab javob
+        # beradi va soatlik yangilanishda ayni paytda o'ynayotgan bola ham
+        # "onlayn emas" bo'lib ko'rinardi. Yozuv soniga ta'siri kichik:
+        # bitta sessiya soatiga eng ko'pi 30 marta yangilanadi.
+        if (timezone.now() - sess.last_seen).total_seconds() > 120:
             Session.objects.filter(pk=token_hash).update(last_seen=timezone.now())
 
         return sess.pupil, token_hash

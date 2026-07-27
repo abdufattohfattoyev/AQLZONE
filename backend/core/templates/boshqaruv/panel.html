@@ -1,0 +1,261 @@
+{% extends "boshqaruv/asos.html" %}
+{% block sarlavha %}Boshqaruv{% endblock %}
+
+{% block tana %}
+<header class="tepa">
+  <h1>Aql Zone — boshqaruv</h1>
+  <span class="xira">{{ yangilangan|date:"d.m.Y H:i" }}</span>
+  <div class="ong">
+    <a class="tugma {% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
+    <a class="tugma {% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
+    <a class="tugma {% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
+    <a class="tugma" href="/boshqaruv/chiqish">Chiqish</a>
+  </div>
+</header>
+
+<div class="ichki">
+
+  <h2>Hozir</h2>
+  <div class="kartalar">
+    <div class="karta">
+      <div class="son" style="color:var(--yashil)">
+        <span class="nuqta {% if faollik.onlayn %}yoniq{% endif %}"></span>
+        {{ faollik.onlayn }}
+      </div>
+      <div class="nom">Onlayn</div>
+      <div class="qosh">oxirgi {{ onlayn_daqiqa }} daqiqada</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ faollik.bugun }}</div>
+      <div class="nom">Bugun mashq qilgan</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ faollik.hafta }}</div>
+      <div class="nom">7 kunda faol</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ faollik.oy }}</div>
+      <div class="nom">30 kunda faol</div>
+    </div>
+  </div>
+
+  <h2>Hisoblar</h2>
+  <div class="kartalar">
+    <div class="karta">
+      <div class="son">{{ umumiy.hisoblar }}</div>
+      <div class="nom">Jami hisob</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ umumiy.royxatdan }}</div>
+      <div class="nom">Ro'yxatdan o'tgan</div>
+      <div class="qosh">{{ umumiy.royxat_foiz }}% hisoblardan</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ umumiy.telegramli }}</div>
+      <div class="nom">Telegram bog'langan</div>
+      <div class="qosh">qolganiga xabar yuborib bo'lmaydi</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ umumiy.qurilmali }}</div>
+      <div class="nom">Faqat qurilma (anonim)</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ umumiy.profillar }}</div>
+      <div class="nom">Bola profillari</div>
+    </div>
+  </div>
+
+  <h2>O'quv natijalari</h2>
+  <div class="kartalar">
+    <div class="karta">
+      <div class="son">{{ umumiy.darslar }}</div>
+      <div class="nom">Tugatilgan dars</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ umumiy.savollar }}</div>
+      <div class="nom">Yechilgan savol</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ umumiy.aniqlik }}%</div>
+      <div class="nom">To'g'ri javob ulushi</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ umumiy.yulduz }}</div>
+      <div class="nom">Berilgan yulduz</div>
+    </div>
+    <div class="karta">
+      <div class="son">{{ umumiy.soat }}</div>
+      <div class="nom">Jami soat mashq</div>
+    </div>
+  </div>
+
+  <h2>Voronka — odamlar qayerda to'xtayapti</h2>
+  <div class="karta">
+    {% for q in voronka %}
+      <div class="bosqich">
+        <div class="yozuv">{{ q.nom }}</div>
+        <div class="chiziq"><span style="width:{{ q.foiz }}%"></span></div>
+        <div class="son">{{ q.son }} · {{ q.foiz }}%</div>
+      </div>
+    {% endfor %}
+    <p class="izoh">
+      Har qadam oldingisining ichida. Eng katta pasayish qayerda bo'lsa,
+      tuzatish ham o'sha yerdan boshlanadi.
+    </p>
+  </div>
+
+  <h2>Kunlik faollik — tugatilgan darslar ({{ kunlar }} kun)</h2>
+  <div class="grafik">
+    {% for q in qator %}
+      <div class="ustun {% if not q.darslar %}quruq{% endif %}"
+           title="{{ q.kun }} — {{ q.darslar }} dars, {{ q.faol }} bola, {{ q.yangi }} yangi hisob">
+        <i style="height:{% if q.balandlik %}{{ q.balandlik }}{% else %}2{% endif %}%"></i>
+      </div>
+    {% endfor %}
+  </div>
+  <p class="izoh">Ustun ustiga sichqonchani olib borsang sana va sonlar chiqadi.</p>
+
+  <h2>Sinflar bo'yicha</h2>
+  <div class="jadval-oram">
+    <table>
+      <thead><tr>
+        <th>Kurs</th><th>Bolalar</th><th>Darslar</th><th>Savollar</th><th>Aniqlik</th><th>Yulduz</th>
+      </tr></thead>
+      <tbody>
+        {% for s in sinflar %}
+          <tr>
+            <td>{{ s.nom }}</td>
+            <td>{{ s.bolalar }}</td>
+            <td>{{ s.darslar }}</td>
+            <td>{{ s.savollar|default:0 }}</td>
+            <td>
+              <span class="belgi {% if s.aniqlik >= 80 %}yashil{% elif s.aniqlik >= 60 %}sariq{% else %}qizil{% endif %}">
+                {{ s.aniqlik }}%
+              </span>
+            </td>
+            <td>{{ s.yulduz|default:0 }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="bosh">Hali birorta dars tugatilmagan</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Eng ko'p o'ynalgan darslar</h2>
+  <div class="jadval-oram">
+    <table>
+      <thead><tr><th class="keng">Dars</th><th>Joyi</th><th>Urinish</th><th>Aniqlik</th></tr></thead>
+      <tbody>
+        {% for d in mashhur %}
+          <tr>
+            <td class="keng">{{ d.lesson_name|default:"—" }}</td>
+            <td>{{ d.joy }}</td>
+            <td>{{ d.urinish }}</td>
+            <td>{{ d.aniqlik }}%</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="bosh">Ma'lumot yo'q</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Eng qiyin darslar</h2>
+  <div class="jadval-oram">
+    <table>
+      <thead><tr><th class="keng">Dars</th><th>Joyi</th><th>Savollar</th><th>Xatolar</th><th>Aniqlik</th></tr></thead>
+      <tbody>
+        {% for d in qiyin %}
+          <tr>
+            <td class="keng">{{ d.lesson_name|default:"—" }}</td>
+            <td>{{ d.joy }}</td>
+            <td>{{ d.savollar }}</td>
+            <td>{{ d.xato }}</td>
+            <td><span class="belgi qizil">{{ d.aniqlik }}%</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="bosh">Kamida 5 ta savol yechilgan dars hali yo'q</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Foydalanuvchilar ({{ foydalanuvchilar|length }})</h2>
+  <div class="jadval-oram">
+    <table>
+      <thead><tr>
+        <th></th><th class="keng">Ism</th><th>Kirish</th><th>Telefon</th>
+        <th>Bolalar</th><th>Darslar</th><th>Yulduz</th><th>Sinf</th>
+        <th>Qo'shilgan</th><th>Oxirgi faollik</th>
+      </tr></thead>
+      <tbody>
+        {% for f in foydalanuvchilar %}
+          <tr>
+            <td><span class="nuqta {% if f.onlayn %}yoniq{% endif %}"></span></td>
+            <td class="keng">
+              {{ f.ism }}
+              {% if f.username %}<span class="xira" style="color:var(--xira)">@{{ f.username }}</span>{% endif %}
+              {% if not f.royxatdan %}<span class="belgi">ro'yxatsiz</span>{% endif %}
+            </td>
+            <td>
+              {% for u in f.usullar %}
+                <span class="belgi {% if u == 'telegram' %}yashil{% endif %}">{{ u }}</span>
+              {% empty %}<span class="xira">—</span>{% endfor %}
+            </td>
+            <td>{{ f.telefon|default:"—" }}</td>
+            <td>{{ f.profillar }}</td>
+            <td>{{ f.darslar }}</td>
+            <td>{{ f.yulduz }}</td>
+            <td>{{ f.sinf }}</td>
+            <td>{{ f.qoshilgan|date:"d.m.y" }}</td>
+            <td>{% if f.oxirgi %}{{ f.oxirgi|date:"d.m.y H:i" }}{% else %}—{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="10" class="bosh">Hali hech kim kirmagan</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>So'nggi harakatlar</h2>
+  <div class="jadval-oram">
+    <table>
+      <thead><tr><th>Vaqt</th><th class="keng">Kim</th><th class="keng">Dars</th><th>Natija</th><th>Yulduz</th></tr></thead>
+      <tbody>
+        {% for r in oqim %}
+          <tr>
+            <td>{{ r.created_at|date:"d.m H:i" }}</td>
+            <td class="keng">{{ r.profile.pupil.toliq_ism|default:"—" }}{% if r.profile.name %} · {{ r.profile.name }}{% endif %}</td>
+            <td class="keng">{{ r.lesson_name|default:"—" }}</td>
+            <td>{{ r.correct }}/{{ r.asked }}</td>
+            <td>{{ r.stars }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="bosh">Hali hech qanday dars tugatilmagan</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Platformalar</h2>
+  <div class="kartalar">
+    {% for p in platformalar %}
+      <div class="karta">
+        <div class="son">{{ p.n }}</div>
+        <div class="nom">{{ p.platform|default:"noma'lum" }}</div>
+      </div>
+    {% empty %}
+      <div class="karta"><div class="bosh">Sessiya yo'q</div></div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<script>
+  // Sahifa o'zi yangilanib turadi — panel ochiq turganda son eskirmasin.
+  // `location.reload()` emas, manzilga qayta o'tish: tanlangan davr
+  // (?kun=) saqlanib qolsin.
+  setTimeout(function () { location.replace(location.href); }, 60000);
+</script>
+{% endblock %}

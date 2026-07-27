@@ -151,6 +151,14 @@ BOT_USERNAME = env("BOT_USERNAME", "")
 # Sessiya tokeni necha kun amal qiladi.
 SESSION_TTL_DAYS = int(env("SESSION_TTL_DAYS", "180"))
 
+# Boshqaruv paneli (/boshqaruv) paroli.
+#
+# BO'SH BO'LSA PANEL BUTUNLAY YO'Q — manzil 404 qaytaradi. Standart holat
+# ataylab "yopiq": parol qo'yishni unutilgan server hisobotni ochiq
+# qoldirib ketmasligi kerak. Yoqish uchun .env ga uzun parol yozing:
+#   python -c "import secrets; print(secrets.token_urlsafe(24))"
+ADMIN_PAROL = env("ADMIN_PAROL", "")
+
 # Mobil ilova boshqa origin'dan chaqiradi. Cookie ishlatilmaydi —
 # himoya Bearer token orqali, shuning uchun "*" xavfsiz.
 CORS_ALLOW_ORIGIN = env("CORS_ALLOW_ORIGIN", "*")
