@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { botHavolasi, botNomi, chiqish, getHisob, hisobniSaqla, miniAppda } from "../lib/api";
+import { turniUnut } from "../lib/tur";
 import type { Hisob } from "../lib/api";
 
 interface Props {
@@ -57,6 +58,9 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
   // Chiqish qaytarib bo'lmaydigan ish emas, lekin bexosdan bosilsa bola
   // o'yin o'rtasida hisobsiz qoladi — bir savol berib qo'yamiz.
   const [tasdiq, setTasdiq] = useState(false);
+  // Yo'lboshchi qayta yoqildimi — tugma bosilganini bildirish uchun.
+  // Sayohatning o'zi kurs sahifasida boshlanadi, shu yerda emas.
+  const [turQayta, setTurQayta] = useState(false);
 
   useEffect(() => {
     let bekor = false;
@@ -239,6 +243,29 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
                   </a>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ---- yo'lboshchi ----
+              Sayohat bir marta ko'rsatiladi va shundan keyin uni qaytarish
+              yo'li bo'lishi kerak. Bola uni tasodifan o'tkazib yuborishi,
+              yoki telefonni ikkinchi farzand olishi mumkin — ikkala holatda
+              ham "qayerda nima" degan savol yana paydo bo'ladi. */}
+          {!royxat && (
+            <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
+              style={{ "--az-kech": "90ms" } as React.CSSProperties}>
+              <div className="font-display text-[14px]">Yo'lboshchi</div>
+              <p className="mt-1 text-[12px] leading-snug text-ink-dim">
+                Qaysi tugma nima qilishini boshqatdan ko'rsatib beradi
+              </p>
+              <button type="button"
+                disabled={turQayta}
+                onClick={() => { turniUnut(); setTurQayta(true); }}
+                className="clay-press mt-3 flex w-full items-center justify-center gap-2 rounded-3xl
+                           bg-track py-2.5 font-display text-[14px] text-ink-soft disabled:opacity-60">
+                <Icon name={turQayta ? "check" : "repeat"} size={17} />
+                {turQayta ? "Kursni ochsangiz boshlanadi" : "Qaytadan ko'rsatish"}
+              </button>
             </div>
           )}
 

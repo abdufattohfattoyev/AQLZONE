@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { Reveal } from "../components/Reveal";
 import { RoadMap } from "../components/RoadMap";
+import { Yolboshchi } from "../components/Yolboshchi";
+import { turKerakmi } from "../lib/tur";
 import { UNIT_COLORS, keyingiDars, lessonId } from "../lib/types";
 import type { Progress, Unit } from "../lib/types";
 import type { Kunlik } from "../lib/progress";
@@ -96,6 +98,24 @@ export function Home({
 
   const kiygan = progress.kiygan ? buyumTop(progress.kiygan) : undefined;
 
+  /**
+   * Yo'lboshchi — birinchi tashrifda ekranni tanishtiradi.
+   *
+   * Kechikish SHART. Ekran ochilishida kartalar `az-kirish` va `Reveal`
+   * bilan pastdan ko'tarilib chiqadi; o'sha paytda o'lchansa, yorug' dog'
+   * elementning HALI YETIB KELMAGAN joyiga qo'yilardi va sayohat qiyshiq
+   * boshlanardi.
+   *
+   * Kurs sahifasida boshlanadi, bosh sahifada emas: tanishtiradigan narsa
+   * aynan shu yerda: kurslar ro'yxati o'zini o'zi tushuntiradi.
+   */
+  const [yolboshchi, setYolboshchi] = useState(false);
+  useEffect(() => {
+    if (!turKerakmi()) return;
+    const t = setTimeout(() => setYolboshchi(true), 900);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     /* Kenglik ekranga qarab o'sadi, ammo cheklangan: dars yo'li ilon izi
        bo'lib buriladi va juda keng ustunda uning burilishlari yassilanib,
@@ -114,8 +134,12 @@ export function Home({
           mo'ljallangan va bolalar qatorida turgani uchun tez-tez bexosdan
           bosilardi. Yuqorida, chetda — ko'rinadi, lekin yo'lda turmaydi. */}
       <div className="flex items-center gap-2">
-        <Pill><Icon name="star" size={19} className="text-brand-gold" />{progress.stars}</Pill>
-        <Pill><Icon name="coin" size={19} className="text-brand-orange-d" />{progress.coins}</Pill>
+        {/* `data-tur` — yo'lboshchi shu atributlar bo'yicha nishonni topadi
+            (components/Yolboshchi.tsx). Ekran o'zgarsa, atribut ko'chadi. */}
+        <span data-tur="hisob" className="flex items-center gap-2 rounded-full">
+          <Pill><Icon name="star" size={19} className="text-brand-gold" />{progress.stars}</Pill>
+          <Pill><Icon name="coin" size={19} className="text-brand-orange-d" />{progress.coins}</Pill>
+        </span>
         <button type="button" onClick={onOtaOna} title="Ota-ona paneli"
           className="ml-auto grid size-11 place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
           <Icon name="parent" size={20} />
@@ -167,7 +191,9 @@ export function Home({
       )}
 
       {/* ---- kunlik maqsad ---- */}
-      <KunlikMaqsad kunlik={kunlik} maqsad={maqsad} />
+      <div data-tur="maqsad">
+        <KunlikMaqsad kunlik={kunlik} maqsad={maqsad} />
+      </div>
 
       {/* ---- xatolar daftari ----
           Faqat takrorlash vaqti kelgan savol bo'lsa ko'rinadi. Doim
@@ -199,8 +225,13 @@ export function Home({
             <Reveal key={ui} kech={Math.min(ui, 4) * 60}>
             <section className="az-shisha overflow-hidden rounded-clay"
               style={{ "--az-kech": `${80 + ui * 45}ms` } as CSSProperties}>
+              {/* Yo'lboshchi bobning faqat SARLAVHASINI yoritadi, butun
+                  bo'limni emas: ochilgan bob ichida dars yo'li bor va u
+                  ekrandan uzun. Yorug' dog' butun ekranni qoplasa,
+                  "mana bu" degan ishora yo'qoladi. */}
               <button
                 type="button"
+                data-tur={ui === 0 ? "boblar" : undefined}
                 onClick={() => setOpen(isOpen ? -1 : ui)}
                 /* `az-qavariq` — yuqori chekkasida yorug'lik, pastida ichki
                    soya. Manzara ustida tekis karta "yopishtirilgan qog'oz"dek
@@ -234,6 +265,8 @@ export function Home({
 
       <Panel yangiNishon={yangiNishon > 0}
         onNishon={onNishon} onDokon={onDokon} onReyting={onReyting} />
+
+      {yolboshchi && <Yolboshchi onTugadi={() => setYolboshchi(false)} />}
     </div>
   );
 }
@@ -264,6 +297,7 @@ function Davom({ units, keyingi, boshlanmagan, onStart }: {
     <button
       type="button"
       onClick={() => onStart(keyingi.ui, keyingi.li)}
+      data-tur="davom"
       className="tugma-3d az-yaltir mt-4 flex w-full items-center gap-3.5 rounded-clay
                  bg-brand-green p-4 text-left text-white shadow-clay"
     >
@@ -303,8 +337,9 @@ function Panel({ yangiNishon, onNishon, onDokon, onReyting }: {
   return (
     /* Pastki to'ldirish xavfsiz zonadan olinadi — iPhone va Telegram
        oynasining pastki chizig'i tugmalar ustiga chiqib qolmasin. */
-    <nav className="az-shisha fixed inset-x-0 bottom-0 z-30 border-t border-karta/45
-                    pb-[env(safe-area-inset-bottom)]">
+    <nav data-tur="panel"
+      className="az-shisha fixed inset-x-0 bottom-0 z-30 border-t border-karta/45
+                 pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex w-full max-w-[430px] px-2 sm:max-w-[560px]">
         {/* Bu sahifaning o'zi — bosilganda tepaga qaytaradi. */}
         <Tab ic="map" nom="Darslar" faol

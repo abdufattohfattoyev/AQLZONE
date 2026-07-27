@@ -762,8 +762,47 @@
   92%, 100% { transform: skewX(-14deg) translateX(200px); }
 }
 
+/* ============================================================
+   YO'LBOSHCHI (components/Yolboshchi.tsx)
+
+   Yorug' dog' — ekranda bitta narsani ajratib ko'rsatadigan usul.
+   Qorayish ALOHIDA qatlam emas: u aynan shu elementning ulkan tashqi
+   soyasi. Ikki sabab:
+
+     1. Teshik chekkasi hech qachon "sirg'anmaydi". Ikki qatlam bo'lsa
+        (qora fon + ustidagi teshik), ular alohida-alohida siljib,
+        harakat paytida orasida bir piksel yorug'lik chizig'i chiqardi.
+     2. Bitta element — bitta o'tish. `top/left/width/height` birga
+        animatsiya bo'ladi va dog' bir nishondan ikkinchisiga SUZIB
+        o'tadi. Aynan shu suzish "endi mana bunisi haqida" deb aytadi.
+   ============================================================ */
+.az-tur-dog {
+  position: fixed;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 3px rgb(255 255 255 / 0.9),        /* nishon atrofidagi yorug' halqa */
+    0 0 0 100vmax rgb(24 18 10 / 0.72);      /* qolgan ekran qorayadi */
+  transition:
+    top 0.5s cubic-bezier(0.3, 0.9, 0.3, 1),
+    left 0.5s cubic-bezier(0.3, 0.9, 0.3, 1),
+    width 0.5s cubic-bezier(0.3, 0.9, 0.3, 1),
+    height 0.5s cubic-bezier(0.3, 0.9, 0.3, 1),
+    border-radius 0.5s ease;
+}
+
+/* Gap qutisi har qadamda qaytadan chiqadi — matn almashgani sezilsin. */
+@keyframes az-tur-gap {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.az-tur-gap { animation: az-tur-gap 0.32s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
 /* Harakat bezovta qilsa — hammasi to'xtaydi, ilova ishlayveradi. */
 @media (prefers-reduced-motion: reduce) {
+  /* Dog' o'zi QOLADI — usiz yo'lboshchi nimani ko'rsatayotgani bilinmaydi.
+     Faqat suzib o'tish yo'qoladi: u sakrab paydo bo'ladi. */
+  .az-tur-dog { transition: none; }
+  .az-tur-gap { animation: none; }
   .az-pulse::after, .az-bob, .az-yaltir::before, .az-konfetti,
   .az-nur, .az-halqa, .az-naqsh, .az-yur { animation: none; }
   /* Yorug'lik yo'li harakatsiz holda "A" ustida oq dog' bo'lib qolmasin */
