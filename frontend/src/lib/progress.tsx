@@ -183,7 +183,7 @@ interface Ctx {
   kunlik: Kunlik;
   /** Do'kondan buyum sotib olish. Tanga yetmasa `false` qaytadi. */
   sotibOl: (c: Course, buyumId: string, narx: number) => boolean;
-  /** Tulkiga buyum kiydirish (bo'sh satr — yechish). */
+  /** Aqlga buyum kiydirish (bo'sh satr — yechish). */
   kiy: (c: Course, buyumId: string) => void;
 }
 

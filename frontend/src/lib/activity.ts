@@ -1,7 +1,7 @@
 /**
  * Bitta savol (activity) turlari.
  *
- * Hammasida `prompt` (tulki nima deyishi), `answer` va `choices` bor —
+ * Hammasida `prompt` (Aql nima deyishi), `answer` va `choices` bor —
  * shu sababli hali maxsus chizuvchisi yo'q turlar ham o'ynasa bo'ladi:
  * savol matni va variantlar ko'rsatiladi, faqat rasm qismi keyin qo'shiladi.
  */

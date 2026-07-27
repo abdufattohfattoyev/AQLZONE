@@ -8,7 +8,7 @@
  * shu sabab ko'pincha ochilmay qolardi.
  *
  * Yechim — YORUG' DOG': ekran qorayadi, faqat bitta element yorug'
- * qoladi va tulki uni bir gap bilan tushuntiradi. Dog' qadamdan qadamga
+ * qoladi va Aql uni bir gap bilan tushuntiradi. Dog' qadamdan qadamga
  * SILJIB o'tadi, sakramaydi: ko'z uni kuzatib boradi va shu harakatning
  * o'zi "endi mana bu haqda gapiryapmiz" deb aytadi — matnsiz ham.
  *

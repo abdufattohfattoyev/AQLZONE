@@ -12,7 +12,7 @@
 export interface Buyum {
   id: string;
   nom: string;
-  /** Tulki ustiga chiqadigan belgi. */
+  /** Aql (brend belgisi) ustiga chiqadigan belgi. */
   belgi: string;
   narx: number;
 }

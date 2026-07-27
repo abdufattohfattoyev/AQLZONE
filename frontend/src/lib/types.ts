@@ -5,7 +5,7 @@ import type { Gen } from "./activity";
  * Darsning ANIMATSION TUSHUNTIRISHI — savollardan oldin ko'rsatiladi.
  *
  * Maktabgacha yoshdagi bola savolni "bilgani uchun" emas, ko'rgani uchun
- * yechadi. Shuning uchun dars savol bilan boshlanmaydi: avval tulki
+ * yechadi. Shuning uchun dars savol bilan boshlanmaydi: avval Aql
  * qadam-baqadam ko'rsatib beradi — olmalar bitta-bitta paydo bo'ladi,
  * ikki guruh birlashadi, ketadiganlari uchib ketadi — va faqat shundan
  * keyin savol so'raladi.
@@ -88,7 +88,7 @@ export interface Progress {
   savollar?: number;
   /** Do'kondan sotib olingan buyumlar (`lib/dokon.ts` kalitlari). */
   olingan?: string[];
-  /** Tulkiga kiydirilgan buyum. */
+  /** Aqlga (brend belgisiga) kiydirilgan buyum. */
   kiygan?: string;
 }
 

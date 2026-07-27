@@ -1,9 +1,15 @@
 /**
- * Tangalar do'koni va tulkini bezash.
+ * Tangalar do'koni va Aqlni bezash.
  *
  * Ikki qism bitta ekranda ataylab: bola buyumni sotib olishi bilan uni
- * tulkida ko'radi. Alohida ekranlar bo'lsa, sotib olish va natija
+ * Aqlning ustida ko'radi. Alohida ekranlar bo'lsa, sotib olish va natija
  * o'rtasida bo'shliq paydo bo'lardi va mukofot hissi susayardi.
+ *
+ * DIQQAT: bezatiladigan qahramon — brend belgisi (`Logo`), ya'ni "Aql".
+ * Ilgari bu ekran uni "tulki" deb atardi, holbuki tulki hech qachon
+ * chizilmagan: ekranda ham shu yerda, ham o'git ekranida, ham bosh
+ * sahifada har doim LOGO turgan. Ya'ni matn ekrandagi narsaga
+ * mos kelmasdi va bola "tulki qani?" deb qidirardi.
  */
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
@@ -35,12 +41,12 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
         </div>
       </div>
 
-      {/* ---- tulki va kiygan buyumi ---- */}
+      {/* ---- Aql va kiygan buyumi ---- */}
       <div className="az-kirish mt-5 flex flex-col items-center">
         <div className="relative">
           <Logo size={110} className="drop-shadow-[0_8px_16px_rgb(0_0_0/0.2)]" />
           {kiyilgan && (
-            // Buyum tulkining boshiga tushadi. Belgi emoji bo'lgani uchun
+            // Buyum Aqlning boshiga tushadi. Belgi emoji bo'lgani uchun
             // o'lchami shriftdan keladi.
             <span className="az-sakra pointer-events-none absolute -top-3 left-1/2 -translate-x-1/2
                              text-[42px] leading-none">
@@ -48,7 +54,7 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
             </span>
           )}
         </div>
-        <h1 className="mt-3 text-[22px]">Tulkini bezash</h1>
+        <h1 className="mt-3 text-[22px]">Aqlni bezash</h1>
         <p className="mt-1 text-center text-[12.5px] text-ink-soft">
           Har to'g'ri javob 2 tanga beradi
         </p>
