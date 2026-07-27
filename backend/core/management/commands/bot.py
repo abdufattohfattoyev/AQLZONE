@@ -39,6 +39,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from core import boshqaruv
 from core.auth import kirish_kodi_yasa
 from core.models import Identity, KirishKodi, Pupil
 
@@ -308,11 +309,32 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         )
         return f"{tg_id}: /raqam"
 
-    if matn.startswith("/help"):
+    # Boshqaruv paneli — faqat administratorlarga.
+    #
+    # Javob ikki xil bo'lishi SHART emas: begona odamga "sen admin emassan"
+    # deb aytish o'zi ma'lumot beradi (demak bunday panel bor). Shuning
+    # uchun ro'yxatda bo'lmagan odam boshqa noma'lum buyruq bilan bir xil
+    # javob oladi — pastdagi umumiy javob.
+    if matn.startswith("/boshqaruv") and boshqaruv.admin_tg_mi(tg_id):
+        if not settings.SAYT_URL:
+            api("sendMessage", chat_id=chat_id,
+                text="SAYT_URL sozlanmagan — havola yasab bo'lmaydi.")
+            return f"{tg_id}: /boshqaruv — SAYT_URL yo'q"
         api("sendMessage", chat_id=chat_id,
-            text="/start — saytga kirish havolasini olish\n"
-                 "/raqam — telefon raqamini bog'lash\n"
-                 "Savollar bo'lsa shu yerga yozing.")
+            text="🔐 <b>Boshqaruv paneli</b>\n\nHavola 10 daqiqa amal qiladi.",
+            parse_mode="HTML",
+            reply_markup={"inline_keyboard": [[
+                {"text": "📊 Panelni ochish", "url": boshqaruv.havola_yasa(tg_id)},
+            ]]})
+        return f"{tg_id}: /boshqaruv — havola yuborildi"
+
+    if matn.startswith("/help"):
+        yordam = ("/start — saytga kirish havolasini olish\n"
+                  "/raqam — telefon raqamini bog'lash\n"
+                  "Savollar bo'lsa shu yerga yozing.")
+        if boshqaruv.admin_tg_mi(tg_id):
+            yordam += "\n/boshqaruv — hisobot paneli"
+        api("sendMessage", chat_id=chat_id, text=yordam)
         return f"{tg_id}: /help"
 
     # Boshqa har qanday xabar — yo'naltiramiz.

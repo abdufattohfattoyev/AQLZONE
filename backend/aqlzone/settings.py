@@ -153,11 +153,24 @@ SESSION_TTL_DAYS = int(env("SESSION_TTL_DAYS", "180"))
 
 # Boshqaruv paneli (/boshqaruv) paroli.
 #
-# BO'SH BO'LSA PANEL BUTUNLAY YO'Q — manzil 404 qaytaradi. Standart holat
-# ataylab "yopiq": parol qo'yishni unutilgan server hisobotni ochiq
-# qoldirib ketmasligi kerak. Yoqish uchun .env ga uzun parol yozing:
+# Yoqish uchun .env ga uzun parol yozing:
 #   python -c "import secrets; print(secrets.token_urlsafe(24))"
 ADMIN_PAROL = env("ADMIN_PAROL", "")
+
+# Administratorlarning Telegram id'lari, vergul bilan.
+#
+# Shu ro'yxatdagi odam botga /boshqaruv yozsa, bot unga kirish havolasini
+# yuboradi — parol eslab yurish shart emas. Ro'yxat SERVERDA turadi va
+# uni faqat .env ga kira oladigan odam o'zgartiradi; ya'ni Telegram id
+# ni bilish o'z-o'zidan hech narsa bermaydi.
+ADMIN_TG = [x for x in env_list("ADMIN_TG_IDS", []) if x]
+
+# Panel umuman yoqilganmi. Ikkala yo'ldan biri sozlanmagan bo'lsa,
+# /boshqaruv manzili BUTUNLAY yo'q (404).
+#
+# Standart holat ataylab "yopiq": sozlashni unutilgan server butun
+# foydalanuvchilar ro'yxatini ochiq qoldirib ketmasligi kerak.
+BOSHQARUV_YONIQ = bool(ADMIN_PAROL or ADMIN_TG)
 
 # Mobil ilova boshqa origin'dan chaqiradi. Cookie ishlatilmaydi —
 # himoya Bearer token orqali, shuning uchun "*" xavfsiz.

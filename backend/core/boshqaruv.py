@@ -12,10 +12,15 @@ jadvallar, migratsiyalar va foydalanuvchi boshqaruvini olib keladi —
 bitta odam ochadigan hisobot sahifasi uchun juda katta narx. Bu yerda
 esa bitta parol yetarli.
 
-Kirish: `.env` da `ADMIN_PAROL` bo'lishi shart. Bo'lmasa sahifa
-BUTUNLAY o'chiq (404) — ya'ni parol qo'yishni unutgan server ochiq
-qolib ketmaydi. Bu ataylab shunday: xavfsizlikning standart holati
-"yopiq" bo'lishi kerak.
+Kirishning ikki yo'li bor va ikkalasi ham bir xil belgiga olib keladi:
+
+  Telegram — admin botga /boshqaruv yozadi, bot havola yuboradi.
+             Telegram id `ADMIN_TG` ro'yxatida bo'lishi shart.
+  Parol    — `ADMIN_PAROL` bilan. Bot ishlamay qolgan holat uchun zaxira.
+
+Ikkalasi ham sozlanmagan bo'lsa sahifa BUTUNLAY o'chiq (404) — ya'ni
+sozlashni unutgan server ochiq qolib ketmaydi. Bu ataylab shunday:
+xavfsizlikning standart holati "yopiq" bo'lishi kerak.
 """
 from __future__ import annotations
 
@@ -43,6 +48,13 @@ MUDDAT = 12 * 3600
 #: boshqa maqsadda yasalgan imzo bu yerda o'tmaydi.
 TUZ = "aqlzone.boshqaruv"
 
+#: Botdagi havolaning imzo maqsadi va amal qilish muddati (sekund).
+#:
+#: Qisqa: havola shaxsiy suhbatda yotib qoladi va uzoq amal qilsa,
+#: telefoni ochiq qolgan odamning hisoboti begonaga ochilardi.
+HAVOLA_TUZ = "aqlzone.boshqaruv.havola"
+HAVOLA_MUDDAT = 10 * 60
+
 #: "Hozir onlayn" deb hisoblanadigan oraliq (daqiqa).
 #:
 #: `Session.last_seen` har so'rovda emas, ma'lum oraliqda yangilanadi
@@ -56,6 +68,47 @@ def _parol() -> str:
     return getattr(settings, "ADMIN_PAROL", "") or ""
 
 
+def _yoniq() -> bool:
+    return bool(getattr(settings, "BOSHQARUV_YONIQ", False))
+
+
+def admin_tg_mi(tg_id: str) -> bool:
+    """Shu Telegram id administratorniki-mi (`ADMIN_TG` ro'yxatida bormi)."""
+    return str(tg_id) in {str(x) for x in getattr(settings, "ADMIN_TG", [])}
+
+
+def havola_yasa(tg_id: str) -> str:
+    """
+    Botga yuboriladigan kirish havolasi.
+
+    Kodda hech qanday sir yo'q — u `SECRET_KEY` bilan IMZOLANGAN qiymat.
+    Ya'ni bazada saqlash kerak emas: server imzoni tekshiradi va vaqti
+    o'tganini `max_age` o'zi rad etadi.
+
+    Kod bir martalik QILINMADI. Sabab `kod_bilan_kir` dagi bilan bir xil:
+    havolani bir marta ochish deyarli hech qachon bitta so'rov bilan
+    tugamaydi — Telegram havolani oldindan yuklaydi, odam uni boshqa
+    brauzerda ochishi mumkin. Bir martalik bo'lsa, havola admin bosishidan
+    OLDIN ishlatilib bo'lingan bo'lardi. Cheklov o'rniga qisqa muddat.
+    """
+    kod = signing.dumps({"tg": str(tg_id)}, salt=HAVOLA_TUZ)
+    asos = (getattr(settings, "SAYT_URL", "") or "").rstrip("/")
+    return f"{asos}/boshqaruv/havola/{kod}"
+
+
+def _belgini_ber(javob):
+    """Kirganlik belgisini cookie'ga yozadi. Ikkala kirish yo'li ham shu yerda tugaydi."""
+    javob.set_cookie(
+        COOKIE,
+        signing.dumps({"ok": True}, salt=TUZ),
+        max_age=MUDDAT,
+        httponly=True,                       # JS o'qiy olmaydi
+        secure=not settings.DEBUG,           # faqat HTTPS orqali
+        samesite="Lax",
+    )
+    return javob
+
+
 def kirganmi(request) -> bool:
     xom = request.COOKIES.get(COOKIE, "")
     if not xom:
@@ -67,31 +120,47 @@ def kirganmi(request) -> bool:
         return False
 
 
+def havola(request, kod: str):
+    """Botdagi havola. Imzo to'g'ri va muddati o'tmagan bo'lsa — ichkariga."""
+    if not _yoniq():
+        raise Http404
+    try:
+        ma = signing.loads(kod, salt=HAVOLA_TUZ, max_age=HAVOLA_MUDDAT)
+    except signing.BadSignature:
+        return render(request, "boshqaruv/kirish.html", {
+            "xato": "Havola eskirgan. Botga /boshqaruv yozib yangisini oling.",
+        }, status=401)
+
+    # Imzo o'zi yetarli emas: ro'yxatdan chiqarilgan admin eski havolasi
+    # bilan qaytib kira olmasligi kerak.
+    if not admin_tg_mi(ma.get("tg", "")):
+        raise Http404
+
+    return _belgini_ber(HttpResponseRedirect("/boshqaruv"))
+
+
 @csrf_protect
 def kirish(request):
-    """Parol so'raydigan sahifa. Parol sozlanmagan bo'lsa — sahifa yo'q."""
-    if not _parol():
+    """Parol so'raydigan sahifa."""
+    if not _yoniq():
         raise Http404
 
     xato = ""
     if request.method == "POST":
         berilgan = request.POST.get("parol", "")
         # `compare_digest` — parolni belgima-belgi solishtirishda ketadigan
-        # vaqt farqidan ma'lumot sizib chiqmasin.
-        if hmac.compare_digest(berilgan, _parol()):
-            javob = HttpResponseRedirect("/boshqaruv")
-            javob.set_cookie(
-                COOKIE,
-                signing.dumps({"ok": True}, salt=TUZ),
-                max_age=MUDDAT,
-                httponly=True,                       # JS o'qiy olmaydi
-                secure=not settings.DEBUG,           # faqat HTTPS orqali
-                samesite="Lax",
-            )
-            return javob
+        # vaqt farqidan ma'lumot sizib chiqmasin. Parol sozlanmagan bo'lsa
+        # bu yo'l butunlay yopiq: bo'sh parol hech qachon to'g'ri emas.
+        if _parol() and hmac.compare_digest(berilgan, _parol()):
+            return _belgini_ber(HttpResponseRedirect("/boshqaruv"))
         xato = "Parol noto'g'ri"
 
-    return render(request, "boshqaruv/kirish.html", {"xato": xato}, status=401 if xato else 200)
+    return render(request, "boshqaruv/kirish.html", {
+        "xato": xato,
+        "parol_bormi": bool(_parol()),
+        "tg_bormi": bool(getattr(settings, "ADMIN_TG", [])),
+        "bot": getattr(settings, "BOT_USERNAME", ""),
+    }, status=401 if xato else 200)
 
 
 def chiqish(request):
@@ -101,7 +170,7 @@ def chiqish(request):
 
 
 def panel(request):
-    if not _parol():
+    if not _yoniq():
         raise Http404
     if not kirganmi(request):
         return kirish(request)
