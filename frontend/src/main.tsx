@@ -7,6 +7,7 @@ import { Fon } from "./components/Fon";
 import { Holat } from "./components/Holat";
 import { XatoUshlagich } from "./components/XatoUshlagich";
 import { Tanishuv } from "./components/Tanishuv";
+import { Kanal } from "./components/Kanal";
 import { ProgressProvider } from "./lib/progress";
 
 /**
@@ -33,6 +34,10 @@ createRoot(document.getElementById("root")!).render(
               holatda bu qatlam ko'rinmaydi va hech narsa qilmaydi. */}
           <Tanishuv>
             <App />
+            {/* Kanalga taklif. Tanishuv ICHIDA: hali ro'yxatdan
+                o'tmagan odamga reklama ko'rsatilmaydi — u avval
+                ilovaga kirib olsin. */}
+            <Kanal />
           </Tanishuv>
           <Holat />
         </ProgressProvider>

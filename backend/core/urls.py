@@ -15,4 +15,5 @@ urlpatterns = [
     path("results", views.results, name="results"),
     path("summary", views.summary, name="summary"),
     path("leaderboard", views.leaderboard, name="leaderboard"),
+    path("kanal", views.kanal, name="kanal"),
 ]

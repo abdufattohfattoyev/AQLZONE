@@ -12,6 +12,7 @@ import json
 from datetime import timedelta
 from io import StringIO
 import time
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 from django.core.management import call_command
@@ -1033,3 +1034,101 @@ class BoshqaruvTest(TestCase):
         Pupil.objects.all().delete()
         self.kir()
         self.assertEqual(self.client.get("/boshqaruv").status_code, 200)
+
+
+@override_settings(KANAL="AqlZoneUz", BOT_TOKEN=BOT)
+class KanalTest(TestCase):
+    """
+    "Kanalga qo'shiling" oynasi kimga ko'rsatiladi.
+
+    Eng muhim qoida shu: SHUBHADA KO'RSATILMAYDI. Telegram javob
+    bermasa yoki bot kanalda admin bo'lmasa, oyna chiqmaydi — chunki
+    teskarisi bitta noto'g'ri sozlama bilan hamma foydalanuvchiga, shu
+    jumladan allaqachon a'zo bo'lganlarga, har ochilishda reklama
+    ko'rsatib chiqardi.
+    """
+
+    def setUp(self):
+        self.pupil = Pupil.objects.create(first_name="Olim", registered_at=timezone.now())
+        Identity.objects.create(
+            pupil=self.pupil, provider=Identity.TELEGRAM, external_id="777",
+        )
+
+    def _javob(self, natija):
+        """`kanal._sorov` o'rniga qo'yiladigan soxta Telegram javobi."""
+        return lambda usul, **kw: natija
+
+    def test_azo_bolmaganga_korsatiladi(self):
+        from core import kanal as K
+        with patch.object(K, "_sorov", self._javob({"ok": True, "result": {"status": "left"}})):
+            self.assertTrue(K.korsatilsinmi(self.pupil))
+        # Rad javob ESLAB QOLINMAYDI: odam keyin qo'shilsa, keyingi
+        # tekshiruvda buni bilishimiz kerak.
+        self.pupil.refresh_from_db()
+        self.assertIsNone(self.pupil.kanal_azo_at)
+
+    def test_azoga_korsatilmaydi_va_eslab_qolinadi(self):
+        from core import kanal as K
+        with patch.object(K, "_sorov", self._javob({"ok": True, "result": {"status": "member"}})):
+            self.assertFalse(K.korsatilsinmi(self.pupil))
+
+        self.pupil.refresh_from_db()
+        self.assertIsNotNone(self.pupil.kanal_azo_at)
+
+        # Ikkinchi marta Telegram UMUMAN so'ralmasligi kerak.
+        def portlaydi(*a, **k):
+            raise AssertionError("a'zoligi tasdiqlangan hisob uchun so'rov ketmasligi kerak")
+        with patch.object(K, "_sorov", portlaydi):
+            self.assertFalse(K.korsatilsinmi(self.pupil))
+
+    def test_ovozi_ochirilgan_ham_azo(self):
+        from core import kanal as K
+        javob = {"ok": True, "result": {"status": "restricted", "is_member": True}}
+        with patch.object(K, "_sorov", self._javob(javob)):
+            self.assertFalse(K.korsatilsinmi(self.pupil))
+
+    def test_chiqarilgan_odam_azo_emas(self):
+        from core import kanal as K
+        javob = {"ok": True, "result": {"status": "restricted", "is_member": False}}
+        with patch.object(K, "_sorov", self._javob(javob)):
+            self.assertTrue(K.korsatilsinmi(self.pupil))
+
+    def test_telegram_javob_bermasa_korsatilmaydi(self):
+        """Bot admin emas yoki tarmoq uzilgan — bu reklama sababi emas."""
+        from core import kanal as K
+        with patch.object(K, "_sorov", self._javob({})):
+            self.assertFalse(K.korsatilsinmi(self.pupil))
+        with patch.object(K, "_sorov", self._javob({"ok": False, "error_code": 400})):
+            self.assertFalse(K.korsatilsinmi(self.pupil))
+
+    @override_settings(KANAL="")
+    def test_kanal_sozlanmagan(self):
+        from core import kanal as K
+        self.assertFalse(K.korsatilsinmi(self.pupil))
+        self.assertEqual(K.kanal_nomi(), "")
+
+    def test_telegramsiz_hisob(self):
+        """A'zoligini tekshirib bo'lmaydigan odamdan oyna hech qachon ketmasdi."""
+        from core import kanal as K
+        yolgiz = Pupil.objects.create(first_name="Anon")
+        self.assertFalse(K.korsatilsinmi(yolgiz))
+
+    def test_kanal_nomi_shakli(self):
+        from core import kanal as K
+        self.assertEqual(K.kanal_nomi(), "@AqlZoneUz")
+        self.assertEqual(K.havola(), "https://t.me/AqlZoneUz")
+        with override_settings(KANAL="@AqlZoneUz"):
+            self.assertEqual(K.kanal_nomi(), "@AqlZoneUz")
+
+    def test_endpoint(self):
+        from core import kanal as K
+        token = A.issue_token(self.pupil, "web")
+        with patch.object(K, "_sorov", self._javob({"ok": True, "result": {"status": "left"}})):
+            r = self.client.get("/api/v1/kanal", HTTP_AUTHORIZATION=f"Bearer {token}")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json(), {
+            "korsat": True, "kanal": "@AqlZoneUz", "havola": "https://t.me/AqlZoneUz",
+        })
+
+    def test_endpoint_tokensiz(self):
+        self.assertEqual(self.client.get("/api/v1/kanal").status_code, 401)

@@ -814,3 +814,23 @@
   .az-ketdi { animation: none; opacity: 0; }
   .az-reveal { opacity: 1; transform: none; transition: none; }
 }
+
+/*
+ * Kanalga taklif oynasi (components/Kanal.tsx).
+ *
+ * Fon va karta ALOHIDA jonlanadi: fon shunchaki qorayadi, karta esa
+ * pastdan ko'tarilib chiqadi. Ikkalasi birga qilinsa oyna "sakrab"
+ * paydo bo'lardi va e'tiborni kerakdan ortiq tortardi — bu reklama,
+ * ogohlantirish emas.
+ */
+@keyframes az-kanal-fon { from { opacity: 0; } to { opacity: 1; } }
+@keyframes az-kanal {
+  from { opacity: 0; transform: translateY(26px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+.az-kanal-fon { animation: az-kanal-fon 0.25s ease-out both; }
+.az-kanal { animation: az-kanal 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .az-kanal-fon, .az-kanal { animation-duration: 0.01ms; }
+}

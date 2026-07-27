@@ -512,3 +512,34 @@ export async function profilQosh(ism: string): Promise<Profil | null> {
     return null;
   }
 }
+
+/* ---------------------------------------------------- Telegram kanali */
+
+export interface KanalHolat {
+  /** Bu odam kanalda YO'Q — taklif oynasini ko'rsatsa bo'ladi. */
+  korsat: boolean;
+  /** `@AqlZoneUz`. Sozlanmagan bo'lsa bo'sh. */
+  kanal: string;
+  havola: string;
+}
+
+/**
+ * Kanalga taklif oynasi shu odamga kerakmi.
+ *
+ * Server Telegram'dan so'raydi, ya'ni javob bir necha yuz millisekund
+ * kechikishi mumkin. Shuning uchun bu chaqiruv ilova ochilishini KUTIB
+ * TURMAYDI — oyna baribir bir necha soniyadan keyin chiqadi.
+ *
+ * Xato bo'lsa `null`: bunda oyna ko'rsatilmaydi. Tarmoq uzilgani yoki
+ * server yiqilgani foydalanuvchiga reklama ko'rsatish sababi emas.
+ */
+export async function getKanal(): Promise<KanalHolat | null> {
+  if (!(await signIn())) return null;
+  try {
+    const r = await fetch("/api/v1/kanal", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as KanalHolat;
+  } catch { return null; }
+}

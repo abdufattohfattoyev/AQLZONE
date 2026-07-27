@@ -68,6 +68,17 @@ class Pupil(models.Model):
     #: emas. Reyting aynan shu bayroqqa qaraydi: ismsiz qatnashchi
     #: ro'yxatda "Noma'lum" bo'lib turmasligi kerak.
     registered_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Telegram kanaliga a'zoligi TASDIQLANGAN payt. `None` — hali yo'q.
+    #:
+    #: Nega saqlanadi: ilova har ochilganda "kanalga qo'shiling" oynasini
+    #: ko'rsatish-ko'rsatmaslikni hal qilish kerak, javob esa Telegram'dan
+    #: keladi. Har safar so'rasak, a'zo bo'lib bo'lgan odam uchun ham
+    #: tashqi so'rov ketardi va ilova o'sha javobni kutib turardi.
+    #:
+    #: Bir marta tasdiqlangach qayta so'ralmaydi. Odam keyin kanaldan
+    #: chiqib ketsa ham qaytarib chaqirmaymiz — bir marta rad javob
+    #: bergan odamni ta'qib qilish obuna qaytarmaydi, ilovadan bezdiradi.
+    kanal_azo_at = models.DateTimeField(null=True, blank=True, default=None)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

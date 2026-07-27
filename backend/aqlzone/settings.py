@@ -151,6 +151,13 @@ BOT_USERNAME = env("BOT_USERNAME", "")
 # Sessiya tokeni necha kun amal qiladi.
 SESSION_TTL_DAYS = int(env("SESSION_TTL_DAYS", "180"))
 
+# Telegram kanali — ilovadagi "kanalga qo'shiling" oynasi uchun.
+#
+# Bo'sh bo'lsa oyna umuman chiqmaydi. Ishlashi uchun BOT O'SHA KANALDA
+# ADMINISTRATOR bo'lishi shart: a'zolikni `getChatMember` bilan faqat
+# admin so'ray oladi. Batafsil — `core/kanal.py`.
+KANAL = env("KANAL", "")
+
 # Boshqaruv panelining (/boshqaruv) administratorlari — Telegram id'lari,
 # vergul bilan.
 #

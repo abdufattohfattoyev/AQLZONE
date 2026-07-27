@@ -15,6 +15,7 @@ kelajakdagi APK/iOS ilova ham AYNAN shu manzillarni chaqiradi.
     GET  /api/v1/results?limit=20           +Bearer
     GET  /api/v1/summary                    +Bearer → ota-ona hisoboti uchun
     GET  /api/v1/leaderboard?davr=jami|hafta +Bearer → top + o'z o'rning
+    GET  /api/v1/kanal                      +Bearer → "kanalga qo'shiling" oynasi kerakmi
     GET  /api/health
 """
 from __future__ import annotations
@@ -32,6 +33,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from . import auth as A
+from . import kanal as K
 from .models import (
     BIZNING_KALIT, MAX_QIYMAT, Identity, LessonResult, Profile, Progress, Pupil, Session,
 )
@@ -666,3 +668,24 @@ def profile_detail(request, pk: int):
     s = ProfileSerializer(pr, data=request.data, partial=True)
     s.is_valid(raise_exception=True)
     return Response({"profil": _profil_json(s.save())})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def kanal(request):
+    """
+    "Telegram kanalimizga qo'shiling" oynasi shu hisobga kerakmi.
+
+    Javob mijozga ISHORA, buyruq emas: oynani ko'rsatish-ko'rsatmaslikni
+    mijoz o'zi hal qiladi (odam "Keyinroq" degan bo'lishi mumkin). Server
+    faqat bitta savolga javob beradi — bu odam kanalda bormi.
+
+    Tekshiruv Telegram'ga so'rov yuboradi, ya'ni sekin bo'lishi mumkin.
+    Shuning uchun u `/me` ichiga QO'SHILMADI: ilova ochilishi butun
+    boshli tashqi xizmatga bog'lanib qolmasligi kerak.
+    """
+    return Response({
+        "korsat": K.korsatilsinmi(request.user),
+        "kanal": K.kanal_nomi(),
+        "havola": K.havola(),
+    })
