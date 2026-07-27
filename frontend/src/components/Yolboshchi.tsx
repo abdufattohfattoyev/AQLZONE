@@ -99,33 +99,41 @@ export function Yolboshchi({ onTugadi }: { onTugadi: () => void }) {
     // Nishon ekrandan tashqarida bo'lishi mumkin (boblar ro'yxati pastda).
     // Avval uni ko'rinishga suramiz, KEYIN o'lchaymiz — aks holda dog'
     // ekrandan tashqarida chizilardi.
-    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    //
+    // Surilish DARHOL bo'ladi, silliq emas. Silliq surilish kadrlarni
+    // talab qiladi va u tugamasdan qolishi mumkin (sahifa orqa fonda,
+    // brauzer kadrlarni to'xtatgan, "harakatni kamaytirish" yoqilgan) —
+    // o'shanda yorug' dog' ekrandan tashqarida chizilib, qadam butunlay
+    // bo'sh ko'rinardi. Harakat baribir bor: dog'ning o'zi nishondan
+    // nishonga suzib o'tadi.
+    el?.scrollIntoView({ block: "center", behavior: "auto" });
 
-    // Silliq surilish tugashini kutamiz. Aniq hodisa yo'q, shuning uchun
-    // ikki marta o'lchaymiz: darhol (surilish kerak bo'lmagan holat uchun)
-    // va surilish tugashi kutilgan paytda.
+    // Ikki marta o'lchaymiz. Surilishdan keyin sahifa qayta joylashishi
+    // mumkin (`Reveal` kartalari ochiladi va balandlik o'zgaradi), shuning
+    // uchun bir oz kutib yana bir marta aniqlaymiz.
     setDog(olcha(qadam.nishon));
-    const t = setTimeout(() => { if (!bekor) setDog(olcha(qadam.nishon)); }, 420);
+    const t = setTimeout(() => { if (!bekor) setDog(olcha(qadam.nishon)); }, 260);
 
     return () => { bekor = true; clearTimeout(t); };
   }, [qadam, olcha]);
 
-  /* --- ekran o'lchami o'zgarsa dog' joyida qolsin --- */
+  /* --- sahifa surilsa yoki ekran o'lchami o'zgarsa, dog' nishonda qolsin --- */
   useEffect(() => {
     const yangila = () => setDog(olcha(qadam.nishon));
     window.addEventListener("resize", yangila);
-    return () => window.removeEventListener("resize", yangila);
+    // `scroll` ham kuzatiladi va bu SHART: qadam almashganda nishon
+    // ko'rinishga suriladi, surilish esa bir necha kadr davom etadi.
+    // Faqat oxirida bir marta o'lchasak, dog' surilish yo'lida qolib,
+    // nishondan siljib turardi.
+    window.addEventListener("scroll", yangila, { passive: true });
+    return () => {
+      window.removeEventListener("resize", yangila);
+      window.removeEventListener("scroll", yangila);
+    };
   }, [qadam, olcha]);
 
   /* --- har qadam ovoz chiqarib o'qiladi (o'qishni bilmaydigan bola uchun) --- */
   useEffect(() => { gapir(qadam.matn); }, [qadam]);
-
-  /* --- sayohat davomida sahifa aylanmasin: dog' nishondan qochib ketardi --- */
-  useEffect(() => {
-    const oldingi = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = oldingi; };
-  }, []);
 
   const tugat = useCallback(() => { turKorildi(); onTugadi(); }, [onTugadi]);
   const keyingi = useCallback(() => {

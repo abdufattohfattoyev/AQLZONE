@@ -1,0 +1,156 @@
+/**
+ * Pastki panel — ilovaning asosiy navigatsiyasi.
+ *
+ * HAMMA ekranda turadi va o'rni hech qachon o'zgarmaydi. Aynan shu
+ * o'zgarmaslik uni foydali qiladi: bola bir marta "do'kon pastda, o'ngdan
+ * ikkinchi" deb o'rganadi va keyin o'ylamaydi. Ilgari bu tugmalar faqat
+ * kurs sahifasida, yuqorida, yozuvsiz kulrang doiralar bo'lib turardi —
+ * boshqa ekranga o'tgan bola ularni butunlay yo'qotardi va orqaga qaytish
+ * tugmasini qidirishga majbur bo'lardi.
+ *
+ * Uchta tugma KURSGA bog'liq (darslar, nishonlar, do'kon), ikkitasi
+ * bog'liq emas (bosh sahifa, reyting). Kursga bog'liqlari qaysi kursni
+ * ochadi degan savol bor va javob uch bosqichli:
+ *
+ *   1. Ayni paytda kurs sahifasidamiz — o'sha kurs.
+ *   2. Emasmiz (masalan reytingda) — oxirgi ochilgan kurs (`lib/oxirgi`).
+ *   3. Hali hech qanday kurs ochilmagan — ro'yxatdagi birinchisi.
+ *
+ * Busiz bosh sahifada turgan bola "Do'kon" ni bosganda hech narsa
+ * bo'lmasdi: qaysi kursning do'koni ochilishi noma'lum edi.
+ */
+import { useEffect, useMemo } from "react";
+import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
+import { Icon } from "../lib/icons";
+import { COURSES, courseBySlug } from "../lib/curriculum";
+import { oxirgiKurs } from "../lib/oxirgi";
+import { useProgress } from "../lib/progress";
+import { nishonlar, olingan } from "../lib/nishon";
+import {
+  yolDokon, yolKurs, yolKurslar, yolNishon, yolReyting,
+} from "../lib/yollar";
+
+/**
+ * Panel KO'RINMAYDIGAN manzillar.
+ *
+ * Dars va takrorlash — diqqat talab qiladigan ish. Pastda navigatsiya
+ * tursa, bola savol o'rtasida uni bexosdan bosib, yig'gan javoblarini
+ * yo'qotardi. Kirish esa hali hisob yo'q joy: paneldagi hech bir manzil
+ * u yerda ma'noga ega emas.
+ */
+const YOPIQ = [
+  /^\/kurs\/[^/]+\/\d+-bob\//,   // dars
+  /^\/kurs\/[^/]+\/daftar$/,     // xatolar daftari (u ham dars)
+  /^\/kirish\//,                 // botdagi havola
+];
+
+export const panelKerakmi = (yol: string): boolean => !YOPIQ.some((r) => r.test(yol));
+
+export function Panel() {
+  const { pathname } = useLocation();
+  const nav = useNavigate();
+  const { progressOf, kunlik } = useProgress();
+
+  // Manzildagi kurs, bo'lmasa oxirgi ochilgani, bo'lmasa birinchisi.
+  const kurs =
+    courseBySlug(/^\/kurs\/([^/]+)/.exec(pathname)?.[1] ?? "") ??
+    courseBySlug(oxirgiKurs()) ??
+    COURSES[0];
+
+  // Yangi nishon bor-yo'qligi — tugma ustidagi qizil nuqta uchun.
+  const p = progressOf(kurs);
+  const yangiNishon = useMemo(
+    () => olingan(nishonlar({
+      progress: p, kunlik, units: kurs.units, savollar: p.savollar ?? 0,
+    })) > 0,
+    [p, kunlik, kurs],
+  );
+
+  const bosh = pathname === yolKurslar();
+  const darslar = /^\/kurs\/[^/]+$/.test(pathname);
+
+  /**
+   * Faol tugma qayta bosilsa — sahifa boshiga qaytadi.
+   *
+   * Bir xil manzilga o'tish hech narsa qilmaydi va tugma "buzuq" bo'lib
+   * tuyulardi. Pastga aylanib ketgan odam uchun esa eng tabiiy kutilma
+   * aynan shu: tepaga qayt.
+   */
+  const yur = (yol: string, faol: boolean) => () => {
+    if (faol) window.scrollTo({ top: 0, behavior: "smooth" });
+    else nav(yol);
+  };
+
+  return (
+    <>
+      {/* Oddiy oqimdagi bo'shliq: panel `fixed` bo'lgani uchun sahifa
+          oxiri uning ostiga kirib qolardi. Bo'shliq shu yerda turadi va
+          panel bilan BIRGA paydo bo'ladi — darsda ikkalasi ham yo'q. */}
+      <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))]" />
+
+      <nav data-tur="panel"
+        className="az-shisha fixed inset-x-0 bottom-0 z-30 border-t border-karta/45
+                   pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex w-full max-w-[430px] px-1 sm:max-w-[560px]">
+          <Tab ic="home" nom="Bosh" faol={bosh} on={yur(yolKurslar(), bosh)} />
+          <Tab ic="map" nom="Darslar" faol={darslar} on={yur(yolKurs(kurs), darslar)} />
+          <Tab ic="trophy" nom="Nishonlar" nuqta={yangiNishon}
+            faol={pathname === yolNishon(kurs)}
+            on={yur(yolNishon(kurs), pathname === yolNishon(kurs))} />
+          <Tab ic="palette" nom="Do'kon"
+            faol={pathname === yolDokon(kurs)}
+            on={yur(yolDokon(kurs), pathname === yolDokon(kurs))} />
+          <Tab ic="order" nom="Reyting"
+            faol={pathname === yolReyting()}
+            on={yur(yolReyting(), pathname === yolReyting())} />
+        </div>
+      </nav>
+    </>
+  );
+}
+
+/** Panelning bitta tugmasi. Balandligi 56px — barmoq uchun yetarli. */
+function Tab({ ic, nom, on, faol = false, nuqta = false }: {
+  ic: "home" | "map" | "trophy" | "palette" | "order";
+  nom: string;
+  on: () => void;
+  faol?: boolean;
+  nuqta?: boolean;
+}) {
+  return (
+    <button type="button" onClick={on} title={nom}
+      aria-current={faol ? "page" : undefined}
+      className={`clay-press flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2
+                  ${faol ? "text-brand-green-d" : "text-ink-soft"}`}>
+      <span className="relative">
+        <Icon name={ic} size={22} />
+        {nuqta && (
+          <span className="absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
+        )}
+      </span>
+      {/* Beshta yozuv 400px ga sig'ishi kerak: "Nishonlar" eng uzuni. */}
+      <span className="text-[11.5px] leading-none">{nom}</span>
+    </button>
+  );
+}
+
+/**
+ * Sahifa almashganda tepaga qaytarish.
+ *
+ * Panel bilan birga keldi va usiz nuqson ko'rinardi: reytingni pastigacha
+ * aylantirgan odam "Do'kon" ni bossa, do'kon ham O'RTASIDAN ochilardi.
+ * Brauzerning orqaga tugmasi bunga kirmaydi — u yerda odam o'zi qoldirgan
+ * joyga qaytishni kutadi, shuning uchun faqat yangi o'tishlar hisobga
+ * olinadi.
+ */
+export function TepagaQayt() {
+  const { pathname } = useLocation();
+  const tur = useNavigationType();
+  useEffect(() => {
+    // "POP" — brauzerning orqaga/oldinga tugmasi. U yerda odam o'zi
+    // qoldirgan joyga qaytishni kutadi, shuning uchun tegilmaydi.
+    if (tur === "POP") return;
+    window.scrollTo(0, 0);
+  }, [pathname, tur]);
+  return null;
+}

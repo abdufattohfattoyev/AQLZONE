@@ -10,7 +10,6 @@ import { UNIT_COLORS, keyingiDars, lessonId } from "../lib/types";
 import type { Progress, Unit } from "../lib/types";
 import type { Kunlik } from "../lib/progress";
 import { bugungiSoni } from "../lib/takrorlash";
-import { nishonlar, olingan } from "../lib/nishon";
 import { buyumTop } from "../lib/dokon";
 
 interface Props {
@@ -26,14 +25,9 @@ interface Props {
   /** Bir kunda nechta savol yechish kerak. */
   maqsad: number;
   onStart: (ui: number, li: number) => void;
-  onBack: () => void;
   /** Xatolar daftaridagi takrorlash darsini ochadi. */
   onDaftar: () => void;
-  onDokon: () => void;
-  onNishon: () => void;
   onOtaOna: () => void;
-  /** Reyting — kursga bog'liq emas, lekin pastki panelda turadi. */
-  onReyting: () => void;
 }
 
 function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -69,7 +63,7 @@ function Ring({ done, total, color }: { done: number; total: number; color: stri
 
 export function Home({
   slug, title, izoh, units, progress, kunlik, maqsad,
-  onStart, onBack, onDaftar, onDokon, onNishon, onOtaOna, onReyting,
+  onStart, onDaftar, onOtaOna,
 }: Props) {
   const totals = useMemo(() => {
     const total = units.reduce((s, U) => s + U.lessons.length, 0);
@@ -89,12 +83,6 @@ export function Home({
   // o'qish yetarli: darsdan qaytilganda marshrut almashadi va bu ekran
   // butunlay qaytadan yasaladi, ya'ni hisob o'z-o'zidan yangilanadi.
   const daftarSoni = useMemo(() => bugungiSoni(slug), [slug]);
-
-  const nishon = useMemo(
-    () => nishonlar({ progress, kunlik, units, savollar: progress.savollar ?? 0 }),
-    [progress, kunlik, units]
-  );
-  const yangiNishon = olingan(nishon);
 
   const kiygan = progress.kiygan ? buyumTop(progress.kiygan) : undefined;
 
@@ -120,9 +108,7 @@ export function Home({
     /* Kenglik ekranga qarab o'sadi, ammo cheklangan: dars yo'li ilon izi
        bo'lib buriladi va juda keng ustunda uning burilishlari yassilanib,
        "yo'l" o'rniga tarqoq nuqtalarga aylanadi. */
-    /* Pastda yopishib turadigan panel bor — oxirgi bo'lim uning ostiga
-       kirib qolmasligi uchun sahifa oxirida bo'sh joy qoldiriladi. */
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-32 sm:max-w-[560px] sm:px-6">
+    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-6 sm:max-w-[560px] sm:px-6">
       {/* ---- yuqori panel ----
           Bu yerda endi faqat "menda nima bor" turadi: yulduz va tanga.
           O'tish tugmalari pastdagi panelga ko'chdi. Sabab: ular bir xil
@@ -132,7 +118,11 @@ export function Home({
 
           Ota-ona tugmasi ataylab pastga TUSHMADI: u bolaga emas, kattaga
           mo'ljallangan va bolalar qatorida turgani uchun tez-tez bexosdan
-          bosilardi. Yuqorida, chetda — ko'rinadi, lekin yo'lda turmaydi. */}
+          bosilardi. Yuqorida, chetda — ko'rinadi, lekin yo'lda turmaydi.
+
+          "Kurslar ro'yxati" tugmasi ham ketdi: uning ishini pastdagi
+          paneldagi "Bosh" bajaradi va ikkita bir xil yo'l bitta ekranda
+          turishi keraksiz. */}
       <div className="flex items-center gap-2">
         {/* `data-tur` — yo'lboshchi shu atributlar bo'yicha nishonni topadi
             (components/Yolboshchi.tsx). Ekran o'zgarsa, atribut ko'chadi. */}
@@ -143,10 +133,6 @@ export function Home({
         <button type="button" onClick={onOtaOna} title="Ota-ona paneli"
           className="ml-auto grid size-11 place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
           <Icon name="parent" size={20} />
-        </button>
-        <button type="button" onClick={onBack} title="Kurslar ro'yxati"
-          className="grid size-11 place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
-          <Icon name="home" size={20} />
         </button>
       </div>
 
@@ -263,9 +249,6 @@ export function Home({
         })}
       </div>
 
-      <Panel yangiNishon={yangiNishon > 0}
-        onNishon={onNishon} onDokon={onDokon} onReyting={onReyting} />
-
       {yolboshchi && <Yolboshchi onTugadi={() => setYolboshchi(false)} />}
     </div>
   );
@@ -313,64 +296,6 @@ function Davom({ units, keyingi, boshlanmagan, onStart }: {
         </span>
       </span>
       <Icon name="chevron" size={22} className="shrink-0 text-white/80" />
-    </button>
-  );
-}
-
-/**
- * Pastki panel.
- *
- * Ilgari bu to'rt yo'nalish yuqorida, bir xil kulrang doiralar bo'lib
- * turardi — faqat belgi bilan. 1-sinf bolasi belgini o'qiy olmaydi va har
- * safar birma-bir bosib ko'rardi. Endi har birining YOZUVI bor va o'rni
- * o'zgarmaydi: bola bir marta o'rganadi.
- *
- * Panel pastda, chunki barmoq shu yerda turadi — telefonni bir qo'lda
- * ushlagan bolaning ekran tepasiga yetishi qiyin.
- */
-function Panel({ yangiNishon, onNishon, onDokon, onReyting }: {
-  yangiNishon: boolean;
-  onNishon: () => void;
-  onDokon: () => void;
-  onReyting: () => void;
-}) {
-  return (
-    /* Pastki to'ldirish xavfsiz zonadan olinadi — iPhone va Telegram
-       oynasining pastki chizig'i tugmalar ustiga chiqib qolmasin. */
-    <nav data-tur="panel"
-      className="az-shisha fixed inset-x-0 bottom-0 z-30 border-t border-karta/45
-                 pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto flex w-full max-w-[430px] px-2 sm:max-w-[560px]">
-        {/* Bu sahifaning o'zi — bosilganda tepaga qaytaradi. */}
-        <Tab ic="map" nom="Darslar" faol
-          on={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
-        <Tab ic="trophy" nom="Nishonlar" nuqta={yangiNishon} on={onNishon} />
-        <Tab ic="palette" nom="Do'kon" on={onDokon} />
-        <Tab ic="order" nom="Reyting" on={onReyting} />
-      </div>
-    </nav>
-  );
-}
-
-/** Panelning bitta tugmasi. Balandligi 56px — barmoq uchun yetarli. */
-function Tab({ ic, nom, on, faol = false, nuqta = false }: {
-  ic: "map" | "trophy" | "palette" | "order";
-  nom: string;
-  on: () => void;
-  faol?: boolean;
-  nuqta?: boolean;
-}) {
-  return (
-    <button type="button" onClick={on} title={nom}
-      className={`clay-press flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2
-                  ${faol ? "text-brand-green-d" : "text-ink-soft"}`}>
-      <span className="relative">
-        <Icon name={ic} size={23} />
-        {nuqta && (
-          <span className="absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
-        )}
-      </span>
-      <span className="text-[12px] leading-none">{nom}</span>
     </button>
   );
 }

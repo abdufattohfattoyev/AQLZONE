@@ -6,7 +6,8 @@
  * o'chirilgan bo'lsa — bo'sh ekran o'rniga tushunarli sahifa ko'rsatiladi.
  */
 import { useEffect, useMemo } from "react";
-import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Panel, TepagaQayt, panelKerakmi } from "./components/Panel";
 import { Dashboard } from "./screens/Dashboard";
 import { Home } from "./screens/Home";
 import { Lesson } from "./screens/Lesson";
@@ -27,11 +28,27 @@ import { takrorlashDarsi } from "./lib/takrorlash";
 import { oxirginiYoz } from "./lib/oxirgi";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
-  indeksniOqi, yolDaftar, yolDars, yolDokon, yolKurs, yolKurslar, yolNishon,
+  indeksniOqi, yolDaftar, yolDars, yolKurs, yolKurslar,
   yolOtaOna, yolReyting, yolSozlama,
 } from "./lib/yollar";
 
 export default function App() {
+  // Panel `Routes` dan TASHQARIDA turadi va shu sabab marshrut
+  // almashganda qayta yasalmaydi: u joyida qotib turadi, bosilgan tugma
+  // esa faqat rangini o'zgartiradi. Har ekranda alohida chizilsa, panel
+  // har o'tishda bir lahzaga yo'qolib, qaytadan paydo bo'lardi.
+  const { pathname } = useLocation();
+
+  return (
+    <>
+      <TepagaQayt />
+      <Yollar />
+      {panelKerakmi(pathname) && <Panel />}
+    </>
+  );
+}
+
+function Yollar() {
   return (
     <Routes>
       <Route path="/" element={<KurslarSahifasi />} />
@@ -102,13 +119,9 @@ function KursSahifasi() {
       progress={progressOf(c)}
       kunlik={kunlik}
       maqsad={KUNLIK_MAQSAD}
-      onBack={() => nav(yolKurslar())}
       onStart={(ui, li) => nav(yolDars(c, ui, li))}
       onDaftar={() => nav(yolDaftar(c))}
-      onDokon={() => nav(yolDokon(c))}
-      onNishon={() => nav(yolNishon(c))}
       onOtaOna={() => nav(yolOtaOna(c))}
-      onReyting={() => nav(yolReyting())}
     />
   );
 }
