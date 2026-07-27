@@ -63,6 +63,24 @@ HAVOLA_MUDDAT = 10 * 60
 #: o'ynayotgan bola ham "onlayn emas" bo'lib ko'rinardi.
 ONLAYN_DAQIQA = 15
 
+#: Panel FAQAT ro'yxatdan o'tganlarni sanaydi.
+#:
+#: Ilovaga kirishning yagona yo'li — Telegram va ism-familiya
+#: (`frontend/src/components/Tanishuv.tsx`). Lekin hisob qatori undan
+#: OLDINROQ yaratiladi: brauzer birinchi so'rovdayoq qurilma tokenini
+#: oladi, ya'ni sahifani ochib darhol yopgan har bir odam bazada bitta
+#: bo'sh `Pupil` bo'lib qoladi.
+#:
+#: Bunday qatorlar hisobotni buzadi: "1200 hisob" degan raqamning
+#: ko'pchiligi ilovani ko'rmagan ham. Shuning uchun panelning HAMMA
+#: qismida shu filtr turadi — kartalar, jadvallar, grafik, oqim.
+#: Ro'yxatsizlar faqat bitta joyda ko'rinadi: voronkaning birinchi
+#: qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
+ROYXAT = Q(registered_at__isnull=False)
+
+#: O'sha filtrning `LessonResult`/`Progress` tomonidan ko'rinishi.
+DARS_ROYXAT = Q(profile__pupil__registered_at__isnull=False)
+
 
 def _parol() -> str:
     return getattr(settings, "ADMIN_PAROL", "") or ""
@@ -193,18 +211,68 @@ def sinf_nomi(grade) -> str:
     return "Maktabgacha" if grade == 0 else f"{grade}-sinf"
 
 
+def _foiz(qism: int, butun: int) -> int:
+    return round(qism * 100 / butun) if butun else 0
+
+
+def _ozgarish(hozirgi: int, oldingi: int) -> int | None:
+    """
+    Ikki davr orasidagi farq, foizda.
+
+    `None` — solishtirish MA'NOSIZ bo'lgan holat: oldingi davrda umuman
+    harakat bo'lmagan. "0 dan 5 ga o'sish necha foiz" degan savolning
+    javobi yo'q, va o'rniga "+500%" yozib qo'yish yolg'on bo'lardi.
+    """
+    if not oldingi:
+        return None
+    return round((hozirgi - oldingi) * 100 / oldingi)
+
+
+def _chiziq(qiymatlar: list[int], eng_katta: int) -> str:
+    """
+    SVG `polyline` uchun nuqtalar.
+
+    Koordinatalar 0…1000 × 0…100 oralig'ida beriladi, SVG esa
+    `preserveAspectRatio="none"` bilan cho'ziladi. Ya'ni grafik qanday
+    kenglikda turishidan qat'i nazar bir xil chiqadi va shablonda
+    arifmetika qolmaydi — u yerda hisob-kitob qilib bo'lmaydi ham.
+    """
+    if not qiymatlar:
+        return ""
+    if len(qiymatlar) == 1:
+        qiymatlar = qiymatlar * 2
+    qadam = 1000 / (len(qiymatlar) - 1)
+    return " ".join(
+        f"{round(i * qadam, 1)},{round(100 - v * 100 / (eng_katta or 1), 1)}"
+        for i, v in enumerate(qiymatlar)
+    )
+
+
 def statistika(kunlar: int = 30) -> dict:
     hozir = timezone.now()
     bugun = timezone.localtime(hozir).date()
     oraliq = hozir - timedelta(days=kunlar)
 
-    # --- umumiy sonlar ---
-    hisoblar = Pupil.objects.count()
-    royxatdan = Pupil.objects.filter(registered_at__isnull=False).count()
-    telegramli = Identity.objects.filter(provider=Identity.TELEGRAM).values("pupil").distinct().count()
-    qurilmali = Identity.objects.filter(provider=Identity.QURILMA).values("pupil").distinct().count()
+    # Butun panel shu ikki so'rovdan o'sadi. Ikkalasi ham ro'yxatdan
+    # o'tmagan hisoblarni CHETLAB o'tadi — sabab `ROYXAT` izohida.
+    hisoblar_qs = Pupil.objects.filter(ROYXAT)
+    darslar_qs = LessonResult.objects.filter(DARS_ROYXAT)
 
-    natijalar = LessonResult.objects.aggregate(
+    # --- umumiy sonlar ---
+    royxatdan = hisoblar_qs.count()
+    jami_hisob = Pupil.objects.count()          # faqat voronka uchun
+    telegramli = (
+        Identity.objects
+        .filter(provider=Identity.TELEGRAM, pupil__registered_at__isnull=False)
+        .values("pupil").distinct().count()
+    )
+    telefonli = (
+        Identity.objects
+        .filter(provider=Identity.TELEFON, pupil__registered_at__isnull=False)
+        .values("pupil").distinct().count()
+    )
+
+    natijalar = darslar_qs.aggregate(
         darslar=Count("id"),
         savollar=Sum("asked"),
         togri=Sum("correct"),
@@ -216,51 +284,84 @@ def statistika(kunlar: int = 30) -> dict:
 
     # --- faollik ---
     onlayn_vaqt = hozir - timedelta(minutes=ONLAYN_DAQIQA)
-    onlayn = Session.objects.filter(last_seen__gte=onlayn_vaqt).values("pupil").distinct().count()
+    onlayn = (
+        Session.objects
+        .filter(last_seen__gte=onlayn_vaqt, pupil__registered_at__isnull=False)
+        .values("pupil").distinct().count()
+    )
 
     def faol(kun: int) -> int:
         """Shu oraliqda kamida bitta dars tugatgan HISOBLAR soni."""
         return (
-            LessonResult.objects
-            .filter(created_at__gte=hozir - timedelta(days=kun))
+            darslar_qs.filter(created_at__gte=hozir - timedelta(days=kun))
             .values("profile__pupil").distinct().count()
         )
+
+    bugun_faol, hafta_faol, oy_faol = faol(1), faol(7), faol(30)
+
+    # --- o'sish: shu hafta va o'tgan hafta ---
+    #
+    # Yalpi son o'sib borgani bilan hech narsa demaydi — u hech qachon
+    # kamaymaydi. Ma'noli savol bitta: shu hafta o'tgan haftadan yaxshimi.
+    hafta = hozir - timedelta(days=7)
+    old_hafta = hozir - timedelta(days=14)
+    yangi_hafta = hisoblar_qs.filter(registered_at__gte=hafta).count()
+    yangi_old = hisoblar_qs.filter(
+        registered_at__gte=old_hafta, registered_at__lt=hafta
+    ).count()
+    dars_hafta = darslar_qs.filter(created_at__gte=hafta).count()
+    dars_old = darslar_qs.filter(created_at__gte=old_hafta, created_at__lt=hafta).count()
+
+    osish = {
+        "yangi": yangi_hafta,
+        "yangi_ozgarish": _ozgarish(yangi_hafta, yangi_old),
+        "darslar": dars_hafta,
+        "dars_ozgarish": _ozgarish(dars_hafta, dars_old),
+    }
 
     # --- ro'yxatdan o'tish voronkasi ---
     #
     # Eng qimmatli ko'rsatkich shu: odamlar qaysi qadamda to'xtayapti.
-    # Har qadam oldingisining ICHIDA turadi, shuning uchun foizlar
-    # birinchi qadamdan hisoblanadi.
-    darsli = LessonResult.objects.values("profile__pupil").distinct().count()
+    # Har qadam oldingisining ICHIDA turadi.
+    darsli = darslar_qs.values("profile__pupil").distinct().count()
 
     # "Qaytgan" — kamida IKKI XIL kunda dars tugatgan. Bir kun o'ynab
     # ketganlar bilan qaytib kelganlar orasidagi farq bu yerdagi eng
     # muhim raqam: ilova ushlab qola oldimi yoki yo'q.
     kunlar_boyicha: dict[int, set] = {}
-    for pk, sana in LessonResult.objects.values_list("profile__pupil", "created_at"):
-        kunlar_boyicha.setdefault(pk, set()).add(_kun_kaliti(sana))
+    soatlar = [0] * 24
+    for pk, sana in darslar_qs.values_list("profile__pupil", "created_at"):
+        mahalliy = timezone.localtime(sana)
+        kunlar_boyicha.setdefault(pk, set()).add(mahalliy.date())
+        soatlar[mahalliy.hour] += 1
     qaytgan = sum(1 for k in kunlar_boyicha.values() if len(k) >= 2)
+    sodiq = sum(1 for k in kunlar_boyicha.values() if len(k) >= 5)
 
     voronka = [
-        {"nom": "Hisob ochgan", "son": hisoblar},
-        {"nom": "Ism kiritgan (ro'yxatdan o'tgan)", "son": royxatdan},
-        {"nom": "Telegram bog'lagan", "son": telegramli},
-        {"nom": "Kamida 1 dars tugatgan", "son": darsli},
-        {"nom": "Boshqa kuni qaytib kelgan", "son": qaytgan},
+        {"nom": "Ilovani ochgan", "son": jami_hisob,
+         "izoh": "brauzer hisob ochdi — ko'pi shu yerda to'xtaydi"},
+        {"nom": "Ro'yxatdan o'tgan", "son": royxatdan,
+         "izoh": "Telegram va ism-familiya"},
+        {"nom": "Kamida 1 dars tugatgan", "son": darsli, "izoh": ""},
+        {"nom": "Boshqa kuni qaytgan", "son": qaytgan, "izoh": "2+ xil kunda o'ynagan"},
+        {"nom": "Odat bo'lgan", "son": sodiq, "izoh": "5+ xil kunda o'ynagan"},
     ]
-    asos = hisoblar or 1
     for q in voronka:
-        q["foiz"] = round(q["son"] * 100 / asos)
+        q["foiz"] = _foiz(q["son"], jami_hisob)
+        # Ikkinchi o'lchov: ro'yxatdan o'tganlarga NISBATAN. Birinchi
+        # qadam juda katta bo'lgani uchun qolganlari yonida ko'rinmay
+        # qoladi, holbuki asosiy ish o'sha pastki qadamlarda.
+        q["ulush"] = _foiz(q["son"], royxatdan)
 
     # --- kunlik grafik ---
     yangi_kun: dict = {}
-    for sana in Pupil.objects.filter(created_at__gte=oraliq).values_list("created_at", flat=True):
+    for sana in hisoblar_qs.filter(registered_at__gte=oraliq).values_list("registered_at", flat=True):
         k = _kun_kaliti(sana)
         yangi_kun[k] = yangi_kun.get(k, 0) + 1
 
     dars_kun: dict = {}
     faol_kun: dict = {}
-    for pk, sana in LessonResult.objects.filter(created_at__gte=oraliq).values_list("profile__pupil", "created_at"):
+    for pk, sana in darslar_qs.filter(created_at__gte=oraliq).values_list("profile__pupil", "created_at"):
         k = _kun_kaliti(sana)
         dars_kun[k] = dars_kun.get(k, 0) + 1
         faol_kun.setdefault(k, set()).add(pk)
@@ -276,12 +377,33 @@ def statistika(kunlar: int = 30) -> dict:
             "faol": len(faol_kun.get(k, ())),
         })
     eng_katta = max([q["darslar"] for q in qator] + [1])
+    eng_faol = max([q["faol"] for q in qator] + [1])
     for q in qator:
         q["balandlik"] = round(q["darslar"] * 100 / eng_katta)
 
+    grafik = {
+        "qator": qator,
+        "eng_katta": eng_katta,
+        "eng_faol": eng_faol,
+        # Faol bolalar chizig'i — ustunlar ustidan o'tadigan ikkinchi qatlam.
+        "chiziq": _chiziq([q["faol"] for q in qator], eng_faol),
+        # Sana o'qida hamma kun sig'maydi: boshi, o'rtasi, oxiri yetarli.
+        "belgilar": [qator[0]["kun"], qator[len(qator) // 2]["kun"], qator[-1]["kun"]] if qator else [],
+    }
+
+    # --- kun davomida qaysi soatda o'ynaydi ---
+    #
+    # Eslatma yuborish vaqtini shu jadval hal qiladi: bola o'ynamaydigan
+    # soatda kelgan xabar shunchaki o'qilmay yopiladi.
+    soat_eng = max(soatlar + [1])
+    soat_qator = [
+        {"soat": s, "son": n, "balandlik": round(n * 100 / soat_eng)}
+        for s, n in enumerate(soatlar)
+    ]
+
     # --- sinflar bo'yicha ---
     sinflar = list(
-        LessonResult.objects.values("grade")
+        darslar_qs.values("grade")
         .annotate(
             darslar=Count("id"),
             savollar=Sum("asked"),
@@ -291,13 +413,15 @@ def statistika(kunlar: int = 30) -> dict:
         )
         .order_by("grade")
     )
+    sinf_eng = max([s["darslar"] for s in sinflar] + [1])
     for s in sinflar:
-        s["aniqlik"] = round((s["togri"] or 0) * 100 / (s["savollar"] or 1))
+        s["aniqlik"] = _foiz(s["togri"] or 0, s["savollar"] or 0)
         s["nom"] = sinf_nomi(s["grade"])
+        s["ulush"] = round(s["darslar"] * 100 / sinf_eng)
 
     # --- darslar: eng ko'p o'ynalgani va eng qiyini ---
     darslar = list(
-        LessonResult.objects.values("grade", "unit", "lesson", "lesson_name")
+        darslar_qs.values("grade", "unit", "lesson", "lesson_name")
         .annotate(
             urinish=Count("id"),
             savollar=Sum("asked"),
@@ -306,7 +430,7 @@ def statistika(kunlar: int = 30) -> dict:
         )
     )
     for d in darslar:
-        d["aniqlik"] = round((d["togri"] or 0) * 100 / (d["savollar"] or 1))
+        d["aniqlik"] = _foiz(d["togri"] or 0, d["savollar"] or 0)
         d["joy"] = f"{sinf_nomi(d['grade'])} · {d['unit'] + 1}-bob · {d['lesson'] + 1}-dars"
 
     mashhur = sorted(darslar, key=lambda d: -d["urinish"])[:10]
@@ -322,12 +446,12 @@ def statistika(kunlar: int = 30) -> dict:
     # Bitta so'rovda yig'iladi (`annotate`), aks holda har bir hisob uchun
     # alohida so'rov ketardi va ro'yxat o'sishi bilan sahifa sekinlashardi.
     xom = (
-        Pupil.objects.annotate(
+        hisoblar_qs.annotate(
             profil_soni=Count("profiles", distinct=True),
             oxirgi_kirish=Max("sessions__last_seen"),
             platforma=Max("sessions__platform"),
         )
-        .order_by(F("oxirgi_kirish").desc(nulls_last=True))[:200]
+        .order_by(F("oxirgi_kirish").desc(nulls_last=True))[:300]
     )
     pupil_ids = [p.pk for p in xom]
 
@@ -365,60 +489,82 @@ def statistika(kunlar: int = 30) -> dict:
         foydalanuvchilar.append({
             "id": p.pk,
             "ism": p.toliq_ism or "—",
+            # Jadval ustidagi qidiruv shu satr bo'yicha ishlaydi (brauzerda).
+            "qidiruv": " ".join(
+                x for x in (p.toliq_ism, p.username, p.telefon) if x
+            ).lower(),
+            "bosh": (p.first_name[:1] or "?").upper(),
             "username": p.username,
             "telefon": p.telefon,
-            "royxatdan": p.registered_at is not None,
-            "usullar": usullar.get(p.pk, []),
+            "usullar": sorted(set(usullar.get(p.pk, []))),
             "profillar": p.profil_soni,
             "yulduz": yulduzlar.get(p.pk, 0) or 0,
             "darslar": dars_soni.get(p.pk, 0),
             "sinf": sinf_nomi(eng_uzoq.get(p.pk)),
             "platforma": p.platforma or "—",
-            "qoshilgan": p.created_at,
+            "qoshilgan": p.registered_at or p.created_at,
             "oxirgi": oxirgi,
             "oxirgi_dars": oxirgi_dars.get(p.pk),
             "onlayn": bool(oxirgi and oxirgi >= onlayn_vaqt),
         })
 
+    # --- eng ko'p mashq qilganlar ---
+    faollar = [f for f in sorted(foydalanuvchilar, key=lambda f: -f["darslar"])[:10] if f["darslar"]]
+    faol_eng = max([f["darslar"] for f in faollar] + [1])
+    for f in faollar:
+        f["ulush"] = round(f["darslar"] * 100 / faol_eng)
+
     # --- so'nggi harakatlar ---
     oqim = list(
-        LessonResult.objects.select_related("profile", "profile__pupil")
+        darslar_qs.select_related("profile", "profile__pupil")
         .order_by("-created_at")[:40]
     )
 
     # --- platformalar ---
     platformalar = list(
-        Session.objects.values("platform").annotate(n=Count("token_hash")).order_by("-n")
+        Session.objects.filter(pupil__registered_at__isnull=False)
+        .values("platform").annotate(n=Count("token_hash")).order_by("-n")
     )
+    platforma_jami = sum(p["n"] for p in platformalar) or 1
+    for p in platformalar:
+        p["foiz"] = round(p["n"] * 100 / platforma_jami)
+        p["nom"] = p["platform"] or "noma'lum"
 
     return {
         "yangilangan": timezone.localtime(hozir),
         "kunlar": kunlar,
         "umumiy": {
-            "hisoblar": hisoblar,
             "royxatdan": royxatdan,
-            "royxat_foiz": round(royxatdan * 100 / asos),
-            "profillar": Profile.objects.count(),
+            "jami_hisob": jami_hisob,
+            "royxatsiz": jami_hisob - royxatdan,
+            "royxat_foiz": _foiz(royxatdan, jami_hisob),
+            "profillar": Profile.objects.filter(pupil__registered_at__isnull=False).count(),
             "telegramli": telegramli,
-            "qurilmali": qurilmali,
+            "telefonli": telefonli,
             "darslar": natijalar["darslar"] or 0,
             "savollar": savollar,
             "yulduz": natijalar["yulduz"] or 0,
-            "aniqlik": round(togri * 100 / (savollar or 1)),
+            "aniqlik": _foiz(togri, savollar),
             "soat": round((natijalar["vaqt"] or 0) / 3_600_000, 1),
+            "dars_ortacha": round((natijalar["darslar"] or 0) / (royxatdan or 1), 1),
         },
         "faollik": {
             "onlayn": onlayn,
-            "bugun": faol(1),
-            "hafta": faol(7),
-            "oy": faol(30),
+            "bugun": bugun_faol,
+            "hafta": hafta_faol,
+            "oy": oy_faol,
+            # "Necha foizi hali ham qaytib turibdi" — o'sishdan muhimroq raqam.
+            "hafta_foiz": _foiz(hafta_faol, royxatdan),
         },
+        "osish": osish,
         "voronka": voronka,
-        "qator": qator,
+        "grafik": grafik,
+        "soatlar": soat_qator,
         "sinflar": sinflar,
         "mashhur": mashhur,
         "qiyin": qiyin,
         "foydalanuvchilar": foydalanuvchilar,
+        "faollar": faollar,
         "oqim": oqim,
         "platformalar": platformalar,
         "onlayn_daqiqa": ONLAYN_DAQIQA,

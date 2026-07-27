@@ -40,7 +40,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from core import boshqaruv
-from core.auth import kirish_kodi_yasa
+from core.auth import kirish_kodi_yasa, tg_ismi
 from core.models import Identity, KirishKodi, Pupil
 
 #: Telegram javobni shuncha sekund ushlab turadi (yangilik bo'lmasa).
@@ -271,8 +271,9 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     chat_id = xabar["chat"]["id"]
     kim = xabar.get("from") or {}
     tg_id = str(kim.get("id") or "")
-    ism = kim.get("first_name") or ""
-    familiya = kim.get("last_name") or ""
+    # Telegram ismi bezakli bo'lishi mumkin (`꧁❖DAVRONOV❖꧂`) — bazaga
+    # tozalangan holda tushadi, aks holda reyting o'sha bezakni ko'rsatardi.
+    ism, familiya = tg_ismi(kim)
 
     # --- kontakt keldi ---
     kontakt = xabar.get("contact")

@@ -578,6 +578,22 @@ class IsmFamiliyaTest(TestCase):
         ).json()["user"]
         self.assertEqual(u["ism"], "Yangi")
 
+    def test_telegramdagi_bezak_bazaga_tushmaydi(self):
+        """Kirishning O'ZIDA tozalanadi — reyting bezakni ko'rsatmasin."""
+        t = self.kir(555, "꧁❖DAVRONOV❖꧂")
+        u = self.client.get(
+            "/api/v1/me", HTTP_AUTHORIZATION=f"Bearer {t}"
+        ).json()["user"]
+        self.assertEqual(u["ism"], "DAVRONOV")
+
+    def test_faqat_bezakdan_iborat_telegram_ismi_yozilmaydi(self):
+        """Harfi yo'q ism — YO'Q ism: undan ro'yxat formasida so'raymiz."""
+        t = self.kir(556, "❖❖❖")
+        u = self.client.get(
+            "/api/v1/me", HTTP_AUTHORIZATION=f"Bearer {t}"
+        ).json()["user"]
+        self.assertEqual(u["ism"], "")
+
     def test_bosh_sorov_rad_etiladi(self):
         t = self.kir()
         self.assertEqual(self.patch(t).status_code, 400)
@@ -588,18 +604,39 @@ class IsmFamiliyaTest(TestCase):
         )
         self.assertEqual(r.status_code, 401)
 
-    def test_ismda_raqam_rad_etiladi(self):
-        """Reyting hammaga ko'rinadi — "asd123" o'sha yerda turmasligi kerak."""
+    def test_harf_bolmagan_belgi_tozalanadi(self):
+        """Reyting hammaga ko'rinadi — "asd123" o'sha yerda turmasligi kerak.
+
+        Lekin RAD ETMAYMIZ: raqam va bezak kesiladi, harflari qoladi.
+        """
         t = self.kir()
-        self.assertEqual(self.patch(t, ism="asd123").status_code, 400)
+        r = self.patch(t, ism="asd123")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["user"]["ism"], "asd")
+
+    def test_bezakli_telegram_ismi_qabul_qilinadi(self):
+        """`꧁❖DAVRONOV❖꧂` — Telegram'dan aynan shunday kelib tushadi."""
+        t = self.kir()
+        r = self.patch(t, ism="꧁❖DAVRONOV❖꧂", familiya="𝓓𝓪𝓿𝓻𝓸𝓷𝓸𝓿")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["user"]["ism"], "DAVRONOV")
+        self.assertEqual(r.json()["user"]["familiya"], "Davronov")
+
+    def test_harfsiz_ism_rad_etiladi(self):
+        """Harf umuman qolmasa — o'shanda so'raymiz."""
+        t = self.kir()
         self.assertEqual(self.patch(t, familiya="!!!").status_code, 400)
+        self.assertEqual(self.patch(t, ism="❖❖❖").status_code, 400)
         self.assertEqual(self.patch(t, ism="A").status_code, 400)
 
     def test_apostrofli_ism_qabul_qilinadi(self):
         """O'zbekcha ism uch xil apostrof bilan yozilishi mumkin."""
         t = self.kir()
-        for ism in ("G'ulom", "G’ulom", "Gʻulom", "Abdulla-Qodiriy"):
-            self.assertEqual(self.patch(t, ism=ism).status_code, 200, ism)
+        for ism in ("G'ulom", "G‘ulom", "G’ulom", "Gʻulom", "Gʼulom", "Abdulla-Qodiriy"):
+            r = self.patch(t, ism=ism)
+            self.assertEqual(r.status_code, 200, ism)
+            # Apostrof KESILMASLIGI kerak: "Gulom" boshqa ism.
+            self.assertEqual(r.json()["user"]["ism"], ism, ism)
 
     def test_telefon_me_da_korinadi(self):
         t = self.kir(999, "Sardor")
@@ -885,3 +922,92 @@ class KirishKodiTest(TestCase):
         A.kirish_kodi_yasa(self.pupil)
         self.assertIsNone(A.kod_bilan_kir("yoq-bunday-kod"))
         self.assertIsNone(A.kod_bilan_kir(""))
+
+
+@override_settings(ADMIN_PAROL="sinov-parol", BOSHQARUV_YONIQ=True, ADMIN_TG=[])
+class BoshqaruvTest(TestCase):
+    """
+    Boshqaruv paneli — /boshqaruv.
+
+    Ikki narsa tekshiriladi va ikkalasi ham amalda kerak bo'lgan:
+
+    1. **Parolsiz ochilmaydi.** Panelda butun bazaning kesimi turadi.
+    2. **Ro'yxatdan o'tmaganlar SANALMAYDI.** Hisob qatori odam ilovani
+       ko'rishidan oldin yaraladi (qurilma tokeni), shuning uchun ular
+       hisobotga qo'shilsa raqamlar ma'nosini yo'qotadi.
+    """
+
+    def setUp(self):
+        hozir = timezone.now()
+
+        # Ro'yxatdan o'tgan hisob — dars natijasi bilan.
+        self.odam = Pupil.objects.create(
+            first_name="Olim", last_name="Salimov", registered_at=hozir
+        )
+        profil = self.odam.asosiy_profil()
+        LessonResult.objects.create(
+            profile=profil, grade=1, lesson_name="Qo'shish",
+            asked=6, correct=5, stars=2,
+        )
+
+        # Ro'yxatdan O'TMAGAN hisob — brauzer ochib yopgan odam.
+        # Uning ham darsi bo'lishi mumkin (ro'yxat oynasi serverga
+        # ulanmaganda o'tkazib yuboriladi), shuning uchun dars ham beramiz:
+        # test aynan shu chalkash holatni ushlashi kerak.
+        yolgon = Pupil.objects.create(first_name="")
+        LessonResult.objects.create(
+            profile=yolgon.asosiy_profil(), grade=2, lesson_name="Sanash",
+            asked=6, correct=6, stars=3,
+        )
+
+    def kir(self):
+        r = self.client.post("/boshqaruv/kirish", {"parol": "sinov-parol"})
+        self.assertEqual(r.status_code, 302)
+
+    def test_parolsiz_ochilmaydi(self):
+        r = self.client.get("/boshqaruv")
+        self.assertEqual(r.status_code, 200)      # kirish sahifasi
+        self.assertContains(r, "Boshqaruv paneli")
+        self.assertNotContains(r, "Voronka")
+
+    def test_notogri_parol(self):
+        r = self.client.post("/boshqaruv/kirish", {"parol": "boshqa"})
+        self.assertEqual(r.status_code, 401)
+
+    def test_parol_bilan_ochiladi(self):
+        self.kir()
+        r = self.client.get("/boshqaruv")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Voronka")
+        self.assertContains(r, "Olim Salimov")
+
+    def test_royxatsizlar_sanalmaydi(self):
+        from .boshqaruv import statistika
+        s = statistika(30)
+
+        self.assertEqual(s["umumiy"]["royxatdan"], 1)
+        self.assertEqual(s["umumiy"]["royxatsiz"], 1)
+        # Dars ham, savol ham, yulduz ham faqat ro'yxatdagi odamdan.
+        self.assertEqual(s["umumiy"]["darslar"], 1)
+        self.assertEqual(s["umumiy"]["savollar"], 6)
+        self.assertEqual(s["umumiy"]["yulduz"], 2)
+        # Jadvalda ham faqat o'sha bitta odam.
+        self.assertEqual(len(s["foydalanuvchilar"]), 1)
+        self.assertEqual(s["foydalanuvchilar"][0]["ism"], "Olim Salimov")
+        # 2-sinf faqat ro'yxatsiz odamda bor edi — kesimda chiqmasligi kerak.
+        self.assertEqual([x["grade"] for x in s["sinflar"]], [1])
+
+    def test_voronka_royxatsizlarni_korsatadi(self):
+        """Yagona joy: "qanchasi yarim yo'lda to'xtadi" degan savol."""
+        from .boshqaruv import statistika
+        voronka = statistika(30)["voronka"]
+        self.assertEqual(voronka[0]["son"], 2)      # ilovani ochgan
+        self.assertEqual(voronka[1]["son"], 1)      # ro'yxatdan o'tgan
+        self.assertEqual(voronka[1]["foiz"], 50)
+
+    def test_bosh_bazada_yiqilmaydi(self):
+        """Nolga bo'linish — hisobot sahifalarining eng ko'p uchraydigan xatosi."""
+        LessonResult.objects.all().delete()
+        Pupil.objects.all().delete()
+        self.kir()
+        self.assertEqual(self.client.get("/boshqaruv").status_code, 200)

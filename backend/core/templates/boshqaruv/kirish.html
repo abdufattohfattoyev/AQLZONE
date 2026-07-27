@@ -2,16 +2,16 @@
 {% block sarlavha %}Kirish{% endblock %}
 
 {% block tana %}
-<div style="display:grid;place-items:center;min-height:100dvh;padding:20px">
-  <form method="post" action="/boshqaruv/kirish"
-        style="background:var(--karta);border:1px solid var(--chegara);border-radius:14px;
-               padding:24px;width:100%;max-width:340px">
+<div class="kirish-oram">
+  <form method="post" action="/boshqaruv/kirish" class="karta kirish-karta">
     {% csrf_token %}
-    <div style="font-size:17px;font-weight:700">Aql Zone — boshqaruv</div>
-    <p class="izoh">Bu sahifa faqat administrator uchun.</p>
+
+    <div class="nishon" style="width:44px;height:44px;border-radius:14px;font-size:16px">AZ</div>
+    <div style="font-size:18px;font-weight:750;margin-top:14px;letter-spacing:-.02em">Boshqaruv paneli</div>
+    <p class="izoh-matn" style="margin-top:4px">Bu sahifa faqat administrator uchun.</p>
 
     {% if xato %}
-      <div style="color:var(--qizil);font-size:13px;margin-top:12px">{{ xato }}</div>
+      <div class="xato-quti">{{ xato }}</div>
     {% endif %}
 
     {% comment %}
@@ -23,15 +23,14 @@
       matnni sahifaga chiqarib yuboradi.
     {% endcomment %}
     {% if tg_bormi %}
-      <div style="margin-top:16px;padding:12px;border:1px solid var(--chegara);
-                  border-radius:10px;background:#111826">
-        <div style="font-size:13.5px;font-weight:600">Telegram orqali</div>
-        <p class="izoh" style="margin-top:4px">
-          Botga <b>/boshqaruv</b> yozing — u kirish havolasini yuboradi.
+      <div class="usul">
+        <div style="font-size:13.5px;font-weight:650">Telegram orqali</div>
+        <p class="izoh-matn" style="margin-top:3px">
+          Botga <b style="color:var(--matn)">/boshqaruv</b> yozing — u kirish havolasini yuboradi.
         </p>
         {% if bot %}
           <a class="tugma" href="https://t.me/{{ bot }}" target="_blank" rel="noopener"
-             style="display:block;text-align:center;margin-top:10px">
+             style="width:100%;justify-content:center;margin-top:11px">
             @{{ bot }} ni ochish
           </a>
         {% endif %}
@@ -39,20 +38,44 @@
     {% endif %}
 
     {% if parol_bormi %}
-      <div style="margin-top:14px">
-        {% if tg_bormi %}
-          <div class="izoh" style="text-align:center;margin-bottom:10px">yoki parol bilan</div>
-        {% endif %}
+      <div style="margin-top:16px">
+        {% if tg_bormi %}<div class="ajratgich"><span>yoki parol bilan</span></div>{% endif %}
         <input type="password" name="parol" autocomplete="current-password"
-               placeholder="Parol"
-               style="width:100%;padding:10px 12px;border-radius:9px;
-                      border:1px solid var(--chegara);background:#111826;color:var(--matn);
-                      font-size:14px">
-        <button type="submit" class="tugma faol" style="width:100%;margin-top:10px;padding:10px">
-          Kirish
-        </button>
+               placeholder="Parol" class="qidiruv" style="width:100%;border-radius:12px">
+        <button type="submit" class="asosiy-tugma">Kirish</button>
       </div>
     {% endif %}
   </form>
 </div>
+
+<style>
+  .kirish-oram { display: grid; place-items: center; min-height: 100dvh; padding: 22px; }
+  .kirish-karta { width: 100%; max-width: 360px; padding: 26px; }
+
+  .xato-quti {
+    margin-top: 14px; padding: 10px 12px; border-radius: var(--r-kichik);
+    background: rgba(251,113,133,.1); color: var(--qizil);
+    font-size: 13px; font-weight: 600;
+  }
+  .usul {
+    margin-top: 18px; padding: 14px;
+    border: 1px solid var(--chegara); border-radius: var(--r-kichik);
+    background: var(--fon-2);
+  }
+  .ajratgich {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--juda-xira); font-size: 12px; margin-bottom: 12px;
+  }
+  .ajratgich::before, .ajratgich::after {
+    content: ""; flex: 1; height: 1px; background: var(--chegara);
+  }
+  .asosiy-tugma {
+    width: 100%; margin-top: 10px; padding: 11px;
+    border: 0; border-radius: 12px; cursor: pointer;
+    background: linear-gradient(140deg, var(--asos), var(--binafsha));
+    color: #fff; font: 600 14px/1 inherit; font-family: inherit;
+    box-shadow: 0 8px 20px -10px rgba(108,140,255,.9);
+  }
+  .asosiy-tugma:hover { filter: brightness(1.08); }
+</style>
 {% endblock %}

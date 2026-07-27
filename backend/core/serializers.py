@@ -6,11 +6,10 @@ uchun server hech qachon kelgan songa ishonmaydi. Chegaradan chiqqan qiymat
 xato qaytarmaydi — kesib qo'yiladi, aks holda internet uzilganda bolaning
 natijasi umuman saqlanmay qolardi.
 """
-import re
-
 from rest_framework import serializers
 
 from .models import LessonResult, Profile
+from .nom import harfli, tozala
 
 
 class DeviceAuthSerializer(serializers.Serializer):
@@ -43,32 +42,29 @@ class TelegramAuthSerializer(serializers.Serializer):
         return data
 
 
-#: Ismda uchraydigan belgilar: harflar, bo'shliq, chiziqcha va apostrof.
-#:
-#: Apostrof uchta ko'rinishda yoziladi — `o'`, `o’`, `oʻ`. Uchalasi ham
-#: klaviaturaga qarab chiqadi va bittasini rad etsak, foydalanuvchi
-#: o'z ismini kirita olmay qolardi.
-ISM_BELGILARI = re.compile(r"^[^\W\d_][^\W\d_ '’ʻ\-]*(?:[ '’ʻ\-][^\W\d_][^\W\d_ '’ʻ\-]*)*$")
-
-
 def _ismni_tekshir(v: str) -> str:
     """
     Ism ham, familiya ham shu tekshiruvdan o'tadi.
 
     Reyting hammaga ko'rinadi, shuning uchun "asdasd123" yoki "!!!" kabi
-    qiymat o'sha yerda turib qolmasligi kerak. Tekshiruv ataylab YUMSHOQ:
-    faqat raqam va belgilardan iborat qiymatni to'sadi, qolganiga aralashmaydi
-    — chunki server qaysi ism "haqiqiy" ekanini bilolmaydi va urinsa,
-    haqiqiy ismli odamlarni ham to'sib qo'yardi.
+    qiymat o'sha yerda turib qolmasligi kerak. Lekin RAD ETISH oxirgi chora:
+    oldin `nom.tozala()` bezakni olib tashlaydi va ko'p holatda shu yetadi
+    (`꧁❖DAVRONOV❖꧂` → `DAVRONOV`). Xato faqat harf umuman qolmaganda
+    chiqadi — o'shanda odam nima yozish kerakligini biladi.
+
+    Qolganiga aralashmaymiz: server qaysi ism "haqiqiy" ekanini bilolmaydi
+    va urinsa, haqiqiy ismli odamlarni ham to'sib qo'yardi.
     """
-    v = " ".join(v.split())          # ketma-ket bo'shliqlar bitta bo'lsin
-    if not v:
+    tozalangan = tozala(v)
+    if not tozalangan:
+        # Bo'sh maydon — bu "o'chirish", xato emas. Faqat bezakdan iborat
+        # qiymat esa xato: odam nimadir yozgan, lekin undan harf qolmadi.
+        if v.strip():
+            raise serializers.ValidationError("ismingizni harflar bilan yozing")
         return ""
-    if len(v) < 2:
+    if not harfli(tozalangan):
         raise serializers.ValidationError("kamida 2 ta harf bo'lsin")
-    if not ISM_BELGILARI.match(v):
-        raise serializers.ValidationError("faqat harflardan iborat bo'lsin")
-    return v
+    return tozalangan
 
 
 class KodSerializer(serializers.Serializer):

@@ -24,6 +24,7 @@ import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { botHavolasi, botNomi, chiqish, getHisob, hisobniSaqla, miniAppda } from "../lib/api";
 import { turniUnut } from "../lib/tur";
+import { tozala } from "../lib/nom";
 import type { Hisob } from "../lib/api";
 
 interface Props {
@@ -67,8 +68,11 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
     getHisob().then((h) => {
       if (bekor) return;
       setHisob(h);
-      setIsm(h?.ism ?? "");
-      setFamiliya(h?.familiya ?? "");
+      // Serverdagi qiymat Telegram'dan kelgan bo'lishi mumkin va bezakli
+      // bo'lishi mumkin. Maydonga tozalab qo'yamiz — odam nima saqlanishini
+      // ko'rib tursin.
+      setIsm(tozala(h?.ism ?? ""));
+      setFamiliya(tozala(h?.familiya ?? ""));
       setYuklandi(true);
     });
     return () => { bekor = true; };

@@ -21,6 +21,7 @@ from django.utils import timezone
 from rest_framework import authentication, exceptions
 
 from .models import Identity, KirishKodi, Pupil, Session
+from .nom import harfli, tozala
 
 #: initData qancha vaqt amal qiladi (sekund).
 MAX_AUTH_AGE = 24 * 60 * 60
@@ -309,9 +310,24 @@ def hisob_topish(provider: str, external_id: str, **yangi_maydonlar) -> Pupil:
     return pupil
 
 
+def tg_ismi(tg: dict) -> tuple[str, str]:
+    """
+    Telegram profilidagi ism-familiyani ilovaga yaroqli holga keltiradi.
+
+    Bezak tozalanadi (`nom.tozala`), harfi qolmagani esa YO'Q deb qaraladi —
+    `❖❖❖` ni ism sifatida yozib qo'ysak, odam ro'yxatdan avtomatik o'tib
+    ketardi va reytingda o'sha bezak turaverardi. Bo'sh qoldirsak, undan
+    ismini bir marta so'raymiz — bu forma allaqachon bor.
+    """
+    def yaroqli(x: str) -> str:
+        t = tozala(x or "")
+        return t if harfli(t) else ""
+
+    return yaroqli(tg.get("first_name")), yaroqli(tg.get("last_name"))
+
+
 def pupil_by_telegram(tg: dict) -> Pupil:
-    ism = tg.get("first_name") or ""
-    familiya = tg.get("last_name") or ""
+    ism, familiya = tg_ismi(tg)
     username = tg.get("username") or ""
     pupil = hisob_topish(
         Identity.TELEGRAM,
@@ -339,7 +355,12 @@ def ismni_yangila(pupil: Pupil, ism: str, familiya: str, username: str) -> None:
        va u ro'yxatdan chiqib qolardi.
     3. **Ikkalasi to'lgan zahoti ro'yxat yopiladi.** Telegram'da ism ham,
        familiya ham bo'lsa, odamdan yana so'rash keraksiz ish.
+
+    Kelgan qiymat shu yerda ham tozalanadi: bu funksiya bir necha joydan
+    chaqiriladi (kirish, hisob bog'lash, birlashtirish) va ularning har
+    birida takrorlashdan ko'ra bitta joyda qilgan ishonchliroq.
     """
+    ism, familiya = tg_ismi({"first_name": ism, "last_name": familiya})
     maydon = ["username"]
     if not pupil.ism_qolda and ism:
         pupil.first_name = ism
