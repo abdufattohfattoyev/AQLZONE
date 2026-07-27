@@ -26,6 +26,7 @@ import { Sozlamalar } from "../screens/Sozlamalar";
 import { Kirish } from "./Kirish";
 import { Kutish } from "./Kutish";
 import { getHisob } from "../lib/api";
+import type { Hisob } from "../lib/api";
 import type { ReactNode } from "react";
 
 /** Tekshiruv holati: hali bilmaymiz → kirish / ism so'raymiz / so'ramaymiz. */
@@ -46,6 +47,10 @@ const KIRGAN_KEY = "az_kirgan";
 
 export function Tanishuv({ children }: { children: ReactNode }) {
   const [holat, setHolat] = useState<Holat>("kutilyapti");
+  // Ism so'raladigan bo'lsa, o'sha ekranga TAYYOR holda beriladi. Aks
+  // holda u xuddi shu `/me` javobini ikkinchi marta so'rar va odam
+  // kirish tugmasini bosgach yana kutib turardi.
+  const [hisob, setHisob] = useState<Hisob | null>(null);
   const { pathname } = useLocation();
   const kirishSahifasi = pathname.startsWith("/kirish/");
 
@@ -61,6 +66,7 @@ export function Tanishuv({ children }: { children: ReactNode }) {
       if (bekor) return;
 
       if (h) {
+        setHisob(h);
         try {
           if (h.royxatdan) localStorage.setItem(KIRGAN_KEY, "1");
           else localStorage.removeItem(KIRGAN_KEY);
@@ -87,7 +93,7 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   if (holat === "kirish") return <Kirish />;
 
   if (holat === "ism") {
-    return <Sozlamalar royxat onBack={() => setHolat("kirish")}
+    return <Sozlamalar royxat boshlangich={hisob} onBack={() => setHolat("kirish")}
       onTayyor={() => setHolat("kerak-emas")} />;
   }
 

@@ -38,6 +38,15 @@ interface Props {
    * Bunda sarlavha boshqacha va ortga tugmasi ko'rsatilmaydi.
    */
   royxat?: boolean;
+  /**
+   * Allaqachon olingan hisob. Berilsa server QAYTA so'ralmaydi.
+   *
+   * Ro'yxat rejimida `Tanishuv` bu ekranni aynan `/me` javobiga qarab
+   * ochadi — ya'ni ma'lumot bir soniya oldin kelgan. Uni qayta so'rash
+   * ikkinchi marta kutish demak: odam kirish tugmasini bosgach bo'sh
+   * ekranga qarab turadi va ilova qotgandek tuyuladi.
+   */
+  boshlangich?: Hisob | null;
 }
 
 /** Raqamni o'qishga qulay qilib bo'ladi: +998 90 123 45 67 */
@@ -47,11 +56,11 @@ function raqamniBeza(x: string): string {
   return `+${r.slice(0, 3)} ${r.slice(3, 5)} ${r.slice(5, 8)} ${r.slice(8, 10)} ${r.slice(10)}`;
 }
 
-export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Props) {
-  const [hisob, setHisob] = useState<Hisob | null>(null);
-  const [yuklandi, setYuklandi] = useState(false);
-  const [ism, setIsm] = useState("");
-  const [familiya, setFamiliya] = useState("");
+export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, boshlangich }: Props) {
+  const [hisob, setHisob] = useState<Hisob | null>(boshlangich ?? null);
+  const [yuklandi, setYuklandi] = useState(boshlangich != null);
+  const [ism, setIsm] = useState(() => tozala(boshlangich?.ism ?? ""));
+  const [familiya, setFamiliya] = useState(() => tozala(boshlangich?.familiya ?? ""));
   const [band, setBand] = useState(false);
   const [holat, setHolat] = useState<"" | "saqlandi">("");
   const [xato, setXato] = useState("");
@@ -63,7 +72,12 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
   // Sayohatning o'zi kurs sahifasida boshlanadi, shu yerda emas.
   const [turQayta, setTurQayta] = useState(false);
 
+  // Hisob tayyor holda berilgan bo'lsa so'rov YUBORILMAYDI: u chaqiruvchi
+  // uchun ham, bu ekran uchun ham bir xil `/me` javobi.
+  const tayyorKeldi = boshlangich != null;
+
   useEffect(() => {
+    if (tayyorKeldi) return;
     let bekor = false;
     getHisob().then((h) => {
       if (bekor) return;
@@ -76,7 +90,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
       setYuklandi(true);
     });
     return () => { bekor = true; };
-  }, []);
+  }, [tayyorKeldi]);
 
   // Bot nomi faqat veb saytda kerak: Mini App ichida foydalanuvchi
   // allaqachon Telegram orqali kirgan va tugma ortiqcha bo'lardi.
@@ -111,26 +125,86 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
     if (n.hisob.royxatdan) onTayyor?.();
   }
 
+  // Ism-familiya maydonlari — ikkala rejimda ham AYNAN bir xil, faqat
+  // qaysi kartaning ichida turishi farq qiladi.
+  const shakl = (
+    <>
+      <Maydon nom="Ism" qiymat={ism} ozgar={setIsm}
+        joy="Masalan: Jasur" onEnter={saqla} />
+      <Maydon nom="Familiya" qiymat={familiya} ozgar={setFamiliya}
+        joy="Masalan: Toshmatov" onEnter={saqla} />
+
+      <button
+        type="button"
+        onClick={saqla}
+        disabled={!toliq || band || (!royxat && !ozgardi)}
+        className="clay-press mt-1 w-full rounded-3xl bg-brand-green py-3 font-display
+                   text-[15px] text-white disabled:opacity-40"
+      >
+        {band ? "Saqlanyapti…" : royxat ? "Davom etish" : "Saqlash"}
+      </button>
+
+      <div className="min-h-5 text-center text-[13px]">
+        {holat === "saqlandi" && !xato && (
+          <span className="az-sakra inline-block text-brand-green-d">Saqlandi ✓</span>
+        )}
+        {xato && <span className="text-brand-red">{xato}</span>}
+      </div>
+    </>
+  );
+
+  /*
+   * Ro'yxat rejimi kirish ekranining DAVOMI, alohida sahifa emas.
+   *
+   * Shu sabab tashqi ko'rinishi `Kirish.tsx` bilan bir xil qilingan:
+   * ekran o'rtasida bitta karta, belgi va sarlavha o'sha kartaning
+   * ichida. Ilgari bu yerda sahifa yuqoridan boshlanar, belgi esa
+   * kartadan tashqarida turardi — natijada "Telegram bilan kirish" ni
+   * bosgan odam kartaning yuqoriga sakraganini ko'rar va boshqa saytga
+   * tushib qolgandek bo'lardi.
+   */
+  if (royxat) {
+    return (
+      <div className="mx-auto grid min-h-dvh w-full max-w-[430px] place-items-center px-4 py-8">
+        <div className="az-kirish w-full rounded-clay bg-karta p-6 text-center shadow-clay">
+          <Logo size={64} className="mx-auto" />
+          <h1 className="mt-3 text-[22px]">Tanishib olaylik</h1>
+          <p className="mt-1 text-[13.5px] leading-snug text-ink-dim">
+            Ism va familiyangizni kiriting — reytingda shu nom ko'rinadi
+          </p>
+
+          {/* Maydonlar kelgunicha o'sha balandlikdagi bo'sh joy turadi,
+              aks holda karta paydo bo'lganda ekran sakrardi. Hisob tayyor
+              berilganda (odatdagi holat) bu umuman ko'rinmaydi. */}
+          <div className="mt-5 space-y-3 text-left">
+            {hisob ? shakl : (
+              <>
+                <div className="h-[62px] animate-pulse rounded-2xl bg-track" />
+                <div className="h-[62px] animate-pulse rounded-2xl bg-track" />
+                <div className="h-[46px] animate-pulse rounded-3xl bg-track" />
+                <div className="min-h-5" />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16">
-      {!royxat && (
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={onBack} title="Ortga"
-            className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
-            <Icon name="chevron" size={20} className="rotate-180" />
-          </button>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={onBack} title="Ortga"
+          className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
+          <Icon name="chevron" size={20} className="rotate-180" />
+        </button>
+      </div>
 
       <div className="az-kirish mt-4 text-center">
         <Logo size={64} className="mx-auto" />
-        <h1 className="mt-3 text-[22px]">
-          {royxat ? "Tanishib olaylik" : "Hisob"}
-        </h1>
+        <h1 className="mt-3 text-[22px]">Hisob</h1>
         <p className="mt-1 text-[13px] leading-snug text-ink-soft">
-          {royxat
-            ? "Ism va familiyangizni kiriting — reytingda shu nom ko'rinadi"
-            : "Hisob egasining ismi — odatda ota-ona"}
+          Hisob egasining ismi — odatda ota-ona
         </p>
       </div>
 
@@ -147,27 +221,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
       {hisob && (
         <>
           <div className="az-kirish mt-6 space-y-3 rounded-clay bg-karta p-4 shadow-clay-sm">
-            <Maydon nom="Ism" qiymat={ism} ozgar={setIsm}
-              joy="Masalan: Jasur" onEnter={saqla} />
-            <Maydon nom={royxat ? "Familiya" : "Familiya"} qiymat={familiya} ozgar={setFamiliya}
-              joy="Masalan: Toshmatov" onEnter={saqla} />
-
-            <button
-              type="button"
-              onClick={saqla}
-              disabled={!toliq || band || (!royxat && !ozgardi)}
-              className="clay-press mt-1 w-full rounded-3xl bg-brand-green py-3 font-display
-                         text-[15px] text-white disabled:opacity-40"
-            >
-              {band ? "Saqlanyapti…" : royxat ? "Davom etish" : "Saqlash"}
-            </button>
-
-            <div className="min-h-5 text-center text-[13px]">
-              {holat === "saqlandi" && !xato && (
-                <span className="az-sakra inline-block text-brand-green-d">Saqlandi ✓</span>
-              )}
-              {xato && <span className="text-brand-red">{xato}</span>}
-            </div>
+            {shakl}
           </div>
 
           {/* ---- bolalar ----
@@ -181,7 +235,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
               yo'li YO'Q. Bu ataylab shunday. Kerak bo'lganda quyidagi
               shartni olib tashlash yetarli — ekran o'zi tayyor turibdi,
               `/profillar` manzili ham ishlaydi. */}
-          {!royxat && (hisob.profillar?.length ?? 1) > 1 && (
+          {(hisob.profillar?.length ?? 1) > 1 && (
             <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
               style={{ "--az-kech": "60ms" } as React.CSSProperties}>
               <div className="font-display text-[14px]">Bolalar</div>
@@ -210,7 +264,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
           )}
 
           {/* ---- kirish usullari ---- */}
-          {!royxat && (
+          {(
             <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
               style={{ "--az-kech": "80ms" } as React.CSSProperties}>
               <div className="font-display text-[14px]">Kirish usullari</div>
@@ -255,7 +309,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
               yo'li bo'lishi kerak. Bola uni tasodifan o'tkazib yuborishi,
               yoki telefonni ikkinchi farzand olishi mumkin — ikkala holatda
               ham "qayerda nima" degan savol yana paydo bo'ladi. */}
-          {!royxat && (
+          {(
             <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
               style={{ "--az-kech": "90ms" } as React.CSSProperties}>
               <div className="font-display text-[14px]">Yo'lboshchi</div>
@@ -278,7 +332,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false }: Pr
               o'zinikidan kelib chiqadi: chiqqan zahoti ilova `initData`
               bilan xuddi shu hisobga qaytadan kirardi. Tugma bosiladi,
               hech narsa o'zgarmaydi — buzuq tugma. */}
-          {!royxat && !miniAppda() && (
+          {!miniAppda() && (
             <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
               style={{ "--az-kech": "100ms" } as React.CSSProperties}>
               {tasdiq ? (
