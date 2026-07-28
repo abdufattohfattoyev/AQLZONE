@@ -505,6 +505,14 @@
 @keyframes az-bob { 50% { translate: 0 -5px; } }
 .az-bob { animation: az-bob 1.7s ease-in-out infinite; }
 
+/* Javob xabari pastdan ko'tarilib chiqadi (Lesson.tsx). Shunchaki paydo
+   bo'lsa, bola uni ko'zi bilan ilg'amasdi — harakat e'tiborni tortadi. */
+@keyframes az-xabar {
+  from { opacity: 0; transform: translateY(10px) scale(0.94); }
+  to   { opacity: 1; transform: none; }
+}
+.az-xabar { animation: az-xabar 260ms cubic-bezier(0.34, 1.5, 0.64, 1); }
+
 /* ----------------------------------------------------- pastki panel */
 
 /* Faol tugma ostidagi belgi bir tugmadan ikkinchisiga SILJIYDI.

@@ -313,10 +313,24 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
         })}
       </div>
 
-      <div className="mt-3 h-6 text-center text-[15px]">
-        {tanlangan !== null && (togriJavob
-          ? <span className="az-sakra inline-block text-brand-green-d">To'g'ri! 👏</span>
-          : <span className="text-brand-red">Deyarli! Yana urinib ko'r</span>)}
+      {/* Javob xabari.
+          `sticky` ATAYLAB: rasmli savolda ustun ekrandan uzun bo'lib
+          qoladi va oddiy oqimda turgan xabar pastga tushib, kesilib
+          ko'rinmay qolardi — bola javobi to'g'rimi-yo'qmi bilmasdi.
+          Sticky esa uni ekran pastida ushlab turadi va pastga aylantirilsa
+          o'z joyiga qo'nadi.
+
+          Balandligi javobsiz ham band turadi (`h-11`): xabar chiqqanda
+          tugmalar pastga siljib ketsa, bola endigina bosgan tugmasi
+          joyidan qochib ketardi. */}
+      <div className="sticky bottom-2 z-20 mt-3 flex h-11 items-center justify-center">
+        {tanlangan !== null && (
+          <span className={`az-xabar rounded-full px-4 py-2 font-display text-[15px] leading-none
+                            text-white shadow-clay-sm
+                            ${togriJavob ? "bg-brand-green" : "bg-brand-red"}`}>
+            {togriJavob ? "To'g'ri! 👏" : "Deyarli! Yana urinib ko'r"}
+          </span>
+        )}
       </div>
 
       <div className="mt-1 text-center text-[12px] text-ink-dim">{unit.u}</div>
