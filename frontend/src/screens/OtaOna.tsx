@@ -71,7 +71,11 @@ export function OtaOna({ onBack }: Props) {
       {xulosa && (
         <section className="az-kirish mt-5 rounded-clay bg-karta p-4 shadow-clay-sm">
           <h2 className="font-display text-[15px]">Oxirgi 7 kun</h2>
-          <div className="mt-3 flex h-24 items-end gap-1.5">
+          {/* Ustun `items-stretch` bilan: qator `items-end` bo'lsa
+              ustunning balandligi MATNIGA teng bo'lib qoladi, ichkaridagi
+              `flex-1` esa nolga tushadi va butun diagramma ko'rinmay
+              qoladi — foizlar to'g'ri hisoblansa ham. */}
+          <div className="mt-3 flex h-24 items-stretch gap-1.5">
             {xulosa.hafta.map((k) => {
               const kun = new Date(`${k.sana}T00:00:00`);
               const balandlik = Math.round((k.savollar / eng) * 100);
