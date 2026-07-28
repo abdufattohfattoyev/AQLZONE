@@ -69,6 +69,26 @@ export function Panel() {
   const bosh = pathname === yolKurslar();
   const darslar = /^\/kurs\/[^/]+$/.test(pathname);
 
+  // Tugmalar ro'yxat bo'lib turadi, chunki siljiydigan belgiga FAOL
+  // TUGMANING INDEKSI kerak. Alohida yozilganda uni sanash uchun har
+  // safar qo'lda tartib raqami yozib qo'yishga to'g'ri kelardi — tugma
+  // qo'shilganda unutiladigan qadam.
+  const tablar = [
+    { ic: "home", nom: "Bosh", yol: yolKurslar(), faol: bosh },
+    { ic: "map", nom: "Darslar", yol: yolKurs(kurs), faol: darslar },
+    {
+      ic: "trophy", nom: "Nishonlar", yol: yolNishon(kurs),
+      faol: pathname === yolNishon(kurs), nuqta: yangiNishon,
+    },
+    { ic: "palette", nom: "Do'kon", yol: yolDokon(kurs), faol: pathname === yolDokon(kurs) },
+    { ic: "order", nom: "Reyting", yol: yolReyting(), faol: pathname === yolReyting() },
+  ] as const;
+
+  // -1 bo'lishi mumkin: sozlamalar va profillar sahifasida hech bir tugma
+  // faol emas. Bunda belgi umuman chizilmaydi — noto'g'ri joyda turgan
+  // belgi "shu yerdasiz" deb yolg'on aytardi.
+  const faolIndeks = tablar.findIndex((t) => t.faol);
+
   /**
    * Faol tugma qayta bosilsa — sahifa boshiga qaytadi.
    *
@@ -91,18 +111,26 @@ export function Panel() {
       <nav data-tur="panel"
         className="az-shisha fixed inset-x-0 bottom-0 z-30 border-t border-karta/45
                    pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex w-full max-w-[430px] px-1 sm:max-w-[560px]">
-          <Tab ic="home" nom="Bosh" faol={bosh} on={yur(yolKurslar(), bosh)} />
-          <Tab ic="map" nom="Darslar" faol={darslar} on={yur(yolKurs(kurs), darslar)} />
-          <Tab ic="trophy" nom="Nishonlar" nuqta={yangiNishon}
-            faol={pathname === yolNishon(kurs)}
-            on={yur(yolNishon(kurs), pathname === yolNishon(kurs))} />
-          <Tab ic="palette" nom="Do'kon"
-            faol={pathname === yolDokon(kurs)}
-            on={yur(yolDokon(kurs), pathname === yolDokon(kurs))} />
-          <Tab ic="order" nom="Reyting"
-            faol={pathname === yolReyting()}
-            on={yur(yolReyting(), pathname === yolReyting())} />
+        <div className="mx-auto w-full max-w-[430px] px-1 sm:max-w-[560px]">
+          {/* `relative` AYNAN shu yerda: belgining eni foizda beriladi va
+              u tugmalar qatoriga nisbatan o'lchanishi kerak. Tashqi
+              idishda bo'lsa, yon bo'shliq ham hisobga kirib, belgi
+              tugmadan bir necha piksel keng bo'lib qolardi. */}
+          <div className="relative flex">
+            {faolIndeks >= 0 && (
+              <span aria-hidden
+                style={{
+                  width: `${100 / tablar.length}%`,
+                  transform: `translateX(${faolIndeks * 100}%)`,
+                }}
+                className="az-panel-belgi absolute inset-y-1 left-0 rounded-2xl bg-brand-green/12" />
+            )}
+            {tablar.map((t) => (
+              <Tab key={t.nom} ic={t.ic} nom={t.nom} faol={t.faol}
+                nuqta={"nuqta" in t ? t.nuqta : false}
+                on={yur(t.yol, t.faol)} />
+            ))}
+          </div>
         </div>
       </nav>
     </>
@@ -118,14 +146,21 @@ function Tab({ ic, nom, on, faol = false, nuqta = false }: {
   nuqta?: boolean;
 }) {
   return (
+    // `relative` — tugma siljiydigan belgi USTIDA turishi uchun: belgi
+    // absolyut joylashgan va joylashgansiz element uni bosib qolardi.
     <button type="button" onClick={on} title={nom}
       aria-current={faol ? "page" : undefined}
-      className={`clay-press flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2
-                  ${faol ? "text-brand-green-d" : "text-ink-soft"}`}>
-      <span className="relative">
+      className={`clay-press relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2
+                  transition-colors ${faol ? "text-brand-green-d" : "text-ink-soft"}`}>
+      {/* `key` faollik bilan almashadi va shu sabab element QAYTA
+          yasaladi — sakrash animatsiyasi aynan shunda qaytadan
+          o'ynaydi. Faqat klass qo'shilsa, brauzer uni qayta ishga
+          tushirmasdi. */}
+      <span key={faol ? "faol" : "oddiy"}
+        className={`relative ${faol ? "az-tab-sakra" : ""}`}>
         <Icon name={ic} size={22} />
         {nuqta && (
-          <span className="absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
+          <span className="az-nuqta absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
         )}
       </span>
       {/* Beshta yozuv 400px ga sig'ishi kerak: "Nishonlar" eng uzuni. */}

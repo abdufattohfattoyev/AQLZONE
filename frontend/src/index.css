@@ -505,6 +505,46 @@
 @keyframes az-bob { 50% { translate: 0 -5px; } }
 .az-bob { animation: az-bob 1.7s ease-in-out infinite; }
 
+/* ----------------------------------------------------- pastki panel */
+
+/* Faol tugma ostidagi belgi bir tugmadan ikkinchisiga SILJIYDI.
+   Paydo bo'lib-yo'qolsa, panel "chaqnab" turgandek tuyulardi va bola
+   qayerdan qayerga o'tganini ko'rmasdi. Siljish esa ikki ekran o'rtasida
+   bog'lanish yasaydi.
+
+   Enini va o'rnini React beradi (`Panel.tsx`): tugmalar teng kenglikda,
+   shuning uchun belgi eni 1/5 va siljishi `indeks * 100%`. */
+.az-panel-belgi {
+  transition: transform 340ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* Yangi tugma faol bo'lganda belgisi bir sakraydi. Animatsiya har safar
+   qaytadan ishga tushishi uchun React o'sha elementni `key` bilan
+   almashtiradi — CSS klass qo'shishning o'zi uni qayta o'ynatmaydi. */
+@keyframes az-tab-sakra {
+  0%   { transform: scale(1); }
+  38%  { transform: scale(1.24) translateY(-2px); }
+  68%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Yangi nishon nuqtasi sekin nafas oladi — ko'zga tashlanadi, lekin
+   diqqatni tortib olmaydi. */
+@keyframes az-nuqta-nafas {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.28); opacity: 0.82; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .az-tab-sakra { animation: az-tab-sakra 440ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .az-nuqta     { animation: az-nuqta-nafas 2.2s ease-in-out infinite; }
+}
+
+/* Harakat kamaytirilgan bo'lsa belgi sakramasdan, darhol joyiga o'tadi. */
+@media (prefers-reduced-motion: reduce) {
+  .az-panel-belgi { transition: none; }
+}
+
 /* Kutish chizig'i (Kutish.tsx). `index.html` dagi dastlabki ekranda ham
    xuddi shu harakat bor — ikkalasi bir xil ko'rinishi kerak. */
 @keyframes az-yur {
