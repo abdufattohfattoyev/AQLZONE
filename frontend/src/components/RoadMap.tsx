@@ -46,7 +46,9 @@ interface Props {
 export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
   const U = units[unitIndex];
   const n = U.lessons.length;
-  const height = (n - 1) * STEP + NODE + 12;
+  // Oxirgi tugun ostida "Boshlash" pufagi uchun joy qoldiriladi — aks
+  // holda oxirgi dars joriy bo'lganda pufak kartadan pastga chiqib ketardi.
+  const height = (n - 1) * STEP + NODE + 34;
   const color = UNIT_COLORS[U.color];
 
   // yo'lning bo'yalgan qismi — boshidan uzluksiz tugagan darslar
@@ -124,17 +126,17 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
               )}
             </button>
 
-            {/* "Boshlash" pufagi tugunning YOZUVSIZ tomonida turadi — shu tomon
-                har doim bo'sh, shuning uchun boshqa yozuvni hech qachon bosmaydi. */}
+            {/* "Boshlash" pufagi tugun OSTIDA, markazi bilan tekislangan.
+                Ilgari u tugunning yozuvsiz tomonida turardi va o'ng chekkadagi
+                tugun uchun o'sha tomonda joy YO'Q edi: 320px enli kartada
+                pufak chetdan 17px tashqariga chiqib, yarmi kesilib qolardi.
+                Chetga surib ham bo'lmaydi — u holda pufak tugunning ustiga
+                minadi. Tugun ostida esa u har qanday enda sig'adi, chunki
+                markazi tugun markazi bilan bir xil. */}
             {st === "current" && (
               <div
-                style={{
-                  top: li * STEP + NODE / 2 - 14,
-                  ...(onRight
-                    ? { left: `calc(50% + ${off - gap}px)`, transform: "translateX(-100%)" }
-                    : { left: `calc(50% + ${off + gap}px)` }),
-                }}
-                className="absolute z-10"
+                style={{ top: li * STEP + NODE + 4, left: `calc(50% + ${off}px)` }}
+                className="absolute z-10 -translate-x-1/2"
               >
                 <span className="az-bob block rounded-2xl bg-brand-orange px-3 py-1 font-display text-xs
                                  whitespace-nowrap text-white shadow-[0_4px_0_var(--color-brand-orange-d)]">
