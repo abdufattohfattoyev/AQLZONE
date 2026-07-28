@@ -150,9 +150,41 @@ ikkalasi ham ATAYLAB shunday:
 | **Tangalar do'koni** — tulkini bezash | `frontend/src/lib/dokon.ts` |
 | **Ota-ona paneli** — haftalik faollik, qiyin mavzular | `frontend/src/screens/OtaOna.tsx` |
 | **Reyting** — jami va haftalik, o'z o'rning bilan | `frontend/src/screens/Reyting.tsx` |
+| **Haftalik liga** — 20 kishilik guruh, ko'tarilish va tushish | `backend/core/liga.py` |
 | **Telegram orqali kirish** — botdagi bir martalik havola bilan | `backend/core/auth.py` |
 | **Profillar** — bir qurilma, bir necha bola | `backend/core/models.py` |
 | **Telegram eslatmasi** | `backend/core/management/commands/eslatma.py` |
+
+### Haftalik liga
+
+Reyting ochilganda birinchi ko'rinadigan jadval. Bola butun saytdagi
+bolalar bilan emas, o'ziga TENG 20 tasi bilan yarishadi: hafta oxirida
+birinchi beshtasi yuqori darajaga ko'tariladi, oxirgi beshtasi quyiga
+tushadi. Darajalar pastdan yuqoriga — Bronza, Kumush, Oltin, Olmos, Toj.
+
+Nega kerak. Umumiy jadval bir necha oydan keyin qotib qoladi: 300 kishilik
+ro'yxatda 147-o'rinni egallagan bola kurashmaydi, chunki oldingi bilan
+orasi yetib bo'lmas darajada uzoq. 20 kishilik guruhda esa uchinchi o'rin
+bir darsda qo'lga kiradi.
+
+Ikki qoida ataylab yumshoq va ikkalasi ham qaytib kelish uchun:
+
+- yulduz yig'magan bola **tushmaydi** — dam olgan hafta jazolanmaydi;
+- guruhda faol bola 12 tadan kam bo'lsa, umuman hech kim tushmaydi
+  (loyiha yangi bo'lganda guruhlar to'lmaydi).
+
+Hafta har dushanba yakunlanadi:
+
+```bash
+python manage.py liga --sinov     # nima bo'lishini ko'rsatadi
+python manage.py liga             # o'tgan haftani yakunlaydi
+```
+
+Buyruq `eslatma` bilan bir xil tartibda, tashqi rejalashtirgich orqali
+chaqiriladi. **U ishlamay qolsa ham hech narsa buzilmaydi**: bola ligani
+ochganda yopilmagan haftasi o'sha yerda yopiladi. Buyruq shunchaki buni
+hamma uchun bir vaqtda qiladi, ya'ni ilovaga kirmagan bolaning o'rni ham
+guruhdoshlariga to'g'ri ko'rinadi.
 
 ## Manzillar
 

@@ -20,7 +20,10 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from . import auth as A
-from .models import Identity, KirishKodi, LessonResult, Progress, Pupil
+from . import liga as L
+from .models import (
+    Identity, KirishKodi, LessonResult, LigaAzo, Profile, Progress, Pupil, Session,
+)
 
 BOT = "123456:TEST_TOKEN_FAQAT_SINOV_UCHUN"
 
@@ -881,6 +884,227 @@ class ReytingTest(TestCase):
         self.assertEqual(len(j["top"]), 1)
         self.assertEqual(j["men"]["orin"], 3)        # ro'yxatda yo'q, o'rni bor
         self.assertEqual(j["qatnashchilar"], 3)
+
+
+class LigaTest(TestCase):
+    """
+    Haftalik liga: 20 kishilik guruh, ko'tarilish va tushish.
+
+    Testlar ikki narsani tekshiradi va ikkalasi ham muhim: jadval to'g'ri
+    saralanadimi, va hafta yakunlanganda kim qayerga o'tadi. Ikkinchisi
+    xato bo'lsa bola sababsiz pastga tushadi — bu eng yomon xato, chunki
+    uni bola ertasi kuni o'zi ko'radi.
+    """
+
+    def bola(self, n: int, ism: str = "") -> str:
+        # Ism ATAYLAB raqamsiz: `/me` bezakli va raqamli ismlarni tozalaydi,
+        # ya'ni "Bola7" serverdan "Bola" bo'lib qaytardi.
+        t = self.client.post(
+            "/api/v1/auth/device", {"deviceId": f"dev-liga-{n:012d}", "platform": "web"},
+            content_type="application/json",
+        ).json()["token"]
+        self.client.patch(
+            "/api/v1/me",
+            {"ism": ism or f"Bola{chr(ord('a') + n % 26)}", "familiya": "Ligachi"},
+            content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {t}",
+        )
+        return t
+
+    def dars(self, token: str, stars: int, kunlar_oldin: int = 0):
+        self.client.post(
+            "/api/v1/results",
+            {"grade": 1, "asked": 6, "correct": 6, "stars": stars},
+            content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        if kunlar_oldin:
+            r = LessonResult.objects.order_by("-pk").first()
+            LessonResult.objects.filter(pk=r.pk).update(
+                created_at=timezone.now() - timedelta(days=kunlar_oldin)
+            )
+
+    def yig(self, token: str, jami: int, kunlar_oldin: int = 0):
+        """
+        `jami` yulduz to'playdi.
+
+        Bitta darsdan ko'pi bilan 3 yulduz chiqadi (serializer chegarasi),
+        shuning uchun kerakli miqdor bir necha darsga bo'linadi.
+        """
+        while jami > 0:
+            self.dars(token, min(3, jami), kunlar_oldin)
+            jami -= 3
+
+    def liga(self, token: str) -> dict:
+        return self.client.get(
+            "/api/v1/liga", HTTP_AUTHORIZATION=f"Bearer {token}"
+        ).json()
+
+    def profil(self, token: str) -> Profile:
+        return Session.objects.get(token_hash=A.sha256(token)).pupil.asosiy_profil()
+
+    def setUp(self):
+        self.a = self.bola(1, "Ali")
+        self.b = self.bola(2, "Zilola")
+
+    # --------------------------------------------------------- a'zolik
+
+    def test_birinchi_kirishda_bronzaga_qoshiladi(self):
+        j = self.liga(self.a)
+        self.assertTrue(j["qatnashadi"])
+        self.assertEqual(j["daraja"]["nom"], "Bronza")
+        self.assertEqual(len(j["guruh"]), 1)
+        self.assertTrue(j["guruh"][0]["men"])
+
+    def test_royxatdan_otmagan_qatnashmaydi(self):
+        t = self.client.post(
+            "/api/v1/auth/device", {"deviceId": "dev-liga-ismsiz00"},
+            content_type="application/json",
+        ).json()["token"]
+        j = self.liga(t)
+        self.assertFalse(j["qatnashadi"])
+        self.assertEqual(LigaAzo.objects.filter(profile__pupil__first_name="").count(), 0)
+
+    def test_ikki_marta_ochilsa_ikkinchi_qator_yasalmaydi(self):
+        self.liga(self.a)
+        self.liga(self.a)
+        self.assertEqual(LigaAzo.objects.filter(profile=self.profil(self.a)).count(), 1)
+
+    def test_guruh_toladi_va_yangisi_ochiladi(self):
+        # 20 ta joy bor; 21-bola ikkinchi guruhga tushishi kerak.
+        for i in range(3, 3 + L.GURUH_HAJMI):
+            self.liga(self.bola(i))
+        oxirgi = self.liga(self.a)                      # 21-a'zo (a hali qo'shilmagan)
+        self.assertEqual(len(oxirgi["guruh"]), 1)
+        self.assertEqual(LigaAzo.objects.filter(hafta=L.hafta_sanasi()).count(), L.GURUH_HAJMI + 1)
+
+    # ---------------------------------------------------------- jadval
+
+    def test_yulduz_boyicha_saralanadi(self):
+        self.liga(self.a)
+        self.liga(self.b)
+        self.yig(self.a, 2)
+        self.yig(self.b, 5)
+        guruh = self.liga(self.a)["guruh"]
+        self.assertEqual([q["yulduz"] for q in guruh], [5, 2])
+        self.assertEqual(guruh[0]["toliqIsm"], "Zilola Ligachi")
+
+    def test_otgan_haftadagi_yulduz_sanalmaydi(self):
+        self.liga(self.a)
+        self.yig(self.a, 9, kunlar_oldin=20)
+        self.assertEqual(self.liga(self.a)["men"]["yulduz"], 0)
+
+    def test_oynamagan_bola_kutmoqda_zonasida(self):
+        self.assertEqual(self.liga(self.a)["men"]["zona"], "kutmoqda")
+
+    def test_besh_kishilik_guruhda_hech_kim_tushmaydi(self):
+        # Faol bola 12 tadan kam — tushish zonasi umuman ko'rsatilmaydi.
+        for t in (self.a, self.b):
+            self.liga(t)
+            self.dars(t, 3)
+        j = self.liga(self.a)
+        self.assertEqual(j["tushadi"], 0)
+        self.assertNotIn("tushadi", [q["zona"] for q in j["guruh"]])
+
+    # -------------------------------------------------------- yakunlash
+
+    def _otgan_haftaga_kochir(self, tokenlar: list[str]) -> "date":
+        """Berilgan bolalarni o'tgan haftaning guruhiga o'tkazadi."""
+        otgan = L.hafta_sanasi() - timedelta(days=7)
+        for t in tokenlar:
+            self.liga(t)
+        LigaAzo.objects.filter(hafta=L.hafta_sanasi()).update(hafta=otgan)
+        LessonResult.objects.all().update(
+            created_at=timezone.now() - timedelta(days=7)
+        )
+        return otgan
+
+    def test_birinchi_beshlik_kotariladi(self):
+        tokenlar = [self.bola(i) for i in range(10, 16)]
+        for i, t in enumerate(tokenlar):
+            self.liga(t)
+            self.yig(t, 12 - i * 2)                     # 12, 10, 8, 6, 4, 2
+        otgan = self._otgan_haftaga_kochir([])
+        L.haftani_yakunla(otgan)
+
+        natijalar = [
+            LigaAzo.objects.get(profile=self.profil(t), hafta=otgan).natija
+            for t in tokenlar
+        ]
+        self.assertEqual(natijalar, ["kotarildi"] * 5 + ["qoldi"])
+
+    def test_kotarilgan_bola_keyingi_hafta_kumushda(self):
+        t = self.bola(20)
+        self.liga(t)
+        self.yig(t, 5)
+        otgan = self._otgan_haftaga_kochir([])
+        L.haftani_yakunla(otgan)
+        self.assertEqual(self.liga(t)["daraja"]["nom"], "Kumush")
+
+    def test_yakunlanmagan_otgan_hafta_ochilganda_yopiladi(self):
+        """Rejalashtirgich ishlamay qolsa ham natija joyida bo'lishi kerak."""
+        t = self.bola(21)
+        self.liga(t)
+        self.yig(t, 5)
+        self._otgan_haftaga_kochir([])                   # yakunlanmagan qoldi
+        j = self.liga(t)                                 # ochilishning o'zi yopadi
+        self.assertEqual(j["daraja"]["nom"], "Kumush")
+        self.assertEqual(j["otganHafta"]["natija"], "kotarildi")
+
+    def test_oynamagan_bola_tushmaydi(self):
+        t = self.bola(22)
+        self.liga(t)
+        LigaAzo.objects.filter(profile=self.profil(t)).update(daraja=2)
+        otgan = self._otgan_haftaga_kochir([])
+        L.haftani_yakunla(otgan)
+        azo = LigaAzo.objects.get(profile=self.profil(t), hafta=otgan)
+        self.assertEqual((azo.natija, azo.yulduz), ("qoldi", 0))
+        self.assertEqual(self.liga(t)["daraja"]["nom"], "Oltin")     # o'sha joyda
+
+    def test_tolgan_guruhning_oxirgi_beshtasi_tushadi(self):
+        tokenlar = [self.bola(i) for i in range(30, 30 + L.TUSHISH_ENG_KAM)]
+        for i, t in enumerate(tokenlar):
+            self.liga(t)
+            self.yig(t, (L.TUSHISH_ENG_KAM - i) * 2)     # 24, 22 … 2
+        LigaAzo.objects.all().update(daraja=1)           # Kumush: tushish mumkin
+        otgan = self._otgan_haftaga_kochir([])
+        L.haftani_yakunla(otgan)
+
+        natijalar = [
+            LigaAzo.objects.get(profile=self.profil(t), hafta=otgan).natija
+            for t in tokenlar
+        ]
+        self.assertEqual(natijalar[:5], ["kotarildi"] * 5)
+        self.assertEqual(natijalar[-5:], ["tushdi"] * 5)
+        self.assertEqual(natijalar[5:-5], ["qoldi"] * 2)
+
+    def test_eng_yuqori_darajadan_yuqoriga_chiqmaydi(self):
+        t = self.bola(40)
+        self.liga(t)
+        LigaAzo.objects.filter(profile=self.profil(t)).update(daraja=L.ENG_YUQORI)
+        self.yig(t, 8)
+        otgan = self._otgan_haftaga_kochir([])
+        L.haftani_yakunla(otgan)
+        azo = LigaAzo.objects.get(profile=self.profil(t), hafta=otgan)
+        self.assertEqual(azo.natija, "qoldi")
+        self.assertEqual(self.liga(t)["daraja"]["nomer"], L.ENG_YUQORI)
+
+    def test_yakunlash_ikki_marta_chaqirilsa_ozgarmaydi(self):
+        t = self.bola(41)
+        self.liga(t)
+        self.yig(t, 4)
+        otgan = self._otgan_haftaga_kochir([])
+        self.assertEqual(L.haftani_yakunla(otgan), 1)
+        self.assertEqual(L.haftani_yakunla(otgan), 0)    # ikkinchisi tegmaydi
+
+    def test_uzoq_tanaffusdan_keyin_daraja_saqlanadi(self):
+        """Bir oy kelmagan bola o'z darajasiga QAYTADI, pastga tushmaydi."""
+        t = self.bola(42)
+        self.liga(t)
+        p = self.profil(t)
+        LigaAzo.objects.filter(profile=p).update(
+            hafta=L.hafta_sanasi() - timedelta(days=28),
+            daraja=3, orin=9, natija="qoldi", yulduz=4,
+        )
+        self.assertEqual(self.liga(t)["daraja"]["nom"], "Olmos")
 
 
 class KirishKodiTest(TestCase):

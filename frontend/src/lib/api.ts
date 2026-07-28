@@ -336,6 +336,65 @@ export async function getReyting(davr: "jami" | "hafta"): Promise<Reyting | null
   } catch { return null; }
 }
 
+/* ---------------------------------------------------------- liga */
+
+export interface LigaDaraja {
+  nomer: number;
+  nom: string;
+  emoji: string;
+}
+
+/** Qator qaysi zonada: rang va tushuntirish shundan chiqadi. */
+export type LigaZona = "kotariladi" | "xavfsiz" | "tushadi" | "kutmoqda";
+
+export interface LigaQator {
+  orin: number;
+  ism: string;
+  familiya: string;
+  toliqIsm: string;
+  /** Ko'p bolali hisobda — qaysi bola. Aks holda bo'sh. */
+  bola: string;
+  avatar: string;
+  yulduz: number;
+  darslar: number;
+  zona: LigaZona;
+  men: boolean;
+}
+
+export interface Liga {
+  /**
+   * Ro'yxatdan o'tmagan hisob guruhga qo'shilmaydi — qolgan maydonlar
+   * bo'sh keladi va ekran taklif ko'rsatadi.
+   */
+  qatnashadi: boolean;
+  daraja?: LigaDaraja;
+  darajalar: LigaDaraja[];
+  hafta?: { boshi: string; tugaydi: string; qolganSoat: number };
+  guruh?: LigaQator[];
+  men?: LigaQator | null;
+  /** Nechtasi ko'tariladi va nechtasi tushadi. 0 — bu hafta yo'q. */
+  kotariladi?: number;
+  tushadi?: number;
+  otganHafta?: {
+    daraja: LigaDaraja;
+    orin: number;
+    yulduz: number;
+    natija: "kotarildi" | "qoldi" | "tushdi";
+    hafta: string;
+  } | null;
+}
+
+export async function getLiga(): Promise<Liga | null> {
+  if (!(await signIn())) return null;
+  try {
+    const r = await fetch(`/api/v1/liga${profilId ? `?profileId=${profilId}` : ""}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as Liga;
+  } catch { return null; }
+}
+
 /**
  * Ilova Telegram Mini App ichida ochilganmi.
  *

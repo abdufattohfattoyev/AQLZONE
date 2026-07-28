@@ -349,4 +349,54 @@ class LessonResult(models.Model):
     class Meta:
         db_table = "lesson_results"
         indexes = [models.Index(fields=["profile", "-created_at"])]
+
+
+class LigaAzo(models.Model):
+    """
+    Bitta bolaning bitta haftadagi liga o'rni.
+
+    Nega umumiy reyting yetarli emas: 300 kishilik jadvalda 147-o'rinni
+    egallagan bola kurashmaydi — oldingi bilan orasi yetib bo'lmas darajada
+    uzoq. 20 kishilik guruhda esa u 4-o'rinda turadi va uchinchi o'rin bir
+    darsda qo'lga kiradi. Raqam bir xil, hissiyot butunlay boshqa.
+
+    Qator HAFTAGA yoziladi, guruh esa o'sha hafta ichida o'zgarmaydi:
+    jadval o'yin davomida ostidan siljib ketmasligi kerak.
+
+    `orin` nolligicha turgan qator — hali yakunlanmagan hafta. Yakunlangach
+    o'rin va natija BIR MARTA yoziladi va qayta hisoblanmaydi: aks holda
+    o'tgan haftadagi ko'tarilish keyinchalik ma'lumot o'zgarsa bekor
+    bo'lib qolardi.
+    """
+
+    NATIJALAR = [
+        ("", "hali yakunlanmagan"),
+        ("kotarildi", "yuqori darajaga"),
+        ("qoldi", "shu darajada"),
+        ("tushdi", "quyi darajaga"),
+    ]
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="liga")
+    #: Haftaning dushanbasi — mahalliy vaqt bo'yicha.
+    hafta = models.DateField()
+    daraja = models.IntegerField(default=0)
+    #: Daraja ichidagi guruh raqami. Har guruhda ko'pi bilan 20 kishi.
+    guruh = models.IntegerField(default=0)
+    #: Ikkalasi ham FAQAT yakunlashda to'ldiriladi — tarix uchun.
+    yulduz = models.IntegerField(default=0)
+    orin = models.IntegerField(default=0)
+    natija = models.CharField(max_length=12, choices=NATIJALAR, default="", blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "liga_azo"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["profile", "hafta"], name="liga_bir_haftada_bir_marta"
+            )
+        ]
+        indexes = [models.Index(fields=["hafta", "daraja", "guruh"])]
+
+    def __str__(self) -> str:  # pragma: no cover — faqat admin/shell uchun
+        return f"{self.profile_id} · {self.hafta} · {self.daraja}-daraja"
         ordering = ["-created_at"]

@@ -15,13 +15,14 @@ kelajakdagi APK/iOS ilova ham AYNAN shu manzillarni chaqiradi.
     GET  /api/v1/results?limit=20           +Bearer
     GET  /api/v1/summary                    +Bearer → ota-ona hisoboti uchun
     GET  /api/v1/leaderboard?davr=jami|hafta +Bearer → top + o'z o'rning
+    GET  /api/v1/liga                       +Bearer → haftalik liga guruhi
     GET  /api/v1/kanal                      +Bearer → "kanalga qo'shiling" oynasi kerakmi
     GET  /api/health
 """
 from __future__ import annotations
 
 import json
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -34,8 +35,10 @@ from rest_framework.response import Response
 
 from . import auth as A
 from . import kanal as K
+from . import liga as L
 from .models import (
-    BIZNING_KALIT, MAX_QIYMAT, Identity, LessonResult, Profile, Progress, Pupil, Session,
+    BIZNING_KALIT, MAX_QIYMAT, Identity, LessonResult, LigaAzo, Profile, Progress,
+    Pupil, Session,
 )
 from .serializers import (
     DeviceAuthSerializer,
@@ -484,11 +487,10 @@ def summary(request):
 MAX_REYTING = 100
 
 
-def _hafta_boshi():
-    """Joriy haftaning dushanbasi, mahalliy vaqt bo'yicha yarim tundan."""
-    bugun = timezone.localdate()
-    dushanba = bugun - timedelta(days=bugun.weekday())
-    return timezone.make_aware(datetime.combine(dushanba, time.min))
+#: Joriy haftaning dushanbasi, mahalliy vaqt bo'yicha yarim tundan.
+#: Reyting ham, liga ham AYNAN shu chegaradan foydalanadi — aks holda
+#: "shu hafta" ikki joyda ikki xil ma'no anglatardi.
+_hafta_boshi = L.hafta_boshi
 
 
 def _reyting_jami(limit: int):
@@ -525,6 +527,41 @@ def _reyting_hafta(limit: int):
     )
     top = list(qs.order_by("-yulduz", "profile")[:limit])
     return qs, [(r["profile"], r["yulduz"]) for r in top]
+
+
+def _kim_ma(profil_idlar: list[int]) -> tuple[dict, dict]:
+    """
+    Jadval qatorlari uchun ism-avatar ma'lumoti — bitta so'rovda.
+
+    Ikkinchi lug'at: hisobda nechta bola bor. Bitta bolali oilada profil
+    nomini ko'rsatish ortiqcha ("Ali Valiyev · Ali"), shuning uchun uni
+    faqat ko'p bolali hisobda chiqaramiz.
+    """
+    profillar = {
+        p.pk: p
+        for p in Profile.objects.filter(pk__in=profil_idlar).select_related("pupil")
+    }
+    hisoblar = {p.pupil_id for p in profillar.values()}
+    bolalar = {
+        r["pupil"]: r["n"]
+        for r in Profile.objects.filter(pupil_id__in=hisoblar)
+        .values("pupil").annotate(n=Count("id"))
+    }
+    return profillar, bolalar
+
+
+def _odam_json(pid: int, kim: tuple[dict, dict]) -> dict:
+    """Reyting va liga qatorlarining umumiy qismi: kim ekani."""
+    profillar, bolalar = kim
+    pr = profillar.get(pid)
+    pupil = pr.pupil if pr else None
+    return {
+        "ism": pupil.first_name if pupil else "",
+        "familiya": pupil.last_name if pupil else "",
+        "toliqIsm": pupil.toliq_ism if pupil else "",
+        "bola": (pr.name if pr and bolalar.get(pr.pupil_id, 1) > 1 else ""),
+        "avatar": pr.avatar if pr else "",
+    }
 
 
 def _darslar_soni(profil_idlar: list[int], boshi=None) -> dict[int, int]:
@@ -584,33 +621,14 @@ def leaderboard(request):
     if joriy.pk not in idlar:
         idlar.append(joriy.pk)
 
-    profillar = {
-        p.pk: p
-        for p in Profile.objects.filter(pk__in=idlar).select_related("pupil")
-    }
+    kim = _kim_ma(idlar)
     boshi = None if davr == "jami" else _hafta_boshi()
     darslar = _darslar_soni(idlar, boshi)
 
-    # Bir hisobda bir nechta bola bo'lsa, qaysi bola ekani ko'rsatiladi.
-    # Bitta bolali oilada bu qator ortiqcha — shuning uchun sanaymiz.
-    hisoblar = {p.pupil_id for p in profillar.values()}
-    bolalar = {
-        r["pupil"]: r["n"]
-        for r in Profile.objects.filter(pupil_id__in=hisoblar)
-        .values("pupil").annotate(n=Count("id"))
-    }
-
     def qator(orin: int, pid: int, yulduz: int) -> dict:
-        pr = profillar.get(pid)
-        pupil = pr.pupil if pr else None
         return {
+            **_odam_json(pid, kim),
             "orin": orin,
-            "ism": pupil.first_name if pupil else "",
-            "familiya": pupil.last_name if pupil else "",
-            "toliqIsm": pupil.toliq_ism if pupil else "",
-            # Faqat ko'p bolali hisobda to'ldiriladi.
-            "bola": (pr.name if pr and bolalar.get(pr.pupil_id, 1) > 1 else ""),
-            "avatar": pr.avatar if pr else "",
             "yulduz": yulduz,
             "darslar": darslar.get(pid, 0),
             "men": pid == joriy.pk,
@@ -621,6 +639,110 @@ def leaderboard(request):
         "top": [qator(i, pid, y) for i, (pid, y) in enumerate(top, 1)],
         "men": qator(meniki[0], joriy.pk, meniki[1]) if meniki else None,
         "qatnashchilar": qs.count(),
+    })
+
+
+# -------------------------------------------------------------------- liga
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def liga(request):
+    """
+    Haftalik liga: 20 kishilik guruh, ko'tarilish va tushish zonalari.
+
+    Reytingdan farqi bitta va u hal qiluvchi: bu yerda bola BUTUN saytdagi
+    bolalar bilan emas, o'ziga teng 20 tasi bilan yarishadi. Mantiq
+    `core/liga.py` da — bu yerda faqat ko'rinish yig'iladi.
+
+    Ro'yxatdan o'tmagan hisob guruhga QO'SHILMAYDI: ismsiz qatorlar bilan
+    to'lgan jadval hech kimni qiziqtirmaydi. Bunday hisobga
+    `qatnashadi: false` qaytadi va mijoz taklif ko'rsatadi.
+    """
+    if not request.user.royxatdan_otgan:
+        return Response({
+            "qatnashadi": False,
+            "darajalar": L.DARAJALAR,
+        })
+
+    joriy = _profil_tanla(request)
+    azo = L.azo_qil(joriy)
+    hafta = azo.hafta
+
+    guruh = list(
+        LigaAzo.objects.filter(hafta=hafta, daraja=azo.daraja, guruh=azo.guruh)
+    )
+    idlar = [a.profile_id for a in guruh]
+    yulduz = L.yulduzlar(idlar, hafta)
+    darslar = L.darslar(idlar, hafta)
+
+    # Jadval TIRIK hisoblanadi: hafta ichida `LigaAzo.yulduz` to'ldirilmaydi
+    # (u faqat yakunlashda yoziladi), shuning uchun tartib har so'rovda
+    # dars natijalaridan chiqadi. Yakunlash bilan bir xil qoida bo'lishi
+    # uchun teng yulduzda oldin qo'shilgan yuqorida turadi.
+    guruh.sort(key=lambda a: (-yulduz.get(a.profile_id, 0), a.created_at, a.pk))
+    faol = sum(1 for a in guruh if yulduz.get(a.profile_id, 0) > 0)
+
+    kim = _kim_ma(idlar)
+    tushish_bor = azo.daraja > 0 and faol >= L.TUSHISH_ENG_KAM
+
+    def zona(orin: int, y: int) -> str:
+        """Qator qaysi rangda ko'rinadi."""
+        if y <= 0:
+            return "kutmoqda"
+        if orin <= L.KOTARILADI and azo.daraja < L.ENG_YUQORI:
+            return "kotariladi"
+        if tushish_bor and orin > faol - L.TUSHADI:
+            return "tushadi"
+        return "xavfsiz"
+
+    qatorlar = []
+    men = None
+    for i, a in enumerate(guruh, 1):
+        y = yulduz.get(a.profile_id, 0)
+        q = {
+            **_odam_json(a.profile_id, kim),
+            "orin": i,
+            "yulduz": y,
+            "darslar": darslar.get(a.profile_id, 0),
+            "zona": zona(i, y),
+            "men": a.profile_id == joriy.pk,
+        }
+        qatorlar.append(q)
+        if q["men"]:
+            men = q
+
+    # O'tgan hafta qanday tugagani — bir marta ko'rsatiladigan xabar uchun.
+    otgan = (
+        LigaAzo.objects.filter(profile=joriy, hafta__lt=hafta)
+        .exclude(orin=0)
+        .order_by("-hafta")
+        .first()
+    )
+
+    tugaydi = L.hafta_oxiri(hafta)
+    return Response({
+        "qatnashadi": True,
+        "daraja": L.daraja_json(azo.daraja),
+        "darajalar": L.DARAJALAR,
+        "hafta": {
+            "boshi": hafta,
+            "tugaydi": tugaydi,
+            # Mijoz o'zi ham hisoblay olardi, lekin qurilma soati noto'g'ri
+            # bo'lsa "0 kun qoldi" deb yozib qo'yardi. Server aytgani aniq.
+            "qolganSoat": max(0, int((tugaydi - timezone.now()).total_seconds() // 3600)),
+        },
+        "guruh": qatorlar,
+        "men": men,
+        "kotariladi": L.KOTARILADI if azo.daraja < L.ENG_YUQORI else 0,
+        "tushadi": L.TUSHADI if tushish_bor else 0,
+        "otganHafta": {
+            "daraja": L.daraja_json(otgan.daraja),
+            "orin": otgan.orin,
+            "yulduz": otgan.yulduz,
+            "natija": otgan.natija,
+            "hafta": otgan.hafta,
+        } if otgan else None,
     })
 
 
