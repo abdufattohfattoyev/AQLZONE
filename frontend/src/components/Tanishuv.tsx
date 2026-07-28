@@ -1,36 +1,38 @@
 /**
- * Kirish darvozasi.
+ * Kirish darvozasi — va u ataylab DEVOR EMAS.
  *
- * Kirishning YAGONA yo'li — Telegram (`Kirish.tsx`). Tugma botga olib
- * boradi, bot bir martalik havola yuboradi, havola `/kirish/<kod>` orqali
- * qaytaradi. Shundan keyin ism-familiya so'raladi.
+ * Ilgari kirmagan odam ilovaning o'zini umuman ko'rmasdi: birinchi ekran
+ * "Telegram bilan kirish" edi. Bu reklamani o'ldiradi — havolani bosgan
+ * odam hali ishonmagan mahsulotga hisob ochmaydi, orqaga qaytadi.
  *
- * Ikki bosqich alohida holat bo'lib turadi, chunki odam ikkisining
- * ORASIDA sahifani yangilashi mumkin: Telegram'i bog'langan-u, familiyasi
- * hali yo'q. Bunda uni yana kirish ekraniga qaytarish ma'nosiz bo'lardi —
- * u allaqachon kirgan, faqat ismini yozib bo'lmagan.
+ * Endi kirmagan odam ilovaga TO'G'RIDAN-TO'G'RI tushadi va o'ynayveradi.
+ * Kirish taklifi birinchi dars tugagach chiqadi — bola yulduzini ko'rgan,
+ * ya'ni nimadir yutgan paytda (`lib/sinov.ts`). Taklifda "Keyinroq" bor,
+ * ya'ni undan chiqib ketish mumkin.
  *
- * Ikki narsa darvozani OCHIQ qoldiradi, va ikkalasi ham ataylab:
+ * Progress yo'qolmaydi: sinov paytidagi natija anonim hisobda serverda
+ * turadi va Telegram bilan kirganda o'sha hisobga qo'shiladi
+ * (`auth/kod` → `_hisoblarni_birlashtir`).
  *
- *   1. **Server javob bermasa — o'tkazib yuboriladi.** Internetsiz bola
- *      darsga kira olmay qolishi ro'yxatdan MUHIMROQ: ilova offline
- *      ishlash uchun qurilgan. Aloqa tiklanganda darvoza yana so'raydi,
- *      reyting esa serverda baribir faqat ro'yxatdan o'tganlarni oladi.
- *   2. **`/kirish/<kod>` darvozadan o'tkaziladi.** Bu botdagi havola,
- *      ya'ni odam AYNAN kirish jarayonida. Uni kirish ekraniga tiqsak,
- *      cheksiz halqa yuzaga kelardi.
+ * Bitta holat hamon TO'SADI va u to'g'ri: odam botdan kelib, Telegram'i
+ * bog'langan-u, ismini yozmagan bo'lsa (`ism`). U allaqachon kirish
+ * jarayonining o'rtasida — uni yarim yo'lda qoldirish chalkashtiradi.
+ *
+ * `/kirish/<kod>` darvozadan o'tkaziladi: bu botdagi havola, ya'ni odam
+ * AYNAN kirish jarayonida. Uni kirish ekraniga tiqsak, cheksiz halqa
+ * yuzaga kelardi.
  */
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sozlamalar } from "../screens/Sozlamalar";
 import { Kirish } from "./Kirish";
-import { Kutish } from "./Kutish";
-import { getHisob } from "../lib/api";
+import { getHisob, miniAppda } from "../lib/api";
+import { royxatniBelgila, taklifgaObuna } from "../lib/sinov";
 import type { Hisob } from "../lib/api";
 import type { ReactNode } from "react";
 
-/** Tekshiruv holati: hali bilmaymiz → kirish / ism so'raymiz / so'ramaymiz. */
-type Holat = "kutilyapti" | "kirish" | "ism" | "kerak-emas";
+/** Tekshiruv holati: hali bilmaymiz → sinov / ism so'raymiz / so'ramaymiz. */
+type Holat = "kutilyapti" | "sinov" | "ism" | "kerak-emas";
 
 /**
  * Oxirgi safar kirgan bo'lganmi.
@@ -47,6 +49,8 @@ const KIRGAN_KEY = "az_kirgan";
 
 export function Tanishuv({ children }: { children: ReactNode }) {
   const [holat, setHolat] = useState<Holat>("kutilyapti");
+  /** Sinov taklifi ko'rsatilyaptimi va bola nechta yulduz olgan edi. */
+  const [taklif, setTaklif] = useState<number | null>(null);
   // Ism so'raladigan bo'lsa, o'sha ekranga TAYYOR holda beriladi. Aks
   // holda u xuddi shu `/me` javobini ikkinchi marta so'rar va odam
   // kirish tugmasini bosgach yana kutib turardi.
@@ -70,15 +74,18 @@ export function Tanishuv({ children }: { children: ReactNode }) {
         try {
           if (h.royxatdan) localStorage.setItem(KIRGAN_KEY, "1");
           else localStorage.removeItem(KIRGAN_KEY);
-        } catch { /* xotira to'lgan — faqat kutish ekrani uzunroq ko'rinadi */ }
+        } catch { /* xotira to'lgan — faqat bayroq eslanmaydi */ }
 
+        royxatniBelgila(h.royxatdan);
         if (h.royxatdan) return setHolat("kerak-emas");
         // Telegram bog'langan, lekin ism-familiya to'liq emas — odam
         // ikki bosqich orasida qolib ketgan.
-        return setHolat(h.telegram ? "ism" : "kirish");
+        return setHolat(h.telegram ? "ism" : "sinov");
       }
       if (++urinish >= 3) {
-        // Server javob bermadi. Ilovani to'smaymiz.
+        // Server javob bermadi. Ilovani to'smaymiz va taklif ham
+        // chiqarmaymiz: internetsiz odamni Telegram'ga yuborishdan
+        // ma'no yo'q, u baribir ochilmaydi.
         setHolat("kerak-emas");
         return;
       }
@@ -89,21 +96,34 @@ export function Tanishuv({ children }: { children: ReactNode }) {
     return () => { bekor = true; };
   }, [holat, kirishSahifasi]);
 
+  // Dars tugaganda `lib/sinov.ts` shu yerga xabar beradi.
+  useEffect(() => taklifgaObuna(setTaklif), []);
+
   if (kirishSahifasi) return <>{children}</>;
-  if (holat === "kirish") return <Kirish />;
 
   if (holat === "ism") {
-    return <Sozlamalar royxat boshlangich={hisob} onBack={() => setHolat("kirish")}
+    return <Sozlamalar royxat boshlangich={hisob} onBack={() => setHolat("sinov")}
       onTayyor={() => setHolat("kerak-emas")} />;
   }
 
-  // Javob hali kelmadi. Oldin kirgan bo'lsa ilovani darhol ko'rsatamiz —
-  // eng ko'p uchraydigan holat va u yerda kutish ekrani ortiqcha to'siq.
-  // Kirmagan (yoki noma'lum) bo'lsa kutamiz: ilovani ochib, keyin uni
-  // tortib olish sahifa qayta yuklanayotgandek ko'rinadi.
-  if (holat === "kutilyapti" && localStorage.getItem(KIRGAN_KEY) !== "1") {
-    return <Kutish />;
+  // Mini App ichida taklif KO'RSATILMAYDI: u yerda kirish `initData`
+  // orqali o'zi bo'ladi va odamni Telegram ichidan yana Telegram'ga
+  // yuborish halqasi yuzaga kelardi.
+  if (taklif !== null && !miniAppda()) {
+    return (
+      <Kirish
+        izoh={taklif === 3 ? "Zo'r! Uchala yulduzni oldingiz" : `${taklif} yulduz qo'lga kiritildi`}
+        xabar={"Yulduzlaringiz hozir faqat shu brauzerda turibdi. Telegram bilan "
+          + "kirsangiz — ular saqlanadi, boshqa telefonda ham ochiladi va "
+          + "haftalik ligada qatnasha boshlaysiz."}
+        tugma="Telegram bilan saqlash"
+        onKeyinroq={() => setTaklif(null)}
+      />
+    );
   }
 
+  // Qolgan hamma holatda ilova ochiq: kutilyapti bo'lsa ham, sinov
+  // bo'lsa ham. Kutish ekrani ataylab olib tashlandi — reklamadan kelgan
+  // odam birinchi ko'rgan narsasi aylanuvchi belgi bo'lmasligi kerak.
   return <>{children}</>;
 }

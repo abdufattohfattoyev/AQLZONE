@@ -26,6 +26,7 @@ import { isUnlocked } from "./lib/types";
 import { temaOf, useTema } from "./lib/tema";
 import { takrorlashDarsi } from "./lib/takrorlash";
 import { oxirginiYoz } from "./lib/oxirgi";
+import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolDaftar, yolDars, yolKurs, yolKurslar,
@@ -158,6 +159,10 @@ function DarsSahifasi() {
       onExit={() => nav(yolKurs(c))}
       onFinish={(r: LessonResult) => {
         darsTugadi(c, ui, li, r);
+        // Kirmagan bo'lsa — shu yerda kirish taklifi chiqishi mumkin.
+        // Ataylab AYNAN shu payt: bola yulduzini endi ko'rdi va taklif
+        // yo'qotish emas, yutuqni saqlash bo'lib tuyuladi.
+        sinovDarsTugadi(r.stars);
         nav(yolKurs(c));
       }}
     />

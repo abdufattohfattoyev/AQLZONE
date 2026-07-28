@@ -31,9 +31,21 @@ interface Props {
    * Bo'sh bo'lsa oddiy "Tizimga kirish" ko'rinishi chiqadi.
    */
   xabar?: string;
+  /** Sarlavha ostidagi qator. Standart — "Tizimga kirish". */
+  izoh?: string;
+  /** Tugma matni. Standart — "Telegram bilan kirish". */
+  tugma?: string;
+  /**
+   * Berilsa — pastda "Keyinroq" chiqadi va ekran MAJBURIY bo'lmay qoladi.
+   *
+   * Sinov rejimidagi taklif aynan shunday: odam kirmasdan ham o'ynashda
+   * davom eta oladi. Chiqib bo'lmaydigan taklif — bu o'sha eski devor,
+   * faqat boshqa joyga ko'chirilgani.
+   */
+  onKeyinroq?: () => void;
 }
 
-export function Kirish({ xabar }: Props) {
+export function Kirish({ xabar, izoh, tugma, onKeyinroq }: Props) {
   const [bot, setBot] = useState<string | null>(null);
   // Mini App ichida tugma ko'rsatilmaydi: u odamni Telegram ichidan
   // yana Telegram'ga yuboradigan halqa bo'lardi. Bu yerga tushish
@@ -53,7 +65,7 @@ export function Kirish({ xabar }: Props) {
       <div className="az-kirish w-full rounded-clay bg-karta p-6 text-center shadow-clay">
         <Logo size={64} className="mx-auto" />
         <h1 className="mt-3 text-[22px]">Aql Zone</h1>
-        <p className="mt-1 text-[13.5px] text-ink-dim">Tizimga kirish</p>
+        <p className="mt-1 text-[13.5px] text-ink-dim">{izoh || "Tizimga kirish"}</p>
 
         {xabar && (
           <p className="mt-4 rounded-2xl bg-track px-3 py-2.5 text-[12.5px]
@@ -76,7 +88,7 @@ export function Kirish({ xabar }: Props) {
               <span className="grid size-7 place-items-center rounded-full bg-white/25">
                 <Icon name="send" size={16} />
               </span>
-              Telegram bilan kirish
+              {tugma || "Telegram bilan kirish"}
             </a>
           ) : ichkarida ? (
             <p className="px-2 text-[13px] leading-snug text-ink-soft">
@@ -97,6 +109,13 @@ export function Kirish({ xabar }: Props) {
             qaytasiz va avtomatik kirasiz.
           </p>
         ) : null}
+
+        {onKeyinroq && (
+          <button type="button" onClick={onKeyinroq}
+            className="mt-4 w-full py-2 text-[13px] text-ink-dim underline-offset-2 hover:underline">
+            Keyinroq
+          </button>
+        )}
       </div>
     </div>
   );
