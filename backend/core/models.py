@@ -79,6 +79,13 @@ class Pupil(models.Model):
     #: chiqib ketsa ham qaytarib chaqirmaymiz — bir marta rad javob
     #: bergan odamni ta'qib qilish obuna qaytarmaydi, ilovadan bezdiradi.
     kanal_azo_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Bot bloklangani ANIQLANGAN payt (Telegram 403 qaytargan).
+    #:
+    #: Keyingi e'lonlar bunday hisobni butunlay o'tkazib yuboradi. Busiz
+    #: har e'londa o'sha odamlarga qayta urinilardi: bu vaqt, so'rov
+    #: cheklovi va "xato" ustunidagi soxta raqam — haqiqiy nosozlik
+    #: o'sha soxta raqam ichida ko'rinmay ketardi.
+    bot_bloklandi_at = models.DateTimeField(null=True, blank=True, default=None)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -349,6 +356,102 @@ class LessonResult(models.Model):
     class Meta:
         db_table = "lesson_results"
         indexes = [models.Index(fields=["profile", "-created_at"])]
+
+
+class Reklama(models.Model):
+    """
+    Botdan yuboriladigan e'lon.
+
+    Nega alohida jadval, "yuborib qo'ya qolmaymizmi": yuborish soniyalar
+    emas, DAQIQALAR oladi. Ming kishilik ro'yxat Telegram cheklovi bilan
+    40 soniya, o'n minglik — o'n daqiqa. Shu orada server qayta ishga
+    tushishi mumkin (deploy, xotira, oddiy nosozlik). Holat bazada
+    turmasa, e'lon yarim yo'lda uzilib qolardi va uni qayerdan davom
+    ettirishni hech kim bilmasdi.
+
+    `ReklamaQabul` esa har bir odam uchun alohida qator yozadi. Shu sabab
+    davom ettirish XAVFSIZ: allaqachon yuborilgan odamga ikkinchi marta
+    bormaydi. Bir odamga ikki marta kelgan reklama — botni bloklashning
+    eng tez yo'li.
+    """
+
+    HOLATLAR = [
+        ("qoralama", "hali yuborilmagan"),
+        ("ketyapti", "yuborilmoqda"),
+        ("tugadi", "hammaga yetdi"),
+        ("toxtatildi", "qo'lda to'xtatilgan"),
+    ]
+
+    matn = models.TextField(default="", blank=True)
+    #: Pastdagi "botga kirish" tugmasi. Yoqib-o'chirib turish uchun.
+    tugma = models.BooleanField(default=True)
+    tugma_matni = models.CharField(max_length=64, default="Aql Zone'ni ochish")
+    #: Bo'sh bo'lsa bot havolasi qo'yiladi (`reklama.havola`).
+    havola = models.CharField(max_length=300, default="", blank=True)
+
+    holat = models.CharField(max_length=12, choices=HOLATLAR, default="qoralama")
+    #: Yuborish boshlanganda hisoblanadi va o'zgarmaydi — foizni shundan
+    #: chiqaramiz. Ro'yxat yuborish davomida o'sib borsa, foiz orqaga
+    #: qaytib, "95% dan 91% ga tushdi" degan g'alati ko'rinish chiqardi.
+    jami = models.IntegerField(default=0)
+    yuborildi = models.IntegerField(default=0)
+    bloklandi = models.IntegerField(default=0)
+    xato = models.IntegerField(default=0)
+
+    #: Kim yuborgani — admin Telegram id'si.
+    kim = models.CharField(max_length=40, default="", blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    boshlandi_at = models.DateTimeField(null=True, blank=True)
+    tugadi_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "reklama"
+        indexes = [models.Index(fields=["-created_at"])]
+
+    @property
+    def foiz(self) -> int:
+        if not self.jami:
+            return 0
+        return round((self.yuborildi + self.bloklandi + self.xato) / self.jami * 100)
+
+    @property
+    def qisqa(self) -> str:
+        matn = " ".join(self.matn.split())
+        return matn[:60] + ("…" if len(matn) > 60 else "")
+
+    def __str__(self) -> str:  # pragma: no cover — admin/shell uchun
+        return f"{self.pk} · {self.holat} · {self.qisqa}"
+
+
+class ReklamaQabul(models.Model):
+    """
+    Bitta e'lon bitta odamga yetdimi.
+
+    Yagona cheklov (`reklama` + `pupil`) — ikki marta yuborishning oldini
+    oladigan asosiy himoya. U dastur mantig'ida emas, BAZADA turadi: ikki
+    jarayon bir vaqtda yuborsa ham ikkinchisi qatorni yoza olmaydi.
+    """
+
+    HOLATLAR = [
+        ("yuborildi", "yetdi"),
+        ("bloklandi", "bot bloklangan"),
+        ("xato", "yuborilmadi"),
+    ]
+
+    reklama = models.ForeignKey(Reklama, on_delete=models.CASCADE, related_name="qabullar")
+    pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="reklamalar")
+    holat = models.CharField(max_length=12, choices=HOLATLAR)
+    izoh = models.CharField(max_length=200, default="", blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "reklama_qabul"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["reklama", "pupil"], name="reklama_bir_odamga_bir_marta"
+            )
+        ]
+        indexes = [models.Index(fields=["reklama", "holat"])]
 
 
 class LigaAzo(models.Model):

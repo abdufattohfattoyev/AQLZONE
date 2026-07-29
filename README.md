@@ -154,6 +154,35 @@ ikkalasi ham ATAYLAB shunday:
 | **Telegram orqali kirish** — botdagi bir martalik havola bilan | `backend/core/auth.py` |
 | **Profillar** — bir qurilma, bir necha bola | `backend/core/models.py` |
 | **Telegram eslatmasi** | `backend/core/management/commands/eslatma.py` |
+| **E'lon tarqatish** — botdan hammaga xabar, inline tugma bilan | `backend/core/reklama.py` |
+
+### E'lon tarqatish
+
+`/boshqaruv/reklama` — matn yoziladi, Telegram'da qanday ko'rinishi yonida
+darhol chiziladi, so'ng avval **o'zingizga**, keyin hammaga yuboriladi.
+Xabar ostidagi "botga kirish" tugmasi yoqib-o'chiriladi; havolasi bo'sh
+qoldirilsa bot manzili qo'yiladi.
+
+Uch narsa ataylab shunday qilingan va uchalasi ham bir marta kuyib
+bilinadigan narsalar:
+
+- **Bir odamga ikki marta bormaydi.** Har yuborilgan xabar
+  `ReklamaQabul` ga yoziladi, cheklov esa BAZADA turadi. Shuning uchun
+  uzilgan e'lonni davom ettirish xavfsiz.
+- **Bloklagan odam eslab qolinadi** (`Pupil.bot_bloklandi_at`) va keyingi
+  e'lonlarda umuman qatnashmaydi.
+- **Tezlik cheklangan** — soniyasiga 25 ta. Oshirilsa Telegram butun
+  botni vaqtincha to'xtatadi.
+
+Yuborish fon oqimida ketadi. Server o'rtada qayta ishga tushsa e'lon
+"ketyapti" holatida qoladi va panelda "Davom ettirish" tugmasi chiqadi.
+Xuddi shu ishni buyruq qatori ham qiladi:
+
+```bash
+python manage.py reklama --royxat        # e'lonlar ro'yxati
+python manage.py reklama --id 3          # yuboradi yoki davom ettiradi
+python manage.py reklama --uzilganlar    # yarim qolganlarning hammasi
+```
 
 ### Haftalik liga
 

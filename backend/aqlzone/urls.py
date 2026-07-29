@@ -4,6 +4,7 @@ Aql Zone — asosiy marshrutlar.
     /api/health          holat tekshiruvi
     /api/v1/...          REST API (core.urls)
     /boshqaruv           administrator hisoboti (Telegram orqali)
+    /boshqaruv/reklama   botdan e'lon tarqatish
     boshqa hammasi       React ilova (SPA) — /kurs/1-sinf kabi URL'lar
                          sahifa yangilanganda ham ishlashi uchun.
 
@@ -27,6 +28,7 @@ urlpatterns = [
     # ekraniga tushib qolmasin.
     path("boshqaruv/kirish", boshqaruv.eski_kirish),
     path("boshqaruv/chiqish", boshqaruv.chiqish, name="boshqaruv-chiqish"),
+    path("boshqaruv/reklama", boshqaruv.reklama, name="boshqaruv-reklama"),
     # Botdagi havola: /boshqaruv/havola/<imzolangan kod>
     path("boshqaruv/havola/<str:kod>", boshqaruv.havola, name="boshqaruv-havola"),
     *spa_urlpatterns(),

@@ -1,0 +1,300 @@
+{% extends "boshqaruv/asos.html" %}
+{% block sarlavha %}E'lonlar{% endblock %}
+
+{% comment %}
+Sahifa tartibi ataylab: yozish maydoni tepada, tarix pastda. Bu yerga
+kirgan odam deyarli har doim YANGI e'lon yozgani keladi.
+
+Yuborish ikki bosqichli: avval "o'zimga", keyin "hammaga". Birinchisi
+majburiy emas, lekin tugmalar shunday joylashganki, ko'z avval unga
+tushadi — e'lonni orqaga qaytarib bo'lmaydi, xato terilgan so'z ming
+kishining telefonida qoladi.
+{% endcomment %}
+
+{% block tana %}
+<header class="tepa">
+  <div class="nishon">AZ</div>
+  <div>
+    <h1>E'lonlar</h1>
+    <div class="vaqt">{{ yangilangan|date:"d.m.Y H:i" }} · botdan xabar tarqatish</div>
+  </div>
+  <div class="ong">
+    <a class="tugma" href="/boshqaruv">← Hisobot</a>
+    <a class="tugma" href="/boshqaruv/chiqish">Chiqish</a>
+  </div>
+</header>
+
+<div class="ichki">
+
+  {% if xabar %}
+  <div class="ogoh">{{ xabar }}</div>
+  {% endif %}
+
+  <!-- ===================================================== yangi e'lon -->
+  <div class="bolim">
+    <h2>Yangi e'lon</h2>
+    <p>{{ qancha }} ta hisobga boradi{% if bloklagan %} · {{ bloklagan }} tasi botni bloklagan, ularga yuborilmaydi{% endif %}</p>
+  </div>
+
+  <form method="post" class="karta tekis yozish">
+    {% csrf_token %}
+    <input type="hidden" name="amal" value="yasa">
+
+    <div class="ikki">
+      <div>
+        <label class="yorliq" for="matn">Xabar matni</label>
+        <textarea id="matn" name="matn" rows="9" maxlength="4096"
+                  placeholder="Salom! Aql Zona'da yangilik: haftalik liga ishga tushdi…"
+                  oninput="korsat()"></textarea>
+        <div class="yordam">
+          <span><b>&lt;b&gt;qalin&lt;/b&gt;</b> · <i>&lt;i&gt;qiya&lt;/i&gt;</i> · &lt;a href="..."&gt;havola&lt;/a&gt;</span>
+          <span id="sanoq">0 / 4096</span>
+        </div>
+
+        <label class="belgilash">
+          <input type="checkbox" name="tugma" checked onchange="korsat()">
+          <span>Pastida "botga kirish" tugmasi bo'lsin</span>
+        </label>
+
+        <div id="tugma-sozlama">
+          <label class="yorliq" for="tugma_matni">Tugma yozuvi</label>
+          <input id="tugma_matni" type="text" name="tugma_matni" maxlength="64"
+                 value="Aql Zone'ni ochish" oninput="korsat()">
+
+          <label class="yorliq" for="havola">Havola</label>
+          <input id="havola" type="text" name="havola" maxlength="300"
+                 placeholder="{{ standart_havola }}" oninput="korsat()">
+          <div class="yordam">Bo'sh qoldirilsa bot havolasi qo'yiladi</div>
+        </div>
+      </div>
+
+      <!-- Ko'rinishi. Telegram'dagi xabar shunga o'xshab chiqadi —
+           tugma joyida turibdimi, matn uzun emasmi, bir qarashda ko'rinadi. -->
+      <div>
+        <label class="yorliq">Telegram'da qanday ko'rinadi</label>
+        <div class="tg">
+          <div class="tg-pufak">
+            <div id="ko-matn" class="tg-matn xira">Xabar matnini yozing…</div>
+            <div class="tg-vaqt">{{ yangilangan|date:"H:i" }}</div>
+          </div>
+          <div id="ko-tugma" class="tg-tugma">Aql Zone'ni ochish</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qator">
+      <button class="tugma asosiy" type="submit">E'lon yasash</button>
+      <span class="yordam">Yasalgandan keyin avval o'zingizga yuborib ko'rasiz</span>
+    </div>
+  </form>
+
+  <!-- ======================================================== tarix -->
+  <div class="bolim">
+    <h2>Yuborilganlar</h2>
+    <p>oxirgi {{ royxat|length }} ta</p>
+  </div>
+
+  {% if not royxat %}
+    <div class="karta tekis bosh-holat">Hali e'lon yo'q.</div>
+  {% endif %}
+
+  {% for r in royxat %}
+  <div class="karta tekis elon">
+    <div class="elon-tepa">
+      <span class="belgi
+        {% if r.holat == 'tugadi' %}yashil{% elif r.holat == 'ketyapti' %}moviy{% elif r.holat == 'toxtatildi' %}qizil{% else %}sariq{% endif %}">
+        {% if r.holat == 'qoralama' %}Yuborilmagan
+        {% elif r.holat == 'ketyapti' %}Ketyapti
+        {% elif r.holat == 'tugadi' %}Tugadi
+        {% else %}To'xtatilgan{% endif %}
+      </span>
+      <span class="elon-vaqt">#{{ r.pk }} · {{ r.created_at|date:"d.m.Y H:i" }}</span>
+      {% if r.tugma %}<span class="belgi">tugma yoniq</span>{% else %}<span class="belgi">tugmasiz</span>{% endif %}
+    </div>
+
+    <div class="elon-matn">{{ r.matn|linebreaksbr }}</div>
+
+    {% if r.jami %}
+    <div class="chiziq"><span style="width: {{ r.foiz }}%"></span></div>
+    <div class="elon-son">
+      <span><b>{{ r.yuborildi }}</b> yetdi</span>
+      <span><b>{{ r.bloklandi }}</b> bloklagan</span>
+      <span><b>{{ r.xato }}</b> xato</span>
+      <span class="xira">{{ r.jami }} tadan · {{ r.foiz }}%</span>
+    </div>
+    {% endif %}
+
+    <div class="qator">
+      <form method="post"><!-- sinov -->
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ r.pk }}">
+        <input type="hidden" name="amal" value="sinov">
+        <button class="tugma" type="submit" {% if not menda_tg %}disabled title="Botdagi havola orqali qaytadan kiring"{% endif %}>
+          O'zimga yuborish
+        </button>
+      </form>
+
+      {% if r.holat == 'ketyapti' %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ r.pk }}">
+          <input type="hidden" name="amal" value="toxtat">
+          <button class="tugma xavfli" type="submit">To'xtatish</button>
+        </form>
+      {% elif r.holat == 'tugadi' %}
+        <span class="yordam">Bu e'lon yuborib bo'lingan</span>
+      {% else %}
+        <form method="post" onsubmit="return tasdiq(this)">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ r.pk }}">
+          <input type="hidden" name="amal" value="{% if r.holat == 'toxtatildi' %}davom{% else %}yubor{% endif %}">
+          <input type="hidden" name="qancha" value="{{ qancha }}">
+          <button class="tugma asosiy" type="submit">
+            {% if r.holat == 'toxtatildi' %}Davom ettirish{% else %}Hammaga yuborish{% endif %}
+          </button>
+        </form>
+        <form method="post" onsubmit="return confirm('E\'lon o\'chirilsinmi?')">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ r.pk }}">
+          <input type="hidden" name="amal" value="ochir">
+          <button class="tugma xavfli" type="submit">O'chirish</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+  .ogoh {
+    margin: 18px 0 0; padding: 11px 15px; border-radius: 12px;
+    background: rgba(108,140,255,.12); border: 1px solid rgba(108,140,255,.3);
+    color: var(--matn); font-size: 13px;
+  }
+  .yozish { padding: 18px; }
+  .ikki { display: grid; gap: 22px; grid-template-columns: minmax(0,1.25fr) minmax(0,.75fr); }
+  @media (max-width: 820px) { .ikki { grid-template-columns: 1fr; } }
+
+  .yorliq {
+    display: block; margin: 14px 0 6px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .07em; color: var(--juda-xira);
+  }
+  .yozish .yorliq:first-child { margin-top: 0; }
+
+  textarea, .yozish input[type="text"] {
+    width: 100%; box-sizing: border-box; padding: 11px 13px;
+    background: var(--fon-2); color: var(--matn);
+    border: 1px solid var(--chegara); border-radius: 12px;
+    font: inherit; font-size: 13.5px; line-height: 1.5; resize: vertical;
+  }
+  textarea:focus, .yozish input[type="text"]:focus {
+    outline: none; border-color: var(--asos);
+  }
+
+  .yordam {
+    display: flex; justify-content: space-between; gap: 10px;
+    margin-top: 6px; font-size: 11.5px; color: var(--juda-xira);
+  }
+  .belgilash {
+    display: flex; align-items: center; gap: 9px; margin-top: 16px;
+    font-size: 13px; color: var(--matn); cursor: pointer;
+  }
+  .belgilash input { width: 16px; height: 16px; accent-color: var(--asos); }
+
+  .qator { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .qator form { margin: 0; }
+
+  .tugma.asosiy { background: var(--asos); border-color: var(--asos); color: #fff; }
+  .tugma.asosiy:hover { color: #fff; filter: brightness(1.08); }
+  .tugma.xavfli { color: var(--qizil); border-color: rgba(251,113,133,.35); }
+  .tugma[disabled] { opacity: .45; cursor: not-allowed; }
+
+  /* --------- Telegram ko'rinishi --------- */
+  .tg {
+    background: #17212b; border-radius: 14px; padding: 14px;
+    border: 1px solid var(--chegara);
+  }
+  .tg-pufak {
+    background: #212d3b; border-radius: 12px 12px 12px 4px;
+    padding: 9px 12px 6px; color: #eff3f6; font-size: 13.5px; line-height: 1.45;
+  }
+  .tg-matn { white-space: pre-wrap; word-break: break-word; }
+  .tg-matn.xira { color: #6b7d8f; }
+  .tg-vaqt { margin-top: 3px; text-align: right; font-size: 10.5px; color: #6b7d8f; }
+  .tg-tugma {
+    margin-top: 4px; padding: 9px; border-radius: 4px 4px 12px 12px;
+    background: #2b5278; color: #7cb7f5; text-align: center;
+    font-size: 13px; font-weight: 600;
+  }
+  .tg-tugma.yoq { display: none; }
+
+  /* --------- ro'yxat --------- */
+  .elon { padding: 16px 18px; margin-top: 12px; }
+  .elon-tepa { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .elon-vaqt { font-size: 12px; color: var(--juda-xira); }
+  .elon-matn {
+    margin-top: 11px; padding: 11px 13px; border-radius: 10px;
+    background: var(--fon-2); font-size: 13px; line-height: 1.5;
+    color: var(--xira); white-space: pre-wrap; word-break: break-word;
+    max-height: 150px; overflow: auto;
+  }
+  .chiziq {
+    margin-top: 13px; height: 6px; border-radius: 999px;
+    background: var(--fon-2); overflow: hidden;
+  }
+  .chiziq span {
+    display: block; height: 100%; border-radius: 999px;
+    background: var(--asos); transition: width .4s ease;
+  }
+  .elon-son { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 9px; font-size: 12.5px; }
+  .elon-son b { color: var(--matn); }
+  .elon-son .xira { color: var(--juda-xira); }
+  .bosh-holat { padding: 22px; text-align: center; color: var(--juda-xira); font-size: 13px; }
+</style>
+
+<script>
+  // Ko'rinish har bosishda yangilanadi: e'lon yuborilgandan keyin uni
+  // to'g'rilab bo'lmaydi, shuning uchun xato YOZAYOTGAN paytda
+  // ko'rinishi kerak.
+  function korsat() {
+    var matn = document.getElementById("matn");
+    var chiqish = document.getElementById("ko-matn");
+    var xom = matn.value;
+
+    // Telegram HTML teglarini o'zi chizadi. Bu yerda ham shunday
+    // qilamiz, lekin FAQAT ruxsat etilganlarini — qolgani matn bo'lib
+    // qoladi, aks holda ko'rinish haqiqatdan farq qilardi.
+    var xavfsiz = xom
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/&lt;(\/?)(b|i|u|s|code)&gt;/g, "<$1$2>")
+      .replace(/&lt;a href=&quot;([^&]*)&quot;&gt;/g, '<a href="$1">')
+      .replace(/&lt;a href="([^"]*)"&gt;/g, '<a href="$1">')
+      .replace(/&lt;\/a&gt;/g, "</a>");
+
+    chiqish.innerHTML = xavfsiz || "Xabar matnini yozing…";
+    chiqish.classList.toggle("xira", !xom);
+    document.getElementById("sanoq").textContent = xom.length + " / 4096";
+
+    var yoniq = document.querySelector('input[name="tugma"]').checked;
+    var tugma = document.getElementById("ko-tugma");
+    tugma.classList.toggle("yoq", !yoniq);
+    tugma.textContent = document.getElementById("tugma_matni").value || "Aql Zone'ni ochish";
+    document.getElementById("tugma-sozlama").style.display = yoniq ? "" : "none";
+  }
+  korsat();
+
+  // Yuborishni orqaga qaytarib bo'lmaydi — shuning uchun tasdiq so'raladi
+  // va unda ANIQ RAQAM turadi. "Rostdan ham?" degan savol hech narsani
+  // to'xtatmaydi, "1240 kishiga ketadi" esa to'xtatadi.
+  function tasdiq(forma) {
+    var n = forma.querySelector('input[name="qancha"]').value;
+    return confirm(n + " ta hisobga xabar ketadi va uni qaytarib bo'lmaydi.\n\nYuborilsinmi?");
+  }
+
+  // E'lon ketayotgan bo'lsa sahifa o'zi yangilanib turadi — admin
+  // hisoblagichni qo'lda bosib o'tirmasin.
+  if (document.querySelector(".belgi.moviy")) {
+    setTimeout(function () { location.replace("/boshqaruv/reklama"); }, 4000);
+  }
+</script>
+{% endblock %}

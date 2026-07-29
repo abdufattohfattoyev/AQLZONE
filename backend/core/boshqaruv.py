@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 from datetime import timedelta
+from urllib.parse import quote
 
 from django.conf import settings
 from django.core import signing
@@ -38,7 +39,10 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import timezone
 
-from .models import Identity, LessonResult, Profile, Progress, Pupil, Session
+from . import reklama as R
+from .models import (
+    Identity, LessonResult, Profile, Progress, Pupil, Reklama, Session,
+)
 
 #: Kirish belgisi shu nom bilan cookie'da saqlanadi.
 COOKIE = "az_boshqaruv"
@@ -112,11 +116,18 @@ def havola_yasa(tg_id: str) -> str:
     return f"{asos}/boshqaruv/havola/{kod}"
 
 
-def _belgini_ber(javob):
-    """Kirganlik belgisini cookie'ga yozadi. Ikkala kirish yo'li ham shu yerda tugaydi."""
+def _belgini_ber(javob, tg_id: str = ""):
+    """
+    Kirganlik belgisini cookie'ga yozadi. Ikkala kirish yo'li ham shu
+    yerda tugaydi.
+
+    Telegram id ham yoziladi: e'lonni "avval o'zimga yuborish" uchun
+    adminning manzili kerak. U imzolangan cookie ichida — ya'ni brauzer
+    tomonidan o'zgartirib bo'lmaydi va begona manzil qo'yib bo'lmaydi.
+    """
     javob.set_cookie(
         COOKIE,
-        signing.dumps({"ok": True}, salt=TUZ),
+        signing.dumps({"ok": True, "tg": str(tg_id)}, salt=TUZ),
         max_age=MUDDAT,
         httponly=True,                       # JS o'qiy olmaydi
         secure=not settings.DEBUG,           # faqat HTTPS orqali
@@ -125,15 +136,30 @@ def _belgini_ber(javob):
     return javob
 
 
-def kirganmi(request) -> bool:
+def _belgi(request) -> dict | None:
     xom = request.COOKIES.get(COOKIE, "")
     if not xom:
-        return False
+        return None
     try:
-        signing.loads(xom, salt=TUZ, max_age=MUDDAT)
-        return True
+        return signing.loads(xom, salt=TUZ, max_age=MUDDAT)
     except signing.BadSignature:
-        return False
+        return None
+
+
+def kirganmi(request) -> bool:
+    return _belgi(request) is not None
+
+
+def kim(request) -> str:
+    """
+    Panelga kirgan adminning Telegram id'si.
+
+    Bo'sh bo'lishi MUMKIN: eski cookie'da bu maydon yo'q edi va uni
+    majburiy qilsak, kirib turgan admin sababsiz tashqariga chiqib
+    qolardi. Bo'sh bo'lganda faqat "o'zimga yuborish" ishlamaydi va
+    panel qaytadan kirishni taklif qiladi.
+    """
+    return str((_belgi(request) or {}).get("tg", ""))
 
 
 def havola(request, kod: str):
@@ -150,7 +176,7 @@ def havola(request, kod: str):
     if not admin_tg_mi(ma.get("tg", "")):
         raise Http404
 
-    return _belgini_ber(HttpResponseRedirect("/boshqaruv"))
+    return _belgini_ber(HttpResponseRedirect("/boshqaruv"), ma.get("tg", ""))
 
 
 def kirish(request, xato: str = ""):
@@ -186,6 +212,118 @@ def panel(request):
         return kirish(request)
     kun = max(7, min(120, int(request.GET.get("kun") or 30)))
     return render(request, "boshqaruv/panel.html", statistika(kun))
+
+
+# -------------------------------------------------------------- e'lonlar
+
+
+#: Ro'yxatda ko'rsatiladigan oxirgi e'lonlar soni.
+REKLAMA_ROYXAT = 20
+
+
+def reklama(request):
+    """
+    E'lon sahifasi: yozish, o'zimga sinab ko'rish, hammaga yuborish.
+
+    Hamma amal POST orqali va oxirida QAYTA YO'NALTIRISH bilan tugaydi
+    (PRG). Aks holda sahifani yangilagan admin e'lonni ikkinchi marta
+    yuborib yuborardi — orqaga qaytarib bo'lmaydigan xato.
+
+    CSRF haqida. Loyihada `CsrfViewMiddleware` yo'q (API Bearer token
+    bilan ishlaydi), ya'ni `{% csrf_token %}` bu yerda TEKSHIRILMAYDI.
+    Himoyani cookie'ning o'zi beradi: `az_boshqaruv` `SameSite=Lax` bilan
+    qo'yilgan, shuning uchun begona saytdan yuborilgan POST so'roviga u
+    UMUMAN qo'shilmaydi va so'rov kirmagan odamniki bo'lib qoladi.
+    Shablondagi belgi kelajak uchun turibdi: middleware qo'shilsa,
+    formalar o'zgarishsiz ishlayveradi.
+    """
+    if not _yoniq():
+        raise Http404
+    if not kirganmi(request):
+        return kirish(request)
+
+    if request.method == "POST":
+        return _reklama_amal(request)
+
+    xabar = request.GET.get("xabar", "")[:200]
+    return render(request, "boshqaruv/reklama.html", {
+        "royxat": Reklama.objects.order_by("-created_at")[:REKLAMA_ROYXAT],
+        "qancha": R.qancha_odam(),
+        "bloklagan": Pupil.objects.filter(bot_bloklandi_at__isnull=False).count(),
+        "standart_havola": R.havola(),
+        "menda_tg": bool(kim(request)),
+        "xabar": xabar,
+        "yangilangan": timezone.now(),
+    })
+
+
+def _reklama_amal(request):
+    """POST amallari: yasash, sinov, yuborish, to'xtatish, davom ettirish."""
+    amal = request.POST.get("amal", "")
+
+    if amal == "yasa":
+        matn = (request.POST.get("matn") or "").strip()
+        if not matn:
+            return _reklama_javob("Matn bo'sh — e'lon yasalmadi")
+        r = Reklama.objects.create(
+            matn=matn[:R.MAX_MATN],
+            # Belgilanmagan checkbox POST'da UMUMAN kelmaydi, shuning
+            # uchun "yo'q" degani — kalitning yo'qligi.
+            tugma=bool(request.POST.get("tugma")),
+            tugma_matni=(request.POST.get("tugma_matni") or "Aql Zone'ni ochish")[:64],
+            havola=(request.POST.get("havola") or "").strip()[:300],
+            kim=kim(request),
+        )
+        return _reklama_javob(f"E'lon #{r.pk} yasaldi. Avval o'zingizga yuborib ko'ring.")
+
+    # Raqam bo'lmagan `id` — buzuq so'rov. `filter(pk="abc")` ValueError
+    # bilan yiqilardi, ya'ni 500 sahifasi chiqardi.
+    try:
+        elon_id = int(request.POST.get("id") or 0)
+    except ValueError:
+        elon_id = 0
+
+    r = Reklama.objects.filter(pk=elon_id).first()
+    if r is None:
+        return _reklama_javob("E'lon topilmadi")
+
+    if amal == "sinov":
+        tg = kim(request)
+        if not tg:
+            return _reklama_javob(
+                "Telegram id topilmadi — chiqib, botdagi havola orqali qaytadan kiring"
+            )
+        ok, izoh = R.sinov_yubor(r, tg)
+        return _reklama_javob(
+            "Sinov nusxasi Telegram'ga yuborildi" if ok else f"Yuborilmadi: {izoh}"
+        )
+
+    if amal == "ochir":
+        # Ketayotgan e'lonni o'chirib bo'lmaydi: qabullar bilan birga
+        # o'chsa, qayta yuborilganda odamlarga IKKINCHI marta borardi.
+        if r.holat == "ketyapti":
+            return _reklama_javob("Avval to'xtating, keyin o'chiring")
+        r.delete()
+        return _reklama_javob("E'lon o'chirildi")
+
+    if amal == "toxtat":
+        Reklama.objects.filter(pk=r.pk, holat="ketyapti").update(holat="toxtatildi")
+        return _reklama_javob("To'xtatildi. Davom ettirsangiz qolganidan boshlanadi.")
+
+    if amal in ("yubor", "davom"):
+        if r.holat == "tugadi":
+            return _reklama_javob("Bu e'lon allaqachon yuborilgan")
+        if r.holat == "ketyapti":
+            return _reklama_javob("E'lon hozir yuborilyapti")
+        R.fonda_yubor(r.pk)
+        return _reklama_javob("Yuborish boshlandi — sahifani yangilab turing")
+
+    return _reklama_javob("Noma'lum amal")
+
+
+def _reklama_javob(xabar: str):
+    """POST → yo'naltirish. Sahifani yangilash amalni takrorlamasin."""
+    return HttpResponseRedirect(f"/boshqaruv/reklama?xabar={quote(xabar)}")
 
 
 # ------------------------------------------------------------ hisob-kitob
