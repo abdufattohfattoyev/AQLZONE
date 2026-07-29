@@ -86,6 +86,13 @@ class Pupil(models.Model):
     #: cheklovi va "xato" ustunidagi soxta raqam — haqiqiy nosozlik
     #: o'sha soxta raqam ichida ko'rinmay ketardi.
     bot_bloklandi_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Oxirgi eslatma yuborilgan payt.
+    #:
+    #: Kuniga bittadan ko'p yubormaslik uchun. Rejalashtirgich bir necha
+    #: marta ishga tushishi mumkin (qo'lda sinash, qayta urinish,
+    #: noto'g'ri sozlangan cron) — bunda bola bir kunda uch-to'rt eslatma
+    #: olardi. Bu eslatma emas, bezovta qilish: javobi bitta — bloklash.
+    eslatma_at = models.DateTimeField(null=True, blank=True, default=None)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

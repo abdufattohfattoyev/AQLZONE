@@ -378,6 +378,76 @@ class EslatmaTest(TestCase):
         self.natija(pupil.asosiy_profil(), 2)
         self.assertNotIn("Anonim", self.kim())
 
+    def test_bloklaganga_yozilmaydi(self):
+        """Bloklagan odamga urinish — vaqt va soxta "xato" raqami."""
+        pupil, profil = self.hisob("555", "Bloklagan")
+        self.natija(profil, 2)
+        Pupil.objects.filter(pk=pupil.pk).update(bot_bloklandi_at=timezone.now())
+        self.assertNotIn("Bloklagan", self.kim())
+
+    def test_bugun_allaqachon_yuborilgan_bolsa_takrorlanmaydi(self):
+        pupil, profil = self.hisob("666", "Takror")
+        self.natija(profil, 2)
+        self.assertIn("Takror", self.kim())          # hali yuborilmagan
+        Pupil.objects.filter(pk=pupil.pk).update(eslatma_at=timezone.now())
+        self.assertNotIn("Takror", self.kim())
+
+    def test_kechagi_eslatma_bugungisiga_halaqit_bermaydi(self):
+        pupil, profil = self.hisob("777", "Kecha")
+        self.natija(profil, 2)
+        Pupil.objects.filter(pk=pupil.pk).update(
+            eslatma_at=timezone.now() - timedelta(days=1)
+        )
+        self.assertIn("Kecha", self.kim())
+
+    # ------------------------------------------------------------- matn
+
+    def test_zanjiri_borga_zanjir_haqida_yoziladi(self):
+        """Yo'qotish qo'rquvi — qaytarishning eng kuchli sababi."""
+        _, profil = self.hisob("888", "Zanjirli")
+        for kun in (1, 2, 3):
+            self.natija(profil, kun)
+        chiqish = self.kim()
+        self.assertIn("zanjiring 3 kun", chiqish.lower())
+
+    def test_zanjiri_yoqqa_oddiy_matn(self):
+        _, profil = self.hisob("999", "Zanjirsiz")
+        self.natija(profil, 4)                       # kecha o'ynamagan
+        self.assertNotIn("zanjiring", self.kim().lower())
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_xabarda_ilovaga_tugma_boladi(self, sorov):
+        _, profil = self.hisob("1212", "Tugmali")
+        self.natija(profil, 2)
+        with self.settings(BOT_TOKEN="sinov:token", MINI_APP_URL="https://aql-zone.uz"):
+            call_command("eslatma", stdout=StringIO())
+        tugma = sorov.call_args[0][1]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertEqual(tugma["text"], "Mashq qilish")
+        self.assertEqual(tugma["url"], "https://aql-zone.uz")
+
+    @patch("core.xabar._sorov", return_value=(False, 403, "bot was blocked by the user"))
+    def test_bloklagani_aniqlansa_belgilanadi(self, sorov):
+        pupil, profil = self.hisob("1313", "Yangi bloklagan")
+        self.natija(profil, 2)
+        with self.settings(BOT_TOKEN="sinov:token"):
+            call_command("eslatma", stdout=StringIO())
+        pupil.refresh_from_db()
+        self.assertIsNotNone(pupil.bot_bloklandi_at)
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_yuborilgach_sana_yoziladi(self, sorov):
+        pupil, profil = self.hisob("1414", "Sanali")
+        self.natija(profil, 2)
+        with self.settings(BOT_TOKEN="sinov:token"):
+            call_command("eslatma", stdout=StringIO())
+        pupil.refresh_from_db()
+        self.assertIsNotNone(pupil.eslatma_at)
+        # Ikkinchi chaqiruv hech kimga bormaydi.
+        sorov.reset_mock()
+        with self.settings(BOT_TOKEN="sinov:token"):
+            call_command("eslatma", stdout=StringIO())
+        self.assertEqual(sorov.call_count, 0)
+
 
 class SpaTest(TestCase):
     def test_notogri_api_yol_404(self):
@@ -1137,7 +1207,7 @@ class ReklamaTest(TestCase):
 
     # ------------------------------------------------------- yuborish
 
-    @patch("core.reklama._sorov", return_value=(True, 200, ""))
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_hammaga_yuboriladi(self, sorov):
         r = self.elon()
         natija = R.yubor(r.pk)
@@ -1146,7 +1216,7 @@ class ReklamaTest(TestCase):
         r.refresh_from_db()
         self.assertEqual((r.holat, r.jami), ("tugadi", 3))
 
-    @patch("core.reklama._sorov", return_value=(True, 200, ""))
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_ikkinchi_marta_yuborilmaydi(self, sorov):
         """Qayta ishga tushirish — eng xavfli holat. Hech kimga takror bormaydi."""
         r = self.elon()
@@ -1159,7 +1229,7 @@ class ReklamaTest(TestCase):
         self.assertEqual(sorov.call_count, 0)
         self.assertEqual(ReklamaQabul.objects.filter(reklama=r).count(), 3)
 
-    @patch("core.reklama._sorov")
+    @patch("core.xabar._sorov")
     def test_uzilgan_elon_qolganidan_davom_etadi(self, sorov):
         # Birinchi ikkitasi ketdi, uchinchisida tarmoq uzildi.
         sorov.side_effect = [(True, 200, ""), (True, 200, ""), Exception("uzildi")]
@@ -1178,7 +1248,7 @@ class ReklamaTest(TestCase):
 
     # -------------------------------------------------------- bloklash
 
-    @patch("core.reklama._sorov")
+    @patch("core.xabar._sorov")
     def test_bloklagan_odam_eslab_qolinadi(self, sorov):
         sorov.side_effect = [
             (False, 403, "bot was blocked by the user"),
@@ -1200,14 +1270,14 @@ class ReklamaTest(TestCase):
         R.yubor(self.elon(matn="Ikkinchi").pk)
         self.assertEqual(sorov.call_count, 2)
 
-    @patch("core.reklama._sorov", return_value=(False, 400, "chat not found"))
+    @patch("core.xabar._sorov", return_value=(False, 400, "chat not found"))
     def test_yoq_hisob_ham_bloklangan_deb_belgilanadi(self, sorov):
         r = self.elon()
         R.yubor(r.pk)
         r.refresh_from_db()
         self.assertEqual((r.bloklandi, r.xato), (3, 0))
 
-    @patch("core.reklama._sorov", return_value=(False, 500, "server xatosi"))
+    @patch("core.xabar._sorov", return_value=(False, 500, "server xatosi"))
     def test_vaqtinchalik_xato_bloklash_emas(self, sorov):
         """500 — Telegram tomonidagi nosozlik. Odamni bloklangan deb belgilamaymiz."""
         r = self.elon()
@@ -1219,7 +1289,7 @@ class ReklamaTest(TestCase):
 
     # ---------------------------------------------------------- tugma
 
-    @patch("core.reklama._sorov", return_value=(True, 200, ""))
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_tugma_yoniq_bolsa_inline_tugma_qoshiladi(self, sorov):
         with self.settings(BOT_USERNAME="aqlzone_bot"):
             R.yubor(self.elon(tugma=True, tugma_matni="Ochish").pk)
@@ -1228,13 +1298,13 @@ class ReklamaTest(TestCase):
         self.assertEqual(tugma["text"], "Ochish")
         self.assertIn("t.me/aqlzone_bot", tugma["url"])
 
-    @patch("core.reklama._sorov", return_value=(True, 200, ""))
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_tugma_ochiq_bolsa_qoshilmaydi(self, sorov):
         with self.settings(BOT_USERNAME="aqlzone_bot"):
             R.yubor(self.elon(tugma=False).pk)
         self.assertNotIn("reply_markup", sorov.call_args[0][1])
 
-    @patch("core.reklama._sorov", return_value=(True, 200, ""))
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_oz_havolasi_bot_havolasidan_ustun(self, sorov):
         with self.settings(BOT_USERNAME="aqlzone_bot"):
             R.yubor(self.elon(tugma=True, havola="https://aql-zone.uz/reyting").pk)
@@ -1243,7 +1313,7 @@ class ReklamaTest(TestCase):
 
     # ---------------------------------------------------------- boshqa
 
-    @patch("core.reklama._sorov", return_value=(True, 200, ""))
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_sinov_nusxasi_royxatga_yozilmaydi(self, sorov):
         """Aks holda admin haqiqiy tarqatishda o'zi e'londan chetda qolardi."""
         r = self.elon()
@@ -1255,7 +1325,7 @@ class ReklamaTest(TestCase):
         R.yubor(r.pk)
         self.assertEqual(sorov.call_count, 3)         # admin ham oldi
 
-    @patch("core.reklama._sorov", return_value=(True, 200, ""))
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_toxtatilsa_qolganiga_yuborilmaydi(self, sorov):
         r = self.elon()
 
@@ -1270,7 +1340,7 @@ class ReklamaTest(TestCase):
         r.refresh_from_db()
         self.assertEqual(r.holat, "toxtatildi")
 
-    @patch("core.reklama._sorov", return_value=(True, 200, ""))
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_telegramsiz_hisobga_yuborilmaydi(self, sorov):
         Pupil.objects.create(first_name="Anonim", registered_at=timezone.now())
         R.yubor(self.elon().pk)

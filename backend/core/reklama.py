@@ -25,84 +25,24 @@ Xuddi shu ishni `manage.py reklama` ham qiladi.
 """
 from __future__ import annotations
 
-import json
 import threading
 import time
-import urllib.error
-import urllib.request
 
-from django.conf import settings
 from django.db import IntegrityError, connection, transaction
 from django.db.models import F
 from django.utils import timezone
 
-from .models import Identity, Pupil, Reklama, ReklamaQabul
+from . import xabar as X
+from .models import Identity, Reklama, ReklamaQabul
 
-#: Bir soniyada nechta xabar. Telegram ~30 ga ruxsat beradi; 25 —
-#: chegaraga tegib ketmaslik uchun ataylab pastroq.
-TEZLIK = 25
-
-#: 429 javobida Telegram kutish muddatini o'zi aytadi. Aytmasa — shu.
-STANDART_KUTISH = 3
-
-#: Bitta xabarning eng katta uzunligi (Telegram cheklovi).
-MAX_MATN = 4096
+#: Telegram bilan gaplashish qoidalari `core/xabar.py` da — bitta joyda.
+TEZLIK = X.TEZLIK
+MAX_MATN = X.MAX_MATN
 
 
 def havola() -> str:
     """Tugma bosilganda ochiladigan standart manzil — bot."""
-    bot = getattr(settings, "BOT_USERNAME", "") or ""
-    return f"https://t.me/{bot}?start=reklama" if bot else ""
-
-
-def _sorov(usul: str, payload: dict) -> tuple[bool, int, str]:
-    """
-    Telegram chaqiruvi. `(muvaffaqiyatmi, http_kodi, izoh)` qaytadi.
-
-    HTTP kodi ATAYLAB qaytariladi: 403 (bloklangan) va 429 (tezlik
-    cheklovi) butunlay boshqacha muomala talab qiladi, "xato bo'ldi"
-    degan bitta bayroq ularni ajrata olmaydi.
-    """
-    url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/{usul}"
-    so_rov = urllib.request.Request(
-        url, data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(so_rov, timeout=20) as r:
-            return json.loads(r.read()).get("ok", False), 200, ""
-    except urllib.error.HTTPError as e:
-        izoh = ""
-        kutish = 0
-        try:
-            tana = json.loads(e.read())
-            izoh = str(tana.get("description", ""))[:200]
-            kutish = int(tana.get("parameters", {}).get("retry_after", 0))
-        except Exception:
-            pass
-        if e.code == 429:
-            time.sleep(kutish or STANDART_KUTISH)
-        return False, e.code, izoh or f"HTTP {e.code}"
-    except Exception as e:                       # tarmoq uzilishi va boshqalar
-        return False, 0, str(e)[:200]
-
-
-def _payload(r: Reklama, chat_id: str) -> dict:
-    """Bitta xabarning to'liq ko'rinishi."""
-    ma = {
-        "chat_id": chat_id,
-        "text": r.matn[:MAX_MATN],
-        "parse_mode": "HTML",
-        # Havolaning kartasi xabarni cho'zib yuboradi va e'lon matnini
-        # pastga surib qo'yadi — o'chirib qo'yamiz.
-        "link_preview_options": {"is_disabled": True},
-    }
-    manzil = (r.havola or havola()).strip()
-    if r.tugma and manzil:
-        ma["reply_markup"] = {
-            "inline_keyboard": [[{"text": r.tugma_matni, "url": manzil}]]
-        }
-    return ma
+    return X.bot_havolasi("reklama")
 
 
 def bitta_yubor(r: Reklama, chat_id: str) -> tuple[str, str]:
@@ -111,14 +51,12 @@ def bitta_yubor(r: Reklama, chat_id: str) -> tuple[str, str]:
 
     Holat: `yuborildi` | `bloklandi` | `xato`.
     """
-    ok, kod, izoh = _sorov("sendMessage", _payload(r, chat_id))
-    if ok:
-        return "yuborildi", ""
-    # 403 — odam botni bloklagan yoki suhbatni o'chirgan.
-    # 400 "chat not found" — hisob o'chirilgan; qayta urinishdan foyda yo'q.
-    if kod == 403 or "chat not found" in izoh.lower():
-        return "bloklandi", izoh
-    return "xato", izoh
+    manzil = (r.havola or havola()).strip()
+    return X.yubor(
+        chat_id, r.matn,
+        tugma=r.tugma_matni if r.tugma else "",
+        havola=manzil if r.tugma else "",
+    )
 
 
 def sinov_yubor(r: Reklama, tg_id: str) -> tuple[bool, str]:
@@ -215,9 +153,7 @@ def yubor(reklama_id: int) -> dict:
             continue
 
         if holat == "bloklandi":
-            Pupil.objects.filter(pk=pupil_id, bot_bloklandi_at__isnull=True).update(
-                bot_bloklandi_at=timezone.now()
-            )
+            X.bloklanganini_belgila(pupil_id)
 
         # Hisoblagich BAZADA oshiriladi (`F`): Python tomonda o'qib-yozsak,
         # ikki jarayon bir vaqtda ishlaganda biri ikkinchisining hisobini

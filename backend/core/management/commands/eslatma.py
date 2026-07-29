@@ -3,61 +3,110 @@ Telegram eslatmasi: bugun mashq qilmagan bolalarga xabar.
 
 Ishlatish:
 
-    python manage.py eslatma --sinov      # kimga borishini ko'rsatadi, yubormaydi
+    python manage.py eslatma --sinov      # kimga borishini va MATNINI ko'rsatadi
     python manage.py eslatma              # haqiqiy yuborish
 
 Buyruq O'ZI rejalashtirmaydi — uni kuniga bir marta tashqi rejalashtirgich
-chaqiradi (Windows Task Scheduler, cron yoki hosting'ning scheduler'i).
-Sabab: doimiy ishlab turadigan jarayon qo'shish butun serverni murakkab
-qiladi, holbuki kuniga bir marta ishlaydigan buyruq yetarli.
+chaqiradi (cron yoki Windows Task Scheduler). Sabab: doimiy ishlab
+turadigan jarayon qo'shish butun serverni murakkab qiladi, holbuki kuniga
+bir marta ishlaydigan buyruq yetarli.
+
+Soatni to'g'ri tanlang. Eslatma maktabdan keyin, kechki ovqatdan oldin
+ma'noli — 17:00–19:00. Ertalab yuborilgani darsga ketayotgan bolada
+ochilmaydi va shunchaki o'qilmagan xabar bo'lib qoladi.
 
 Kimga yuboriladi:
   - Telegram'i bog'langan bo'lsa (aks holda yuboradigan joy yo'q)
+  - botni bloklamagan bo'lsa
   - BUGUN birorta dars tugatmagan bo'lsa
   - lekin oxirgi 14 kun ichida faol bo'lgan bo'lsa
+  - va bugun unga eslatma hali yuborilmagan bo'lsa
 
-Oxirgi shart muhim: butunlay tashlab ketgan odamga xabar yuborish —
-spam. Eslatma faqat "yaqinda o'ynagan, bugun unutgan" bolaga ma'noli.
+Oxirgi ikki shart muhim. Butunlay tashlab ketgan odamga xabar yuborish —
+spam. Kuniga ikki marta yuborish esa undan ham yomon: bolaning ota-onasi
+botni bloklaydi va biz uni butunlay yo'qotamiz.
+
+MATN har kuni bir xil emas. Zanjiri bor bolaga "zanjiring uziladi"
+deyiladi — bu eng kuchli sabab, chunki u YO'QOTISH haqida. Zanjiri
+yo'qlarga esa kun bo'yicha almashadigan matn boradi: har kuni bir xil
+xabar bir haftada ko'rinmas bo'lib qoladi.
 """
 from __future__ import annotations
 
-import json
-import urllib.error
-import urllib.request
+import time
 from datetime import timedelta
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db.models import Max
 from django.utils import timezone
 
-from core.models import Identity, LessonResult
+from core import xabar as X
+from core.models import Identity, LessonResult, Pupil
 
 #: Shu kundan beri umuman faol bo'lmaganlarga yozmaymiz.
 FAOL_KUN = 14
 
-#: Telegram API bir soniyada ~30 xabarga ruxsat beradi; ehtiyot bo'lamiz.
-CHEKLOV = 25
+#: Zanjirni sanashda shuncha kundan orqaga qaramaymiz — uzoq tarix
+#: xabarga hech narsa qo'shmaydi, so'rov esa og'irlashadi.
+ZANJIR_CHEGARA = 60
+
+#: Bir marta yuboriladigan eng ko'p xabar. Bu XAVFSIZLIK to'sig'i:
+#: kutilmaganda ro'yxat o'n barobar oshsa, buyruq soatlab ishlab
+#: qolmasin. Tezlik cheklovi bundan alohida (`xabar.ORALIQ`).
+CHEKLOV = 5000
 
 
-def xabar_yubor(chat_id: str, matn: str) -> tuple[bool, str]:
-    """Bitta xabar. Xato bo'lsa (False, sabab) qaytadi — jarayon to'xtamaydi."""
-    url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
-    payload = json.dumps({
-        "chat_id": chat_id,
-        "text": matn,
-        "parse_mode": "HTML",
-    }).encode()
-    so_rov = urllib.request.Request(
-        url, data=payload, headers={"Content-Type": "application/json"}
-    )
-    try:
-        with urllib.request.urlopen(so_rov, timeout=10) as r:
-            return json.loads(r.read()).get("ok", False), ""
-    except urllib.error.HTTPError as e:
-        # 403 = bola botni bloklagan. Bu xato emas, oddiy holat.
-        return False, f"HTTP {e.code}"
-    except Exception as e:                       # tarmoq uzilishi va boshqalar
-        return False, str(e)
+def zanjir(profil_idlar: list[int], bugun) -> int:
+    """
+    Ketma-ket necha kun mashq qilingan (bugun hisobga olinmaydi).
+
+    Kechadan orqaga qarab sanaladi. Bugun allaqachon o'ynagan bolaga
+    eslatma yuborilmaydi, ya'ni bu yerda "bugun" doim bo'sh.
+    """
+    kunlar = {
+        timezone.localtime(v).date()
+        for v in LessonResult.objects.filter(
+            profile_id__in=profil_idlar,
+            created_at__gte=timezone.now() - timedelta(days=ZANJIR_CHEGARA),
+        ).values_list("created_at", flat=True)
+    }
+    n = 0
+    kun = bugun - timedelta(days=1)
+    while kun in kunlar:
+        n += 1
+        kun -= timedelta(days=1)
+    return n
+
+
+def matn_yasa(ism: str, zanjir_kun: int, kun_raqami: int) -> str:
+    """Eslatma matni. Zanjiri borga boshqacha, yo'qqa boshqacha."""
+    if zanjir_kun >= 2:
+        return (
+            f"🔥 <b>{ism}</b>, zanjiring <b>{zanjir_kun} kun</b>.\n\n"
+            "Bugun mashq qilmasang uzilib qoladi — atigi 6 ta savol yetadi."
+        )
+    if zanjir_kun == 1:
+        return (
+            f"👋 <b>{ism}</b>, kecha zo'r ishlading!\n\n"
+            "Bugun ham davom etamizmi? 5 daqiqa — va zanjiring ikki kun bo'ladi."
+        )
+
+    # Zanjiri yo'q. Matn kun bo'yicha almashadi: har kuni bir xil xabar
+    # bir haftada ko'zga tashlanmay qoladi.
+    variantlar = [
+        f"👋 <b>{ism}</b>, bugun Aql Zone'da mashq qilmading.\n\n"
+        "Atigi 6 ta savol — boshlaymizmi?",
+
+        f"🎯 <b>{ism}</b>, bugungi maqsading kutib turibdi.\n\n"
+        "5 daqiqa — va yulduz qo'lingda.",
+
+        f"🏆 <b>{ism}</b>, haftalik ligada o'rning tushib ketmasin.\n\n"
+        "Bitta dars yetadi — guruhdoshlaring uxlamayapti!",
+
+        f"⭐ <b>{ism}</b>, bugun hali bitta ham yulduz yig'mading.\n\n"
+        "Birinchisini olamizmi?",
+    ]
+    return variantlar[kun_raqami % len(variantlar)]
 
 
 class Command(BaseCommand):
@@ -66,7 +115,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--sinov", action="store_true",
-            help="Hech narsa yubormaydi, faqat kimga borishini ko'rsatadi",
+            help="Hech narsa yubormaydi, faqat kimga va nima borishini ko'rsatadi",
         )
         parser.add_argument(
             "--limit", type=int, default=CHEKLOV,
@@ -76,7 +125,7 @@ class Command(BaseCommand):
     def handle(self, *args, **o):
         sinov: bool = o["sinov"]
 
-        if not settings.BOT_TOKEN and not sinov:
+        if not settings_bot_bormi() and not sinov:
             self.stderr.write(self.style.ERROR(
                 "BOT_TOKEN sozlanmagan — .env ga qo'shing yoki --sinov bilan ishga tushiring"
             ))
@@ -84,6 +133,8 @@ class Command(BaseCommand):
 
         bugun = timezone.localdate()
         chegara = timezone.now() - timedelta(days=FAOL_KUN)
+        kun_raqami = bugun.toordinal()
+        havola = X.ilova_havolasi()
 
         # Bugun dars tugatgan profillar — ularga yozmaymiz.
         bugungilar = set(
@@ -91,11 +142,14 @@ class Command(BaseCommand):
             .values_list("profile_id", flat=True)
         )
 
-        yuborildi = xato = 0
+        yuborildi = xato = bloklandi = 0
         korilgan: set[int] = set()
 
         for kirish in (
             Identity.objects.filter(provider=Identity.TELEGRAM)
+            # Bloklaganlar butunlay chetda: ularga urinish vaqt, so'rov
+            # cheklovi va "xato" ustunidagi soxta raqam degani.
+            .filter(pupil__bot_bloklandi_at__isnull=True)
             .select_related("pupil")
             .iterator()
         ):
@@ -103,7 +157,13 @@ class Command(BaseCommand):
                 continue
             korilgan.add(kirish.pupil_id)
 
-            profillar = list(kirish.pupil.profiles.all())
+            pupil = kirish.pupil
+
+            # Bugun allaqachon yuborilgan bo'lsa — takrorlamaymiz.
+            if pupil.eslatma_at and timezone.localtime(pupil.eslatma_at).date() == bugun:
+                continue
+
+            profillar = list(pupil.profiles.all())
             if not profillar:
                 continue
 
@@ -113,32 +173,46 @@ class Command(BaseCommand):
                 continue
 
             # Yaqinda faol bo'lganmi?
-            faol = LessonResult.objects.filter(
-                profile__in=profillar, created_at__gte=chegara
-            ).exists()
-            if not faol:
+            idlar = [p.pk for p in profillar]
+            oxirgi = LessonResult.objects.filter(profile_id__in=idlar).aggregate(
+                oxirgi=Max("created_at")
+            )["oxirgi"]
+            if oxirgi is None or oxirgi < chegara:
                 continue
 
-            ism = qolganlar[0].name or kirish.pupil.ism or "Do'stim"
-            matn = (
-                f"👋 <b>{ism}</b>, bugun Aql Zone'da mashq qilmading.\n\n"
-                "Atigi 10 ta savol — zanjiring uzilmasin! 🔥"
-            )
+            ism = qolganlar[0].name or pupil.ism or "Do'stim"
+            matn = matn_yasa(ism, zanjir(idlar, bugun), kun_raqami)
 
             if sinov:
-                self.stdout.write(f"  → {kirish.external_id}: {ism}")
+                self.stdout.write(f"  → {kirish.external_id} ({ism}):")
+                self.stdout.write("    " + matn.replace("\n", " ").replace("<b>", "").replace("</b>", ""))
                 yuborildi += 1
             else:
-                ok, sabab = xabar_yubor(kirish.external_id, matn)
-                if ok:
+                holat, sabab = X.yubor(
+                    kirish.external_id, matn, tugma="Mashq qilish", havola=havola,
+                )
+                if holat == "yuborildi":
                     yuborildi += 1
+                    Pupil.objects.filter(pk=pupil.pk).update(eslatma_at=timezone.now())
+                elif holat == "bloklandi":
+                    bloklandi += 1
+                    X.bloklanganini_belgila(pupil.pk)
                 else:
                     xato += 1
                     self.stdout.write(f"  ✗ {kirish.external_id}: {sabab}")
+                time.sleep(X.ORALIQ)
 
             if yuborildi >= o["limit"]:
                 self.stdout.write(f"chegaraga yetildi ({o['limit']})")
                 break
 
         holat = "yuborilardi" if sinov else "yuborildi"
-        self.stdout.write(self.style.SUCCESS(f"{yuborildi} ta xabar {holat}, {xato} ta xato"))
+        self.stdout.write(self.style.SUCCESS(
+            f"{yuborildi} ta xabar {holat}, {bloklandi} ta bloklagan, {xato} ta xato"
+        ))
+
+
+def settings_bot_bormi() -> bool:
+    from django.conf import settings
+
+    return bool(settings.BOT_TOKEN)

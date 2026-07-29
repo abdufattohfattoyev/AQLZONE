@@ -153,8 +153,39 @@ ikkalasi ham ATAYLAB shunday:
 | **Haftalik liga** — 20 kishilik guruh, ko'tarilish va tushish | `backend/core/liga.py` |
 | **Telegram orqali kirish** — botdagi bir martalik havola bilan | `backend/core/auth.py` |
 | **Profillar** — bir qurilma, bir necha bola | `backend/core/models.py` |
-| **Telegram eslatmasi** | `backend/core/management/commands/eslatma.py` |
+| **Telegram eslatmasi** — bugun mashq qilmaganlarga | `backend/core/management/commands/eslatma.py` |
 | **E'lon tarqatish** — botdan hammaga xabar, inline tugma bilan | `backend/core/reklama.py` |
+
+### Avtomatik eslatma
+
+Kuniga bir marta, bugun mashq qilmagan bolaga Telegram'ga xabar boradi.
+Ostida "Mashq qilish" tugmasi — bitta bosishda ilova ochiladi.
+
+```bash
+python manage.py eslatma --sinov     # kimga va QANDAY matn borishini ko'rsatadi
+python manage.py eslatma             # yuborish
+```
+
+Kimga yuboriladi: Telegram'i bog'langan, botni bloklamagan, bugun dars
+tugatmagan, lekin **oxirgi 14 kun ichida faol bo'lgan** bolaga. Oxirgi
+shart muhim — butunlay tashlab ketgan odamga yozish spam.
+
+Matn bir xil emas va bu ataylab. Zanjiri bor bolaga *"zanjiring 5 kun,
+bugun uzilib qoladi"* deyiladi: bu eng kuchli sabab, chunki u yutuq
+haqida emas, **yo'qotish** haqida. Zanjiri yo'qlarga esa kun bo'yicha
+almashadigan to'rtta matndan biri boradi — har kuni bir xil xabar bir
+haftada ko'zga tashlanmay qoladi.
+
+Bir kunda ikki marta yuborilmaydi (`Pupil.eslatma_at`). Rejalashtirgich
+tasodifan ikki marta ishga tushsa ham bola bitta xabar oladi.
+
+**Soatni to'g'ri tanlang:** 17:00–19:00. Ertalab yuborilgan eslatma
+darsga ketayotgan bolada ochilmaydi va o'qilmagan xabar bo'lib qoladi.
+
+```bash
+# har kuni 18:00 da (serverda, cron)
+0 18 * * * cd /root/aqlzone && docker compose exec -T web python manage.py eslatma
+```
 
 ### E'lon tarqatish
 
