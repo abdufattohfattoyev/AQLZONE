@@ -78,6 +78,24 @@ def zanjir(profil_idlar: list[int], bugun) -> int:
     return n
 
 
+#: Xabarda ISHLATILMAYDIGAN nomlar.
+#:
+#: "Men" — profilning standart nomi (`Pupil.asosiy_profil`): ismi yo'q
+#: hisobda shunday yoziladi. Uni xabarga qo'ysak "Men, zanjiring uzilib
+#: qoladi" degan ma'nosiz gap chiqardi — ishlab turgan bazada
+#: foydalanuvchilarning aksariyati aynan shunday edi.
+STANDART_NOM = {"men", "bola", "foydalanuvchi", "user"}
+
+
+def ism_tanla(profil, pupil) -> str:
+    """Xabarda murojaat qilinadigan nom. Topilmasa — "Do'stim"."""
+    for nomzod in (getattr(profil, "name", ""), pupil.ism):
+        nomzod = (nomzod or "").strip()
+        if nomzod and nomzod.lower() not in STANDART_NOM:
+            return nomzod
+    return "Do'stim"
+
+
 def matn_yasa(ism: str, zanjir_kun: int, kun_raqami: int) -> str:
     """Eslatma matni. Zanjiri borga boshqacha, yo'qqa boshqacha."""
     if zanjir_kun >= 2:
@@ -180,7 +198,7 @@ class Command(BaseCommand):
             if oxirgi is None or oxirgi < chegara:
                 continue
 
-            ism = qolganlar[0].name or pupil.ism or "Do'stim"
+            ism = ism_tanla(qolganlar[0], pupil)
             matn = matn_yasa(ism, zanjir(idlar, bugun), kun_raqami)
 
             if sinov:

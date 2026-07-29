@@ -410,6 +410,26 @@ class EslatmaTest(TestCase):
         chiqish = self.kim()
         self.assertIn("zanjiring 3 kun", chiqish.lower())
 
+    def test_standart_nom_ismga_aylanmaydi(self):
+        """
+        "Men" — profilning standart nomi. Xabarga tushsa "Men, zanjiring
+        uzilib qoladi" degan ma'nosiz gap chiqardi.
+        """
+        pupil = Pupil.objects.create(first_name="")
+        Identity.objects.create(pupil=pupil, provider="telegram", external_id="1515")
+        profil = pupil.asosiy_profil()
+        self.assertEqual(profil.name, "Men")         # standart nom
+        self.natija(profil, 2)
+
+        chiqish = self.kim()
+        self.assertIn("Do'stim", chiqish)
+        self.assertNotIn("Men,", chiqish)
+
+    def test_haqiqiy_ism_ishlatiladi(self):
+        _, profil = self.hisob("1616", "Malika")
+        self.natija(profil, 2)
+        self.assertIn("Malika", self.kim())
+
     def test_zanjiri_yoqqa_oddiy_matn(self):
         _, profil = self.hisob("999", "Zanjirsiz")
         self.natija(profil, 4)                       # kecha o'ynamagan
