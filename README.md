@@ -182,10 +182,18 @@ tasodifan ikki marta ishga tushsa ham bola bitta xabar oladi.
 **Soatni to'g'ri tanlang:** 17:00–19:00. Ertalab yuborilgan eslatma
 darsga ketayotgan bolada ochilmaydi va o'qilmagan xabar bo'lib qoladi.
 
+Cron **soat sayin** chaqiriladi, soatni esa buyruqning o'zi tekshiradi:
+
 ```bash
-# har kuni 18:00 da (serverda, cron)
-0 18 * * * cd /root/aqlzone && docker compose exec -T web python manage.py eslatma
+0 * * * * docker exec aqlzone python manage.py eslatma --soat 18
 ```
+
+Nega shunday. Serverning soati CEST, konteynerniki UTC, bolalar esa
+Toshkent vaqtida yashaydi — cron'da "18:00" deb yozish uchalasidan
+qaysi biri ekanini taxmin qilish demak. Ustiga yozgi vaqt ko'chishi bor:
+to'g'ri sozlangan cron ham yiliga ikki marta bir soatga siljib ketadi.
+`--soat` bilan bu savol butunlay yo'qoladi — Django uchun mahalliy vaqt
+aniq (`TIME_ZONE = Asia/Tashkent`).
 
 ### E'lon tarqatish
 

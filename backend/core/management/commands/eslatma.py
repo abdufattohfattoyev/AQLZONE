@@ -139,9 +139,28 @@ class Command(BaseCommand):
             "--limit", type=int, default=CHEKLOV,
             help=f"Bir marta eng ko'pi bilan nechta xabar (standart: {CHEKLOV})",
         )
+        parser.add_argument(
+            "--soat", type=int, default=None,
+            help="Faqat shu soatda ishlaydi (Toshkent vaqti). Cron'ni soat "
+                 "sayin chaqirib qo'yish uchun — vaqt mintaqasi chalkashligi yo'qoladi.",
+        )
 
     def handle(self, *args, **o):
         sinov: bool = o["sinov"]
+
+        # Vaqt mintaqasi masalasi shu yerda hal bo'ladi.
+        #
+        # Serverning soati CEST, konteynerniki UTC, bolalar esa Toshkent
+        # vaqtida yashaydi — cron'da "18:00" deb yozish uchalasidan
+        # qaysi biri ekanini taxmin qilish demak. Ustiga yozgi vaqt
+        # ko'chishi bor: to'g'ri sozlangan cron ham yiliga ikki marta bir
+        # soatga siljib ketadi.
+        #
+        # Shuning uchun cron SOAT SAYIN chaqiriladi, soatni esa buyruq
+        # o'zi tekshiradi — Django uchun mahalliy vaqt aniq
+        # (`TIME_ZONE = Asia/Tashkent`).
+        if o["soat"] is not None and timezone.localtime().hour != o["soat"]:
+            return
 
         if not settings_bot_bormi() and not sinov:
             self.stderr.write(self.style.ERROR(

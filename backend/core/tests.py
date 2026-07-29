@@ -410,6 +410,25 @@ class EslatmaTest(TestCase):
         chiqish = self.kim()
         self.assertIn("zanjiring 3 kun", chiqish.lower())
 
+    def test_soat_mos_kelmasa_jim_chiqadi(self):
+        """
+        Cron soat sayin chaqiradi — vaqt mintaqasi chalkashligi bo'lmasin
+        uchun. Belgilangan soat kelmaguncha hech kimga yozilmaydi.
+        """
+        _, profil = self.hisob("1717", "Soatli")
+        self.natija(profil, 2)
+        boshqa_soat = (timezone.localtime().hour + 5) % 24
+
+        chiqish = StringIO()
+        call_command("eslatma", "--sinov", "--soat", str(boshqa_soat), stdout=chiqish)
+        self.assertNotIn("Soatli", chiqish.getvalue())
+
+        chiqish = StringIO()
+        call_command(
+            "eslatma", "--sinov", "--soat", str(timezone.localtime().hour), stdout=chiqish
+        )
+        self.assertIn("Soatli", chiqish.getvalue())
+
     def test_standart_nom_ismga_aylanmaydi(self):
         """
         "Men" — profilning standart nomi. Xabarga tushsa "Men, zanjiring
