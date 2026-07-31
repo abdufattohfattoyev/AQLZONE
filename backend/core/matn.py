@@ -79,6 +79,58 @@ XABAR: dict[str, dict[str, str]] = {
     "tIlovaniOchish": {"uz": "🎓 Ilovani ochish", "ru": "🎓 Открыть приложение"},
     "tRaqamniYuborish": {"uz": "📱 Raqamni yuborish", "ru": "📱 Отправить номер"},
 
+    # ------------------------------------------------ bot: doimiy klaviatura
+    #
+    # Bu to'rttasi suhbat ostida DOIM turadi. Ular oddiy tugmalardan farq
+    # qiladi: matn emas, KLAVIATURA yuboradi — ya'ni odam nima yozishni
+    # o'ylab o'tirmaydi. Ilgari bot faqat buyruqni tushunardi va "/oyinlar"
+    # deb yozgan odam "Boshlash uchun /start yuboring" degan javob olardi,
+    # ya'ni bot bilgan narsasini yashirib turardi.
+    #
+    # Yozuvlar QISQA: ikkitasi bir qatorga sig'ishi kerak va ruschasi
+    # o'zbekchasidan uzun bo'lishi mumkin.
+    "tIlova": {"uz": "🎓 Darslar", "ru": "🎓 Уроки"},
+    "tOyinlar": {"uz": "🎮 O'yinlar", "ru": "🎮 Игры"},
+    "tRaqamTugma": {"uz": "📱 Raqam", "ru": "📱 Номер"},
+    "tYordamTugma": {"uz": "❓ Yordam", "ru": "❓ Помощь"},
+
+    # ---------------------------------------------------------- bot: o'yinlar
+    "oyinlar": {
+        "uz": (
+            "🎮 <b>Matematik o'yinlar</b>\n\n"
+            "Sakkizta o'yin, har birida uch daraja:\n"
+            "🟢 oson — 6–9 yosh\n"
+            "🔵 o'rta — 10–14 yosh\n"
+            "🔴 qiyin — kattalar\n\n"
+            "Tezkor hisob, ko'paytirish jadvali, yashirin amal, "
+            "ketma-ketlik, chamalash, tarozi, «24» va sonlar xotirasi.\n\n"
+            "Har kuni o'ynang — rekordingiz saqlanadi."
+        ),
+        "ru": (
+            "🎮 <b>Математические игры</b>\n\n"
+            "Восемь игр, в каждой три уровня:\n"
+            "🟢 лёгкий — 6–9 лет\n"
+            "🔵 средний — 10–14 лет\n"
+            "🔴 сложный — взрослым\n\n"
+            "Быстрый счёт, таблица умножения, скрытый знак, "
+            "последовательность, прикидка, весы, «24» и память на числа.\n\n"
+            "Играйте каждый день — рекорд сохраняется."
+        ),
+    },
+    "tOyinniOch": {"uz": "🎮 O'yinlarni ochish", "ru": "🎮 Открыть игры"},
+
+    # --------------------------------------------------- bot: buyruqlar ro'yxati
+    #
+    # Telegram'dagi "/" tugmasi ostidagi ro'yxat (`setMyCommands`). Uni
+    # o'rnatmagunimizcha ro'yxat BO'SH turardi va odam bot nima
+    # qilishini umuman bilmasdi — buyruqni faqat taxmin qilib topardi.
+    "buyruqStart": {"uz": "Boshlash va saytga kirish", "ru": "Начать и войти на сайт"},
+    "buyruqOyinlar": {"uz": "Matematik o'yinlar", "ru": "Математические игры"},
+    "buyruqRaqam": {"uz": "Telefon raqamini bog'lash", "ru": "Привязать номер телефона"},
+    "buyruqYordam": {"uz": "Yordam", "ru": "Помощь"},
+    #: Kiritish maydoni yonidagi menyu tugmasi.
+    "menyuTugma": {"uz": "Ochish", "ru": "Открыть"},
+
     # ------------------------------------------------------------ bot: raqam
     "raqamSora": {
         "uz": (
@@ -119,18 +171,39 @@ XABAR: dict[str, dict[str, str]] = {
     "yordam": {
         "uz": (
             "/start — saytga kirish havolasini olish\n"
-            "/raqam — telefon raqamini bog'lash\n"
+            "/oyinlar — matematik o'yinlar\n"
+            "/raqam — telefon raqamini bog'lash\n\n"
+            "Pastdagi tugmalar doim shu yerda turadi.\n"
             "Savollar bo'lsa shu yerga yozing."
         ),
         "ru": (
             "/start — получить ссылку для входа на сайт\n"
-            "/raqam — привязать номер телефона\n"
+            "/oyinlar — математические игры\n"
+            "/raqam — привязать номер телефона\n\n"
+            "Кнопки внизу всегда на месте.\n"
             "Если есть вопросы — напишите сюда."
         ),
     },
     "yordamAdmin": {
         "uz": "\n/boshqaruv — hisobot paneli",
         "ru": "\n/boshqaruv — панель отчётов",
+    },
+    # Noma'lum xabarga javob — IKKI xil.
+    #
+    # Doimiy klaviatura bor bo'lsa odamni tugmaga yo'naltirish kerak:
+    # u allaqachon ekranda turadi va buyruq yozishdan osonroq. Klaviatura
+    # yo'q bo'lsa (Mini App sozlanmagan) esa o'sha gapni aytish —
+    # yo'q narsaga ishora qilish bo'lardi, shuning uchun eski javob
+    # o'z o'rnida qoladi.
+    "boshlaTugma": {
+        "uz": (
+            "Quyidagi tugmalardan birini tanlang 👇\n\n"
+            "🎓 Darslar · 🎮 O'yinlar · 📱 Raqam · ❓ Yordam"
+        ),
+        "ru": (
+            "Выберите одну из кнопок ниже 👇\n\n"
+            "🎓 Уроки · 🎮 Игры · 📱 Номер · ❓ Помощь"
+        ),
     },
     "boshlaStart": {
         "uz": "Boshlash uchun /start yuboring.",
@@ -266,6 +339,20 @@ XABAR: dict[str, dict[str, str]] = {
         ),
     },
 }
+
+
+def barcha(kalit: str) -> set[str]:
+    """
+    Bitta kalitning BARCHA tildagi matni.
+
+    Doimiy klaviatura tugmalari uchun kerak: ular oddiy matn yuboradi va
+    bot uni tanib olishi shart. Tanish faqat JORIY tilda bo'lsa, tilini
+    almashtirgan odamning ekranida eski tildagi tugmalar qolib ketardi
+    (Telegram klaviaturani o'zi yangilamaydi) va ular bosilganda bot
+    "tushunmadim" derdi.
+    """
+    juft = XABAR.get(kalit) or {}
+    return {v for v in juft.values() if v}
 
 
 def M(kalit: str, til: str = STANDART, **orin) -> str:

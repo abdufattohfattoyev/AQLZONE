@@ -160,7 +160,9 @@ ikkalasi ham ATAYLAB shunday:
 | **Telegram eslatmasi** — bugun mashq qilmaganlarga | `backend/core/management/commands/eslatma.py` |
 | **E'lon tarqatish** — botdan hammaga xabar, inline tugma bilan | `backend/core/reklama.py` |
 | **Adminga xabar** — yangi ro'yxatdan o'tgan odam va jami soni | `backend/core/xabar.py` (`adminga_yangi_hisob`) |
+| **Botdagi doimiy tugmalar** — darslar, o'yinlar, raqam, yordam | `backend/core/management/commands/bot.py` (`asosiy_klaviatura`) |
 | **Rangli tugmalar** — yashil / ko'k / qizil, ma'nosiga qarab | `backend/core/xabar.py` (`YASHIL`, `KOK`, `QIZIL`) |
+| **Matematik o'yinlar** — 8 ta o'yin, har birida 3 daraja | `frontend/src/lib/oyin/` |
 
 ## Qaytishni ta'minlaydigan uch mexanizm
 
@@ -261,6 +263,58 @@ maqsad va nolga tushgan zanjir kutib olsa, u ikkinchi marta ketadi — va
 endi qaytmaydi. Shu sabab kurs sahifasida yumshoq kutib olish kartasi
 chiqadi: *"20 kun ko'rinmadingiz. Yulduzlaringiz joyida — yengil
 boshlaymiz."* (`components/Qaytish.tsx`).
+
+### Botdagi doimiy tugmalar
+
+Suhbat ostida to'rtta tugma DOIM turadi:
+
+```
+🎓 Darslar   🎮 O'yinlar
+📱 Raqam     ❓ Yordam
+```
+
+Birinchi ikkitasi xabar yubormaydi — ular `web_app` tugmasi va bosilishi
+bilan ilovani kerakli sahifada ochadi (`/` va `/oyinlar`).
+
+**Nega kerak edi.** Bot faqat buyruqni tushunardi va ularni hech qayerda
+ko'rsatmasdi: `/oyinlar` deb yozgan odam "Boshlash uchun /start yuboring"
+degan javob olardi — ya'ni bot bilgan narsasini o'zi yashirib turardi.
+Buyruqni eslab qolish esa hech kimning ishi emas.
+
+Uch qo'shimcha:
+
+- **`setMyCommands`** — "/" tugmasi ostidagi ro'yxat. O'rnatilmagunicha u
+  BO'SH edi. Har til uchun alohida yuboriladi.
+- **`setChatMenuButton`** — kiritish maydoni yonidagi tugma. SUHBAT
+  bo'yicha qo'yiladi, umumiy emas: umumiysi bitta tilda qotib qolardi.
+- **Klaviatura noma'lum xabarga javobda ham qayta yuboriladi** — bu
+  yangilikdan oldin botdan foydalangan odamlarda u yo'q va ular `/start`
+  ni boshqa hech qachon yozmasligi mumkin.
+
+Tugma matni **barcha tilda** taniladi (`matn.barcha`): Telegram
+allaqachon yuborilgan klaviaturani o'zi yangilamaydi, ya'ni tilini
+almashtirgan odamning ekranida eski tildagi tugma qolib ketishi mumkin.
+
+### Bot qaysi tilda gapiradi
+
+Tartib qat'iy va u bitta savolga javob beradi — *"odam uchun bu bitta
+ilova"*:
+
+```
+1. Pupil.til     ilovada TANLANGAN til        ← ustun
+2. language_code Telegram interfeysi tili     ← hisob hali yo'q bo'lsa
+3. "uz"          loyihaning asosiy tili
+```
+
+Ikkinchisi birinchisidan ustun bo'lmasligi muhim: O'zbekistonda telefon
+ruscha, bola esa o'zbek maktabida bo'lishi juda ko'p uchraydi.
+
+Til saytda almashtirilganda **darhol serverga yoziladi**
+(`frontend/src/lib/til.ts` dagi `tilniAlmashtir`). Ilgari u faqat
+qurilmada saqlanardi va natijada sayt o'zbekchaga o'tgani bilan bot
+ruscha gapirib turaverardi. Saqlash sahifa qayta yuklanishidan OLDIN
+kutiladi (ko'pi bilan 1,5 soniya), aks holda yangilanish so'rovni yarim
+yo'lda uzib qo'yardi.
 
 ### Avtomatik eslatma
 
@@ -375,6 +429,9 @@ ochiladi:
 /kurs/1-sinf/nishonlar       yutuq nishonlari
 /kurs/1-sinf/ota-ona         ota-ona paneli
 /reyting                     reyting — kursdan tashqarida, hammasi birga
+/oyinlar                     matematik o'yinlar ro'yxati
+/oyinlar/tezkor              o'yinning daraja tanlash ekrani
+/oyinlar/tezkor/2-daraja     o'yinning o'zi
 /sozlamalar                  hisob: ism, familiya, kirish usullari
 /kirish/<kod>                botdagi «Saytga kirish» havolasi
 ```
@@ -385,6 +442,117 @@ server `index.html` ni qaytaradi va marshrutni React hal qiladi
 
 Yopiq darsni manzilni qo'lda o'zgartirib ochib bo'lmaydi — ilova kurs
 sahifasiga qaytaradi.
+
+## Matematik o'yinlar
+
+Kurslardan **butunlay alohida** bo'lim: `/oyinlar`. U yerda dars yo'q,
+tartib yo'q, "keyingi bob" yo'q — sakkizta o'yin va rekord. Kod:
+`frontend/src/lib/oyin/`, ekranlar `screens/Oyinlar.tsx`,
+`screens/OyinDaraja.tsx`, `screens/Oyin.tsx`.
+
+**Nega alohida.** Kurs — rejali ish, unga bola ota-onasi aytganda kiradi.
+O'yinga esa u O'ZI keladi va aynan shu narsa uni ertaga ham qaytaradi.
+O'yinni kurs ichiga qo'yganda manzilda tasodifiy sinf raqami turib
+qolardi va ulashilgan havola "bu 2-sinf o'yini ekan" degan yolg'onni
+aytardi.
+
+| O'yin | Nima so'raydi | 🟢 Oson | 🔵 O'rta | 🔴 Qiyin |
+|---|---|---|---|---|
+| ⚡ Tezkor hisob | to'g'rimi yoki xatomi | `6 + 5 = 11` | `84 ÷ 12 = 7` | `40% · 220 = 83` |
+| ✖️ Ko'paytirish jadvali | jadval, teskarisi ham | `3 × 4 = ?` | `7 × ? = 56` | `288 ÷ 18 = ?` |
+| ❓ Yashirin amal | qaysi belgi | `6 ? 3 = 9` | `72 ? 8 = 9` | `(−13) ? (−18) = −31` |
+| 🔢 Ketma-ketlik | qonuniyat | `2 · 4 · 6 · ?` | `1 · 4 · 9 · 16 · ?` | `1 · 1 · 2 · 3 · 5 · ?` |
+| 👁 Chamalash | taxminiy javob | `19 + 22 ≈ ?` | `19 × 21 ≈ ?` | `2000 ÷ 45 ≈ ?` |
+| ⚖️ Tarozi | tenglama, harfsiz | `🍎🍎🍎 = 12` | `3🍒 = 5🍋`, `🍋 = 3` | `🍇+🍋=20`, `🍇−🍋=2` |
+| 🎲 24 | to'rt raqamdan 24 | `2·(3+4+5)` | `5×5−1×1` | `8÷(3−8÷3)` |
+| 🧠 Sonlar xotirasi | nechta sonni eslaysan | 3 ta, bir xonali | 4 ta, ikki xonali | 5 ta, **teskari** |
+
+### Daraja, yosh emas
+
+Qiyinlik YOSH bilan emas, DARAJA bilan tanlanadi. Yosh esa darajaning
+yonida **maslahat** bo'lib turadi ("6–9 yosh · 1–3-sinf"). Farqi kichik
+ko'rinadi, oqibati katta:
+
+| Agar yosh tanlov bo'lsa | Nima bo'ladi |
+|---|---|
+| Devor | kuchli 9 yoshli bola "bolalar darajasi" da zerikadi va chiqolmaydi |
+| Uyat | qiynalayotgan 12 yoshli bola "kichiklar" ni tanlashdan uyaladi |
+| Yolg'on | yoshni hech kim tekshirmaydi — reyting uchun hamma "kattalar" ni tanlaydi |
+
+Yozuv esa ota-onaga kerak: u bolasiga qaysi darajani berishni bir
+qarashda biladi.
+
+**Rekord `o'yin + daraja` juftligi bo'yicha ALOHIDA saqlanadi**
+(`lib/oyin/rekord.ts`). Bitta umumiy rekord bo'lganda "Qiyin" da 8 ball
+olgan katta bilan "Oson" da 30 ball olgan bola bir jadvalda turardi va
+ikkalasi ham o'z natijasining ma'nosini yo'qotardi.
+
+**Qulf.** Yuqori daraja oldingisida bir necha ball to'plangandan keyin
+ochiladi (10 va 15). Shart past — bir-ikki o'yin yetadi — va maqsadi
+to'sish emas: hech kim isinmasdan turib eng qiyin darajaga tushib,
+"juda qiyin ekan" deb tashlab ketmasin.
+
+### O'yin nima beradi, nima bermaydi
+
+| | |
+|---|---|
+| **Tanga** | beradi — ball ÷ 3, kunning birinchi o'yinida ikki barobar |
+| **Kunlik zanjir** | qo'shiladi — bo'limning butun maqsadi shu |
+| **Yulduz** | **BERMAYDI** |
+| **Serverga yozuv** | yo'q |
+
+Yulduz ataylab berilmaydi: u darsning o'lchovi va reyting aynan shuni
+sanaydi. O'yindan yulduz berilsa, 60 soniyada yigirma ball yig'a
+oladigan bola bir kechada jadval boshiga chiqib, darslarni oylab o'tgan
+bolaning mehnatini ma'nosiz qilardi.
+
+Tanga OXIRGI OCHILGAN kursga tushadi — aynan o'sha do'kon bola ochadigan
+do'kon bo'ladi. Tengma-teng bo'lganda bola tangasini ko'rmay qolardi.
+
+### "24" da nega kasr arifmetikasi
+
+`8 ÷ (3 − 8 ÷ 3)` ning oralig'ida 1/3 chiqadi. `double` bilan
+hisoblasak, oxirida 24 o'rniga 23.999999999999996 keladi — va o'yin
+TO'G'RI yechimni rad etadi. "Epsilon" bilan yamash teskari nuqson
+tug'diradi: 24 ga juda yaqin, ammo noto'g'ri yechim qabul qilinadi.
+Shu sabab hamma hisob butun sonli kasr (`p/q`) ustida ketadi
+(`lib/oyin/yigirma.ts`).
+
+Topishmoqning darajasi ham qo'lda yozilmaydi, **hisoblanadi**:
+
+```
+faqat + va × bilan yechiladi           → 1-daraja
+− yoki ÷ kerak, oraliq sonlar butun    → 2-daraja
+oraliqda kasr chiqishi SHART           → 3-daraja
+```
+
+Uchinchisi eng qiziq: odam butun sonlar bilan urinib ko'radi, topa
+olmaydi va "yechimi yo'q" deb o'ylaydi — aslida bor.
+
+### Sinov
+
+```bash
+cd frontend && npx jiti scripts/oyin.ts
+```
+
+Savollar tasodifiy yasaladi va nuqsoni brauzerda ko'rinmasligi mumkin:
+yuz savoldan bittasida ikkita to'g'ri variant chiqsa, uni qo'lda o'ynab
+topib bo'lmaydi. Bola esa darrov topadi — va to'g'ri javob berib "xato"
+degan yozuvni ko'rgan bola o'yinga qaytmaydi. Shuning uchun sinov har
+generator va har daraja uchun 400 tadan savol yasab, javob variantlar
+ichida va faqat BITTA marta ekanini tekshiradi. `npm run tekshir` bilan
+birga ishlaydi.
+
+### Yangi o'yin qo'shish
+
+Oqim o'yini (savol → javob → keyingisi) uchun ikki qadam yetadi:
+
+1. `lib/oyin/savollar.ts` ga `(daraja) => OqimSavol` funksiyasi.
+2. `lib/oyin/index.ts` ga bitta qator.
+
+O'yin ekrani (`components/oyin/Oqim.tsx`) qaysi o'yin ekanini bilmaydi —
+u faqat savol so'raydi va javobni taqqoslaydi. Matnlar `lib/matn.ts` da,
+"O'YINLAR" bo'limida.
 
 ## Kurslar
 
@@ -420,6 +588,17 @@ Yozuvlar `min-w-0` va `truncate` bilan chegaralangan. Bu SHART: usiz
 uzun yozuv (ruscha "Родители") tugmani kengaytirib, qolgan beshtasini
 siqib qo'yardi va siljiydigan belgi joyidan chiqib ketardi. Oltita yozuv
 320px li telefonga ham sig'adi — ikki tilda ham tekshirilgan.
+
+**Panelsiz ekranlar** (`YOPIQ` ro'yxati): dars, xatolar daftari, kunlik
+sinov, o'yinning o'zi va kirish sahifasi. Hammasida bitta sabab —
+u yerda diqqat talab qilinadi va vaqt yuradi: pastdagi tugmani
+bexosdan bosgan odam yig'gan natijasini yo'qotardi. O'yinlar RO'YXATIDA
+esa panel turadi, chunki u oddiy sahifa.
+
+**Yettinchi tugma qo'shilmadi.** O'yinlar bo'limiga kirish bosh
+sahifadagi katta kartadan boradi: 320px li telefonda oltita tugmaga
+allaqachon ~53px dan qolgan va yettinchisi ikkala tilda ham qatorni
+buzardi.
 
 ## Qobiq: veb, Telegram Mini App, APK
 

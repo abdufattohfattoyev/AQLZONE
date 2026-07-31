@@ -25,6 +25,8 @@ interface Props {
   onSozlama: () => void;
   /** Reyting — barcha kurslar bo'yicha umumiy. */
   onReyting: () => void;
+  /** Matematik o'yinlar bo'limi — kurslardan mustaqil. */
+  onOyinlar: () => void;
 }
 
 /** Ro'yxat navbat bilan chiqsin — ekran "jonli" ochilgandek ko'rinadi. */
@@ -44,7 +46,7 @@ function joriyBola(h: Hisob | null) {
 }
 
 export function Dashboard({
-  progressOf, onOpen, onDavom, onProfillar, onSozlama, onReyting,
+  progressOf, onOpen, onDavom, onProfillar, onSozlama, onReyting, onOyinlar,
 }: Props) {
   // Sinxron o'qiladi (localStorage) — tugma sakrab chiqmasligi uchun.
   const kopBola = profilSoni() > 1;
@@ -181,6 +183,18 @@ export function Dashboard({
           onDavom={() => onDavom(oxirgi, davom.ui, davom.li)} />
       )}
 
+      {/* ---- o'yinlar ----
+          Kurslardan OLDIN turadi va bu ataylab. Kurslar rejali ish:
+          ularga bola ota-onasi aytganda kiradi. O'yinga esa u O'ZI
+          keladi — va aynan shu narsa uni ertaga ham qaytaradi. Karta
+          pastda tursa, ro'yxatni oxirigacha surgan odamgina uni
+          ko'rardi, ya'ni deyarli hech kim.
+
+          Kartaning o'zi bitta va keng: sakkizta o'yin bu yerda
+          ko'rsatilmaydi. Bosh sahifa TANLOV ekrani emas, u faqat
+          "qayerga borasan?" degan savolga javob beradi. */}
+      <OyinlarKarta on={onOyinlar} />
+
       {/* Maktabgacha kurs alohida sarlavha ostida turadi: u sinf emas va
           ota-ona "bolam hali maktabga bormaydi" deganda aynan shu yerni
           izlaydi. Bitta ro'yxatda turganda u "0-sinf" dek ko'rinardi. */}
@@ -265,6 +279,47 @@ function Davom({ c, keyingi, onDavom }: {
             <span className="block truncate text-[12.5px] text-white/70">{nom}</span>
           </span>
           <Icon name="chevron" size={20} className="shrink-0 text-white/80" />
+        </button>
+      </div>
+    </Reveal>
+  );
+}
+
+/**
+ * "Matematik o'yinlar" kartasi.
+ *
+ * Kurs kartalaridan ATAYLAB boshqacha ko'rinadi: siyoh rangli fon,
+ * yon tomonda uchta o'yin belgisi. Agar u ham oq karta bo'lganda,
+ * ro'yxatda "yana bitta kurs" bo'lib yo'qolib ketardi — holbuki bu
+ * butunlay boshqa narsa: bu yerda dars yo'q, faqat rekord bor.
+ *
+ * Belgilar YON TOMONDA turadi va bosilmaydi. Ular ro'yxat emas,
+ * ishora: "ichkarida bir nechta o'yin bor" degan gapni yozuvsiz aytadi.
+ */
+function OyinlarKarta({ on }: { on: () => void }) {
+  return (
+    <Reveal kech={50}>
+      <div className="az-kirish mt-4 sm:mt-6" style={kech(50)}>
+        <button type="button" onClick={on}
+          className="tugma-3d az-yaltir flex w-full items-center gap-3 rounded-clay bg-brand-purple
+                     p-3.5 text-left text-white shadow-clay">
+          <span className="grid size-12 shrink-0 place-items-center rounded-[16px] bg-white/20">
+            <Icon name="puzzle" size={26} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-[16px] leading-tight">
+              {t("oyinlarBolim")}
+            </span>
+            <span className="mt-0.5 block text-[12.5px] leading-snug text-white/85">
+              {t("oyinlarIzoh")}
+            </span>
+          </span>
+          {/* 375px dan tor telefonda belgilar yashiriladi: u yerda
+              yozuv uchun har piksel qimmat va uchta emoji qatorni
+              ikkiga bo'lib yuborardi. */}
+          <span aria-hidden className="hidden shrink-0 gap-1 text-[19px] min-[380px]:flex">
+            <span>⚡</span><span>🎲</span><span>🧠</span>
+          </span>
         </button>
       </div>
     </Reveal>

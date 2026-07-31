@@ -21,6 +21,20 @@ export const yolSozlama = () => "/sozlamalar";
 /** Reyting — kim qancha yulduz yig'gan. Kursdan tashqarida: hammasi birga. */
 export const yolReyting = () => "/reyting";
 
+/**
+ * O'yinlar — kursdan TASHQARIDA.
+ *
+ * Manzil `/kurs/...` ostiga tushmasligi ataylab: o'yin biror sinfga
+ * tegishli emas, uni 1-sinf bolasi ham, kattasi ham o'ynaydi. Kurs
+ * ichiga qo'ysak, havolada tasodifiy sinf raqami turib qolardi va
+ * ulashilgan havola "bu 2-sinf o'yini ekan" degan yolg'onni aytardi.
+ */
+export const yolOyinlar = () => "/oyinlar";
+/** Bitta o'yinning daraja tanlash ekrani. */
+export const yolOyin = (id: string) => `/oyinlar/${id}`;
+/** O'yinning o'zi — daraja bilan. */
+export const yolOyinDaraja = (id: string, daraja: number) => `/oyinlar/${id}/${daraja}-daraja`;
+
 export const yolKurs = (c: Course) => `/kurs/${c.slug}`;
 /** Xatolar daftari (takrorlash darsi). */
 export const yolDaftar = (c: Course) => `/kurs/${c.slug}/daftar`;

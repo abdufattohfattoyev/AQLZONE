@@ -738,6 +738,135 @@ class BotTest(TestCase):
         self.bot.yangilikni_qayta_ishla(self.xabar("salom"))
         self.assertIn("/start", self.matnlar())
 
+    # ------------------------------------------------ doimiy klaviatura
+
+    #: Mini App sozlangan holat — doimiy klaviatura faqat shunda chiziladi.
+    ILOVA = dict(MINI_APP_URL="https://aql-zone.uz", SAYT_URL="https://aql-zone.uz")
+
+    def klaviatura(self) -> list[list[dict]]:
+        """Yuborilgan xabarlardagi ENG OXIRGI doimiy klaviatura."""
+        for x in reversed(self.yuborilgan):
+            k = (x.get("reply_markup") or {}).get("keyboard")
+            if k:
+                return k
+        return []
+
+    @override_settings(**ILOVA)
+    def test_start_doimiy_klaviatura_yuboradi(self):
+        """
+        Tugmalar suhbat ostida qoladi.
+
+        Ilgari bot faqat buyruqni tushunardi va ularni hech qayerda
+        ko'rsatmasdi: `/oyinlar` deb yozgan odam "Boshlash uchun /start
+        yuboring" degan javob olardi.
+        """
+        self.bot.yangilikni_qayta_ishla(self.xabar("/start"))
+        k = self.klaviatura()
+        matnlar = [t["text"] for qator in k for t in qator]
+        self.assertIn("🎮 O'yinlar", matnlar)
+        self.assertIn("🎓 Darslar", matnlar)
+
+        # Ikkita tugma ILOVANI ochadi, xabar yubormaydi.
+        oyin = next(t for qator in k for t in qator if "O'yinlar" in t["text"])
+        self.assertEqual(oyin["web_app"]["url"], "https://aql-zone.uz/oyinlar")
+
+    @override_settings(MINI_APP_URL="", SAYT_URL="https://aql-zone.uz")
+    def test_ilovasiz_klaviatura_chizilmaydi(self):
+        """Yarim ishlaydigan tugmalar — yo'qidan yomonroq."""
+        self.bot.yangilikni_qayta_ishla(self.xabar("/start"))
+        self.assertEqual(self.klaviatura(), [])
+
+    @override_settings(**ILOVA)
+    def test_klaviatura_tugmasi_ishlaydi(self):
+        """Tugma oddiy MATN yuboradi va bot uni tanishi kerak."""
+        self.bot.yangilikni_qayta_ishla(self.xabar("🎮 O'yinlar"))
+        self.assertIn("Matematik o'yinlar", self.matnlar())
+
+    @override_settings(**ILOVA)
+    def test_klaviatura_tugmasi_boshqa_tilda_ham_tanaladi(self):
+        """
+        Telegram allaqachon yuborilgan klaviaturani o'zi yangilamaydi.
+
+        Ya'ni tilini almashtirgan odamning ekranida eski tildagi tugma
+        qolib ketishi mumkin — u ham ishlashi shart.
+        """
+        self.bot.yangilikni_qayta_ishla(self.xabar("🎮 Игры"))
+        self.assertIn("Matematik o'yinlar", self.matnlar())
+
+    @override_settings(**ILOVA)
+    def test_notanish_xabar_klaviaturani_qaytaradi(self):
+        """
+        Yangilikdan oldingi foydalanuvchilarda klaviatura umuman yo'q va
+        ular /start ni boshqa hech qachon yozmasligi mumkin.
+        """
+        self.bot.yangilikni_qayta_ishla(self.xabar("salom"))
+        self.assertNotEqual(self.klaviatura(), [])
+
+    # ------------------------------------------------------- o'yinlar
+
+    @override_settings(**ILOVA)
+    def test_oyinlar_buyrogi_toppa_togri_oyinlarni_ochadi(self):
+        """Odam o'yin so'radi — uni bosh sahifaga tashlash ortiqcha qadam."""
+        self.bot.yangilikni_qayta_ishla(self.xabar("/oyinlar"))
+        tugma = self.yuborilgan[-1]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertEqual(tugma["web_app"]["url"], "https://aql-zone.uz/oyinlar")
+
+    @override_settings(MINI_APP_URL="https://aql-zone.uz/", SAYT_URL="https://aql-zone.uz")
+    def test_manzil_oxiridagi_chiziq_ikkilanmaydi(self):
+        """`.env` da manzilni ikki xil yozish mumkin."""
+        self.bot.yangilikni_qayta_ishla(self.xabar("/oyinlar"))
+        tugma = self.yuborilgan[-1]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertEqual(tugma["web_app"]["url"], "https://aql-zone.uz/oyinlar")
+
+    # ------------------------------------------------------------- til
+
+    @override_settings(**ILOVA)
+    def test_ilovada_tanlangan_til_botda_ham_ishlaydi(self):
+        """
+        Odam uchun bu BITTA ilova.
+
+        Telegram interfeysi ruscha bo'lsa ham, saytda o'zbekcha tanlangan
+        bo'lsa bot o'zbekcha gapiradi — aks holda bir joyda o'zbekcha,
+        boshqa joyda ruscha bo'lib qolardi.
+        """
+        ruscha = self.xabar("/start")
+        ruscha["message"]["from"]["language_code"] = "ru"
+        self.bot.yangilikni_qayta_ishla(ruscha)
+        self.assertIn("Здравствуйте", self.matnlar())
+
+        # Sayt o'zbekchaga o'tdi (`PATCH /api/v1/me` shuni yozadi).
+        Pupil.objects.update(til="uz")
+        self.yuborilgan.clear()
+
+        self.bot.yangilikni_qayta_ishla(ruscha)
+        self.assertIn("Assalomu alaykum", self.matnlar())
+        self.assertNotIn("Здравствуйте", self.matnlar())
+
+    @override_settings(**ILOVA)
+    def test_menyu_tugmasi_odamning_tilida(self):
+        """
+        Menyu tugmasi SUHBAT bo'yicha qo'yiladi, umumiy emas.
+
+        Umumiy sozlash bitta tilda qotib qolardi va ruszabon odam
+        o'ziga tanish bo'lmagan so'zni ko'rardi.
+        """
+        ruscha = self.xabar("/start")
+        ruscha["message"]["from"]["language_code"] = "ru"
+        self.bot.yangilikni_qayta_ishla(ruscha)
+        menyu = next(x for x in self.yuborilgan if x["usul"] == "setChatMenuButton")
+        self.assertEqual(menyu["chat_id"], 555)
+        self.assertEqual(menyu["menu_button"]["text"], "Открыть")
+
+    @override_settings(**ILOVA)
+    def test_buyruqlar_royxati_ikki_tilda_ornatiladi(self):
+        """`/` tugmasi ostidagi ro'yxat — usiz bot nima qilishini hech kim bilmaydi."""
+        self.bot.buyruqlarni_ornat()
+        sorovlar = [x for x in self.yuborilgan if x["usul"] == "setMyCommands"]
+        tillar = {x.get("language_code", "") for x in sorovlar}
+        self.assertEqual(tillar, {"uz", "ru", ""})
+        buyruqlar = [c["command"] for c in sorovlar[0]["commands"]]
+        self.assertIn("oyinlar", buyruqlar)
+
 
 @override_settings(BOT_TOKEN=BOT)
 class IsmFamiliyaTest(TestCase):

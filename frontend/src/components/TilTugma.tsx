@@ -12,10 +12,13 @@
  * o'tadimi yoki hozir UZ ekanini bildiradimi?) — bu savol har safar
  * paydo bo'lardi.
  *
- * Faol bo'lak QAYTA BOSILSA hech narsa qilmaydi: `tilniQoy` o'zi
+ * Faol bo'lak QAYTA BOSILSA hech narsa qilmaydi: `tilniAlmashtir` o'zi
  * tekshiradi va bir xil tilda sahifani qayta yuklamaydi.
+ *
+ * Tanlov SERVERGA ham yetkaziladi — Telegram boti va eslatmalar xuddi
+ * shu tilda gapirishi uchun (`lib/til.ts`).
  */
-import { TILLAR, til, tilniQoy } from "../lib/til";
+import { TILLAR, til, tilniAlmashtir } from "../lib/til";
 import { t } from "../lib/matn";
 
 export function TilTugma({ className = "" }: { className?: string }) {
@@ -34,7 +37,7 @@ export function TilTugma({ className = "" }: { className?: string }) {
           <button
             key={x.kod}
             type="button"
-            onClick={() => tilniQoy(x.kod)}
+            onClick={() => void tilniAlmashtir(x.kod)}
             title={x.nom}
             aria-current={shu ? "true" : undefined}
             className={`clay-press rounded-full px-2.5 py-1 font-display text-[11.5px]

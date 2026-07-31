@@ -44,6 +44,10 @@ const YOPIQ = [
   /^\/kurs\/[^/]+\/\d+-bob\//,   // dars
   /^\/kurs\/[^/]+\/daftar$/,     // xatolar daftari (u ham dars)
   /^\/kurs\/[^/]+\/sinov$/,      // kunlik sinov (u ham dars)
+  // O'yinning O'ZI — ro'yxat va daraja tanlash emas. O'yinda soat
+  // yuradi va pastdagi tugmani bexosdan bosgan odam butun natijasini
+  // yo'qotardi; ro'yxatda esa panel kerak, chunki u oddiy sahifa.
+  /^\/oyinlar\/[^/]+\/[^/]+$/,
   /^\/kirish\//,                 // botdagi havola
 ];
 

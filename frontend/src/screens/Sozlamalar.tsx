@@ -27,7 +27,7 @@ import { turniUnut } from "../lib/tur";
 import { tozala } from "../lib/nom";
 import type { Hisob } from "../lib/api";
 import { t } from "../lib/matn";
-import { TILLAR, til, tilniQoy } from "../lib/til";
+import { TILLAR, til, tilniAlmashtir } from "../lib/til";
 import { useOrqaga } from "../lib/qobiq";
 
 interface Props {
@@ -253,7 +253,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
               {TILLAR.map((x) => {
                 const shu = x.kod === til();
                 return (
-                  <button key={x.kod} type="button" onClick={() => tilniQoy(x.kod)}
+                  <button key={x.kod} type="button" onClick={() => void tilniAlmashtir(x.kod)}
                     aria-current={shu ? "true" : undefined}
                     className={`clay-press flex flex-1 items-center justify-center gap-2 rounded-3xl
                       py-2.5 font-display text-[14px] ${

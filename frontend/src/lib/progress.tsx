@@ -12,8 +12,9 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { COURSES } from "./curriculum";
+import { COURSES, courseBySlug } from "./curriculum";
 import type { Course } from "./curriculum";
+import { oxirgiKurs } from "./oxirgi";
 import { lessonId } from "./types";
 import type { Progress } from "./types";
 import * as api from "./api";
@@ -235,6 +236,18 @@ interface Ctx {
   zanjirniTikla: () => boolean;
   /** Kunlik sinov natijasi — darslar xaritasiga yozilmaydi. */
   sinovTugadi: (c: Course, r: LessonResult) => void;
+  /**
+   * O'yin natijasi — faqat TANGA va kunlik zanjir.
+   *
+   * Yulduz ATAYLAB berilmaydi: yulduz darsning o'lchovi va reyting ham
+   * aynan shuni sanaydi. O'yindan yulduz berilsa, 60 soniyada yigirma
+   * ball yig'ish mumkin bo'lgan bola bir kechada jadval boshiga chiqib,
+   * darslarni oylab o'tgan bolaning mehnatini ma'nosiz qilardi.
+   *
+   * Zanjirga esa QO'SHILADI — bo'limning butun maqsadi shu: odam
+   * har kuni ilovani ochsin.
+   */
+  oyinTugadi: (tanga: number, savollar: number) => void;
 }
 
 const ProgressCtx = createContext<Ctx | null>(null);
@@ -479,11 +492,46 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  /* -------------------------------------------------- o'yinlar */
+
+  /**
+   * O'yin natijasi.
+   *
+   * Tanga QAYSI kursga tushadi degan savol bor, chunki o'yin kursga
+   * tegishli emas. Javob — OXIRGI OCHILGAN kurs (bo'lmasa birinchisi),
+   * ya'ni aynan o'sha do'kon bola ochadigan do'kon bo'ladi. Boshqa
+   * taqsimot ham bo'lardi (masalan tengma-teng), lekin unda bola
+   * tangasini ko'rmay qolardi: u 2-sinf do'konini ochadi, tanga esa
+   * to'rt kursga bo'linib ketgan bo'lardi.
+   *
+   * Serverga hech narsa YUBORILMAYDI: u yerda dars natijalari turadi va
+   * o'yin ularning orasiga tushsa, ota-ona panelidagi "eng qiyin
+   * darslar" ro'yxati buzilardi.
+   */
+  const oyinTugadi = useCallback((tanga: number, savollar: number) => {
+    const c = courseBySlug(oxirgiKurs()) ?? COURSES[0];
+    if (!c) return;
+    if (tanga > 0) {
+      setAll((p) => {
+        const cur = p[c.key] ?? BOSH;
+        return {
+          ...p,
+          [c.key]: {
+            ...cur,
+            coins: cur.coins + tanga,
+            savollar: (cur.savollar ?? 0) + savollar,
+          },
+        };
+      });
+    }
+    if (savollar > 0) setKunlik((k) => kunlikYangila(k, savollar));
+  }, []);
+
   return (
     <ProgressCtx.Provider
       value={{
         progressOf, darsTugadi, kunlik: kunlikKorinishi(kunlik), sotibOl, kiy,
-        jamiTanga, tiklash, zanjirniTikla, sinovTugadi,
+        jamiTanga, tiklash, zanjirniTikla, sinovTugadi, oyinTugadi,
       }}
     >
       {children}

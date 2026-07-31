@@ -87,6 +87,39 @@ export function tilniQoy(t: Til, qaytaYukla = true): void {
 }
 
 /**
+ * Tilni almashtiradi VA serverga ham xabar beradi.
+ *
+ * NEGA ALOHIDA FUNKSIYA. `tilniQoy` faqat qurilmada saqlaydi va
+ * shu sabab BOT boshqa tilda gapirib qolardi: sayt o'zbekchaga
+ * o'tgan, serverdagi `Pupil.til` esa Telegram interfeysi bo'yicha
+ * "ru" bo'lib qolgan edi. Odam uchun bu bitta ilova — bir joyda
+ * o'zbekcha, boshqa joyda ruscha bo'lishi tushuntirib bo'lmaydigan
+ * narsa.
+ *
+ * Saqlash reload'dan OLDIN kutiladi, aks holda sahifa yangilanishi
+ * so'rovni yarim yo'lda uzib qo'yardi. Lekin ko'pi bilan bir yarim
+ * soniya: sekin tarmoq tufayli til almashmay turishi — bundan ancha
+ * yomon. Yetib bormasa ham falokat emas: ilova keyingi ochilishida
+ * `Tanishuv` farqni ko'rib qayta yuboradi.
+ *
+ * `api` DINAMIK yuklanadi: `api` → `matn` → `til` zanjiri allaqachon
+ * bor va to'g'ridan-to'g'ri import halqa yasagan bo'lardi.
+ */
+export async function tilniAlmashtir(t: Til): Promise<void> {
+  if (t === joriy) return;
+  try {
+    const { tilniSaqla } = await import("./api");
+    await Promise.race([
+      tilniSaqla(t),
+      new Promise((bajar) => setTimeout(bajar, 1500)),
+    ]);
+  } catch {
+    /* tarmoq yo'q — til baribir almashadi */
+  }
+  tilniQoy(t);
+}
+
+/**
  * Ikki qiymatdan tilga mos kelganini tanlaydi.
  *
  * Faqat matn uchun emas: ro'yxatlar, sonlar, hatto komponentlar ham

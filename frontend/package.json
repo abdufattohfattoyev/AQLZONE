@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "tekshir": "jiti scripts/tekshir.ts && jiti scripts/zanjir.ts && jiti scripts/qobiq.ts"
+    "tekshir": "jiti scripts/tekshir.ts && jiti scripts/zanjir.ts && jiti scripts/qobiq.ts && jiti scripts/oyin.ts"
   },
   "dependencies": {
     "react": "^19.2.7",

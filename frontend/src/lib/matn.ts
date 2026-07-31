@@ -519,6 +519,123 @@ const S = {
 
   /* ---------------- yo'l xaritasi ---------------- */
   bobTakrorlash: ["Bob takrorlash", "Повторение главы"],
+
+  /* ================= O'YINLAR ================= */
+
+  oyinlar: ["O'yinlar", "Игры"],
+  oyinlarIzoh: [
+    "Sof matematika — har yosh uchun. Darsdan tashqari, rekord uchun.",
+    "Чистая математика — для любого возраста. Не урок, а рекорд.",
+  ],
+  oyinlarBolim: ["Matematik o'yinlar", "Математические игры"],
+  oyinlarTagi: [
+    "Har o'yinda uch daraja bor. Yosh — faqat maslahat, xohlagan darajangni tanlaysan.",
+    "В каждой игре три уровня. Возраст — лишь подсказка, уровень выбираешь сам.",
+  ],
+  oyinHaliYoq: ["Hali o'ynalmagan", "Ещё не играли"],
+
+  /* ---------------- darajalar ---------------- */
+  daraja: ["Daraja", "Уровень"],
+  darajaTanla: ["Darajani tanla", "Выбери уровень"],
+  darajaOson: ["Oson", "Лёгкий"],
+  darajaOrta: ["O'rta", "Средний"],
+  darajaQiyin: ["Qiyin", "Сложный"],
+  darajaOsonYosh: ["6–9 yosh · 1–3-sinf", "6–9 лет · 1–3 класс"],
+  darajaOrtaYosh: ["10–14 yosh · 4–8-sinf", "10–14 лет · 4–8 класс"],
+  darajaQiyinYosh: ["15+ · kattalar", "15+ · взрослым"],
+  darajaQulf: [
+    "Oldingi darajada yana {n} ball to'plang",
+    "Наберите ещё {n} на предыдущем уровне",
+  ],
+  darajaYoshIzoh: [
+    "Yosh — faqat maslahat. Istagan darajangni tanla.",
+    "Возраст — только подсказка. Выбирай любой уровень.",
+  ],
+
+  /* ---------------- o'yin nomlari ---------------- */
+  oyinTezkor: ["Tezkor hisob", "Быстрый счёт"],
+  oyinTezkorIzoh: ["To'g'rimi yoki xatomi?", "Верно или нет?"],
+  oyinTezkorQoida: [
+    "Ifoda chiqadi — to'g'ri bo'lsa ✅, xato bo'lsa ❌ bos. Har xato 3 soniya oladi.",
+    "Появится пример — верно ✅, неверно ❌. Каждая ошибка отнимает 3 секунды.",
+  ],
+  oyinJadval: ["Ko'paytirish jadvali", "Таблица умножения"],
+  oyinJadvalIzoh: ["Jadvalni qanchalik tez bilasan?", "Насколько быстро знаешь таблицу?"],
+  oyinJadvalQoida: [
+    "Ko'paytirish, bo'lish va yashirin ko'paytuvchi. To'g'ri javobni tanla.",
+    "Умножение, деление и скрытый множитель. Выбери верный ответ.",
+  ],
+  oyinBelgi: ["Yashirin amal", "Скрытый знак"],
+  oyinBelgiIzoh: ["Qaysi belgi yashiringan?", "Какой знак спрятан?"],
+  oyinBelgiQoida: [
+    "Amal belgisi o'rnida savol turadi. Qaysi belgi to'g'ri kelishini top.",
+    "Вместо знака стоит вопрос. Найди, какой знак подходит.",
+  ],
+  oyinKetma: ["Ketma-ketlik", "Последовательность"],
+  oyinKetmaIzoh: ["Qonuniyatni top", "Найди закономерность"],
+  oyinKetmaQoida: [
+    "Sonlar qatori berilgan. Keyingisi qaysi son bo'lishini top.",
+    "Дан ряд чисел. Найди, какое число будет следующим.",
+  ],
+  oyinTaxmin: ["Chamalash", "Прикидка"],
+  oyinTaxminIzoh: ["Aniq hisoblash shart emas", "Точно считать не нужно"],
+  oyinTaxminQoida: [
+    "Aniq javob kerak emas — eng yaqin sonni tanla. Bozorda ham shunday qilasan.",
+    "Точный ответ не нужен — выбери ближайшее число. На рынке ты делаешь так же.",
+  ],
+  oyinTarozi: ["Tarozi", "Весы"],
+  oyinTaroziIzoh: ["Har meva qanchaga teng?", "Чему равен каждый фрукт?"],
+  oyinTaroziQoida: [
+    "Tarozi muvozanatda. Berilgan shartlardan mevaning qiymatini top.",
+    "Весы в равновесии. По условиям найди значение фрукта.",
+  ],
+  oyin24: ["24 — sonlar sehri", "24 — магия чисел"],
+  oyin24Izoh: ["To'rt raqamdan 24 chiqar", "Получи 24 из четырёх цифр"],
+  oyin24Qoida: [
+    "Ikki sonni va amalni bos — ular birlashadi. Oxirida 24 qolsin. Har raqam bir marta.",
+    "Нажми два числа и знак — они объединятся. В конце должно остаться 24. Каждая цифра один раз.",
+  ],
+  oyinXotira: ["Sonlar xotirasi", "Память на числа"],
+  oyinXotiraIzoh: ["Nechta sonni eslab qolasan?", "Сколько чисел запомнишь?"],
+  oyinXotiraQoida: [
+    "Sonlar bir lahza ko'rinadi — so'ng ularni tartib bilan tering. Bitta xato — tugadi.",
+    "Числа появятся на миг — затем набери их по порядку. Одна ошибка — конец.",
+  ],
+
+  /* ---------------- o'yin ekrani ---------------- */
+  oyinBall: ["Ball", "Очки"],
+  oyinRekordim: ["Rekordim", "Мой рекорд"],
+  oyinRekordYoq: ["Rekord yo'q", "Рекорда нет"],
+  oyinYangiRekord: ["Yangi rekord!", "Новый рекорд!"],
+  oyinTugadi: ["O'yin tugadi", "Игра окончена"],
+  oyinQayta: ["Yana o'ynash", "Играть ещё"],
+  oyinBoshqaDaraja: ["Boshqa daraja", "Другой уровень"],
+  oyinlargaQaytish: ["O'yinlarga qaytish", "Вернуться к играм"],
+  oyinTogri: ["To'g'ri", "Верно"],
+  oyinXatoTugma: ["Xato", "Неверно"],
+  oyinTanga: ["+{n} tanga", "+{n} монет"],
+  oyinBonusIzoh: [
+    "Kunning birinchi o'yini — tanga ikki barobar",
+    "Первая игра за день — монеты вдвое",
+  ],
+  oyinOldingi: ["Oldingi rekord: {n}", "Прошлый рекорд: {n}"],
+  oyinYaqin: ["Rekordgacha {n} ball qoldi", "До рекорда осталось {n}"],
+
+  /* ---------------- 24 o'yini ---------------- */
+  oyin24Nishon: ["24 ni yig'", "Собери 24"],
+  oyin24Qaytar: ["Ortga qaytar", "Отменить"],
+  oyin24Otkaz: ["Boshqasi", "Другая"],
+  oyin24Yechim: ["Yechim: {y}", "Решение: {y}"],
+  oyin24Topildi: ["Topding!", "Нашёл!"],
+  oyin24Sanoq: ["Yechilgan: {n}", "Решено: {n}"],
+  oyin24Sonlar: ["Sonlarni bos", "Нажимай на числа"],
+
+  /* ---------------- xotira o'yini ---------------- */
+  xotiraPogona: ["{n}-pog'ona", "Ступень {n}"],
+  xotiraEsla: ["Eslab qol…", "Запоминай…"],
+  xotiraQaytar: ["Endi tering", "Теперь набери"],
+  xotiraTeskari: ["TESKARI tartibda tering", "Набери в ОБРАТНОМ порядке"],
+  xotiraNatija: ["{n} ta son", "чисел: {n}"],
 } satisfies Record<string, [string, string]>;
 
 export type Kalit = keyof typeof S;

@@ -42,7 +42,7 @@ from django.utils import timezone
 
 from core import boshqaruv
 from core.auth import kirish_kodi_yasa, tg_ismi
-from core.matn import M, tilni_tanla
+from core.matn import TILLAR, M, barcha, tilni_tanla
 from core.models import Identity, KirishKodi, Pupil
 from core.xabar import KOK, YASHIL, tugma_yasa
 
@@ -179,6 +179,81 @@ def muddat_matni(til: str = "uz") -> str:
     return M("muddatDaqiqa", til, n=d)
 
 
+#: Mini App ichidagi o'yinlar bo'limining yo'li.
+OYIN_YOLI = "/oyinlar"
+
+
+def ilova_url(yol: str = "") -> str:
+    """
+    Mini App manzili, ixtiyoriy ichki yo'l bilan.
+
+    Oxiridagi qiya chiziq olib tashlanadi: `MINI_APP_URL` ni `.env` ga
+    ikki xil yozish mumkin va `https://aql-zone.uz//oyinlar` degan manzil
+    Telegram tekshiruvidan o'tmasdi.
+    """
+    asos = (settings.MINI_APP_URL or "").rstrip("/")
+    return f"{asos}{yol}" if asos else ""
+
+
+def asosiy_klaviatura(til: str) -> dict | None:
+    """
+    Suhbat ostida DOIM turadigan to'rtta tugma.
+
+    NEGA KERAK. Bot faqat buyruqni tushunardi va ularni hech qayerda
+    ko'rsatmасdi: `/oyinlar` deb yozgan odam "Boshlash uchun /start
+    yuboring" degan javob olardi — ya'ni bot bilgan narsasini o'zi
+    yashirib turardi. Buyruqni eslab qolish esa hech kimning ishi emas.
+
+    Ikkita tugma to'g'ridan-to'g'ri ILOVANI ochadi (`web_app`), ya'ni
+    ular xabar yubormaydi — bosilishi bilan darslar yoki o'yinlar
+    ochiladi. Qolgan ikkitasi oddiy matn yuboradi va uni bot tanib oladi.
+
+    `is_persistent` — klaviatura yopilib qolmasin: aks holda odam uni
+    bir marta yashirsa, boshqa hech qachon topolmaydi.
+
+    `MINI_APP_URL` sozlanmagan bo'lsa (lokal ishlab chiqish) klaviatura
+    UMUMAN chizilmaydi: yarim ishlaydigan tugmalar — yo'qidan yomonroq.
+    """
+    if not ilova_url():
+        return None
+    return {
+        "keyboard": [
+            [
+                tugma_yasa(M("tIlova", til), web_app={"url": ilova_url()}),
+                tugma_yasa(M("tOyinlar", til), web_app={"url": ilova_url(OYIN_YOLI)}),
+            ],
+            [
+                tugma_yasa(M("tRaqamTugma", til)),
+                tugma_yasa(M("tYordamTugma", til)),
+            ],
+        ],
+        "resize_keyboard": True,
+        "is_persistent": True,
+    }
+
+
+def menyu_tugmasini_qoy(chat_id: int, til: str) -> None:
+    """
+    Kiritish maydoni yonidagi menyu tugmasi — SHU suhbat uchun.
+
+    Umumiy (`chat_id` siz) sozlash ham bor, lekin u BITTA tilda qotib
+    qoladi: o'zbekcha qo'ysak ruszabon odam "Ochish" degan tanish
+    bo'lmagan so'zni ko'radi. Suhbat bo'yicha qo'yilganda esa har kim
+    o'z tilida ko'radi — xuddi saytdagidek.
+    """
+    if not ilova_url():
+        return
+    api(
+        "setChatMenuButton",
+        chat_id=chat_id,
+        menu_button={
+            "type": "web_app",
+            "text": M("menyuTugma", til),
+            "web_app": {"url": ilova_url()},
+        },
+    )
+
+
 def raqam_sora(chat_id: int, matn: str, til: str = "uz") -> None:
     """Telefon raqamini so'raydigan klaviatura."""
     api(
@@ -265,16 +340,52 @@ def salom_yubor(
     til = pupil.til or til
 
     tugmalar = ilova_tugmalari(til, havola)
+    klaviatura = asosiy_klaviatura(til)
 
+    # Menyu tugmasi ham shu odamning tilida bo'lsin.
+    menyu_tugmasini_qoy(chat_id, til)
+
+    # Xabar IKKIGA bo'lingan va sabab texnik: bitta xabarda yo doimiy
+    # klaviatura, yo inline tugmalar bo'ladi — ikkalasi birga bo'lmaydi.
+    # Bo'linish tabiiy joydan o'tadi: salom (klaviatura bilan), so'ng
+    # "tugmani bosing" (tugmalar bilan). Ikkinchisi oxirida turadi —
+    # ya'ni odam ko'radigan oxirgi xabar aynan harakat talab qilgani.
+    if klaviatura:
+        api("sendMessage", chat_id=chat_id, text=salom,
+            parse_mode="HTML", reply_markup=klaviatura)
+        api("sendMessage", chat_id=chat_id,
+            text=M("tugmaniBos", til, muddat=muddat_matni(til)).strip(),
+            parse_mode="HTML", reply_markup={"inline_keyboard": tugmalar})
+    else:
+        # Mini App sozlanmagan — doimiy klaviatura ham yo'q, hammasi
+        # avvalgidek bitta xabarda ketadi.
+        api("sendMessage", chat_id=chat_id,
+            text=salom + M("tugmaniBos", til, muddat=muddat_matni(til)),
+            parse_mode="HTML", reply_markup={"inline_keyboard": tugmalar})
+    return f"{tg_id}: /start — kirish havolasi yuborildi (hisob #{pupil.pk})"
+
+
+def oyinlarni_yubor(chat_id: int, til: str) -> None:
+    """
+    /oyinlar — o'yinlar bo'limi haqida va uni ochadigan tugma.
+
+    Tugma to'g'ridan-to'g'ri `/oyinlar` sahifasiga olib boradi, bosh
+    sahifaga emas: odam o'yin so'radi, ya'ni uni yana bir marta bosishga
+    majburlashning hech qanday sababi yo'q.
+    """
+    url = ilova_url(OYIN_YOLI)
+    if not url:
+        api("sendMessage", chat_id=chat_id, text=M("ilovaSozlanmagan", til))
+        return
     api(
         "sendMessage",
         chat_id=chat_id,
-        text=salom + M("tugmaniBos", til, muddat=muddat_matni(til)),
+        text=M("oyinlar", til),
         parse_mode="HTML",
-        # Eski "raqam yuborish" klaviaturasi osilib qolmasin.
-        reply_markup={"inline_keyboard": tugmalar},
+        reply_markup={"inline_keyboard": [[tugma_yasa(
+            M("tOyinniOch", til), YASHIL, web_app={"url": url},
+        )]]},
     )
-    return f"{tg_id}: /start — kirish havolasi yuborildi (hisob #{pupil.pk})"
 
 
 def ilovani_yubor(chat_id: int, pupil: Pupil, yangi: bool) -> None:
@@ -288,11 +399,12 @@ def ilovani_yubor(chat_id: int, pupil: Pupil, yangi: bool) -> None:
     )
     tugmalar = ilova_tugmalari(til, havola)
 
-    # Avval eski "raqam yuborish" klaviaturasini olib tashlaymiz: u
-    # ekranning pastida osilib qolsa, foydalanuvchi raqamni yana
-    # yuborish kerakdek tuyuladi.
+    # Eski "raqam yuborish" klaviaturasi o'rniga ASOSIY klaviatura
+    # qaytariladi. Ilgari u shunchaki o'chirilardi va suhbat pastida
+    # bo'shliq qolardi — odam raqamni bergandan keyin qayerga borishni
+    # bilmay qolardi. Mini App sozlanmagan bo'lsa avvalgidek o'chadi.
     api("sendMessage", chat_id=chat_id, text=matn,
-        reply_markup={"remove_keyboard": True})
+        reply_markup=asosiy_klaviatura(til) or {"remove_keyboard": True})
 
     if not tugmalar:
         api("sendMessage", chat_id=chat_id, text=M("ilovaSozlanmagan", til))
@@ -410,6 +522,26 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         ).update(xabar_yopiq_at=None)
         return salom_yubor(chat_id, tg_id, ism, familiya, til)
 
+    # Doimiy klaviatura tugmasi bosilgan bo'lishi mumkin. Tugma oddiy
+    # MATN yuboradi, shuning uchun uni buyruqlardan oldin taniymiz —
+    # aks holda u pastdagi "tushunmadim" javobiga tushib ketardi.
+    #
+    # Tanish BARCHA tilda bo'ladi (`barcha`): Telegram allaqachon
+    # yuborilgan klaviaturani o'zi yangilamaydi, ya'ni tilini
+    # almashtirgan odamning ekranida eski tildagi tugma qolib ketishi
+    # mumkin va u ham ishlashi kerak.
+    if matn.startswith("/oyinlar") or matn in barcha("tOyinlar"):
+        oyinlarni_yubor(chat_id, til)
+        return f"{tg_id}: o'yinlar"
+
+    if matn in barcha("tRaqamTugma"):
+        raqam_sora(chat_id, M("raqamSora", til), til)
+        return f"{tg_id}: raqam tugmasi"
+
+    if matn in barcha("tYordamTugma"):
+        api("sendMessage", chat_id=chat_id, text=M("yordam", til))
+        return f"{tg_id}: yordam tugmasi"
+
     # Raqam endi majburiy emas — kirish havola orqali bo'ladi. Lekin u
     # hisobni tiklashda va eslatma yuborishda kerak, shuning uchun alohida
     # buyruq bo'lib qoladi.
@@ -447,8 +579,52 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         return f"{tg_id}: /help"
 
     # Boshqa har qanday xabar — yo'naltiramiz.
-    api("sendMessage", chat_id=chat_id, text=M("boshlaStart", til))
+    #
+    # Klaviatura shu yerda ham QAYTA yuboriladi. Sabab: bu yangilikdan
+    # oldin botdan foydalangan odamlarda u umuman yo'q va ular /start ni
+    # boshqa hech qachon yozmasligi mumkin. Endi esa istalgan xabar
+    # ularga tugmalarni qaytaradi.
+    klaviatura = asosiy_klaviatura(til)
+    api("sendMessage", chat_id=chat_id,
+        text=M("boshlaTugma" if klaviatura else "boshlaStart", til),
+        reply_markup=klaviatura or None)
     return f"{tg_id}: boshqa xabar"
+
+
+#: "/" tugmasi ostidagi ro'yxat. Tartib — foydalanish chastotasi bo'yicha.
+BUYRUQLAR = (
+    ("start", "buyruqStart"),
+    ("oyinlar", "buyruqOyinlar"),
+    ("raqam", "buyruqRaqam"),
+    ("help", "buyruqYordam"),
+)
+
+
+def buyruqlarni_ornat() -> None:
+    """
+    Telegram'dagi buyruqlar ro'yxatini o'rnatadi (`setMyCommands`).
+
+    NEGA KERAK. Ro'yxat o'rnatilmagunicha kiritish maydonidagi "/"
+    tugmasi BO'SH ro'yxat ko'rsatadi — ya'ni bot nima qila olishini
+    faqat taxmin qilib topish mumkin edi.
+
+    Har til uchun ALOHIDA yuboriladi (`language_code`), ustiga
+    tilsiz nusxa ham qo'yiladi: uchinchi tilda telefon ishlatadigan
+    odam o'zbekchasini ko'radi — loyihaning asosiy tili.
+
+    Bot ishga tushganda BIR MARTA chaqiriladi: ro'yxat Telegram
+    tomonida saqlanadi va har xabarda qayta yuborish keraksiz.
+    """
+    for til in TILLAR:
+        api(
+            "setMyCommands",
+            commands=[{"command": c, "description": M(k, til)} for c, k in BUYRUQLAR],
+            language_code=til,
+        )
+    api(
+        "setMyCommands",
+        commands=[{"command": c, "description": M(k)} for c, k in BUYRUQLAR],
+    )
 
 
 class Command(BaseCommand):
@@ -476,8 +652,13 @@ class Command(BaseCommand):
             ))
         if not settings.MINI_APP_URL:
             self.stdout.write(self.style.WARNING(
-                "diqqat: MINI_APP_URL bo'sh — Mini App tugmasi ko'rsatilmaydi"
+                "diqqat: MINI_APP_URL bo'sh — Mini App tugmasi va doimiy "
+                "klaviatura ko'rsatilmaydi"
             ))
+
+        # Buyruqlar ro'yxati — bir marta, ishga tushishda. Telegram uni
+        # o'zida saqlaydi, shuning uchun har xabarda takrorlash keraksiz.
+        buyruqlarni_ornat()
 
         # Oxirgi ishlangan yangilik. Telegram shundan keyingilarini beradi,
         # ya'ni bir xabar ikki marta qayta ishlanmaydi.

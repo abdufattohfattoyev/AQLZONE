@@ -19,6 +19,12 @@ import { Reyting } from "./screens/Reyting";
 import { Sozlamalar } from "./screens/Sozlamalar";
 import { KodKirish } from "./screens/KodKirish";
 import { NotFound } from "./screens/NotFound";
+import { Oyinlar } from "./screens/Oyinlar";
+import { OyinDaraja } from "./screens/OyinDaraja";
+import { Oyin } from "./screens/Oyin";
+import { oyinById } from "./lib/oyin";
+import { darajaniOqi } from "./lib/oyin/tur";
+import { ochiqmi } from "./lib/oyin/rekord";
 import { courseBySlug } from "./lib/curriculum";
 import { KUNLIK_MAQSAD, useProgress } from "./lib/progress";
 import type { LessonResult } from "./lib/progress";
@@ -30,7 +36,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolDaftar, yolDars, yolKurs, yolKurslar,
-  yolOtaOna, yolReyting, yolSinov, yolSozlama,
+  yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "./lib/yollar";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
@@ -63,6 +69,10 @@ function Yollar() {
           havola kirish ekraniga tushib, cheksiz halqa bo'lib qolardi. */}
       <Route path="/kirish/:kod" element={<KodKirish />} />
       <Route path="/reyting" element={<ReytingSahifasi />} />
+      {/* O'yinlar kursdan tashqarida: ular biror sinfga tegishli emas. */}
+      <Route path="/oyinlar" element={<OyinlarSahifasi />} />
+      <Route path="/oyinlar/:id" element={<OyinDarajaSahifasi />} />
+      <Route path="/oyinlar/:id/:daraja" element={<OyinSahifasi />} />
       <Route path="/kurs/:slug" element={<KursSahifasi />} />
       {/* Diqqat: "daftar" bob nomiga o'xshaydi, shuning uchun u
           /:bob/:dars dan OLDIN turishi shart — aks holda marshrut
@@ -95,6 +105,7 @@ function KurslarSahifasi() {
       onProfillar={() => nav("/profillar")}
       onSozlama={() => nav(yolSozlama())}
       onReyting={() => nav(yolReyting())}
+      onOyinlar={() => nav(yolOyinlar())}
     />
   );
 }
@@ -321,6 +332,73 @@ function SozlamaSahifasi() {
     <Sozlamalar
       onBack={() => nav(yolKurslar())}
       onProfillar={() => nav("/profillar")}
+    />
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*                             o'yinlar                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * O'yinlar bo'limi — kurslardan MUSTAQIL.
+ *
+ * Tema "bosh" bo'lib qoladi: o'yin bir sinfga tegishli emas va
+ * 1-sinfning quyoshli ko'k fonida ochilsa, u "bolalar o'yini" bo'lib
+ * ko'rinardi — holbuki uni katta ham o'ynaydi.
+ */
+function OyinlarSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Oyinlar onBack={() => nav(yolKurslar())} onOyin={(id) => nav(yolOyin(id))} />;
+}
+
+function OyinDarajaSahifasi() {
+  const nav = useNavigate();
+  const { id } = useParams();
+  useTema("bosh");
+
+  const o = oyinById(id ?? "");
+  if (!o) {
+    return <NotFound nima={t("oyinlar")}
+      qaytish={{ matn: t("oyinlarBolim"), yol: yolOyinlar() }} />;
+  }
+
+  return (
+    <OyinDaraja
+      oyin={o}
+      onBack={() => nav(yolOyinlar())}
+      onBoshla={(d) => nav(yolOyinDaraja(o.id, d))}
+    />
+  );
+}
+
+/**
+ * O'yinning o'zi.
+ *
+ * Ochilmagan daraja manzilni qo'lda o'zgartirib ochilmasin — aks holda
+ * qulfning ma'nosi qolmasdi. Bunday holatda daraja tanlash ekraniga
+ * qaytariladi: u yerda qulf va uni ochish sharti ko'rinib turadi.
+ */
+function OyinSahifasi() {
+  const nav = useNavigate();
+  const { id, daraja } = useParams();
+  useTema("bosh");
+
+  const o = oyinById(id ?? "");
+  const d = darajaniOqi(daraja);
+
+  if (!o || d === null) {
+    return <NotFound nima={t("oyinlar")}
+      qaytish={{ matn: t("oyinlarBolim"), yol: yolOyinlar() }} />;
+  }
+  if (!ochiqmi(o.id, d)) return <Navigate to={yolOyin(o.id)} replace />;
+
+  return (
+    <Oyin
+      oyin={o} daraja={d}
+      onChiq={() => nav(yolOyinlar())}
+      onDaraja={() => nav(yolOyin(o.id))}
     />
   );
 }
