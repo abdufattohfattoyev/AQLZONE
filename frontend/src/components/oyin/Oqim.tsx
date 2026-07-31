@@ -78,16 +78,45 @@ interface Props {
   rekord: number;
   /** Yakun ekrani (natija saqlangandan keyin tashqaridan beriladi). */
   yakun: ReactElement | null;
+  /**
+   * TAYYOR savollar — kunlik maydon uchun.
+   *
+   * Berilmasa o'yin savolni o'zi yasaydi (odatdagi mashq rejimi).
+   * Berilsa esa ular TARTIB BILAN olinadi va yangisi yasalmaydi:
+   * maydonda hamma bir xil savolni, bir xil ketma-ketlikda ko'rishi
+   * shart, aks holda jadval hech narsani o'lchamaydi.
+   *
+   * Ro'yxat tugasa o'yin ham tugaydi. Amalda bunga yetib bo'lmaydi
+   * (zaxira 40 ta, vaqt esa 45 soniya), lekin cheksiz aylantirish
+   * xavfli bo'lardi: bir xil savolni ikkinchi marta ko'rgan odam
+   * javobni eslab qoladi.
+   */
+  savollar?: OqimSavol[];
+  /** Vaqtni tashqaridan belgilash — maydonda hamma bosqich teng. */
+  vaqt?: number;
 }
 
 type Holat = "sanoq" | "oyin" | "tugadi";
 
-export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun }: Props) {
+export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, vaqt }: Props) {
   const gen = oyin.gen!;
-  const jamiVaqt = (oyin.vaqt ?? [60, 60, 60])[daraja - 1];
+  const jamiVaqt = vaqt ?? (oyin.vaqt ?? [60, 60, 60])[daraja - 1];
+
+  /**
+   * Keyingi savol: tayyor ro'yxatdan yoki yangi yasalgan.
+   *
+   * Ro'yxat tugasa `null` qaytadi va o'yin tugaydi — bu holat faqat
+   * nazariy, lekin uni ochiq qoldirsak ro'yxat tugagan payt
+   * `undefined` savol ekranga chizilardi.
+   */
+  const keyingiSavol = useCallback(
+    (n: number): OqimSavol | null =>
+      savollar ? (savollar[n] ?? null) : gen(daraja),
+    [savollar, gen, daraja],
+  );
 
   const [holat, setHolat] = useState<Holat>("sanoq");
-  const [savol, setSavol] = useState<OqimSavol>(() => gen(daraja));
+  const [savol, setSavol] = useState<OqimSavol>(() => keyingiSavol(0) ?? gen(daraja));
   const [ball, setBall] = useState(0);
   const [berilgan, setBerilgan] = useState(0);
   const [qolganMs, setQolganMs] = useState(jamiVaqt * 1000);
@@ -159,6 +188,10 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun }: Props) {
     if (holat !== "oyin" || qulf.current) return;
     qulf.current = true;
     const togri = v === savol.javob;
+    // Keyingi savolning o'rni SHU YERDA hisoblanadi, taymer ichida
+    // emas: u yerda `berilganRef` allaqachon yangilangan bo'lishi ham,
+    // bo'lmasligi ham mumkin va bitta savol o'tkazib yuborilardi.
+    const keyingiOrin = berilganRef.current + 1;
     setJavob({ v, togri });
     setBerilgan((n) => n + 1);
 
@@ -187,9 +220,14 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun }: Props) {
 
     setTimeout(() => {
       if (tugaganRef.current) return;
+      const keyingi = keyingiSavol(keyingiOrin);
+      if (!keyingi) {
+        tugat(ballRef.current, berilganRef.current);
+        return;
+      }
       qulf.current = false;
       setJavob(null);
-      setSavol(gen(daraja));
+      setSavol(keyingi);
     }, togri ? TOGRI_KUT : XATO_KUT);
   };
 

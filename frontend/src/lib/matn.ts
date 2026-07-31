@@ -534,6 +534,30 @@ const S = {
   ],
   oyinHaliYoq: ["Hali o'ynalmagan", "Ещё не играли"],
 
+  /* ---------------- bugungi maydon ---------------- */
+  maydon: ["Bugungi maydon", "Сегодняшняя арена"],
+  maydonIzoh: [
+    "3 bosqich · hammaga bir xil savol",
+    "3 этапа · у всех одни и те же задания",
+  ],
+  maydonQolgan: ["{n} soat qoldi", "осталось {n} ч"],
+  maydonBosqich: ["{n}-bosqich / {jami}", "Этап {n} / {jami}"],
+  maydonVaqt: ["{n} soniya", "{n} секунд"],
+  maydonBoshla: ["Boshlash", "Начать"],
+  maydonTugadi: ["Maydon tugadi!", "Арена пройдена!"],
+  maydonErtaga: [
+    "Ertaga yangi uch bosqich ochiladi. Bugungisi yarim tunda yopiladi.",
+    "Завтра откроются три новых этапа. Сегодняшний закрывается в полночь.",
+  ],
+  maydonChiqish: ["Yopish", "Закрыть"],
+  maydonBugunOynadingiz: ["Bugun o'ynadingiz", "Сегодня вы уже играли"],
+  maydonNatijangiz: ["Natijangiz: {n} ball", "Ваш результат: {n}"],
+  maydonMashq: ["Mashq", "Тренировка"],
+  maydonMashqIzoh: [
+    "Cheksiz o'ynang — rekordingizni yaxshilang",
+    "Играйте сколько угодно — улучшайте рекорд",
+  ],
+
   /* ---------------- darajalar ---------------- */
   daraja: ["Daraja", "Уровень"],
   darajaTanla: ["Darajani tanla", "Выбери уровень"],

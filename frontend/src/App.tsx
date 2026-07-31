@@ -20,6 +20,7 @@ import { Sozlamalar } from "./screens/Sozlamalar";
 import { KodKirish } from "./screens/KodKirish";
 import { NotFound } from "./screens/NotFound";
 import { Oyinlar } from "./screens/Oyinlar";
+import { Maydon } from "./screens/Maydon";
 import { OyinDaraja } from "./screens/OyinDaraja";
 import { Oyin } from "./screens/Oyin";
 import { oyinById } from "./lib/oyin";
@@ -36,7 +37,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolDaftar, yolDars, yolKurs, yolKurslar,
-  yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
+  yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "./lib/yollar";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
@@ -71,6 +72,9 @@ function Yollar() {
       <Route path="/reyting" element={<ReytingSahifasi />} />
       {/* O'yinlar kursdan tashqarida: ular biror sinfga tegishli emas. */}
       <Route path="/oyinlar" element={<OyinlarSahifasi />} />
+      {/* Maydon `:id` dan OLDIN: aks holda "maydon" o'yin id'si
+          deb qabul qilinib, "topilmadi" sahifasi chiqardi. */}
+      <Route path="/oyinlar/maydon" element={<MaydonSahifasi />} />
       <Route path="/oyinlar/:id" element={<OyinDarajaSahifasi />} />
       <Route path="/oyinlar/:id/:daraja" element={<OyinSahifasi />} />
       <Route path="/kurs/:slug" element={<KursSahifasi />} />
@@ -350,7 +354,19 @@ function SozlamaSahifasi() {
 function OyinlarSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
-  return <Oyinlar onBack={() => nav(yolKurslar())} onOyin={(id) => nav(yolOyin(id))} />;
+  return (
+    <Oyinlar
+      onBack={() => nav(yolKurslar())}
+      onOyin={(id) => nav(yolOyin(id))}
+      onMaydon={() => nav(yolMaydon())}
+    />
+  );
+}
+
+function MaydonSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Maydon onChiq={() => nav(yolOyinlar())} />;
 }
 
 function OyinDarajaSahifasi() {

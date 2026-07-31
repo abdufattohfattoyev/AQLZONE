@@ -149,6 +149,7 @@ ikkalasi ham ATAYLAB shunday:
 | **Kunlik maqsad va zanjir** (oyiga bitta qoldirilgan kun kechiriladi) | `frontend/src/lib/progress.tsx` |
 | **Zanjirni tanga bilan tiklash** — uzilgan kuni, haftada bitta | `frontend/src/lib/zanjir.ts` |
 | **Kunlik sinov** — faqat bugun ochiq, tangasi ikki barobar | `frontend/src/lib/kunlikSinov.ts` |
+| **Bugungi maydon** — 3 bosqich, kuniga bir marta, hammaga bir xil savol | `frontend/src/lib/oyin/maydon.ts` |
 | **Qaytarish zanjiri** — 7/21/45 kun, keyin sukut | `backend/core/management/commands/qaytarish.py` |
 | **Nishonlar** — progressdan hisoblanadi, alohida saqlanmaydi | `frontend/src/lib/nishon.ts` |
 | **Tangalar do'koni** — tulkini bezash | `frontend/src/lib/dokon.ts` |

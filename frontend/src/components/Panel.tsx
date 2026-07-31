@@ -48,6 +48,9 @@ const YOPIQ = [
   // yuradi va pastdagi tugmani bexosdan bosgan odam butun natijasini
   // yo'qotardi; ro'yxatda esa panel kerak, chunki u oddiy sahifa.
   /^\/oyinlar\/[^/]+\/[^/]+$/,
+  // Bugungi maydon — u ham o'yin, ustiga kuniga bitta urinish. Bu
+  // yerda bexosdan bosilgan tugma butun kunni yo'qotardi.
+  /^\/oyinlar\/maydon$/,
   /^\/kirish\//,                 // botdagi havola
 ];
 

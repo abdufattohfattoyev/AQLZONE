@@ -17,6 +17,7 @@ import { joriyProfil } from "../api";
 import { kunKaliti } from "../zanjir";
 import { DARAJALAR } from "./tur";
 import type { Daraja, OyinId } from "./tur";
+import type { MaydonNatija } from "./maydon";
 
 const KALIT = "azapp_oyin_v1";
 
@@ -140,3 +141,52 @@ export function bugunOynalgan(id: OyinId): boolean {
  */
 export const tangaHisobi = (ball: number, bonus: boolean): number =>
   Math.max(0, Math.ceil(ball / 3)) * (bonus ? BONUS : 1);
+
+/* ================= BUGUNGI MAYDON ================= */
+
+const MAYDON_KALIT = "azapp_maydon_v1";
+
+/**
+ * Maydon natijasi shu faylda saqlanadi, `maydon.ts` da emas.
+ *
+ * `maydon.ts` — QOIDA: qaysi kun qaysi o'yin, qaysi savol. U sof va
+ * uni brauzersiz sinash mumkin (`scripts/maydon.ts`). Saqlash esa
+ * `localStorage` va profilga tegadi, ya'ni brauzersiz umuman
+ * ishlamaydi. Ikkisi bir faylda turganda sinov skripti "localStorage
+ * yo'q" deb yiqilardi.
+ */
+const maydonKalitim = (): string => {
+  const p = joriyProfil();
+  return p ? `${MAYDON_KALIT}::${p}` : MAYDON_KALIT;
+};
+
+/** Bugun o'ynalgan bo'lsa — natijasi, aks holda `null`. */
+export function maydonNatija(): MaydonNatija | null {
+  try {
+    const xom = localStorage.getItem(maydonKalitim());
+    if (!xom) return null;
+    const n = JSON.parse(xom) as MaydonNatija;
+    return n.kun === kunKaliti() ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Natijani yozadi va yozilganini qaytaradi.
+ *
+ * Bugungisi ALLAQACHON bo'lsa ustiga yozilmaydi — "kuniga bitta
+ * urinish" qoidasi shu yerda, saqlash nuqtasida turadi. Ekranda ham
+ * tekshiriladi, lekin ekran o'zgarishi mumkin, qoida esa qolishi kerak.
+ */
+export function maydonYoz(n: Omit<MaydonNatija, "kun">): MaydonNatija {
+  const bor = maydonNatija();
+  if (bor) return bor;
+  const yozuv: MaydonNatija = { ...n, kun: kunKaliti() };
+  try {
+    localStorage.setItem(maydonKalitim(), JSON.stringify(yozuv));
+  } catch {
+    /* xotira to'lgan — natija faqat shu ekranda qoladi */
+  }
+  return yozuv;
+}

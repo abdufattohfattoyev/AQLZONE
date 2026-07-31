@@ -278,22 +278,35 @@ export function ketma(d: Daraja): OqimSavol {
     for (let i = 0; i < 4; i++) { arr.push(x); x += osish ? q : -q; }
     keyingi = x;
   } else if (d === 2) {
-    const tur = rnd(1, 3);
+    // Chegaralar ATAYLAB keng. Ilgari ular tor edi (`x` 1..4, `b` 1..5,
+    // 1..3) va ikkinchi darajada JAMI 16 xil savol chiqardi — ya'ni
+    // bir daqiqalik o'yinda savollar takrorlanib ketardi va o'yinchi
+    // javobni eslab qolib, o'ylamay bosaverardi. To'rtinchi tur ham
+    // shuning uchun qo'shildi: u sonlarni kattalashtiradi, qoidani
+    // emas, ya'ni daraja qiyinlashmaydi, xilma-xilligi ortadi.
+    const tur = rnd(1, 4);
     if (tur === 1) {
       const k = pick([2, 2, 3]);
-      let x = rnd(1, 4);
+      let x = rnd(1, 6);
       for (let i = 0; i < 4; i++) { arr.push(x); x *= k; }
       keyingi = x;
     } else if (tur === 2) {
       // Kvadratlar: 1, 4, 9, 16 → 25
-      const b = rnd(1, 5);
+      const b = rnd(1, 8);
       for (let i = 0; i < 4; i++) arr.push((b + i) ** 2);
       keyingi = (b + 4) ** 2;
-    } else {
+    } else if (tur === 3) {
       // Qadam o'sib boradi: 1, 3, 6, 10 → 15
-      const b = rnd(1, 3);
+      const b = rnd(1, 6);
       let x = b, q = b + 1;
       for (let i = 0; i < 4; i++) { arr.push(x); x += q; q++; }
+      keyingi = x;
+    } else {
+      // Bir xil qadam, lekin katta sonlar: 14, 23, 32, 41 → 50
+      const q = rnd(4, 12);
+      const osish = Math.random() < 0.75;
+      let x = osish ? rnd(5, 40) : rnd(70, 130);
+      for (let i = 0; i < 4; i++) { arr.push(x); x += osish ? q : -q; }
       keyingi = x;
     }
   } else {

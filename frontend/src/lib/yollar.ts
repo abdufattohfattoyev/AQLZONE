@@ -30,6 +30,9 @@ export const yolReyting = () => "/reyting";
  * ulashilgan havola "bu 2-sinf o'yini ekan" degan yolg'onni aytardi.
  */
 export const yolOyinlar = () => "/oyinlar";
+
+/** Bugungi maydon — kunlik uch bosqich. */
+export const yolMaydon = () => "/oyinlar/maydon";
 /** Bitta o'yinning daraja tanlash ekrani. */
 export const yolOyin = (id: string) => `/oyinlar/${id}`;
 /** O'yinning o'zi — daraja bilan. */
