@@ -75,11 +75,40 @@
   --az-soya-sm: 0 4px 0 var(--color-clay), 0 6px 12px rgb(0 0 0 / 0.08);
   --az-soya-node: 0 7px 0 rgb(0 0 0 / 0.16), 0 12px 22px rgb(0 0 0 / 0.15);
   --az-body: #0f1436;
+
+  /*
+   * EKRAN O'LCHAMI VA XAVFSIZ CHETLAR.
+   *
+   * Uchalasi standart holatda brauzerning o'z qiymatiga teng. Telegram
+   * Mini App ichida esa ular JS'dan ustiga yoziladi (`lib/qobiq.ts`),
+   * chunki brauzerning javobi u yerda noto'g'ri chiqadi:
+   *
+   *   `100dvh` — Telegram Desktop Mini App'ni TOR VA PAST oynada
+   *   ochadi, telefonda esa klaviatura ko'rinadigan balandlikni
+   *   o'zgartiradi. Ikkalasida ham `dvh` haqiqiy joydan katta chiqib,
+   *   ekran pastidagi tugma ko'rinmay qolardi.
+   *
+   *   `safe-area-inset-top` — Telegram o'z sarlavhasi bilan "notch" ni
+   *   allaqachon yopgan, biz esa ustiga yana bo'shliq qo'shib, mazmunni
+   *   pastga surardik.
+   */
+  --az-ekran: 100dvh;
+  --az-tepa: env(safe-area-inset-top);
+  --az-past: env(safe-area-inset-bottom);
 }
 
 @utility shadow-clay { box-shadow: var(--az-soya); }
 @utility shadow-clay-sm { box-shadow: var(--az-soya-sm); }
 @utility shadow-node { box-shadow: var(--az-soya-node); }
+
+/**
+ * To'liq ekran balandligi — `min-h-dvh` o'rniga.
+ *
+ * Har joyda shu ishlatiladi, chunki `dvh` faqat oddiy brauzerda to'g'ri
+ * (yuqoridagi izohga qarang). Telegram bergan qiymat kelmasa, o'zgaruvchi
+ * baribir `100dvh` bo'lib turadi — ya'ni vebda hech narsa o'zgarmaydi.
+ */
+@utility min-h-ekran { min-height: var(--az-ekran); }
 
 /* ---------------- Bosh sahifa: yorug' tong ----------------
    Bu ekran — brendning kirish eshigi, ilovada birinchi ko'riladigan joy.
@@ -181,9 +210,9 @@
        zaxira: rasm qavatlari chizilgunicha ekran to'g'ri rangda tursin,
        ya'ni yangilaganda oq yaltirash bo'lmasin. */
     background: var(--az-body);
-    min-height: 100dvh;
+    min-height: var(--az-ekran);
     user-select: none;                       /* bola matnni belgilab olmasin */
-    padding-top: env(safe-area-inset-top);   /* iOS "notch" ostiga kirmasin */
+    padding-top: var(--az-tepa);             /* iOS "notch" ostiga kirmasin */
     transition: color 0.4s ease;
   }
 

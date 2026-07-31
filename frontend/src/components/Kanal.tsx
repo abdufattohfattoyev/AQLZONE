@@ -24,6 +24,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Icon } from "../lib/icons";
 import { getKanal } from "../lib/api";
+import { havolaniOch } from "../lib/qobiq";
+import { t } from "../lib/matn";
 
 /** Oyna ilova ochilgandan qancha vaqt o'tib chiqadi (ms). */
 const KECHIKISH = 2500;
@@ -92,7 +94,10 @@ export function Kanal() {
   };
 
   const och = () => {
-    window.open(holat!.havola, "_blank", "noopener");
+    // Telegram ichida kanal TELEGRAM'NING O'ZIDA ochiladi. `window.open`
+    // u yerda brauzerni ochadi va odam ilovadan butunlay chiqib ketadi —
+    // qaytish uchun u botni qaytadan topishi kerak bo'lardi.
+    havolaniOch(holat!.havola);
     setOchiq(false);
     // Odam qaytganda a'zoligini qayta so'raymiz: qo'shilgan bo'lsa
     // server buni eslab qoladi va oyna boshqa chiqmaydi. Qo'shilmagan
@@ -125,7 +130,7 @@ export function Kanal() {
         <button
           type="button"
           onClick={() => yop(true)}
-          aria-label="Yopish"
+          aria-label={t("yopish")}
           className="clay-press float-right -mr-1 -mt-1 grid size-8 place-items-center
                      rounded-full text-ink-dim hover:bg-track"
         >
@@ -138,17 +143,17 @@ export function Kanal() {
         </span>
 
         <h2 id="az-kanal-sarlavha" className="mt-4 font-display text-[21px] leading-tight">
-          Telegram kanalimizga qo'shiling!
+          {t("kanalSarlavha")}
         </h2>
         <p className="mt-1.5 text-[13.5px] leading-snug text-ink-dim">
-          Yangi darslar va foydali maslahatlar — birinchi bo'lib bilasiz.
+          {t("kanalIzoh")}
         </p>
 
         <ul className="mt-5 space-y-3 text-left">
-          <Qator belgi="📚" bosh="Yangi darslar va bo'limlar">chiqishi bilan e'lon qilamiz</Qator>
-          <Qator belgi="🎯" bosh="Bolani qiziqtirish sirlari">har hafta bitta amaliy maslahat</Qator>
-          <Qator belgi="🏆" bosh="Musobaqa va sovrinlar">faqat kanalda e'lon qilinadi</Qator>
-          <Qator belgi="🔔" bosh="Yangiliklar">ilovadagi o'zgarishlardan xabardor bo'lasiz</Qator>
+          <Qator belgi="📚" bosh={t("kanal1")}>{t("kanal1Izoh")}</Qator>
+          <Qator belgi="🎯" bosh={t("kanal2")}>{t("kanal2Izoh")}</Qator>
+          <Qator belgi="🏆" bosh={t("kanal3")}>{t("kanal3Izoh")}</Qator>
+          <Qator belgi="🔔" bosh={t("kanal4")}>{t("kanal4Izoh")}</Qator>
         </ul>
 
         <button
@@ -160,7 +165,7 @@ export function Kanal() {
           <span className="grid size-7 place-items-center rounded-full bg-white/25">
             <Icon name="send" size={15} />
           </span>
-          Telegramda ochish
+          {t("kanalOchish")}
         </button>
 
         <button
@@ -168,7 +173,7 @@ export function Kanal() {
           onClick={() => yop(true)}
           className="mt-3 w-full py-1.5 text-[13.5px] font-semibold text-ink-dim"
         >
-          Keyinroq
+          {t("keyinroq")}
         </button>
       </div>
     </div>

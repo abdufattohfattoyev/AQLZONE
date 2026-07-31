@@ -8,9 +8,9 @@
  * boshqa ekranga o'tgan bola ularni butunlay yo'qotardi va orqaga qaytish
  * tugmasini qidirishga majbur bo'lardi.
  *
- * Uchta tugma KURSGA bog'liq (darslar, nishonlar, do'kon), ikkitasi
- * bog'liq emas (bosh sahifa, reyting). Kursga bog'liqlari qaysi kursni
- * ochadi degan savol bor va javob uch bosqichli:
+ * To'rtta tugma KURSGA bog'liq (darslar, nishonlar, do'kon, ota-ona),
+ * ikkitasi bog'liq emas (bosh sahifa, reyting). Kursga bog'liqlari qaysi
+ * kursni ochadi degan savol bor va javob uch bosqichli:
  *
  *   1. Ayni paytda kurs sahifasidamiz — o'sha kurs.
  *   2. Emasmiz (masalan reytingda) — oxirgi ochilgan kurs (`lib/oxirgi`).
@@ -27,8 +27,10 @@ import { oxirgiKurs } from "../lib/oxirgi";
 import { useProgress } from "../lib/progress";
 import { nishonlar, olingan } from "../lib/nishon";
 import {
-  yolDokon, yolKurs, yolKurslar, yolNishon, yolReyting,
+  yolDokon, yolKurs, yolKurslar, yolNishon, yolOtaOna, yolReyting,
 } from "../lib/yollar";
+import { t } from "../lib/matn";
+import { tebrat } from "../lib/qobiq";
 
 /**
  * Panel KO'RINMAYDIGAN manzillar.
@@ -41,6 +43,7 @@ import {
 const YOPIQ = [
   /^\/kurs\/[^/]+\/\d+-bob\//,   // dars
   /^\/kurs\/[^/]+\/daftar$/,     // xatolar daftari (u ham dars)
+  /^\/kurs\/[^/]+\/sinov$/,      // kunlik sinov (u ham dars)
   /^\/kirish\//,                 // botdagi havola
 ];
 
@@ -74,14 +77,21 @@ export function Panel() {
   // safar qo'lda tartib raqami yozib qo'yishga to'g'ri kelardi — tugma
   // qo'shilganda unutiladigan qadam.
   const tablar = [
-    { ic: "home", nom: "Bosh", yol: yolKurslar(), faol: bosh },
-    { ic: "map", nom: "Darslar", yol: yolKurs(kurs), faol: darslar },
+    { ic: "home", nom: t("tabBosh"), yol: yolKurslar(), faol: bosh },
+    { ic: "map", nom: t("tabDarslar"), yol: yolKurs(kurs), faol: darslar },
     {
-      ic: "trophy", nom: "Nishonlar", yol: yolNishon(kurs),
+      ic: "trophy", nom: t("tabNishonlar"), yol: yolNishon(kurs),
       faol: pathname === yolNishon(kurs), nuqta: yangiNishon,
     },
-    { ic: "palette", nom: "Do'kon", yol: yolDokon(kurs), faol: pathname === yolDokon(kurs) },
-    { ic: "order", nom: "Reyting", yol: yolReyting(), faol: pathname === yolReyting() },
+    { ic: "palette", nom: t("tabDokon"), yol: yolDokon(kurs), faol: pathname === yolDokon(kurs) },
+    { ic: "order", nom: t("tabReyting"), yol: yolReyting(), faol: pathname === yolReyting() },
+    // Ota-ona paneli ENG O'NGDA turadi va bu ataylab: u bolaga emas,
+    // kattaga mo'ljallangan. Bola panelni chapdan o'ngga o'rganadi
+    // (darslar → nishonlar → do'kon), shuning uchun eng oxirgi joy uning
+    // yo'lidan eng uzoq nuqta — bexosdan bosilishi kamayadi. Yuqoridagi
+    // kichik tugma o'z joyida qoladi: kurs sahifasida turgan ota-ona uni
+    // pastdan izlamaydi.
+    { ic: "parent", nom: t("tabOtaOna"), yol: yolOtaOna(kurs), faol: pathname === yolOtaOna(kurs) },
   ] as const;
 
   // -1 bo'lishi mumkin: sozlamalar va profillar sahifasida hech bir tugma
@@ -97,6 +107,9 @@ export function Panel() {
    * aynan shu: tepaga qayt.
    */
   const yur = (yol: string, faol: boolean) => () => {
+    // Yengil tebranish — Telegram ichida tugma "bosildi" degan javobni
+    // beradi. Boshqa joyda hech narsa qilmaydi.
+    tebrat("tanlov");
     if (faol) window.scrollTo({ top: 0, behavior: "smooth" });
     else nav(yol);
   };
@@ -106,11 +119,11 @@ export function Panel() {
       {/* Oddiy oqimdagi bo'shliq: panel `fixed` bo'lgani uchun sahifa
           oxiri uning ostiga kirib qolardi. Bo'shliq shu yerda turadi va
           panel bilan BIRGA paydo bo'ladi — darsda ikkalasi ham yo'q. */}
-      <div aria-hidden className="h-[calc(4rem+env(safe-area-inset-bottom))]" />
+      <div aria-hidden className="h-[calc(4rem+var(--az-past))]" />
 
       <nav data-tur="panel"
         className="az-shisha fixed inset-x-0 bottom-0 z-30 border-t border-karta/45
-                   pb-[env(safe-area-inset-bottom)]">
+                   pb-[var(--az-past)]">
         <div className="mx-auto w-full max-w-[430px] px-1 sm:max-w-[560px]">
           {/* `relative` AYNAN shu yerda: belgining eni foizda beriladi va
               u tugmalar qatoriga nisbatan o'lchanishi kerak. Tashqi
@@ -139,7 +152,7 @@ export function Panel() {
 
 /** Panelning bitta tugmasi. Balandligi 56px — barmoq uchun yetarli. */
 function Tab({ ic, nom, on, faol = false, nuqta = false }: {
-  ic: "home" | "map" | "trophy" | "palette" | "order";
+  ic: "home" | "map" | "trophy" | "palette" | "order" | "parent";
   nom: string;
   on: () => void;
   faol?: boolean;
@@ -150,7 +163,11 @@ function Tab({ ic, nom, on, faol = false, nuqta = false }: {
     // absolyut joylashgan va joylashgansiz element uni bosib qolardi.
     <button type="button" onClick={on} title={nom}
       aria-current={faol ? "page" : undefined}
-      className={`clay-press relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2
+      /* `min-w-0` SHART: usiz flex elementi o'z mazmunidan kichrayolmaydi
+         va uzun yozuv ("Родителям") tugmani kengaytirib, qolgan beshtasini
+         siqib qo'yadi — natijada siljiydigan belgi ham joyidan chiqadi.
+         U bilan esa yozuv `truncate` ga bo'ysunadi. */
+      className={`clay-press relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2
                   transition-colors ${faol ? "text-brand-green-d" : "text-ink-soft"}`}>
       {/* `key` faollik bilan almashadi va shu sabab element QAYTA
           yasaladi — sakrash animatsiyasi aynan shunda qaytadan
@@ -163,8 +180,12 @@ function Tab({ ic, nom, on, faol = false, nuqta = false }: {
           <span className="az-nuqta absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
         )}
       </span>
-      {/* Beshta yozuv 400px ga sig'ishi kerak: "Nishonlar" eng uzuni. */}
-      <span className="text-[11.5px] leading-none">{nom}</span>
+      {/* Oltita yozuv 320px li telefonga ham sig'ishi kerak. Eng uzuni —
+          "Nishonlar" (ruschada "Родителям"), ya'ni bir tugmaga ~53px
+          qoladi. Shu sabab yozuv kichraytirilgan va `truncate` bilan
+          chegaralangan: chetdan chiqib ketgan harf butun qatorni
+          qiyshaytirardi. */}
+      <span className="w-full truncate px-0.5 text-center text-[10.5px] leading-none">{nom}</span>
     </button>
   );
 }

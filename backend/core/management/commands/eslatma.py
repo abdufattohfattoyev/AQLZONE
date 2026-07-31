@@ -41,6 +41,7 @@ from django.db.models import Max
 from django.utils import timezone
 
 from core import xabar as X
+from core.matn import M, tilni_tanla
 from core.models import Identity, LessonResult, Pupil
 
 #: Shu kundan beri umuman faol bo'lmaganlarga yozmaymiz.
@@ -87,44 +88,34 @@ def zanjir(profil_idlar: list[int], bugun) -> int:
 STANDART_NOM = {"men", "bola", "foydalanuvchi", "user"}
 
 
-def ism_tanla(profil, pupil) -> str:
-    """Xabarda murojaat qilinadigan nom. Topilmasa — "Do'stim"."""
+def ism_tanla(profil, pupil, til: str = "uz") -> str:
+    """Xabarda murojaat qilinadigan nom. Topilmasa — neytral so'z."""
     for nomzod in (getattr(profil, "name", ""), pupil.ism):
         nomzod = (nomzod or "").strip()
         if nomzod and nomzod.lower() not in STANDART_NOM:
             return nomzod
-    return "Do'stim"
+    return M("eslatmaIsmsiz", til)
 
 
-def matn_yasa(ism: str, zanjir_kun: int, kun_raqami: int) -> str:
-    """Eslatma matni. Zanjiri borga boshqacha, yo'qqa boshqacha."""
+#: Zanjiri yo'q bolaga boradigan matnlar — kun bo'yicha almashadi.
+#: Har kuni bir xil xabar bir haftada ko'zga tashlanmay qoladi.
+VARIANT = ("eslatma0", "eslatma1", "eslatma2", "eslatma3")
+
+
+def matn_yasa(ism: str, zanjir_kun: int, kun_raqami: int, til: str = "uz") -> str:
+    """
+    Eslatma matni. Zanjiri borga boshqacha, yo'qqa boshqacha.
+
+    Matnlarning o'zi `core/matn.py` da, ikki tilda. Ular shu yerdan
+    chiqarildi: bitta xabar ikki tilda yozilganda kod matndan ko'rinmay
+    ketardi va yangi til qo'shish har bir tarmoqni qayta yozish demak
+    bo'lardi.
+    """
     if zanjir_kun >= 2:
-        return (
-            f"🔥 <b>{ism}</b>, zanjiring <b>{zanjir_kun} kun</b>.\n\n"
-            "Bugun mashq qilmasang uzilib qoladi — atigi 6 ta savol yetadi."
-        )
+        return M("eslatmaZanjir", til, ism=ism, kun=zanjir_kun)
     if zanjir_kun == 1:
-        return (
-            f"👋 <b>{ism}</b>, kecha zo'r ishlading!\n\n"
-            "Bugun ham davom etamizmi? 5 daqiqa — va zanjiring ikki kun bo'ladi."
-        )
-
-    # Zanjiri yo'q. Matn kun bo'yicha almashadi: har kuni bir xil xabar
-    # bir haftada ko'zga tashlanmay qoladi.
-    variantlar = [
-        f"👋 <b>{ism}</b>, bugun Aql Zone'da mashq qilmading.\n\n"
-        "Atigi 6 ta savol — boshlaymizmi?",
-
-        f"🎯 <b>{ism}</b>, bugungi maqsading kutib turibdi.\n\n"
-        "5 daqiqa — va yulduz qo'lingda.",
-
-        f"🏆 <b>{ism}</b>, haftalik ligada o'rning tushib ketmasin.\n\n"
-        "Bitta dars yetadi — guruhdoshlaring uxlamayapti!",
-
-        f"⭐ <b>{ism}</b>, bugun hali bitta ham yulduz yig'mading.\n\n"
-        "Birinchisini olamizmi?",
-    ]
-    return variantlar[kun_raqami % len(variantlar)]
+        return M("eslatmaBirKun", til, ism=ism)
+    return M(VARIANT[kun_raqami % len(VARIANT)], til, ism=ism)
 
 
 class Command(BaseCommand):
@@ -187,6 +178,10 @@ class Command(BaseCommand):
             # Bloklaganlar butunlay chetda: ularga urinish vaqt, so'rov
             # cheklovi va "xato" ustunidagi soxta raqam degani.
             .filter(pupil__bot_bloklandi_at__isnull=True)
+            # "Boshqa yozmang" degan odam ham chetda: bu bloklash emas,
+            # hurmat bilan so'ralgan iltimos va uni buzish bloklashga
+            # olib keladi (`bot.py` → `xabarni_yop`).
+            .filter(pupil__xabar_yopiq_at__isnull=True)
             .select_related("pupil")
             .iterator()
         ):
@@ -217,8 +212,9 @@ class Command(BaseCommand):
             if oxirgi is None or oxirgi < chegara:
                 continue
 
-            ism = ism_tanla(qolganlar[0], pupil)
-            matn = matn_yasa(ism, zanjir(idlar, bugun), kun_raqami)
+            til = tilni_tanla(pupil.til)
+            ism = ism_tanla(qolganlar[0], pupil, til)
+            matn = matn_yasa(ism, zanjir(idlar, bugun), kun_raqami, til)
 
             if sinov:
                 self.stdout.write(f"  → {kirish.external_id} ({ism}):")
@@ -226,7 +222,7 @@ class Command(BaseCommand):
                 yuborildi += 1
             else:
                 holat, sabab = X.yubor(
-                    kirish.external_id, matn, tugma="Mashq qilish", havola=havola,
+                    kirish.external_id, matn, tugma=M("tMashqQilish", til), havola=havola,
                 )
                 if holat == "yuborildi":
                     yuborildi += 1

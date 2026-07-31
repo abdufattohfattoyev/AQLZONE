@@ -3,11 +3,14 @@ import type { CSSProperties } from "react";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { Reveal } from "../components/Reveal";
+import { TilTugma } from "../components/TilTugma";
 import { getHisob, joriyProfil, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
 import { COURSES, courseBySlug, lessonCount } from "../lib/curriculum";
 import { UNIT_COLORS, keyingiDars } from "../lib/types";
 import { oxirgiKurs } from "../lib/oxirgi";
+import { t } from "../lib/matn";
+import { kursMatn } from "../lib/tarjima/kurs";
 import type { Course } from "../lib/curriculum";
 import type { Progress } from "../lib/types";
 
@@ -73,7 +76,19 @@ export function Dashboard({
     /* Kenglik ekranga qarab o'sadi. Telefonda bitta ustun — kartalar katta va
        bosish oson. Planshetdan boshlab kurslar yonma-yon turadi, aks holda
        katta ekranda ro'yxat ingichka tasma bo'lib cho'zilib ketardi. */
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16 sm:max-w-[700px] sm:px-6 sm:pt-7 lg:max-w-[1020px]">
+    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-2.5 pb-10 sm:max-w-[700px] sm:px-6 sm:pt-5 lg:max-w-[1020px]">
+      {/* ---- til ----
+          Eng tepada, o'ng chetda. Bosh sahifa brendning kirish eshigi va
+          til shu yerda tanlanadi: noto'g'ri tilda ochilgan ilovada odam
+          qolgan hech narsani o'qiy olmaydi.
+
+          Sarlavhadan TASHQARIDA turadi va bu ataylab: `header` markazga
+          tekislangan, tugma esa chetga suriladi — ikkisini bitta oqimga
+          qo'ysak, logo markazdan siljib ketardi. */}
+      <div className="az-kirish flex justify-end">
+        <TilTugma />
+      </div>
+
       {/* ---- brend ---- */}
       <header className="az-kirish text-center">
         {/* Bosh ekranda brend TO'LIQ ko'rinadi: belgi + yozuv + shior.
@@ -90,58 +105,67 @@ export function Dashboard({
             pastda qolib ketardi — odam nima qilishni bilmay skroll
             qidirardi. Endi oyna pasaysa, logo ham kichrayadi. */}
         <Logo size={272} variant="toliq"
-          className="mx-auto h-auto w-[min(72vw,clamp(150px,26vh,272px))]
-                     drop-shadow-[0_8px_16px_rgb(30_50_110/0.18)] sm:w-[min(300px,34vh)]" />
-        <h1 className="sr-only">Aql Zone — bilim va o'yin platformasi</h1>
+          className="mx-auto h-auto w-[min(58vw,clamp(124px,20vh,208px))]
+                     drop-shadow-[0_6px_14px_rgb(30_50_110/0.16)] sm:w-[min(248px,28vh)]" />
+        <h1 className="sr-only">{t("shior")}</h1>
 
-        <div className="mt-3 flex justify-center gap-2">
-          <Belgi ic="star" matn={`${jamiYulduz} yulduz`} />
-          <Belgi ic="map" matn={`${jamiDars} dars`} />
-        </div>
+        {/* Hisob belgilari va o'tish tugmalari.
+            Ikkisi IKKI GURUHGA bo'lingan va guruhlar o'ralish birligi
+            bo'lib turadi. Sabab o'lchovda ko'rindi: to'rtta chipni bitta
+            o'ralgan qatorga qo'ysak, 375px li telefonda uchtasi birinchi
+            qatorga sig'ib, "Hisobim" yolg'iz ikkinchi qatorga tushadi —
+            qator qiyshiq ko'rinadi. Guruh bilan esa tor ekranda 2+2,
+            kengida esa to'rttasi bir qatorda bo'ladi. */}
+        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+          <span className="flex items-center gap-1.5">
+            <Belgi ic="star" matn={t("yulduzSoni", { n: jamiYulduz })} />
+            <Belgi ic="map" matn={t("darsSoni", { n: jamiDars })} />
+          </span>
 
-        <div className="mt-2 flex flex-wrap justify-center gap-2">
-          {/* Profil almashtirish faqat IKKI va undan ko'p bola bo'lganda
-              ma'noli. Bitta bolali oilada bu tugma hech narsa qilmaydi va
-              faqat "bu nima?" degan savol tug'diradi. Bola qo'shish
-              "Hisobim" ichida turadi va ikkinchisi qo'shilishi bilan bu
-              tugma o'zi paydo bo'ladi. */}
-          {kopBola && (
-            <button type="button" onClick={onProfillar}
-              className="clay-press flex items-center gap-1.5 rounded-full bg-karta/70
-                         px-3.5 py-1.5 text-[12.5px] text-ink-soft backdrop-blur-sm">
-              <Icon name="parent" size={15} />
-              Kim o'ynayapti?
-            </button>
-          )}
-          {/* Reyting kursga bog'liq emas — barcha kurslar yulduzi birga
-              hisoblanadi, shuning uchun tugma bosh sahifada turadi. */}
-          {/* Belgi "order" (pog'onali qator), kubok EMAS: kubok kurs
-              ichida NISHONLAR degan ma'noni bildiradi va bitta belgi ikki
-              xil joyga olib borsa, bola uni o'rganolmaydi. */}
-          <button type="button" onClick={onReyting} title="Reyting"
-            className="clay-press flex items-center gap-1.5 rounded-full bg-karta/70
-                       px-3.5 py-1.5 text-[12.5px] text-ink-soft backdrop-blur-sm">
-            <Icon name="order" size={15} className="text-brand-gold" />
-            Reyting
-          </button>
-          {/* Hisob tugmasi — ism bilan.
-              Kimning hisobida ekanini ko'rsatish shu yerda muhim: bir
-              telefonda ota-ona ham, bola ham ochadi va "bu kimning
-              yulduzlari?" degan savol doim tug'iladi. Ism kelmaguncha
-              eski matn turadi. */}
-          <button type="button" onClick={onSozlama} title="Hisob sozlamalari"
-            className="clay-press flex max-w-[190px] items-center gap-1.5 rounded-full bg-karta/70
-                       px-3.5 py-1.5 text-[12.5px] text-ink-soft backdrop-blur-sm">
-            {bola ? (
-              <span className="grid size-[18px] shrink-0 place-items-center rounded-full
-                               bg-track text-[11px] leading-none">
-                {bola.avatar || "🦊"}
-              </span>
-            ) : (
-              <Icon name="pencil" size={15} />
+          <span className="flex min-w-0 items-center gap-1.5">
+            {/* Profil almashtirish faqat IKKI va undan ko'p bola bo'lganda
+                ma'noli. Bitta bolali oilada bu tugma hech narsa qilmaydi
+                va faqat "bu nima?" degan savol tug'diradi. Bola qo'shish
+                "Hisobim" ichida turadi va ikkinchisi qo'shilishi bilan bu
+                tugma o'zi paydo bo'ladi. */}
+            {kopBola && (
+              <button type="button" onClick={onProfillar}
+                className="clay-press flex shrink-0 items-center gap-1.5 rounded-full bg-karta/70
+                           px-2.5 py-1.5 text-[11.5px] text-ink-soft backdrop-blur-sm">
+                <Icon name="parent" size={14} />
+                {t("kimOynayapti")}
+              </button>
             )}
-            <span className="truncate">{hisob?.toliqIsm || "Hisobim"}</span>
-          </button>
+            {/* Reyting kursga bog'liq emas — barcha kurslar yulduzi birga
+                hisoblanadi, shuning uchun tugma bosh sahifada turadi. */}
+            {/* Belgi "order" (pog'onali qator), kubok EMAS: kubok kurs
+                ichida NISHONLAR degan ma'noni bildiradi va bitta belgi
+                ikki xil joyga olib borsa, bola uni o'rganolmaydi. */}
+            <button type="button" onClick={onReyting} title={t("reyting")}
+              className="clay-press flex shrink-0 items-center gap-1.5 rounded-full bg-karta/70
+                         px-2.5 py-1.5 text-[11.5px] text-ink-soft backdrop-blur-sm">
+              <Icon name="order" size={14} className="text-brand-gold" />
+              {t("reyting")}
+            </button>
+            {/* Hisob tugmasi — ism bilan.
+                Kimning hisobida ekanini ko'rsatish shu yerda muhim: bir
+                telefonda ota-ona ham, bola ham ochadi va "bu kimning
+                yulduzlari?" degan savol doim tug'iladi. Ism kelmaguncha
+                eski matn turadi. */}
+            <button type="button" onClick={onSozlama} title={t("hisobSozlamalari")}
+              className="clay-press flex min-w-0 items-center gap-1.5 rounded-full bg-karta/70
+                         px-2.5 py-1.5 text-[11.5px] text-ink-soft backdrop-blur-sm">
+              {bola ? (
+                <span className="grid size-[17px] shrink-0 place-items-center rounded-full
+                                 bg-track text-[10.5px] leading-none">
+                  {bola.avatar || "🦊"}
+                </span>
+              ) : (
+                <Icon name="pencil" size={14} className="shrink-0" />
+              )}
+              <span className="truncate">{hisob?.toliqIsm || t("hisobim")}</span>
+            </button>
+          </span>
         </div>
       </header>
 
@@ -162,8 +186,8 @@ export function Dashboard({
           izlaydi. Bitta ro'yxatda turganda u "0-sinf" dek ko'rinardi. */}
       {maktabgacha.length > 0 && (
         <>
-          <Sarlavha kech={kech(60)}>Maktabga tayyorgarlik · 4–6 yosh</Sarlavha>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Sarlavha kech={kech(60)}>{t("maktabgachaBolim")}</Sarlavha>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {maktabgacha.map((c, i) => (
               <KursKarta key={c.id} c={c} i={i} progressOf={progressOf} onOpen={onOpen} />
             ))}
@@ -171,16 +195,16 @@ export function Dashboard({
         </>
       )}
 
-      <Sarlavha kech={kech(90)}>Sinf kurslari</Sarlavha>
+      <Sarlavha kech={kech(90)}>{t("sinfKurslari")}</Sarlavha>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         {sinflar.map((c, i) => (
           <KursKarta key={c.id} c={c} i={i + maktabgacha.length} progressOf={progressOf} onOpen={onOpen} />
         ))}
       </div>
 
-      <p className="az-kirish mt-6 text-center text-[12px] text-ink-soft/80" style={kech(460)}>
-        Har bir kurs bolaning yoshiga qarab tuzilgan
+      <p className="az-kirish mt-5 text-center text-[11.5px] text-ink-soft/80" style={kech(460)}>
+        {t("kurslarIzoh")}
       </p>
     </div>
   );
@@ -199,29 +223,35 @@ function Davom({ c, keyingi, onDavom }: {
 }) {
   const U = c.units[keyingi.ui];
   // Dars nomining ikkinchi qismi — darslik betlari; kartada ortiqcha.
-  const nom = U.lessons[keyingi.li].n.split(" · ")[0];
+  const nom = kursMatn(U.lessons[keyingi.li].n).split(" · ")[0];
 
   return (
     <Reveal kech={40}>
-      <div className="az-kirish mt-5 sm:mt-7" style={kech(40)}>
-        <h2 className="mb-2 ml-1.5 text-[12px] tracking-widest text-ink-soft uppercase">
-          Oxirgi marta shu yerda edingiz
+      <div className="az-kirish mt-4 sm:mt-6" style={kech(40)}>
+        <h2 className="mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
+          {t("oxirgiMarta")}
         </h2>
         <button type="button" onClick={onDavom}
-          className="tugma-3d az-yaltir flex w-full items-center gap-4 rounded-clay bg-brand-green
-                     p-4 text-left text-white shadow-clay">
-          <span className="grid size-14 shrink-0 place-items-center rounded-[18px] bg-white/20">
-            <Icon name={U.lessons[keyingi.li].ic} size={30} />
+          className="tugma-3d az-yaltir flex w-full items-center gap-3 rounded-clay bg-brand-green
+                     p-3.5 text-left text-white shadow-clay">
+          <span className="grid size-12 shrink-0 place-items-center rounded-[16px] bg-white/20">
+            <Icon name={U.lessons[keyingi.li].ic} size={26} />
           </span>
+          {/* Ikki qator: HARAKAT tepada, MANZIL pastda.
+              Ilgari birinchi qatorda "Maktabgacha · Davom etish" turardi
+              va telefonda u ikkiga bo'linib ketardi — natijada kartada
+              uch qator matn bo'lib, "Davom etish" so'zi kurs nomining
+              davomidek ko'rinardi. Endi harakat doim yolg'iz turadi. */}
           <span className="min-w-0 flex-1">
-            <span className="block font-display text-[17px] leading-tight">
-              {c.title} · Davom etish
+            <span className="block font-display text-[16px] leading-tight">
+              {t("davomEtish")}
             </span>
-            <span className="mt-0.5 block truncate text-[13px] text-white/85">
-              {U.u} · {nom}
+            <span className="mt-0.5 block truncate text-[12.5px] text-white/85">
+              {kursMatn(c.title)} · {kursMatn(U.u)}
             </span>
+            <span className="block truncate text-[12.5px] text-white/70">{nom}</span>
           </span>
-          <Icon name="chevron" size={22} className="shrink-0 text-white/80" />
+          <Icon name="chevron" size={20} className="shrink-0 text-white/80" />
         </button>
       </div>
     </Reveal>
@@ -230,7 +260,7 @@ function Davom({ c, keyingi, onDavom }: {
 
 function Sarlavha({ children, kech }: { children: React.ReactNode; kech: CSSProperties }) {
   return (
-    <h2 className="az-kirish mt-5 mb-2 ml-1.5 text-[12px] tracking-widest text-ink-soft uppercase sm:mt-8 sm:mb-2.5"
+    <h2 className="az-kirish mt-4 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase sm:mt-6 sm:mb-2"
       style={kech}>
       {children}
     </h2>
@@ -263,11 +293,11 @@ function KursKarta({ c, i, progressOf, onOpen }: {
       <button type="button" onClick={() => onOpen(c)}
         /* `az-yaltir` ataylab yo'q: u `overflow: hidden` talab qiladi va
            kartadan chiqib turgan "tugadi" belgisini kesib qo'yardi. */
-        className="tugma-3d flex h-full w-full items-center gap-3.5 rounded-clay bg-karta/95 p-3.5
-                   text-left shadow-clay backdrop-blur-sm sm:gap-4 sm:p-4"
+        className="tugma-3d flex h-full w-full items-center gap-3 rounded-clay bg-karta/95 p-3
+                   text-left shadow-clay backdrop-blur-sm sm:gap-3.5 sm:p-3.5"
         style={kech(110 + i * 70)}>
-        <span className={`relative grid size-14 shrink-0 place-items-center overflow-visible rounded-[18px] text-white sm:size-16 sm:rounded-[20px] ${color.bg}`}>
-          <Icon name={c.ic} size={31} />
+        <span className={`relative grid size-12 shrink-0 place-items-center overflow-visible rounded-[16px] text-white sm:size-14 sm:rounded-[18px] ${color.bg}`}>
+          <Icon name={c.ic} size={27} />
           {/* Ichki yorug'lik — tekis rangni hajmli qiladi */}
           <span className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/35 to-transparent" />
           {foiz === 100 && (
@@ -280,37 +310,39 @@ function KursKarta({ c, i, progressOf, onOpen }: {
 
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline gap-2">
-            <span className="font-display text-[17px] leading-tight">{c.title}</span>
+            <span className="min-w-0 truncate font-display text-[15.5px] leading-tight">
+              {kursMatn(c.title)}
+            </span>
             {done > 0 && (
-              <span className="ml-auto shrink-0 font-display text-[13px] text-ink-dim">{foiz}%</span>
+              <span className="ml-auto shrink-0 font-display text-[12.5px] text-ink-dim">{foiz}%</span>
             )}
           </span>
           {/* Izoh ikki qatordan oshmaydi. Uzun izoh (maktabgacha kursda u
               beshta mavzuni sanaydi) kartani ikki barobar cho'zib, past
               oynada boshqa kurslarni ekrandan chiqarib yuborardi. */}
-          <span className="mt-0.5 line-clamp-2 block text-[12.5px] leading-snug text-ink-dim">{c.desc}</span>
+          <span className="mt-0.5 line-clamp-2 block text-[12px] leading-snug text-ink-dim">{kursMatn(c.desc)}</span>
 
           {/* Hali boshlanmagan kursda bo'sh chiziq "bu yerda hech narsa
               yo'q" degandek ko'rinardi va `0/40` uni yanada kuchaytirardi.
               Boshlanmagan kursda taraqqiyot emas, TAKLIF turishi kerak. */}
           {done === 0 ? (
-            <span className="mt-2 flex items-center gap-1.5 font-display text-[13px] text-brand-green-d">
-              <Icon name="star" size={15} className="text-brand-gold" />
-              Boshlash
+            <span className="mt-1.5 flex items-center gap-1.5 font-display text-[12.5px] text-brand-green-d">
+              <Icon name="star" size={14} className="text-brand-gold" />
+              {t("boshlash")}
             </span>
           ) : (
-            <span className="mt-2 flex items-center gap-2">
-              <span className="h-2 flex-1 overflow-hidden rounded-full bg-track">
+            <span className="mt-1.5 flex items-center gap-2">
+              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-track">
                 <span className="block h-full rounded-full bg-gradient-to-r from-brand-green to-brand-green-d
                                  transition-[width] duration-500"
                   style={{ width: `${foiz}%` }} />
               </span>
-              <span className="text-[11.5px] whitespace-nowrap text-ink-dim">{done}/{total}</span>
+              <span className="text-[11px] whitespace-nowrap text-ink-dim">{done}/{total}</span>
             </span>
           )}
         </span>
 
-        <Icon name="chevron" size={20} className="shrink-0 text-ink-dim" />
+        <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
       </button>
     </Reveal>
   );
@@ -318,9 +350,9 @@ function KursKarta({ c, i, progressOf, onOpen }: {
 
 function Belgi({ ic, matn }: { ic: "star" | "map"; matn: string }) {
   return (
-    <span className="flex items-center gap-1.5 rounded-full bg-karta/70 px-3 py-1.5 text-[12.5px]
-                     text-ink-soft backdrop-blur-sm">
-      <Icon name={ic} size={15} className={ic === "star" ? "text-brand-gold" : "text-brand-blue-d"} />
+    <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-karta/70 px-2.5 py-1.5
+                     text-[11.5px] text-ink-soft backdrop-blur-sm">
+      <Icon name={ic} size={14} className={ic === "star" ? "text-brand-gold" : "text-brand-blue-d"} />
       {matn}
     </span>
   );

@@ -13,6 +13,8 @@
  */
 import { Icon } from "../lib/icons";
 import { UNIT_COLORS, lessonId, nodeState } from "../lib/types";
+import { t } from "../lib/matn";
+import { kursMatn } from "../lib/tarjima/kurs";
 import type { Progress, Unit } from "../lib/types";
 
 const NODE = 76;         // tugallangan va joriy tugun o'lchami
@@ -99,7 +101,7 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
         // yozuv tugunning bo'sh tomonida turadi
         const onRight = off <= 0;
         const gap = size / 2 + 12;
-        const [name, ...rest] = L.n.split(" · ");
+        const [name, ...rest] = kursMatn(L.n).split(" · ");
         const meta = rest.join(" · ");
 
         return (
@@ -140,7 +142,7 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
               >
                 <span className="az-bob block rounded-2xl bg-brand-orange px-3 py-1 font-display text-xs
                                  whitespace-nowrap text-white shadow-[0_4px_0_var(--color-brand-orange-d)]">
-                  Boshlash
+                  {t("boshlash")}
                 </span>
               </div>
             )}

@@ -18,6 +18,8 @@
  * qolishi — eng yomon holat.
  */
 
+import { til } from "./til";
+
 /**
  * Tashqi TTS xizmati manzili.
  *
@@ -107,12 +109,18 @@ export function gapir(matn: string): void {
 function brauzerOvozi(matn: string): void {
   if (!ZAXIRA_BRAUZER || typeof speechSynthesis === "undefined") return;
   const u = new SpeechSynthesisUtterance(matn);
-  u.lang = "uz-UZ";
+  // Til savol matni bilan BIR XIL bo'lishi shart. Ruscha savolni "uz-UZ"
+  // bilan o'qitsak, brauzer harflarni o'zbekcha qoidalar bilan talaffuz
+  // qilib, tushunarsiz ovoz chiqarardi — ruscha ovoz esa deyarli har
+  // qurilmada bor va sifatli.
+  const kod = til() === "ru" ? "ru-RU" : "uz-UZ";
+  u.lang = kod;
   u.rate = 0.9;                            // bolalar uchun sekinroq
-  // O'zbekcha ovoz bo'lsa — o'shani olamiz. Bo'lmasa brauzer o'zi tanlaydi:
-  // talaffuz g'alizroq bo'ladi, lekin bola baribir gapni tushunadi.
-  const uz = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("uz"));
-  if (uz) u.voice = uz;
+  // Shu tildagi ovoz bo'lsa — o'shani olamiz. Bo'lmasa brauzer o'zi
+  // tanlaydi: talaffuz g'alizroq bo'ladi, lekin gap tushunarli qoladi.
+  const ovoz = speechSynthesis.getVoices()
+    .find((v) => v.lang.toLowerCase().startsWith(kod.slice(0, 2)));
+  if (ovoz) u.voice = ovoz;
   speechSynthesis.speak(u);
 }
 

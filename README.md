@@ -143,9 +143,13 @@ ikkalasi ham ATAYLAB shunday:
 | | Qayerda |
 |---|---|
 | Yo'l xaritasi, 177 dars, har safar yangi savollar | `frontend/src/lib/curriculum/` |
+| **Ikki til** — o'zbekcha va ruscha, savollargacha to'liq | `frontend/src/lib/til.ts` |
 | **Xatolar daftari** — xato qilingan savol turi 1 / 3 / 7 kundan keyin qaytadi | `frontend/src/lib/daftar.ts` |
 | **Offline** — internetsiz to'liq ishlaydi | `frontend/public/sw.js` |
 | **Kunlik maqsad va zanjir** (oyiga bitta qoldirilgan kun kechiriladi) | `frontend/src/lib/progress.tsx` |
+| **Zanjirni tanga bilan tiklash** — uzilgan kuni, haftada bitta | `frontend/src/lib/zanjir.ts` |
+| **Kunlik sinov** — faqat bugun ochiq, tangasi ikki barobar | `frontend/src/lib/kunlikSinov.ts` |
+| **Qaytarish zanjiri** — 7/21/45 kun, keyin sukut | `backend/core/management/commands/qaytarish.py` |
 | **Nishonlar** — progressdan hisoblanadi, alohida saqlanmaydi | `frontend/src/lib/nishon.ts` |
 | **Tangalar do'koni** — tulkini bezash | `frontend/src/lib/dokon.ts` |
 | **Ota-ona paneli** — haftalik faollik, qiyin mavzular | `frontend/src/screens/OtaOna.tsx` |
@@ -155,6 +159,106 @@ ikkalasi ham ATAYLAB shunday:
 | **Profillar** — bir qurilma, bir necha bola | `backend/core/models.py` |
 | **Telegram eslatmasi** — bugun mashq qilmaganlarga | `backend/core/management/commands/eslatma.py` |
 | **E'lon tarqatish** — botdan hammaga xabar, inline tugma bilan | `backend/core/reklama.py` |
+
+## Qaytishni ta'minlaydigan uch mexanizm
+
+Zanjir, liga va nishonlar bolani ushlab turadi, lekin uchta teshik bor edi
+va uchalasi ham **ketishning aniq nuqtasida** turardi.
+
+### 1. Zanjirni tanga bilan tiklash
+
+**Muammo.** Bepul muzlatgich oyiga bitta qoldirilgan kunni kechiradi.
+Undan keyin zanjir nolga tushardi — va amalda aynan o'sha payt bola
+ilovani tashlab ketardi: 12 kunlik mehnat bir kunda yo'qolgandek
+tuyuladi.
+
+**Yechim.** Uzilgan kuni ilova ochilsa, kurs sahifasida taklif chiqadi:
+*"8 kunlik zanjiringni saqlab qolish mumkin — faqat bugun. 50 tanga."*
+
+Bu bir vaqtda **tangalarga ma'no beradi**: hozir ular faqat shlyapa va
+tojga ketadi, ya'ni ikki-uch haftadan keyin ortiqcha bo'lib qoladi.
+
+Uch chegara ATAYLAB qat'iy (`frontend/src/lib/zanjir.ts`), aks holda
+zanjir hech narsani bildirmay qolardi:
+
+| Chegara | Qiymat | Nega |
+|---|---|---|
+| Eng ko'p uzilish | 2 kun | bir hafta yo'qolgan odamning "45 kunlik zanjiri" — yolg'on |
+| Ikki tiklash orasi | 7 kun | har kuni sotib olinadigan zanjir — zanjir emas, obuna |
+| Narx | 50 → 100 → 200 | oyiga uchtadan ko'p emas |
+
+Bepul muzlatgich BIRINCHI turadi: bir kunlik uzilishni u o'zi yopadi va
+o'sha holatda tanga so'rash — bor narsani sotish bo'lardi.
+
+Tanga jami hisobdan yechiladi (eng boy kursdan boshlab): tangalar kursga
+tegishli, zanjir esa butun hisobga — aks holda bola tangasini 3-sinfda
+yig'ib, 1-sinfda zanjirini tiklay olmasdi.
+
+### 2. Kunlik sinov — faqat bugun ochiq
+
+**Muammo.** Ilovada hech narsa o'tkazib yuborilmaydi: har bir dars ertaga
+ham shu yerda. Shoshilish uchun sabab yo'q, ya'ni "keyinroq" har doim
+to'g'ri javob — va "keyinroq" hech qachon kelmaydi.
+
+**Yechim.** Kuniga bitta sinov: 6 ta savol, **tangasi ikki barobar**,
+yarim tunda yopiladi. Kartada qolgan soat turadi.
+
+Savollar **xatolar daftaridan va allaqachon o'tilgan darslardan** olinadi
+(`frontend/src/lib/kunlikSinov.ts`) — ya'ni yangi kontent yozish kerak
+emas va sinov hech qachon "bilmagan narsam" bo'lmaydi.
+
+Uch qoida:
+
+- **Olti savol, ko'p emas.** O'tkazib yuborgan bola o'zini aybdor his
+  qilmasligi kerak — sinov "yo'qotish" emas, "bonus olmadim" bo'lsin.
+- **Zanjirga ta'sir qilmaydi.** U qo'shimcha, majburiyat emas.
+- **Yo'l xaritasiga yozilmaydi.** Darslar tartibini oldinga surmaydi.
+
+Serverga natija `unit=99, lesson=99` bilan boradi — haqiqiy darslardan
+uzoq son, aks holda sinov ota-ona panelidagi "eng qiyin darslar"
+ro'yxatida boshqa darsning aniqligini buzib ko'rsatardi.
+
+### 3. Yo'qolganlarni qaytarish
+
+**Muammo.** Kunlik eslatma ataylab faqat so'nggi 14 kunda faol
+bo'lganlarga yoziladi — bu to'g'ri anti-spam qoidasi. Lekin uning
+teskari tomoni ham bor edi: **14 kundan oshgan odam abadiy yo'qolardi**,
+chunki uni qaytarishning hech qanday yo'li yo'q edi.
+
+**Yechim** (`backend/core/management/commands/qaytarish.py`): uchta
+xabar, keyin butunlay sukut.
+
+```
+7-kun    "Yulduzlaring joyida — hech narsa yo'qolmagan"
+21-kun   "Endi kunlik sinov bor" (yangi sabab)
+45-kun   ochiq aytilgan xayrlashuv, keyin hech qachon
+```
+
+Har biri BOSHQA narsa haqida gapiradi: bir gapni uch marta takrorlash —
+yolvorish, va u ishlamaydi. Oraliqlar kengayib boradi: yaqinda ketgan
+odam qaytishga yaqin, uzoq ketgani esa har hafta eslatilsa faqat
+asabiylashadi.
+
+**Har xabarda «Boshqa yozmang» tugmasi.** Rad javob yo'li bo'lmagan xabar
+oxir-oqibat bloklanadi, bloklangan odam esa butunlay yo'qoladi: keyin
+unga na e'lon, na kirish havolasi yetib boradi. Tugma o'sha yo'qotishni
+oddiy "hozircha kerakmas" ga aylantiradi (`Pupil.xabar_yopiq_at` —
+eslatma ham, qaytarish ham to'xtaydi; `/start` yozilsa o'zi ochiladi).
+
+Hisob har TANAFFUS uchun alohida: odam qaytib dars qilishi bilan
+`qaytarish_soni` nolga tushadi, ya'ni bir yilda ikki marta yo'qolgan odam
+ikkala safar ham chaqiriladi.
+
+```bash
+python manage.py qaytarish --sinov     # kimga va NIMA borishini ko'rsatadi
+python manage.py qaytarish --soat 18   # yuborish
+```
+
+**Qaytganda nima kutib oladi.** Yigirma kundan keyin qaytgan bolani bo'sh
+maqsad va nolga tushgan zanjir kutib olsa, u ikkinchi marta ketadi — va
+endi qaytmaydi. Shu sabab kurs sahifasida yumshoq kutib olish kartasi
+chiqadi: *"20 kun ko'rinmadingiz. Yulduzlaringiz joyida — yengil
+boshlaymiz."* (`components/Qaytish.tsx`).
 
 ### Avtomatik eslatma
 
@@ -295,6 +399,114 @@ hayvonni tanish, sanash. Bu darslarda javob tugmalari ham matn emas —
 rangli doira yoki katta rasm. Bola savolni hech kimning yordamisiz yechadi.
 Keyin asta-sekin sonlarga va amallarga o'tiladi.
 
+## Pastki panel — oltita tugma
+
+Panel HAMMA ekranda turadi va o'rni hech qachon o'zgarmaydi
+(`components/Panel.tsx`). Ichida oltita tugma bor:
+
+```
+Bosh  ·  Darslar  ·  Nishonlar  ·  Do'kon  ·  Reyting  ·  Ota-ona
+```
+
+**Ota-ona paneli eng o'ngda va bu ataylab.** U bolaga emas, kattaga
+mo'ljallangan; bola esa panelni chapdan o'ngga o'rganadi (darslar →
+nishonlar → do'kon), ya'ni oxirgi joy uning yo'lidan eng uzoq nuqta —
+bexosdan bosilishi kamayadi. Kurs sahifasidagi yuqoridagi kichik tugma
+o'z joyida qoldi: u yerda turgan ota-ona uni pastdan izlamaydi.
+
+Yozuvlar `min-w-0` va `truncate` bilan chegaralangan. Bu SHART: usiz
+uzun yozuv (ruscha "Родители") tugmani kengaytirib, qolgan beshtasini
+siqib qo'yardi va siljiydigan belgi joyidan chiqib ketardi. Oltita yozuv
+320px li telefonga ham sig'adi — ikki tilda ham tekshirilgan.
+
+## Qobiq: veb, Telegram Mini App, APK
+
+Ilova uch sirtda ochiladi va **dizayn uchalasida bir xil**:
+
+```
+veb   oddiy brauzer (aql-zone.uz)
+tg    Telegram Mini App — botdagi tugma orqali
+apk   mobil ilova ichidagi WebView (VITE_ROUTER=hash)
+```
+
+**Nega dizayn bo'linmaydi.** Ota-ona botdan ochadi, keyin noutbukda
+saytga kiradi. Ikkisi boshqacha ko'rinsa, birinchi savoli: "bu o'sha
+ilovami, yulduzlarim shu yerdami?" Aynan shu tashvishni yo'qotish uchun
+serverda hisoblarni birlashtirish yozilgan — dizayn uni qaytarib
+keltirmasligi kerak. Uch dizayn tizimi 20 ekran × 3 tema × 3 sirt degani
+ham: har yangi ekran uch marta tekshirilishi kerak bo'lardi.
+
+**Bo'linadigan narsa — RAMKA.** Telegram ichida allaqachon o'z sarlavhasi,
+o'z orqaga tugmasi va o'z surish ishoralari bor; biz ularni takrorlab
+qo'ysak, ilova "veb sayt Telegram'ga tiqilgan" bo'lib ko'rinadi. Hammasi
+bitta faylda: `frontend/src/lib/qobiq.ts`.
+
+| Nuqson | Yechim |
+|---|---|
+| **Ikkita orqaga tugmasi** — Telegram `←` chizadi, biz yana bittasini | `useOrqaga()` nativ tugmani ulaydi va bizning strelkani yashiradi |
+| **Sarlavha rangi** ilova fonidan farq qilib, chok ko'rinardi | tema almashganda `setHeaderColor`/`setBackgroundColor` (`useTema` ichidan) |
+| **`100dvh` noto'g'ri** — Desktop'da oyna past, telefonda klaviatura | `--az-ekran` ← `viewportStableHeight`, CSS'da `min-h-ekran` |
+| **Tepadagi bo'shliq ikki marta** — Telegram "notch" ni yopgan, biz ustiga `env()` qo'shardik | `--az-tepa` ← `contentSafeAreaInset.top` |
+| **Pastga surish ilovani yopardi** — dars o'rtasida halokat | `disableVerticalSwipes()` (7.7+) |
+| **Kanal havolasi brauzerni ochardi** va odam ilovadan chiqib ketardi | `openTelegramLink` (`havolaniOch`) |
+| Javob berilganda jismoniy javob yo'q edi | `tebrat()` — `HapticFeedback` |
+
+Uchta CSS o'zgaruvchisi (`--az-ekran`, `--az-tepa`, `--az-past`) standart
+holatda brauzerning o'z qiymatiga teng (`100dvh`, `env(safe-area-*)`) va
+faqat Telegram ichida JS'dan ustiga yoziladi. Ya'ni **vebda hech narsa
+o'zgarmaydi**.
+
+Har bir Telegram chaqiruvi `try/catch` va versiya tekshiruvi ichida: 2019
+yildagi mijozda `BackButton` ham yo'q, o'shanda ilova jimgina avvalgidek
+ishlaydi. `useOrqaga` aynan shu holatni hisobga oladi — nativ tugma
+bo'lmasa **o'zimizniki qaytadi**, aks holda ekran qaytib bo'lmaydigan
+tuzoqqa aylanardi.
+
+Ikki joyda qobiq ataylab ARALASHMAYDI: ro'yxat oynasida nativ orqaga
+tugmasi ulanmaydi (u yerda chiqish yo'li dizayn bo'yicha yo'q), va
+Telegram `themeParams` ranglari olinmaydi (foydalanuvchining istalgan
+mavzusi bolalar ilovasining o'ziga xosligini yo'qotardi va kontrastni
+kafolatlab bo'lmasdi).
+
+### Sinov
+
+Mini App'ni brauzerda ochib bo'lmaydi — u imzolangan `initData` talab
+qiladi. Shuning uchun tarmoq soxta `window.Telegram.WebApp` bilan
+tekshiriladi:
+
+```bash
+cd frontend && npm run tekshir
+```
+
+Bu ikki ishni qiladi: generatorlarni 80 martadan ishga tushiradi va
+qobiqning Telegram tarmog'ini tekshiradi (`scripts/qobiq.ts`) — qaysi
+chaqiruvlar ketgani, o'zgaruvchilar qanday qo'yilgani, havola qaysi
+yo'ldan ketgani. Busiz bu kod **ishlab chiqarishda birinchi marta** ishga
+tushardi va xatosi jim o'tardi.
+
+## O'lchamlar va moslashuv
+
+Bosh sahifa va kurs sahifasi ataylab ZICH: logo, chiplar, kartalar va
+oraliqlar bir bo'g'in kichraytirilgan. Sabab o'lchov bilan tekshirilgan —
+avval birinchi kurs kartasi 375px li telefonda 545-pikselda boshlanardi,
+ya'ni odam ilovani ochib **hech qanday kursni ko'rmasdi** va skroll
+qidirishga majbur bo'lardi. Hozir u 425–432 orasida turadi.
+
+Uch narsa qat'iy o'lchamda emas, ekranga qarab o'sadi:
+
+| Nima | Qanday | Nega |
+|---|---|---|
+| Logo | `min(58vw, clamp(124px, 20vh, 208px))` | past oynada (Telegram Desktop) balandlik bo'yicha ham kichrayadi |
+| Kurs sarlavhasi | `clamp(20px, 5.8vw, 24px)` | "Математика 4 класс" 320px da ikki qatorga bo'linardi |
+| Bosh sahifa chiplari | ikki guruh, `flex-wrap` | tor ekranda 2+2, kengida to'rttasi bir qatorda |
+
+Chiplar aynan GURUHGA bo'lingan, bitta o'ralgan qator emas: to'rttasi bir
+qatorga qo'yilganda 375px da uchtasi sig'ib, "Hisobim" yolg'iz ikkinchi
+qatorga tushardi — qator qiyshiq ko'rinardi.
+
+Tekshirilgan kengliklar: **320**, **360**, **375** va planshet — ikki
+tilda ham gorizontal skroll yo'q va hech bir yozuv kesilmaydi.
+
 ## Dizayn: uchta tema
 
 4-sinf o'quvchisi "kichkinalar o'yini"ni yoqtirmaydi, 1-sinf bolasi esa
@@ -344,6 +556,10 @@ Generatorlar tasodifiy sonlarga tayanadi, shuning uchun xato faqat ma'lum
 qiymatlarda ko'rinadi — masalan javob manfiy chiqishi yoki to'g'ri javob
 variantlar ichida umuman bo'lmasligi. Skript har bir generatorni 80 martadan
 ishga tushirib, shularni bola darsni ochishidan oldin tutadi.
+
+Xuddi shu buyruq **qobiq sinovini** ham o'tkazadi (`scripts/qobiq.ts`) —
+Telegram Mini App tarmog'i brauzerda tekshirib bo'lmaydigan yagona joy.
+Tafsilot: "Qobiq" bo'limi.
 
 ## Hisob, kirish va profillar
 
@@ -476,6 +692,96 @@ odamlar jadvaliga aylanadi.
 Yangi versiya chiqqanda ilova o'zi qayta yuklanmaydi — pastda "yangilash"
 tugmasi chiqadi. Bola dars o'rtasida bo'lishi mumkin.
 
+## Ikki til: o'zbekcha va ruscha
+
+Til butun ilovaga taalluqli — interfeys, bob va dars nomlari, animatsion
+tushuntirishlar va **savollarning o'zi**. Ya'ni ruscha tanlagan bola
+matematikani ruscha o'qiydi, harflar bobida esa lotin emas, **kirill**
+alifbosini ko'radi (`activity.ts`, `HARFLAR_RU`).
+
+```
+frontend/src/lib/til.ts              til holati — modul darajasida
+frontend/src/lib/matn.ts             interfeys matnlari
+frontend/src/lib/tarjima/savol.ts    savol matnlari
+frontend/src/lib/tarjima/kurs.ts     bob, dars va kurs nomlari
+frontend/src/lib/activity.ts         ma'lumot ro'yxatlari (rang, hayvon, meva…)
+backend/core/matn.py                 bot va eslatma xabarlari
+```
+
+**Til React kontekstida turmaydi.** Sabab: savol generatorlari sof
+funksiyalar va komponentdan tashqarida chaqiriladi — hook ularga yetib
+bormaydi. Shuning uchun `til()` istalgan joydan o'qiladi.
+
+**Almashtirilganda sahifa qayta yuklanadi.** Kurslar ro'yxati va bob
+nomlari modul yuklanganda bir marta yasaladi; ularni yugurib turgan
+ilovada birma-bir almashtirish albatta biror joyda eski matn qoldiradi.
+Bir soniyalik narx — evaziga ekranda ikki til aralashib qolmaydi.
+Profil almashtirish ham xuddi shu yo'ldan boradi.
+
+**Almashtirgich ekranning eng tepasida** (`components/TilTugma.tsx`) —
+bosh sahifada o'ng chetda, kurs sahifasida yulduz-tanga yonida. Sozlamalar
+ichida ham bor, lekin u yerda YETARLI EMAS: noto'g'ri tilda ochilgan
+ilovada odam sozlamalar tugmasini ham o'qiy olmaydi. Tugma ikki bo'lakli
+(`UZ | RU`) va ikkala til bir vaqtda ko'rinadi — aylanadigan bitta tugma
+bo'lsa, "hozir qaysi til?" degan savol har safar paydo bo'lardi.
+
+**Ilk ochilishda til bir marta so'raladi** (`components/TilTanlash.tsx`).
+Brauzer tili taxmin beradi, lekin taxmin ko'p yerda yolg'on chiqadi:
+telefon ruscha sozlangan-u, bola o'zbek maktabida o'qiydi. Noto'g'ri
+tilda ochilgan ilovada esa ota-ona til tugmasini o'zi o'qiy olmaydigan
+ekran ortidan izlashi kerak bo'ladi. Ekran sarlavhasi ikki tilda yozilgan
+— o'sha payt foydalanuvchi qaysi tilni o'qiy olishini bilmaymiz.
+
+### Ruscha kelishik tuzog'i
+
+O'zbekchada savol qo'shimcha bilan yasaladi ("olmani top"), ruschada esa
+ot kelishikka kiradi va sifat jinsga qarab o'zgaradi: `красное яблоко`,
+lekin `красную клубнику`. Shu sabab **ruscha savollar bosh kelishikda
+turadigan qolipga solingan**:
+
+| O'zbekcha | Ruscha | Nega |
+|---|---|---|
+| `Qizil olmani top!` | `Где красное яблоко?` | tushum kelishigi kerak emas |
+| `Ayiq qanday ovoz chiqaradi?` | `Как говорит медведь?` | qaratqich kelishigi kerak emas |
+| `Nechta olma?` | `Сколько их?` | ko'plik shakli kerak emas |
+| `Qaysi biri baland?` | `Что выше?` | daraja shakli jinsga bog'lanmaydi |
+
+Ikki joyda ot jinsi baribir kerak bo'ladi va u ma'lumotning o'zida
+turadi: mevalarda `r` maydoni (`"n"` — `яблоко`), ranglarda esa uchala
+shakl (`ru`, `ruF`, `ruN`). `rangSifat(hex, rod)` shu ikkisini
+kelishtiradi.
+
+Sonlar bilan kelgan otlar ruschada uch shaklga kiradi ("1 предмет",
+"2 предмета", "5 предметов") va qolipda uni to'g'ri chiqarib bo'lmaydi.
+Shuning uchun bunday joylarda **raqam** ishlatiladi: `Всего 3!`,
+`Пучков: 2, палочек: 5.`
+
+### Serverga til nega kerak
+
+Ilovaning o'ziga kerak emas — u tilni `localStorage` da saqlaydi.
+`Pupil.til` esa **server yozadigan** xabarlar uchun: eslatma, botdagi
+javoblar. Ular ilova yopiq bo'lganda ketadi, ya'ni qurilmadagi sozlamani
+so'rab olishning iloji yo'q.
+
+Qiymat ikki manbadan keladi va tartib muhim:
+
+1. **Mavjud hisobda** — ilovada tanlangan til (`PATCH /api/v1/me`).
+2. **Yangi hisobda** — Telegram bergan `language_code`.
+
+Ikkinchisi faqat zaxira: Telegram interfeysi ruscha bo'lgani "darslarni
+ham ruscha o'qiydi" degani emas. Lekin /start ga javob birinchi aloqa
+bo'ladi va u odam o'qiy oladigan tilda bo'lishi kerak — aks holda u
+tugmani bosmaydi.
+
+### Yangi matn qo'shganda
+
+Lug'atdagi qiymat `[o'zbekcha, ruscha]` juftligi, `satisfies` bilan
+tekshiriladi — ya'ni bir tilni unutish **tiplar tekshiruvida** tutiladi,
+ekranda emas. Kurs va dars nomlari esa boshqacha: u yerda kalit
+o'zbekcha matnning O'ZI (`tarjima/kurs.ts`), tarjimasi topilmasa
+o'zbekchasi qoladi. Shu sabab yangi dars qo'shish hech narsani buzmaydi —
+u shunchaki lug'atga tushmaguncha bir tilda ko'rinadi.
+
 ## Ovoz
 
 **Hozircha o'chirilgan.** Yoqish uchun `frontend/src/lib/ovoz.ts` da bitta qator:
@@ -486,6 +792,12 @@ export const OVOZ_YONIQ = true;
 
 Chaqiruv joylari (dars savoli, to'g'ri/xato javob) kodda allaqachon turibdi,
 tayyor mp3 fayllar `frontend/public/audio/` da turadi — `OVOZ-README.md` ga qarang.
+
+Brauzer ovozining tili **savol matni bilan birga** almashadi: ruscha
+darsda `ru-RU`, o'zbekchada `uz-UZ`. Busiz ruscha savol o'zbekcha
+talaffuz qoidalari bilan o'qilib, tushunarsiz chiqardi. Ruschada bu
+zaxira ancha ishonchli: `ru-RU` ovozi deyarli har qurilmada bor, tayyor
+mp3 fayllar esa hozircha faqat o'zbekcha.
 
 ## Testlar
 

@@ -69,6 +69,9 @@ def _user_json(pupil: Pupil) -> dict:
         # Ism ham, familiya ham to'ldirilganmi. Mijoz shu bayroqqa qarab
         # ro'yxat oynasini ko'rsatadi yoki ko'rsatmaydi.
         "royxatdan": pupil.royxatdan_otgan,
+        # Serverdagi til. Mijoz buni faqat SOLISHTIRISH uchun ishlatadi:
+        # qurilmadagi tanlov boshqacha bo'lsa, u yangisini yuboradi.
+        "til": pupil.til or "uz",
         "profillar": [_profil_json(pr) for pr in pupil.profiles.all()],
     }
 
@@ -365,6 +368,13 @@ def me(request):
         if "familiya" in s.validated_data:
             pupil.last_name = s.validated_data["familiya"]
             yangilandi.append("last_name")
+        # Til ilovada tanlanadi va shu yerda ESLAB QOLINADI. Ilovaning
+        # o'ziga bu kerak emas (u qurilmada saqlaydi) — server yozadigan
+        # xabarlar uchun kerak: eslatma va botdagi javoblar ilova yopiq
+        # bo'lganda ketadi.
+        if "til" in s.validated_data:
+            pupil.til = s.validated_data["til"]
+            yangilandi.append("til")
         pupil.save(update_fields=yangilandi)
         # Ikkalasi ham to'lgan bo'lsa ro'yxat shu yerda yopiladi —
         # foydalanuvchi "Davom etish" ni bosgan zahoti ilovaga kiradi.

@@ -93,6 +93,36 @@ class Pupil(models.Model):
     #: noto'g'ri sozlangan cron) — bunda bola bir kunda uch-to'rt eslatma
     #: olardi. Bu eslatma emas, bezovta qilish: javobi bitta — bloklash.
     eslatma_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Foydalanuvchi "boshqa yozmang" tugmasini bosgan payt.
+    #:
+    #: Bu BLOKLASHDAN farq qiladi va farqi muhim: bloklash — bizdan
+    #: qochish, bu esa hurmat bilan so'ralgan iltimos. Belgilangan hisobga
+    #: HECH QANDAY xabar bormaydi: na eslatma, na qaytarish. Bot esa
+    #: avvalgidek javob beradi — odam o'zi yozsa, u bilan gaplashamiz.
+    #:
+    #: Nega tugma kerak. Rad javob berish yo'li bo'lmagan xabar oxir-oqibat
+    #: bloklanadi, va bloklangan odam butunlay yo'qoladi: keyin unga na
+    #: e'lon, na kirish havolasi yetib boradi. Bitta tugma o'sha yo'qotishni
+    #: oddiy "hozircha kerakmas" ga aylantiradi.
+    xabar_yopiq_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Oxirgi "qaytib keling" xabari yuborilgan payt.
+    qaytarish_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Shu tanaffusda nechta "qaytib keling" xabari yuborilgan (0..3).
+    #:
+    #: Odam qaytib dars qilishi bilan NOLGA tushadi (`qaytarish.py`) —
+    #: ya'ni hisob har tanaffus uchun alohida yuritiladi va bir yil ichida
+    #: ikki marta yo'qolgan odam ikkala safar ham chaqiriladi.
+    qaytarish_soni = models.PositiveSmallIntegerField(default=0)
+    #: Foydalanuvchi tanlagan til: "uz" yoki "ru".
+    #:
+    #: Ilovaning o'ziga bu kerak emas — u tilni qurilmada (localStorage)
+    #: saqlaydi. SERVER YOZADIGAN xabarlar uchun kerak: eslatma, botdagi
+    #: javoblar va e'lonlar. Ular ilova ochiq bo'lmaganda yuboriladi,
+    #: ya'ni qurilmadagi sozlamani so'rab olishning iloji yo'q.
+    #:
+    #: Standart qiymat "uz": bu loyihaning asosiy tili va til hali
+    #: kelmagan eski hisoblar avvalgidek o'zbekcha xabar oladi.
+    til = models.CharField(max_length=2, default="uz", blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

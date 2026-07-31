@@ -22,6 +22,9 @@ import { Logo } from "./Logo";
 import { Rasm } from "./Rasm";
 import { gapir } from "../lib/ovoz";
 import type { Ogit as OgitT } from "../lib/types";
+import { til } from "../lib/til";
+import { t } from "../lib/matn";
+import { kursMatn } from "../lib/tarjima/kurs";
 
 /**
  * Bitta qadam necha vaqt turadi.
@@ -48,8 +51,17 @@ const Bosh = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  * "bir" qo'shimcha bilan qo'shilganda o'zgaradi — "birta" emas, "bitta".
  * Bu izohlarni bola ovoz chiqarib eshitadi, shuning uchun noto'g'ri shakl
  * darrov sezilardi.
+ *
+ * Ruschada RAQAM qaytariladi. Sabab: ruscha ot sonlar bilan uch xil
+ * shaklga kiradi ("1 предмет", "2 предмета", "5 предметов") va uni
+ * bitta qolipda to'g'ri chiqarib bo'lmaydi — raqam esa har qanday
+ * sonda to'g'ri o'qiladi.
  */
-const ta = (n: number) => (n === 1 ? "bitta" : `${SON[n]}ta`);
+const ta = (n: number) =>
+  til() === "ru" ? String(n) : (n === 1 ? "bitta" : `${SON[n]}ta`);
+
+/** Son nomi: o'zbekchada so'z, ruschada raqam. */
+const son = (n: number) => (til() === "ru" ? String(n) : SON[n]);
 
 const kech = (ms: number) => ({ "--az-kech": `${ms}ms` }) as CSSProperties;
 
@@ -149,7 +161,9 @@ function qadamlar(o: OgitT): Qadam[] {
       // bir xil tuzilishda) — bola shunda "yana bitta qo'shildi" ni ko'radi,
       // "hammasi qaytadan boshlandi" ni emas.
       return Array.from({ length: o.n }, (_, i) => ({
-        matn: i + 1 === o.n ? `Hammasi ${ta(o.n)}!` : `${Bosh(ta(i + 1))}...`,
+        matn: i + 1 === o.n
+          ? t("ogSanashOxir", { ta: ta(o.n) })
+          : t("ogSanashOraliq", { ta: Bosh(ta(i + 1)) }),
         kut: i + 1 === o.n ? QADAM_MS : SANASH_MS,
         ko: (
           <span className="flex flex-col items-center gap-5">
@@ -176,13 +190,13 @@ function qadamlar(o: OgitT): Qadam[] {
         </span>
       );
       return [
-        { matn: `${Bosh(ta(o.a))} bor.`, ko: sahna(false) },
+        { matn: t("ogQoshBor", { ta: Bosh(ta(o.a)) }), ko: sahna(false) },
         {
-          matn: `Yana ${ta(o.b)} keldi. Bu "+" belgisi — QO'SHISH.`,
+          matn: t("ogQoshYana", { ta: ta(o.b) }),
           ko: sahna(true),
         },
         {
-          matn: `Endi birga sanaymiz — hammasi ${ta(j)} bo'ldi!`,
+          matn: t("ogQoshJami", { ta: ta(j) }),
           ko: (
             <span className="flex flex-col items-center gap-5">
               <KattaSon v={j} />
@@ -195,7 +209,7 @@ function qadamlar(o: OgitT): Qadam[] {
           kut: 2000 + j * 520,
         },
         {
-          matn: "Yozilishi shunday. Endi o'zing urinib ko'r!",
+          matn: t("ogYozilishi"),
           ko: <Yozuv matn={`${o.a} + ${o.b} = ${j}`} />,
         },
       ];
@@ -213,15 +227,15 @@ function qadamlar(o: OgitT): Qadam[] {
         </span>
       );
       return [
-        { matn: `${Bosh(ta(o.n))} bor edi.`, ko: sahna(false) },
+        { matn: t("ogAyirBor", { ta: Bosh(ta(o.n)) }), ko: sahna(false) },
         {
-          matn: `${Bosh(ta(o.k))}si ketdi. Bu "−" belgisi — AYIRISH.`,
+          matn: t("ogAyirKetdi", { ta: Bosh(ta(o.k)) }),
           ko: sahna(true),
           // Uchib ketish o'zi ~1 s davom etadi — bola uni ko'rib qolishi kerak.
           kut: QADAM_MS + o.k * 420,
         },
         {
-          matn: `${Bosh(ta(q))} qoldi.`,
+          matn: t("ogAyirQoldi", { ta: Bosh(ta(q)) }),
           ko: (
             <span className="flex flex-col items-center gap-5">
               <KattaSon v={q} />
@@ -231,7 +245,7 @@ function qadamlar(o: OgitT): Qadam[] {
           kut: 2000 + q * 520,
         },
         {
-          matn: "Yozilishi shunday. Endi o'zing urinib ko'r!",
+          matn: t("ogYozilishi"),
           ko: <Yozuv matn={`${o.n} − ${o.k} = ${q}`} />,
         },
       ];
@@ -248,7 +262,7 @@ function qadamlar(o: OgitT): Qadam[] {
       );
       return [
         {
-          matn: "Ikki tarafga qaraymiz.",
+          matn: t("ogTaqqoslaIkki"),
           ko: (
             <span className="flex items-stretch gap-3">
               {tomon(o.a, false)}
@@ -257,7 +271,7 @@ function qadamlar(o: OgitT): Qadam[] {
           ),
         },
         {
-          matn: "Qaysi tarafda ko'p? Sanab ko'ramiz.",
+          matn: t("ogTaqqoslaSana"),
           ko: (
             <span className="flex items-stretch gap-3">
               <span className="flex flex-col items-center gap-2">
@@ -272,7 +286,9 @@ function qadamlar(o: OgitT): Qadam[] {
           ),
         },
         {
-          matn: `${Bosh(SON[kop])} — ${SON[kam]}dan ko'p. Ko'p tarafda ${ta(kop)} bor.`,
+          matn: t("ogTaqqoslaNatija", {
+            kop: Bosh(son(kop)), kam: son(kam), ta: ta(kop),
+          }),
           ko: (
             <span className="flex items-stretch gap-3">
               {tomon(o.a, chapKop)}
@@ -286,7 +302,7 @@ function qadamlar(o: OgitT): Qadam[] {
     case "raqam":
       return [
         {
-          matn: `Bu — ${SON[o.n]} raqami.`,
+          matn: t("ogRaqamBu", { son: son(o.n) }),
           ko: (
             <span className="az-katta grid size-40 place-items-center rounded-clay bg-karta
                              font-display text-[110px] leading-none text-brand-purple shadow-clay">
@@ -295,7 +311,7 @@ function qadamlar(o: OgitT): Qadam[] {
           ),
         },
         {
-          matn: `${Bosh(SON[o.n])} raqami ${ta(o.n)} narsani bildiradi.`,
+          matn: t("ogRaqamBildiradi", { son: Bosh(son(o.n)), ta: ta(o.n) }),
           ko: (
             <span className="flex items-center gap-4">
               <span className="grid size-24 shrink-0 place-items-center rounded-clay bg-karta
@@ -324,10 +340,12 @@ function qadamlar(o: OgitT): Qadam[] {
         </span>
       );
       return [
-        { matn: "Sonlar shu tartibda turadi.", ko: qator(-1) },
-        { matn: "Bittasi yashirinib qoldi. Qo'shnilariga qara!", ko: qator(yashirin) },
+        { matn: t("ogQatorTartib"), ko: qator(-1) },
+        { matn: t("ogQatorYashirin"), ko: qator(yashirin) },
         {
-          matn: `${yashirin} dan keyin ${yashirin + 2} keladi, ular orasida — ${yashirin + 1}.`,
+          matn: t("ogQatorNatija", {
+            a: yashirin, b: yashirin + 1, c: yashirin + 2,
+          }),
           ko: qator(-1),
         },
       ];
@@ -353,16 +371,16 @@ function qadamlar(o: OgitT): Qadam[] {
         </span>
       );
       return [
-        { matn: "Bu — naqsh. U takrorlanib boradi.", ko: chiziq(false, false) },
-        { matn: "Qara: shu qism qayta-qayta kelyapti.", ko: chiziq(true, false) },
-        { matn: "Demak keyin nima kelishini topish mumkin!", ko: chiziq(true, true) },
+        { matn: t("ogNaqshBu"), ko: chiziq(false, false) },
+        { matn: t("ogNaqshQara"), ko: chiziq(true, false) },
+        { matn: t("ogNaqshDemak"), ko: chiziq(true, true) },
       ];
     }
 
     case "tanish":
       return [
         {
-          matn: `Bu — ${o.nom}.`,
+          matn: t("ogTanishBu", { nom: kursMatn(o.nom) }),
           ko: (
             <span className="az-katta block">
               {/* Harf bo'lsa matn, shakl bo'lsa chizma — `Rasm` o'zi ajratadi. */}
@@ -384,7 +402,7 @@ function qadamlar(o: OgitT): Qadam[] {
       // faqat BITTA yangi so'zni oladi. Nomi pastda yozilgan va aytiladi,
       // ota-ona esa bola bilan takrorlaydi.
       const qadam: Qadam[] = o.items.map((it) => ({
-        matn: `Bu — ${it.nom}.`,
+        matn: t("ogTanishBu", { nom: it.nom }),
         kut: 2600,
         ko: <span className="az-katta block">{dona(it, 132)}</span>,
       }));
@@ -392,7 +410,7 @@ function qadamlar(o: OgitT): Qadam[] {
       // Oxirida hammasi birga — endi bola ularni YONMA-YON ko'radi va
       // farqini o'zi payqaydi. Savollar aynan shundan keyin boshlanadi.
       qadam.push({
-        matn: `Hammasi shu — ${o.nom}. Endi topib ko'ramiz!`,
+        matn: t("ogRoyxatOxir", { nom: kursMatn(o.nom) }),
         ko: (
           <span className="flex max-w-[300px] flex-wrap items-center justify-center gap-3">
             {o.items.map((it, i) => (
@@ -439,13 +457,13 @@ export function Ogit({ o, nomi, onBoshla }: { o: OgitT; nomi: string; onBoshla: 
   useEffect(() => { gapir(q[i].matn); }, [i, q, qayta]);
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-4 pt-4 pb-8">
+    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-4 pt-4 pb-8">
       {/* Qadam ko'rsatkichi — bola qancha qolganini ko'rib turadi. */}
       <div className="flex items-center gap-2">
         <Logo size={40} />
         <div className="min-w-0 flex-1">
           <div className="truncate font-display text-[15px] leading-tight">{nomi}</div>
-          <div className="text-[12px] text-ink-dim">Avval ko'rsataman</div>
+          <div className="text-[12px] text-ink-dim">{t("avvalKorsataman")}</div>
         </div>
         <div className="flex gap-1.5">
           {q.map((_, k) => (
@@ -485,19 +503,19 @@ export function Ogit({ o, nomi, onBoshla }: { o: OgitT; nomi: string; onBoshla: 
             className="clay-press flex shrink-0 items-center gap-2 rounded-3xl bg-karta px-4 py-3.5
                        font-display text-[15px] text-ink-soft shadow-clay-sm">
             <Icon name="repeat" size={18} />
-            Yana ko'rsat
+            {t("yanaKorsat")}
           </button>
           <button type="button" onClick={onBoshla}
             className="az-yaltir tugma-3d flex-1 rounded-3xl bg-brand-green py-3.5
                        font-display text-lg text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
-            Boshlaymiz!
+            {t("boshlaymiz")}
           </button>
         </div>
       ) : (
         <button type="button" onClick={onBoshla}
           className="clay-press mt-3 flex w-full items-center justify-center gap-2 rounded-3xl
                      bg-karta/70 py-3 font-display text-[15px] text-ink-soft">
-          O'tkazib yuborish
+          {t("otkazibYuborish")}
           <Icon name="chevron" size={16} />
         </button>
       )}

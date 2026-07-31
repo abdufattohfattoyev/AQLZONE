@@ -24,6 +24,8 @@ export const yolReyting = () => "/reyting";
 export const yolKurs = (c: Course) => `/kurs/${c.slug}`;
 /** Xatolar daftari (takrorlash darsi). */
 export const yolDaftar = (c: Course) => `/kurs/${c.slug}/daftar`;
+/** Kunlik sinov — faqat bugun ochiq. */
+export const yolSinov = (c: Course) => `/kurs/${c.slug}/sinov`;
 /** Tangalar do'koni. */
 export const yolDokon = (c: Course) => `/kurs/${c.slug}/dokon`;
 /** Yutuq nishonlari. */

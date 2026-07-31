@@ -5,6 +5,8 @@
  * shu sababli hali maxsus chizuvchisi yo'q turlar ham o'ynasa bo'ladi:
  * savol matni va variantlar ko'rsatiladi, faqat rasm qismi keyin qo'shiladi.
  */
+import { til } from "./til";
+
 export type Answer = number | string;
 
 /**
@@ -115,15 +117,47 @@ export type ActivityType = Activity["type"];
 /** Savol yasovchi funksiya — dasturda shular ro'yxati turadi. */
 export type Gen = () => Activity;
 
+/* ================= ma'lumot ro'yxatlari =================
+ * Har bir yozuvda ikki nom bor: `nom` (o'zbekcha) va `ru` (ruscha).
+ * Ular savol matnida ishlatiladi, shuning uchun HAR JOYDA `nomi()`
+ * orqali o'qiladi — to'g'ridan-to'g'ri `.nom` yozilsa ruscha darsda
+ * o'zbekcha so'z chiqib qolardi.
+ *
+ * Ruscha nom SIFAT bilan kelishishi kerak bo'lgan joylarda (masalan
+ * "qizil olma" → "красное яблоко") yozuvda `r` — jins turadi. Ranglar
+ * esa uchala shaklda saqlanadi.
+ */
+
+/** Ruscha ot jinsi — rang sifati shunga qarab kelishadi. */
+export type Rod = "m" | "f" | "n";
+
+/** Ikki tilli nomi bor har qanday yozuv. */
+export interface Nomli {
+  nom: string;
+  ru?: string;
+}
+
+/** Yozuvning joriy tildagi nomi. */
+export const nomi = (x: Nomli): string => (til() === "ru" ? (x.ru ?? x.nom) : x.nom);
+
 export const SHAPES = {
-  circle: { name: "Doira", corners: 0 },
-  triangle: { name: "Uchburchak", corners: 3 },
-  square: { name: "Kvadrat", corners: 4 },
-  rect: { name: "To'rtburchak", corners: 4 },
-  pentagon: { name: "Beshburchak", corners: 5 },
+  circle: { name: "Doira", nameRu: "круг", corners: 0 },
+  triangle: { name: "Uchburchak", nameRu: "треугольник", corners: 3 },
+  square: { name: "Kvadrat", nameRu: "квадрат", corners: 4 },
+  rect: { name: "To'rtburchak", nameRu: "прямоугольник", corners: 4 },
+  pentagon: { name: "Beshburchak", nameRu: "пятиугольник", corners: 5 },
 } as const;
 
 export type ShapeKey = keyof typeof SHAPES;
+
+/**
+ * Shakl nomi javob tugmasida turadi, shuning uchun ruschada ham BOSH
+ * HARF bilan yoziladi — qolgan variantlar bilan bir ko'rinishda bo'lsin.
+ */
+export const shaklNomi = (k: ShapeKey): string =>
+  til() === "ru"
+    ? SHAPES[k].nameRu.charAt(0).toUpperCase() + SHAPES[k].nameRu.slice(1)
+    : SHAPES[k].name;
 
 export const OBJS = ["🍎", "⭐", "🎈", "🐟", "🌸", "🦆", "🍪", "🚗", "🍓", "🐝", "🌻", "🐞"] as const;
 
@@ -135,17 +169,35 @@ export const OBJS = ["🍎", "⭐", "🎈", "🐟", "🌸", "🦆", "🍪", "�
  * (kattalar o'qib berishi uchun) chiqadi.
  */
 export const RANGLAR = [
-  { nom: "qizil", hex: "#f2453d" },
-  { nom: "sariq", hex: "#f7c325" },
-  { nom: "ko'k", hex: "#3d8ef2" },
-  { nom: "yashil", hex: "#3fb865" },
-  { nom: "to'q sariq", hex: "#f78c25" },
-  { nom: "binafsha", hex: "#9b5de5" },
-  { nom: "pushti", hex: "#f56dbc" },
-  { nom: "jigarrang", hex: "#96603b" },
+  { nom: "qizil", ru: "красный", ruF: "красная", ruN: "красное", hex: "#f2453d" },
+  { nom: "sariq", ru: "жёлтый", ruF: "жёлтая", ruN: "жёлтое", hex: "#f7c325" },
+  { nom: "ko'k", ru: "синий", ruF: "синяя", ruN: "синее", hex: "#3d8ef2" },
+  { nom: "yashil", ru: "зелёный", ruF: "зелёная", ruN: "зелёное", hex: "#3fb865" },
+  { nom: "to'q sariq", ru: "оранжевый", ruF: "оранжевая", ruN: "оранжевое", hex: "#f78c25" },
+  { nom: "binafsha", ru: "фиолетовый", ruF: "фиолетовая", ruN: "фиолетовое", hex: "#9b5de5" },
+  { nom: "pushti", ru: "розовый", ruF: "розовая", ruN: "розовое", hex: "#f56dbc" },
+  { nom: "jigarrang", ru: "коричневый", ruF: "коричневая", ruN: "коричневое", hex: "#96603b" },
 ] as const;
 
-export const rangNomi = (hex: string) => RANGLAR.find((r) => r.hex === hex)?.nom ?? "rang";
+export const rangNomi = (hex: string) => {
+  const r = RANGLAR.find((x) => x.hex === hex);
+  if (!r) return til() === "ru" ? "цвет" : "rang";
+  return til() === "ru" ? r.ru : r.nom;
+};
+
+/**
+ * Rang sifati OT JINSIGA kelishtirilgan holda.
+ *
+ * O'zbekchada sifat o'zgarmaydi ("qizil olma", "qizil gilos"), ruschada
+ * esa uch shakl bor. Busiz "красный яблоко" kabi gap chiqardi va bu
+ * o'qib beradigan ota-onaning ko'ziga darrov tashlanadi.
+ */
+export function rangSifat(hex: string, r: Rod): string {
+  const x = [...RANGLAR, ...MAKTAB_RANGLAR].find((c) => c.hex === hex);
+  if (!x) return til() === "ru" ? "цветной" : "rangli";
+  if (til() !== "ru") return x.nom;
+  return r === "f" ? x.ruF : r === "n" ? x.ruN : x.ru;
+}
 
 /**
  * Faqat to'rt asosiy rang — maktabgacha yoshning eng birinchi darsi.
@@ -166,13 +218,13 @@ export const ASOSIY_RANGLAR = RANGLAR.slice(0, 4);
  * chegara bilan chiziladi (`screens/Lesson.tsx`).
  */
 export const MAKTAB_RANGLAR = [
-  { nom: "qizil", hex: "#f2453d" },
-  { nom: "yashil", hex: "#3fb865" },
-  { nom: "ko'k", hex: "#3d8ef2" },
-  { nom: "sariq", hex: "#f7c325" },
-  { nom: "binafsha", hex: "#9b5de5" },
-  { nom: "qora", hex: "#2f2b28" },
-  { nom: "oq", hex: "#ffffff" },
+  { nom: "qizil", ru: "красный", ruF: "красная", ruN: "красное", hex: "#f2453d" },
+  { nom: "yashil", ru: "зелёный", ruF: "зелёная", ruN: "зелёное", hex: "#3fb865" },
+  { nom: "ko'k", ru: "синий", ruF: "синяя", ruN: "синее", hex: "#3d8ef2" },
+  { nom: "sariq", ru: "жёлтый", ruF: "жёлтая", ruN: "жёлтое", hex: "#f7c325" },
+  { nom: "binafsha", ru: "фиолетовый", ruF: "фиолетовая", ruN: "фиолетовое", hex: "#9b5de5" },
+  { nom: "qora", ru: "чёрный", ruF: "чёрная", ruN: "чёрное", hex: "#2f2b28" },
+  { nom: "oq", ru: "белый", ruF: "белая", ruN: "белое", hex: "#ffffff" },
 ] as const;
 
 /**
@@ -183,14 +235,14 @@ export const MAKTAB_RANGLAR = [
  * shunda javob tugmalari o'sha palitrada bo'yaladi.
  */
 export const RANGLI_NARSA = [
-  { e: "🍎", nom: "olma", hex: "#f2453d" },
-  { e: "🍌", nom: "banan", hex: "#f7c325" },
-  { e: "🍇", nom: "uzum", hex: "#9b5de5" },
-  { e: "🌳", nom: "daraxt", hex: "#3fb865" },
-  { e: "🍊", nom: "apelsin", hex: "#f78c25" },
-  { e: "🌊", nom: "dengiz", hex: "#3d8ef2" },
-  { e: "🐻", nom: "ayiq", hex: "#96603b" },
-  { e: "🌷", nom: "lola", hex: "#f56dbc" },
+  { e: "🍎", nom: "olma", ru: "яблоко", hex: "#f2453d" },
+  { e: "🍌", nom: "banan", ru: "банан", hex: "#f7c325" },
+  { e: "🍇", nom: "uzum", ru: "виноград", hex: "#9b5de5" },
+  { e: "🌳", nom: "daraxt", ru: "дерево", hex: "#3fb865" },
+  { e: "🍊", nom: "apelsin", ru: "апельсин", hex: "#f78c25" },
+  { e: "🌊", nom: "dengiz", ru: "море", hex: "#3d8ef2" },
+  { e: "🐻", nom: "ayiq", ru: "медведь", hex: "#96603b" },
+  { e: "🌷", nom: "lola", ru: "тюльпан", hex: "#f56dbc" },
 ] as const;
 
 /**
@@ -201,43 +253,49 @@ export const RANGLI_NARSA = [
  * bola shaklni ko'rib, xuddi shunisini tanlaydi.
  */
 export const SHAKL_EMOJI = [
-  { e: "⭕", nom: "doira" },
-  { e: "🔺", nom: "uchburchak" },
-  { e: "🟥", nom: "kvadrat" },
-  { e: "⭐", nom: "yulduz" },
-  { e: "❤️", nom: "yurak" },
-  { e: "🔷", nom: "romb" },
+  { e: "⭕", nom: "doira", ru: "круг" },
+  { e: "🔺", nom: "uchburchak", ru: "треугольник" },
+  { e: "🟥", nom: "kvadrat", ru: "квадрат" },
+  { e: "⭐", nom: "yulduz", ru: "звезда" },
+  { e: "❤️", nom: "yurak", ru: "сердце" },
+  { e: "🔷", nom: "romb", ru: "ромб" },
 ] as const;
 
 /** Kim nima yeydi — hayvon va uning yemi. */
 export const YEM = [
-  { h: "🐰", nom: "quyon", y: "🥕" },
-  { h: "🐭", nom: "sichqon", y: "🧀" },
-  { h: "🐶", nom: "it", y: "🦴" },
-  { h: "🐱", nom: "mushuk", y: "🐟" },
-  { h: "🐻", nom: "ayiq", y: "🍯" },
-  { h: "🐵", nom: "maymun", y: "🍌" },
-  { h: "🐴", nom: "ot", y: "🌾" },
-  { h: "🐝", nom: "asalari", y: "🌸" },
+  { h: "🐰", nom: "quyon", ru: "заяц", y: "🥕" },
+  { h: "🐭", nom: "sichqon", ru: "мышка", y: "🧀" },
+  { h: "🐶", nom: "it", ru: "собака", y: "🦴" },
+  { h: "🐱", nom: "mushuk", ru: "кот", y: "🐟" },
+  { h: "🐻", nom: "ayiq", ru: "медведь", y: "🍯" },
+  { h: "🐵", nom: "maymun", ru: "обезьяна", y: "🍌" },
+  { h: "🐴", nom: "ot", ru: "лошадь", y: "🌾" },
+  { h: "🐝", nom: "asalari", ru: "пчела", y: "🌸" },
 ] as const;
 
 /** Guruhlar — "qaysi biri meva?" savoli uchun. */
 export const GURUHLAR = [
-  { nom: "meva", items: ["🍎", "🍌", "🍇", "🍓", "🍊", "🍉", "🍐"] },
-  { nom: "hayvon", items: ["🐶", "🐱", "🐰", "🐘", "🦁", "🐻", "🐮"] },
-  { nom: "mashina", items: ["🚗", "🚌", "🚂", "✈️", "🚲", "🚢"] },
-  { nom: "kiyim", items: ["👕", "👖", "🧦", "🧢", "👗", "🧥"] },
-  { nom: "gul", items: ["🌷", "🌻", "🌸", "🌹", "🌼"] },
+  { nom: "meva", ru: "фрукт", items: ["🍎", "🍌", "🍇", "🍓", "🍊", "🍉", "🍐"] },
+  { nom: "hayvon", ru: "животное", items: ["🐶", "🐱", "🐰", "🐘", "🦁", "🐻", "🐮"] },
+  { nom: "mashina", ru: "транспорт", items: ["🚗", "🚌", "🚂", "✈️", "🚲", "🚢"] },
+  { nom: "kiyim", ru: "одежда", items: ["👕", "👖", "🧦", "🧢", "👗", "🧥"] },
+  { nom: "gul", ru: "цветок", items: ["🌷", "🌻", "🌸", "🌹", "🌼"] },
 ] as const;
 
-/** Kayfiyat — yuz ifodasini o'qish. */
+/**
+ * Kayfiyat — yuz ifodasini o'qish.
+ *
+ * Ruscha nom ATAYLAB fe'l shaklida ("радуется", "плачет"): savol
+ * "Кто из них радуется?" bo'lib chiqadi va sifat kelishigi kerak
+ * bo'lmaydi.
+ */
 export const KAYFIYAT = [
-  { e: "😀", nom: "xursand" },
-  { e: "😢", nom: "yig'layapti" },
-  { e: "😠", nom: "jahli chiqqan" },
-  { e: "😴", nom: "uxlayapti" },
-  { e: "😮", nom: "hayron qolgan" },
-  { e: "🥶", nom: "sovqotgan" },
+  { e: "😀", nom: "xursand", ru: "радуется" },
+  { e: "😢", nom: "yig'layapti", ru: "плачет" },
+  { e: "😠", nom: "jahli chiqqan", ru: "злится" },
+  { e: "😴", nom: "uxlayapti", ru: "спит" },
+  { e: "😮", nom: "hayron qolgan", ru: "удивился" },
+  { e: "🥶", nom: "sovqotgan", ru: "замёрз" },
 ] as const;
 
 /**
@@ -247,8 +305,23 @@ export const KAYFIYAT = [
  * uchun "o'" va "g'" kabi apostrofli harflar hozircha yo'q — ular
  * kichkintoy uchun bir emas, ikki belgidek ko'rinadi.
  */
-export const HARFLAR = ["A", "B", "D", "E", "F", "G", "H", "I", "K", "L",
+const HARFLAR_UZ = ["A", "B", "D", "E", "F", "G", "H", "I", "K", "L",
   "M", "N", "O", "P", "Q", "R", "S", "T", "U", "Y", "Z"] as const;
+
+/**
+ * Ruscha alifbo — shu tilda o'qiyotgan bola uchun.
+ *
+ * Bu shunchaki tarjima emas: ruscha darsda bola KIRILLni o'rganadi,
+ * lotin harflari unga hech narsa bermaydi. Ro'yxatdan adashtiradigan
+ * harflar (Ъ, Ь, Ы, Й, Ё) chiqarilgan — ular kichkintoy uchun
+ * mustaqil belgi bo'lib ko'rinmaydi.
+ */
+const HARFLAR_RU = ["А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "К",
+  "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ш",
+  "Э", "Ю", "Я"] as const;
+
+export const harflar = (): readonly string[] =>
+  til() === "ru" ? HARFLAR_RU : HARFLAR_UZ;
 
 /**
  * So'zning bosh harfi — o'qishga tayyorgarlikning asosiy mashqi.
@@ -258,27 +331,31 @@ export const HARFLAR = ["A", "B", "D", "E", "F", "G", "H", "I", "K", "L",
  * "shar" yoki "cho'chqa" bo'lmaydi, chunki ularning boshi ikki harf.
  */
 export const BOSH_HARF = [
-  { e: "🍎", nom: "olma", h: "O" },
-  { e: "🍌", nom: "banan", h: "B" },
-  { e: "🍇", nom: "uzum", h: "U" },
-  { e: "🐘", nom: "fil", h: "F" },
-  { e: "🐶", nom: "it", h: "I" },
-  { e: "🐱", nom: "mushuk", h: "M" },
-  { e: "🐰", nom: "quyon", h: "Q" },
-  { e: "🦊", nom: "tulki", h: "T" },
-  { e: "🌸", nom: "gul", h: "G" },
-  { e: "🐟", nom: "baliq", h: "B" },
-  { e: "📕", nom: "kitob", h: "K" },
-  { e: "🍞", nom: "non", h: "N" },
-  { e: "🐝", nom: "asalari", h: "A" },
-  { e: "🌳", nom: "daraxt", h: "D" },
-  { e: "🐐", nom: "echki", h: "E" },
-  { e: "🌷", nom: "lola", h: "L" },
-  { e: "🚗", nom: "mashina", h: "M" },
-  { e: "🥕", nom: "sabzi", h: "S" },
-  { e: "🦓", nom: "zebra", h: "Z" },
-  { e: "🍐", nom: "nok", h: "N" },
+  { e: "🍎", nom: "olma", h: "O", ru: "яблоко", hRu: "Я" },
+  { e: "🍌", nom: "banan", h: "B", ru: "банан", hRu: "Б" },
+  { e: "🍇", nom: "uzum", h: "U", ru: "виноград", hRu: "В" },
+  { e: "🐘", nom: "fil", h: "F", ru: "слон", hRu: "С" },
+  { e: "🐶", nom: "it", h: "I", ru: "пёс", hRu: "П" },
+  { e: "🐱", nom: "mushuk", h: "M", ru: "кот", hRu: "К" },
+  { e: "🐰", nom: "quyon", h: "Q", ru: "заяц", hRu: "З" },
+  { e: "🦊", nom: "tulki", h: "T", ru: "лиса", hRu: "Л" },
+  { e: "🌸", nom: "gul", h: "G", ru: "цветок", hRu: "Ц" },
+  { e: "🐟", nom: "baliq", h: "B", ru: "рыба", hRu: "Р" },
+  { e: "📕", nom: "kitob", h: "K", ru: "книга", hRu: "К" },
+  { e: "🍞", nom: "non", h: "N", ru: "хлеб", hRu: "Х" },
+  { e: "🐝", nom: "asalari", h: "A", ru: "пчела", hRu: "П" },
+  { e: "🌳", nom: "daraxt", h: "D", ru: "дерево", hRu: "Д" },
+  { e: "🐐", nom: "echki", h: "E", ru: "коза", hRu: "К" },
+  { e: "🌷", nom: "lola", h: "L", ru: "тюльпан", hRu: "Т" },
+  { e: "🚗", nom: "mashina", h: "M", ru: "машина", hRu: "М" },
+  { e: "🥕", nom: "sabzi", h: "S", ru: "морковь", hRu: "М" },
+  { e: "🦓", nom: "zebra", h: "Z", ru: "зебра", hRu: "З" },
+  { e: "🍐", nom: "nok", h: "N", ru: "груша", hRu: "Г" },
 ] as const;
+
+/** So'zning joriy tildagi bosh harfi. */
+export const boshHarfi = (x: { h: string; hRu: string }): string =>
+  til() === "ru" ? x.hRu : x.h;
 
 /* ================= Atrofdagi dunyo =================
  * Maktabgacha yoshda matematika yolg'iz kelmaydi. Bola avval DUNYONI
@@ -297,47 +374,64 @@ export const BOSH_HARF = [
  * qolmaydi va bugun ham ishlaydi.
  */
 export const HAYVON_OVOZ = [
-  { e: "🐶", nom: "it", ovoz: "vov-vov" },
-  { e: "🐱", nom: "mushuk", ovoz: "miyov" },
-  { e: "🐮", nom: "sigir", ovoz: "mu-u" },
-  { e: "🐑", nom: "qo'y", ovoz: "ba-a" },
-  { e: "🐔", nom: "tovuq", ovoz: "qo'-qo'-qo'" },
-  { e: "🐓", nom: "xo'roz", ovoz: "qu-qa-ri-qu" },
-  { e: "🐸", nom: "baqa", ovoz: "qur-qur" },
-  { e: "🦁", nom: "arslon", ovoz: "rrr" },
-  { e: "🐴", nom: "ot", ovoz: "ih-ih" },
-  { e: "🐷", nom: "cho'chqa", ovoz: "xryu" },
-  { e: "🦆", nom: "o'rdak", ovoz: "g'a-g'a" },
-  { e: "🐝", nom: "asalari", ovoz: "vizz" },
+  { e: "🐶", nom: "it", ru: "собака", ovoz: "vov-vov", ovozRu: "гав-гав" },
+  { e: "🐱", nom: "mushuk", ru: "кот", ovoz: "miyov", ovozRu: "мяу" },
+  { e: "🐮", nom: "sigir", ru: "корова", ovoz: "mu-u", ovozRu: "му-у" },
+  { e: "🐑", nom: "qo'y", ru: "овца", ovoz: "ba-a", ovozRu: "бе-е" },
+  { e: "🐔", nom: "tovuq", ru: "курица", ovoz: "qo'-qo'-qo'", ovozRu: "ко-ко-ко" },
+  { e: "🐓", nom: "xo'roz", ru: "петух", ovoz: "qu-qa-ri-qu", ovozRu: "ку-ка-ре-ку" },
+  { e: "🐸", nom: "baqa", ru: "лягушка", ovoz: "qur-qur", ovozRu: "ква-ква" },
+  { e: "🦁", nom: "arslon", ru: "лев", ovoz: "rrr", ovozRu: "ррр" },
+  { e: "🐴", nom: "ot", ru: "лошадь", ovoz: "ih-ih", ovozRu: "иго-го" },
+  { e: "🐷", nom: "cho'chqa", ru: "свинья", ovoz: "xryu", ovozRu: "хрю-хрю" },
+  { e: "🦆", nom: "o'rdak", ru: "утка", ovoz: "g'a-g'a", ovozRu: "кря-кря" },
+  { e: "🐝", nom: "asalari", ru: "пчела", ovoz: "vizz", ovozRu: "жжж" },
 ] as const;
 
-/** Mevalar. `hex` — mevaning rangi, "qizil mevani top" darsi uchun. */
+/** Hayvon tovushi — joriy tilda. */
+export const ovoziNomi = (x: { ovoz: string; ovozRu: string }): string =>
+  til() === "ru" ? x.ovozRu : x.ovoz;
+
+/**
+ * Mevalar. `hex` — mevaning rangi, "qizil mevani top" darsi uchun.
+ * `r` — ruscha jinsi: rang sifati shunga qarab kelishadi.
+ */
 export const MEVA = [
-  { e: "🍎", nom: "olma", hex: "#f2453d" },
-  { e: "🍌", nom: "banan", hex: "#f7c325" },
-  { e: "🍇", nom: "uzum", hex: "#9b5de5" },
-  { e: "🍉", nom: "tarvuz", hex: "#3fb865" },
-  { e: "🍓", nom: "qulupnay", hex: "#f2453d" },
-  { e: "🍊", nom: "apelsin", hex: "#f78c25" },
-  { e: "🍐", nom: "nok", hex: "#3fb865" },
-  { e: "🍒", nom: "gilos", hex: "#f2453d" },
-  { e: "🍑", nom: "shaftoli", hex: "#f78c25" },
-  { e: "🍋", nom: "limon", hex: "#f7c325" },
+  { e: "🍎", nom: "olma", ru: "яблоко", r: "n", hex: "#f2453d" },
+  { e: "🍌", nom: "banan", ru: "банан", r: "m", hex: "#f7c325" },
+  { e: "🍇", nom: "uzum", ru: "виноград", r: "m", hex: "#9b5de5" },
+  { e: "🍉", nom: "tarvuz", ru: "арбуз", r: "m", hex: "#3fb865" },
+  { e: "🍓", nom: "qulupnay", ru: "клубника", r: "f", hex: "#f2453d" },
+  { e: "🍊", nom: "apelsin", ru: "апельсин", r: "m", hex: "#f78c25" },
+  { e: "🍐", nom: "nok", ru: "груша", r: "f", hex: "#3fb865" },
+  { e: "🍒", nom: "gilos", ru: "черешня", r: "f", hex: "#f2453d" },
+  { e: "🍑", nom: "shaftoli", ru: "персик", r: "m", hex: "#f78c25" },
+  { e: "🍋", nom: "limon", ru: "лимон", r: "m", hex: "#f7c325" },
 ] as const;
 
-/** Transport. `qayer` — "u qayerda yuradi?" darsi shunga tayanadi. */
+/**
+ * Transport. `qayer` — "u qayerda yuradi?" darsi shunga tayanadi.
+ *
+ * Ruscha shakl ("по земле") ATAYLAB to'liq ibora: savol "Что
+ * передвигается по воздуху?" bo'lib chiqadi va hech qanday kelishik
+ * o'zgarishi kerak bo'lmaydi.
+ */
 export const TRANSPORT = [
-  { e: "🚗", nom: "mashina", qayer: "yerda" },
-  { e: "🚌", nom: "avtobus", qayer: "yerda" },
-  { e: "🚂", nom: "poyezd", qayer: "yerda" },
-  { e: "🚲", nom: "velosiped", qayer: "yerda" },
-  { e: "🚕", nom: "taksi", qayer: "yerda" },
-  { e: "✈️", nom: "samolyot", qayer: "havoda" },
-  { e: "🚁", nom: "vertolyot", qayer: "havoda" },
-  { e: "🚀", nom: "raketa", qayer: "havoda" },
-  { e: "🚢", nom: "kema", qayer: "suvda" },
-  { e: "⛵", nom: "yelkanli qayiq", qayer: "suvda" },
+  { e: "🚗", nom: "mashina", ru: "машина", qayer: "yerda", qayerRu: "по земле" },
+  { e: "🚌", nom: "avtobus", ru: "автобус", qayer: "yerda", qayerRu: "по земле" },
+  { e: "🚂", nom: "poyezd", ru: "поезд", qayer: "yerda", qayerRu: "по земле" },
+  { e: "🚲", nom: "velosiped", ru: "велосипед", qayer: "yerda", qayerRu: "по земле" },
+  { e: "🚕", nom: "taksi", ru: "такси", qayer: "yerda", qayerRu: "по земле" },
+  { e: "✈️", nom: "samolyot", ru: "самолёт", qayer: "havoda", qayerRu: "по воздуху" },
+  { e: "🚁", nom: "vertolyot", ru: "вертолёт", qayer: "havoda", qayerRu: "по воздуху" },
+  { e: "🚀", nom: "raketa", ru: "ракета", qayer: "havoda", qayerRu: "по воздуху" },
+  { e: "🚢", nom: "kema", ru: "корабль", qayer: "suvda", qayerRu: "по воде" },
+  { e: "⛵", nom: "yelkanli qayiq", ru: "парусная лодка", qayer: "suvda", qayerRu: "по воде" },
 ] as const;
+
+/** Transport qayerda yuradi — joriy tilda. */
+export const qayerNomi = (x: { qayer: string; qayerRu: string }): string =>
+  til() === "ru" ? x.qayerRu : x.qayer;
 
 /**
  * Uzun–qisqa, baland–past juftlari.
@@ -355,20 +449,43 @@ export const OLCHAM_JUFT = [
   { katta: "🦒", kichik: "🐈", nomK: "jirafa", nomKi: "mushuk", sifat: "baland" },
 ] as const;
 
-/** Yo'nalishlar — strelka ko'rinishida, o'qish umuman kerak emas. */
+/**
+ * O'lcham sifatlari va ularning teskarisi.
+ *
+ * Ruscha shakl ATAYLAB DARAJA ko'rinishida ("выше", "больше"): u jinsga
+ * ham, songa ham bog'lanmaydi, ya'ni "Что выше?" istalgan juftlik uchun
+ * to'g'ri chiqadi. Sifatning oddiy shakli bo'lsa ("высокий"), har bir
+ * juftga alohida jins kerak bo'lardi.
+ */
+export const OLCHAM_SIFAT: Record<string, { teskari: string; ru: string; ruTeskari: string }> = {
+  baland: { teskari: "past", ru: "выше", ruTeskari: "ниже" },
+  katta: { teskari: "kichik", ru: "больше", ruTeskari: "меньше" },
+  uzun: { teskari: "qisqa", ru: "длиннее", ruTeskari: "короче" },
+};
+
+/**
+ * Yo'nalishlar — strelka ko'rinishida, o'qish umuman kerak emas.
+ *
+ * `nomQ` — "qaysi biri yuqoriga qaragan?" savolidagi shakl. Ruschada
+ * ikkisi bir xil ("вверх"), o'zbekchada ham — lekin maydon alohida
+ * turadi, chunki savol qolipi ikki xil.
+ */
 export const YONALISH = [
-  { e: "⬆️", nom: "yuqoriga" },
-  { e: "⬇️", nom: "pastga" },
-  { e: "⬅️", nom: "chapga" },
-  { e: "➡️", nom: "o'ngga" },
+  { e: "⬆️", nom: "yuqoriga", ru: "вверх" },
+  { e: "⬇️", nom: "pastga", ru: "вниз" },
+  { e: "⬅️", nom: "chapga", ru: "влево" },
+  { e: "➡️", nom: "o'ngga", ru: "вправо" },
 ] as const;
 
-/** Kun qismlari. Tartib muhim — "keyin nima bo'ladi?" savoli shunga tayanadi. */
+/**
+ * Kun qismlari. Tartib muhim — "keyin nima bo'ladi?" savoli shunga tayanadi.
+ * `ruGen` — "после утра" uchun qaratqich kelishigi.
+ */
 export const KUN_TARTIBI = [
-  { e: "🌞", nom: "ertalab" },
-  { e: "☀️", nom: "tush" },
-  { e: "🌇", nom: "kech" },
-  { e: "🌙", nom: "tun" },
+  { e: "🌞", nom: "ertalab", ru: "утро", ruGen: "утра" },
+  { e: "☀️", nom: "tush", ru: "день", ruGen: "дня" },
+  { e: "🌇", nom: "kech", ru: "вечер", ruGen: "вечера" },
+  { e: "🌙", nom: "tun", ru: "ночь", ruGen: "ночи" },
 ] as const;
 
 /**
@@ -378,15 +495,28 @@ export const KUN_TARTIBI = [
  * yo'q — kun nomining rasmi bo'lmaydi. Shuning uchun u ataylab oxirroqda
  * turadi va ovoz yoqilganda to'liq mustaqil ishlaydi.
  */
-export const HAFTA = ["Dushanba", "Seshanba", "Chorshanba", "Payshanba",
+const HAFTA_UZ = ["Dushanba", "Seshanba", "Chorshanba", "Payshanba",
   "Juma", "Shanba", "Yakshanba"] as const;
+
+const HAFTA_RU = ["Понедельник", "Вторник", "Среда", "Четверг",
+  "Пятница", "Суббота", "Воскресенье"] as const;
+
+/** "Dushanbadan keyin" → "после понедельника": qaratqich kelishigi. */
+const HAFTA_RU_GEN = ["понедельника", "вторника", "среды", "четверга",
+  "пятницы", "субботы", "воскресенья"] as const;
+
+export const hafta = (): readonly string[] => (til() === "ru" ? HAFTA_RU : HAFTA_UZ);
+
+/** Hafta kunining "…dan keyin" shakli. */
+export const haftaKeyin = (i: number): string =>
+  til() === "ru" ? HAFTA_RU_GEN[i] : HAFTA_UZ[i];
 
 /** Ob-havo. `kiyim` — "bunday kunda nima kerak?" savoli uchun. */
 export const OB_HAVO = [
-  { e: "☀️", nom: "quyoshli", kiyim: "🕶️", kiyimNom: "ko'zoynak" },
-  { e: "🌧️", nom: "yomg'irli", kiyim: "☂️", kiyimNom: "soyabon" },
-  { e: "❄️", nom: "qorli", kiyim: "🧥", kiyimNom: "issiq kiyim" },
-  { e: "⛅", nom: "bulutli", kiyim: "👕", kiyimNom: "yengil kiyim" },
+  { e: "☀️", nom: "quyoshli", ru: "солнечный", kiyim: "🕶️", kiyimNom: "ko'zoynak", kiyimRu: "очки" },
+  { e: "🌧️", nom: "yomg'irli", ru: "дождливый", kiyim: "☂️", kiyimNom: "soyabon", kiyimRu: "зонт" },
+  { e: "❄️", nom: "qorli", ru: "снежный", kiyim: "🧥", kiyimNom: "issiq kiyim", kiyimRu: "тёплая куртка" },
+  { e: "⛅", nom: "bulutli", ru: "облачный", kiyim: "👕", kiyimNom: "yengil kiyim", kiyimRu: "футболка" },
 ] as const;
 
 /**
@@ -397,21 +527,40 @@ export const OB_HAVO = [
  * o'qimasdan eng kattasini tanlaydi.
  */
 export const HAYVONLAR = [
-  { e: "🐜", nom: "chumoli", o: 1 }, { e: "🐝", nom: "asalari", o: 1 },
-  { e: "🐭", nom: "sichqon", o: 2 }, { e: "🐤", nom: "jo'ja", o: 2 },
-  { e: "🐸", nom: "baqa", o: 2 }, { e: "🐔", nom: "tovuq", o: 2 },
-  { e: "🐰", nom: "quyon", o: 3 }, { e: "🐱", nom: "mushuk", o: 3 },
-  { e: "🐶", nom: "it", o: 3 }, { e: "🦊", nom: "tulki", o: 3 },
-  { e: "🐷", nom: "cho'chqa", o: 4 }, { e: "🐑", nom: "qo'y", o: 4 },
-  { e: "🐻", nom: "ayiq", o: 4 }, { e: "🦁", nom: "sher", o: 4 },
-  { e: "🐮", nom: "sigir", o: 5 }, { e: "🐴", nom: "ot", o: 5 },
-  { e: "🐘", nom: "fil", o: 5 },
+  { e: "🐜", nom: "chumoli", ru: "муравей", o: 1 }, { e: "🐝", nom: "asalari", ru: "пчела", o: 1 },
+  { e: "🐭", nom: "sichqon", ru: "мышка", o: 2 }, { e: "🐤", nom: "jo'ja", ru: "цыплёнок", o: 2 },
+  { e: "🐸", nom: "baqa", ru: "лягушка", o: 2 }, { e: "🐔", nom: "tovuq", ru: "курица", o: 2 },
+  { e: "🐰", nom: "quyon", ru: "заяц", o: 3 }, { e: "🐱", nom: "mushuk", ru: "кот", o: 3 },
+  { e: "🐶", nom: "it", ru: "собака", o: 3 }, { e: "🦊", nom: "tulki", ru: "лиса", o: 3 },
+  { e: "🐷", nom: "cho'chqa", ru: "свинья", o: 4 }, { e: "🐑", nom: "qo'y", ru: "овца", o: 4 },
+  { e: "🐻", nom: "ayiq", ru: "медведь", o: 4 }, { e: "🦁", nom: "sher", ru: "лев", o: 4 },
+  { e: "🐮", nom: "sigir", ru: "корова", o: 5 }, { e: "🐴", nom: "ot", ru: "лошадь", o: 5 },
+  { e: "🐘", nom: "fil", ru: "слон", o: 5 },
 ] as const;
 
-export const hayvonNomi = (e: string) => HAYVONLAR.find((h) => h.e === e)?.nom ?? "hayvon";
-
-const NAMES: Record<string, string> = {
-  "🍎": "olma", "⭐": "yulduz", "🎈": "shar", "🐟": "baliq", "🌸": "gul", "🦆": "o'rdak",
-  "🍪": "pechene", "🚗": "mashina", "🍓": "qulupnay", "🐝": "asalari", "🌻": "kungaboqar", "🐞": "qo'ng'iz",
+export const hayvonNomi = (e: string) => {
+  const h = HAYVONLAR.find((x) => x.e === e);
+  if (!h) return til() === "ru" ? "животное" : "hayvon";
+  return til() === "ru" ? h.ru : h.nom;
 };
-export const objName = (e: string) => NAMES[e] ?? "narsa";
+
+const NAMES: Record<string, { nom: string; ru: string }> = {
+  "🍎": { nom: "olma", ru: "яблоко" },
+  "⭐": { nom: "yulduz", ru: "звезда" },
+  "🎈": { nom: "shar", ru: "шарик" },
+  "🐟": { nom: "baliq", ru: "рыбка" },
+  "🌸": { nom: "gul", ru: "цветок" },
+  "🦆": { nom: "o'rdak", ru: "утка" },
+  "🍪": { nom: "pechene", ru: "печенье" },
+  "🚗": { nom: "mashina", ru: "машинка" },
+  "🍓": { nom: "qulupnay", ru: "клубника" },
+  "🐝": { nom: "asalari", ru: "пчела" },
+  "🌻": { nom: "kungaboqar", ru: "подсолнух" },
+  "🐞": { nom: "qo'ng'iz", ru: "жучок" },
+};
+
+export const objName = (e: string) => {
+  const x = NAMES[e];
+  if (!x) return til() === "ru" ? "предмет" : "narsa";
+  return til() === "ru" ? x.ru : x.nom;
+};

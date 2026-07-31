@@ -24,6 +24,7 @@
  * (masalan sarlavha + kartochka) ular bir-birining rangini o'g'irlamasin.
  */
 import { useId } from "react";
+import { T } from "../lib/til";
 
 interface Props {
   size?: number;
@@ -169,7 +170,11 @@ export function Logo({ size = 40, className = "", variant = "belgi", jonli = tru
               lengthAdjust="spacingAndGlyphs"
               fontFamily="'Baloo 2', 'Fredoka', system-ui, sans-serif"
               fontSize="13" fontWeight="700" letterSpacing="1.2" fill="#1e3a8f">
-              BILIM SARI HAR BIR QADAM
+              {/* Shior tarjima qilinadi, brend nomi esa YO'Q: "Aql Zone" —
+                  bu nom, uni o'girish brendni ikkiga bo'lardi. `textLength`
+                  ikki tilda ham bir xil kenglikni ushlab turadi, ya'ni
+                  ruscha uzunroq matn chiziqlarga tegib ketmaydi. */}
+              {T("BILIM SARI HAR BIR QADAM", "КАЖДЫЙ ШАГ К ЗНАНИЯМ")}
             </text>
           </g>
         </g>

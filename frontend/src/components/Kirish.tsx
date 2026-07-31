@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import { Logo } from "./Logo";
 import { botHavolasi, botNomi, miniAppda } from "../lib/api";
+import { t } from "../lib/matn";
 
 interface Props {
   /**
@@ -61,11 +62,11 @@ export function Kirish({ xabar, izoh, tugma, onKeyinroq }: Props) {
   }, [ichkarida]);
 
   return (
-    <div className="mx-auto grid min-h-dvh w-full max-w-[430px] place-items-center px-4 py-8">
+    <div className="mx-auto grid min-h-ekran w-full max-w-[430px] place-items-center px-4 py-8">
       <div className="az-kirish w-full rounded-clay bg-karta p-6 text-center shadow-clay">
         <Logo size={64} className="mx-auto" />
         <h1 className="mt-3 text-[22px]">Aql Zone</h1>
-        <p className="mt-1 text-[13.5px] text-ink-dim">{izoh || "Tizimga kirish"}</p>
+        <p className="mt-1 text-[13.5px] text-ink-dim">{izoh || t("tizimgaKirish")}</p>
 
         {xabar && (
           <p className="mt-4 rounded-2xl bg-track px-3 py-2.5 text-[12.5px]
@@ -88,32 +89,29 @@ export function Kirish({ xabar, izoh, tugma, onKeyinroq }: Props) {
               <span className="grid size-7 place-items-center rounded-full bg-white/25">
                 <Icon name="send" size={16} />
               </span>
-              {tugma || "Telegram bilan kirish"}
+              {tugma || t("telegramBilanKirish")}
             </a>
           ) : ichkarida ? (
             <p className="px-2 text-[13px] leading-snug text-ink-soft">
-              Telegram ma'lumoti kelmadi. Ilovani yopib, botdagi tugma
-              orqali qaytadan oching.
+              {t("tgMalumotKelmadi")}
             </p>
           ) : (
             <p className="px-2 text-[13px] leading-snug text-ink-soft">
-              Telegram orqali kirish sozlanmagan. Iltimos, keyinroq urinib
-              ko'ring.
+              {t("tgSozlanmagan")}
             </p>
           )}
         </div>
 
         {bot ? (
           <p className="mt-3 px-2 text-[12px] leading-snug text-ink-dim">
-            Botda «Saytga kirish» tugmasi chiqadi — uni bossangiz shu yerga
-            qaytasiz va avtomatik kirasiz.
+            {t("botIzoh")}
           </p>
         ) : null}
 
         {onKeyinroq && (
           <button type="button" onClick={onKeyinroq}
             className="mt-4 w-full py-2 text-[13px] text-ink-dim underline-offset-2 hover:underline">
-            Keyinroq
+            {t("keyinroq")}
           </button>
         )}
       </div>

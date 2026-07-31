@@ -20,6 +20,7 @@
  * Bu yerdagi hook keyingi almashinuvlar uchun.
  */
 import { useEffect } from "react";
+import { temaRanginiUzat } from "./qobiq";
 
 export type Tema = "bosh" | "bolalar" | "katta";
 
@@ -32,11 +33,17 @@ export function useTema(t: Tema): void {
     const el = document.documentElement;
     const oldingi = el.dataset.tema;
     el.dataset.tema = t;
+    // Telegram Mini App ichida SARLAVHA RANGI ham temaga ergashadi.
+    // Busiz chok ko'rinardi: bizning fon quyoshli ko'k, Telegram
+    // sarlavhasi esa o'zining kulrangida — ikkisi orasida keskin chiziq
+    // paydo bo'lib, ilova "ramkaga tiqilgan" bo'lib ko'rinardi.
+    temaRanginiUzat();
     return () => {
       // Oldingi holatni qaytaramiz, aks holda kursdan chiqqanda tema
       // o'sha kursnikida qolib ketadi.
       if (oldingi) el.dataset.tema = oldingi;
       else delete el.dataset.tema;
+      temaRanginiUzat();
     };
   }, [t]);
 }

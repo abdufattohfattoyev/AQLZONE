@@ -15,6 +15,23 @@ import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import { getLiga } from "../lib/api";
 import type { Liga, LigaQator, LigaZona } from "../lib/api";
+import { t } from "../lib/matn";
+
+/**
+ * Daraja nomi serverdan O'ZBEKCHA keladi (`core/liga.py`) va shu yerda
+ * o'giriladi. Nega mijozda: nom keshlangan javobda ham, o'tgan hafta
+ * xabarida ham uchraydi — serverga til yuborish bilan hal qilsak,
+ * eski javoblar eski tilda qolib ketardi.
+ */
+const DARAJA: Record<string, Parameters<typeof t>[0]> = {
+  Bronza: "darajaBronza",
+  Kumush: "darajaKumush",
+  Oltin: "darajaOltin",
+  Olmos: "darajaOlmos",
+  Toj: "darajaToj",
+};
+
+const darajaNomi = (nom: string): string => (DARAJA[nom] ? t(DARAJA[nom]) : nom);
 
 /** O'tgan hafta natijasi ko'rsatilgani — bir marta ko'rsatiladi. */
 const XABAR_KALIT = "az_liga_xabar";
@@ -51,15 +68,12 @@ export function LigaJadval() {
   }
 
   if (yuklanyapti) {
-    return <p className="mt-8 text-center text-[13px] text-ink-dim">Yuklanyapti…</p>;
+    return <p className="mt-8 text-center text-[13px] text-ink-dim">{t("yuklanyapti")}</p>;
   }
 
   if (ma === null) {
     return (
-      <Karta emoji="📶">
-        Liga serverdan olinadi va hozir aloqa yo'q. Darslar baribir
-        ishlayveradi — internet paydo bo'lganda qaytib keling.
-      </Karta>
+      <Karta emoji="📶">{t("ligaAloqaYoq")}</Karta>
     );
   }
 
@@ -67,10 +81,7 @@ export function LigaJadval() {
   // to'lib ketardi va hech kim uni ochmasdi.
   if (!ma.qatnashadi) {
     return (
-      <Karta emoji="🏆">
-        Ligada qatnashish uchun ismingizni kiriting — guruhdoshlaringiz sizni
-        shu nom bilan ko'radi. Buni Sozlamalardan qilish mumkin.
-      </Karta>
+      <Karta emoji="🏆">{t("ligaIsmKerak")}</Karta>
     );
   }
 
@@ -93,16 +104,20 @@ export function LigaJadval() {
           <span className="min-w-0 flex-1">
             <span className="block font-display text-[14.5px] leading-tight">
               {xabar.natija === "kotarildi"
-                ? "Yuqori darajaga chiqdingiz!"
+                ? t("ligaKotarildi")
                 : xabar.natija === "tushdi"
-                  ? "Bu hafta qaytarib olamiz"
-                  : "O'tgan hafta yakunlandi"}
+                  ? t("ligaTushdi")
+                  : t("ligaYakunlandi")}
             </span>
             <span className="mt-1 block text-[12.5px] leading-snug text-ink-soft">
-              {xabar.daraja.nom} ligasida {xabar.orin}-o'rin, {xabar.yulduz} yulduz.
+              {t("ligaXabarIzoh", {
+                daraja: darajaNomi(xabar.daraja.nom),
+                orin: xabar.orin,
+                yulduz: xabar.yulduz,
+              })}
             </span>
           </span>
-          <button type="button" onClick={xabarniYop} title="Yopish"
+          <button type="button" onClick={xabarniYop} title={t("yopish")}
             className="clay-press grid size-7 shrink-0 place-items-center rounded-full bg-karta text-ink-dim">
             <Icon name="times" size={14} />
           </button>
@@ -117,7 +132,7 @@ export function LigaJadval() {
           const joriy = d.nomer === ma.daraja?.nomer;
           const otilgan = d.nomer < (ma.daraja?.nomer ?? 0);
           return (
-            <span key={d.nomer} title={d.nom}
+            <span key={d.nomer} title={darajaNomi(d.nom)}
               className={`grid flex-1 place-items-center rounded-2xl py-1.5 transition-colors ${
                 joriy ? "bg-brand-gold/20 ring-2 ring-brand-gold" : ""
               }`}>
@@ -129,7 +144,7 @@ export function LigaJadval() {
               <span className={`mt-0.5 text-[9.5px] leading-none ${
                 joriy ? "font-display text-ink" : "text-ink-dim"
               }`}>
-                {d.nom}
+                {darajaNomi(d.nom)}
               </span>
             </span>
           );
@@ -137,8 +152,10 @@ export function LigaJadval() {
       </div>
 
       <p className="az-kirish mt-3 text-center text-[13px] leading-snug text-ink-soft">
-        <span className="font-display text-ink">{ma.daraja?.nom} ligasi</span>
-        {" · "}{guruh.length} bola
+        <span className="font-display text-ink">
+          {t("ligaSarlavha", { daraja: darajaNomi(ma.daraja?.nom ?? "") })}
+        </span>
+        {" · "}{t("ligaBola", { n: guruh.length })}
         <br />
         {qolganVaqt(ma.hafta?.qolganSoat ?? 0)}
       </p>
@@ -149,10 +166,10 @@ export function LigaJadval() {
             {/* Chegara chiziqlari qatorlar ORASIDA turadi: "shu yerdan
                 yuqorisi ko'tariladi" degani jadvalning o'zida ko'rinadi. */}
             {i === kotariladi && kotariladi > 0 && (
-              <Chegara rang="green" matn={`${kotariladi} kishi yuqoriga chiqadi`} />
+              <Chegara rang="green" matn={t("ligaKotariladi", { n: kotariladi })} />
             )}
             {tushadi > 0 && i === tushishBoshi && (
-              <Chegara rang="red" matn={`${tushadi} kishi pastga tushadi`} />
+              <Chegara rang="red" matn={t("ligaTushadi", { n: tushadi })} />
             )}
             <Qator q={q} kech={i * 35} />
           </li>
@@ -161,14 +178,12 @@ export function LigaJadval() {
 
       {guruh.every((q) => q.yulduz === 0) && (
         <p className="mt-4 text-center text-[12.5px] leading-snug text-ink-dim">
-          Bu hafta guruhda hali hech kim yulduz yig'magan — birinchi darsni
-          yeching va darhol birinchi o'ringa chiqasiz
+          {t("ligaBoshGuruh")}
         </p>
       )}
 
       <p className="mt-5 text-center text-[11.5px] leading-snug text-ink-dim">
-        Har dushanba guruh yangilanadi. Yulduz yig'masangiz pastga
-        tushmaysiz — dam olgan hafta jazolanmaydi.
+        {t("ligaQoida")}
       </p>
     </div>
   );
@@ -176,11 +191,14 @@ export function LigaJadval() {
 
 /** "3 kun 5 soat qoldi" — serverdan kelgan soat bo'yicha. */
 function qolganVaqt(soat: number): string {
-  if (soat <= 0) return "Hafta yakunlanmoqda";
-  if (soat < 24) return `Hafta tugashiga ${soat} soat qoldi`;
+  if (soat <= 0) return t("haftaYakunlanmoqda");
+  if (soat < 24) return t("haftaSoat", { n: soat });
   const kun = Math.floor(soat / 24);
   const qoldiq = soat % 24;
-  return `Hafta tugashiga ${kun} kun${qoldiq ? ` ${qoldiq} soat` : ""} qoldi`;
+  return t("haftaKun", {
+    kun,
+    soat: qoldiq ? t("haftaKunSoat", { n: qoldiq }) : "",
+  });
 }
 
 function Chegara({ rang, matn }: { rang: "green" | "red"; matn: string }) {
@@ -216,12 +234,12 @@ function Qator({ q, kech }: { q: LigaQator; kech: number }) {
 
       <span className="min-w-0 flex-1">
         <span className="block truncate font-display text-[14.5px] leading-tight">
-          {q.toliqIsm || "Noma'lum"}
-          {q.men && <span className="ml-1.5 text-[11.5px] text-brand-green-d">siz</span>}
+          {q.toliqIsm || t("nomalum")}
+          {q.men && <span className="ml-1.5 text-[11.5px] text-brand-green-d">{t("siz")}</span>}
         </span>
         <span className="mt-0.5 block truncate text-[11.5px] text-ink-dim">
           {q.bola ? `${q.bola} · ` : ""}
-          {q.yulduz ? `${q.darslar} dars` : "hali boshlamadi"}
+          {q.yulduz ? t("darsSoni", { n: q.darslar }) : t("haliBoshlamadi")}
         </span>
       </span>
 

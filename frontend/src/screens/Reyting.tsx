@@ -21,6 +21,8 @@ import { Icon } from "../lib/icons";
 import { LigaJadval } from "../components/LigaJadval";
 import { getReyting } from "../lib/api";
 import type { Reyting as ReytingMa, ReytingQator } from "../lib/api";
+import { t } from "../lib/matn";
+import { useOrqaga } from "../lib/qobiq";
 
 type Davr = "liga" | "jami" | "hafta";
 
@@ -31,6 +33,7 @@ export function Reyting({ onBack }: { onBack: () => void }) {
   const [davr, setDavr] = useState<Davr>("liga");
   const [ma, setMa] = useState<ReytingMa | null>(null);
   const [yuklanyapti, setYuklanyapti] = useState(true);
+  const ozStrelka = useOrqaga(onBack);
 
   useEffect(() => {
     // Liga o'z ma'lumotini o'zi oladi — bu yerda so'rov yubormaymiz.
@@ -52,31 +55,37 @@ export function Reyting({ onBack }: { onBack: () => void }) {
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16 sm:max-w-[560px]">
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onBack} title="Ortga"
-          className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
-          <Icon name="chevron" size={20} className="rotate-180" />
-        </button>
+        {/* Telegram Mini App ichida bu strelka CHIZILMAYDI: u yerda
+            Telegram o'z sarlavhasida nativ `←` ni ko'rsatadi va ikkitasi
+            bir ekranda turganda odam har safar "qaysi biri to'g'ri?" deb
+            o'ylardi (`lib/qobiq.ts`). */}
+        {ozStrelka && (
+          <button type="button" onClick={onBack} title={t("ortga")}
+            className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
+            <Icon name="chevron" size={20} className="rotate-180" />
+          </button>
+        )}
       </div>
 
       <div className="az-kirish mt-4 text-center">
         <span className="grid size-16 place-items-center rounded-[22px] bg-brand-gold/15 mx-auto">
           <Icon name="trophy" size={34} className="text-brand-gold" />
         </span>
-        <h1 className="mt-3 text-[22px]">Reyting</h1>
+        <h1 className="mt-3 text-[22px]">{t("reyting")}</h1>
         <p className="mt-1 text-[13px] leading-snug text-ink-soft">
           {davr === "liga"
-            ? "Har hafta yangi guruh, yangi imkoniyat"
+            ? t("ligaIzoh")
             : ma?.qatnashchilar
-              ? `${ma.qatnashchilar} ta qatnashchi`
-              : "Yulduz yig'ib yuqoriga chiqing"}
+              ? t("qatnashchilar", { n: ma.qatnashchilar })
+              : t("yulduzYigib")}
         </p>
       </div>
 
       {/* ---- davr ---- */}
       <div className="az-kirish mt-4 flex gap-1 rounded-full bg-karta p-1 shadow-clay-sm">
-        <Tab faol={davr === "liga"} onClick={() => setDavr("liga")}>Liga</Tab>
-        <Tab faol={davr === "jami"} onClick={() => setDavr("jami")}>Jami</Tab>
-        <Tab faol={davr === "hafta"} onClick={() => setDavr("hafta")}>Shu hafta</Tab>
+        <Tab faol={davr === "liga"} onClick={() => setDavr("liga")}>{t("reytingLiga")}</Tab>
+        <Tab faol={davr === "jami"} onClick={() => setDavr("jami")}>{t("reytingJami")}</Tab>
+        <Tab faol={davr === "hafta"} onClick={() => setDavr("hafta")}>{t("reytingHafta")}</Tab>
       </div>
 
       {davr === "liga" && <LigaJadval />}
@@ -85,15 +94,14 @@ export function Reyting({ onBack }: { onBack: () => void }) {
           tabdan qolgan eski ma'lumot bo'ladi va uni ko'rsatib bo'lmaydi. */}
       {umumiy && <>
       {yuklanyapti && (
-        <p className="mt-8 text-center text-[13px] text-ink-dim">Yuklanyapti…</p>
+        <p className="mt-8 text-center text-[13px] text-ink-dim">{t("yuklanyapti")}</p>
       )}
 
       {!yuklanyapti && ma === null && (
         <div className="az-kirish mt-6 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
           <div className="text-[34px] leading-none">📶</div>
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
-            Reyting serverdan olinadi va hozir aloqa yo'q.
-            Darslar baribir ishlayveradi — internet paydo bo'lganda qaytib keling.
+            {t("reytingAloqaYoq")}
           </p>
         </div>
       )}
@@ -102,9 +110,7 @@ export function Reyting({ onBack }: { onBack: () => void }) {
         <div className="az-kirish mt-6 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
           <div className="text-[34px] leading-none">⭐</div>
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
-            {davr === "hafta"
-              ? "Bu hafta hali hech kim yulduz yig'magan. Birinchi bo'ling!"
-              : "Reyting hali bo'sh. Birinchi darsni yeching va ro'yxatni boshlang."}
+            {davr === "hafta" ? t("haftaBosh") : t("reytingBosh")}
           </p>
         </div>
       )}
@@ -130,9 +136,7 @@ export function Reyting({ onBack }: { onBack: () => void }) {
       {/* Yulduzi yo'q — hali o'rin ham yo'q. */}
       {!yuklanyapti && ma && !ma.men && !menRoyxatda && ma.top.length > 0 && (
         <p className="mt-4 text-center text-[12.5px] leading-snug text-ink-dim">
-          {davr === "hafta"
-            ? "Bu hafta hali yulduz yig'magansiz — bitta dars yeting va ro'yxatda paydo bo'lasiz"
-            : "Hali yulduzingiz yo'q — birinchi darsni yeching"}
+          {davr === "hafta" ? t("haftaYulduzsiz") : t("yulduzsiz")}
         </p>
       )}
       </>}
@@ -173,11 +177,11 @@ function Qator({ q, kech }: { q: ReytingQator; kech: number }) {
 
       <span className="min-w-0 flex-1">
         <span className="block truncate font-display text-[14.5px] leading-tight">
-          {q.toliqIsm || "Noma'lum"}
-          {q.men && <span className="ml-1.5 text-[11.5px] text-brand-green-d">siz</span>}
+          {q.toliqIsm || t("nomalum")}
+          {q.men && <span className="ml-1.5 text-[11.5px] text-brand-green-d">{t("siz")}</span>}
         </span>
         <span className="mt-0.5 block truncate text-[11.5px] text-ink-dim">
-          {q.bola ? `${q.bola} · ` : ""}{q.darslar} dars
+          {q.bola ? `${q.bola} · ` : ""}{t("darsSoni", { n: q.darslar })}
         </span>
       </span>
 

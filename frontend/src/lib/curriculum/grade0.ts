@@ -25,7 +25,7 @@ import { withReviews } from "../types";
 import * as G from "../generators";
 import {
   HAYVON_OVOZ, KAYFIYAT, KUN_TARTIBI, MAKTAB_RANGLAR, MEVA, OB_HAVO,
-  SHAKL_EMOJI, TRANSPORT, YONALISH,
+  SHAKL_EMOJI, TRANSPORT, YONALISH, nomi, rangNomi,
 } from "../activity";
 
 /**
@@ -36,10 +36,11 @@ import {
  * bola butun mavzuni ko'rib chiqadi. Aynan shu narsa ota-onaga "bola bilan
  * birga takrorlash" imkonini beradi.
  */
-const roy = (a: readonly { e: string; nom: string }[]) => a.map((x) => ({ e: x.e, nom: x.nom }));
+const roy = (a: readonly { e: string; nom: string; ru?: string }[]) =>
+  a.map((x) => ({ e: x.e, nom: nomi(x) }));
 
 /** Ranglar rasm emas, doira bo'lib chiziladi — shuning uchun alohida. */
-const RANG_ROY = MAKTAB_RANGLAR.map((r) => ({ hex: r.hex, nom: r.nom }));
+const RANG_ROY = MAKTAB_RANGLAR.map((r) => ({ hex: r.hex, nom: rangNomi(r.hex) }));
 
 const U: Unit[] = [
   /* ============ TANISHUV: dunyoni nomlaymiz ============ */

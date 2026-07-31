@@ -9,6 +9,31 @@ import { XatoUshlagich } from "./components/XatoUshlagich";
 import { Tanishuv } from "./components/Tanishuv";
 import { Kanal } from "./components/Kanal";
 import { ProgressProvider } from "./lib/progress";
+import { t } from "./lib/matn";
+import { tilniUlash } from "./lib/til";
+import { qobiqniUlash } from "./lib/qobiq";
+
+/**
+ * Sahifa sarlavhasi va `lang` atributi.
+ *
+ * `index.html` da ular O'ZBEKCHA yozilgan — u statik fayl va ikki tilni
+ * bir vaqtda ko'rsata olmaydi. Shu sabab ilova ishga tushganda ustiga
+ * to'g'rilanadi: brauzer yorlig'i, tarix va PWA nomi tanlangan tilda
+ * ko'rinadi.
+ */
+tilniUlash();
+document.title = t("shior");
+
+/**
+ * Qobiq — qaysi sirtda ishlayotganimizga qarab RAMKA sozlanadi:
+ * Telegram ichida nativ orqaga tugmasi, sarlavha rangi, haqiqiy ekran
+ * balandligi va surish ishoralari. Dizaynga tegmaydi (`lib/qobiq.ts`).
+ *
+ * React'dan OLDIN chaqiriladi: `--az-ekran` va `--az-tepa` birinchi
+ * kadrda joyida bo'lishi kerak, aks holda ekran bir lahza noto'g'ri
+ * balandlikda chizilib, keyin sakrab to'g'rilanardi.
+ */
+qobiqniUlash();
 
 /**
  * Veb va Telegram Mini App'da manzil chiroyli bo'lishi kerak:

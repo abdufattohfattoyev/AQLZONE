@@ -11,6 +11,7 @@
  * bo'lsa, faqat ko'p o'ynagan bola yutardi.
  */
 import type { IconName } from "./icons";
+import { t } from "./matn";
 import type { Kunlik } from "./progress";
 import type { Progress, Unit } from "./types";
 import { lessonId } from "./types";
@@ -51,46 +52,46 @@ export function nishonlar({ progress, kunlik, units, savollar }: Manba): Nishon[
   return [
     {
       id: "ilk-qadam",
-      nom: "Ilk qadam",
-      izoh: "Birinchi darsni tugat",
+      nom: t("nIlkQadam"),
+      izoh: t("nIlkQadamIzoh"),
       ic: "star",
       daraja: nisbat(tugagan, 1),
     },
     {
       id: "yetti-kun",
-      nom: "Bir hafta",
-      izoh: "7 kun ketma-ket mashq qil",
+      nom: t("nBirHafta"),
+      izoh: t("nBirHaftaIzoh"),
       ic: "flame",
       daraja: nisbat(kunlik.kunlar, 7),
       hisob: `${Math.min(kunlik.kunlar, 7)}/7`,
     },
     {
       id: "yuz-savol",
-      nom: "Yuz savol",
-      izoh: "100 ta savol yech",
+      nom: t("nYuzSavol"),
+      izoh: t("nYuzSavolIzoh"),
       ic: "map",
       daraja: nisbat(savollar, 100),
       hisob: `${Math.min(savollar, 100)}/100`,
     },
     {
       id: "xatosiz-bob",
-      nom: "Xatosiz bob",
-      izoh: "Bir bobning hamma darsini 3 yulduzga yech",
+      nom: t("nXatosizBob"),
+      izoh: t("nXatosizBobIzoh"),
       ic: "trophy",
       daraja: nisbat(xatosizBob, 1),
     },
     {
       id: "oʻn-dars",
-      nom: "O'n dars",
-      izoh: "10 ta darsni tugat",
+      nom: t("nOnDars"),
+      izoh: t("nOnDarsIzoh"),
       ic: "check",
       daraja: nisbat(tugagan, 10),
       hisob: `${Math.min(tugagan, 10)}/10`,
     },
     {
       id: "yuz-yulduz",
-      nom: "Yulduz yig'uvchi",
-      izoh: "100 ta yulduz to'pla",
+      nom: t("nYulduzYiguvchi"),
+      izoh: t("nYulduzYiguvchiIzoh"),
       ic: "star",
       daraja: nisbat(progress.stars, 100),
       hisob: `${Math.min(progress.stars, 100)}/100`,

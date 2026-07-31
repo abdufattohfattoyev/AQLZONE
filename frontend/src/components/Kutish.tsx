@@ -12,7 +12,7 @@
  */
 export function Kutish() {
   return (
-    <div className="grid min-h-dvh place-items-center p-4">
+    <div className="grid min-h-ekran place-items-center p-4">
       <div className="grid place-items-center gap-2.5 rounded-clay bg-karta px-8 py-7 shadow-clay">
         <img src="/logo.svg" alt="Aql Zone" width={64} height={64} />
         <b className="font-display text-[19px] text-ink">Aql Zone</b>

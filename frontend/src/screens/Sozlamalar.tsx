@@ -26,6 +26,9 @@ import { botHavolasi, botNomi, chiqish, getHisob, hisobniSaqla, miniAppda } from
 import { turniUnut } from "../lib/tur";
 import { tozala } from "../lib/nom";
 import type { Hisob } from "../lib/api";
+import { t } from "../lib/matn";
+import { TILLAR, til, tilniQoy } from "../lib/til";
+import { useOrqaga } from "../lib/qobiq";
 
 interface Props {
   onBack: () => void;
@@ -71,6 +74,12 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
   // Yo'lboshchi qayta yoqildimi — tugma bosilganini bildirish uchun.
   // Sayohatning o'zi kurs sahifasida boshlanadi, shu yerda emas.
   const [turQayta, setTurQayta] = useState(false);
+
+  // Nativ orqaga tugmasi RO'YXAT rejimida ulanmaydi: u yerda chiqish
+  // yo'li ataylab yo'q — odam kirish jarayonining o'rtasida turadi va
+  // uni yarim yo'lda qoldirish chalkashtiradi. Telegram'ning tugmasini
+  // ko'rsatsak, dizayn ataylab yopgan eshikni qaytarib ochgan bo'lardik.
+  const ozStrelka = useOrqaga(onBack, !royxat);
 
   // Hisob tayyor holda berilgan bo'lsa so'rov YUBORILMAYDI: u chaqiruvchi
   // uchun ham, bu ekran uchun ham bir xil `/me` javobi.
@@ -129,10 +138,10 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
   // qaysi kartaning ichida turishi farq qiladi.
   const shakl = (
     <>
-      <Maydon nom="Ism" qiymat={ism} ozgar={setIsm}
-        joy="Masalan: Jasur" onEnter={saqla} />
-      <Maydon nom="Familiya" qiymat={familiya} ozgar={setFamiliya}
-        joy="Masalan: Toshmatov" onEnter={saqla} />
+      <Maydon nom={t("maydonIsm")} qiymat={ism} ozgar={setIsm}
+        joy={t("joyIsm")} onEnter={saqla} />
+      <Maydon nom={t("maydonFamiliya")} qiymat={familiya} ozgar={setFamiliya}
+        joy={t("joyFamiliya")} onEnter={saqla} />
 
       <button
         type="button"
@@ -141,12 +150,12 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
         className="clay-press mt-1 w-full rounded-3xl bg-brand-green py-3 font-display
                    text-[15px] text-white disabled:opacity-40"
       >
-        {band ? "Saqlanyapti…" : royxat ? "Davom etish" : "Saqlash"}
+        {band ? t("saqlanyapti") : royxat ? t("davomEtish") : t("saqlash")}
       </button>
 
       <div className="min-h-5 text-center text-[13px]">
         {holat === "saqlandi" && !xato && (
-          <span className="az-sakra inline-block text-brand-green-d">Saqlandi ✓</span>
+          <span className="az-sakra inline-block text-brand-green-d">{t("saqlandi")}</span>
         )}
         {xato && <span className="text-brand-red">{xato}</span>}
       </div>
@@ -165,12 +174,12 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
    */
   if (royxat) {
     return (
-      <div className="mx-auto grid min-h-dvh w-full max-w-[430px] place-items-center px-4 py-8">
+      <div className="mx-auto grid min-h-ekran w-full max-w-[430px] place-items-center px-4 py-8">
         <div className="az-kirish w-full rounded-clay bg-karta p-6 text-center shadow-clay">
           <Logo size={64} className="mx-auto" />
-          <h1 className="mt-3 text-[22px]">Tanishib olaylik</h1>
+          <h1 className="mt-3 text-[22px]">{t("tanishibOlaylik")}</h1>
           <p className="mt-1 text-[13.5px] leading-snug text-ink-dim">
-            Ism va familiyangizni kiriting — reytingda shu nom ko'rinadi
+            {t("royxatIzoh")}
           </p>
 
           {/* Maydonlar kelgunicha o'sha balandlikdagi bo'sh joy turadi,
@@ -194,17 +203,23 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16">
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onBack} title="Ortga"
-          className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
-          <Icon name="chevron" size={20} className="rotate-180" />
-        </button>
+        {/* Telegram Mini App ichida bu strelka CHIZILMAYDI: u yerda
+            Telegram o'z sarlavhasida nativ `←` ni ko'rsatadi va ikkitasi
+            bir ekranda turganda odam har safar "qaysi biri to'g'ri?" deb
+            o'ylardi (`lib/qobiq.ts`). */}
+        {ozStrelka && (
+          <button type="button" onClick={onBack} title={t("ortga")}
+            className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
+            <Icon name="chevron" size={20} className="rotate-180" />
+          </button>
+        )}
       </div>
 
       <div className="az-kirish mt-4 text-center">
         <Logo size={64} className="mx-auto" />
-        <h1 className="mt-3 text-[22px]">Hisob</h1>
+        <h1 className="mt-3 text-[22px]">{t("hisob")}</h1>
         <p className="mt-1 text-[13px] leading-snug text-ink-soft">
-          Hisob egasining ismi — odatda ota-ona
+          {t("hisobEgasi")}
         </p>
       </div>
 
@@ -212,8 +227,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
         <div className="az-kirish mt-6 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
           <div className="text-[34px] leading-none">📶</div>
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
-            Hisob ma'lumoti serverda saqlanadi va hozir aloqa yo'q.
-            Darslar baribir ishlayveradi — internet paydo bo'lganda qaytib keling.
+            {t("hisobAloqaYoq")}
           </p>
         </div>
       )}
@@ -222,6 +236,39 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
         <>
           <div className="az-kirish mt-6 space-y-3 rounded-clay bg-karta p-4 shadow-clay-sm">
             {shakl}
+          </div>
+
+          {/* ---- til ----
+              Eng yuqorida turadi va bu ataylab: noto'g'ri tilda ochilgan
+              ilovada odam boshqa hech narsani o'qiy olmaydi, ya'ni bu
+              tugma uning BIRINCHI ehtiyoji. Almashtirilganda sahifa
+              qayta yuklanadi (`lib/til.ts` ga qarang). */}
+          <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
+            style={{ "--az-kech": "40ms" } as React.CSSProperties}>
+            <div className="font-display text-[14px]">{t("tilSarlavha")}</div>
+            <p className="mt-1 text-[12px] leading-snug text-ink-dim">
+              {t("tilIzoh")}
+            </p>
+            <div className="mt-3 flex gap-2">
+              {TILLAR.map((x) => {
+                const shu = x.kod === til();
+                return (
+                  <button key={x.kod} type="button" onClick={() => tilniQoy(x.kod)}
+                    aria-current={shu ? "true" : undefined}
+                    className={`clay-press flex flex-1 items-center justify-center gap-2 rounded-3xl
+                      py-2.5 font-display text-[14px] ${
+                      shu ? "bg-brand-green/20 ring-2 ring-brand-green text-ink" : "bg-track text-ink-soft"
+                    }`}>
+                    <span className={`grid size-6 place-items-center rounded-full text-[11px]
+                                      leading-none ${shu ? "bg-brand-green/25" : "bg-karta"}`}>
+                      {x.belgi}
+                    </span>
+                    {x.nom}
+                    {shu && <Icon name="check" size={16} className="text-brand-green-d" />}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* ---- bolalar ----
@@ -238,9 +285,9 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
           {(hisob.profillar?.length ?? 1) > 1 && (
             <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
               style={{ "--az-kech": "60ms" } as React.CSSProperties}>
-              <div className="font-display text-[14px]">Bolalar</div>
+              <div className="font-display text-[14px]">{t("bolalar")}</div>
               <p className="mt-1 text-[12px] leading-snug text-ink-dim">
-                Har bir bolaning yulduzlari alohida saqlanadi
+                {t("bolalarIzoh")}
               </p>
 
               <div className="mt-3 space-y-2">
@@ -249,7 +296,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
                     <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-karta text-[20px]">
                       {p.avatar || "🦊"}
                     </span>
-                    <span className="min-w-0 flex-1 text-[14px]">{p.ism || "Ismsiz"}</span>
+                    <span className="min-w-0 flex-1 text-[14px]">{p.ism || t("ismsiz")}</span>
                   </div>
                 ))}
               </div>
@@ -258,7 +305,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
                 className="clay-press mt-3 flex w-full items-center justify-center gap-2 rounded-3xl
                            bg-track py-2.5 font-display text-[14px] text-ink-soft">
                 <Icon name="parent" size={17} />
-                Bolalarni boshqarish
+                {t("bolalarniBoshqarish")}
               </button>
             </div>
           )}
@@ -267,21 +314,21 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
           {(
             <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
               style={{ "--az-kech": "80ms" } as React.CSSProperties}>
-              <div className="font-display text-[14px]">Kirish usullari</div>
+              <div className="font-display text-[14px]">{t("kirishUsullari")}</div>
               <p className="mt-1 text-[12px] leading-snug text-ink-dim">
-                Qancha ko'p bo'lsa, progressni tiklash shuncha oson
+                {t("kirishUsulIzoh")}
               </p>
 
               <div className="mt-3 space-y-2">
-                <Usul ic="phone" nom="Telefon"
+                <Usul ic="phone" nom={t("usulTelefon")}
                   qiymat={hisob.telefon ? raqamniBeza(hisob.telefon) : ""}
-                  yoq="Botga raqamingizni yuboring" />
-                <Usul ic="send" nom="Telegram"
-                  qiymat={hisob.telegram ? "bog'langan" : ""}
-                  yoq="bog'lanmagan" />
-                <Usul ic="phone" nom="Qurilma"
-                  qiymat={hisob.qurilma ? "shu qurilma" : ""}
-                  yoq="bog'lanmagan" />
+                  yoq={t("raqamniYuboring")} />
+                <Usul ic="send" nom={t("usulTelegram")}
+                  qiymat={hisob.telegram ? t("boglangan") : ""}
+                  yoq={t("boglanmagan")} />
+                <Usul ic="phone" nom={t("usulQurilma")}
+                  qiymat={hisob.qurilma ? t("shuQurilma") : ""}
+                  yoq={t("boglanmagan")} />
               </div>
 
               {/* Telegram bog'lanmagan bo'lsa — shu yerdan bog'lash mumkin.
@@ -291,13 +338,13 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
               {!hisob.telegram && bot && (
                 <div className="mt-3 border-t border-track pt-3">
                   <p className="mb-2 text-center text-[12px] leading-snug text-ink-dim">
-                    Telegram'ni bog'lasangiz, yulduzlaringiz boshqa qurilmada ham ochiladi
+                    {t("telegramTaklif")}
                   </p>
                   <a href={botHavolasi(bot)}
                     className="clay-press flex w-full items-center justify-center gap-2
                                rounded-3xl bg-brand-green py-2.5 font-display text-[14px] text-white">
                     <Icon name="send" size={16} />
-                    Telegram bilan bog'lash
+                    {t("telegramBoglash")}
                   </a>
                 </div>
               )}
@@ -312,9 +359,9 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
           {(
             <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
               style={{ "--az-kech": "90ms" } as React.CSSProperties}>
-              <div className="font-display text-[14px]">Yo'lboshchi</div>
+              <div className="font-display text-[14px]">{t("yolboshchi")}</div>
               <p className="mt-1 text-[12px] leading-snug text-ink-dim">
-                Qaysi tugma nima qilishini boshqatdan ko'rsatib beradi
+                {t("turIzoh")}
               </p>
               <button type="button"
                 disabled={turQayta}
@@ -322,7 +369,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
                 className="clay-press mt-3 flex w-full items-center justify-center gap-2 rounded-3xl
                            bg-track py-2.5 font-display text-[14px] text-ink-soft disabled:opacity-60">
                 <Icon name={turQayta ? "check" : "repeat"} size={17} />
-                {turQayta ? "Kursni ochsangiz boshlanadi" : "Qaytadan ko'rsatish"}
+                {turQayta ? t("turBoshlanadi") : t("turQaytadan")}
               </button>
             </div>
           )}
@@ -338,19 +385,18 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
               {tasdiq ? (
                 <>
                   <p className="text-center text-[13px] leading-snug text-ink-soft">
-                    Chiqasizmi? Yulduzlaringiz serverda qoladi — Telegram
-                    orqali qaytib kirsangiz hammasi joyida bo'ladi.
+                    {t("chiqishSavol")}
                   </p>
                   <div className="mt-3 flex gap-2">
                     <button type="button" onClick={() => setTasdiq(false)}
                       className="clay-press flex-1 rounded-3xl bg-track py-2.5
                                  font-display text-[14px] text-ink-soft">
-                      Bekor qilish
+                      {t("bekor")}
                     </button>
                     <button type="button" onClick={chiqish}
                       className="clay-press flex-1 rounded-3xl bg-brand-red py-2.5
                                  font-display text-[14px] text-white">
-                      Ha, chiqaman
+                      {t("haChiqaman")}
                     </button>
                   </div>
                 </>
@@ -358,7 +404,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
                 <button type="button" onClick={() => setTasdiq(true)}
                   className="clay-press w-full rounded-3xl bg-track py-2.5
                              font-display text-[14px] text-ink-soft">
-                  Hisobdan chiqish
+                  {t("hisobdanChiqish")}
                 </button>
               )}
             </div>

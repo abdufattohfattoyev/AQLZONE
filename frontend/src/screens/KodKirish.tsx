@@ -23,6 +23,7 @@ import { Kirish } from "../components/Kirish";
 import { Logo } from "../components/Logo";
 import { Sozlamalar } from "./Sozlamalar";
 import { getHisob, kodBilanKir } from "../lib/api";
+import { t } from "../lib/matn";
 
 type Holat = "kutilyapti" | "ism" | "tayyor" | "xato";
 
@@ -104,16 +105,16 @@ export function KodKirish() {
   // Telegram tugmasi bilan birga.
   if (holat === "xato") {
     return (
-      <Kirish xabar="Havolaning muddati tugagan — u bir soat amal qiladi. Yangisini olish uchun tugmani bosing." />
+      <Kirish xabar={t("havolaEskirdi")} />
     );
   }
 
   return (
-    <div className="mx-auto grid min-h-dvh w-full max-w-[430px] place-items-center px-4 py-8">
+    <div className="mx-auto grid min-h-ekran w-full max-w-[430px] place-items-center px-4 py-8">
       <div className="az-kirish w-full rounded-clay bg-karta p-6 text-center shadow-clay">
         <Logo size={64} className="mx-auto" />
-        <h1 className="mt-3 text-[20px]">Kirilyapti…</h1>
-        <p className="mt-1 text-[13px] text-ink-dim">Bir soniya</p>
+        <h1 className="mt-3 text-[20px]">{t("kirilyapti")}</h1>
+        <p className="mt-1 text-[13px] text-ink-dim">{t("birSoniya")}</p>
       </div>
     </div>
   );

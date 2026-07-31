@@ -10,18 +10,36 @@
  * to'qnashsa, yulduzi ko'proq bo'lgani ustun turadi. Shu qoida bola
  * internetsiz o'ynagan darsni saqlab qoladi.
  */
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { COURSES } from "./curriculum";
 import type { Course } from "./curriculum";
 import { lessonId } from "./types";
 import type { Progress } from "./types";
 import * as api from "./api";
+import { kunKaliti, kunOldin, tiklangan, tiklashTaklifi } from "./zanjir";
+import type { TiklashTaklifi } from "./zanjir";
 
 export const BOSH: Progress = { stars: 0, coins: 0, done: {}, savollar: 0, olingan: [], kiygan: "" };
 
 /** Bir kunda nechta savol yechish maqsad qilingan. */
 export const KUNLIK_MAQSAD = 10;
+
+/** Kunlik sinovda har to'g'ri javob nechta tanga beradi (odatdagisi 2). */
+export const SINOV_TANGA = 4;
+
+/**
+ * Kunlik sinov natijasi serverda qaysi "bob/dars" bo'lib yoziladi.
+ *
+ * Haqiqiy darslardan uzoq son tanlangan: eng katta kursda 12 bob bor,
+ * ya'ni 99 hech qachon to'qnashmaydi. Busiz sinov natijasi ota-ona
+ * panelidagi "eng qiyin darslar" ro'yxatida boshqa darsning aniqligini
+ * buzib ko'rsatardi.
+ */
+export const SINOV_JOY = 99;
+
+/** Server hisobotida shu nom bilan ko'rinadi. */
+export const SINOV_NOM = "Kunlik sinov";
 
 /** Kunlik maqsad va ketma-ket kunlar. */
 export interface Kunlik {
@@ -44,6 +62,18 @@ export interface Kunlik {
   muzlatgichOyi: string;
   /** Oxirgi marta muzlatgich ishlatilgan kun — foydalanuvchiga aytish uchun. */
   muzlaganKun: string;
+  /**
+   * Zanjir oxirgi marta TANGA bilan tiklangan kun.
+   *
+   * Muzlatgichdan farqi: muzlatgich bepul va o'zi ishlaydi, tiklash esa
+   * pullik va faqat foydalanuvchi so'raganda bo'ladi. Ikki tiklash
+   * orasida kamida bir hafta bo'lishi kerak (`lib/zanjir.ts`).
+   */
+  tiklanganKun: string;
+  /** Shu oyda nechta tiklash bo'lgan — narx shundan oshadi. */
+  tiklashSoni: number;
+  /** Tiklash hisobi qaysi oyga tegishli ("2026-07"). */
+  tiklashOyi: string;
 }
 
 /** Har oy nechta qoldirilgan kun kechiriladi. */
@@ -52,22 +82,15 @@ const OYLIK_MUZLATGICH = 1;
 const KUNLIK_BOSH: Kunlik = {
   sana: "", savollar: 0, kunlar: 0,
   muzlatgich: OYLIK_MUZLATGICH, muzlatgichOyi: "", muzlaganKun: "",
+  tiklanganKun: "", tiklashSoni: 0, tiklashOyi: "",
 };
 
 /** Serverdagi va localStorage'dagi kalit — server faqat shunday kalitlarni qabul qiladi. */
 const KUNLIK_KEY = "azapp_kunlik_v1";
 
-/**
- * Sana MAHALLIY vaqt bo'yicha olinadi.
- * `toISOString()` UTC beradi — Toshkentda kechqurun o'ynagan bola uchun
- * u allaqachon "ertaga" bo'lib qoladi va kun noto'g'ri almashardi.
- */
-function kunKaliti(d = new Date()): string {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-const kechaKaliti = () => kunKaliti(new Date(Date.now() - 86400_000));
+// Sana hisobi `lib/zanjir.ts` da — u yerda zanjir qoidalari bilan bir
+// joyda turadi va React'siz sinaladi.
+const kechaKaliti = () => kunOldin(1);
 
 /** Yangi savollar qo'shilgandagi kunlik holat. */
 function kunlikYangila(k: Kunlik, savollar: number): Kunlik {
@@ -86,15 +109,23 @@ function kunlikYangila(k: Kunlik, savollar: number): Kunlik {
   // Roppa-rosa BIR kun qoldirilgan va muzlatgich bor — zanjir saqlanadi.
   // Ikki va undan ko'p kun qoldirilsa muzlatgich yordam bermaydi: aks
   // holda "ketma-ket kunlar" degan so'zning ma'nosi qolmasdi.
-  const oldingi = k.sana && k.sana === kunKaliti(new Date(Date.now() - 2 * 86400_000));
+  const oldingi = k.sana && k.sana === kunOldin(2);
   if (oldingi && muzlatgich > 0) {
     return {
+      ...k,
       sana: bugun, savollar, kunlar: k.kunlar + 1,
       muzlatgich: muzlatgich - 1, muzlatgichOyi: oy, muzlaganKun: bugun,
     };
   }
 
-  return { sana: bugun, savollar, kunlar: 1, muzlatgich, muzlatgichOyi: oy, muzlaganKun: "" };
+  // Zanjir uzildi. Tiklash hisobi (`tiklash*`) SAQLANADI — u oy bo'yicha
+  // yuritiladi va zanjir uzilgani bilan noldan boshlanmasligi kerak,
+  // aks holda har uzilishdan keyin narx yana eng arzoniga qaytardi.
+  return {
+    ...k,
+    sana: bugun, savollar, kunlar: 1,
+    muzlatgich, muzlatgichOyi: oy, muzlaganKun: "",
+  };
 }
 
 /** Ko'rsatish uchun: kun almashgan bo'lsa bugungi hisob noldan boshlanadi. */
@@ -165,6 +196,11 @@ function kunlikniOqi(): Kunlik {
       muzlatgich: d.muzlatgich ?? OYLIK_MUZLATGICH,
       muzlatgichOyi: d.muzlatgichOyi ?? "",
       muzlaganKun: d.muzlaganKun ?? "",
+      // Yangi maydonlar: eski saqlangan qiymatlarda ular yo'q, shuning
+      // uchun standart qiymat beriladi — eski zanjir buzilmaydi.
+      tiklanganKun: d.tiklanganKun ?? "",
+      tiklashSoni: d.tiklashSoni ?? 0,
+      tiklashOyi: d.tiklashOyi ?? "",
     };
   } catch {
     return KUNLIK_BOSH;
@@ -185,6 +221,20 @@ interface Ctx {
   sotibOl: (c: Course, buyumId: string, narx: number) => boolean;
   /** Aqlga buyum kiydirish (bo'sh satr — yechish). */
   kiy: (c: Course, buyumId: string) => void;
+  /**
+   * Barcha kurslardagi tangalar yig'indisi.
+   *
+   * Tangalar KURSGA tegishli, zanjir esa BUTUN hisobga. Shu sabab zanjir
+   * tiklash narxi jami hisobdan yechiladi — aks holda bola tangasini
+   * 3-sinfda yig'ib, 1-sinfda zanjirini tiklay olmasdi.
+   */
+  jamiTanga: number;
+  /** Uzilgan zanjirni tiklash taklifi. Yo'q bo'lsa `null`. */
+  tiklash: TiklashTaklifi | null;
+  /** Zanjirni tanga evaziga tiklaydi. Tanga yetmasa `false`. */
+  zanjirniTikla: () => boolean;
+  /** Kunlik sinov natijasi — darslar xaritasiga yozilmaydi. */
+  sinovTugadi: (c: Course, r: LessonResult) => void;
 }
 
 const ProgressCtx = createContext<Ctx | null>(null);
@@ -342,9 +392,99 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  /* ------------------------------------------------ zanjirni tiklash */
+
+  const jamiTanga = useMemo(
+    () => COURSES.reduce((n, c) => n + (all[c.key]?.coins ?? 0), 0),
+    [all],
+  );
+
+  /** Tiklash taklifi — kun almashishi bilan o'zi yo'qoladi. */
+  const tiklash = useMemo(() => tiklashTaklifi(kunlik), [kunlik]);
+
+  /**
+   * Zanjirni tanga evaziga tiklaydi.
+   *
+   * Tanga ENG BOY kursdan boshlab yechiladi. Boshqa taqsimot ham
+   * bo'lardi, lekin bu bittasi doim ishlaydi: jami yetsa, yechish
+   * albatta tugaydi va hech qaysi kurs manfiyga tushmaydi.
+   */
+  const zanjirniTikla = useCallback((): boolean => {
+    const taklif = tiklashTaklifi(kunlikRef.current);
+    if (!taklif) return false;
+
+    const joriy = allRef.current;
+    const jami = COURSES.reduce((n, c) => n + (joriy[c.key]?.coins ?? 0), 0);
+    if (jami < taklif.narx) return false;
+
+    setAll((p) => {
+      const yangi = { ...p };
+      let qolgan = taklif.narx;
+      // Boydan kambag'alga qarab yechamiz.
+      const tartib = [...COURSES].sort(
+        (a, b) => (yangi[b.key]?.coins ?? 0) - (yangi[a.key]?.coins ?? 0),
+      );
+      for (const c of tartib) {
+        if (qolgan <= 0) break;
+        const cur = yangi[c.key] ?? BOSH;
+        const olinadi = Math.min(cur.coins, qolgan);
+        if (olinadi <= 0) continue;
+        yangi[c.key] = { ...cur, coins: cur.coins - olinadi };
+        qolgan -= olinadi;
+      }
+      return yangi;
+    });
+    setKunlik((k) => tiklangan(k));
+    return true;
+  }, []);
+
+  /* -------------------------------------------------- kunlik sinov */
+
+  /**
+   * Kunlik sinov natijasi.
+   *
+   * Darsdan ikki farqi bor va ikkalasi ham ataylab:
+   *
+   *   1. Yo'l xaritasiga YOZILMAYDI (`done` ga tegilmaydi) — sinov
+   *      darslar tartibini oldinga surmaydi, u alohida narsa.
+   *   2. Tanga IKKI BAROBAR. Sinovning butun ma'nosi shu: u faqat
+   *      bugun ochiq va o'tkazib yuborilsa qaytmaydi.
+   *
+   * Yulduz esa odatdagidek qo'shiladi — haftalik liga aynan shuni
+   * sanaydi va kunlik qaytishni mukofotlash ligadagi maqsad bilan
+   * to'liq mos keladi.
+   */
+  const sinovTugadi = useCallback((c: Course, r: LessonResult) => {
+    setAll((p) => {
+      const cur = p[c.key] ?? BOSH;
+      return {
+        ...p,
+        [c.key]: {
+          ...cur,
+          stars: cur.stars + r.stars,
+          coins: cur.coins + r.correct * SINOV_TANGA,
+          savollar: (cur.savollar ?? 0) + r.asked,
+        },
+      };
+    });
+    setKunlik((k) => kunlikYangila(k, r.asked));
+    // Serverga ham boradi: liga va ota-ona paneli buni ko'rsin. `unit`
+    // va `lesson` ataylab haqiqiy darslardan uzoq son — hisobotda u
+    // o'z nomi bilan turadi va biror darsning natijasini buzmaydi.
+    api.postResult({
+      grade: c.grade, unit: SINOV_JOY, lesson: SINOV_JOY,
+      lessonName: SINOV_NOM,
+      asked: r.asked, correct: r.correct, mistakes: r.mistakes, stars: r.stars,
+      durationMs: r.davomiylik,
+    });
+  }, []);
+
   return (
     <ProgressCtx.Provider
-      value={{ progressOf, darsTugadi, kunlik: kunlikKorinishi(kunlik), sotibOl, kiy }}
+      value={{
+        progressOf, darsTugadi, kunlik: kunlikKorinishi(kunlik), sotibOl, kiy,
+        jamiTanga, tiklash, zanjirniTikla, sinovTugadi,
+      }}
     >
       {children}
     </ProgressCtx.Provider>

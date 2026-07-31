@@ -7,6 +7,9 @@
  *
  * Shu sabab bu fayl kelajakdagi mobil ilovada ham o'zgarishsiz ishlaydi.
  */
+import { t } from "./matn";
+import { tgWebApp, tgda } from "./qobiq";
+
 const TOKEN_KEY = "az_token";
 const DEVICE_KEY = "az_device";
 /** Tanlangan profil — qaysi bolaning progressi bilan ishlayapmiz. */
@@ -14,8 +17,11 @@ const PROFIL_KEY = "az_profil";
 /** Oxirgi ma'lum profil soni. Nega saqlanadi — `profilSoni()` ga qarang. */
 const PROFIL_SONI_KEY = "az_profil_soni";
 
-type TG = { initData?: string; ready?: () => void; expand?: () => void };
-const tg = (): TG | undefined => (window as unknown as { Telegram?: { WebApp: TG } }).Telegram?.WebApp;
+// Telegram obyekti va sirt tekshiruvi `lib/qobiq.ts` da — YAGONA joyda.
+// Ilgari bu fayl o'z nusxasini saqlardi va ikki nusxa albatta bir-biridan
+// qolib ketardi: bittasiga yangi maydon qo'shiladi, ikkinchisi eski
+// holida qoladi va nosozlik faqat ishlab chiqarishda ko'rinadi.
+const tg = tgWebApp;
 
 function deviceId(): string {
   let d = localStorage.getItem(DEVICE_KEY);
@@ -403,7 +409,7 @@ export async function getLiga(): Promise<Liga | null> {
  * internet bor. Oddiy brauzerda esa bola anonim o'ynayveradi — undan ism
  * so'rash keraksiz to'siq bo'lardi.
  */
-export const miniAppda = (): boolean => Boolean(tg()?.initData);
+export const miniAppda = (): boolean => tgda();
 
 /* ------------------------------------------------- ota-ona paneli */
 
@@ -464,6 +470,39 @@ export interface Hisob {
   royxatdan: boolean;
   /** Shu hisobdagi bolalar. Sozlamalarda ro'yxat qilib ko'rsatiladi. */
   profillar?: Profil[];
+  /**
+   * Serverda saqlangan til ("uz" / "ru").
+   *
+   * Ilova bunga QARAB ishlamaydi — u tilni qurilmada saqlaydi. Maydon
+   * faqat solishtirish uchun: qurilmadagi tanlov boshqacha bo'lsa,
+   * ilova yangisini serverga yozadi (`tilniSaqla`). Serverga esa til
+   * eslatma va botdagi javoblar uchun kerak — ular ilova yopiq
+   * bo'lganda yuboriladi.
+   */
+  til?: string;
+}
+
+/**
+ * Tanlangan tilni serverga yozadi.
+ *
+ * Javobi kutilmaydi va xatosi jim o'tadi: til serverda faqat xabar
+ * yuborish uchun kerak, ilova esa u yetib bormasa ham avvalgidek
+ * ishlaydi. Buning uchun foydalanuvchini kutdirish ortiqcha.
+ */
+export async function tilniSaqla(til: string): Promise<void> {
+  if (!token) return;
+  try {
+    await fetch("/api/v1/me", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ til }),
+    });
+  } catch (e) {
+    console.warn("[api] til saqlanmadi:", (e as Error).message);
+  }
 }
 
 export async function getHisob(): Promise<Hisob | null> {
@@ -510,11 +549,12 @@ function xatoMatni(d: unknown): string {
     for (const [maydon, qiymat] of Object.entries(d as Record<string, unknown>)) {
       const matn = Array.isArray(qiymat) ? String(qiymat[0]) : String(qiymat);
       if (!matn) continue;
-      const nom = maydon === "ism" ? "Ism" : maydon === "familiya" ? "Familiya" : "";
+      const nom = maydon === "ism" ? t("xatoIsm")
+        : maydon === "familiya" ? t("xatoFamiliya") : "";
       return nom ? `${nom}: ${matn}` : matn;
     }
   }
-  return "Saqlanmadi — qaytadan urinib ko'ring";
+  return t("saqlanmadi");
 }
 
 /**
@@ -527,7 +567,7 @@ export async function hisobniSaqla(
   o: { ism?: string; familiya?: string },
 ): Promise<SaqlashNatija> {
   if (!token && !(await signIn())) {
-    return { ok: false, xato: "Aloqa yo'q — internetni tekshiring" };
+    return { ok: false, xato: t("aloqaYoq") };
   }
   try {
     const r = await fetch("/api/v1/me", {
@@ -543,7 +583,7 @@ export async function hisobniSaqla(
     return { ok: true, hisob: (d as { user: Hisob }).user };
   } catch (e) {
     console.warn("[api] ism saqlanmadi:", (e as Error).message);
-    return { ok: false, xato: "Aloqa yo'q — internetni tekshiring" };
+    return { ok: false, xato: t("aloqaYoq") };
   }
 }
 

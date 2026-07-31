@@ -38,9 +38,11 @@ import urllib.request
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils import timezone
 
 from core import boshqaruv
 from core.auth import kirish_kodi_yasa, tg_ismi
+from core.matn import M, tilni_tanla
 from core.models import Identity, KirishKodi, Pupil
 
 #: Telegram javobni shuncha sekund ushlab turadi (yangilik bo'lmasa).
@@ -68,6 +70,25 @@ def api(usul: str, **payload) -> dict:
         return {"ok": False, "xato": str(e)}
 
 
+def _til_top(tg_id: str, tg_tili: str | None) -> str:
+    """
+    Shu odam uchun xabar tili.
+
+    Tartib muhim: MAVJUD hisobda ilovada tanlangan til ustun turadi.
+    Telegram interfeysi ruscha bo'lgani "darslarni ham ruscha o'qiydi"
+    degani emas — ko'p oilada telefon ruscha, bola esa o'zbek maktabida.
+    Hisob yo'q bo'lsa Telegram tili yagona ishora bo'lib qoladi.
+    """
+    kirish = (
+        Identity.objects.filter(provider=Identity.TELEGRAM, external_id=tg_id)
+        .select_related("pupil")
+        .first()
+    )
+    if kirish and kirish.pupil.til:
+        return tilni_tanla(kirish.pupil.til)
+    return tilni_tanla(tg_tili)
+
+
 def raqamni_tozala(xom: str) -> str:
     """
     Telegram raqamni "+998901234567" yoki "998901234567" ko'rinishida beradi.
@@ -79,7 +100,9 @@ def raqamni_tozala(xom: str) -> str:
 
 
 @transaction.atomic
-def raqamni_bogla(tg_id: str, telefon: str, ism: str, familiya: str) -> tuple[Pupil, bool]:
+def raqamni_bogla(
+    tg_id: str, telefon: str, ism: str, familiya: str, til: str = "",
+) -> tuple[Pupil, bool]:
     """
     Telefonni Telegram hisobiga bog'laydi.
 
@@ -98,7 +121,12 @@ def raqamni_bogla(tg_id: str, telefon: str, ism: str, familiya: str) -> tuple[Pu
     if kirish:
         pupil = kirish.pupil
     else:
-        pupil = Pupil.objects.create(first_name=ism, last_name=familiya)
+        # Til YANGI hisobga Telegram'dan yoziladi: odam hali ilovani
+        # ochmagan, ya'ni boshqa ishora yo'q. Ilova ochilganda o'zining
+        # tanlovini yuboradi va bu qiymat ustiga yoziladi.
+        pupil = Pupil.objects.create(
+            first_name=ism, last_name=familiya, til=til or "uz",
+        )
         Identity.objects.create(
             pupil=pupil, provider=Identity.TELEGRAM, external_id=tg_id
         )
@@ -136,7 +164,7 @@ def raqamni_bogla(tg_id: str, telefon: str, ism: str, familiya: str) -> tuple[Pu
     return pupil, True
 
 
-def muddat_matni() -> str:
+def muddat_matni(til: str = "uz") -> str:
     """
     "1 soat" / "30 daqiqa" — xabarda ko'rsatish uchun.
 
@@ -145,10 +173,12 @@ def muddat_matni() -> str:
     deyaverardi va foydalanuvchi havolani ishlamayapti deb o'ylardi.
     """
     d = KirishKodi.DAQIQA
-    return f"{d // 60} soat" if d >= 60 and d % 60 == 0 else f"{d} daqiqa"
+    if d >= 60 and d % 60 == 0:
+        return M("muddatSoat", til, n=d // 60)
+    return M("muddatDaqiqa", til, n=d)
 
 
-def raqam_sora(chat_id: int, matn: str) -> None:
+def raqam_sora(chat_id: int, matn: str, til: str = "uz") -> None:
     """Telefon raqamini so'raydigan klaviatura."""
     api(
         "sendMessage",
@@ -157,7 +187,7 @@ def raqam_sora(chat_id: int, matn: str) -> None:
         parse_mode="HTML",
         reply_markup={
             "keyboard": [[{
-                "text": "📱 Raqamni yuborish",
+                "text": M("tRaqamniYuborish", til),
                 # Telegram raqamni FAQAT shu tugma orqali beradi.
                 "request_contact": True,
             }]],
@@ -167,7 +197,9 @@ def raqam_sora(chat_id: int, matn: str) -> None:
     )
 
 
-def salom_yubor(chat_id: int, tg_id: str, ism: str, familiya: str) -> str:
+def salom_yubor(
+    chat_id: int, tg_id: str, ism: str, familiya: str, til: str = "uz",
+) -> str:
     """
     /start javobi: salom va bir martalik "Saytga kirish" havolasi.
 
@@ -180,40 +212,32 @@ def salom_yubor(chat_id: int, tg_id: str, ism: str, familiya: str) -> str:
     jurnalda ko'rsatamiz. Aks holda bot "ishlayapti" ko'rinadi-yu,
     foydalanuvchi hech qayerga o'ta olmaydi.
     """
-    salom = (
-        f"Assalomu alaykum{', ' + ism if ism else ''}! 👋\n\n"
-        "<b>Aql Zone</b> — 1–4-sinf matematikasi.\n"
-        "Bola darslik boblari bo'ylab yuradi, yulduz yig'adi va "
-        "har safar yangi savollar yechadi."
-    )
+    salom = M("salom", til, ism=(", " + ism if ism else ""))
 
     if not settings.SAYT_URL:
-        raqam_sora(
-            chat_id,
-            salom + "\n\n⚠️ Sayt manzili sozlanmagan (SAYT_URL).\n"
-                    "Progress yo'qolmasligi uchun raqamingizni yuboring.",
-        )
+        raqam_sora(chat_id, salom + M("saytYoq", til), til)
         return f"{tg_id}: /start — SAYT_URL yo'q, raqam so'raldi"
 
     # Hisob shu yerda yaratiladi (yoki topiladi): havola aynan shu hisobga
     # kiritishi kerak. Raqam bo'sh — u keyin, /raqam orqali qo'shiladi.
-    pupil, _ = raqamni_bogla(tg_id, "", ism, familiya)
+    pupil, _ = raqamni_bogla(tg_id, "", ism, familiya, til)
     havola = f"{settings.SAYT_URL}/kirish/{kirish_kodi_yasa(pupil)}"
 
-    tugmalar = [[{"text": "✅ Saytga kirish", "url": havola}]]
+    # Hisob allaqachon bor bo'lsa, ILOVADA tanlangan til ustun turadi:
+    # Telegram interfeysi ruscha bo'lgani odam darslarni ham ruscha
+    # o'qiydi degani emas.
+    til = pupil.til or til
+
+    tugmalar = [[{"text": M("tSaytgaKirish", til), "url": havola}]]
     if settings.MINI_APP_URL:
         tugmalar.append([
-            {"text": "🎓 Ilovani ochish", "web_app": {"url": settings.MINI_APP_URL}},
+            {"text": M("tIlovaniOchish", til), "web_app": {"url": settings.MINI_APP_URL}},
         ])
 
     api(
         "sendMessage",
         chat_id=chat_id,
-        text=(
-            salom + "\n\n"
-            "Pastdagi «✅ Saytga kirish» tugmasini bosing — avtomatik kirasiz.\n\n"
-            f"Tugma {muddat_matni()} amal qiladi."
-        ),
+        text=salom + M("tugmaniBos", til, muddat=muddat_matni(til)),
         parse_mode="HTML",
         # Eski "raqam yuborish" klaviaturasi osilib qolmasin.
         reply_markup={"inline_keyboard": tugmalar},
@@ -223,19 +247,18 @@ def salom_yubor(chat_id: int, tg_id: str, ism: str, familiya: str) -> str:
 
 def ilovani_yubor(chat_id: int, pupil: Pupil, yangi: bool) -> None:
     """Raqam qabul qilingandan keyin — kirish havolasi va Mini App tugmasi."""
-    matn = (
-        "Rahmat, raqam saqlandi ✅" if yangi else "Raqamingiz allaqachon saqlangan ✅"
-    )
+    til = pupil.til or "uz"
+    matn = M("raqamSaqlandi" if yangi else "raqamAllaqachon", til)
 
     tugmalar = []
     if settings.SAYT_URL:
         tugmalar.append([{
-            "text": "✅ Saytga kirish",
+            "text": M("tSaytgaKirish", til),
             "url": f"{settings.SAYT_URL}/kirish/{kirish_kodi_yasa(pupil)}",
         }])
     if settings.MINI_APP_URL:
         tugmalar.append([
-            {"text": "🎓 Ilovani ochish", "web_app": {"url": settings.MINI_APP_URL}},
+            {"text": M("tIlovaniOchish", til), "web_app": {"url": settings.MINI_APP_URL}},
         ])
 
     # Avval eski "raqam yuborish" klaviaturasini olib tashlaymiz: u
@@ -245,16 +268,63 @@ def ilovani_yubor(chat_id: int, pupil: Pupil, yangi: bool) -> None:
         reply_markup={"remove_keyboard": True})
 
     if not tugmalar:
-        api("sendMessage", chat_id=chat_id,
-            text="⚠️ Ilova manzili sozlanmagan (SAYT_URL / MINI_APP_URL).")
+        api("sendMessage", chat_id=chat_id, text=M("ilovaSozlanmagan", til))
         return
 
     api(
         "sendMessage",
         chat_id=chat_id,
-        text=f"Ilovaga o'tish — tugma {muddat_matni()} amal qiladi:",
+        text=M("ilovagaOtish", til, muddat=muddat_matni(til)),
         reply_markup={"inline_keyboard": tugmalar},
     )
+
+
+def xabarni_yop(tg_id: str) -> None:
+    """
+    "Boshqa yozmang" — hisobga belgi qo'yiladi.
+
+    Bloklashdan farqi bor va u muhim: bloklash — bizdan qochish, bu esa
+    hurmat bilan so'ralgan iltimos. Shu sabab belgilangan hisobga hech
+    qanday xabar bormaydi (na eslatma, na qaytarish), lekin bot odam
+    o'zi yozsa avvalgidek javob beradi va hisob buzilmaydi.
+    """
+    Pupil.objects.filter(
+        identities__provider=Identity.TELEGRAM,
+        identities__external_id=tg_id,
+        xabar_yopiq_at__isnull=True,
+    ).update(xabar_yopiq_at=timezone.now())
+
+
+def tugma_javobi(q: dict) -> str:
+    """
+    Inline tugma bosilganda (`callback_query`).
+
+    Telegram HAR BOSISHGA javob kutadi: `answerCallbackQuery` yuborilmasa,
+    tugma foydalanuvchining ekranida bir necha soniya "yuklanmoqda"
+    holatida qotib qoladi va u tugmani buzuq deb o'ylaydi. Shu sabab
+    javob eng birinchi ketadi, ish esa keyin bajariladi.
+    """
+    kim = q.get("from") or {}
+    tg_id = str(kim.get("id") or "")
+    data = str(q.get("data") or "")
+    til = _til_top(tg_id, kim.get("language_code"))
+
+    if data == "xabar_yopiq":
+        xabarni_yop(tg_id)
+        api("answerCallbackQuery", callback_query_id=q.get("id"))
+        # Tugma ikkinchi marta bosilmasin: xabar ostidagi klaviatura
+        # olib tashlanadi va o'rniga tasdiq matni yuboriladi.
+        xabar = q.get("message") or {}
+        if xabar.get("message_id"):
+            api("editMessageReplyMarkup",
+                chat_id=xabar["chat"]["id"], message_id=xabar["message_id"],
+                reply_markup={"inline_keyboard": []})
+            api("sendMessage", chat_id=xabar["chat"]["id"],
+                text=M("xabarYopildi", til))
+        return f"{tg_id}: xabarlar o'chirildi"
+
+    api("answerCallbackQuery", callback_query_id=q.get("id"))
+    return f"{tg_id}: noma'lum tugma ({data[:32]})"
 
 
 def yangilikni_qayta_ishla(u: dict) -> str:
@@ -264,6 +334,10 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     Webhook'ga o'tilsa ham AYNAN shu funksiya chaqiriladi — polling
     mantiqidan mustaqil.
     """
+    # Inline tugma bosilishi — alohida tur, `message` emas.
+    if u.get("callback_query"):
+        return tugma_javobi(u["callback_query"])
+
     xabar = u.get("message") or u.get("edited_message")
     if not xabar:
         return ""
@@ -274,6 +348,9 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     # Telegram ismi bezakli bo'lishi mumkin (`꧁❖DAVRONOV❖꧂`) — bazaga
     # tozalangan holda tushadi, aks holda reyting o'sha bezakni ko'rsatardi.
     ism, familiya = tg_ismi(kim)
+    # Telegram interfeysi tili — YANGI hisob uchun yagona ishora. Mavjud
+    # hisobda ilovada tanlangan til ustun turadi (`salom_yubor`).
+    til = _til_top(tg_id, kim.get("language_code"))
 
     # --- kontakt keldi ---
     kontakt = xabar.get("contact")
@@ -281,33 +358,36 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         # Boshqa odamning vizitkasini yuborish mumkin. Faqat O'ZINIKI qabul
         # qilinadi, aks holda birov begona raqamni bog'lab qo'yardi.
         if str(kontakt.get("user_id") or "") != tg_id:
-            api("sendMessage", chat_id=chat_id,
-                text="Iltimos, o'z raqamingizni yuboring — tugmani bosing.")
+            api("sendMessage", chat_id=chat_id, text=M("begonaKontakt", til))
             return f"{tg_id}: begona kontakt rad etildi"
 
         telefon = raqamni_tozala(kontakt.get("phone_number", ""))
         if not telefon:
-            api("sendMessage", chat_id=chat_id, text="Raqam o'qilmadi, qayta urining.")
+            api("sendMessage", chat_id=chat_id, text=M("raqamOqilmadi", til))
             return f"{tg_id}: raqam bo'sh"
 
-        pupil, yangi = raqamni_bogla(tg_id, telefon, ism, familiya)
+        pupil, yangi = raqamni_bogla(tg_id, telefon, ism, familiya, til)
         ilovani_yubor(chat_id, pupil, yangi)
         return f"{tg_id}: raqam bog'landi (hisob #{pupil.pk})"
 
     # --- matn keldi ---
     matn = (xabar.get("text") or "").strip()
     if matn.startswith("/start"):
-        return salom_yubor(chat_id, tg_id, ism, familiya)
+        # Odam o'zi yozdi — demak xabarlarga qarshi emas. "Boshqa
+        # yozmang" belgisi olib tashlanadi, aks holda u eslatmalardan
+        # abadiy chetda qolardi va buni tushuntiradigan joy yo'q.
+        Pupil.objects.filter(
+            identities__provider=Identity.TELEGRAM,
+            identities__external_id=tg_id,
+            xabar_yopiq_at__isnull=False,
+        ).update(xabar_yopiq_at=None)
+        return salom_yubor(chat_id, tg_id, ism, familiya, til)
 
     # Raqam endi majburiy emas — kirish havola orqali bo'ladi. Lekin u
     # hisobni tiklashda va eslatma yuborishda kerak, shuning uchun alohida
     # buyruq bo'lib qoladi.
     if matn.startswith("/raqam"):
-        raqam_sora(
-            chat_id,
-            "Raqamingizni yuboring — telefon yoki brauzer almashsa ham "
-            "hisobingiz va yulduzlaringiz joyida qoladi.",
-        )
+        raqam_sora(chat_id, M("raqamSora", til), til)
         return f"{tg_id}: /raqam"
 
     # Boshqaruv paneli — faqat administratorlarga.
@@ -330,17 +410,14 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         return f"{tg_id}: /boshqaruv — havola yuborildi"
 
     if matn.startswith("/help"):
-        yordam = ("/start — saytga kirish havolasini olish\n"
-                  "/raqam — telefon raqamini bog'lash\n"
-                  "Savollar bo'lsa shu yerga yozing.")
+        yordam = M("yordam", til)
         if boshqaruv.admin_tg_mi(tg_id):
-            yordam += "\n/boshqaruv — hisobot paneli"
+            yordam += M("yordamAdmin", til)
         api("sendMessage", chat_id=chat_id, text=yordam)
         return f"{tg_id}: /help"
 
     # Boshqa har qanday xabar — yo'naltiramiz.
-    api("sendMessage", chat_id=chat_id,
-        text="Boshlash uchun /start yuboring.")
+    api("sendMessage", chat_id=chat_id, text=M("boshlaStart", til))
     return f"{tg_id}: boshqa xabar"
 
 

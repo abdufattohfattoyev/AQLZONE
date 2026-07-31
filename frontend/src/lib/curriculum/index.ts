@@ -1,5 +1,6 @@
 import type { IconName } from "../icons";
 import type { Unit, UnitColor } from "../types";
+import { sinfMatn } from "../tarjima/kurs";
 import { grade0 } from "./grade0";
 import { grade1 } from "./grade1";
 import { grade2 } from "./grade2";
@@ -52,7 +53,7 @@ export const courseById = (id: string) => COURSES.find((c) => c.id === id);
  * Server natijalarni faqat `grade` soni bilan saqlaydi, shuning uchun
  * ota-ona panelida "0-sinf" chiqib qolmasligi uchun shu yerda o'giriladi.
  */
-export const sinfNomi = (grade: number) => (grade === 0 ? "Maktabgacha" : `${grade}-sinf`);
+export const sinfNomi = (grade: number) => sinfMatn(grade);
 
 /** Manzildan kursni topadi: "1-sinf" → 1-sinf kursi. */
 export const courseBySlug = (slug: string) => COURSES.find((c) => c.slug === slug);

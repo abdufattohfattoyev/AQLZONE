@@ -68,7 +68,14 @@ def _sorov(usul: str, payload: dict) -> tuple[bool, int, str]:
         return False, 0, str(e)[:200]
 
 
-def yubor(chat_id: str, matn: str, tugma: str = "", havola: str = "") -> tuple[str, str]:
+def yubor(
+    chat_id: str,
+    matn: str,
+    tugma: str = "",
+    havola: str = "",
+    ikkinchi_tugma: str = "",
+    ikkinchi_data: str = "",
+) -> tuple[str, str]:
     """
     Bitta xabar yuboradi. `(holat, izoh)` qaytadi.
 
@@ -78,6 +85,13 @@ def yubor(chat_id: str, matn: str, tugma: str = "", havola: str = "") -> tuple[s
     chiqadi. Bittasi bo'sh bo'lsa tugma umuman qo'shilmaydi — yarim
     sozlangan tugma Telegram tomonidan rad etiladi va butun xabar
     yuborilmay qolardi.
+
+    `ikkinchi_tugma` esa HAVOLA EMAS, javob tugmasi (`callback_data`):
+    bosilganda bot ichida ish bajariladi, brauzer ochilmaydi. Hozircha
+    bitta joyda kerak — "qaytib keling" zanjiridagi «Boshqa yozmang»
+    (`management/commands/qaytarish.py`). U alohida QATORDA turadi:
+    asosiy tugma bilan yonma-yon bo'lsa, bexosdan bosilishi oson bo'lardi
+    va bu qaytarib bo'lmaydigan tanlov.
     """
     payload = {
         "chat_id": chat_id,
@@ -86,8 +100,13 @@ def yubor(chat_id: str, matn: str, tugma: str = "", havola: str = "") -> tuple[s
         # Havolaning kartasi xabarni cho'zib, matnni pastga surib qo'yadi.
         "link_preview_options": {"is_disabled": True},
     }
+    qatorlar = []
     if tugma and havola:
-        payload["reply_markup"] = {"inline_keyboard": [[{"text": tugma, "url": havola}]]}
+        qatorlar.append([{"text": tugma, "url": havola}])
+    if ikkinchi_tugma and ikkinchi_data:
+        qatorlar.append([{"text": ikkinchi_tugma, "callback_data": ikkinchi_data}])
+    if qatorlar:
+        payload["reply_markup"] = {"inline_keyboard": qatorlar}
 
     ok, kod, izoh = _sorov("sendMessage", payload)
     if ok:

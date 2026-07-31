@@ -1640,3 +1640,170 @@ class KanalTest(TestCase):
 
     def test_endpoint_tokensiz(self):
         self.assertEqual(self.client.get("/api/v1/kanal").status_code, 401)
+
+
+class QaytarishTest(TestCase):
+    """
+    "Qaytib keling" zanjiri — kimga, qachon va necha marta.
+
+    Bu mantiq eng nozik joyda turadi: bir qadam noto'g'ri bo'lsa, ilova
+    tashlab ketgan odamni ta'qib qila boshlaydi va javobi bitta —
+    bloklash. Bloklangan odam esa butunlay yo'qoladi: keyin unga na
+    e'lon, na kirish havolasi yetib boradi. Shuning uchun har bir
+    chegara alohida test bilan qotirilgan.
+    """
+
+    def kim(self) -> str:
+        chiqish = StringIO()
+        call_command("qaytarish", "--sinov", stdout=chiqish)
+        return chiqish.getvalue()
+
+    def hisob(self, tg_id: str, ism: str):
+        pupil = Pupil.objects.create(first_name=ism)
+        Identity.objects.create(pupil=pupil, provider="telegram", external_id=tg_id)
+        return pupil, pupil.asosiy_profil()
+
+    def natija(self, profil, kunlar_oldin: int):
+        r = LessonResult.objects.create(profile=profil, asked=6, correct=6, stars=3)
+        LessonResult.objects.filter(pk=r.pk).update(
+            created_at=timezone.now() - timedelta(days=kunlar_oldin)
+        )
+
+    # ------------------------------------------------------- bosqichlar
+
+    def test_yetti_kundan_keyin_birinchi_xabar(self):
+        _, profil = self.hisob("901", "Yetti")
+        self.natija(profil, 8)
+        self.assertIn("Yetti", self.kim())
+
+    def test_uch_kunlik_tanaffusga_yozilmaydi(self):
+        """Bu hali "yo'qolgan" emas — kunlik eslatmaning ishi."""
+        _, profil = self.hisob("902", "Uch")
+        self.natija(profil, 3)
+        self.assertNotIn("Uch", self.kim())
+
+    def test_bosqich_oynasidan_otib_ketgan_kutadi(self):
+        """15-kun: birinchi bosqich o'tgan, ikkinchisi hali kelmagan."""
+        _, profil = self.hisob("903", "Oraliq")
+        self.natija(profil, 15)
+        self.assertNotIn("Oraliq", self.kim())
+
+    def test_ikkinchi_bosqich_birinchisidan_keyin_keladi(self):
+        pupil, profil = self.hisob("904", "Ikkinchi")
+        self.natija(profil, 22)
+        # Birinchi xabar allaqachon ketgan, oxirgisi 12 kun oldin.
+        Pupil.objects.filter(pk=pupil.pk).update(
+            qaytarish_soni=1, qaytarish_at=timezone.now() - timedelta(days=12),
+        )
+        self.assertIn("Ikkinchi", self.kim())
+
+    def test_uchtadan_keyin_butunlay_sukut(self):
+        pupil, profil = self.hisob("905", "Tugagan")
+        self.natija(profil, 60)
+        Pupil.objects.filter(pk=pupil.pk).update(
+            qaytarish_soni=3, qaytarish_at=timezone.now() - timedelta(days=30),
+        )
+        self.assertNotIn("Tugagan", self.kim())
+
+    def test_yaqinda_yuborilgan_bolsa_takrorlanmaydi(self):
+        """Bosqichlar qo'shilib ketmasin — orasida kamida 10 kun."""
+        pupil, profil = self.hisob("906", "Yaqin")
+        self.natija(profil, 22)
+        Pupil.objects.filter(pk=pupil.pk).update(
+            qaytarish_soni=1, qaytarish_at=timezone.now() - timedelta(days=2),
+        )
+        self.assertNotIn("Yaqin", self.kim())
+
+    # ---------------------------------------------------------- chetlar
+
+    def test_hech_qachon_oynamaganga_yozilmaydi(self):
+        """U yo'qolmagan — hali boshlamagan."""
+        self.hisob("907", "Boshlamagan")
+        self.assertNotIn("Boshlamagan", self.kim())
+
+    def test_bloklaganga_yozilmaydi(self):
+        pupil, profil = self.hisob("908", "Bloklagan")
+        self.natija(profil, 10)
+        Pupil.objects.filter(pk=pupil.pk).update(bot_bloklandi_at=timezone.now())
+        self.assertNotIn("Bloklagan", self.kim())
+
+    def test_xabarni_yopgan_odamga_yozilmaydi(self):
+        pupil, profil = self.hisob("909", "Yopgan")
+        self.natija(profil, 10)
+        Pupil.objects.filter(pk=pupil.pk).update(xabar_yopiq_at=timezone.now())
+        self.assertNotIn("Yopgan", self.kim())
+
+    def test_qaytgan_odamning_hisobi_tozalanadi(self):
+        """
+        Keyingi tanaffus NOLDAN boshlanadi.
+
+        Busiz bir marta qaytarilgan odam ikkinchi safar yo'qolganda
+        zanjirning o'rtasidan davom etardi — yoki umuman chaqirilmasdi.
+        """
+        pupil, profil = self.hisob("910", "Qaytgan")
+        Pupil.objects.filter(pk=pupil.pk).update(
+            qaytarish_soni=2, qaytarish_at=timezone.now() - timedelta(days=20),
+        )
+        self.natija(profil, 1)                      # kecha o'ynagan
+        self.kim()
+        pupil.refresh_from_db()
+        self.assertEqual(pupil.qaytarish_soni, 0)
+        self.assertIsNone(pupil.qaytarish_at)
+
+    # ------------------------------------------------------------- til
+
+    def test_ruscha_hisobga_ruscha_xabar(self):
+        pupil, profil = self.hisob("911", "Rus")
+        Pupil.objects.filter(pk=pupil.pk).update(til="ru")
+        self.natija(profil, 8)
+        self.assertIn("Твои звёзды", self.kim())
+
+
+class XabarYopishTest(TestCase):
+    """«Boshqa yozmang» tugmasi va uni /start orqali qaytarish."""
+
+    def setUp(self):
+        self.pupil = Pupil.objects.create(first_name="Charchagan")
+        Identity.objects.create(
+            pupil=self.pupil, provider="telegram", external_id="920",
+        )
+
+    def test_tugma_hisobni_belgilaydi(self):
+        from core.management.commands import bot as B
+        with patch.object(B, "api", lambda *a, **k: {"ok": True}):
+            B.yangilikni_qayta_ishla({
+                "callback_query": {
+                    "id": "cb1", "data": "xabar_yopiq",
+                    "from": {"id": 920},
+                    "message": {"message_id": 5, "chat": {"id": 920}},
+                },
+            })
+        self.pupil.refresh_from_db()
+        self.assertIsNotNone(self.pupil.xabar_yopiq_at)
+
+    def test_start_belgini_olib_tashlaydi(self):
+        """Odam o'zi yozdi — demak xabarlarga qarshi emas."""
+        from core.management.commands import bot as B
+        Pupil.objects.filter(pk=self.pupil.pk).update(xabar_yopiq_at=timezone.now())
+        with patch.object(B, "api", lambda *a, **k: {"ok": True}):
+            B.yangilikni_qayta_ishla({
+                "message": {
+                    "chat": {"id": 920}, "from": {"id": 920, "first_name": "Charchagan"},
+                    "text": "/start",
+                },
+            })
+        self.pupil.refresh_from_db()
+        self.assertIsNone(self.pupil.xabar_yopiq_at)
+
+    def test_notanish_tugma_javobsiz_qolmaydi(self):
+        """
+        Telegram HAR bosishga javob kutadi: `answerCallbackQuery`
+        yuborilmasa, tugma foydalanuvchining ekranida qotib qoladi.
+        """
+        from core.management.commands import bot as B
+        chaqiruv = []
+        with patch.object(B, "api", lambda usul, **k: chaqiruv.append(usul) or {"ok": True}):
+            B.yangilikni_qayta_ishla({
+                "callback_query": {"id": "cb2", "data": "yoq", "from": {"id": 920}},
+            })
+        self.assertIn("answerCallbackQuery", chaqiruv)

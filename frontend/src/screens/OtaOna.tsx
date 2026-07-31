@@ -18,6 +18,9 @@ import { getXulosa } from "../lib/api";
 import type { Xulosa } from "../lib/api";
 import { hammasi as daftarHammasi } from "../lib/daftar";
 import { courseBySlug, sinfNomi } from "../lib/curriculum";
+import { t } from "../lib/matn";
+import { useOrqaga } from "../lib/qobiq";
+import { kursMatn } from "../lib/tarjima/kurs";
 
 interface Props {
   onBack: () => void;
@@ -26,15 +29,18 @@ interface Props {
 /** Millisekundni odam o'qiydigan ko'rinishga aylantiradi. */
 function vaqtMatn(ms: number): string {
   const daqiqa = Math.round(ms / 60000);
-  if (daqiqa < 60) return `${daqiqa} daqiqa`;
-  return `${Math.floor(daqiqa / 60)} soat ${daqiqa % 60} daqiqa`;
+  if (daqiqa < 60) return t("daqiqa", { n: daqiqa });
+  return t("soatDaqiqa", { soat: Math.floor(daqiqa / 60), daqiqa: daqiqa % 60 });
 }
 
-const HAFTA_KUNI = ["Ya", "Du", "Se", "Ch", "Pa", "Ju", "Sh"];
+/** Diagramma ostidagi qisqa kun nomlari. Yakshanbadan boshlanadi —
+    `Date.getDay()` shu tartibda qaytaradi. */
+const haftaKuni = () => t("haftaKunlari").split(",");
 
 export function OtaOna({ onBack }: Props) {
   const [xulosa, setXulosa] = useState<Xulosa | null>(null);
   const [yuklandi, setYuklandi] = useState(false);
+  const ozStrelka = useOrqaga(onBack);
 
   useEffect(() => {
     let bekor = false;
@@ -54,23 +60,29 @@ export function OtaOna({ onBack }: Props) {
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16">
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onBack} title="Ortga"
-          className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
-          <Icon name="chevron" size={20} className="rotate-180" />
-        </button>
+        {/* Telegram Mini App ichida bu strelka CHIZILMAYDI: u yerda
+            Telegram o'z sarlavhasida nativ `←` ni ko'rsatadi va ikkitasi
+            bir ekranda turganda odam har safar "qaysi biri to'g'ri?" deb
+            o'ylardi (`lib/qobiq.ts`). */}
+        {ozStrelka && (
+          <button type="button" onClick={onBack} title={t("ortga")}
+            className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
+            <Icon name="chevron" size={20} className="rotate-180" />
+          </button>
+        )}
       </div>
 
       <div className="az-kirish mt-4">
-        <h1 className="text-[22px]">Ota-ona paneli</h1>
+        <h1 className="text-[22px]">{t("otaOnaPaneli")}</h1>
         <p className="mt-1 text-[13px] text-ink-soft">
-          Farzandingiz nima qilyapti va qayerda yordam kerak
+          {t("otaOnaIzoh")}
         </p>
       </div>
 
       {/* ---- haftalik faollik ---- */}
       {xulosa && (
         <section className="az-kirish mt-5 rounded-clay bg-karta p-4 shadow-clay-sm">
-          <h2 className="font-display text-[15px]">Oxirgi 7 kun</h2>
+          <h2 className="font-display text-[15px]">{t("oxirgi7Kun")}</h2>
           {/* Ustun `items-stretch` bilan: qator `items-end` bo'lsa
               ustunning balandligi MATNIGA teng bo'lib qoladi, ichkaridagi
               `flex-1` esa nolga tushadi va butun diagramma ko'rinmay
@@ -90,7 +102,7 @@ export function OtaOna({ onBack }: Props) {
                       style={{ height: k.savollar ? `${Math.max(8, balandlik)}%` : "3px" }}
                     />
                   </div>
-                  <span className="text-[10.5px] text-ink-dim">{HAFTA_KUNI[kun.getDay()]}</span>
+                  <span className="text-[10.5px] text-ink-dim">{haftaKuni()[kun.getDay()]}</span>
                 </div>
               );
             })}
@@ -101,26 +113,28 @@ export function OtaOna({ onBack }: Props) {
       {/* ---- jami ---- */}
       {xulosa && xulosa.jami.darslar > 0 && (
         <section className="az-kirish mt-3 grid grid-cols-2 gap-3">
-          <Katak nom="Darslar" qiymat={xulosa.jami.darslar} />
-          <Katak nom="Savollar" qiymat={xulosa.jami.savollar} />
-          <Katak nom="Aniqlik" qiymat={`${xulosa.jami.aniqlik}%`}
+          <Katak nom={t("kDarslar")} qiymat={xulosa.jami.darslar} />
+          <Katak nom={t("kSavollar")} qiymat={xulosa.jami.savollar} />
+          <Katak nom={t("kAniqlik")} qiymat={`${xulosa.jami.aniqlik}%`}
             rang={xulosa.jami.aniqlik >= 80 ? "text-brand-green-d" : "text-brand-orange-d"} />
-          <Katak nom="Sarflangan vaqt" qiymat={vaqtMatn(xulosa.jami.vaqt)} kichik />
+          <Katak nom={t("kVaqt")} qiymat={vaqtMatn(xulosa.jami.vaqt)} kichik />
         </section>
       )}
 
       {/* ---- qiynalayotgan mavzular ---- */}
       {xulosa && xulosa.qiyin.length > 0 && (
         <section className="az-kirish mt-3 rounded-clay bg-karta p-4 shadow-clay-sm">
-          <h2 className="font-display text-[15px]">Eng qiyin kelgan darslar</h2>
+          <h2 className="font-display text-[15px]">{t("engQiyin")}</h2>
           <p className="mt-0.5 text-[12px] text-ink-dim">
-            Aniqlik bo'yicha — shu mavzularni birga takrorlash foydali
+            {t("engQiyinIzoh")}
           </p>
           <div className="mt-3 space-y-2">
             {xulosa.qiyin.map((d, i) => (
               <div key={i} className="flex items-center gap-2.5">
                 <span className="min-w-0 flex-1 truncate text-[13px]">
-                  {d.lesson_name || `${sinfNomi(d.grade)}, ${d.unit + 1}-bob`}
+                  {d.lesson_name
+                    ? kursMatn(d.lesson_name)
+                    : t("sinfBob", { sinf: sinfNomi(d.grade), n: d.unit + 1 })}
                 </span>
                 <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-track">
                   <span
@@ -140,7 +154,7 @@ export function OtaOna({ onBack }: Props) {
       {/* ---- xatolar daftari (mahalliy) ---- */}
       {daftar.length > 0 && (
         <section className="az-kirish mt-3 rounded-clay bg-karta p-4 shadow-clay-sm">
-          <h2 className="font-display text-[15px]">Takrorlash kutayotgan mavzular</h2>
+          <h2 className="font-display text-[15px]">{t("takrorlashKutayotgan")}</h2>
           <div className="mt-2.5 space-y-1.5">
             {daftar.map((y, i) => {
               const c = courseBySlug(y.kurs);
@@ -148,10 +162,10 @@ export function OtaOna({ onBack }: Props) {
               return (
                 <div key={i} className="flex items-center gap-2 text-[13px]">
                   <span className="min-w-0 flex-1 truncate">
-                    {dars?.n.split(" · ")[0] ?? `${y.ui + 1}-bob`}
+                    {dars ? kursMatn(dars.n).split(" · ")[0] : t("bobRaqam", { n: y.ui + 1 })}
                   </span>
                   <span className="shrink-0 rounded-full bg-brand-red/15 px-2 py-0.5 text-[11.5px] text-brand-red">
-                    {y.xato} xato
+                    {t("xatoSoni", { n: y.xato })}
                   </span>
                 </div>
               );
@@ -165,8 +179,7 @@ export function OtaOna({ onBack }: Props) {
         <div className="az-kirish mt-5 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
           <div className="text-[34px] leading-none">📶</div>
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
-            Hisobot serverdan olinadi va hozir aloqa yo'q.
-            Bola o'ynashda davom etaveradi — ma'lumot keyin sinxronlanadi.
+            {t("hisobotAloqaYoq")}
           </p>
         </div>
       )}
@@ -175,8 +188,7 @@ export function OtaOna({ onBack }: Props) {
         <div className="az-kirish mt-5 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
           <div className="text-[34px] leading-none">🌱</div>
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
-            Hali birorta dars tugallanmagan. Birinchi darsdan keyin
-            shu yerda hisobot paydo bo'ladi.
+            {t("hisobotBosh")}
           </p>
         </div>
       )}

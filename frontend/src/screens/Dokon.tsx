@@ -13,7 +13,9 @@
  */
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
-import { BUYUMLAR, buyumTop } from "../lib/dokon";
+import { BUYUMLAR, buyumNomi, buyumTop } from "../lib/dokon";
+import { t } from "../lib/matn";
+import { useOrqaga } from "../lib/qobiq";
 import type { Progress } from "../lib/types";
 
 interface Props {
@@ -24,6 +26,7 @@ interface Props {
 }
 
 export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
+  const ozStrelka = useOrqaga(onBack);
   const olingan = progress.olingan ?? [];
   const kiygan = progress.kiygan ?? "";
   const kiyilgan = kiygan ? buyumTop(kiygan) : undefined;
@@ -31,10 +34,15 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16">
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onBack} title="Ortga"
-          className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
-          <Icon name="chevron" size={20} className="rotate-180" />
-        </button>
+        {/* Telegram ichida strelka chizilmaydi — u yerda nativi bor
+            (`lib/qobiq.ts`). Tanga hisobi `ml-auto` bilan o'ng chetda
+            turadi, ya'ni strelka yo'qolganda ham joyidan siljimaydi. */}
+        {ozStrelka && (
+          <button type="button" onClick={onBack} title={t("ortga")}
+            className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
+            <Icon name="chevron" size={20} className="rotate-180" />
+          </button>
+        )}
         <div className="ml-auto flex items-center gap-1.5 rounded-full bg-karta px-3.5 py-1.5 text-[15px] shadow-clay-sm">
           <Icon name="coin" size={19} className="text-brand-orange-d" />
           {progress.coins}
@@ -54,15 +62,15 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
             </span>
           )}
         </div>
-        <h1 className="mt-3 text-[22px]">Aqlni bezash</h1>
+        <h1 className="mt-3 text-[22px]">{t("aqlniBezash")}</h1>
         <p className="mt-1 text-center text-[12.5px] text-ink-soft">
-          Har to'g'ri javob 2 tanga beradi
+          {t("tangaIzoh")}
         </p>
 
         {kiygan && (
           <button type="button" onClick={() => onKiy("")}
             className="clay-press mt-2.5 rounded-full bg-track px-4 py-1.5 text-[12.5px] text-ink-soft">
-            Buyumni yechish
+            {t("buyumniYechish")}
           </button>
         )}
       </div>
@@ -89,11 +97,11 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
               ].join(" ")}
             >
               <span className="text-[38px] leading-none">{b.belgi}</span>
-              <span className="font-display text-[13.5px] leading-tight">{b.nom}</span>
+              <span className="font-display text-[13.5px] leading-tight">{buyumNomi(b)}</span>
 
               {bor ? (
                 <span className={`text-[12px] ${shu ? "text-brand-green-d" : "text-ink-dim"}`}>
-                  {shu ? "kiyilgan" : "kiyish"}
+                  {shu ? t("kiyilgan") : t("kiyish")}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-[12.5px] text-ink-soft">

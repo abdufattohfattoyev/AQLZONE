@@ -12,6 +12,7 @@ import { bugungilar } from "./daftar";
 import type { Yozuv } from "./daftar";
 import type { Activity, Gen } from "./activity";
 import type { Lesson, Unit } from "./types";
+import { t } from "./matn";
 
 /** Kerakli turni topish uchun eng ko'p necha marta urinamiz. */
 const URINISH = 24;
@@ -58,16 +59,16 @@ export function takrorlashDarsi(kurs: string): { unit: Unit; lesson: Lesson } | 
 
   return {
     unit: {
-      u: "Xatolar daftari",
+      u: t("xatolarDaftari"),
       ic: "repeat",
       color: "orange",
       intro: {
-        t: "Xatolar daftari",
+        t: t("xatolarDaftari"),
         v: ["?"],
-        d: "Avval qiynalgan savollaring qaytadi — bu safar yangi sonlar bilan.",
+        d: t("daftarIzoh"),
       },
       lessons: [],
     },
-    lesson: { n: "Takrorlash", ic: "repeat", gens, review: true },
+    lesson: { n: t("takrorlash"), ic: "repeat", gens, review: true },
   };
 }

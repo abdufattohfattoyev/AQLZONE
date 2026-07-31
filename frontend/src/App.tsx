@@ -30,8 +30,11 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolDaftar, yolDars, yolKurs, yolKurslar,
-  yolOtaOna, yolReyting, yolSozlama,
+  yolOtaOna, yolReyting, yolSinov, yolSozlama,
 } from "./lib/yollar";
+import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
+import { t } from "./lib/matn";
+import { kursMatn } from "./lib/tarjima/kurs";
 
 export default function App() {
   // Panel `Routes` dan TASHQARIDA turadi va shu sabab marshrut
@@ -65,6 +68,9 @@ function Yollar() {
           /:bob/:dars dan OLDIN turishi shart — aks holda marshrut
           uni bob deb qabul qilardi. */}
       <Route path="/kurs/:slug/daftar" element={<DaftarSahifasi />} />
+      {/* Kunlik sinov ham dars: shu sabab u `/:bob/:dars` dan OLDIN
+          turadi, aks holda marshrut "sinov" ni bob nomi deb o'qirdi. */}
+      <Route path="/kurs/:slug/sinov" element={<SinovSahifasi />} />
       <Route path="/kurs/:slug/dokon" element={<DokonSahifasi />} />
       <Route path="/kurs/:slug/nishonlar" element={<NishonSahifasi />} />
       <Route path="/kurs/:slug/ota-ona" element={<OtaOnaSahifasi />} />
@@ -109,19 +115,20 @@ function KursSahifasi() {
   // kursga qaytishni xohlaydi.
   useEffect(() => { if (c) oxirginiYoz(c.slug); }, [c]);
 
-  if (!c) return <NotFound nima={`"${slug}" kursi`} />;
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
 
   return (
     <Home
       slug={c.slug}
       title={c.title}
-      izoh={c.grade === 0 ? "Maktabga tayyorgarlik" : "Darslik bo'yicha to'liq kurs"}
+      izoh={c.grade === 0 ? t("izohMaktabgacha") : t("izohToliqKurs")}
       units={c.units}
       progress={progressOf(c)}
       kunlik={kunlik}
       maqsad={KUNLIK_MAQSAD}
       onStart={(ui, li) => nav(yolDars(c, ui, li))}
       onDaftar={() => nav(yolDaftar(c))}
+      onSinov={() => nav(yolSinov(c))}
       onOtaOna={() => nav(yolOtaOna(c))}
     />
   );
@@ -135,7 +142,7 @@ function DarsSahifasi() {
   const c = courseBySlug(slug ?? "");
   useTema(c ? temaOf(c.grade) : "bosh");
 
-  if (!c) return <NotFound nima={`"${slug}" kursi`} />;
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
 
   const ui = indeksniOqi(bob, "bob");
   const li = indeksniOqi(dars, "dars");
@@ -143,7 +150,7 @@ function DarsSahifasi() {
   const L = U && li !== null ? U.lessons[li] : undefined;
 
   if (ui === null || li === null || !U || !L) {
-    return <NotFound nima="Bunday dars" qaytish={{ matn: c.title, yol: yolKurs(c) }} />;
+    return <NotFound nima={t("bundayDars")} qaytish={{ matn: kursMatn(c.title), yol: yolKurs(c) }} />;
   }
 
   // Yopiq darsni manzilni qo'lda o'zgartirib ochib bo'lmasin —
@@ -188,7 +195,7 @@ function DaftarSahifasi() {
   // almashib turib, bola javob bera olmasdi.
   const dars = useMemo(() => (c ? takrorlashDarsi(c.slug) : null), [c]);
 
-  if (!c) return <NotFound nima={`"${slug}" kursi`} />;
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
   if (!dars) return <Navigate to={yolKurs(c)} replace />;
 
   return (
@@ -198,6 +205,51 @@ function DaftarSahifasi() {
       takrorlash
       onExit={() => nav(yolKurs(c))}
       onFinish={() => nav(yolKurs(c))}
+    />
+  );
+}
+
+
+/**
+ * Kunlik sinov — faqat bugun ochiq bo'ladigan 6 ta savol.
+ *
+ * Darsdan uch farqi bor: yo'l xaritasiga yozilmaydi, tangasi ikki
+ * barobar va bajarilgani KUN bo'yicha eslab qolinadi
+ * (`lib/kunlikSinov.ts`). Bugun allaqachon bajarilgan bo'lsa —
+ * manzilni qo'lda ochib bo'lmaydi, kurs sahifasiga qaytadi.
+ */
+function SinovSahifasi() {
+  const nav = useNavigate();
+  const { slug } = useParams();
+  const { progressOf, sinovTugadi } = useProgress();
+
+  const c = courseBySlug(slug ?? "");
+  useTema(c ? temaOf(c.grade) : "bosh");
+
+  // Dars bir marta yig'iladi: har renderda qaytadan yasalsa, savollar
+  // almashib turib, bola javob bera olmasdi.
+  const dars = useMemo(
+    () => (c && !sinovBajarilgan(c.slug) ? sinovDarsi(c.slug, c.units, progressOf(c)) : null),
+    // `progressOf` har renderda yangilanadi, lekin sinov BIR MARTA
+    // yig'ilishi kerak — shuning uchun u bog'liqlikda emas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [c],
+  );
+
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
+  if (!dars) return <Navigate to={yolKurs(c)} replace />;
+
+  return (
+    <Lesson
+      unit={dars.unit}
+      lesson={dars.lesson}
+      takrorlash
+      onExit={() => nav(yolKurs(c))}
+      onFinish={(r: LessonResult) => {
+        sinovniBelgila(c.slug);
+        sinovTugadi(c, r);
+        nav(yolKurs(c));
+      }}
     />
   );
 }
@@ -220,7 +272,7 @@ function DokonSahifasi() {
   const { progressOf, sotibOl, kiy } = useProgress();
   const { c, slug } = useKurs();
 
-  if (!c) return <NotFound nima={`"${slug}" kursi`} />;
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
   return (
     <Dokon
       progress={progressOf(c)}
@@ -236,7 +288,7 @@ function NishonSahifasi() {
   const { progressOf, kunlik } = useProgress();
   const { c, slug } = useKurs();
 
-  if (!c) return <NotFound nima={`"${slug}" kursi`} />;
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
   const p = progressOf(c);
   return (
     <Nishonlar
@@ -252,7 +304,7 @@ function OtaOnaSahifasi() {
   const nav = useNavigate();
   const { c, slug } = useKurs();
 
-  if (!c) return <NotFound nima={`"${slug}" kursi`} />;
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
   return <OtaOna onBack={() => nav(yolKurs(c))} />;
 }
 

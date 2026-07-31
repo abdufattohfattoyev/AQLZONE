@@ -21,11 +21,12 @@
  * bu fayl emas, o'sha atribut ko'chadi — va nishon topilmasa qadam
  * shunchaki matn bo'lib ko'rsatiladi, sayohat buzilmaydi.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Icon } from "../lib/icons";
 import { Logo } from "./Logo";
 import { gapir } from "../lib/ovoz";
 import { turKorildi } from "../lib/tur";
+import { t } from "../lib/matn";
 
 interface Qadam {
   /** Yoritiladigan elementning `data-tur` qiymati. Bo'lmasa — butun ekran. */
@@ -39,13 +40,13 @@ interface Qadam {
  * → "yana nima bor?". Shu sabab birinchi bo'lib eng katta yashil tugma
  * tushuntiriladi, oxirida esa qo'shimcha ekranlar.
  */
-const QADAMLAR: Qadam[] = [
-  { matn: "Salom! Men Aql. Bu yerda nima qayerda turishini ko'rsatib beraman." },
-  { nishon: "davom", matn: "Dars shu tugmadan boshlanadi. Bir bosasan — va o'qish boshlanadi." },
-  { nishon: "hisob", matn: "Har bir to'g'ri javob uchun yulduz va tanga olasan." },
-  { nishon: "maqsad", matn: "Har kuni shuncha savol yechsang, zanjiring uzilmaydi." },
-  { nishon: "boblar", matn: "Darslar boblarga bo'lingan. Bobni ochsang, ichida dars yo'li chiqadi." },
-  { nishon: "panel", matn: "Pastda nishonlaring, do'koning va reyting turadi." },
+const qadamlar = (): Qadam[] => [
+  { matn: t("turSalom") },
+  { nishon: "davom", matn: t("turDavom") },
+  { nishon: "hisob", matn: t("turHisob") },
+  { nishon: "maqsad", matn: t("turMaqsad") },
+  { nishon: "boblar", matn: t("turBoblar") },
+  { nishon: "panel", matn: t("turPanel") },
 ];
 
 /** Yorug' dog' element chekkasidan qancha kengroq bo'lsin. */
@@ -58,6 +59,10 @@ interface Dog {
 export function Yolboshchi({ onTugadi }: { onTugadi: () => void }) {
   const [i, setI] = useState(0);
   const [dog, setDog] = useState<Dog | null>(null);
+  // Ro'yxat bir marta yasaladi: til seans ichida o'zgarmaydi (almashsa
+  // sahifa qayta yuklanadi), lekin har renderda yangi massiv qaytsa
+  // pastdagi effektlar bog'liqligi doim "o'zgargan" ko'rinardi.
+  const QADAMLAR = useMemo(qadamlar, []);
   const qadam = QADAMLAR[i];
   const oxirgi = i >= QADAMLAR.length - 1;
 
@@ -153,7 +158,7 @@ export function Yolboshchi({ onTugadi }: { onTugadi: () => void }) {
       : { bottom: window.innerHeight - dog.top + 14 };
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-label="Yo'lboshchi">
+    <div className="fixed inset-0 z-50" role="dialog" aria-label={t("yolboshchi")}>
       {/* Yorug' dog'.
           Qorayish alohida qatlam emas, aynan SHU elementning ulkan tashqi
           soyasi. Shuning uchun teshik chekkasi hech qachon "sirg'anmaydi":
@@ -171,7 +176,7 @@ export function Yolboshchi({ onTugadi }: { onTugadi: () => void }) {
 
       {/* Ekranning istalgan joyiga bosish ham oldinga suradi — bolaning
           birinchi harakati aynan shu bo'ladi. */}
-      <button type="button" onClick={keyingi} aria-label="Keyingi"
+      <button type="button" onClick={keyingi} aria-label={t("keyingi")}
         className="absolute inset-0 size-full cursor-pointer" />
 
       {/* Gap qutisi */}
@@ -194,13 +199,13 @@ export function Yolboshchi({ onTugadi }: { onTugadi: () => void }) {
             {!oxirgi && (
               <button type="button" onClick={tugat}
                 className="clay-press rounded-3xl px-3 py-2 text-[13px] text-ink-dim">
-                O'tkazib yuborish
+                {t("otkazibYuborish")}
               </button>
             )}
             <button type="button" onClick={keyingi}
               className="clay-press flex items-center gap-1.5 rounded-3xl bg-brand-green px-4 py-2
                          font-display text-[14px] text-white">
-              {oxirgi ? "Boshladik!" : "Keyingi"}
+              {oxirgi ? t("boshlaymiz") : t("keyingi")}
               <Icon name="chevron" size={15} />
             </button>
           </div>

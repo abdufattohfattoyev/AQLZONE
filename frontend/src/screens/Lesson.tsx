@@ -9,6 +9,9 @@ import type { Lesson as LessonT, Unit } from "../lib/types";
 import type { LessonResult } from "../lib/progress";
 import { gapir, tovush } from "../lib/ovoz";
 import { takrorlandi, xatoQoshildi } from "../lib/daftar";
+import { t } from "../lib/matn";
+import { kursMatn } from "../lib/tarjima/kurs";
+import { tebrat, useOrqaga } from "../lib/qobiq";
 
 /** Bir dars nechta savoldan iborat. */
 const SAVOL = 6;
@@ -110,6 +113,10 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
 
   const A = savollar[idx];
 
+  // Darsdan chiqish: Telegram ichida nativ orqaga tugmasi bilan, vebda
+  // esa chapdagi qizil strelka bilan.
+  const ozStrelka = useOrqaga(onExit);
+
   useEffect(() => {
     xatoQilgan.current = false;
     setTanlangan(null);
@@ -150,12 +157,17 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
       xatoQilgan.current = true;
       setXato((x) => x + 1);
       tovush("xato");
+      // Tebranish OVOZGA bog'lanmagan: telefoni ovozsiz rejimda turgan
+      // bola ham javobi to'g'rimi-yo'qmi darhol biladi. Xato tebranishi
+      // ataylab boshqacha — ekranga qaramasdan ham farqi sezilarli.
+      tebrat("xato");
       // noto'g'ri javobdan keyin yana urinib ko'rsin
       setTimeout(() => setTanlangan(null), 900);
       return;
     }
 
     tovush("togri");
+    tebrat("togri");
     setPortlash((p) => p + 1);
     if (!xatoQilgan.current) setBirinchidanTogri((c) => c + 1);
     setTimeout(() => {
@@ -167,7 +179,7 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
   // Avval ko'rsatamiz, keyin so'raymiz. Maktabgacha yoshda savolga darrov
   // o'tish bolani "bilmayman" holatiga tushiradi — u qoidani ko'rmagan.
   if (ogitda && lesson.ogit) {
-    return <Ogit o={lesson.ogit} nomi={lesson.n} onBoshla={() => setOgitda(false)} />;
+    return <Ogit o={lesson.ogit} nomi={kursMatn(lesson.n)} onBoshla={() => setOgitda(false)} />;
   }
 
   if (tugadi) {
@@ -198,14 +210,19 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
   const rasmli = A.kind === "rang" || A.kind === "emoji" || A.kind === "belgi";
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-4 pt-4 pb-8">
+    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-4 pt-4 pb-8">
       {/* yuqori panel */}
       <div className="flex items-center gap-3">
-        <button type="button" onClick={onExit}
-          className="clay-press grid size-11 place-items-center rounded-2xl bg-karta text-brand-red shadow-clay-sm"
-          title="Ortga">
-          <Icon name="chevron" size={20} className="rotate-180" />
-        </button>
+        {/* Telegram ichida strelka chizilmaydi — u yerda nativi bor.
+            Qolgan qism o'zgarmaydi: `flex-1` chiziqchalari bo'shab
+            qolgan joyni o'zi to'ldiradi. */}
+        {ozStrelka && (
+          <button type="button" onClick={onExit}
+            className="clay-press grid size-11 place-items-center rounded-2xl bg-karta text-brand-red shadow-clay-sm"
+            title={t("ortga")}>
+            <Icon name="chevron" size={20} className="rotate-180" />
+          </button>
+        )}
         <div className="flex flex-1 gap-1.5">
           {savollar.map((_, i) => (
             <span key={i}
@@ -328,12 +345,12 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
           <span className={`az-xabar rounded-full px-4 py-2 font-display text-[15px] leading-none
                             text-white shadow-clay-sm
                             ${togriJavob ? "bg-brand-green" : "bg-brand-red"}`}>
-            {togriJavob ? "To'g'ri! 👏" : "Deyarli! Yana urinib ko'r"}
+            {togriJavob ? t("togriJavob") : t("deyarli")}
           </span>
         )}
       </div>
 
-      <div className="mt-1 text-center text-[12px] text-ink-dim">{unit.u}</div>
+      <div className="mt-1 text-center text-[12px] text-ink-dim">{kursMatn(unit.u)}</div>
     </div>
   );
 }
@@ -343,6 +360,13 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
 function Natija({ asked, correct, mistakes, stars, onNext, onQayta }:
   Omit<LessonResult, "davomiylik"> & { onNext: () => void; onQayta: () => void }) {
   const pct = asked ? Math.round((correct / asked) * 100) : 0;
+
+  // Uch yulduz — darsning eng katta lahzasi. Konfetti bilan birga
+  // kuchli tebranish ketadi: bola qo'lida ham "yutdim" degan javobni
+  // sezadi. Bir yoki ikki yulduzda tebranish yo'q — o'shanda u
+  // mukofot bo'lmay, shovqinga aylanardi.
+  useEffect(() => { if (stars === 3) tebrat("yutuq"); }, [stars]);
+
   const Box = ({ v, l, c = "" }: { v: string | number; l: string; c?: string }) => (
     <div className="flex-1 rounded-2xl bg-track px-1 py-2 text-center">
       <div className={`font-display text-xl leading-tight ${c}`}>{v}</div>
@@ -351,13 +375,13 @@ function Natija({ asked, correct, mistakes, stars, onNext, onQayta }:
   );
 
   return (
-    <div className="relative grid min-h-dvh place-items-center p-6">
+    <div className="relative grid min-h-ekran place-items-center p-6">
       {/* Uch yulduz olganda bayram — bu lahza uchun bola qaytib keladi. */}
       {stars === 3 && <Konfetti />}
 
       <div className="az-savol w-full max-w-[360px] rounded-[32px] bg-karta p-7 text-center
                       shadow-[0_12px_40px_rgb(0_0_0/0.3)]">
-        <h2 className="text-2xl">Zo'r ish!</h2>
+        <h2 className="text-2xl">{t("zorIsh")}</h2>
 
         <div className="mt-2 flex justify-center gap-1 text-brand-gold">
           {Array.from({ length: 3 }, (_, i) => (
@@ -368,22 +392,22 @@ function Natija({ asked, correct, mistakes, stars, onNext, onQayta }:
         </div>
 
         <div className="mt-4 flex gap-2">
-          <Box v={asked} l="SAVOL" />
-          <Box v={correct} l="TO'G'RI" c="text-brand-green-d" />
-          <Box v={mistakes} l="XATO" c="text-brand-red" />
-          <Box v={`${pct}%`} l="ANIQLIK" />
+          <Box v={asked} l={t("natijaSavol")} />
+          <Box v={correct} l={t("natijaTogri")} c="text-brand-green-d" />
+          <Box v={mistakes} l={t("natijaXato")} c="text-brand-red" />
+          <Box v={`${pct}%`} l={t("natijaAniqlik")} />
         </div>
 
         {mistakes === 0 && (
           <div className="mt-3 text-[13px] text-brand-green-d">
-            Barcha javoblar birinchi urinishda to'g'ri!
+            {t("xatosizJavob")}
           </div>
         )}
 
         <button type="button" onClick={onNext}
           className="az-yaltir tugma-3d mt-6 w-full rounded-3xl bg-brand-green py-3.5 font-display text-lg
                      text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
-          Davom etish
+          {t("davomEtish")}
         </button>
 
         {/* Qayta o'ynaganda savollar yangidan yasaladi — sonlar boshqa bo'ladi. */}
@@ -391,7 +415,7 @@ function Natija({ asked, correct, mistakes, stars, onNext, onQayta }:
           className="clay-press mt-2.5 flex w-full items-center justify-center gap-2 rounded-3xl bg-track
                      py-3 font-display text-[15px] text-ink-soft">
           <Icon name="repeat" size={18} />
-          Yana o'ynash
+          {t("yanaOynash")}
         </button>
       </div>
     </div>

@@ -19,6 +19,19 @@
           document.documentElement.dataset.tema =
             !m ? "bosh" : (+m[1] <= 1 ? "bolalar" : "katta");
         } catch (e) { /* manzil g'alati — standart tema qoladi */ }
+
+        // Til ham SHU YERDA qo'yiladi, React'dan oldin. `lang` atributi
+        // brauzerning tinish belgilari, chiziqcha qo'yishi va ekran
+        // o'quvchining talaffuziga ta'sir qiladi — u sahifa chizilgandan
+        // keyin o'zgarsa, birinchi kadr noto'g'ri til qoidalari bilan
+        // chiziladi.
+        try {
+          var t = localStorage.getItem("azapp_til");
+          if (t !== "ru" && t !== "uz") {
+            t = (navigator.language || "").toLowerCase().indexOf("ru") === 0 ? "ru" : "uz";
+          }
+          document.documentElement.lang = t;
+        } catch (e) { /* xotira bloklangan — standart "uz" qoladi */ }
       })();
     </script>
     <!--

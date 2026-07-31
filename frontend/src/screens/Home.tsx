@@ -11,6 +11,13 @@ import type { Progress, Unit } from "../lib/types";
 import type { Kunlik } from "../lib/progress";
 import { bugungiSoni } from "../lib/takrorlash";
 import { buyumTop } from "../lib/dokon";
+import { TilTugma } from "../components/TilTugma";
+import { Qaytish, ZanjirTiklash } from "../components/Qaytish";
+import { useProgress } from "../lib/progress";
+import { qaytish } from "../lib/zanjir";
+import { qolganSoat, sinovBajarilgan } from "../lib/kunlikSinov";
+import { t } from "../lib/matn";
+import { kursMatn } from "../lib/tarjima/kurs";
 
 interface Props {
   /** Kurs slug'i — xatolar daftari shu kurs bo'yicha filtrlanadi. */
@@ -27,12 +34,14 @@ interface Props {
   onStart: (ui: number, li: number) => void;
   /** Xatolar daftaridagi takrorlash darsini ochadi. */
   onDaftar: () => void;
+  /** Kunlik sinovni ochadi — faqat bugun. */
+  onSinov: () => void;
   onOtaOna: () => void;
 }
 
 function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`flex items-center gap-1.5 rounded-full bg-karta px-3.5 py-1.5 text-[15px] shadow-clay-sm ${className}`}>
+    <div className={`flex items-center gap-1.5 rounded-full bg-karta px-3 py-1 text-[14px] shadow-clay-sm ${className}`}>
       {children}
     </div>
   );
@@ -63,8 +72,11 @@ function Ring({ done, total, color }: { done: number; total: number; color: stri
 
 export function Home({
   slug, title, izoh, units, progress, kunlik, maqsad,
-  onStart, onDaftar, onOtaOna,
+  onStart, onDaftar, onSinov, onOtaOna,
 }: Props) {
+  // Zanjir tiklash va jami tanga kontekstdan keladi: ular BUTUN hisobga
+  // tegishli, bitta kursga emas.
+  const { jamiTanga, tiklash, zanjirniTikla } = useProgress();
   const totals = useMemo(() => {
     const total = units.reduce((s, U) => s + U.lessons.length, 0);
     const done = units.reduce(
@@ -85,6 +97,10 @@ export function Home({
   const daftarSoni = useMemo(() => bugungiSoni(slug), [slug]);
 
   const kiygan = progress.kiygan ? buyumTop(progress.kiygan) : undefined;
+
+  // Necha kundan beri ko'rinmagan. Dars tugashi bilan `kunlik.sana`
+  // bugunga o'tadi va karta o'zi yo'qoladi — alohida yopish kerak emas.
+  const qaytganKun = qaytish(kunlik);
 
   /**
    * Yo'lboshchi — birinchi tashrifda ekranni tanishtiradi.
@@ -108,7 +124,7 @@ export function Home({
     /* Kenglik ekranga qarab o'sadi, ammo cheklangan: dars yo'li ilon izi
        bo'lib buriladi va juda keng ustunda uning burilishlari yassilanib,
        "yo'l" o'rniga tarqoq nuqtalarga aylanadi. */
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-6 sm:max-w-[560px] sm:px-6">
+    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-3 pb-4 sm:max-w-[560px] sm:px-6">
       {/* ---- yuqori panel ----
           Bu yerda endi faqat "menda nima bor" turadi: yulduz va tanga.
           O'tish tugmalari pastdagi panelga ko'chdi. Sabab: ular bir xil
@@ -127,37 +143,46 @@ export function Home({
         {/* `data-tur` — yo'lboshchi shu atributlar bo'yicha nishonni topadi
             (components/Yolboshchi.tsx). Ekran o'zgarsa, atribut ko'chadi. */}
         <span data-tur="hisob" className="flex items-center gap-2 rounded-full">
-          <Pill><Icon name="star" size={19} className="text-brand-gold" />{progress.stars}</Pill>
-          <Pill><Icon name="coin" size={19} className="text-brand-orange-d" />{progress.coins}</Pill>
+          <Pill><Icon name="star" size={17} className="text-brand-gold" />{progress.stars}</Pill>
+          <Pill><Icon name="coin" size={17} className="text-brand-orange-d" />{progress.coins}</Pill>
         </span>
-        <button type="button" onClick={onOtaOna} title="Ota-ona paneli"
-          className="ml-auto grid size-11 place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
-          <Icon name="parent" size={20} />
+        {/* Til shu yerda ham turadi: kurs sahifasi ilova ochilganda
+            ko'pincha BIRINCHI ekran bo'ladi (bosh sahifadagi "Davom
+            etish" to'g'ridan-to'g'ri shu yerga tushiradi), ya'ni
+            noto'g'ri tilni ko'rgan odam bosh sahifaga qaytishi shart
+            emas. */}
+        <TilTugma className="ml-auto" />
+        <button type="button" onClick={onOtaOna} title={t("otaOnaPaneli")}
+          className="grid size-10 place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm clay-press">
+          <Icon name="parent" size={18} />
         </button>
       </div>
 
       {/* ---- sarlavha ---- */}
-      <div className="az-kirish mt-5 flex flex-col items-center text-center">
+      <div className="az-kirish mt-4 flex flex-col items-center text-center">
         <span className="relative">
-          <Logo size={52} className="drop-shadow-[0_6px_12px_rgb(58_46_34/0.22)]" />
+          <Logo size={46} className="drop-shadow-[0_6px_12px_rgb(58_46_34/0.22)]" />
           {kiygan && (
-            <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[22px] leading-none">
+            <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[20px] leading-none">
               {kiygan.belgi}
             </span>
           )}
         </span>
-        <h1 className="mt-2 text-[26px] leading-tight">{title}</h1>
-        <div className="mt-0.5 text-[13px] text-ink-soft">
-          {izoh} · {units.length} bo'lim
+        {/* Sarlavha ekranga qarab o'sadi: uzun kurs nomi ("Математика
+            4 класс") 320px li telefonda 26px da ikki qatorga bo'linib,
+            ostidagi hamma narsani pastga surardi. */}
+        <h1 className="mt-1.5 text-[clamp(20px,5.8vw,24px)] leading-tight">{kursMatn(title)}</h1>
+        <div className="mt-0.5 text-[12.5px] text-ink-soft">
+          {izoh} · {t("bolimSoni", { n: units.length })}
         </div>
       </div>
 
       {/* ---- umumiy taraqqiyot ---- */}
-      <div className="mt-4">
-        <div className="mb-1.5 text-center text-[13px] text-ink-soft">
-          {totals.done} / {totals.total} dars tugallandi
+      <div className="mt-3">
+        <div className="mb-1 text-center text-[12.5px] text-ink-soft">
+          {t("darsTugallandi", { done: totals.done, jami: totals.total })}
         </div>
-        <div className="h-3 overflow-hidden rounded-full bg-karta/55">
+        <div className="h-2.5 overflow-hidden rounded-full bg-karta/55">
           <div
             className="h-full rounded-full bg-gradient-to-r from-brand-orange to-brand-gold transition-[width] duration-500"
             style={{ width: `${Math.max(2, (totals.done / totals.total) * 100)}%` }}
@@ -176,25 +201,41 @@ export function Home({
           onStart={onStart} />
       )}
 
+      {/* ---- qaytish va zanjir ----
+          Ikkalasi kunlik maqsaddan OLDIN turadi va bu ataylab: uzilgan
+          zanjirni ko'rgan bola avval "hali saqlash mumkin" degan
+          javobni olishi kerak, keyin bugungi maqsadni. Teskari tartibda
+          u avval nolga tushgan zanjirni ko'rib, ilovani yopardi. */}
+      {tiklash && (
+        <ZanjirTiklash taklif={tiklash} jamiTanga={jamiTanga} onTikla={zanjirniTikla} />
+      )}
+      {!tiklash && qaytganKun > 0 && <Qaytish kun={qaytganKun} />}
+
       {/* ---- kunlik maqsad ---- */}
       <div data-tur="maqsad">
         <KunlikMaqsad kunlik={kunlik} maqsad={maqsad} />
       </div>
+
+      {/* ---- bugungi sinov ----
+          Kunlik maqsaddan KEYIN: maqsad majburiy qism, sinov esa
+          qo'shimcha. Bajarilganda ham ko'rinib turadi — "bugun buni
+          qildim" degan belgi mukofotning bir qismi. */}
+      <Sinov bajarildi={sinovBajarilgan(slug)} onSinov={onSinov} />
 
       {/* ---- xatolar daftari ----
           Faqat takrorlash vaqti kelgan savol bo'lsa ko'rinadi. Doim
           tursa, bola uni fon deb qabul qilib, e'tibor bermay qo'yardi. */}
       {daftarSoni > 0 && (
         <button type="button" onClick={onDaftar}
-          className="tugma-3d mt-3 flex w-full items-center gap-3 rounded-clay bg-karta p-4
+          className="tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay bg-karta p-3.5
                      text-left shadow-clay-sm">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand-red/15 text-brand-red">
-            <Icon name="repeat" size={22} />
+          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand-red/15 text-brand-red">
+            <Icon name="repeat" size={20} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-display text-[15px] leading-tight">Xatolar daftari</span>
+            <span className="block font-display text-[15px] leading-tight">{t("xatolarDaftari")}</span>
             <span className="block text-[12.5px] text-ink-soft">
-              {daftarSoni} ta savol takrorlashni kutyapti
+              {t("daftarKutyapti", { n: daftarSoni })}
             </span>
           </span>
           <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
@@ -202,7 +243,7 @@ export function Home({
       )}
 
       {/* ---- boblar va yo'l ---- */}
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-2.5">
         {units.map((U, ui) => {
           const done = U.lessons.filter((_, li) => progress.done[lessonId(ui, li)]).length;
           const color = UNIT_COLORS[U.color];
@@ -222,15 +263,16 @@ export function Home({
                 /* `az-qavariq` — yuqori chekkasida yorug'lik, pastida ichki
                    soya. Manzara ustida tekis karta "yopishtirilgan qog'oz"dek
                    ko'rinardi; bu ikkisi uni yuzadan ko'targandek qiladi. */
-                className="az-qavariq flex w-full items-center gap-3 bg-karta p-3.5 text-left shadow-clay-sm clay-press"
+                className="az-qavariq flex w-full items-center gap-3 bg-karta p-3 text-left shadow-clay-sm clay-press"
               >
-                <span className={`grid size-12 shrink-0 place-items-center rounded-[15px] text-white ${color.bg}`}>
-                  <Icon name={U.ic} size={26} />
+                <span className={`grid size-11 shrink-0 place-items-center rounded-[14px] text-white ${color.bg}`}>
+                  <Icon name={U.ic} size={24} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-display text-[15px] leading-tight">{U.u}</span>
-                  <span className="block text-[12px] text-ink-dim">
-                    {U.lessons.length} dars{done ? ` · ${done} tugadi` : ""}
+                  <span className="block font-display text-[14.5px] leading-tight">{kursMatn(U.u)}</span>
+                  <span className="block text-[11.5px] text-ink-dim">
+                    {t("bobDars", { n: U.lessons.length })}
+                    {done ? t("bobTugadi", { n: done }) : ""}
                   </span>
                 </span>
                 <Ring done={done} total={U.lessons.length} color={color.road} />
@@ -255,6 +297,53 @@ export function Home({
 }
 
 /**
+ * Bugungi sinov kartasi.
+ *
+ * Yozuvda QOLGAN VAQT turadi va butun ma'no shunda: sinov yarim tunda
+ * yopiladi va ertaga boshqasi bo'ladi. Muddatsiz taklif "keyinroq"
+ * degan javobni oladi, muddatli esa bugun bosiladi.
+ */
+function Sinov({ bajarildi, onSinov }: { bajarildi: boolean; onSinov: () => void }) {
+  if (bajarildi) {
+    return (
+      <div className="mt-2.5 flex items-center gap-3 rounded-clay bg-karta/70 p-3.5 shadow-clay-sm">
+        <span className="grid size-10 shrink-0 place-items-center rounded-2xl
+                         bg-brand-green/15 text-brand-green-d">
+          <Icon name="check" size={20} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-[14px] leading-tight text-ink-soft">
+            {t("sinovBajarildi")}
+          </span>
+          <span className="block text-[12px] text-ink-dim">{t("sinovErtaga")}</span>
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onSinov}
+      className="tugma-3d az-yaltir mt-2.5 flex w-full items-center gap-3 rounded-clay
+                 bg-brand-gold p-3.5 text-left text-white shadow-clay">
+      <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/25">
+        <Icon name="flame" size={21} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[15px] leading-tight">
+          {t("sinovSarlavha")}
+        </span>
+        <span className="mt-0.5 block truncate text-[12px] text-white/85">
+          {t("sinovIzoh")}
+        </span>
+      </span>
+      <span className="shrink-0 rounded-full bg-white/25 px-2.5 py-1 text-[11.5px] whitespace-nowrap">
+        {t("sinovQolgan", { n: qolganSoat() })}
+      </span>
+    </button>
+  );
+}
+
+/**
  * "Davom etish" — bola to'xtagan darsga bir bosishda olib boradigan tugma.
  *
  * Yozuv ikki qavat: harakat ("Davom etish") va MANZIL ("2-bo'lim ·
@@ -274,28 +363,28 @@ function Davom({ units, keyingi, boshlanmagan, onStart }: {
   const L = U.lessons[keyingi.li];
   // Dars nomining ikkinchi qismi — darslik betlari ("Qo'shish · 42–43-bet").
   // Tugmada faqat nomi turadi, betlar bu yerda ortiqcha shovqin.
-  const nom = L.n.split(" · ")[0];
+  const nom = kursMatn(L.n).split(" · ")[0];
 
   return (
     <button
       type="button"
       onClick={() => onStart(keyingi.ui, keyingi.li)}
       data-tur="davom"
-      className="tugma-3d az-yaltir mt-4 flex w-full items-center gap-3.5 rounded-clay
-                 bg-brand-green p-4 text-left text-white shadow-clay"
+      className="tugma-3d az-yaltir mt-3.5 flex w-full items-center gap-3 rounded-clay
+                 bg-brand-green p-3.5 text-left text-white shadow-clay"
     >
-      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20">
-        <Icon name={L.ic} size={26} />
+      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/20">
+        <Icon name={L.ic} size={24} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-display text-[17px] leading-tight">
-          {boshlanmagan ? "Boshlash" : "Davom etish"}
+        <span className="block font-display text-[16px] leading-tight">
+          {boshlanmagan ? t("boshlash") : t("davomEtish")}
         </span>
-        <span className="mt-0.5 block truncate text-[13px] text-white/85">
-          {U.u} · {nom}
+        <span className="mt-0.5 block truncate text-[12.5px] text-white/85">
+          {kursMatn(U.u)} · {nom}
         </span>
       </span>
-      <Icon name="chevron" size={22} className="shrink-0 text-white/80" />
+      <Icon name="chevron" size={20} className="shrink-0 text-white/80" />
     </button>
   );
 }
@@ -314,13 +403,13 @@ function KunlikMaqsad({ kunlik, maqsad }: { kunlik: Kunlik; maqsad: number }) {
   const bajarildi = kunlik.savollar >= maqsad;
 
   return (
-    <div className="mt-4 flex items-center gap-3 rounded-clay bg-[linear-gradient(135deg,var(--az-maqsad-1),var(--az-maqsad-2))] p-4 shadow-clay-sm">
-      <Icon name={bajarildi ? "trophy" : "flame"} size={26}
+    <div className="mt-3 flex items-center gap-3 rounded-clay bg-[linear-gradient(135deg,var(--az-maqsad-1),var(--az-maqsad-2))] p-3.5 shadow-clay-sm">
+      <Icon name={bajarildi ? "trophy" : "flame"} size={24}
         className={`shrink-0 ${bajarildi ? "text-brand-gold" : "text-[#e2571f]"}`} />
 
       <div className="min-w-0 flex-1">
-        <div className="font-display text-[15px]">
-          {bajarildi ? "Bugungi maqsad bajarildi!" : "Kunlik maqsad"}
+        <div className="font-display text-[14.5px] leading-tight">
+          {bajarildi ? t("maqsadBajarildi") : t("kunlikMaqsad")}
         </div>
         <div className="mt-1 flex items-center gap-2">
           <span className="h-2 flex-1 overflow-hidden rounded-full bg-black/15">
@@ -336,7 +425,7 @@ function KunlikMaqsad({ kunlik, maqsad }: { kunlik: Kunlik; maqsad: number }) {
 
       <div className="shrink-0 rounded-xl bg-karta/70 px-3 py-1.5 text-center">
         <div className="font-display text-[15px] leading-none">{kunlik.kunlar}</div>
-        <div className="text-[10px] text-ink-dim">kun</div>
+        <div className="text-[10px] text-ink-dim">{t("kun")}</div>
       </div>
     </div>
   );

@@ -7,6 +7,8 @@
  */
 import { Icon } from "../lib/icons";
 import type { Nishon } from "../lib/nishon";
+import { t } from "../lib/matn";
+import { useOrqaga } from "../lib/qobiq";
 
 interface Props {
   nishonlar: Nishon[];
@@ -15,21 +17,28 @@ interface Props {
 
 export function Nishonlar({ nishonlar, onBack }: Props) {
   const olingan = nishonlar.filter((n) => n.daraja >= 1).length;
+  const ozStrelka = useOrqaga(onBack);
 
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16">
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onBack} title="Ortga"
-          className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
-          <Icon name="chevron" size={20} className="rotate-180" />
-        </button>
+        {/* Telegram Mini App ichida bu strelka CHIZILMAYDI: u yerda
+            Telegram o'z sarlavhasida nativ `←` ni ko'rsatadi va ikkitasi
+            bir ekranda turganda odam har safar "qaysi biri to'g'ri?" deb
+            o'ylardi (`lib/qobiq.ts`). */}
+        {ozStrelka && (
+          <button type="button" onClick={onBack} title={t("ortga")}
+            className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
+            <Icon name="chevron" size={20} className="rotate-180" />
+          </button>
+        )}
       </div>
 
       <div className="az-kirish mt-4 text-center">
         <div className="text-[52px] leading-none">🏅</div>
-        <h1 className="mt-2 text-[22px]">Nishonlar</h1>
+        <h1 className="mt-2 text-[22px]">{t("nishonlar")}</h1>
         <p className="mt-1 text-[13px] text-ink-soft">
-          {olingan} / {nishonlar.length} qo'lga kiritildi
+          {t("nishonHisob", { olingan, jami: nishonlar.length })}
         </p>
       </div>
 

@@ -17,6 +17,7 @@
  */
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
+import { t } from "../lib/matn";
 
 interface Props {
   children: ReactNode;
@@ -46,15 +47,14 @@ export class XatoUshlagich extends Component<Props, State> {
     if (!this.state.xato) return this.props.children;
 
     return (
-      <div className="grid min-h-dvh place-items-center px-6">
+      <div className="grid min-h-ekran place-items-center px-6">
         <div className="w-full max-w-[360px] rounded-clay bg-karta p-7 text-center shadow-clay">
           <div className="text-[56px] leading-none">🛠️</div>
 
-          <h1 className="mt-3 text-[21px]">Nimadir noto'g'ri ketdi</h1>
+          <h1 className="mt-3 text-[21px]">{t("xatoSarlavha")}</h1>
 
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
-            Xavotir olma — <b>yulduzlaring va tangalaring joyida</b>.
-            Quyidagi tugmani bosib davom etsang bo'ladi.
+            {t("xatoIzoh1")}<b>{t("xatoIzohQalin")}</b>{t("xatoIzoh2")}
           </p>
 
           <button
@@ -63,7 +63,7 @@ export class XatoUshlagich extends Component<Props, State> {
             className="clay-press mt-6 w-full rounded-3xl bg-brand-green py-3.5 font-display text-lg
                        text-white shadow-[0_6px_0_var(--color-brand-green-d)]"
           >
-            Qayta urinish
+            {t("qaytaUrinish")}
           </button>
 
           <button
@@ -71,14 +71,14 @@ export class XatoUshlagich extends Component<Props, State> {
             onClick={() => { window.location.href = "/"; }}
             className="clay-press mt-2.5 w-full rounded-3xl bg-track py-3 font-display text-[15px] text-ink-soft"
           >
-            Boshiga qaytish
+            {t("boshigaQaytish")}
           </button>
 
           {/* Texnik tafsilot — bolaga kerak emas, lekin ota-ona yoki
               ishlab chiquvchi muammoni aytib bera olsin. */}
           <details className="mt-4 text-left">
             <summary className="cursor-pointer text-[11.5px] text-ink-dim">
-              Texnik ma'lumot
+              {t("texnikMalumot")}
             </summary>
             <pre className="mt-1.5 max-h-32 overflow-auto rounded-xl bg-track p-2 text-[10.5px]
                             whitespace-pre-wrap text-ink-dim">

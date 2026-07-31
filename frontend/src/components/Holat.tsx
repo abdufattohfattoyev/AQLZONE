@@ -8,6 +8,7 @@
  */
 import { useOffline } from "../lib/offline";
 import { Icon } from "../lib/icons";
+import { t } from "../lib/matn";
 
 export function Holat() {
   const { tarmoq, yangiVersiya, yangila } = useOffline();
@@ -20,7 +21,7 @@ export function Holat() {
         <div className="az-kirish pointer-events-auto flex items-center gap-2 rounded-full bg-karta
                         px-4 py-2 text-[13px] shadow-clay-sm">
           <span className="size-2 shrink-0 rounded-full bg-brand-orange" />
-          Internet yo'q — o'ynashda davom et, progress keyin saqlanadi
+          {t("internetYoq")}
         </div>
       )}
 
@@ -32,7 +33,7 @@ export function Holat() {
                      bg-brand-green px-4 py-2 text-[13px] text-white shadow-clay-sm"
         >
           <Icon name="repeat" size={16} />
-          Yangi versiya tayyor — yangilash
+          {t("yangiVersiya")}
         </button>
       )}
     </div>

@@ -90,12 +90,18 @@ class HisobSerializer(serializers.Serializer):
         required=False, allow_blank=True, max_length=120, trim_whitespace=True
     )
 
+    #: Ilova tanlagan til. Ism bilan bir so'rovda kelishi mumkin, lekin
+    #: odatda alohida keladi — foydalanuvchi tilni almashtirganda.
+    til = serializers.ChoiceField(choices=["uz", "ru"], required=False)
+
     validate_ism = staticmethod(_ismni_tekshir)
     validate_familiya = staticmethod(_ismni_tekshir)
 
     def validate(self, data):
         if not data:
-            raise serializers.ValidationError("ism yoki familiya yuborilishi kerak")
+            raise serializers.ValidationError(
+                "ism, familiya yoki til yuborilishi kerak"
+            )
         return data
 
 

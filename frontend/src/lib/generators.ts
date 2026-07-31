@@ -9,12 +9,15 @@
  */
 import { choicesAround, pc, pcS, pick, rnd, shuffle } from "./rnd";
 import {
-  ASOSIY_RANGLAR, BOSH_HARF, GURUHLAR, HAFTA, HARFLAR, HAYVONLAR, HAYVON_OVOZ,
+  ASOSIY_RANGLAR, BOSH_HARF, GURUHLAR, HAYVONLAR, HAYVON_OVOZ,
   KAYFIYAT, KUN_TARTIBI, MAKTAB_RANGLAR, MEVA, OBJS, OB_HAVO, OLCHAM_JUFT,
-  RANGLAR, RANGLI_NARSA, SHAKL_EMOJI, SHAPES, TRANSPORT, YEM, YONALISH,
-  objName, rangNomi,
+  OLCHAM_SIFAT, RANGLAR, RANGLI_NARSA, SHAKL_EMOJI, SHAPES, TRANSPORT, YEM,
+  YONALISH, boshHarfi, hafta, haftaKeyin, harflar, nomi, objName, ovoziNomi,
+  qayerNomi, rangSifat, shaklNomi,
 } from "./activity";
 import type { Activity, Gen, ShapeKey } from "./activity";
+import { til } from "./til";
+import { p } from "./tarjima/savol";
 
 /* ==================== Maktabgacha (4–6 yosh) ====================
  * Bu bolalar 1-sinf bolasidan ham kichik: ular na o'qiydi, na sanaydi,
@@ -41,6 +44,16 @@ import type { Activity, Gen, ShapeKey } from "./activity";
  */
 const Bosh = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/**
+ * Nomni GAP BOSHIDA turgan holatga keltiradi — faqat o'zbekchada.
+ *
+ * O'zbekcha qolipda nom gapning boshida keladi ("Ayiq nimani yeydi?"),
+ * ruschada esa o'rtasida ("Что ест медведь?"). Shuning uchun bosh harfga
+ * ko'tarish tilga bog'liq: ruschada u gap o'rtasidagi otni katta harf
+ * bilan yozib qo'yardi.
+ */
+const B = (s: string) => (til() === "ru" ? s : Bosh(s));
+
 /* ---------- ranglar ---------- */
 
 /** Ko'rsatilgan rangni topish — to'rt asosiy rang ichidan. */
@@ -49,7 +62,7 @@ export const g0Rang = (): Activity => {
   const boshqa = shuffle(ASOSIY_RANGLAR.filter((r) => r.hex !== t.hex)).slice(0, 3);
   return {
     type: "rang", rang: t.hex, answer: t.hex, kind: "rang",
-    prompt: "Shu rangni top!",
+    prompt: p("rangTop"),
     choices: shuffle([t.hex, ...boshqa.map((r) => r.hex)]),
   };
 };
@@ -60,7 +73,7 @@ export const g0RangNom = (): Activity => {
   const boshqa = shuffle(ASOSIY_RANGLAR.filter((r) => r.hex !== t.hex)).slice(0, 3);
   return {
     type: "rang", rang: "", answer: t.hex, kind: "rang",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("rangQaysi", { nom: nomi(t) }),
     choices: shuffle([t.hex, ...boshqa.map((r) => r.hex)]),
   };
 };
@@ -71,7 +84,7 @@ export const g0RangNarsa = (): Activity => {
   const boshqa = shuffle(RANGLAR.filter((r) => r.hex !== t.hex)).slice(0, 3);
   return {
     type: "rasm", emoji: t.e, answer: t.hex, kind: "rang",
-    prompt: `${Bosh(t.nom)} qanday rangda?`,
+    prompt: p("narsaRang", { nom: B(nomi(t)) }),
     choices: shuffle([t.hex, ...boshqa.map((r) => r.hex)]),
   };
 };
@@ -82,7 +95,7 @@ export const g0RangKop = (): Activity => {
   const boshqa = shuffle(MAKTAB_RANGLAR.filter((r) => r.hex !== t.hex)).slice(0, 3);
   return {
     type: "rang", rang: "", answer: t.hex, kind: "rang",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("rangQaysi", { nom: nomi(t) }),
     choices: shuffle([t.hex, ...boshqa.map((r) => r.hex)]),
   };
 };
@@ -101,7 +114,13 @@ export const g0RangliMeva = (): Activity => {
   const boshqa = shuffle(MEVA.filter((m) => m.hex !== t.hex)).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `${Bosh(rangNomi(t.hex))} ${t.nom}ni top!`,
+    // Ruschada sifat OT JINSIGA kelishadi ("красное яблоко", "красную
+    // клубнику"), o'zbekchada esa o'zgarmaydi — shu sabab ikki til bir
+    // qolipda ishlashi uchun sifat `rangSifat` dan olinadi.
+    prompt: p("rangliMeva", {
+      sifat: B(rangSifat(t.hex, t.r)),
+      nom: nomi(t),
+    }),
     choices: shuffle([t.e, ...boshqa.map((m) => m.e)]),
   };
 };
@@ -114,7 +133,7 @@ export const g0Shakl = (): Activity => {
   const boshqa = shuffle(SHAKL_EMOJI.filter((s) => s.e !== t.e)).slice(0, 3);
   return {
     type: "rasm", emoji: t.e, answer: t.e, kind: "emoji",
-    prompt: "Xuddi shu shaklni top!",
+    prompt: p("shaklTop"),
     choices: shuffle([t.e, ...boshqa.map((s) => s.e)]),
   };
 };
@@ -125,7 +144,7 @@ export const g0ShaklNom = (): Activity => {
   const boshqa = shuffle(SHAKL_EMOJI.filter((s) => s.e !== t.e)).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("shaklQaysi", { nom: nomi(t) }),
     choices: shuffle([t.e, ...boshqa.map((s) => s.e)]),
   };
 };
@@ -151,7 +170,7 @@ export const g0Naqsh = (): Activity => {
   const boshqa = shuffle(SHAKL_EMOJI.filter((s) => s.e !== javob)).slice(0, 3);
   return {
     type: "naqsh", items, answer: javob, kind: "emoji",
-    prompt: "Keyin nima keladi?",
+    prompt: p("naqshKeyin"),
     choices: shuffle([javob, ...boshqa.map((s) => s.e)]),
   };
 };
@@ -165,7 +184,7 @@ export const g0Guruh = (): Activity => {
   const boshqalar = shuffle(GURUHLAR.filter((x) => x.nom !== g.nom).flatMap((x) => [...x.items])).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: togri, kind: "emoji",
-    prompt: `Qaysi biri ${g.nom}?`,
+    prompt: p("guruhQaysi", { nom: nomi(g) }),
     choices: shuffle([togri, ...boshqalar]),
   };
 };
@@ -180,7 +199,7 @@ export const g0Ortiq = (): Activity => {
   items.splice(joy, 0, ortiq);
   return {
     type: "odd", items, odd: joy, answer: ortiq, kind: "emoji",
-    prompt: "Qaysi biri boshqacha?",
+    prompt: p("boshqacha"),
     choices: shuffle([ortiq, ...uch]),
   };
 };
@@ -191,7 +210,7 @@ export const g0Yem = (): Activity => {
   const boshqa = shuffle(YEM.filter((x) => x.y !== t.y)).slice(0, 3);
   return {
     type: "rasm", emoji: t.h, answer: t.y, kind: "emoji",
-    prompt: `${Bosh(t.nom)} nimani yeydi?`,
+    prompt: p("yem", { nom: B(nomi(t)) }),
     choices: shuffle([t.y, ...boshqa.map((x) => x.y)]),
   };
 };
@@ -202,7 +221,7 @@ export const g0Kayfiyat = (): Activity => {
   const boshqa = shuffle(KAYFIYAT.filter((k) => k.e !== t.e)).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("kayfiyat", { nom: nomi(t) }),
     choices: shuffle([t.e, ...boshqa.map((k) => k.e)]),
   };
 };
@@ -215,7 +234,7 @@ export const g0Hayvon = (): Activity => {
   const boshqa = shuffle(HAYVON_OVOZ.filter((h) => h.e !== t.e)).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("hayvonQaysi", { nom: nomi(t) }),
     choices: shuffle([t.e, ...boshqa.map((h) => h.e)]),
   };
 };
@@ -232,7 +251,7 @@ export const g0HayvonOvoz = (): Activity => {
   const boshqa = shuffle(HAYVON_OVOZ.filter((h) => h.ovoz !== t.ovoz)).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Kim "${t.ovoz}" deydi?`,
+    prompt: p("ovozKim", { ovoz: ovoziNomi(t) }),
     choices: shuffle([t.e, ...boshqa.map((h) => h.e)]),
   };
 };
@@ -242,9 +261,9 @@ export const g0Ovozi = (): Activity => {
   const t = pick(HAYVON_OVOZ);
   const boshqa = shuffle(HAYVON_OVOZ.filter((h) => h.ovoz !== t.ovoz)).slice(0, 3);
   return {
-    type: "rasm", emoji: t.e, answer: t.ovoz, kind: "matn",
-    prompt: `${Bosh(t.nom)} qanday ovoz chiqaradi?`,
-    choices: shuffle([t.ovoz, ...boshqa.map((h) => h.ovoz)]),
+    type: "rasm", emoji: t.e, answer: ovoziNomi(t), kind: "matn",
+    prompt: p("ovozQanday", { nom: B(nomi(t)) }),
+    choices: shuffle([ovoziNomi(t), ...boshqa.map(ovoziNomi)]),
   };
 };
 
@@ -254,7 +273,7 @@ export const g0Meva = (): Activity => {
   const boshqa = shuffle(MEVA.filter((m) => m.e !== t.e)).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("mevaQaysi", { nom: nomi(t) }),
     choices: shuffle([t.e, ...boshqa.map((m) => m.e)]),
   };
 };
@@ -271,7 +290,7 @@ export const g0MevaRang = (): Activity => {
   const boshqa = shuffle(RANGLAR.filter((r) => r.hex !== t.hex)).slice(0, 3);
   return {
     type: "rasm", emoji: t.e, answer: t.hex, kind: "rang",
-    prompt: `${Bosh(t.nom)} qanday rangda?`,
+    prompt: p("narsaRang", { nom: B(nomi(t)) }),
     choices: shuffle([t.hex, ...boshqa.map((r) => r.hex)]),
   };
 };
@@ -282,7 +301,7 @@ export const g0Transport = (): Activity => {
   const boshqa = shuffle(TRANSPORT.filter((x) => x.e !== t.e)).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("transportQaysi", { nom: nomi(t) }),
     choices: shuffle([t.e, ...boshqa.map((x) => x.e)]),
   };
 };
@@ -299,7 +318,7 @@ export const g0TransportJoy = (): Activity => {
   const boshqa = shuffle(TRANSPORT.filter((x) => x.qayer !== t.qayer)).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi biri ${t.qayer} yuradi?`,
+    prompt: p("transportJoy", { qayer: qayerNomi(t) }),
     choices: shuffle([t.e, ...boshqa.map((x) => x.e)]),
   };
 };
@@ -316,10 +335,15 @@ export const g0TransportJoy = (): Activity => {
 export const g0Olcham = (): Activity => {
   const t = pick(OLCHAM_JUFT);
   const kattaSora = Math.random() < 0.5;
-  const teskari: Record<string, string> = { katta: "kichik", uzun: "qisqa", baland: "past" };
+  const s = OLCHAM_SIFAT[t.sifat];
+  // Ruschada DARAJA shakli ishlatiladi ("выше", "короче"): u jinsga
+  // bog'lanmaydi, ya'ni istalgan juftlik uchun to'g'ri chiqadi.
+  const sifat = til() === "ru"
+    ? (kattaSora ? s.ru : s.ruTeskari)
+    : (kattaSora ? t.sifat : s.teskari);
   return {
     type: "rasm", emoji: "", answer: kattaSora ? t.katta : t.kichik, kind: "emoji",
-    prompt: `Qaysi biri ${kattaSora ? t.sifat : teskari[t.sifat]}?`,
+    prompt: p("olcham", { sifat }),
     choices: shuffle([t.katta, t.kichik]),
   };
 };
@@ -329,7 +353,7 @@ export const g0Yonalish = (): Activity => {
   const t = pick(YONALISH);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi strelka ${t.nom} qaragan?`,
+    prompt: p("yonalish", { nom: nomi(t) }),
     choices: shuffle(YONALISH.map((y) => y.e)),
   };
 };
@@ -341,7 +365,7 @@ export const g0Kun = (): Activity => {
   const t = pick(KUN_TARTIBI);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("kunQaysi", { nom: nomi(t) }),
     choices: shuffle(KUN_TARTIBI.map((k) => k.e)),
   };
 };
@@ -352,7 +376,8 @@ export const g0KunKeyin = (): Activity => {
   const t = KUN_TARTIBI[i], j = KUN_TARTIBI[i + 1];
   return {
     type: "rasm", emoji: t.e, answer: j.e, kind: "emoji",
-    prompt: `${Bosh(t.nom)}dan keyin nima bo'ladi?`,
+    // Ruschada "после" qaratqich kelishigini talab qiladi (утро → утра).
+    prompt: p("kunKeyin", { nom: til() === "ru" ? t.ruGen : Bosh(t.nom) }),
     choices: shuffle(KUN_TARTIBI.map((k) => k.e)),
   };
 };
@@ -365,15 +390,16 @@ export const g0KunKeyin = (): Activity => {
  * ilova o'zi aytadi), bola esa tartibni quloq bilan eslab qoladi.
  */
 export const g0Hafta = (): Activity => {
-  const i = rnd(0, HAFTA.length - 2);
-  const togri = HAFTA[i + 1];
-  const boshqa = shuffle(HAFTA.filter((k) => k !== togri)).slice(0, 3);
+  const kunlar = hafta();
+  const i = rnd(0, kunlar.length - 2);
+  const togri = kunlar[i + 1];
+  const boshqa = shuffle(kunlar.filter((k) => k !== togri)).slice(0, 3);
   return {
     // Sahnada BUGUNGI kun turadi: bola so'zning shaklini ko'radi va uni
     // eshitgan nomi bilan bog'laydi. Bo'sh sahna bu darsni umuman
     // ma'nosiz qilardi — ko'rsatadigan narsasi qolmasdi.
-    type: "belgi", belgi: HAFTA[i], answer: togri, kind: "matn",
-    prompt: `${HAFTA[i]}dan keyin qaysi kun keladi?`,
+    type: "belgi", belgi: kunlar[i], answer: togri, kind: "matn",
+    prompt: p("haftaKeyin", { kun: haftaKeyin(i) }),
     choices: shuffle([togri, ...boshqa]),
   };
 };
@@ -383,7 +409,7 @@ export const g0ObHavo = (): Activity => {
   const t = pick(OB_HAVO);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi biri ${t.nom} kun?`,
+    prompt: p("obHavoQaysi", { nom: nomi(t) }),
     choices: shuffle(OB_HAVO.map((o) => o.e)),
   };
 };
@@ -393,7 +419,7 @@ export const g0ObHavoKiyim = (): Activity => {
   const t = pick(OB_HAVO);
   return {
     type: "rasm", emoji: t.e, answer: t.kiyim, kind: "emoji",
-    prompt: "Bunday kunda nima kerak?",
+    prompt: p("obHavoKiyim"),
     choices: shuffle(OB_HAVO.map((o) => o.kiyim)),
   };
 };
@@ -410,7 +436,7 @@ export const g0Sana = (max = 3): Activity => {
   const n = rnd(1, max), e = pick(OBJS);
   return {
     type: "count", emoji: e, n, answer: n, kind: "belgi",
-    prompt: `Nechta ${objName(e)}?`,
+    prompt: p("nechta", { nom: objName(e) }),
     choices: choicesAround(n, 4, 1, max + 2),
   };
 };
@@ -425,7 +451,7 @@ export const g0Kop = (): Activity => {
   const kop = Math.max(a, b);
   return {
     type: "cmpvis", a, b, emoji: pick(OBJS), answer: kop, kind: "belgi",
-    prompt: "Qayerda ko'p? Nechta?",
+    prompt: p("qayerdaKop"),
     choices: choicesAround(kop, 4, 1, 7),
   };
 };
@@ -435,7 +461,7 @@ export const g0Qosh = (max = 5): Activity => {
   const a = rnd(1, max - 1), b = rnd(1, max - a);
   return {
     type: "cmpvis", a, b, emoji: pick(OBJS), plus: true, answer: a + b, kind: "belgi",
-    prompt: "Hammasi nechta?",
+    prompt: p("hammasiNechta"),
     choices: choicesAround(a + b, 4, 1, max + 2),
   };
 };
@@ -447,7 +473,7 @@ export const g0Nur = (max = 5): Activity => {
   const hide = rnd(1, 3);
   return {
     type: "numray", arr, hide, answer: arr[hide], kind: "belgi",
-    prompt: "Qaysi son tushib qolgan?",
+    prompt: p("tushibQolgan"),
     choices: choicesAround(arr[hide], 4, 1, max),
   };
 };
@@ -460,7 +486,7 @@ export const g0Kam = (): Activity => {
   const kam = Math.min(a, b);
   return {
     type: "cmpvis", a, b, emoji: pick(OBJS), answer: kam, kind: "belgi",
-    prompt: "Qayerda kam? Nechta?",
+    prompt: p("qayerdaKam"),
     choices: choicesAround(kam, 4, 1, 7),
   };
 };
@@ -475,7 +501,7 @@ export const g0Ayir = (max = 5): Activity => {
   const n = rnd(2, max), k = rnd(1, n - 1);
   return {
     type: "ayirvis", n, k, emoji: pick(OBJS), answer: n - k, kind: "belgi",
-    prompt: "Nechtasi qoldi?",
+    prompt: p("nechtaQoldi"),
     choices: choicesAround(n - k, 4, 1, max + 1),
   };
 };
@@ -485,7 +511,7 @@ export const g0QoshBelgi = (max = 5): Activity => {
   const a = rnd(1, max - 1), b = rnd(1, max - a);
   return {
     type: "eqn", text: `${a} + ${b} = ?`, answer: a + b, kind: "belgi",
-    prompt: `${a} ga ${b} ni qo'sh!`,
+    prompt: p("qoshBuyruq", { a, b }),
     choices: choicesAround(a + b, 4, 1, max + 2),
   };
 };
@@ -495,7 +521,7 @@ export const g0AyirBelgi = (max = 5): Activity => {
   const a = rnd(2, max), b = rnd(1, a - 1);
   return {
     type: "eqn", text: `${a} − ${b} = ?`, answer: a - b, kind: "belgi",
-    prompt: `${a} dan ${b} ni ayir!`,
+    prompt: p("ayirBuyruq", { a, b }),
     choices: choicesAround(a - b, 4, 1, max),
   };
 };
@@ -507,7 +533,7 @@ export const g0Keyingi = (max = 5): Activity => {
   const j = keyin ? n + 1 : n - 1;
   return {
     type: "eqn", text: keyin ? `${n} → ?` : `? ← ${n}`, answer: j, kind: "belgi",
-    prompt: keyin ? `${n} dan keyin qaysi son keladi?` : `${n} dan oldin qaysi son turadi?`,
+    prompt: keyin ? p("keyingiSon", { n }) : p("oldingiSon", { n }),
     choices: choicesAround(j, 4, 1, max),
   };
 };
@@ -520,29 +546,31 @@ export const g0Raqam = (max = 5): Activity => {
   const boshqa = shuffle(Array.from({ length: max }, (_, i) => i + 1).filter((x) => x !== n)).slice(0, 3);
   return {
     type: "belgi", belgi: "", answer: n, kind: "belgi",
-    prompt: `Qaysi biri ${n} raqami?`,
+    prompt: p("raqamQaysi", { n }),
     choices: shuffle([n, ...boshqa]),
   };
 };
 
 /** Harfni tanish: "qaysi biri A harfi?" */
 export const g0Harf = (): Activity => {
-  const h = pick(HARFLAR);
-  const boshqa = shuffle(HARFLAR.filter((x) => x !== h)).slice(0, 3);
+  const alifbo = harflar();
+  const h = pick(alifbo);
+  const boshqa = shuffle(alifbo.filter((x) => x !== h)).slice(0, 3);
   return {
     type: "belgi", belgi: "", answer: h, kind: "belgi",
-    prompt: `Qaysi biri ${h} harfi?`,
+    prompt: p("harfQaysi", { h }),
     choices: shuffle([h, ...boshqa]),
   };
 };
 
 /** Xuddi shu harfni top — o'qishdan oldingi eng oson shakl mashqi. */
 export const g0HarfJuft = (): Activity => {
-  const h = pick(HARFLAR);
-  const boshqa = shuffle(HARFLAR.filter((x) => x !== h)).slice(0, 3);
+  const alifbo = harflar();
+  const h = pick(alifbo);
+  const boshqa = shuffle(alifbo.filter((x) => x !== h)).slice(0, 3);
   return {
     type: "belgi", belgi: h, answer: h, kind: "belgi",
-    prompt: "Xuddi shu harfni top!",
+    prompt: p("harfTop"),
     choices: shuffle([h, ...boshqa]),
   };
 };
@@ -550,11 +578,12 @@ export const g0HarfJuft = (): Activity => {
 /** So'z qaysi harf bilan boshlanadi: 🍎 olma → O. */
 export const g0BoshHarf = (): Activity => {
   const t = pick(BOSH_HARF);
-  const boshqa = shuffle(HARFLAR.filter((x) => x !== t.h)).slice(0, 3);
+  const h = boshHarfi(t);
+  const boshqa = shuffle(harflar().filter((x) => x !== h)).slice(0, 3);
   return {
-    type: "rasm", emoji: t.e, answer: t.h, kind: "belgi",
-    prompt: `"${t.nom}" qaysi harf bilan boshlanadi?`,
-    choices: shuffle([t.h, ...boshqa]),
+    type: "rasm", emoji: t.e, answer: h, kind: "belgi",
+    prompt: p("boshHarf", { nom: nomi(t) }),
+    choices: shuffle([h, ...boshqa]),
   };
 };
 
@@ -576,7 +605,7 @@ export const g1Rang = (): Activity => {
   const boshqa = shuffle(RANGLAR.filter((r) => r.hex !== t.hex)).slice(0, 3);
   return {
     type: "rang", rang: t.hex, answer: t.hex, kind: "rang",
-    prompt: `Shu rangni top!`,
+    prompt: p("rangTop"),
     choices: shuffle([t.hex, ...boshqa.map((r) => r.hex)]),
   };
 };
@@ -587,7 +616,7 @@ export const g1RangNom = (): Activity => {
   const boshqa = shuffle(RANGLAR.filter((r) => r.hex !== t.hex)).slice(0, 3);
   return {
     type: "rang", rang: "", answer: t.hex, kind: "rang",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("rangQaysi", { nom: nomi(t) }),
     choices: shuffle([t.hex, ...boshqa.map((r) => r.hex)]),
   };
 };
@@ -600,7 +629,7 @@ export const g1Hayvon = (): Activity => {
   const boshqa = shuffle(HAYVONLAR.filter((h) => h.e !== t.e)).slice(0, 3);
   return {
     type: "rasm", emoji: t.e, answer: t.e, kind: "emoji",
-    prompt: "Xuddi shunisini top!",
+    prompt: p("shunisiTop"),
     choices: shuffle([t.e, ...boshqa.map((h) => h.e)]),
   };
 };
@@ -611,7 +640,7 @@ export const g1HayvonNom = (): Activity => {
   const boshqa = shuffle(HAYVONLAR.filter((h) => h.e !== t.e)).slice(0, 3);
   return {
     type: "rasm", emoji: "", answer: t.e, kind: "emoji",
-    prompt: `Qaysi biri ${t.nom}?`,
+    prompt: p("hayvonQaysi", { nom: nomi(t) }),
     choices: shuffle([t.e, ...boshqa.map((h) => h.e)]),
   };
 };
@@ -621,7 +650,7 @@ export const g1HayvonSana = (max = 5): Activity => {
   const h = pick(HAYVONLAR), n = rnd(1, max);
   return {
     type: "count", emoji: h.e, n, answer: n,
-    prompt: `Nechta ${h.nom}?`,
+    prompt: p("nechta", { nom: nomi(h) }),
     choices: choicesAround(n, 4, 1, max + 2),
   };
 };
@@ -635,7 +664,7 @@ export const g1HayvonOrtiq = (): Activity => {
   return {
     type: "odd", items: Array.from({ length: 4 }, (_, i) => (i === odd ? b.e : a.e)), odd,
     answer: b.e, kind: "emoji",
-    prompt: "Qaysi biri boshqacha?",
+    prompt: p("boshqacha"),
     choices: shuffle([b.e, a.e, ...shuffle(HAYVONLAR.filter((h) => h.e !== a.e && h.e !== b.e)).slice(0, 2).map((h) => h.e)]),
   };
 };
@@ -657,25 +686,34 @@ export const g1KattaKichik = (): Activity => {
   const togri = tanlangan.reduce((a, b) => (kattaSora ? (b.o > a.o ? b : a) : (b.o < a.o ? b : a)));
   return {
     type: "rasm", emoji: "", answer: togri.e, kind: "emoji",
-    prompt: kattaSora ? "Qaysi hayvon eng katta?" : "Qaysi hayvon eng kichik?",
+    prompt: kattaSora ? p("engKatta") : p("engKichik"),
     choices: shuffle(tanlangan.map((h) => h.e)),
   };
 };
 
 /* ---------- joylashuv, sanash, sonlar ---------- */
 
-const OY = ["yuqorida", "pastda", "chapda", "o'ngda", "o'rtada"] as const;
+/**
+ * Joylashuv nomlari — javob variantlari sifatida ishlatiladi.
+ *
+ * Ro'yxat funksiya bo'lib turadi, doimiy emas: til modul yuklangandan
+ * keyin ham almashishi mumkin va doimiy qiymat eski tilda qotib qolardi.
+ */
+const oy = () => [
+  p("jYuqorida"), p("jPastda"), p("jChapda"), p("jOngda"), p("jOrtada"),
+];
 
 /** Fazoviy joylashuv. 3×3 katakda narsa qayerda turibdi. */
 export const g1Pos = (): Activity => {
   // Faqat aniq javobi bor kataklar: burchaklar ikki ma'noli bo'lib qoladi.
   const kataklar = [1, 7, 3, 5, 4];                     // yuqori, past, chap, o'ng, markaz
+  const OY = oy();
   const i = rnd(0, kataklar.length - 1);
   const e = pick(OBJS);
   const togri = OY[i];
   return {
     type: "pos", emoji: e, cell: kataklar[i], answer: togri,
-    prompt: `${Bosh(objName(e))} qayerda?`,
+    prompt: p("narsaQayerda", { nom: B(objName(e)) }),
     choices: shuffle([togri, ...shuffle(OY.filter((x) => x !== togri)).slice(0, 3)]),
   };
 };
@@ -689,7 +727,7 @@ export const g1Odd = (): Activity => {
   const items = Array.from({ length: 4 }, (_, i) => (i === odd ? boshqa : asosiy));
   return {
     type: "odd", items, odd, answer: boshqa,
-    prompt: "Qaysi biri boshqacha?",
+    prompt: p("boshqacha"),
     choices: shuffle([boshqa, asosiy, ...shuffle(OBJS.filter((x) => x !== asosiy && x !== boshqa)).slice(0, 2)]),
   };
 };
@@ -699,7 +737,7 @@ export const g1Count = (max = 10): Activity => {
   const n = rnd(1, max), e = pick(OBJS);
   return {
     type: "count", emoji: e, n, answer: n,
-    prompt: `Nechta ${objName(e)}?`,
+    prompt: p("nechta", { nom: objName(e) }),
     choices: choicesAround(n, 4, 1, max + 2),
   };
 };
@@ -713,7 +751,7 @@ export const g1CmpVis = (): Activity => {
   const kop = Math.max(a, b);
   return {
     type: "cmpvis", a, b, emoji: e, answer: kop,
-    prompt: "Qayerda ko'p? Nechta?",
+    prompt: p("qayerdaKop"),
     choices: pc(kop, [Math.min(a, b), kop + 1, kop - 1]),
   };
 };
@@ -725,8 +763,8 @@ export const g1Cmp = (max = 10): Activity => {
   while (b === a) b = rnd(1, max);
   const kop = Math.max(a, b);
   return {
-    type: "eqn", text: `${a}   va   ${b}`, answer: kop,
-    prompt: "Qaysi son katta?",
+    type: "eqn", text: `${a}   ${p("txtVa")}   ${b}`, answer: kop,
+    prompt: p("qaysiSonKatta"),
     choices: pc(kop, [Math.min(a, b), kop + 1, Math.max(1, kop - 2)]),
   };
 };
@@ -736,7 +774,7 @@ export const g1Compose = (jami = 10): Activity => {
   const n = rnd(4, jami), a = rnd(1, n - 1);
   return {
     type: "eqn", text: `${n} = ${a} + ?`, answer: n - a,
-    prompt: "Yetmayotgan sonni top!",
+    prompt: p("yetmayotgan"),
     choices: choicesAround(n - a, 4, 0, jami),
   };
 };
@@ -748,7 +786,7 @@ export const g1NextPrev = (max = 10): Activity => {
   const j = keyin ? n + 1 : n - 1;
   return {
     type: "eqn", text: `${n} → ?`, answer: j,
-    prompt: keyin ? `${n} dan keyin nima keladi?` : `${n} dan oldin nima turadi?`,
+    prompt: keyin ? p("keyingiNima", { n }) : p("oldingiNima", { n }),
     choices: choicesAround(j, 4, 0, max + 1),
   };
 };
@@ -758,7 +796,7 @@ export const g1Add10 = (): Activity => {
   const a = rnd(1, 8), b = rnd(1, 9 - a);
   return {
     type: "eqn", text: `${a} + ${b} = ?`, answer: a + b,
-    prompt: "Qo'sh!",
+    prompt: p("qosh"),
     choices: choicesAround(a + b, 4, 0, 12),
   };
 };
@@ -768,7 +806,7 @@ export const g1Sub10 = (): Activity => {
   const a = rnd(3, 10), b = rnd(1, a - 1);
   return {
     type: "eqn", text: `${a} − ${b} = ?`, answer: a - b,
-    prompt: "Ayir!",
+    prompt: p("ayir"),
     choices: choicesAround(a - b, 4, 0, 11),
   };
 };
@@ -778,7 +816,7 @@ export const g1Add20 = (): Activity => {
   const a = rnd(6, 9), b = rnd(11 - a, 9);
   return {
     type: "eqn", text: `${a} + ${b} = ?`, answer: a + b,
-    prompt: "Avval 10 gacha to'ldir, qolganini qo'sh!",
+    prompt: p("onlikTold"),
     choices: choicesAround(a + b, 4, 10, 20),
   };
 };
@@ -788,7 +826,7 @@ export const g1Sub20 = (): Activity => {
   const a = rnd(11, 18), b = rnd(a - 9, 9);
   return {
     type: "eqn", text: `${a} − ${b} = ?`, answer: a - b,
-    prompt: "Avval 10 gacha tush, keyin qolganini ayir!",
+    prompt: p("onlikTush"),
     choices: choicesAround(a - b, 4, 0, 12),
   };
 };
@@ -798,7 +836,7 @@ export const g1Tens = (maxTens = 1): Activity => {
   const t = rnd(1, maxTens), u = rnd(0, 9), n = t * 10 + u;
   return {
     type: "tens", tens: t, units: u, answer: n,
-    prompt: `${t} ta dasta va ${u} ta tayoqcha. Nechta?`,
+    prompt: p("dasta", { t, u }),
     choices: pc(n, [t * 10, u * 10 + t, n + 10]),
   };
 };
@@ -810,14 +848,14 @@ export const g1AddTens = (): Activity => {
     const a = rnd(1, 5) * 10, b = rnd(1, 9 - a / 10) * 10;
     return {
       type: "eqn", text: `${a} + ${b} = ?`, answer: a + b,
-      prompt: "O'nliklarni qo'shamiz: 3 o'nlik + 4 o'nlik = 7 o'nlik!",
+      prompt: p("onlikQosh"),
       choices: pc(a + b, [a + b + 10, a + b - 10, a * 2]),
     };
   }
   const a = rnd(3, 9) * 10, b = rnd(1, a / 10 - 1) * 10;
   return {
     type: "eqn", text: `${a} − ${b} = ?`, answer: a - b,
-    prompt: "O'nliklarni ayiramiz: 7 o'nlik − 2 o'nlik = 5 o'nlik!",
+    prompt: p("onlikAyir"),
     choices: pc(a - b, [a - b + 10, a - b - 10, b]),
   };
 };
@@ -828,7 +866,7 @@ export const g1Add100 = (): Activity => {
   const a = t * 10 + u, b = rnd(1, 9 - u) + rnd(0, 9 - t) * 10;
   return {
     type: "eqn", text: `${a} + ${b} = ?`, answer: a + b,
-    prompt: "O'nlikni o'nlikka, birlikni birlikka qo'sh!",
+    prompt: p("onlikBirlikQosh"),
     choices: choicesAround(a + b, 4, 10, 99),
   };
 };
@@ -839,7 +877,7 @@ export const g1Sub100 = (): Activity => {
   const a = t * 10 + u, b = rnd(1, u) + rnd(0, t - 1) * 10;
   return {
     type: "eqn", text: `${a} − ${b} = ?`, answer: a - b,
-    prompt: "O'nlikdan o'nlikni, birlikdan birlikni ayir!",
+    prompt: p("onlikBirlikAyir"),
     choices: choicesAround(a - b, 4, 0, 99),
   };
 };
@@ -848,32 +886,34 @@ export const g1Sub100 = (): Activity => {
 
 export const gMul = (n = 0, max = 10): Activity => {
   const a = n || rnd(2, 9), b = rnd(1, max), s = a * b;
-  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: "Ko'paytirib, to'g'ri javobni tanla!", answer: s, choices: choicesAround(s, 4, 0, 100) };
+  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: p("kopaytir"), answer: s, choices: choicesAround(s, 4, 0, 100) };
 };
 
 export const gDiv = (n = 0, max = 10): Activity => {
   const b = n || rnd(2, 9), k = rnd(1, max), a = b * k;
-  return { type: "eqn", text: `${a} ÷ ${b} = ?`, prompt: "Bo'lib, to'g'ri javobni tanla!", answer: k, choices: choicesAround(k, 4, 0, 12) };
+  return { type: "eqn", text: `${a} ÷ ${b} = ?`, prompt: p("bol"), answer: k, choices: choicesAround(k, 4, 0, 12) };
 };
 
 export const gMulDiv = (): Activity => {
-  const a = rnd(2, 9), b = rnd(2, 9), p = a * b;
-  return { type: "eqn", text: `${a} × ${b} = ${p},  ${p} ÷ ${a} = ?`, prompt: "Ko'paytmani bilsang — bo'linmani ham topasan!", answer: b, choices: choicesAround(b, 4, 1, 10) };
+  // O'zgaruvchi nomi `p` EMAS: `p` — tarjima funksiyasi va uni soya
+  // qilib qo'ysa, shu qatordagi `p("…")` chaqiruvi songa aylanardi.
+  const a = rnd(2, 9), b = rnd(2, 9), kop = a * b;
+  return { type: "eqn", text: `${a} × ${b} = ${kop},  ${kop} ÷ ${a} = ?`, prompt: p("kopaytmaBolinma"), answer: b, choices: choicesAround(b, 4, 1, 10) };
 };
 
 export const gMulSum = (): Activity => {
   const k = rnd(2, 9), g = rnd(2, 5);
-  return { type: "eqn", text: `${Array(g).fill(k).join(" + ")} = ${k} × ?`, prompt: "Bir xil qo'shiluvchilar yig'indisini ko'paytmaga aylantiramiz!", answer: g, choices: choicesAround(g, 4, 1, 10) };
+  return { type: "eqn", text: `${Array(g).fill(k).join(" + ")} = ${k} × ?`, prompt: p("yigindiKopaytma"), answer: g, choices: choicesAround(g, 4, 1, 10) };
 };
 
 export const gMulVis = (): Activity => {
   const g = rnd(2, 5), k = rnd(2, 5), e = pick(OBJS);
-  return { type: "mulvis", g, k, emoji: e, answer: g * k, prompt: `${g} ta guruh, har birida ${k} ta ${objName(e)}. Hammasi bo'lib nechta?`, choices: choicesAround(g * k, 4, 1, 40) };
+  return { type: "mulvis", g, k, emoji: e, answer: g * k, prompt: p("guruhlarJami", { g, k, nom: objName(e) }), choices: choicesAround(g * k, 4, 1, 40) };
 };
 
 export const gDivVis = (): Activity => {
   const g = rnd(2, 5), k = rnd(2, 5), e = pick(OBJS);
-  return { type: "divvis", g, k, emoji: e, answer: k, prompt: `${g * k} ta ${objName(e)}ni ${g} ta teng guruhga bo'ldik. Har birida nechtadan?`, choices: choicesAround(k, 4, 1, 12) };
+  return { type: "divvis", g, k, emoji: e, answer: k, prompt: p("tengGuruh", { jami: g * k, nom: objName(e), g }), choices: choicesAround(k, 4, 1, 12) };
 };
 
 export const gColumn = (op: "+" | "−", max: number): Activity => {
@@ -881,24 +921,24 @@ export const gColumn = (op: "+" | "−", max: number): Activity => {
   if (op === "+") { a = rnd(12, max - 12); b = rnd(11, max - a); }
   else { a = rnd(25, max); b = rnd(11, a - 1); }
   const s = op === "+" ? a + b : a - b;
-  return { type: "column", op, a, b, answer: s, prompt: op === "+" ? "Ustun shaklida qo'shamiz. Javobni tanla!" : "Ustun shaklida ayiramiz. Javobni tanla!", choices: choicesAround(s, 4, 0, max + 10) };
+  return { type: "column", op, a, b, answer: s, prompt: op === "+" ? p("ustunQosh") : p("ustunAyir"), choices: choicesAround(s, 4, 0, max + 10) };
 };
 
 export const gAddOver2 = (max = 100): Activity => {
   const t = rnd(1, Math.floor(max / 10) - 1), u = rnd(1, 9);
   const a = t * 10 + u, b = rnd(10 - u, 9), s = a + b;
-  return { type: "eqn", text: `${a} + ${b} = ?`, prompt: "O'nlikdan o'tib qo'sh! Avval o'nlikkacha to'ldir.", answer: s, choices: choicesAround(s, 4, 0, max) };
+  return { type: "eqn", text: `${a} + ${b} = ?`, prompt: p("onlikdanOtibQosh"), answer: s, choices: choicesAround(s, 4, 0, max) };
 };
 
 export const gSubOver2 = (max = 100): Activity => {
   const t = rnd(2, Math.floor(max / 10)), u = rnd(0, 8);
   const a = t * 10 + u, b = rnd(u + 1, 9), s = a - b;
-  return { type: "eqn", text: `${a} − ${b} = ?`, prompt: "O'nlikdan o'tib ayir! Bitta o'nlikni buzamiz.", answer: s, choices: choicesAround(s, 4, 0, max) };
+  return { type: "eqn", text: `${a} − ${b} = ?`, prompt: p("onlikdanOtibAyir"), answer: s, choices: choicesAround(s, 4, 0, max) };
 };
 
 export const gPlace = (): Activity => {
   const t = rnd(2, 9), u = rnd(1, 9), n = t * 10 + u;
-  return { type: "eqn", text: `${n} = ${t * 10} + ?`, prompt: "Sonni xona qo'shiluvchilariga ajrat!", answer: u, choices: choicesAround(u, 4, 0, 9) };
+  return { type: "eqn", text: `${n} = ${t * 10} + ?`, prompt: p("xonaAjrat"), answer: u, choices: choicesAround(u, 4, 0, 9) };
 };
 
 export const gRay = (max: number): Activity => {
@@ -906,80 +946,90 @@ export const gRay = (max: number): Activity => {
   const start = step * rnd(0, Math.max(0, Math.floor((max - step * 6) / step)));
   const arr = Array.from({ length: 7 }, (_, i) => start + i * step);
   const hide = rnd(1, 5);
-  return { type: "numray", arr, hide, prompt: "Sonlar nurida tushib qolgan sonni top!", answer: arr[hide], choices: choicesAround(arr[hide], 4, 0, max) };
+  return { type: "numray", arr, hide, prompt: p("nurTushib"), answer: arr[hide], choices: choicesAround(arr[hide], 4, 0, max) };
 };
 
 export const gParen = (): Activity => {
   const a = rnd(10, 40), b = rnd(3, 20), c = rnd(2, Math.min(9, b));
   const s = a + (b - c);
-  return { type: "eqn", text: `${a} + (${b} − ${c}) = ?`, prompt: "Avval qavs ichini hisoblaymiz!", answer: s, choices: choicesAround(s, 4, 0, 80) };
+  return { type: "eqn", text: `${a} + (${b} − ${c}) = ?`, prompt: p("qavsAvval"), answer: s, choices: choicesAround(s, 4, 0, 80) };
 };
 
 export const gParenMul = (): Activity => {
   const a = rnd(2, 9), b = rnd(2, 5), c = rnd(1, 9), s = a * b + c;
-  return { type: "eqn", text: `${a} × ${b} + ${c} = ?`, prompt: "Avval ko'paytiramiz, keyin qo'shamiz!", answer: s, choices: choicesAround(s, 4, 0, 60) };
+  return { type: "eqn", text: `${a} × ${b} + ${c} = ?`, prompt: p("kopaytKeyinQosh"), answer: s, choices: choicesAround(s, 4, 0, 60) };
 };
 
 export const gLetter = (): Activity => {
   const L = pick(["a", "b", "x", "y"]), v = rnd(2, 20), c = rnd(3, 30);
-  return { type: "eqn", text: `${L} + ${c},   ${L} = ${v}`, prompt: `${L} o'rniga ${v} ni qo'yib hisobla!`, answer: v + c, choices: choicesAround(v + c, 4, 0, 60) };
+  return { type: "eqn", text: `${L} + ${c},   ${L} = ${v}`, prompt: p("harfQoy", { L, v }), answer: v + c, choices: choicesAround(v + c, 4, 0, 60) };
 };
 
 export const gEqx = (): Activity => {
   const kind = pick(["add", "sub", "mul"] as const);
   if (kind === "mul") {
     const a = rnd(2, 9), k = rnd(2, 9);
-    return { type: "eqn", text: `x × ${a} = ${a * k}`, prompt: "Noma'lum ko'paytuvchini top: x = ?", answer: k, choices: choicesAround(k, 4, 1, 10) };
+    return { type: "eqn", text: `x × ${a} = ${a * k}`, prompt: p("nomalumKopaytuvchi"), answer: k, choices: choicesAround(k, 4, 1, 10) };
   }
   const a = rnd(5, 40), s = a + rnd(5, 40);
   if (kind === "add") {
     const x = s - a;
-    return { type: "eqn", text: `x + ${a} = ${s}`, prompt: "Noma'lum qo'shiluvchini top: x = ?", answer: x, choices: choicesAround(x, 4, 0, 60) };
+    return { type: "eqn", text: `x + ${a} = ${s}`, prompt: p("nomalumQoshiluvchi"), answer: x, choices: choicesAround(x, 4, 0, 60) };
   }
-  return { type: "eqn", text: `x − ${a} = ${s - a}`, prompt: "Noma'lum kamayuvchini top: x = ?", answer: s, choices: choicesAround(s, 4, 0, 90) };
+  return { type: "eqn", text: `x − ${a} = ${s - a}`, prompt: p("nomalumKamayuvchi"), answer: s, choices: choicesAround(s, 4, 0, 90) };
 };
 
-const FRACS = [{ p: 2, n: "yarmi", t: "1/2" }, { p: 3, n: "uchdan biri", t: "1/3" }, { p: 4, n: "choragi", t: "1/4" }];
+/**
+ * Ulush nomlari. `n` — JAVOB TUGMASIDA turadigan so'z, shuning uchun u
+ * funksiya orqali olinadi: doimiy qiymat bo'lsa modul yuklangan paytdagi
+ * tilda qotib qolardi.
+ */
+const fracs = () => [
+  { p: 2, n: p("jYarmi"), t: "1/2" },
+  { p: 3, n: p("jUchdanBiri"), t: "1/3" },
+  { p: 4, n: p("jChoragi"), t: "1/4" },
+];
 
 export const gFrac = (): Activity => {
+  const FRACS = fracs();
   const f = pick(FRACS);
-  return { type: "frac", parts: f.p, shaded: 1, prompt: "Shaklning bo'yalgan qismi — bu uning nimasi?", answer: f.n, choices: shuffle(FRACS.map((x) => x.n)) };
+  return { type: "frac", parts: f.p, shaded: 1, prompt: p("ulushNima"), answer: f.n, choices: shuffle(FRACS.map((x) => x.n)) };
 };
 
 export const gFracNum = (): Activity => {
-  const f = pick(FRACS), k = rnd(2, 9), tot = f.p * k;
-  return { type: "eqn", text: `${tot} ning ${f.t} qismi = ?`, prompt: `${tot} ni ${f.p} ta teng bo'lakka bo'lamiz!`, answer: k, choices: choicesAround(k, 4, 1, 12) };
+  const f = pick(fracs()), k = rnd(2, 9), tot = f.p * k;
+  return { type: "eqn", text: p("txtQismi", { tot, t: f.t }), prompt: p("ulushBol", { tot, p: f.p }), answer: k, choices: choicesAround(k, 4, 1, 12) };
 };
 
 export const gPerim = (): Activity => {
   const w = rnd(2, 9), h = rnd(2, 9), sq = Math.random() < 0.35;
   const W = w, H = sq ? w : h, P = 2 * (W + H);
-  return { type: "perim", w: W, h: H, answer: P, prompt: `${sq ? "Kvadrat" : "To'g'ri to'rtburchak"}ning perimetrini top! (P = barcha tomonlar yig'indisi)`, choices: choicesAround(P, 4, 4, 40) };
+  return { type: "perim", w: W, h: H, answer: P, prompt: sq ? p("perimKvadrat") : p("perimTortburchak"), choices: choicesAround(P, 4, 4, 40) };
 };
 
 export const gArea = (): Activity => {
   const w = rnd(2, 6), h = rnd(2, 5);
-  return { type: "area", w, h, answer: w * h, prompt: "Shakl nechta katakdan iborat? Sanab top!", choices: choicesAround(w * h, 4, 1, 36) };
+  return { type: "area", w, h, answer: w * h, prompt: p("katakSana"), choices: choicesAround(w * h, 4, 1, 36) };
 };
 
 export const gShape = (): Activity => {
   const keys = Object.keys(SHAPES) as ShapeKey[];
   const k = pick(keys);
   const others = shuffle(keys.filter((x) => x !== k)).slice(0, 3);
-  return { type: "shapeName", shape: k, prompt: "Bu qanday shakl? To'g'ri nomni tanla!", answer: SHAPES[k].name, choices: shuffle([k, ...others]).map((x) => SHAPES[x].name) };
+  return { type: "shapeName", shape: k, prompt: p("shaklNomiSavol"), answer: shaklNomi(k), choices: shuffle([k, ...others]).map(shaklNomi) };
 };
 
 export const gCorners = (): Activity => {
   const keys = Object.keys(SHAPES) as ShapeKey[];
   const k = pick(keys);
-  return { type: "corners", shape: k, prompt: "Bu shaklning nechta burchagi bor?", answer: SHAPES[k].corners, choices: shuffle([0, 3, 4, 5]) };
+  return { type: "corners", shape: k, prompt: p("burchakSoni"), answer: SHAPES[k].corners, choices: shuffle([0, 3, 4, 5]) };
 };
 
 export const gMm = (): Activity => {
   const cm = rnd(1, 9);
   if (Math.random() < 0.5)
-    return { type: "eqn", text: `${cm} sm = ? mm`, prompt: "1 sm = 10 mm. Hisobla!", answer: cm * 10, choices: choicesAround(cm * 10, 4, 10, 100) };
-  return { type: "eqn", text: `${cm * 10} mm = ? sm`, prompt: "10 mm = 1 sm. Hisobla!", answer: cm, choices: choicesAround(cm, 4, 1, 10) };
+    return { type: "eqn", text: p("txtSmMm", { n: cm }), prompt: p("smMm"), answer: cm * 10, choices: choicesAround(cm * 10, 4, 10, 100) };
+  return { type: "eqn", text: p("txtMmSm", { n: cm * 10 }), prompt: p("mmSm"), answer: cm, choices: choicesAround(cm, 4, 1, 10) };
 };
 
 export const gClock = (): Activity => {
@@ -987,18 +1037,18 @@ export const gClock = (): Activity => {
   const txt = `${h}:${String(m).padStart(2, "0")}`;
   const set = new Set<string>([txt]);
   while (set.size < 4) set.add(`${rnd(1, 12)}:${String(pick([0, 15, 30, 45])).padStart(2, "0")}`);
-  return { type: "clock", h, m, prompt: "Soat nechani ko'rsatyapti?", answer: txt, choices: shuffle([...set]) };
+  return { type: "clock", h, m, prompt: p("soatNecha"), answer: txt, choices: shuffle([...set]) };
 };
 
 export const gTime = (): Activity => {
   const q = pick([
-    { t: "1 soat = ? minut", a: 60, lo: 10, hi: 100 },
-    { t: "1 sutka = ? soat", a: 24, lo: 10, hi: 40 },
-    { t: "1 hafta = ? kun", a: 7, lo: 1, hi: 14 },
-    { t: "1 yil = ? oy", a: 12, lo: 5, hi: 20 },
-    { t: "yarim soat = ? minut", a: 30, lo: 10, hi: 60 },
-  ]);
-  return { type: "eqn", text: q.t, prompt: "Vaqt birliklarini eslaymiz!", answer: q.a, choices: choicesAround(q.a, 4, q.lo, q.hi) };
+    { t: "uSoatMinut", a: 60, lo: 10, hi: 100 },
+    { t: "uSutkaSoat", a: 24, lo: 10, hi: 40 },
+    { t: "uHaftaKun", a: 7, lo: 1, hi: 14 },
+    { t: "uYilOy", a: 12, lo: 5, hi: 20 },
+    { t: "uYarimSoat", a: 30, lo: 10, hi: 60 },
+  ] as const);
+  return { type: "eqn", text: p(q.t), prompt: p("vaqtBirlik"), answer: q.a, choices: choicesAround(q.a, 4, q.lo, q.hi) };
 };
 
 const COL_L = ["A", "B", "C", "D"];
@@ -1007,42 +1057,42 @@ export const gCoord = (): Activity => {
   const cell = COL_L[cx] + (cy + 1);
   const set = new Set<string>([cell]);
   while (set.size < 4) set.add(COL_L[rnd(0, w - 1)] + rnd(1, h));
-  return { type: "coord", w, h, cx, cy, emoji: e, prompt: `${objName(e)} qaysi katakda joylashgan?`, answer: cell, choices: shuffle([...set]) };
+  return { type: "coord", w, h, cx, cy, emoji: e, prompt: p("katakQaysi", { nom: B(objName(e)) }), answer: cell, choices: shuffle([...set]) };
 };
 
 export const gData = (): Activity => {
   const rows = shuffle([...OBJS]).slice(0, 3).map((emoji) => ({ emoji, n: rnd(2, 7) }));
   const top = rows.reduce((a, b) => (b.n > a.n ? b : a));
-  return { type: "data", rows, prompt: `Jadvalda eng ko'p nima bor? Nechta ${objName(top.emoji)} bor?`, answer: top.n, choices: choicesAround(top.n, 4, 1, 9) };
+  return { type: "data", rows, prompt: p("jadvalKop", { nom: objName(top.emoji) }), answer: top.n, choices: choicesAround(top.n, 4, 1, 9) };
 };
 
 /* ==================== 3–4-sinf uchun umumiy ==================== */
 
 export const g3MulBig = (): Activity => {
   const a = rnd(11, 99), b = rnd(2, 9), s = a * b;
-  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: "Ko'p xonali sonni bir xonaliga ko'paytir!", answer: s, choices: choicesAround(s, 4, 0, s + 40) };
+  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: p("kopXonaliKopaytir"), answer: s, choices: choicesAround(s, 4, 0, s + 40) };
 };
 
 export const g3DivBig = (): Activity => {
   const b = rnd(2, 9), k = rnd(11, 99), a = b * k;
-  return { type: "eqn", text: `${a} ÷ ${b} = ?`, prompt: "Ko'p xonali sonni bir xonaliga bo'l!", answer: k, choices: choicesAround(k, 4, 0, k + 20) };
+  return { type: "eqn", text: `${a} ÷ ${b} = ?`, prompt: p("kopXonaliBol"), answer: k, choices: choicesAround(k, 4, 0, k + 20) };
 };
 
 export const g3Rem = (): Activity => {
   const b = rnd(3, 9), k = rnd(2, 9), r = rnd(1, b - 1), a = b * k + r;
-  return { type: "eqn", text: `${a} ÷ ${b} = ${k}   qoldiq ?`, prompt: "Qoldiqni top! Qoldiq har doim bo'luvchidan kichik.", answer: r, choices: pc(r, [r + 1, r - 1, b]) };
+  return { type: "eqn", text: `${a} ÷ ${b} = ${k}   ${p("txtQoldiq")} ?`, prompt: p("qoldiqTop"), answer: r, choices: pc(r, [r + 1, r - 1, b]) };
 };
 
 export const g3Len = (): Activity => {
-  const q = pick([["1 m = ? sm", 100, [10, 1000, 50]], ["1 dm = ? sm", 10, [1, 100, 20]],
-    ["1 km = ? m", 1000, [100, 10000, 500]], ["1 m = ? dm", 10, [1, 100, 5]], ["1 sm = ? mm", 10, [1, 100, 5]]] as const);
-  return { type: "eqn", text: q[0], prompt: "Uzunlik birliklarini eslaymiz!", answer: q[1], choices: pc(q[1], [...q[2]]) };
+  const q = pick([["uMSm", 100, [10, 1000, 50]], ["uDmSm", 10, [1, 100, 20]],
+    ["uKmM", 1000, [100, 10000, 500]], ["uMDm", 10, [1, 100, 5]], ["uSmMm", 10, [1, 100, 5]]] as const);
+  return { type: "eqn", text: p(q[0]), prompt: p("uzunlikBirlik"), answer: q[1], choices: pc(q[1], [...q[2]]) };
 };
 
 export const g3Mass = (): Activity => {
-  const q = pick([["1 kg = ? g", 1000, [100, 10000, 500]], ["1 t = ? kg", 1000, [100, 10000, 500]],
-    ["1 s (sentner) = ? kg", 100, [10, 1000, 50]]] as const);
-  return { type: "eqn", text: q[0], prompt: "Massa birliklarini eslaymiz!", answer: q[1], choices: pc(q[1], [...q[2]]) };
+  const q = pick([["uKgG", 1000, [100, 10000, 500]], ["uTKg", 1000, [100, 10000, 500]],
+    ["uSentnerKg", 100, [10, 1000, 50]]] as const);
+  return { type: "eqn", text: p(q[0]), prompt: p("massaBirlik"), answer: q[1], choices: pc(q[1], [...q[2]]) };
 };
 
 const FR: [number, string][] = [[2, "1/2"], [3, "1/3"], [4, "1/4"], [6, "1/6"], [8, "1/8"]];
@@ -1050,50 +1100,50 @@ export const gFracCmp = (): Activity => {
   const x = pick(FR); let y = pick(FR);
   while (y[0] === x[0]) y = pick(FR);
   const big = x[0] < y[0] ? x : y;
-  return { type: "eqn", text: `${x[1]}   va   ${y[1]}`, prompt: "Qaysi ulush katta? Maxraj kichik bo'lsa — ulush katta!", answer: big[1], choices: pcS(big[1], [x[1], y[1]], ["1/2", "1/3", "1/4", "1/5", "1/6", "1/8"]) };
+  return { type: "eqn", text: `${x[1]}   ${p("txtVa")}   ${y[1]}`, prompt: p("ulushKatta"), answer: big[1], choices: pcS(big[1], [x[1], y[1]], ["1/2", "1/3", "1/4", "1/5", "1/6", "1/8"]) };
 };
 
 /* ==================== 3-sinf ==================== */
 
 export const g3Compose = (): Activity => {
   const h = rnd(1, 9), t = rnd(0, 9), u = rnd(0, 9), n = h * 100 + t * 10 + u;
-  return { type: "eqn", text: `${h} yuzlik ${t} o'nlik ${u} birlik = ?`, prompt: "Xona qo'shiluvchilaridan sonni yasa!", answer: n, choices: choicesAround(n, 4, 100, 999) };
+  return { type: "eqn", text: p("txtXonaUch", { h, t, u }), prompt: p("xonadanYasa"), answer: n, choices: choicesAround(n, 4, 100, 999) };
 };
 
 export const g3Split = (): Activity => {
   const h = rnd(1, 9), t = rnd(1, 9), u = rnd(1, 9), n = h * 100 + t * 10 + u;
   const w = pick(["h", "t", "u"] as const);
-  if (w === "h") return { type: "eqn", text: `${n} sonida nechta yuzlik bor?`, prompt: "Uch xonali sonning xonalarini ajratib ko'r!", answer: h, choices: pc(h, [t, u, h + 1]) };
-  if (w === "t") return { type: "eqn", text: `${n} sonining o'nlar xonasida qaysi raqam turibdi?`, prompt: "O'nlar xonasidagi raqamni top!", answer: t, choices: pc(t, [h, u, t + 1]) };
-  return { type: "eqn", text: `${n} sonining birlar xonasida qaysi raqam turibdi?`, prompt: "Birlar xonasidagi raqamni top!", answer: u, choices: pc(u, [h, t, u + 1]) };
+  if (w === "h") return { type: "eqn", text: p("txtYuzlikSoni", { n }), prompt: p("uchXonaliAjrat"), answer: h, choices: pc(h, [t, u, h + 1]) };
+  if (w === "t") return { type: "eqn", text: p("txtOnlarXona", { n }), prompt: p("onlarRaqami"), answer: t, choices: pc(t, [h, u, t + 1]) };
+  return { type: "eqn", text: p("txtBirlarXona", { n }), prompt: p("birlarRaqami"), answer: u, choices: pc(u, [h, t, u + 1]) };
 };
 
 export const g3Cmp = (): Activity => {
   const a = rnd(101, 999); let b = rnd(101, 999);
   if (a === b) b++;
   const big = Math.max(a, b);
-  return { type: "eqn", text: `${a}   va   ${b}`, prompt: "Qaysi son katta? Kattasini tanla!", answer: big, choices: pc(big, [Math.min(a, b), big + rnd(1, 60), big - rnd(1, 60)]) };
+  return { type: "eqn", text: `${a}   ${p("txtVa")}   ${b}`, prompt: p("kattasiniTanla"), answer: big, choices: pc(big, [Math.min(a, b), big + rnd(1, 60), big - rnd(1, 60)]) };
 };
 
 export const g3Round = (): Activity => {
   const n = rnd(11, 989), r = Math.round(n / 10) * 10;
-  return { type: "eqn", text: `${n} ≈ ?   (o'nlikkacha)`, prompt: "Sonni o'nlikkacha yaxlitla!", answer: r, choices: pc(r, [r - 10, r + 10, r + 20]) };
+  return { type: "eqn", text: `${n} ≈ ?   ${p("txtOnlikkacha")}`, prompt: p("onlikkachaYaxlit"), answer: r, choices: pc(r, [r - 10, r + 10, r + 20]) };
 };
 
 export const g3Round100 = (): Activity => {
   const n = rnd(150, 949), r = Math.round(n / 100) * 100;
-  return { type: "eqn", text: `${n} ≈ ?   (yuzlikkacha)`, prompt: "Sonni yuzlikkacha yaxlitla!", answer: r, choices: pc(r, [r - 100, r + 100, r + 200]) };
+  return { type: "eqn", text: `${n} ≈ ?   ${p("txtYuzlikkacha")}`, prompt: p("yuzlikkachaYaxlit"), answer: r, choices: pc(r, [r - 100, r + 100, r + 200]) };
 };
 
 export const g3Order = (): Activity => {
   const b = rnd(2, 9), c = rnd(2, 9), op = pick(["+", "−"] as const), a = rnd(b * c + 1, 90);
   const s = op === "+" ? a + b * c : a - b * c;
-  return { type: "eqn", text: `${a} ${op} ${b} × ${c} = ?`, prompt: "Avval ko'paytir, keyin qo'sh yoki ayir!", answer: s, choices: choicesAround(s, 4, 0, s + 30) };
+  return { type: "eqn", text: `${a} ${op} ${b} × ${c} = ?`, prompt: p("kopaytKeyinQoshAyir"), answer: s, choices: choicesAround(s, 4, 0, s + 30) };
 };
 
 export const g3OrderDiv = (): Activity => {
   const b = rnd(2, 9), k = rnd(2, 9), a = rnd(5, 60), s = a + k;
-  return { type: "eqn", text: `${a} + ${b * k} ÷ ${b} = ?`, prompt: "Avval bo'lamiz, keyin qo'shamiz!", answer: s, choices: choicesAround(s, 4, 0, s + 25) };
+  return { type: "eqn", text: `${a} + ${b * k} ÷ ${b} = ?`, prompt: p("bolKeyinQosh"), answer: s, choices: choicesAround(s, 4, 0, s + 25) };
 };
 
 /* ==================== 4-sinf ==================== */
@@ -1101,49 +1151,49 @@ export const g3OrderDiv = (): Activity => {
 export const g4Compose = (): Activity => {
   const th = rnd(1, 9), h = rnd(0, 9), t = rnd(0, 9), u = rnd(0, 9);
   const n = th * 1000 + h * 100 + t * 10 + u;
-  return { type: "eqn", text: `${th} minglik ${h} yuzlik ${t} o'nlik ${u} birlik = ?`, prompt: "Sonni xonalaridan yasa!", answer: n, choices: choicesAround(n, 4, 1000, 9999) };
+  return { type: "eqn", text: p("txtXonaTort", { th, h, t, u }), prompt: p("xonalardanYasa"), answer: n, choices: choicesAround(n, 4, 1000, 9999) };
 };
 
 export const g4Class = (): Activity => {
   const n = rnd(1000, 999999), th = Math.floor(n / 1000);
-  return { type: "eqn", text: `${n} sonida nechta minglik bor?`, prompt: "Minglar sinfini ajratib ko'r!", answer: th, choices: pc(th, [th + 1, th - 1, n % 1000]) };
+  return { type: "eqn", text: p("txtMinglikSoni", { n }), prompt: p("minglarSinfi"), answer: th, choices: pc(th, [th + 1, th - 1, n % 1000]) };
 };
 
 export const g4Cmp = (): Activity => {
   const a = rnd(1000, 99999); let b = rnd(1000, 99999);
   if (a === b) b++;
   const big = Math.max(a, b);
-  return { type: "eqn", text: `${a}   va   ${b}`, prompt: "Qaysi son katta? Xonalar sonini solishtir!", answer: big, choices: pc(big, [Math.min(a, b), big + rnd(1, 300), big - rnd(1, 300)]) };
+  return { type: "eqn", text: `${a}   ${p("txtVa")}   ${b}`, prompt: p("xonalarSolishtir"), answer: big, choices: pc(big, [Math.min(a, b), big + rnd(1, 300), big - rnd(1, 300)]) };
 };
 
 export const g4Round = (): Activity => {
   const n = rnd(1050, 98999), r = Math.round(n / 1000) * 1000;
-  return { type: "eqn", text: `${n} ≈ ?   (minglikkacha)`, prompt: "Minglikkacha yaxlitla!", answer: r, choices: pc(r, [r - 1000, r + 1000, r + 2000]) };
+  return { type: "eqn", text: `${n} ≈ ?   ${p("txtMinglikkacha")}`, prompt: p("minglikkachaYaxlit"), answer: r, choices: pc(r, [r - 1000, r + 1000, r + 2000]) };
 };
 
 export const g4Round100 = (): Activity => {
   const n = rnd(1150, 98949), r = Math.round(n / 100) * 100;
-  return { type: "eqn", text: `${n} ≈ ?   (yuzlikkacha)`, prompt: "Yuzlikkacha yaxlitla!", answer: r, choices: pc(r, [r - 100, r + 100, r + 200]) };
+  return { type: "eqn", text: `${n} ≈ ?   ${p("txtYuzlikkacha")}`, prompt: p("yuzlikkachaYaxlit2"), answer: r, choices: pc(r, [r - 100, r + 100, r + 200]) };
 };
 
 export const g4Mul2 = (): Activity => {
   const a = rnd(12, 99), b = rnd(11, 99), s = a * b;
-  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: "Ikki xonali sonlarni ustun shaklida ko'paytir!", answer: s, choices: choicesAround(s, 4, 0, s + 150) };
+  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: p("ikkiXonaliKopaytir"), answer: s, choices: choicesAround(s, 4, 0, s + 150) };
 };
 
 export const g4MulBig = (): Activity => {
   const a = rnd(101, 999), b = rnd(2, 9), s = a * b;
-  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: "Uch xonali sonni bir xonaliga ko'paytir!", answer: s, choices: choicesAround(s, 4, 0, s + 80) };
+  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: p("uchXonaliKopaytir"), answer: s, choices: choicesAround(s, 4, 0, s + 80) };
 };
 
 export const g4Mul10 = (): Activity => {
   const a = rnd(12, 99), b = pick([10, 20, 30, 40, 50, 100, 200, 300]), s = a * b;
-  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: "Yumaloq songa ko'paytirish: nollarni keyin qo'shamiz!", answer: s, choices: pc(s, [s / 10, s * 10, s + b]) };
+  return { type: "eqn", text: `${a} × ${b} = ?`, prompt: p("yumaloqKopaytir"), answer: s, choices: pc(s, [s / 10, s * 10, s + b]) };
 };
 
 export const g4DivLong = (): Activity => {
   const b = rnd(11, 25), k = rnd(4, 40), a = b * k;
-  return { type: "eqn", text: `${a} ÷ ${b} = ?`, prompt: "Ikki xonali songa bo'l!", answer: k, choices: choicesAround(k, 4, 0, k + 20) };
+  return { type: "eqn", text: `${a} ÷ ${b} = ?`, prompt: p("ikkiXonaliBol"), answer: k, choices: choicesAround(k, 4, 0, k + 20) };
 };
 
 export const g4Order = (): Activity => {
@@ -1157,50 +1207,50 @@ export const g4Order = (): Activity => {
     { t: `${a * c} ÷ ${a} + ${b} = ?`, v: c + b },
     { t: `${kamayuvchi} − ${b} × ${c} = ?`, v: kamayuvchi - b * c },
   ]);
-  return { type: "eqn", text: k.t, prompt: "Amallar tartibiga rioya qil: qavs → ×÷ → +−", answer: k.v, choices: choicesAround(k.v, 4, 0, Math.abs(k.v) + 30) };
+  return { type: "eqn", text: k.t, prompt: p("amallarTartibi"), answer: k.v, choices: choicesAround(k.v, 4, 0, Math.abs(k.v) + 30) };
 };
 
 export const g4FracAdd = (): Activity => {
   const d = pick([4, 5, 6, 7, 8, 9]), n1 = rnd(1, d - 2), n2 = rnd(1, d - n1), s = n1 + n2;
-  return { type: "eqn", text: `${n1}/${d} + ${n2}/${d} = ?/${d}`, prompt: "Maxrajlar teng — suratlarni qo'shamiz!", answer: s, choices: pc(s, [s + 1, s - 1, d]) };
+  return { type: "eqn", text: `${n1}/${d} + ${n2}/${d} = ?/${d}`, prompt: p("kasrQosh"), answer: s, choices: pc(s, [s + 1, s - 1, d]) };
 };
 
 export const g4FracSub = (): Activity => {
   const d = pick([4, 5, 6, 7, 8, 9]), n1 = rnd(2, d - 1), n2 = rnd(1, n1 - 1), s = n1 - n2;
-  return { type: "eqn", text: `${n1}/${d} − ${n2}/${d} = ?/${d}`, prompt: "Suratlarni ayiramiz, maxraj o'zgarmaydi!", answer: s, choices: pc(s, [s + 1, s - 1, n1]) };
+  return { type: "eqn", text: `${n1}/${d} − ${n2}/${d} = ?/${d}`, prompt: p("kasrAyir"), answer: s, choices: pc(s, [s + 1, s - 1, n1]) };
 };
 
 /** w: "s" masofa, "v" tezlik, "t" vaqt; berilmasa — tasodifiy. */
 export const g4Speed = (w?: "s" | "v" | "t"): Activity => {
   const v = pick([40, 50, 60, 70, 80, 90]), t = rnd(2, 6), s = v * t;
   const which = w ?? pick(["s", "v", "t"] as const);
-  if (which === "s") return { type: "eqn", text: `v = ${v} km/soat,   t = ${t} soat.   s = ?`, prompt: "Masofa = tezlik × vaqt", answer: s, choices: pc(s, [v + t, s + v, v * (t + 1)]) };
-  if (which === "v") return { type: "eqn", text: `s = ${s} km,   t = ${t} soat.   v = ?`, prompt: "Tezlik = masofa ÷ vaqt", answer: v, choices: pc(v, [s - t, v + 10, v - 10]) };
-  return { type: "eqn", text: `s = ${s} km,   v = ${v} km/soat.   t = ?`, prompt: "Vaqt = masofa ÷ tezlik", answer: t, choices: pc(t, [t + 1, t + 2, t + 3]) };
+  if (which === "s") return { type: "eqn", text: p("txtTezlikS", { v, t }), prompt: p("masofaF"), answer: s, choices: pc(s, [v + t, s + v, v * (t + 1)]) };
+  if (which === "v") return { type: "eqn", text: p("txtTezlikV", { s, t }), prompt: p("tezlikF"), answer: v, choices: pc(v, [s - t, v + 10, v - 10]) };
+  return { type: "eqn", text: p("txtTezlikT", { s, v }), prompt: p("vaqtF"), answer: t, choices: pc(t, [t + 1, t + 2, t + 3]) };
 };
 
 export const g4Area = (): Activity => {
   const w = rnd(3, 12), h = rnd(3, 12), s = w * h;
-  return { type: "eqn", text: `Tomonlari ${w} sm va ${h} sm.   S = ?  (sm²)`, prompt: "To'g'ri to'rtburchak yuzasi: S = a × b", answer: s, choices: pc(s, [2 * (w + h), s + w, s - h]) };
+  return { type: "eqn", text: p("txtTomonlari", { w, h }), prompt: p("yuzaF"), answer: s, choices: pc(s, [2 * (w + h), s + w, s - h]) };
 };
 
 export const g4AreaSide = (): Activity => {
   const w = rnd(3, 12), h = rnd(3, 12), s = w * h;
-  return { type: "eqn", text: `S = ${s} sm², a = ${w} sm.   b = ?  (sm)`, prompt: "Tomonni topish: b = S ÷ a", answer: h, choices: pc(h, [w, s - w, h + 2]) };
+  return { type: "eqn", text: p("txtYuzaTomon", { s, w }), prompt: p("tomonF"), answer: h, choices: pc(h, [w, s - w, h + 2]) };
 };
 
 export const g4Units = (): Activity => {
-  const q = pick([["1 km = ? m", 1000, [100, 10000, 500]], ["1 t = ? kg", 1000, [100, 10000, 500]],
-    ["1 dm² = ? sm²", 100, [10, 1000, 50]], ["1 m² = ? dm²", 100, [10, 1000, 50]],
-    ["1 ar = ? m²", 100, [10, 1000, 50]], ["1 kg = ? g", 1000, [100, 10000, 500]]] as const);
-  return { type: "eqn", text: q[0], prompt: "Kattalik birliklarini eslaymiz!", answer: q[1], choices: pc(q[1], [...q[2]]) };
+  const q = pick([["uKmM", 1000, [100, 10000, 500]], ["uTKg", 1000, [100, 10000, 500]],
+    ["uDm2Sm2", 100, [10, 1000, 50]], ["uM2Dm2", 100, [10, 1000, 50]],
+    ["uArM2", 100, [10, 1000, 50]], ["uKgG", 1000, [100, 10000, 500]]] as const);
+  return { type: "eqn", text: p(q[0]), prompt: p("kattalikBirlik"), answer: q[1], choices: pc(q[1], [...q[2]]) };
 };
 
 export const g4TimeBig = (): Activity => {
-  const q = pick([["1 asr = ? yil", 100, [10, 1000, 50]], ["1 sutka = ? soat", 24, [12, 48, 36]],
-    ["1 yil = ? oy", 12, [10, 24, 6]], ["1 soat = ? minut", 60, [30, 90, 120]],
-    ["1 minut = ? sekund", 60, [30, 90, 120]], ["1 hafta = ? kun", 7, [5, 14, 10]]] as const);
-  return { type: "eqn", text: q[0], prompt: "Vaqt birliklarini eslaymiz!", answer: q[1], choices: pc(q[1], [...q[2]]) };
+  const q = pick([["uAsrYil", 100, [10, 1000, 50]], ["uSutkaSoat", 24, [12, 48, 36]],
+    ["uYilOy", 12, [10, 24, 6]], ["uSoatMinut", 60, [30, 90, 120]],
+    ["uMinutSekund", 60, [30, 90, 120]], ["uHaftaKun", 7, [5, 14, 10]]] as const);
+  return { type: "eqn", text: p(q[0]), prompt: p("vaqtBirlik"), answer: q[1], choices: pc(q[1], [...q[2]]) };
 };
 
 export type { Gen };

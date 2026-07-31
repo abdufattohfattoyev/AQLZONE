@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
+import { t } from "../lib/matn";
 
 interface Props {
   /** Nima topilmadi — masalan `"7-sinf" kursi`. */
@@ -9,15 +10,15 @@ interface Props {
   qaytish?: { matn: string; yol: string };
 }
 
-export function NotFound({ nima = "Bu sahifa", qaytish }: Props) {
-  const orqaga = qaytish ?? { matn: "Kurslarga qaytish", yol: "/" };
+export function NotFound({ nima, qaytish }: Props) {
+  const orqaga = qaytish ?? { matn: t("kurslargaQaytish"), yol: "/" };
   return (
-    <div className="grid min-h-dvh place-items-center px-6">
+    <div className="grid min-h-ekran place-items-center px-6">
       <div className="w-full max-w-[360px] rounded-clay bg-karta p-8 text-center shadow-clay">
         <Logo size={64} className="mx-auto" />
-        <h1 className="mt-4 text-[22px]">{nima} topilmadi</h1>
+        <h1 className="mt-4 text-[22px]">{t("topilmadi", { nima: nima ?? t("buSahifa") })}</h1>
         <p className="mt-1.5 text-[13.5px] leading-snug text-ink-soft">
-          Manzil noto'g'ri bo'lishi mumkin. Quyidagi tugma orqali davom eting.
+          {t("topilmadiIzoh")}
         </p>
         <Link
           to={orqaga.yol}

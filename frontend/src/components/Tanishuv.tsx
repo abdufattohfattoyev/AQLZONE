@@ -26,10 +26,13 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sozlamalar } from "../screens/Sozlamalar";
 import { Kirish } from "./Kirish";
-import { getHisob, miniAppda } from "../lib/api";
+import { TilTanlash } from "./TilTanlash";
+import { til, tilTanlangan } from "../lib/til";
+import { getHisob, miniAppda, tilniSaqla } from "../lib/api";
 import { royxatniBelgila, taklifgaObuna } from "../lib/sinov";
 import type { Hisob } from "../lib/api";
 import type { ReactNode } from "react";
+import { t } from "../lib/matn";
 
 /** Tekshiruv holati: hali bilmaymiz → sinov / ism so'raymiz / so'ramaymiz. */
 type Holat = "kutilyapti" | "sinov" | "ism" | "kerak-emas";
@@ -49,6 +52,13 @@ const KIRGAN_KEY = "az_kirgan";
 
 export function Tanishuv({ children }: { children: ReactNode }) {
   const [holat, setHolat] = useState<Holat>("kutilyapti");
+  /**
+   * Til so'ralishi kerakmi.
+   *
+   * Holatda turadi, chunki tanlov taxmin bilan mos tushsa sahifa qayta
+   * yuklanmaydi — o'shanda ekranni React o'zi olib tashlashi kerak.
+   */
+  const [tilSoraladi, setTilSoraladi] = useState(() => !tilTanlangan());
   /** Sinov taklifi ko'rsatilyaptimi va bola nechta yulduz olgan edi. */
   const [taklif, setTaklif] = useState<number | null>(null);
   // Ism so'raladigan bo'lsa, o'sha ekranga TAYYOR holda beriladi. Aks
@@ -71,6 +81,10 @@ export function Tanishuv({ children }: { children: ReactNode }) {
 
       if (h) {
         setHisob(h);
+        // Til serverda eslatma va bot javoblari uchun turadi. Faqat
+        // FARQ bo'lganda yuboriladi: har ochilishda yozib turish
+        // keraksiz so'rov bo'lardi.
+        if ((h.til || "uz") !== til()) void tilniSaqla(til());
         try {
           if (h.royxatdan) localStorage.setItem(KIRGAN_KEY, "1");
           else localStorage.removeItem(KIRGAN_KEY);
@@ -101,6 +115,11 @@ export function Tanishuv({ children }: { children: ReactNode }) {
 
   if (kirishSahifasi) return <>{children}</>;
 
+  // Til eng birinchi so'raladi: qolgan hamma ekran (kirish taklifi ham,
+  // ism so'rash ham) allaqachon biror tilda yozilgan bo'ladi va noto'g'ri
+  // tanlangani odamni birinchi qadamda to'xtatib qo'yadi.
+  if (tilSoraladi) return <TilTanlash onTanlandi={() => setTilSoraladi(false)} />;
+
   if (holat === "ism") {
     return <Sozlamalar royxat boshlangich={hisob} onBack={() => setHolat("sinov")}
       onTayyor={() => setHolat("kerak-emas")} />;
@@ -112,11 +131,9 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   if (taklif !== null && !miniAppda()) {
     return (
       <Kirish
-        izoh={taklif === 3 ? "Zo'r! Uchala yulduzni oldingiz" : `${taklif} yulduz qo'lga kiritildi`}
-        xabar={"Yulduzlaringiz hozir faqat shu brauzerda turibdi. Telegram bilan "
-          + "kirsangiz — ular saqlanadi, boshqa telefonda ham ochiladi va "
-          + "haftalik ligada qatnasha boshlaysiz."}
-        tugma="Telegram bilan saqlash"
+        izoh={taklif === 3 ? t("taklifUchYulduz") : t("taklifYulduz", { n: taklif })}
+        xabar={t("taklifXabar")}
+        tugma={t("telegramBilanSaqlash")}
         onKeyinroq={() => setTaklif(null)}
       />
     );
