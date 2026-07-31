@@ -25,7 +25,7 @@ import json
 from datetime import timedelta
 
 from django.conf import settings
-from django.db import transaction
+from django.db import models, transaction
 from django.db.models import Count, Sum
 from django.utils import timezone
 from rest_framework import status
@@ -34,10 +34,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from . import auth as A
+from . import duel as D
 from . import kanal as K
 from . import liga as L
 from .models import (
-    BIZNING_KALIT, MAX_QIYMAT, Identity, LessonResult, LigaAzo, Profile, Progress,
+    BIZNING_KALIT, MAX_QIYMAT, Duel, Identity, LessonResult, LigaAzo, Profile, Progress,
     Pupil, Session,
 )
 from .serializers import (
@@ -821,3 +822,178 @@ def kanal(request):
         "kanal": K.kanal_nomi(),
         "havola": K.havola(),
     })
+
+
+# ------------------------------------------------------------------ duel
+
+
+def _duel_json(d, ozim: bool = False) -> dict:
+    """
+    Duel haqidagi ochiq ma'lumot.
+
+    BALL YO'Q va bu ataylab: chaqiruvni ochgan odam raqibning natijasini
+    oldindan bilsa, duel "nishonga urish" ga aylanadi — kerakli sonni
+    o'tishi bilan to'xtaydi va oxirigacha urinmaydi. Ball faqat o'yin
+    tugagach, natija ekranida ko'rinadi.
+    """
+    return {
+        "kod": d.kod,
+        "oyin": d.oyin,
+        "daraja": d.daraja,
+        "holat": d.holat,
+        "chaqirgan": D.korinadigan_ism(d.chaqirgan),
+        "ozim": ozim,
+        "havola": D.havola(d.kod),
+    }
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_boshla(request):
+    """
+    Yangi chaqiruv boshlaydi: kod, urug' va o'yin qaytadi.
+
+    O'yinni SERVER tanlaydi. Chaqirgan odam o'zi tanlasa, u har doim
+    o'zi eng kuchli bo'lgan o'yinni tanlardi va bellashuv hisoblash
+    mahoratini emas, tanlash mahoratini o'lchab qolardi.
+    """
+    profil = _profil_tanla(request)
+    if D.bugungi_soni(profil) >= D.KUNLIK_CHEGARA:
+        return Response(
+            {"detail": "kunlik chegara", "chegara": D.KUNLIK_CHEGARA},
+            status=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+    d = D.yangi_duel(profil)
+    return Response({**_duel_json(d, ozim=True), "urug": d.urug}, status=201)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def duel_korish(request, kod: str):
+    """Chaqiruv haqida: kim chaqirgan, qaysi o'yin, hali ochiqmi."""
+    d = Duel.objects.select_related("chaqirgan").filter(kod=kod).first()
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    profil = _profil_tanla(request)
+    return Response(_duel_json(d, ozim=d.chaqirgan_id == profil.pk))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_qabul(request, kod: str):
+    """
+    Chaqiruvni qabul qiladi — o'ynash uchun urug' va raqib sanog'i.
+
+    Uch holatda rad etiladi va uchalasi ham foydalanuvchiga tushunarli
+    javob bilan: chaqiruv tayyor emas, muddati o'tgan, yoki allaqachon
+    o'ynalgan. To'rtinchisi — o'zini o'zi chaqirish: bu xato emas,
+    lekin duel bo'lolmaydi.
+    """
+    d = Duel.objects.select_related("chaqirgan").filter(kod=kod).first()
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    profil = _profil_tanla(request)
+    if d.chaqirgan_id == profil.pk:
+        return Response({"detail": "ozingiz"}, status=409)
+
+    holat = d.holat
+    if holat == "boshlanmagan":
+        return Response({"detail": "tayyor emas"}, status=409)
+    if holat == "tugadi":
+        return Response({"detail": "allaqachon oynalgan"}, status=409)
+    if holat == "muddati_otdi":
+        return Response({"detail": "muddati otdi"}, status=410)
+
+    return Response({
+        **_duel_json(d),
+        "urug": d.urug,
+        # Faqat SANOQ — raqibning chizig'i uchun. Yakuniy ball emas.
+        "raqibSanoq": d.chaqirgan_sanoq,
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_natija(request, kod: str):
+    """
+    O'yin natijasini yozadi.
+
+    Bir tomon uchun BIR MARTA: ikkinchi urinish rad etiladi, aks holda
+    o'yinchi eng yaxshi natijasi chiqquncha qayta-qayta yuborardi.
+    """
+    d = Duel.objects.select_related("chaqirgan").filter(kod=kod).first()
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    ball = int(request.data.get("ball") or 0)
+    xato = int(request.data.get("xato") or 0)
+    sanoq = request.data.get("sanoq") or []
+    if not D.natija_yaroqlimi(ball, xato, sanoq):
+        return Response({"detail": "notogri natija"}, status=400)
+
+    profil = _profil_tanla(request)
+    chaqirganmi = d.chaqirgan_id == profil.pk
+
+    if chaqirganmi and d.chaqirgan_tugatdi:
+        return Response({"detail": "allaqachon yozilgan"}, status=409)
+    if not chaqirganmi and d.qabul_tugatdi:
+        return Response({"detail": "allaqachon oynalgan"}, status=409)
+    if not chaqirganmi and not d.chaqirgan_tugatdi:
+        return Response({"detail": "tayyor emas"}, status=409)
+    if not chaqirganmi and d.muddati_otdimi:
+        return Response({"detail": "muddati otdi"}, status=410)
+
+    kim = D.natijani_yoz(d, profil, ball, xato, sanoq)
+
+    if kim == "chaqirgan":
+        # Chaqiruv endi tayyor — havola beriladi.
+        return Response({**_duel_json(d, ozim=True), "havola": D.havola(d.kod)})
+
+    D.natija_xabari(d)
+    return Response({
+        "kod": d.kod,
+        "golib": d.golib,
+        "meniki": d.qabul_ball,
+        "raqib": d.chaqirgan_ball,
+        "raqibIsm": D.korinadigan_ism(d.chaqirgan),
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def duel_royxat(request):
+    """
+    O'z duellarim — o'yinlar ekranidagi ro'yxat uchun.
+
+    Faqat oxirgi 20 tasi: bu tarix emas, "nima bo'lyapti" degan savolga
+    javob. To'liq tarix boshqaruv panelida.
+    """
+    profil = _profil_tanla(request)
+    qs = (
+        Duel.objects
+        .select_related("chaqirgan", "qabul")
+        .filter(models.Q(chaqirgan=profil) | models.Q(qabul=profil))
+        .order_by("-created_at")[:20]
+    )
+    ro = []
+    for d in qs:
+        meniki = d.chaqirgan_id == profil.pk
+        ro.append({
+            "kod": d.kod,
+            "oyin": d.oyin,
+            "holat": d.holat,
+            "menChaqirdim": meniki,
+            "raqib": (D.korinadigan_ism(d.qabul) if d.qabul else "")
+            if meniki else D.korinadigan_ism(d.chaqirgan),
+            "meniki": d.chaqirgan_ball if meniki else d.qabul_ball,
+            "raqibBall": d.qabul_ball if meniki else d.chaqirgan_ball,
+            "yutdim": (
+                d.golib == ("chaqirgan" if meniki else "qabul")
+                if d.golib and d.golib != "durang" else None
+            ),
+            "durang": d.golib == "durang",
+            "havola": D.havola(d.kod) if meniki else "",
+        })
+    return Response({"duellar": ro})

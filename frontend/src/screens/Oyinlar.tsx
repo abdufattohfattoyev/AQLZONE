@@ -38,10 +38,11 @@ import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import { useOrqaga } from "../lib/qobiq";
 
-export function Oyinlar({ onBack, onOyin, onMaydon }: {
+export function Oyinlar({ onBack, onOyin, onMaydon, onDuel }: {
   onBack: () => void;
   onOyin: (id: string) => void;
   onMaydon: () => void;
+  onDuel: () => void;
 }) {
   const ozStrelka = useOrqaga(onBack);
   // Bugun o'ynalganmi — karta shunga qarab ikki xil gapiradi.
@@ -73,6 +74,26 @@ export function Oyinlar({ onBack, onOyin, onMaydon }: {
           qayta tizishning ma'nosi shu: odam ekranni ochganda sakkizta
           emas, BITTA qaror ko'rsin. */}
       <MaydonKarta bugun={bugun} onOch={onMaydon} />
+
+      {/* ---- do'st bilan bellashuv ----
+          Maydondan KEYIN turadi va bu ataylab: maydon har kuni
+          o'ynaladigan yolg'iz o'yin, duel esa do'sti bo'lganda
+          ma'noga ega. Ikkalasini teng qo'ysak, do'sti yo'q bola
+          birinchi ekrandayoq "menga bu tegishli emas" degan
+          kartani ko'rardi. */}
+      <button type="button" onClick={onDuel}
+        className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3.5 rounded-clay
+                   bg-karta p-3.5 text-left shadow-clay-sm">
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl
+                         bg-brand-orange/15 text-[24px]">
+          ⚔️
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-[15.5px] leading-tight">{t("duel")}</span>
+          <span className="mt-0.5 block text-[12.5px] text-ink-soft">{t("duelIzoh")}</span>
+        </span>
+        <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+      </button>
 
       <h2 className="az-kirish mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
         {t("maydonMashq")}

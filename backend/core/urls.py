@@ -17,4 +17,12 @@ urlpatterns = [
     path("leaderboard", views.leaderboard, name="leaderboard"),
     path("liga", views.liga, name="liga"),
     path("kanal", views.kanal, name="kanal"),
+
+    # Do'st bilan bellashuv. Tartib muhim: `duel/royxat` `duel/<kod>` dan
+    # OLDIN turishi kerak, aks holda "royxat" kod deb qabul qilinardi.
+    path("duel", views.duel_boshla, name="duel-boshla"),
+    path("duel/royxat", views.duel_royxat, name="duel-royxat"),
+    path("duel/<str:kod>", views.duel_korish, name="duel-korish"),
+    path("duel/<str:kod>/qabul", views.duel_qabul, name="duel-qabul"),
+    path("duel/<str:kod>/natija", views.duel_natija, name="duel-natija"),
 ]

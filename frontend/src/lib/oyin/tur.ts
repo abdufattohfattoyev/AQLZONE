@@ -147,4 +147,13 @@ export interface OyinNatija {
   ball: number;
   /** O'ynalgan savollar soni — kunlik maqsadga shu qo'shiladi. */
   savollar: number;
+  /** Nechta xato qilingan. Duelda teng ballda g'olibni shu aniqlaydi. */
+  xato?: number;
+  /**
+   * Har soniyadagi ball (duel uchun).
+   *
+   * Faqat duelda to'ldiriladi: raqibning chizig'i shu massivdan
+   * chiziladi. Boshqa o'yinlarda `undefined` bo'lib qolaveradi.
+   */
+  sanoq?: number[];
 }

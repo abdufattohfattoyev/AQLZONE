@@ -37,6 +37,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import { OyinSahna, Sanoq } from "./Sahna";
 import { HA, YOQ } from "../../lib/oyin/savollar";
+import { raqibBali, sanoqniYoz } from "../../lib/oyin/duel";
 import { t } from "../../lib/matn";
 import { tebrat } from "../../lib/qobiq";
 import type { Daraja, OqimSavol, Oyin, OyinNatija } from "../../lib/oyin/tur";
@@ -94,11 +95,21 @@ interface Props {
   savollar?: OqimSavol[];
   /** Vaqtni tashqaridan belgilash — maydonda hamma bosqich teng. */
   vaqt?: number;
+  /**
+   * Raqib — duelda ekranda ikkinchi chiziq bo'lib yuradi.
+   *
+   * `sanoq` — uning har soniyadagi bali. Yakuniy son BERILMAYDI va
+   * ko'rsatilmaydi ham: u ko'rinsa duel "nishonga urish" ga aylanadi,
+   * o'yinchi kerakli ballni o'tishi bilan to'xtaydi.
+   */
+  raqib?: { nom: string; sanoq: number[] };
 }
 
 type Holat = "sanoq" | "oyin" | "tugadi";
 
-export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, vaqt }: Props) {
+export function Oqim({
+  oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, vaqt, raqib,
+}: Props) {
   const gen = oyin.gen!;
   const jamiVaqt = vaqt ?? (oyin.vaqt ?? [60, 60, 60])[daraja - 1];
 
@@ -142,11 +153,23 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, 
   const muddat = useRef(0);
   const tugaganRef = useRef(false);
 
+  /**
+   * O'yin qachon boshlangani va har soniyadagi ball.
+   *
+   * Vaqt DEVOR SOATI bo'yicha o'lchanadi, qolgan vaqtdan emas: qolgan
+   * vaqt xato va kombo tufayli o'zgarib turadi, ya'ni undan "necha
+   * soniya o'tdi" degan savolga to'g'ri javob chiqmaydi. Raqib chizig'i
+   * esa aynan o'sha javobga tayanadi.
+   */
+  const boshlandi = useRef(0);
+  const sanoqRef = useRef<number[]>([]);
+
   // Soat ichida eng so'nggi ball kerak, lekin uni bog'liqlikka qo'shsak
   // interval har javobda qayta o'rnatilardi — shuning uchun havola
   // orqali o'qiladi. Qiymat har renderda yangilanib turadi.
   const ballRef = useRef(0);
   const berilganRef = useRef(0);
+  const xatoRef = useRef(0);
   ballRef.current = ball;
   berilganRef.current = berilgan;
 
@@ -166,12 +189,19 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, 
     tugaganRef.current = true;
     setHolat("tugadi");
     tebrat("yutuq");
-    onTugadi({ ball: oxirgiBall, savollar: oxirgiSavol });
-  }, [onTugadi]);
+    // Oxirgi soniya ham yozilsin: o'yin tugagan lahzadagi ball
+    // chiziqning eng oxirgi nuqtasi bo'ladi.
+    sanoqniYoz(sanoqRef.current, jamiVaqt, oxirgiBall);
+    onTugadi({
+      ball: oxirgiBall, savollar: oxirgiSavol,
+      xato: xatoRef.current, sanoq: [...sanoqRef.current],
+    });
+  }, [onTugadi, jamiVaqt]);
 
   /* Soat. Sanoq tugagandan keyin yuradi. */
   useEffect(() => {
     if (holat !== "oyin") return;
+    boshlandi.current = Date.now();
     muddat.current = Date.now() + qolganMs;
     const id = setInterval(() => {
       const q = muddat.current - Date.now();
@@ -210,12 +240,24 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, 
     } else {
       setZanjir(0);
       setQoshildi(0);
+      xatoRef.current += 1;
       tebrat("xato");
       // Jazo MUDDATDAN olinadi, ko'rsatilayotgan sondan emas — aks holda
       // keyingi soat urishida u eski qiymatdan qaytadan hisoblanib,
       // jazo bekor bo'lib qolardi.
       muddat.current -= JAZO;
       setQolganMs(muddat.current - Date.now());
+    }
+
+    // Har javobdan keyin sanoq yangilanadi — raqib uchun chiziq shundan
+    // yasaladi. Yozuv javob berilgan LAHZADA bo'lishi kerak, aks holda
+    // ikki javob orasidagi sakrash chiziqda ko'rinmasdi.
+    if (boshlandi.current) {
+      sanoqniYoz(
+        sanoqRef.current,
+        (Date.now() - boshlandi.current) / 1000,
+        togri ? ballRef.current + ballHisobi(zanjir + 1) : ballRef.current,
+      );
     }
 
     setTimeout(() => {
@@ -235,6 +277,12 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, 
 
   const soniya = Math.max(0, Math.ceil(qolganMs / 1000));
 
+  // Raqibning SHU LAHZADAGI bali. Soat har 100 ms da yangilanadi,
+  // ya'ni chiziq o'z-o'zidan harakatlanadi.
+  const otgan = boshlandi.current ? (Date.now() - boshlandi.current) / 1000 : 0;
+  const raqibHozir = raqib ? raqibBali(raqib.sanoq, otgan) : 0;
+  const engKatta = Math.max(1, ball, raqibHozir);
+
   return (
     <OyinSahna
       oyin={oyin} daraja={daraja} onChiq={onChiq}
@@ -246,6 +294,17 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, 
         <Sanoq onTugadi={() => setHolat("oyin")} />
       ) : (
         <>
+          {/* ---- raqib chizig'i (faqat duelda) ----
+              Ikki chiziq yonma-yon: raqibniki tepada, o'zimniki
+              pastda. SON ko'rsatiladi, lekin raqibning YAKUNIY bali
+              emas — u hozirgacha to'plagani. Farqi katta: o'yinchi
+              "quvib yetyapman" ni ko'radi, "yana 7 ta kerak" ni emas. */}
+          {raqib && (
+            <div className="mt-3 space-y-1.5 rounded-clay bg-karta/70 p-2.5 shadow-clay-sm">
+              <Chiziq nom={raqib.nom} ball={raqibHozir} eng={engKatta} rang="bg-brand-red" />
+              <Chiziq nom={t("duelSiz")} ball={ball} eng={engKatta} rang="bg-brand-green" />
+            </div>
+          )}
           {/* ---- savol ---- */}
           <div className="relative my-4 grid flex-1 place-items-center rounded-clay bg-sahna/85
                           px-3 py-8 ring-1 ring-track ring-inset backdrop-blur-sm">
@@ -350,5 +409,30 @@ function Tugma({ qiymat, savol, javob, on }: {
         qiymat
       )}
     </button>
+  );
+}
+
+
+/**
+ * Duel chizig'i — bitta o'yinchining hozirgi bali.
+ *
+ * Chiziq ENG KATTA balldan kelib chiqib chiziladi (ikkalasidan
+ * qaysi biri katta bo'lsa). Qat'iy chegara (masalan 60 ball) ham
+ * mumkin edi, lekin unda ikki bo'sh o'ynagan bolaning chiziqlari
+ * ekranning chap chekkasida qimirlamay turardi va bellashuv
+ * ko'rinmasdi.
+ */
+function Chiziq({ nom, ball, eng, rang }: {
+  nom: string; ball: number; eng: number; rang: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-[72px] shrink-0 truncate text-[11.5px] text-ink-soft">{nom}</span>
+      <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-track">
+        <span className={`block h-full rounded-full transition-[width] duration-300 ${rang}`}
+          style={{ width: `${Math.max(3, (ball / eng) * 100)}%` }} />
+      </span>
+      <span className="w-7 shrink-0 text-right font-display text-[13px]">{ball}</span>
+    </div>
   );
 }

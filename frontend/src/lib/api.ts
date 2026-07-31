@@ -642,3 +642,122 @@ export async function getKanal(): Promise<KanalHolat | null> {
     return (await r.json()) as KanalHolat;
   } catch { return null; }
 }
+
+/* ================= DUEL — do'st bilan bellashuv ================= */
+
+export interface DuelHolat {
+  kod: string;
+  oyin: string;
+  daraja: number;
+  /** `boshlanmagan` | `kutyapti` | `tugadi` | `muddati_otdi` */
+  holat: string;
+  chaqirgan: string;
+  ozim: boolean;
+  havola: string;
+  /** Faqat boshlashda va qabul qilishda keladi. */
+  urug?: number;
+  /**
+   * Chaqirganning har soniyadagi bali — raqib chizig'i uchun.
+   *
+   * Yakuniy BALL ataylab kelmaydi: u ko'rinsa duel "nishonga urish" ga
+   * aylanadi va o'yinchi kerakli sonni o'tishi bilan to'xtaydi.
+   */
+  raqibSanoq?: number[];
+}
+
+export interface DuelNatija {
+  kod: string;
+  /** `chaqirgan` | `qabul` | `durang` */
+  golib: string;
+  meniki: number;
+  raqib: number;
+  raqibIsm: string;
+}
+
+export interface DuelYozuv {
+  kod: string;
+  oyin: string;
+  holat: string;
+  menChaqirdim: boolean;
+  raqib: string;
+  meniki: number;
+  raqibBall: number;
+  /** `null` — hali tugamagan. */
+  yutdim: boolean | null;
+  durang: boolean;
+  havola: string;
+}
+
+/** Xato turi — ekran foydalanuvchiga tushunarli javob bera olishi uchun. */
+export class DuelXato extends Error {
+  /** HTTP kodi — ekran shunga qarab tushunarli javob beradi. */
+  kod: number;
+  sabab: string;
+
+  constructor(kod: number, sabab: string) {
+    super(sabab);
+    this.kod = kod;
+    this.sabab = sabab;
+  }
+}
+
+async function duelPost<T>(url: string, body: unknown = {}): Promise<T> {
+  // Kirishni KUTAMIZ. Duel ekrani ilova ochilishi bilan chaqiriladi
+  // (chaqiruv havolasi to'g'ridan-to'g'ri shu yerga tushiradi) va o'sha
+  // lahzada token hali kelmagan bo'lishi mumkin — busiz birinchi so'rov
+  // 401 bilan qaytib, ekranda "aloqa yo'q" degan yolg'on xato chiqardi.
+  if (!token && !(await signIn())) throw new DuelXato(401, "kirish yo'q");
+
+  const r = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(bilanProfil(body as Record<string, unknown>)),
+  });
+  if (!r.ok) {
+    let sabab = "";
+    try { sabab = ((await r.json()) as { detail?: string }).detail ?? ""; } catch { /* bo'sh */ }
+    throw new DuelXato(r.status, sabab);
+  }
+  return r.json() as Promise<T>;
+}
+
+/** Yangi chaqiruv boshlaydi — urug' va o'yin serverdan keladi. */
+export const duelBoshla = (): Promise<DuelHolat> =>
+  duelPost<DuelHolat>("/api/v1/duel");
+
+/** Chaqiruv haqida ma'lumot (ball bermaydi). */
+export async function duelKorish(kod: string): Promise<DuelHolat | null> {
+  if (!token && !(await signIn())) return null;
+  try {
+    const r = await fetch(`/api/v1/duel/${encodeURIComponent(kod)}${profilQuery()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as DuelHolat;
+  } catch { return null; }
+}
+
+/** Chaqiruvni qabul qiladi — o'ynash uchun urug' va raqib sanog'i. */
+export const duelQabul = (kod: string): Promise<DuelHolat> =>
+  duelPost<DuelHolat>(`/api/v1/duel/${encodeURIComponent(kod)}/qabul`);
+
+/** Natijani yuboradi. Chaqirgan uchun `DuelHolat`, qabul qilgan uchun `DuelNatija`. */
+export const duelNatija = <T>(
+  kod: string, ball: number, xato: number, sanoq: number[],
+): Promise<T> =>
+  duelPost<T>(`/api/v1/duel/${encodeURIComponent(kod)}/natija`, { ball, xato, sanoq });
+
+/** O'z duellarim — oxirgi 20 tasi. */
+export async function duelRoyxat(): Promise<DuelYozuv[]> {
+  if (!token && !(await signIn())) return [];
+  try {
+    const r = await fetch(`/api/v1/duel/royxat${profilQuery()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return [];
+    return ((await r.json()) as { duellar: DuelYozuv[] }).duellar;
+  } catch { return []; }
+}

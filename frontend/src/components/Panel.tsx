@@ -51,6 +51,11 @@ const YOPIQ = [
   // Bugungi maydon — u ham o'yin, ustiga kuniga bitta urinish. Bu
   // yerda bexosdan bosilgan tugma butun kunni yo'qotardi.
   /^\/oyinlar\/maydon$/,
+  // Duel — u ham o'yin. Chaqiruv havolasi (`/duel/<kod>`) esa
+  // umuman ilova ichidan emas, Telegramdan ochiladi: u yerda panel
+  // "qayerdaman?" degan savolni faqat kuchaytirardi.
+  /^\/oyinlar\/duel$/,
+  /^\/duel\//,
   /^\/kirish\//,                 // botdagi havola
 ];
 

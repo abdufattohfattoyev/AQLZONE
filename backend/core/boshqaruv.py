@@ -41,6 +41,7 @@ from django.utils import timezone
 
 from . import reklama as R
 from .models import (
+    Duel,
     Identity, LessonResult, Profile, Progress, Pupil, Reklama, Session,
 )
 
@@ -707,3 +708,108 @@ def statistika(kunlar: int = 30) -> dict:
         "platformalar": platformalar,
         "onlayn_daqiqa": ONLAYN_DAQIQA,
     }
+
+
+# ---------------------------------------------------------------- duellar
+
+
+#: Jadvalda ko'rsatiladigan oxirgi duellar soni.
+DUEL_ROYXAT = 60
+
+
+def duel_statistika(kunlar: int = 30) -> dict:
+    """
+    Duel hisoboti.
+
+    Asosiy savol bitta: **chaqiruvlar javob olyaptimi?** Duel soni emas,
+    aynan shu foiz muhim — javobsiz qolgan chaqiruv o'yin emas, bo'sh
+    ish. Shuning uchun ekranning eng tepasida "qabul qilindi" turadi.
+
+    Ikkinchi savol: chaqiruv YASALDI-yu, o'ynalmadimi? "Boshlanmagan"
+    duellar — bu o'yinni ochib, tugatmasdan chiqib ketganlar. Ular ko'p
+    bo'lsa, muammo duelda emas, o'yinning o'zida.
+    """
+    hozir = timezone.now()
+    oraliq = hozir - timedelta(days=kunlar)
+    kecha = hozir - timedelta(hours=Duel.MUDDAT_SOAT)
+
+    qs = Duel.objects.filter(created_at__gte=oraliq)
+
+    jami = qs.count()
+    boshlanmagan = qs.filter(chaqirgan_tugatdi=False).count()
+    tugagan = qs.filter(qabul_tugatdi=True).count()
+    # Kutayotgan: chaqiruv tayyor, javob yo'q va muddati hali o'tmagan.
+    kutyapti = qs.filter(
+        chaqirgan_tugatdi=True, qabul_tugatdi=False, created_at__gte=kecha
+    ).count()
+    javobsiz = qs.filter(
+        chaqirgan_tugatdi=True, qabul_tugatdi=False, created_at__lt=kecha
+    ).count()
+
+    # Qabul foizi FAQAT tayyor chaqiruvlardan hisoblanadi: yarim yo'lda
+    # tashlab ketilgan duel raqibga umuman ko'rinmagan va uni "qabul
+    # qilinmadi" deb sanash foizni yolg'on pasaytirardi.
+    tayyor = tugagan + kutyapti + javobsiz
+    qabul_foiz = _foiz(tugagan, tayyor)
+
+    # Eng faol chaqiruvchilar.
+    faollar = (
+        qs.filter(chaqirgan_tugatdi=True)
+        .values("chaqirgan__name", "chaqirgan__pupil__first_name")
+        .annotate(soni=Count("id"))
+        .order_by("-soni")[:10]
+    )
+
+    # O'yinlar bo'yicha taqsimot — qaysi o'yin duelda ko'proq tushgani.
+    oyinlar = (
+        qs.filter(qabul_tugatdi=True)
+        .values("oyin").annotate(soni=Count("id")).order_by("-soni")
+    )
+
+    tugaganlar = qs.filter(qabul_tugatdi=True)
+    ortacha = tugaganlar.aggregate(
+        ch=Sum("chaqirgan_ball"), qa=Sum("qabul_ball"),
+    )
+    n = tugaganlar.count() or 1
+
+    royxat = list(
+        Duel.objects.select_related("chaqirgan", "qabul")
+        .order_by("-created_at")[:DUEL_ROYXAT]
+    )
+
+    return {
+        "kunlar": kunlar,
+        "yangilangan": hozir,
+        "duel": {
+            "jami": jami,
+            "tugagan": tugagan,
+            "kutyapti": kutyapti,
+            "javobsiz": javobsiz,
+            "boshlanmagan": boshlanmagan,
+            "tayyor": tayyor,
+            "qabul_foiz": qabul_foiz,
+            "ortacha_ball": round(((ortacha["ch"] or 0) + (ortacha["qa"] or 0)) / (n * 2)),
+            "bugun": Duel.objects.filter(
+                created_at__date=timezone.localtime(hozir).date()
+            ).count(),
+        },
+        "faollar": [
+            {
+                "ism": f["chaqirgan__name"] or f["chaqirgan__pupil__first_name"] or "—",
+                "soni": f["soni"],
+            }
+            for f in faollar
+        ],
+        "oyinlar": list(oyinlar),
+        "royxat": royxat,
+    }
+
+
+def duellar(request):
+    """Duel hisoboti sahifasi."""
+    if not _yoniq():
+        raise Http404
+    if not kirganmi(request):
+        return kirish(request)
+    kun = max(7, min(120, int(request.GET.get("kun") or 30)))
+    return render(request, "boshqaruv/duel.html", duel_statistika(kun))

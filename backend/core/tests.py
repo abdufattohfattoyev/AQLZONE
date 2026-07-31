@@ -17,14 +17,17 @@ from urllib.parse import urlencode
 
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+from django.core import signing
 from django.utils import timezone
 
 from . import auth as A
+from . import boshqaruv
+from . import duel as D
 from . import xabar
 from . import liga as L
 from . import reklama as R
 from .models import (
-    Identity, KirishKodi, LessonResult, LigaAzo, Profile, Progress, Pupil,
+    Duel, Identity, KirishKodi, LessonResult, LigaAzo, Profile, Progress, Pupil,
     Reklama, ReklamaQabul, Session,
 )
 
@@ -2160,3 +2163,223 @@ class ReklamaRangiTest(TestCase):
         tugma = sorov.call_args[0][1]["reply_markup"]["inline_keyboard"][0][0]
         self.assertNotIn("web_app", tugma)
         self.assertEqual(tugma["url"], "https://t.me/AqlZoneUz")
+
+
+class DuelTest(TestCase):
+    """
+    Do'st bilan bellashuv.
+
+    Sinovlar ikki narsaga qaraydi: OQIM to'g'ri ketyaptimi va
+    QOIDALAR buzilmaydimi. Ikkinchisi muhimroq — bir tomonga ikki
+    marta natija yozish yoki o'zini o'zi chaqirish kabi holatlar
+    brauzerda ko'rinmaydi, lekin bittasi o'tib ketsa jadval yolg'on
+    bo'lib qoladi.
+    """
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post(
+            "/api/v1/auth/device",
+            {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 200, r.content)
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def setUp(self):
+        self.a = self.kir("dev-aaaa1111bbbb2222cccc")
+        self.b = self.kir("dev-dddd3333eeee4444ffff")
+
+    def boshla(self) -> dict:
+        r = self.client.post("/api/v1/duel", {}, content_type="application/json", **self.a)
+        self.assertEqual(r.status_code, 201, r.content)
+        return r.json()
+
+    def natija(self, kod: str, kim: dict, ball: int, xato: int = 0, sanoq=None):
+        return self.client.post(
+            f"/api/v1/duel/{kod}/natija",
+            {"ball": ball, "xato": xato, "sanoq": sanoq if sanoq is not None else [ball]},
+            content_type="application/json", **kim,
+        )
+
+    def tayyor(self, ball: int = 30) -> str:
+        """Chaqirgan o'ynab bo'lgan duel kodini qaytaradi."""
+        kod = self.boshla()["kod"]
+        self.assertEqual(self.natija(kod, self.a, ball).status_code, 200)
+        return kod
+
+    # --------------------------------------------------------- oqim
+
+    def test_boshlaganda_urug_va_oyin_keladi(self):
+        d = self.boshla()
+        self.assertIn(d["oyin"], D.OYINLAR)
+        self.assertGreater(d["urug"], 0)
+        self.assertEqual(d["holat"], "boshlanmagan")
+
+    def test_toliq_oqim_golib_aniqlanadi(self):
+        kod = self.tayyor(ball=30)
+
+        # Chaqiruvni ko'rish — ball KO'RINMAYDI.
+        r = self.client.get(f"/api/v1/duel/{kod}", **self.b)
+        self.assertEqual(r.status_code, 200)
+        self.assertNotIn("ball", r.json())
+        self.assertEqual(r.json()["holat"], "kutyapti")
+
+        # Qabul qilish — urug' va raqib sanog'i keladi.
+        r = self.client.post(f"/api/v1/duel/{kod}/qabul", {},
+                             content_type="application/json", **self.b)
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertIn("urug", r.json())
+        self.assertEqual(r.json()["raqibSanoq"], [30])
+
+        # Ikkinchi o'yinchi ko'proq to'pladi — u yutadi.
+        r = self.natija(kod, self.b, 41)
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(r.json()["golib"], "qabul")
+        self.assertEqual(r.json()["meniki"], 41)
+        self.assertEqual(r.json()["raqib"], 30)
+
+        d = Duel.objects.get(kod=kod)
+        self.assertEqual(d.holat, "tugadi")
+        self.assertIsNotNone(d.tugadi_at)
+
+    def test_ikkala_oyinchi_bir_xil_urugni_oladi(self):
+        kod = self.tayyor()
+        urug = Duel.objects.get(kod=kod).urug
+        r = self.client.post(f"/api/v1/duel/{kod}/qabul", {},
+                             content_type="application/json", **self.b)
+        self.assertEqual(r.json()["urug"], urug)
+
+    def test_teng_ballda_kam_xato_yutadi(self):
+        kod = self.boshla()["kod"]
+        self.natija(kod, self.a, 30, xato=4)
+        self.natija(kod, self.b, 30, xato=1)
+        self.assertEqual(Duel.objects.get(kod=kod).golib, "qabul")
+
+    def test_hammasi_teng_bolsa_durang(self):
+        kod = self.boshla()["kod"]
+        self.natija(kod, self.a, 30, xato=2)
+        self.natija(kod, self.b, 30, xato=2)
+        self.assertEqual(Duel.objects.get(kod=kod).golib, "durang")
+
+    # --------------------------------------------------------- qoidalar
+
+    def test_ozini_ozi_chaqira_olmaydi(self):
+        kod = self.tayyor()
+        r = self.client.post(f"/api/v1/duel/{kod}/qabul", {},
+                             content_type="application/json", **self.a)
+        self.assertEqual(r.status_code, 409)
+
+    def test_tayyor_bolmagan_chaqiruv_qabul_qilinmaydi(self):
+        kod = self.boshla()["kod"]          # chaqirgan hali o'ynamagan
+        r = self.client.post(f"/api/v1/duel/{kod}/qabul", {},
+                             content_type="application/json", **self.b)
+        self.assertEqual(r.status_code, 409)
+
+    def test_bir_tomon_ikki_marta_natija_yubora_olmaydi(self):
+        kod = self.tayyor()
+        self.assertEqual(self.natija(kod, self.a, 99).status_code, 409)
+
+    def test_oynalgan_duel_qayta_oynalmaydi(self):
+        kod = self.tayyor()
+        self.natija(kod, self.b, 41)
+        # Uchinchi odam ham, o'sha odam ham qayta o'ynay olmaydi.
+        c = self.kir("dev-9999888877776666aaaa")
+        self.assertEqual(self.natija(kod, self.b, 99).status_code, 409)
+        r = self.client.post(f"/api/v1/duel/{kod}/qabul", {},
+                             content_type="application/json", **c)
+        self.assertEqual(r.status_code, 409)
+
+    def test_muddati_otgan_chaqiruv_ochilmaydi(self):
+        kod = self.tayyor()
+        eski = timezone.now() - timedelta(hours=Duel.MUDDAT_SOAT + 1)
+        Duel.objects.filter(kod=kod).update(created_at=eski)
+        r = self.client.post(f"/api/v1/duel/{kod}/qabul", {},
+                             content_type="application/json", **self.b)
+        self.assertEqual(r.status_code, 410)
+
+    def test_haqiqatga_sigmaydigan_ball_rad_etiladi(self):
+        kod = self.boshla()["kod"]
+        # 60 soniyada 3 balldan tez — jismonan mumkin emas.
+        self.assertEqual(self.natija(kod, self.a, D.VAQT * D.MAX_BALL_SONIYA + 1).status_code, 400)
+        self.assertEqual(self.natija(kod, self.a, -5).status_code, 400)
+
+    def test_topilmagan_kod_404(self):
+        r = self.client.get("/api/v1/duel/yoq-bunday-kod", **self.b)
+        self.assertEqual(r.status_code, 404)
+
+    def test_kunlik_chegara(self):
+        for _ in range(D.KUNLIK_CHEGARA):
+            self.client.post("/api/v1/duel", {}, content_type="application/json", **self.a)
+        r = self.client.post("/api/v1/duel", {}, content_type="application/json", **self.a)
+        self.assertEqual(r.status_code, 429)
+
+    def test_kodlar_takrorlanmaydi(self):
+        kodlar = {self.boshla()["kod"] for _ in range(10)}
+        self.assertEqual(len(kodlar), 10)
+
+    # --------------------------------------------------------- ro'yxat
+
+    def test_royxatda_ikkala_tomon_ham_koradi(self):
+        kod = self.tayyor(ball=30)
+        self.natija(kod, self.b, 41)
+
+        r = self.client.get("/api/v1/duel/royxat", **self.a)
+        yozuv = r.json()["duellar"][0]
+        self.assertTrue(yozuv["menChaqirdim"])
+        self.assertFalse(yozuv["yutdim"])
+        self.assertEqual(yozuv["meniki"], 30)
+
+        r = self.client.get("/api/v1/duel/royxat", **self.b)
+        yozuv = r.json()["duellar"][0]
+        self.assertFalse(yozuv["menChaqirdim"])
+        self.assertTrue(yozuv["yutdim"])
+        self.assertEqual(yozuv["meniki"], 41)
+
+
+class BoshqaruvDuelTest(TestCase):
+    """Boshqaruv panelidagi duel hisoboti."""
+
+    def setUp(self):
+        self.p1 = Profile.objects.create(pupil=Pupil.objects.create(first_name="A"), name="Aziz")
+        self.p2 = Profile.objects.create(pupil=Pupil.objects.create(first_name="M"), name="Malika")
+
+    def duel(self, **kw):
+        asos = dict(kod=f"k{Duel.objects.count()}", urug=1, oyin="tezkor", chaqirgan=self.p1)
+        return Duel.objects.create(**{**asos, **kw})
+
+    def test_qabul_foizi_tayyorlardan_hisoblanadi(self):
+        # Tugagan
+        self.duel(chaqirgan_tugatdi=True, qabul=self.p2, qabul_tugatdi=True, golib="qabul")
+        # Kutayotgan
+        self.duel(chaqirgan_tugatdi=True)
+        # Tugatilmagan — foizga KIRMAYDI, chunki raqib uni umuman ko'rmagan
+        self.duel()
+
+        s = boshqaruv.duel_statistika(30)
+        self.assertEqual(s["duel"]["jami"], 3)
+        self.assertEqual(s["duel"]["tayyor"], 2)
+        self.assertEqual(s["duel"]["qabul_foiz"], 50)
+        self.assertEqual(s["duel"]["boshlanmagan"], 1)
+
+    def test_javobsiz_qolgan_alohida_sanaladi(self):
+        d = self.duel(chaqirgan_tugatdi=True)
+        Duel.objects.filter(pk=d.pk).update(
+            created_at=timezone.now() - timedelta(hours=Duel.MUDDAT_SOAT + 2)
+        )
+        s = boshqaruv.duel_statistika(30)
+        self.assertEqual(s["duel"]["javobsiz"], 1)
+        self.assertEqual(s["duel"]["kutyapti"], 0)
+
+    def test_sahifa_ochiladi(self):
+        self.duel(chaqirgan_tugatdi=True, qabul=self.p2, qabul_tugatdi=True,
+                  chaqirgan_ball=30, qabul_ball=41, golib="qabul")
+        with self.settings(ADMIN_TG=["555"], BOSHQARUV_YONIQ=True):
+            self.client.cookies[boshqaruv.COOKIE] = signing.dumps(
+                {"ok": True, "tg": "555"}, salt=boshqaruv.TUZ
+            )
+            r = self.client.get("/boshqaruv/duel")
+        self.assertEqual(r.status_code, 200)
+        matn = r.content.decode()
+        self.assertIn("Aziz", matn)
+        self.assertIn("Malika", matn)
+        self.assertIn("30 : 41", matn)

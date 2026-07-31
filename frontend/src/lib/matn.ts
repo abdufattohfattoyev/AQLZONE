@@ -534,6 +534,48 @@ const S = {
   ],
   oyinHaliYoq: ["Hali o'ynalmagan", "Ещё не играли"],
 
+  /* ---------------- duel ---------------- */
+  duel: ["Do'st bilan bellashuv", "Дуэль с другом"],
+  duelIzoh: [
+    "Bir xil savollar · 60 soniya",
+    "Одинаковые вопросы · 60 секунд",
+  ],
+  duelSiz: ["Siz", "Вы"],
+  duelChaqirish: ["Chaqiruv yuborish", "Отправить вызов"],
+  duelTayyorlanmoqda: ["Tayyorlanmoqda…", "Готовим…"],
+  duelSizChaqirdingiz: ["Chaqiruv tayyor!", "Вызов готов!"],
+  duelUlashing: [
+    "Havolani do'stingizga yuboring — u xuddi shu savollarni yechadi.",
+    "Отправьте ссылку другу — он решит те же самые задания.",
+  ],
+  duelNusxa: ["Havolani nusxalash", "Скопировать ссылку"],
+  duelNusxalandi: ["Nusxalandi ✓", "Скопировано ✓"],
+  duelUlash: ["Telegramda ulashish", "Поделиться в Telegram"],
+  duelUlashMatn: [
+    "Meni yutib ko'r-chi 😏",
+    "Попробуй меня обыграть 😏",
+  ],
+  duelChaqiruv: ["{nom} sizni bellashuvga chaqiryapti", "{nom} вызывает вас на дуэль"],
+  duelChaqiruvIzoh: [
+    "Xuddi shu savollarni yechasiz. 60 soniya.",
+    "Вы решите те же самые задания. 60 секунд.",
+  ],
+  duelQabul: ["Qabul qilaman", "Принимаю"],
+  duelYutdingiz: ["Siz yutdingiz!", "Вы победили!"],
+  duelYutqazdingiz: ["Bu safar yutqazdingiz", "На этот раз проигрыш"],
+  duelDurang: ["Durang!", "Ничья!"],
+  duelHisob: ["{meniki} : {raqib}", "{meniki} : {raqib}"],
+  duelYana: ["Yana chaqirish", "Вызвать снова"],
+  duelOyinlarga: ["O'yinlarga qaytish", "К играм"],
+  duelTopilmadi: ["Chaqiruv topilmadi", "Вызов не найден"],
+  duelMuddatiOtdi: ["Chaqiruv muddati o'tgan", "Срок вызова истёк"],
+  duelOynalgan: ["Bu chaqiruv allaqachon o'ynalgan", "Этот вызов уже сыгран"],
+  duelOzingiz: ["Bu sizning chaqiruvingiz", "Это ваш собственный вызов"],
+  duelChegara: ["Bugunga chaqiruvlar tugadi", "Вызовы на сегодня закончились"],
+  duelXato: ["Aloqa yo'q — qaytadan urinib ko'ring", "Нет связи — попробуйте снова"],
+  duelKutyapti: ["Javob kutilmoqda", "Ожидает ответа"],
+  duelTarix: ["So'nggi bellashuvlar", "Последние дуэли"],
+
   /* ---------------- bugungi maydon ---------------- */
   maydon: ["Bugungi maydon", "Сегодняшняя арена"],
   maydonIzoh: [

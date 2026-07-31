@@ -1,0 +1,172 @@
+{% extends "boshqaruv/asos.html" %}
+{% block sarlavha %}Duellar{% endblock %}
+
+{% comment %}
+Sahifaning tartibi bitta savolga bo'ysunadi: CHAQIRUVLAR JAVOB
+OLYAPTIMI? Duel soni emas, aynan shu foiz muhim — javobsiz qolgan
+chaqiruv o'yin emas, bo'sh ish. Shuning uchun u eng tepada va eng
+katta shrift bilan turadi.
+
+Ikkinchi qatordagi "boshlanmagan" ham shunchaki son emas: bu o'yinni
+ochib, tugatmasdan chiqib ketganlar. Ular ko'p bo'lsa muammo duelda
+emas, o'yinning o'zida.
+{% endcomment %}
+
+{% block tana %}
+<header class="tepa">
+  <div class="nishon">AZ</div>
+  <div>
+    <h1>Duellar</h1>
+    <div class="vaqt">{{ yangilangan|date:"d.m.Y H:i" }} · so'nggi {{ kunlar }} kun</div>
+  </div>
+  <div class="ong">
+    <div class="tanlagich">
+      <a class="{% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
+      <a class="{% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
+      <a class="{% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
+    </div>
+    <a class="tugma" href="/boshqaruv">Panel</a>
+    <a class="tugma" href="/boshqaruv/reklama">E'lonlar</a>
+    <a class="tugma" href="/boshqaruv/chiqish">Chiqish</a>
+  </div>
+</header>
+
+<main class="ichki">
+
+  <div class="setka k4">
+    <div class="karta olchov">
+      <div class="nom">Javob olgan chaqiruvlar</div>
+      <div class="son">{{ duel.qabul_foiz }}%</div>
+      <div class="qosh">{{ duel.tugagan }} / {{ duel.tayyor }} ta tayyor chaqiruv</div>
+    </div>
+    <div class="karta olchov">
+      <div class="nom">Jami duel</div>
+      <div class="son">{{ duel.jami }}</div>
+      <div class="qosh">bugun: {{ duel.bugun }}</div>
+    </div>
+    <div class="karta olchov">
+      <div class="nom">Javob kutyapti</div>
+      <div class="son">{{ duel.kutyapti }}</div>
+      <div class="qosh">muddati hali o'tmagan</div>
+    </div>
+    <div class="karta olchov">
+      <div class="nom">Javobsiz qolgan</div>
+      <div class="son">{{ duel.javobsiz }}</div>
+      <div class="qosh">24 soat ichida ochilmadi</div>
+    </div>
+    <div class="karta olchov">
+      <div class="nom">Tugatilmagan o'yin</div>
+      <div class="son">{{ duel.boshlanmagan }}</div>
+      <div class="qosh">chaqiruv yasaldi, o'ynalmadi</div>
+    </div>
+    <div class="karta olchov">
+      <div class="nom">O'rtacha ball</div>
+      <div class="son">{{ duel.ortacha_ball }}</div>
+      <div class="qosh">tugagan duellarda</div>
+    </div>
+  </div>
+
+  <div class="setka k2" style="margin-top:14px">
+    <section class="karta">
+      <h2>Eng ko'p chaqirganlar</h2>
+      {% if faollar %}
+        <table>
+          <tbody>
+          {% for f in faollar %}
+            <tr>
+              <td>{{ f.ism }}</td>
+              <td class="raqam xira">{{ f.soni }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="izoh-matn">Hali chaqiruv yo'q.</p>
+      {% endif %}
+    </section>
+
+    <section class="karta">
+      <h2>O'yinlar bo'yicha</h2>
+      {% if oyinlar %}
+        <table>
+          <tbody>
+          {% for o in oyinlar %}
+            <tr>
+              <td>{{ o.oyin }}</td>
+              <td class="raqam xira">{{ o.soni }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="izoh-matn">Hali tugagan duel yo'q.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="karta" style="margin-top:14px">
+    <h2>So'nggi duellar</h2>
+    {% if royxat %}
+      <table>
+        <thead>
+          <tr>
+            <th>Vaqt</th>
+            <th>Chaqirgan</th>
+            <th>Raqib</th>
+            <th>O'yin</th>
+            <th class="raqam">Hisob</th>
+            <th>Holat</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for d in royxat %}
+          <tr>
+            <td class="xira">{{ d.created_at|date:"d.m H:i" }}</td>
+            <td>
+              {{ d.chaqirgan.name|default:"—" }}
+              {% if d.golib == "chaqirgan" %}<span class="belgi yashil">yutdi</span>{% endif %}
+            </td>
+            <td>
+              {% if d.qabul %}
+                {{ d.qabul.name|default:"—" }}
+                {% if d.golib == "qabul" %}<span class="belgi yashil">yutdi</span>{% endif %}
+              {% else %}
+                <span class="juda-xira">—</span>
+              {% endif %}
+            </td>
+            <td class="xira">{{ d.oyin }}</td>
+            <td class="raqam">
+              {% if d.qabul_tugatdi %}
+                {{ d.chaqirgan_ball }} : {{ d.qabul_ball }}
+              {% elif d.chaqirgan_tugatdi %}
+                <span class="juda-xira">{{ d.chaqirgan_ball }} : —</span>
+              {% else %}
+                <span class="juda-xira">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if d.holat == "tugadi" %}
+                {% if d.golib == "durang" %}
+                  <span class="belgi">durang</span>
+                {% else %}
+                  <span class="belgi yashil">tugadi</span>
+                {% endif %}
+              {% elif d.holat == "kutyapti" %}
+                <span class="belgi sariq">kutyapti</span>
+              {% elif d.holat == "muddati_otdi" %}
+                <span class="belgi qizil">javobsiz</span>
+              {% else %}
+                <span class="belgi">tugatilmagan</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="izoh-matn">Hali duel bo'lmagan.</p>
+    {% endif %}
+  </section>
+
+</main>
+{% endblock %}

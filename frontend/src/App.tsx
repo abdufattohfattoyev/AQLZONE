@@ -21,6 +21,7 @@ import { KodKirish } from "./screens/KodKirish";
 import { NotFound } from "./screens/NotFound";
 import { Oyinlar } from "./screens/Oyinlar";
 import { Maydon } from "./screens/Maydon";
+import { Duel, DuelQabul } from "./screens/Duel";
 import { OyinDaraja } from "./screens/OyinDaraja";
 import { Oyin } from "./screens/Oyin";
 import { oyinById } from "./lib/oyin";
@@ -37,7 +38,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolDaftar, yolDars, yolKurs, yolKurslar,
-  yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
+  yolDuel, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "./lib/yollar";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
@@ -75,6 +76,8 @@ function Yollar() {
       {/* Maydon `:id` dan OLDIN: aks holda "maydon" o'yin id'si
           deb qabul qilinib, "topilmadi" sahifasi chiqardi. */}
       <Route path="/oyinlar/maydon" element={<MaydonSahifasi />} />
+      <Route path="/oyinlar/duel" element={<DuelSahifasi />} />
+      <Route path="/duel/:kod" element={<DuelQabulSahifasi />} />
       <Route path="/oyinlar/:id" element={<OyinDarajaSahifasi />} />
       <Route path="/oyinlar/:id/:daraja" element={<OyinSahifasi />} />
       <Route path="/kurs/:slug" element={<KursSahifasi />} />
@@ -359,6 +362,7 @@ function OyinlarSahifasi() {
       onBack={() => nav(yolKurslar())}
       onOyin={(id) => nav(yolOyin(id))}
       onMaydon={() => nav(yolMaydon())}
+      onDuel={() => nav(yolDuel())}
     />
   );
 }
@@ -367,6 +371,25 @@ function MaydonSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
   return <Maydon onChiq={() => nav(yolOyinlar())} />;
+}
+
+function DuelSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Duel onChiq={() => nav(yolOyinlar())} />;
+}
+
+/**
+ * Chaqiruv havolasi — do'stdan kelgan manzil.
+ *
+ * Chiqish O'YINLARGA olib boradi, orqaga emas: bu manzilga odam
+ * Telegramdan tushadi va uning brauzer tarixida "orqa" degan joy yo'q.
+ */
+function DuelQabulSahifasi() {
+  const nav = useNavigate();
+  const { kod } = useParams();
+  useTema("bosh");
+  return <DuelQabul kod={kod ?? ""} onChiq={() => nav(yolOyinlar())} />;
 }
 
 function OyinDarajaSahifasi() {

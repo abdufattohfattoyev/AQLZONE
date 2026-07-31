@@ -33,6 +33,13 @@ export const yolOyinlar = () => "/oyinlar";
 
 /** Bugungi maydon — kunlik uch bosqich. */
 export const yolMaydon = () => "/oyinlar/maydon";
+
+/** Do'st bilan bellashuv — chaqiruv yasash. */
+export const yolDuel = () => "/oyinlar/duel";
+
+/** Chaqiruv havolasi. ATAYLAB qisqa (`/duel/<kod>`): u Telegramda
+ *  ulashiladi va uzun manzil xabarni ikki qatorga bo'lib yuboradi. */
+export const yolDuelKod = (kod: string) => `/duel/${kod}`;
 /** Bitta o'yinning daraja tanlash ekrani. */
 export const yolOyin = (id: string) => `/oyinlar/${id}`;
 /** O'yinning o'zi — daraja bilan. */

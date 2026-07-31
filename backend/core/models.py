@@ -561,3 +561,107 @@ class LigaAzo(models.Model):
     def __str__(self) -> str:  # pragma: no cover — faqat admin/shell uchun
         return f"{self.profile_id} · {self.hafta} · {self.daraja}-daraja"
         ordering = ["-created_at"]
+
+
+class Duel(models.Model):
+    """
+    Ikki do'stning bellashuvi — bir xil savollar bilan.
+
+    ─────────────────── NEGA BITTA JADVAL ───────────────────
+
+    Duelning ikki tomoni bor va ular hech qachon uchtaga aylanmaydi.
+    Alohida `DuelAzo` jadvali moslashuvchanroq bo'lardi, lekin har bir
+    o'qishda `JOIN` va "ikkinchi tomon topilmadi" degan holatni qo'lda
+    tekshirishni talab qilardi. Bitta qatorda esa duelning BUTUN holati
+    ko'rinib turadi va noto'g'ri holat yasab bo'lmaydi.
+
+    ─────────────────── SAVOLLAR SAQLANMAYDI ───────────────────
+
+    Server savol yubormaydi va saqlamaydi — faqat `urug` (bitta son).
+    Ikkala qurilma o'sha urug'dan AYNAN bir xil savollarni yasaydi
+    (`frontend/src/lib/oyin/urug.ts`). Shu sabab duel jadvali kichik
+    bo'lib qoladi va savollar o'zgarganda eski duellar buzilmaydi.
+
+    ─────────────────── SANOQ NEGA KERAK ───────────────────
+
+    `*_sanoq` — har soniyadagi ball (60 ta kichik son). Undan raqibning
+    chizig'i chiziladi: qabul qilgan odam chaqirganning ballini JONLI
+    o'sib borayotgandek ko'radi. Yakuniy son esa ATAYLAB ko'rsatilmaydi
+    — u ko'rinsa duel "nishonga urish" ga aylanadi va o'yinchi kerakli
+    ballni o'tishi bilan to'xtaydi.
+    """
+
+    #: Havoladagi kod. Taxmin qilib bo'lmaydigan bo'lishi kerak: kodni
+    #: bilgan odam duelni ochadi va u ochiq havola sifatida ulashiladi.
+    kod = models.CharField(max_length=16, unique=True)
+
+    urug = models.BigIntegerField()
+    oyin = models.CharField(max_length=16)
+    daraja = models.SmallIntegerField(default=2)
+
+    chaqirgan = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="yuborgan_duellar"
+    )
+    chaqirgan_ball = models.IntegerField(default=0)
+    chaqirgan_xato = models.IntegerField(default=0)
+    chaqirgan_sanoq = models.JSONField(default=list)
+    #: Chaqirgan o'yinni TUGATDIMI. Tugatmagan duel havolasi ishlamaydi:
+    #: yarim yo'lda tashlab ketilgan o'yin raqibga chaqiruv bo'lolmaydi.
+    chaqirgan_tugatdi = models.BooleanField(default=False)
+
+    qabul = models.ForeignKey(
+        Profile, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="qabul_duellar",
+    )
+    qabul_ball = models.IntegerField(default=0)
+    qabul_xato = models.IntegerField(default=0)
+    qabul_sanoq = models.JSONField(default=list)
+    qabul_tugatdi = models.BooleanField(default=False)
+
+    #: Kim yutdi: "chaqirgan" | "qabul" | "durang" | "" (hali tugamagan).
+    golib = models.CharField(max_length=10, default="", blank=True)
+
+    created_at = models.DateTimeField(default=timezone.now)
+    tugadi_at = models.DateTimeField(null=True, blank=True)
+
+    #: Chaqiruv shuncha soatdan keyin kuchini yo'qotadi.
+    MUDDAT_SOAT = 24
+
+    class Meta:
+        db_table = "duel"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["chaqirgan", "-created_at"]),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover — faqat admin/shell uchun
+        return f"duel {self.kod} · {self.oyin}"
+
+    @property
+    def muddati_otdimi(self) -> bool:
+        yosh = timezone.now() - self.created_at
+        return yosh.total_seconds() > self.MUDDAT_SOAT * 3600
+
+    @property
+    def holat(self) -> str:
+        """`boshlanmagan` | `kutyapti` | `tugadi` | `muddati_otdi`."""
+        if not self.chaqirgan_tugatdi:
+            return "boshlanmagan"
+        if self.qabul_tugatdi:
+            return "tugadi"
+        return "muddati_otdi" if self.muddati_otdimi else "kutyapti"
+
+    def golibni_aniqla(self) -> str:
+        """
+        G'olibni hisoblaydi.
+
+        Ball teng bo'lsa KAM XATO qilgani yutadi — aks holda "durang"
+        juda tez-tez chiqardi: ball 60 soniyada yig'iladi va ikki
+        o'yinchi bir xil songa kelib qolishi oson.
+        """
+        if self.chaqirgan_ball != self.qabul_ball:
+            return "chaqirgan" if self.chaqirgan_ball > self.qabul_ball else "qabul"
+        if self.chaqirgan_xato != self.qabul_xato:
+            return "chaqirgan" if self.chaqirgan_xato < self.qabul_xato else "qabul"
+        return "durang"
