@@ -463,7 +463,24 @@ class EslatmaTest(TestCase):
             call_command("eslatma", stdout=StringIO())
         tugma = sorov.call_args[0][1]["reply_markup"]["inline_keyboard"][0][0]
         self.assertEqual(tugma["text"], "Mashq qilish")
-        self.assertEqual(tugma["url"], "https://aql-zone.uz")
+        # Ilova BOT ICHIDA ochiladi — brauzerga chiqarib yuboradigan
+        # oddiy havola emas.
+        self.assertEqual(tugma["web_app"], {"url": "https://aql-zone.uz"})
+        self.assertNotIn("url", tugma)
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_mini_app_yoq_bolsa_oddiy_havola(self, sorov):
+        """
+        `MINI_APP_URL` sozlanmagan bo'lsa tugma bot havolasiga tushadi —
+        va `t.me/...` ni Mini App qilib ochib bo'lmaydi.
+        """
+        _, profil = self.hisob("1515", "Havolali")
+        self.natija(profil, 2)
+        with self.settings(BOT_TOKEN="sinov:token", MINI_APP_URL="", SAYT_URL=""):
+            call_command("eslatma", stdout=StringIO())
+        tugma = sorov.call_args[0][1]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertNotIn("web_app", tugma)
+        self.assertTrue(tugma["url"].startswith("https://t.me/"))
 
     @patch("core.xabar._sorov", return_value=(False, 403, "bot was blocked by the user"))
     def test_bloklagani_aniqlansa_belgilanadi(self, sorov):
@@ -1944,3 +1961,73 @@ class TugmaRangiTest(TestCase):
         tugma = api.call_args[1]["reply_markup"]["keyboard"][0][0]
         self.assertEqual(tugma["style"], "primary")
         self.assertTrue(tugma["request_contact"])
+
+
+class BotIlovaTugmasiTest(TestCase):
+    """
+    Botdagi asosiy tugma — ilovani BOT ICHIDA ochishi kerak.
+
+    Ilgari birinchi tugma sayt havolasi edi va u brauzerni ochardi:
+    odam Telegram'dan chiqib ketardi, u yerda hisobga kirish qaytadan
+    boshlanardi. Endi birinchi o'rinda Mini App turadi.
+    """
+
+    def tugmalar(self, mini_app="https://aql-zone.uz", sayt="https://aql-zone.uz"):
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL=mini_app, SAYT_URL=sayt):
+            return B.ilova_tugmalari("uz", f"{sayt}/kirish/abc" if sayt else "")
+
+    def test_ilova_birinchi_va_yashil(self):
+        q = self.tugmalar()
+        self.assertEqual(q[0][0]["web_app"], {"url": "https://aql-zone.uz"})
+        self.assertEqual(q[0][0]["style"], "success")
+
+    def test_sayt_havolasi_ikkinchi_va_kok(self):
+        q = self.tugmalar()
+        self.assertIn("/kirish/abc", q[1][0]["url"])
+        self.assertEqual(q[1][0]["style"], "primary")
+
+    def test_mini_app_yoq_bolsa_sayt_yashilga_qaytadi(self):
+        q = self.tugmalar(mini_app="")
+        self.assertEqual(len(q), 1)
+        self.assertIn("/kirish/abc", q[0][0]["url"])
+        self.assertEqual(q[0][0]["style"], "success")
+
+
+class ReklamaRangiTest(TestCase):
+    """E'lon tugmasining rangi — admin tanlaydi, e'lon bilan saqlanadi."""
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_tanlangan_rang_xabarga_tushadi(self, sorov):
+        r = Reklama.objects.create(
+            matn="Salom", tugma=True, tugma_matni="Ochish",
+            havola="https://aql-zone.uz", tugma_rangi="danger",
+        )
+        with self.settings(BOT_TOKEN="sinov:token"):
+            R.bitta_yubor(r, "555")
+        tugma = sorov.call_args[0][1]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertEqual(tugma["style"], "danger")
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_ilova_manzili_bot_ichida_ochiladi(self, sorov):
+        r = Reklama.objects.create(
+            matn="Salom", tugma=True, tugma_matni="Ochish",
+            havola="https://aql-zone.uz",
+        )
+        with self.settings(BOT_TOKEN="sinov:token", MINI_APP_URL="https://aql-zone.uz"):
+            R.bitta_yubor(r, "555")
+        self.assertIn("web_app", sorov.call_args[0][1]["reply_markup"]["inline_keyboard"][0][0])
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_tashqi_manzil_oddiy_havola_bolib_qoladi(self, sorov):
+        """Kanal yoki boshqa saytni Mini App qilib ochib bo'lmaydi."""
+        r = Reklama.objects.create(
+            matn="Salom", tugma=True, tugma_matni="Kanal",
+            havola="https://t.me/AqlZoneUz",
+        )
+        with self.settings(BOT_TOKEN="sinov:token", MINI_APP_URL="https://aql-zone.uz"):
+            R.bitta_yubor(r, "555")
+        tugma = sorov.call_args[0][1]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertNotIn("web_app", tugma)
+        self.assertEqual(tugma["url"], "https://t.me/AqlZoneUz")

@@ -433,6 +433,20 @@ class Reklama(models.Model):
     #: Bo'sh bo'lsa bot havolasi qo'yiladi (`reklama.havola`).
     havola = models.CharField(max_length=300, default="", blank=True)
 
+    #: Tugmaning rangi (Bot API 9.4 `style`). Nomlari `core/xabar.py` da.
+    #:
+    #: Standart — yashil: e'londagi tugma deyarli har doim asosiy
+    #: harakat bo'ladi ("ilovani oching"). Qizil esa ataylab qoldirilgan:
+    #: e'londa ogohlantirish yoki bekor qilish tugmasi ham bo'lishi
+    #: mumkin va o'shanda rang matndan oldin ko'zga tashlanishi kerak.
+    RANGLAR = [
+        ("success", "yashil — asosiy harakat"),
+        ("primary", "ko'k — yordamchi"),
+        ("danger", "qizil — ogohlantirish"),
+        ("", "rangsiz — mijozning o'z ko'rinishi"),
+    ]
+    tugma_rangi = models.CharField(max_length=10, choices=RANGLAR, default="success", blank=True)
+
     holat = models.CharField(max_length=12, choices=HOLATLAR, default="qoralama")
     #: Yuborish boshlanganda hisoblanadi va o'zgarmaydi — foizni shundan
     #: chiqaramiz. Ro'yxat yuborish davomida o'sib borsa, foiz orqaga

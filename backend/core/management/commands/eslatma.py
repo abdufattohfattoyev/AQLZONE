@@ -223,6 +223,10 @@ class Command(BaseCommand):
             else:
                 holat, sabab = X.yubor(
                     kirish.external_id, matn, tugma=M("tMashqQilish", til), havola=havola,
+                    # Eslatma tugmasi ilovani BOT ICHIDA ochadi: brauzerga
+                    # chiqib ketgan odam u yerda qaytadan kirishi kerak
+                    # bo'lardi va aynan o'sha qadamda ko'pchilik to'xtaydi.
+                    ilovada=True,
                 )
                 if holat == "yuborildi":
                     yuborildi += 1

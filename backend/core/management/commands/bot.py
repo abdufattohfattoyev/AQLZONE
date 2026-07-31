@@ -201,6 +201,38 @@ def raqam_sora(chat_id: int, matn: str, til: str = "uz") -> None:
     )
 
 
+def ilova_tugmalari(til: str, havola: str) -> list[list[dict]]:
+    """
+    Botdagi asosiy tugmalar: ilova va (zaxira sifatida) sayt havolasi.
+
+    **Ilova BIRINCHI va YASHIL.** Ilgari birinchi o'rinda sayt havolasi
+    turardi va u brauzerni ochardi — odam Telegram'dan chiqib ketardi.
+    U yerda uch narsa yo'qoladi: hisobga kirish qaytadan boshlanadi,
+    orqaga qaytish uchun Telegram'ni topib, botni qidirish kerak
+    bo'ladi, va bolaning qo'lidagi telefonda brauzer oynasi allaqachon
+    o'nlab boshqa varaq bilan to'la. Mini App esa bot suhbatining
+    ustida ochiladi va kirish o'z-o'zidan bo'ladi (`initData`).
+
+    Sayt havolasi BUTUNLAY olib tashlanmadi va bu ataylab: Mini App
+    juda eski Telegram mijozlarida ochilmaydi, kompyuterda esa ba'zi
+    odamlar ilovani baribir brauzerda ko'rishni afzal ko'radi. U ikkinchi
+    qatorda, ko'k rangda turadi — ko'rinadi, lekin yo'lda turmaydi.
+
+    `MINI_APP_URL` sozlanmagan bo'lsa (lokal ishlab chiqish) sayt
+    havolasi o'z o'rniga qaytadi va yashil bo'ladi.
+    """
+    if not settings.MINI_APP_URL:
+        return [[tugma_yasa(M("tSaytgaKirish", til), YASHIL, url=havola)]] if havola else []
+
+    tugmalar = [[tugma_yasa(
+        M("tIlovaniOchish", til), YASHIL,
+        web_app={"url": settings.MINI_APP_URL},
+    )]]
+    if havola:
+        tugmalar.append([tugma_yasa(M("tSaytgaKirish", til), KOK, url=havola)])
+    return tugmalar
+
+
 def salom_yubor(
     chat_id: int, tg_id: str, ism: str, familiya: str, til: str = "uz",
 ) -> str:
@@ -232,15 +264,7 @@ def salom_yubor(
     # o'qiydi degani emas.
     til = pupil.til or til
 
-    # Yashil — odam botga aynan shu havola uchun kelgan. Mini App tugmasi
-    # ko'k: u boshqa YO'L, boshqa maqsad emas, va ikkalasi ham yashil
-    # bo'lsa ko'z qay biriga bosishni bilmay qolardi.
-    tugmalar = [[tugma_yasa(M("tSaytgaKirish", til), YASHIL, url=havola)]]
-    if settings.MINI_APP_URL:
-        tugmalar.append([
-            tugma_yasa(M("tIlovaniOchish", til), KOK,
-                       web_app={"url": settings.MINI_APP_URL}),
-        ])
+    tugmalar = ilova_tugmalari(til, havola)
 
     api(
         "sendMessage",
@@ -258,17 +282,11 @@ def ilovani_yubor(chat_id: int, pupil: Pupil, yangi: bool) -> None:
     til = pupil.til or "uz"
     matn = M("raqamSaqlandi" if yangi else "raqamAllaqachon", til)
 
-    tugmalar = []
-    if settings.SAYT_URL:
-        tugmalar.append([tugma_yasa(
-            M("tSaytgaKirish", til), YASHIL,
-            url=f"{settings.SAYT_URL}/kirish/{kirish_kodi_yasa(pupil)}",
-        )])
-    if settings.MINI_APP_URL:
-        tugmalar.append([
-            tugma_yasa(M("tIlovaniOchish", til), KOK,
-                       web_app={"url": settings.MINI_APP_URL}),
-        ])
+    havola = (
+        f"{settings.SAYT_URL}/kirish/{kirish_kodi_yasa(pupil)}"
+        if settings.SAYT_URL else ""
+    )
+    tugmalar = ilova_tugmalari(til, havola)
 
     # Avval eski "raqam yuborish" klaviaturasini olib tashlaymiz: u
     # ekranning pastida osilib qolsa, foydalanuvchi raqamni yana

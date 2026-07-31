@@ -28,6 +28,7 @@ from __future__ import annotations
 import threading
 import time
 
+from django.conf import settings
 from django.db import IntegrityError, connection, transaction
 from django.db.models import F
 from django.utils import timezone
@@ -56,6 +57,11 @@ def bitta_yubor(r: Reklama, chat_id: str) -> tuple[str, str]:
         chat_id, r.matn,
         tugma=r.tugma_matni if r.tugma else "",
         havola=manzil if r.tugma else "",
+        uslub=r.tugma_rangi,
+        # E'londagi havola IXTIYORIY — admin kanal yoki tashqi saytni
+        # ham qo'yishi mumkin. Shuning uchun Mini App faqat manzil
+        # ilovaning o'ziniki bo'lganda ochiladi; qolganida oddiy havola.
+        ilovada=bool(settings.MINI_APP_URL) and manzil.rstrip("/") == settings.MINI_APP_URL.rstrip("/"),
     )
 
 

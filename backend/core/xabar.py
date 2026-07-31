@@ -114,6 +114,7 @@ def yubor(
     ikkinchi_data: str = "",
     uslub: str = YASHIL,
     ikkinchi_uslub: str = QIZIL,
+    ilovada: bool = False,
 ) -> tuple[str, str]:
     """
     Bitta xabar yuboradi. `(holat, izoh)` qaytadi.
@@ -135,6 +136,23 @@ def yubor(
     Ranglar standart holda ma'noga qarab qo'yilgan: asosiy tugma YASHIL
     (odam shu havola uchun kelgan), ikkinchisi QIZIL (u doim rad javob —
     "boshqa yozmang"). Kerak bo'lsa chaqiruvchi almashtiradi.
+
+    `ilovada=True` — tugma ilovani TELEGRAM ICHIDA ochadi (Mini App),
+    brauzerni ochmaydi. Farqi katta: odam brauzerga chiqib ketsa, u
+    yerda hisobga kirish qaytadan boshlanadi, orqaga qaytish esa
+    Telegram'ni topib, botni qidirishni talab qiladi — o'sha yo'lda
+    ko'pchilik yo'qoladi. Mini App'da esa kirish o'z-o'zidan bo'ladi
+    (`initData`) va ilova bot suhbatining ustida ochiladi.
+
+    Ikki holatda `ilovada` E'TIBORGA OLINMAYDI va oddiy havola qoladi:
+
+      * manzil `https://` emas — Telegram Mini App'ni faqat HTTPS'da
+        ochadi va boshqasini butun xabar bilan birga rad etadi;
+      * manzil Telegram'ning o'zi (`t.me/...`) — uni Mini App qilib
+        ochish mumkin emas.
+
+    Tekshiruv shu yerda turadi, chaqiruvchida emas: bir joyda unutilsa,
+    xabar butunlay yetib bormasdi.
     """
     payload = {
         "chat_id": chat_id,
@@ -145,7 +163,15 @@ def yubor(
     }
     qatorlar = []
     if tugma and havola:
-        qatorlar.append([tugma_yasa(tugma, uslub, url=havola)])
+        mini_app = (
+            ilovada
+            and havola.startswith("https://")
+            and not havola.startswith("https://t.me/")
+        )
+        qatorlar.append([
+            tugma_yasa(tugma, uslub, web_app={"url": havola}) if mini_app
+            else tugma_yasa(tugma, uslub, url=havola)
+        ])
     if ikkinchi_tugma and ikkinchi_data:
         qatorlar.append([tugma_yasa(ikkinchi_tugma, ikkinchi_uslub, callback_data=ikkinchi_data)])
     if qatorlar:

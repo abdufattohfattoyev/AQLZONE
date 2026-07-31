@@ -176,7 +176,7 @@ class Command(BaseCommand):
             else:
                 holat, sabab = X.yubor(
                     kirish.external_id, matn,
-                    tugma=M("tQaytish", til), havola=havola,
+                    tugma=M("tQaytish", til), havola=havola, ilovada=True,
                     # "Boshqa yozmang" — inline tugma, javobi `bot.py` da.
                     ikkinchi_tugma=M("tXabarniOchir", til),
                     ikkinchi_data="xabar_yopiq",

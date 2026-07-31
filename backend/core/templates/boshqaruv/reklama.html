@@ -65,6 +65,17 @@ kishining telefonida qoladi.
           <input id="havola" type="text" name="havola" maxlength="300"
                  placeholder="{{ standart_havola }}" oninput="korsat()">
           <div class="yordam">Bo'sh qoldirilsa bot havolasi qo'yiladi</div>
+
+          <label class="yorliq" for="tugma_rangi">Tugma rangi</label>
+          <select id="tugma_rangi" name="tugma_rangi" onchange="korsat()">
+            <option value="success">🟢 Yashil — asosiy harakat</option>
+            <option value="primary">🔵 Ko'k — yordamchi</option>
+            <option value="danger">🔴 Qizil — ogohlantirish</option>
+            <option value="">⚪ Rangsiz</option>
+          </select>
+          <div class="yordam">
+            Eski Telegram versiyalarida rang ko'rinmaydi — matn o'zi gapirsin
+          </div>
         </div>
       </div>
 
@@ -227,6 +238,11 @@ kishining telefonida qoladi.
     font-size: 13px; font-weight: 600;
   }
   .tg-tugma.yoq { display: none; }
+  /* Ko'rinishdagi ranglar Telegram'ning tungi mavzusidan olindi —
+     admin haqiqatda nima ketishini ko'rsin, taxmin qilmasin. */
+  .tg-tugma.success { background: #2e6b46; color: #a8e6bd; }
+  .tg-tugma.primary { background: #2b5278; color: #7cb7f5; }
+  .tg-tugma.danger  { background: #6e3234; color: #f0a9a6; }
 
   /* --------- ro'yxat --------- */
   .elon { padding: 16px 18px; margin-top: 12px; }
@@ -279,6 +295,10 @@ kishining telefonida qoladi.
     var tugma = document.getElementById("ko-tugma");
     tugma.classList.toggle("yoq", !yoniq);
     tugma.textContent = document.getElementById("tugma_matni").value || "Aql Zone'ni ochish";
+    // Rang ko'rinishga ham tushadi: admin tanlaganini darhol ko'rsin.
+    var rang = document.getElementById("tugma_rangi").value;
+    tugma.classList.remove("success", "primary", "danger");
+    if (rang) tugma.classList.add(rang);
     document.getElementById("tugma-sozlama").style.display = yoniq ? "" : "none";
   }
   korsat();

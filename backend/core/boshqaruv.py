@@ -272,6 +272,14 @@ def _reklama_amal(request):
             tugma=bool(request.POST.get("tugma")),
             tugma_matni=(request.POST.get("tugma_matni") or "Aql Zone'ni ochish")[:64],
             havola=(request.POST.get("havola") or "").strip()[:300],
+            # Ro'yxatdagi qiymatdan boshqasi kelsa yashilga tushadi:
+            # Telegram noma'lum `style` ga butun xabarni rad etadi va
+            # e'lon hech kimga bormasdi.
+            tugma_rangi=(
+                request.POST.get("tugma_rangi")
+                if request.POST.get("tugma_rangi") in dict(Reklama.RANGLAR)
+                else "success"
+            ),
             kim=kim(request),
         )
         return _reklama_javob(f"E'lon #{r.pk} yasaldi. Avval o'zingizga yuborib ko'ring.")
