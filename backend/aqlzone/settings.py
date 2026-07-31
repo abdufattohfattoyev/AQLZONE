@@ -7,6 +7,7 @@ Shu sabab bir xil API Telegram Mini App'da ham, APK/iOS'da ham ishlaydi.
 
 Sozlash uchun .env fayl (yoki muhit o'zgaruvchilari) ishlatiladi — .env.example ga qarang.
 """
+import sys
 from pathlib import Path
 
 from .env import env, env_bool, env_list
@@ -175,6 +176,15 @@ ADMIN_TG = [x for x in env_list("ADMIN_TG_IDS", []) if x]
 # Standart holat ataylab "yopiq": sozlashni unutilgan server butun
 # foydalanuvchilar ro'yxatini ochiq qoldirib ketmasligi kerak.
 BOSHQARUV_YONIQ = bool(ADMIN_TG)
+
+# Sinov ishlayaptimi (`manage.py test`).
+#
+# Faqat BIR narsa uchun kerak: yangi ro'yxatdan o'tganda adminga
+# ketadigan xabar sinovda yuborilmasin. Ro'yxatdan o'tish o'nlab testda
+# uchraydi va ularning har biri haqiqiy Telegram'ga chiqib ketardi —
+# sekin ham, noto'g'ri ham. Boshqa hech qayerda ishlatilmaydi: kodning
+# "sinovdami?" deb turli yo'l tutishi odatda xatoni yashiradi.
+TESTDA = "test" in sys.argv
 
 # Mobil ilova boshqa origin'dan chaqiradi. Cookie ishlatilmaydi —
 # himoya Bearer token orqali, shuning uchun "*" xavfsiz.

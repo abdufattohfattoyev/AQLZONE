@@ -191,6 +191,13 @@ class Pupil(models.Model):
             return False
         self.registered_at = timezone.now()
         self.save(update_fields=["registered_at"])
+        # Adminga xabar ham SHU YERDA: ro'yxat aynan shu qatorda yopiladi
+        # va uchala chaqiruvchining har birida alohida yozilsa, biri
+        # ertami-kechmi unutilardi. Yuborish fon oqimida — bu chaqiruv
+        # foydalanuvchini kutdirmaydi (`xabar.adminga_yangi_hisob`).
+        from .xabar import adminga_yangi_hisob
+
+        adminga_yangi_hisob(self)
         return True
 
     @property

@@ -159,6 +159,7 @@ ikkalasi ham ATAYLAB shunday:
 | **Profillar** — bir qurilma, bir necha bola | `backend/core/models.py` |
 | **Telegram eslatmasi** — bugun mashq qilmaganlarga | `backend/core/management/commands/eslatma.py` |
 | **E'lon tarqatish** — botdan hammaga xabar, inline tugma bilan | `backend/core/reklama.py` |
+| **Adminga xabar** — yangi ro'yxatdan o'tgan odam va jami soni | `backend/core/xabar.py` (`adminga_yangi_hisob`) |
 
 ## Qaytishni ta'minlaydigan uch mexanizm
 

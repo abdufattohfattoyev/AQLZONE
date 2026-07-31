@@ -116,6 +116,82 @@ def yubor(
     return "xato", izoh
 
 
+def adminga_yangi_hisob(pupil) -> None:
+    """
+    Yangi ro'yxatdan o'tgan odam haqida administratorlarga xabar.
+
+    `Pupil.royxatni_yop()` dan chaqiriladi — ya'ni har bir hisob uchun
+    ENG KO'PI BIR MARTA. Uch xil yo'l bilan ro'yxatdan o'tiladi (qo'lda
+    ism kiritish, Telegram orqali kirish, hisoblarni birlashtirish) va
+    xabar o'sha uchalasi qo'shiladigan yagona nuqtada turadi.
+
+    **Fon oqimida yuboriladi.** Funksiya foydalanuvchining so'rovi ichida
+    chaqiriladi: bola "Davom etish" ni bosgan zahoti. Telegram sekin
+    javob bersa (yoki umuman javob bermasa), bola shuncha vaqt ro'yxat
+    oynasida qotib turardi — holbuki bu xabar unga emas, adminga kerak.
+    Shuning uchun javob kutilmaydi.
+
+    Sanoq ASOSIY OQIMDA hisoblanadi va fon oqimiga tayyor matn ketadi:
+    SQLite bir vaqtda ikki oqimdan o'qilganda qulflanib qolishi mumkin,
+    va bu ehtimolni ro'yxatdan o'tish yo'liga olib kirish arzimaydi.
+
+    Xabar ketmaydigan uch holat — hammasi jimgina:
+      * `ADMIN_TG` bo'sh (sozlanmagan server);
+      * `BOT_TOKEN` yo'q (bot ulanmagan);
+      * sinov ishlayapti (`TESTDA`).
+    """
+    import html
+    import threading
+
+    from django.utils import timezone
+
+    from .models import Identity, Pupil
+
+    adminlar = [str(x) for x in getattr(settings, "ADMIN_TG", []) if x]
+    if not adminlar or not getattr(settings, "BOT_TOKEN", "") or getattr(settings, "TESTDA", False):
+        return
+
+    try:
+        jami = Pupil.objects.filter(registered_at__isnull=False).count()
+        bugun = Pupil.objects.filter(
+            registered_at__date=timezone.localdate()
+        ).count()
+
+        # Kirish usuli — odam qaysi eshikdan kirgani. Bittadan ko'p
+        # bo'lishi mumkin (qurilma + Telegram), shuning uchun hammasi.
+        usullar = ", ".join(
+            dict(Identity.PROVAYDERLAR).get(p, p)
+            for p in pupil.identities.values_list("provider", flat=True)
+        ) or "—"
+
+        ism = html.escape(pupil.toliq_ism or "—")
+        username = f"@{html.escape(pupil.username)}" if pupil.username else "—"
+
+        matn = (
+            "🆕 <b>Yangi foydalanuvchi</b>\n\n"
+            f"👤 {ism}\n"
+            f"🔗 {username}\n"
+            f"🚪 {usullar}\n"
+            f"🌐 {'ruscha' if pupil.til == 'ru' else 'o‘zbekcha'}\n\n"
+            f"📊 Jami ro‘yxatdan o‘tganlar: <b>{jami}</b>\n"
+            f"📅 Bugun: <b>{bugun}</b>"
+        )
+    except Exception:                            # noqa: BLE001 — ro'yxat buzilmasin
+        # Xabar yasalmadi (masalan baza band). Ro'yxatdan o'tish esa
+        # ALLAQACHON yakunlangan va uni ortga qaytarish mumkin emas —
+        # shuning uchun bu yerda jim qolamiz.
+        return
+
+    def yubor_hammaga() -> None:
+        for tg_id in adminlar:
+            try:
+                yubor(tg_id, matn)
+            except Exception:                    # noqa: BLE001
+                pass
+
+    threading.Thread(target=yubor_hammaga, daemon=True).start()
+
+
 def bloklanganini_belgila(pupil_id: int) -> None:
     """Botni bloklagan hisobni belgilaydi — keyin unga urinilmaydi."""
     from .models import Pupil

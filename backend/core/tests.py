@@ -488,6 +488,95 @@ class EslatmaTest(TestCase):
         self.assertEqual(sorov.call_count, 0)
 
 
+class AdminXabariTest(TestCase):
+    """
+    Yangi ro'yxatdan o'tgan odam haqida adminga ketadigan xabar.
+
+    Xabar FON OQIMIDA yuboriladi, sinovda esa natija darhol kerak —
+    shuning uchun `threading.Thread` o'rniga vazifani joyida bajaradigan
+    soxta sinf qo'yiladi. Oqimni kutib o'tirish (`join`) ham mumkin edi,
+    lekin unda test vaqtga bog'liq bo'lib qolardi.
+    """
+
+    class DarholOqim:
+        def __init__(self, target=None, daemon=None, **kw):
+            self._target = target
+
+        def start(self):
+            self._target()
+
+    def royxatdan_otkaz(self, ism="Abdufattoh", familiya="Fattoyev"):
+        pupil = Pupil.objects.create(first_name=ism, last_name=familiya)
+        Identity.objects.create(
+            pupil=pupil, provider=Identity.TELEGRAM, external_id=f"tg-{pupil.pk}"
+        )
+        return pupil
+
+    def sozlama(self):
+        return self.settings(ADMIN_TG=["555", "777"], BOT_TOKEN="sinov:token", TESTDA=False)
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_royxat_yopilganda_adminga_ketadi(self, sorov):
+        pupil = self.royxatdan_otkaz()
+        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+            self.assertTrue(pupil.royxatni_yop())
+
+        # Ikkala adminga ham bordi.
+        self.assertEqual(sorov.call_count, 2)
+        self.assertEqual(
+            {c[0][1]["chat_id"] for c in sorov.call_args_list}, {"555", "777"}
+        )
+
+        matn = sorov.call_args[0][1]["text"]
+        self.assertIn("Yangi foydalanuvchi", matn)
+        self.assertIn("Abdufattoh Fattoyev", matn)
+        self.assertIn("Telegram", matn)          # kirish usuli
+        self.assertIn("Jami ro‘yxatdan o‘tganlar: <b>1</b>", matn)
+        self.assertIn("Bugun: <b>1</b>", matn)
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_sanoq_haqiqiy_songa_teng(self, sorov):
+        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+            self.royxatdan_otkaz("Bir", "Birov").royxatni_yop()
+            self.royxatdan_otkaz("Ikki", "Ikkov").royxatni_yop()
+        self.assertIn("Jami ro‘yxatdan o‘tganlar: <b>2</b>", sorov.call_args[0][1]["text"])
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_takror_chaqiruvda_xabar_takrorlanmaydi(self, sorov):
+        pupil = self.royxatdan_otkaz()
+        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+            pupil.royxatni_yop()
+            sorov.reset_mock()
+            # Ikkinchi chaqiruv `False` qaytaradi — ro'yxat allaqachon yopiq.
+            self.assertFalse(pupil.royxatni_yop())
+        self.assertEqual(sorov.call_count, 0)
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_ism_yarim_bolsa_xabar_yoq(self, sorov):
+        """Familiyasiz odam hali ro'yxatdan o'tmagan — xabar ham yo'q."""
+        pupil = Pupil.objects.create(first_name="Yolg‘iz", last_name="")
+        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+            self.assertFalse(pupil.royxatni_yop())
+        self.assertEqual(sorov.call_count, 0)
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_admin_sozlanmagan_serverda_jim(self, sorov):
+        pupil = self.royxatdan_otkaz()
+        with self.settings(ADMIN_TG=[], BOT_TOKEN="sinov:token", TESTDA=False), \
+             patch("threading.Thread", self.DarholOqim):
+            pupil.royxatni_yop()
+        self.assertEqual(sorov.call_count, 0)
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_ismdagi_belgi_xabarni_buzmaydi(self, sorov):
+        """HTML rejimida yuboriladi — ism ichidagi `<` qochirilishi shart."""
+        pupil = self.royxatdan_otkaz("<b>Ali", "Valiyev")
+        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+            pupil.royxatni_yop()
+        matn = sorov.call_args[0][1]["text"]
+        self.assertIn("&lt;b&gt;Ali Valiyev", matn)
+
+
 class SpaTest(TestCase):
     def test_notogri_api_yol_404(self):
         # /api/ ostidagi noma'lum yo'l SPA'ga tushib ketmasligi kerak.
