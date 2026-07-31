@@ -126,6 +126,19 @@ const S = {
     "Все ответы верны с первой попытки!",
   ],
   yanaOynash: ["Yana o'ynash", "Играть ещё"],
+  chiqishSarlavha: ["Darsni tashlab chiqasizmi?", "Выйти из урока?"],
+  chiqishIzoh: [
+    "Yechilgan {n} ta savol saqlanmaydi — dars boshidan boshlanadi.",
+    "Решённые вопросы ({n}) не сохранятся — урок начнётся сначала.",
+  ],
+  /* Hali bittasi ham yechilmagan, lekin urinilgan holat: son yozish
+     ("0 ta savol saqlanmaydi") hech narsani anglatmasdi. */
+  chiqishIzohBosh: [
+    "Dars faqat oxirigacha yetkazilganda saqlanadi.",
+    "Урок сохраняется, только если пройти его до конца.",
+  ],
+  chiqishDavom: ["Yo'q, davom etaman", "Нет, продолжу"],
+  chiqishHa: ["Ha, chiqaman", "Да, выйти"],
 
   /* ---------------- o'git (Ogit) ---------------- */
   avvalKorsataman: ["Avval ko'rsataman", "Сначала покажу"],

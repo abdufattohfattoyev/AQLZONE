@@ -187,7 +187,10 @@ export function Dashboard({
       {maktabgacha.length > 0 && (
         <>
           <Sarlavha kech={kech(60)}>{t("maktabgachaBolim")}</Sarlavha>
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Maktabgacha kurs KENG karta bo'lib qoladi: u bitta va uni
+              ikkiga bo'lingan setkaga qo'ysak, yonida bo'sh joy turardi.
+              Kengligi ham vazifasiga mos — bu bo'limning bosh kursi. */}
+          <div className={`grid gap-2.5 ${maktabgacha.length > 1 ? "sm:grid-cols-2" : ""}`}>
             {maktabgacha.map((c, i) => (
               <KursKarta key={c.id} c={c} i={i} progressOf={progressOf} onOpen={onOpen} />
             ))}
@@ -197,9 +200,19 @@ export function Dashboard({
 
       <Sarlavha kech={kech(90)}>{t("sinfKurslari")}</Sarlavha>
 
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Sinflar TELEFONDA HAM ikkitadan turadi va kartasi boshqacha —
+          tik (belgi tepada, yozuv ostida). Ilgari to'rttala sinf keng
+          qatorlar bo'lib pastga cho'zilardi: ekranda bittasi ko'rinib,
+          qolganini topish uchun surish kerak edi, ya'ni ota-ona "3-sinf
+          bormi?" degan savolga darrov javob ololmasdi. Endi to'rttasi
+          ikki qatorga sig'adi va butun ro'yxat bir qarashda ko'rinadi.
+
+          Kompyuterda to'rttasi bitta qatorga chiqadi — 2 va 3 ustunli
+          oraliq bosqich ATAYLAB yo'q: sinflar soni to'rtta, uchtaga
+          bo'lganda oxirgisi yolg'iz qolib, qator sinib ko'rinardi. */}
+      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {sinflar.map((c, i) => (
-          <KursKarta key={c.id} c={c} i={i + maktabgacha.length} progressOf={progressOf} onOpen={onOpen} />
+          <SinfKarta key={c.id} c={c} i={i + maktabgacha.length} progressOf={progressOf} onOpen={onOpen} />
         ))}
       </div>
 
@@ -343,6 +356,95 @@ function KursKarta({ c, i, progressOf, onOpen }: {
         </span>
 
         <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+      </button>
+    </Reveal>
+  );
+}
+
+/**
+ * Sinf kursining kartasi — TIK ko'rinish.
+ *
+ * `KursKarta` dan farqi maketda: u yerda belgi, yozuv va strelka bitta
+ * qatorda turadi va shu sabab karta kamida butun ekran kengligini
+ * talab qiladi. Bu yerda belgi TEPADA, yozuv ostida — natijada karta
+ * ikki barobar tor joyga sig'adi va telefonda ikkitadan yonma-yon
+ * turadi.
+ *
+ * Tor kartada IZOH KO'RINMAYDI (`sm:` dan boshlab chiqadi). Sabab
+ * o'lchovda ko'rindi: 375px li telefonda ustun ~150px bo'ladi va
+ * "Ko'paytirish, bo'lish, perimetr, ulush, soat" u yerda to'rt qatorga
+ * bo'linib, kartani cho'zadi — hosil bo'lgan matn devori esa ota-onaga
+ * KURSNI TANLASHDA yordam bermaydi, sinf raqami yetarli. Kengroq
+ * ekranda joy bor, o'shanda izoh qaytadi.
+ *
+ * Strelka ham yo'q: butun karta bosiladigan tugma va tor kartada
+ * strelka yozuvdan joy o'g'irlardi.
+ */
+function SinfKarta({ c, i, progressOf, onOpen }: {
+  c: Course; i: number;
+  progressOf: (c: Course) => Progress;
+  onOpen: (c: Course) => void;
+}) {
+  const p = progressOf(c);
+  const total = lessonCount(c);
+  const done = Object.keys(p.done).length;
+  const foiz = Math.round((done / total) * 100);
+  const color = UNIT_COLORS[c.color];
+
+  return (
+    <Reveal kech={i * 90} className="h-full">
+      <button type="button" onClick={() => onOpen(c)}
+        className="tugma-3d flex h-full w-full flex-col rounded-clay bg-karta/95 p-3 text-left
+                   shadow-clay backdrop-blur-sm sm:p-3.5"
+        style={kech(110 + i * 70)}>
+        <span className="flex w-full items-start gap-2">
+          <span className={`relative grid size-11 shrink-0 place-items-center overflow-visible
+                            rounded-[15px] text-white sm:size-12 ${color.bg}`}>
+            <Icon name={c.ic} size={25} />
+            <span className="pointer-events-none absolute inset-0 rounded-[inherit]
+                             bg-gradient-to-b from-white/35 to-transparent" />
+            {foiz === 100 && (
+              <span className="absolute -right-1.5 -bottom-1.5 grid size-6 place-items-center rounded-full
+                               bg-brand-green text-white ring-3 ring-karta">
+                <Icon name="check" size={14} />
+              </span>
+            )}
+          </span>
+          {done > 0 && (
+            <span className="ml-auto font-display text-[12px] text-ink-dim">{foiz}%</span>
+          )}
+        </span>
+
+        {/* Ikki qatorgacha o'raladi — "1-sinf Matematika" tor ustunda
+            aynan shunday bo'linadi. `truncate` bo'lganda esa ruscha
+            "Математика 1 класс" da SINF RAQAMI kesilib qolardi, ya'ni
+            kartaning eng kerakli so'zi yo'qolardi. */}
+        <span className="mt-2 line-clamp-2 font-display text-[14px] leading-tight">
+          {kursMatn(c.title)}
+        </span>
+
+        <span className="mt-0.5 hidden line-clamp-2 text-[11.5px] leading-snug text-ink-dim sm:block">
+          {kursMatn(c.desc)}
+        </span>
+
+        {/* `mt-auto` — pastki qator qatordagi hamma kartada bir sathda
+            tursin: sarlavhalar bir va ikki qatorli bo'lgani uchun ular
+            aks holda har xil balandlikda qolardi. */}
+        {done === 0 ? (
+          <span className="mt-auto flex items-center gap-1.5 pt-2 font-display text-[12px] text-brand-green-d">
+            <Icon name="star" size={13} className="text-brand-gold" />
+            {t("boshlash")}
+          </span>
+        ) : (
+          <span className="mt-auto flex items-center gap-1.5 pt-2">
+            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-track">
+              <span className="block h-full rounded-full bg-gradient-to-r from-brand-green to-brand-green-d
+                               transition-[width] duration-500"
+                style={{ width: `${foiz}%` }} />
+            </span>
+            <span className="text-[10.5px] whitespace-nowrap text-ink-dim">{done}/{total}</span>
+          </span>
+        )}
       </button>
     </Reveal>
   );

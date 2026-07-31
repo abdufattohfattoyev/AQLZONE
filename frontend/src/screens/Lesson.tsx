@@ -4,6 +4,7 @@ import { QuestionView, sahnaBor } from "../components/QuestionView";
 import { Ogit } from "../components/Ogit";
 import { Rasm } from "../components/Rasm";
 import { Konfetti } from "../components/Konfetti";
+import { Chiqish } from "../components/Chiqish";
 import type { Activity, Answer } from "../lib/activity";
 import type { Lesson as LessonT, Unit } from "../lib/types";
 import type { LessonResult } from "../lib/progress";
@@ -113,9 +114,26 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
 
   const A = savollar[idx];
 
+  /**
+   * Chiqishni tasdiqlash oynasi ochiqmi.
+   *
+   * So'rov faqat BOSHLANGAN darsda chiqadi: birinchi savolda hech narsa
+   * yechilmagan bo'lsa yo'qotadigan narsa yo'q va o'shanda tasdiq
+   * so'rash — bekorga yo'lni to'sish. `idx` ham, `xato` ham hisobga
+   * olinadi: xato qilingan savolda `idx` hali surilmagan bo'ladi.
+   */
+  const [chiqishSorovi, setChiqishSorovi] = useState(false);
+  const boshlangan = idx > 0 || xato > 0 || tanlangan !== null;
+
   // Darsdan chiqish: Telegram ichida nativ orqaga tugmasi bilan, vebda
-  // esa chapdagi qizil strelka bilan.
-  const ozStrelka = useOrqaga(onExit);
+  // esa chapdagi qizil strelka bilan. Ikkalasi ham shu yerdan o'tadi —
+  // aks holda nativ tugma tasdiqsiz chiqarib yuborardi.
+  const chiqmoqchi = useCallback(() => {
+    if (boshlangan) setChiqishSorovi(true);
+    else onExit();
+  }, [boshlangan, onExit]);
+
+  const ozStrelka = useOrqaga(chiqmoqchi);
 
   useEffect(() => {
     xatoQilgan.current = false;
@@ -182,9 +200,22 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
     return <Ogit o={lesson.ogit} nomi={kursMatn(lesson.n)} onBoshla={() => setOgitda(false)} />;
   }
 
+  /* Tasdiq oynasi ikki ekranda ham kerak — dars ichida ham, natija
+     ekranida ham. Natijada u yanada muhim: u yerdan tasdiqsiz chiqilsa
+     endigina yig'ilgan yulduzlar yozilmay qolardi (`onFinish` faqat
+     "Davom etish" da chaqiriladi). */
+  const oyna = chiqishSorovi && (
+    <Chiqish
+      javob={idx}
+      onDavom={() => setChiqishSorovi(false)}
+      onChiq={onExit}
+    />
+  );
+
   if (tugadi) {
     const yulduz = xato === 0 ? 3 : xato <= 2 ? 2 : 1;
     return (
+      <>
       <Natija
         asked={savollar.length}
         correct={birinchidanTogri}
@@ -201,6 +232,8 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
           })
         }
       />
+      {oyna}
+      </>
     );
   }
 
@@ -217,7 +250,7 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
             Qolgan qism o'zgarmaydi: `flex-1` chiziqchalari bo'shab
             qolgan joyni o'zi to'ldiradi. */}
         {ozStrelka && (
-          <button type="button" onClick={onExit}
+          <button type="button" onClick={chiqmoqchi}
             className="clay-press grid size-11 place-items-center rounded-2xl bg-karta text-brand-red shadow-clay-sm"
             title={t("ortga")}>
             <Icon name="chevron" size={20} className="rotate-180" />
@@ -351,6 +384,8 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
       </div>
 
       <div className="mt-1 text-center text-[12px] text-ink-dim">{kursMatn(unit.u)}</div>
+
+      {oyna}
     </div>
   );
 }
