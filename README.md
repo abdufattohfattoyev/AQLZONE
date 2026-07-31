@@ -160,6 +160,7 @@ ikkalasi ham ATAYLAB shunday:
 | **Telegram eslatmasi** — bugun mashq qilmaganlarga | `backend/core/management/commands/eslatma.py` |
 | **E'lon tarqatish** — botdan hammaga xabar, inline tugma bilan | `backend/core/reklama.py` |
 | **Adminga xabar** — yangi ro'yxatdan o'tgan odam va jami soni | `backend/core/xabar.py` (`adminga_yangi_hisob`) |
+| **Rangli tugmalar** — yashil / ko'k / qizil, ma'nosiga qarab | `backend/core/xabar.py` (`YASHIL`, `KOK`, `QIZIL`) |
 
 ## Qaytishni ta'minlaydigan uch mexanizm
 

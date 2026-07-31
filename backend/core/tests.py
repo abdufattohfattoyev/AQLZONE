@@ -20,6 +20,7 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from . import auth as A
+from . import xabar
 from . import liga as L
 from . import reklama as R
 from .models import (
@@ -1896,3 +1897,50 @@ class XabarYopishTest(TestCase):
                 "callback_query": {"id": "cb2", "data": "yoq", "from": {"id": 920}},
             })
         self.assertIn("answerCallbackQuery", chaqiruv)
+
+
+class TugmaRangiTest(TestCase):
+    """
+    Tugma ranglari (`style`, Bot API 9.4).
+
+    Rang KO'RINISH emas, MA'NO: asosiy harakat yashil, yordamchi ko'k,
+    qaytarib bo'lmaydigani qizil. Shu sabab test ranglarni emas,
+    ularning qaysi tugmaga tushishini tekshiradi.
+    """
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_asosiy_tugma_yashil_ikkinchisi_qizil(self, sorov):
+        with self.settings(BOT_TOKEN="sinov:token"):
+            xabar.yubor(
+                "555", "matn",
+                tugma="Qaytish", havola="https://aql-zone.uz",
+                ikkinchi_tugma="Boshqa yozmang", ikkinchi_data="ochir",
+            )
+        qatorlar = sorov.call_args[0][1]["reply_markup"]["inline_keyboard"]
+        self.assertEqual(qatorlar[0][0]["style"], "success")
+        self.assertEqual(qatorlar[1][0]["style"], "danger")
+
+    def test_uslub_bosh_bolsa_maydon_qoshilmaydi(self):
+        """Telegram noma'lum `style` ga butun xabarni rad etadi."""
+        self.assertNotIn("style", xabar.tugma_yasa("Matn", "", url="https://x.uz"))
+        self.assertEqual(xabar.tugma_yasa("Matn", xabar.KOK)["style"], "primary")
+
+    @patch("core.management.commands.bot.api")
+    def test_start_tugmalari_ranglanadi(self, api):
+        from core.management.commands import bot as B
+
+        with self.settings(SAYT_URL="https://aql-zone.uz",
+                           MINI_APP_URL="https://aql-zone.uz"):
+            B.salom_yubor(1, "973358587", "Ali", "Valiyev", "uz")
+        qatorlar = api.call_args[1]["reply_markup"]["inline_keyboard"]
+        self.assertEqual(qatorlar[0][0]["style"], "success")   # Saytga kirish
+        self.assertEqual(qatorlar[1][0]["style"], "primary")   # Ilovani ochish
+
+    @patch("core.management.commands.bot.api")
+    def test_raqam_tugmasi_kok(self, api):
+        from core.management.commands import bot as B
+
+        B.raqam_sora(1, "matn", "uz")
+        tugma = api.call_args[1]["reply_markup"]["keyboard"][0][0]
+        self.assertEqual(tugma["style"], "primary")
+        self.assertTrue(tugma["request_contact"])

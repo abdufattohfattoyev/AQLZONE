@@ -36,6 +36,43 @@ STANDART_KUTISH = 3
 #: Bitta xabarning eng katta uzunligi (Telegram cheklovi).
 MAX_MATN = 4096
 
+# ------------------------------------------------------- tugma ranglari
+#
+# Bot API 9.4 (2026-02-09) dan tugmaga `style` berish mumkin. Faqat
+# UCHTA nom bor va o'z rangimizni (brenddagi yashil #48c97a) berib
+# bo'lmaydi — Telegram uni o'z mavzusidagi ranglar bilan chizadi.
+#
+# Ranglar shu yerda NOM bilan turadi, kod bo'ylab "success" deb
+# yozilmaydi: rang o'zi hech narsani anglatmaydi, MA'NOsi anglatadi.
+# Ma'no bir joyda turgani uchun butun bot bir xil qoidaga bo'ysunadi:
+#
+#   YASHIL  asosiy harakat — odam shu tugma uchun kelgan
+#   KOK     yordamchi yo'l — foydali, lekin majburiy emas
+#   QIZIL   ortga qaytarib bo'lmaydigan tanlov
+#
+# DIQQAT: eski mijozlar `style` ni tanimaydi va tugmani odatdagidek
+# chizadi. Shuning uchun rangga MA'NO YUKLAMASLIK kerak — "qizilini
+# bosmang" degan ogohlantirish eski telefonda yo'qoladi. Rang faqat
+# ko'zni yo'naltiradi, matnning o'rnini bosmaydi.
+YASHIL = "success"
+KOK = "primary"
+QIZIL = "danger"
+
+
+def tugma_yasa(matn: str, uslub: str = "", **maydon) -> dict:
+    """
+    Bitta tugma yasaydi.
+
+    `uslub` bo'sh bo'lsa `style` maydoni UMUMAN qo'shilmaydi. Bo'sh satr
+    yuborish ham mumkin edi, lekin Telegram noma'lum qiymatga butun
+    xabarni rad etib javob beradi — ya'ni bitta e'tiborsizlik tufayli
+    xabar umuman yetib bormasdi.
+    """
+    t = {"text": matn, **maydon}
+    if uslub:
+        t["style"] = uslub
+    return t
+
 
 def _sorov(usul: str, payload: dict) -> tuple[bool, int, str]:
     """
@@ -75,6 +112,8 @@ def yubor(
     havola: str = "",
     ikkinchi_tugma: str = "",
     ikkinchi_data: str = "",
+    uslub: str = YASHIL,
+    ikkinchi_uslub: str = QIZIL,
 ) -> tuple[str, str]:
     """
     Bitta xabar yuboradi. `(holat, izoh)` qaytadi.
@@ -92,6 +131,10 @@ def yubor(
     (`management/commands/qaytarish.py`). U alohida QATORDA turadi:
     asosiy tugma bilan yonma-yon bo'lsa, bexosdan bosilishi oson bo'lardi
     va bu qaytarib bo'lmaydigan tanlov.
+
+    Ranglar standart holda ma'noga qarab qo'yilgan: asosiy tugma YASHIL
+    (odam shu havola uchun kelgan), ikkinchisi QIZIL (u doim rad javob —
+    "boshqa yozmang"). Kerak bo'lsa chaqiruvchi almashtiradi.
     """
     payload = {
         "chat_id": chat_id,
@@ -102,9 +145,9 @@ def yubor(
     }
     qatorlar = []
     if tugma and havola:
-        qatorlar.append([{"text": tugma, "url": havola}])
+        qatorlar.append([tugma_yasa(tugma, uslub, url=havola)])
     if ikkinchi_tugma and ikkinchi_data:
-        qatorlar.append([{"text": ikkinchi_tugma, "callback_data": ikkinchi_data}])
+        qatorlar.append([tugma_yasa(ikkinchi_tugma, ikkinchi_uslub, callback_data=ikkinchi_data)])
     if qatorlar:
         payload["reply_markup"] = {"inline_keyboard": qatorlar}
 

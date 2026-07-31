@@ -44,6 +44,7 @@ from core import boshqaruv
 from core.auth import kirish_kodi_yasa, tg_ismi
 from core.matn import M, tilni_tanla
 from core.models import Identity, KirishKodi, Pupil
+from core.xabar import KOK, YASHIL, tugma_yasa
 
 #: Telegram javobni shuncha sekund ushlab turadi (yangilik bo'lmasa).
 KUTISH = 25
@@ -186,11 +187,14 @@ def raqam_sora(chat_id: int, matn: str, til: str = "uz") -> None:
         text=matn,
         parse_mode="HTML",
         reply_markup={
-            "keyboard": [[{
-                "text": M("tRaqamniYuborish", til),
+            # Ko'k — bu yordamchi qadam: raqam ixtiyoriy, u faqat
+            # eslatma va hisobni tiklash uchun kerak. Yashil qo'ysak,
+            # majburiydek ko'rinardi.
+            "keyboard": [[tugma_yasa(
+                M("tRaqamniYuborish", til), KOK,
                 # Telegram raqamni FAQAT shu tugma orqali beradi.
-                "request_contact": True,
-            }]],
+                request_contact=True,
+            )]],
             "resize_keyboard": True,
             "one_time_keyboard": True,
         },
@@ -228,10 +232,14 @@ def salom_yubor(
     # o'qiydi degani emas.
     til = pupil.til or til
 
-    tugmalar = [[{"text": M("tSaytgaKirish", til), "url": havola}]]
+    # Yashil — odam botga aynan shu havola uchun kelgan. Mini App tugmasi
+    # ko'k: u boshqa YO'L, boshqa maqsad emas, va ikkalasi ham yashil
+    # bo'lsa ko'z qay biriga bosishni bilmay qolardi.
+    tugmalar = [[tugma_yasa(M("tSaytgaKirish", til), YASHIL, url=havola)]]
     if settings.MINI_APP_URL:
         tugmalar.append([
-            {"text": M("tIlovaniOchish", til), "web_app": {"url": settings.MINI_APP_URL}},
+            tugma_yasa(M("tIlovaniOchish", til), KOK,
+                       web_app={"url": settings.MINI_APP_URL}),
         ])
 
     api(
@@ -252,13 +260,14 @@ def ilovani_yubor(chat_id: int, pupil: Pupil, yangi: bool) -> None:
 
     tugmalar = []
     if settings.SAYT_URL:
-        tugmalar.append([{
-            "text": M("tSaytgaKirish", til),
-            "url": f"{settings.SAYT_URL}/kirish/{kirish_kodi_yasa(pupil)}",
-        }])
+        tugmalar.append([tugma_yasa(
+            M("tSaytgaKirish", til), YASHIL,
+            url=f"{settings.SAYT_URL}/kirish/{kirish_kodi_yasa(pupil)}",
+        )])
     if settings.MINI_APP_URL:
         tugmalar.append([
-            {"text": M("tIlovaniOchish", til), "web_app": {"url": settings.MINI_APP_URL}},
+            tugma_yasa(M("tIlovaniOchish", til), KOK,
+                       web_app={"url": settings.MINI_APP_URL}),
         ])
 
     # Avval eski "raqam yuborish" klaviaturasini olib tashlaymiz: u
@@ -404,8 +413,11 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         api("sendMessage", chat_id=chat_id,
             text="🔐 <b>Boshqaruv paneli</b>\n\nHavola 10 daqiqa amal qiladi.",
             parse_mode="HTML",
+            # Ko'k — bu ish quroli, bolaga mo'ljallangan asosiy harakat
+            # emas. Yashil faqat foydalanuvchi yo'lida ishlatiladi.
             reply_markup={"inline_keyboard": [[
-                {"text": "📊 Panelni ochish", "url": boshqaruv.havola_yasa(tg_id)},
+                tugma_yasa("📊 Panelni ochish", KOK,
+                           url=boshqaruv.havola_yasa(tg_id)),
             ]]})
         return f"{tg_id}: /boshqaruv — havola yuborildi"
 
