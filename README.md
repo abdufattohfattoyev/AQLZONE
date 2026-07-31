@@ -492,6 +492,56 @@ ochiladi (10 va 15). Shart past — bir-ikki o'yin yetadi — va maqsadi
 to'sish emas: hech kim isinmasdan turib eng qiyin darajaga tushib,
 "juda qiyin ekan" deb tashlab ketmasin.
 
+### O'yinni ushlab turadigan uch mexanizm
+
+Uchalasi ham bir savolga javob beradi: *nega odam yana bir marta
+o'ynaydi?*
+
+**1. Zanjir — ketma-ket to'g'ri javoblar** (oqim o'yinlarida)
+
+Har javob bir ball berganda o'yin TEKIS bo'lib qoladi: 40-savol
+4-savoldan farq qilmaydi. Zanjir esa o'sish beradi:
+
+| Ketma-ket | Bir javob | Qo'shimcha |
+|---|---|---|
+| 1–2 | 1 ball | — |
+| 3–5 | 2 ball | 🔥 belgisi, +0,7 sek vaqt |
+| 6+ | 3 ball | 🔥 belgisi, +0,7 sek vaqt |
+
+Zanjir XATODA uziladi va bu shoshilishga qarshi tabiiy to'siq. Vaqt
+jazosi tezlikni jazolaydi, zanjir esa ehtiyotkorlikni MUKOFOTLAYDI —
+ikkalasi birga o'yinni "tez bos" dan "tez, lekin to'g'ri bos" ga
+aylantiradi.
+
+Yig'ilgan ball savol USTIDA tug'ilib, hisob tomonga uchadi (`az-ball`).
+Burchakdagi songa jimgina qo'shilsa, o'yinchi buni umuman sezmasdi:
+uning ko'zi savolda, hisobda emas.
+
+**2. Rekord o'yin PAYTIDA ko'rsatiladi**
+
+Ball eski rekorddan oshgan zahoti hisob oltin rangga o'tadi va 🏆
+paydo bo'ladi. Buni oxirida aytish kech: rekordini ortda qoldirganini
+bilgan odam oxirigacha o'ynaydi, bilmagan esa "baribir chiqmaydi" deb
+qo'yib yuboradi.
+
+**3. "24" da berk ko'chani aytish**
+
+O'yinning eng og'riqli joyi shu edi: ikki sonni noto'g'ri
+birlashtirgan odam berk ko'chaga kiradi va buni BILMAYDI. U qolgan
+sonlarni aylantirib, vaqtini yo'qotadi va oxirida "bu topishmoqning
+yechimi yo'q ekan" degan xulosaga keladi — aslida yechim bor edi,
+faqat boshqa yo'lda.
+
+Endi har birlashtirishdan keyin yechuvchi hozirgi taxtani tekshiradi
+(`yechilarmi`) va 24 ga yo'l qolmagan bo'lsa aytadi, "Ortga qaytar"
+esa qizarib turadi. Ogohlantirish ERTA chiqmaydi: `6, 18` da u jim
+turadi, chunki `6 + 18 = 24`.
+
+Pastdagi satr endi yig'ilayotgan ifodani ham ko'rsatadi (`8 ×`).
+Ilgari u yerda ikki qatorli qoida doim turardi — birinchi
+topishmoqdan keyin u hech kimga kerak emas, lekin ekranning eng
+qimmatli joyini egallardi.
+
 ### O'yin nima beradi, nima bermaydi
 
 | | |

@@ -17,7 +17,7 @@
  * sanaydi. O'yindan yulduz berilsa, bir kechada jadval boshiga chiqqan
  * bola darslarni oylab o'tgan bolaning mehnatini ma'nosiz qilardi.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Oqim } from "../components/oyin/Oqim";
 import { Xotira } from "../components/oyin/Xotira";
 import { YigirmaTort } from "../components/oyin/YigirmaTort";
@@ -75,7 +75,21 @@ export function Oyin({ oyin, daraja, onChiq, onDaraja }: {
     />
   );
 
-  const umumiy = { oyin, daraja, onChiq, onTugadi: tugadi, yakun: yakun ?? null };
+  // Eski rekord o'yin BOSHLANISHIDA bir marta o'qiladi va o'yin
+  // davomida o'zgarmaydi. Har renderda o'qilsa, natija saqlangan
+  // lahzada u yangisiga almashib, "rekordingdan oshding" belgisi
+  // o'zi-o'zidan o'chib qolardi.
+  const eskiRekord = useMemo(
+    () => rekord(oyin.id, daraja),
+    // `urinish` — "Yana o'ynash": yangi o'yinda rekord ham yangilangan.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [oyin.id, daraja, urinish],
+  );
+
+  const umumiy = {
+    oyin, daraja, onChiq, onTugadi: tugadi,
+    rekord: eskiRekord, yakun: yakun ?? null,
+  };
   const kalit = `${oyin.id}-${daraja}-${urinish}`;
 
   if (oyin.tur === "yigirma") return <YigirmaTort key={kalit} {...umumiy} />;

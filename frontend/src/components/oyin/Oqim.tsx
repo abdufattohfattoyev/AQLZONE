@@ -19,6 +19,19 @@
  * soniya kutadi. Bu vaqt yo'qotish emas — o'yinning yagona o'rgatuvchi
  * lahzasi: javobni ko'rmagan odam bir xil xatoni yigirma marta
  * takrorlaydi va o'yindan hech narsa o'rganmaydi.
+ *
+ * ──────────────────── ZANJIR: NEGA KERAK ────────────────────
+ *
+ * Har to'g'ri javob bir ball berganda o'yin TEKIS bo'lib qoladi: 40-savol
+ * 4-savoldan hech nima bilan farq qilmaydi va o'yinchi shunchaki
+ * "yana bittasi" ni bosaveradi. Ketma-ket javoblar esa o'yinga o'sish
+ * beradi — uch to'g'ri javobdan keyin har biri ikki ball, oltitadan
+ * keyin uch ball.
+ *
+ * Muhimi: zanjir XATODA uziladi va bu shoshilishga qarshi tabiiy
+ * to'siq. Vaqt jazosi tezlikni jazolaydi, zanjir esa ehtiyotkorlikni
+ * MUKOFOTLAYDI — ikkalasi birga o'ynaganda o'yin "tez bos" dan
+ * "tez, lekin to'g'ri bos" ga aylanadi.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
@@ -30,6 +43,26 @@ import type { Daraja, OqimSavol, Oyin, OyinNatija } from "../../lib/oyin/tur";
 
 /** Xato javob necha millisekund vaqt oladi. */
 const JAZO = 3000;
+
+/**
+ * Zanjir uzunligiga qarab bitta to'g'ri javob necha ball beradi.
+ *
+ * Ko'paytuvchi UCHTA bosqichda to'xtaydi. To'rtinchisi ham qo'shilishi
+ * mumkin edi, lekin unda o'yin oxiridagi bitta xato butun natijani
+ * yo'qqa chiqarardi — va o'shanda o'yinchi xatodan qo'rqib, javob
+ * berishni sekinlashtiradi.
+ */
+const ballHisobi = (zanjir: number): number =>
+  zanjir >= 6 ? 3 : zanjir >= 3 ? 2 : 1;
+
+/**
+ * Uzun zanjirda har to'g'ri javob shuncha millisekund vaqt QAYTARADI.
+ *
+ * Vaqt faqat olinadigan bo'lsa, o'yin oxiri doim bir xil: soat tugaydi.
+ * Qaytarilgan vaqt esa yaxshi o'ynagan odamga o'yinni CHO'ZISH imkonini
+ * beradi — va aynan shu "yana bir oz" hissi uni ekranda ushlab turadi.
+ */
+const MUKOFOT = 700;
 /** To'g'ri javobdan keyingi qisqa to'xtash. */
 const TOGRI_KUT = 200;
 /** Xato javobdan keyingi to'xtash — to'g'ri javobni ko'rishga yetadi. */
@@ -41,13 +74,15 @@ interface Props {
   onChiq: () => void;
   /** O'yin tugadi — natija tashqarida saqlanadi. */
   onTugadi: (n: OyinNatija) => void;
+  /** Shu o'yin va darajadagi eski rekord — o'yin PAYTIDA ko'rsatiladi. */
+  rekord: number;
   /** Yakun ekrani (natija saqlangandan keyin tashqaridan beriladi). */
   yakun: ReactElement | null;
 }
 
 type Holat = "sanoq" | "oyin" | "tugadi";
 
-export function Oqim({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
+export function Oqim({ oyin, daraja, onChiq, onTugadi, rekord, yakun }: Props) {
   const gen = oyin.gen!;
   const jamiVaqt = (oyin.vaqt ?? [60, 60, 60])[daraja - 1];
 
@@ -56,8 +91,16 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
   const [ball, setBall] = useState(0);
   const [berilgan, setBerilgan] = useState(0);
   const [qolganMs, setQolganMs] = useState(jamiVaqt * 1000);
+  /** Ketma-ket to'g'ri javoblar. Xatoda nolga tushadi. */
+  const [zanjir, setZanjir] = useState(0);
   /** Bosilgan variant va u to'g'rimi — tugmalarni bo'yash uchun. */
   const [javob, setJavob] = useState<{ v: string; togri: boolean } | null>(null);
+  /**
+   * Oxirgi javobda nechta ball qo'shildi — savol ustida "+2" bo'lib
+   * uchib chiqadi. Zanjir ishlayotganini SON bilan ko'rsatish kerak:
+   * "olov chiqdi" degan belgi o'zi nima berayotganini aytmaydi.
+   */
+  const [qoshildi, setQoshildi] = useState(0);
 
   /**
    * Tugash vaqti — SANOQ emas, MUDDAT saqlanadi.
@@ -120,9 +163,20 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
     setBerilgan((n) => n + 1);
 
     if (togri) {
-      setBall((n) => n + 1);
+      const yangiZanjir = zanjir + 1;
+      const olingan = ballHisobi(yangiZanjir);
+      setZanjir(yangiZanjir);
+      setBall((n) => n + olingan);
+      setQoshildi(olingan);
       tebrat("togri");
+      // Uzun zanjirda vaqt biroz qaytariladi — o'yin cho'ziladi.
+      if (yangiZanjir >= 3) {
+        muddat.current += MUKOFOT;
+        setQolganMs(muddat.current - Date.now());
+      }
     } else {
+      setZanjir(0);
+      setQoshildi(0);
       tebrat("xato");
       // Jazo MUDDATDAN olinadi, ko'rsatilayotgan sondan emas — aks holda
       // keyingi soat urishida u eski qiymatdan qaytadan hisoblanib,
@@ -148,14 +202,26 @@ export function Oqim({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
       oyin={oyin} daraja={daraja} onChiq={onChiq}
       ball={ball} ballNomi={t("oyinBall")}
       qolgan={qolganMs / (jamiVaqt * 1000)} soniya={soniya}
+      zanjir={zanjir} rekordOshdi={rekord > 0 && ball > rekord}
     >
       {holat === "sanoq" ? (
         <Sanoq onTugadi={() => setHolat("oyin")} />
       ) : (
         <>
           {/* ---- savol ---- */}
-          <div className="my-4 grid flex-1 place-items-center rounded-clay bg-sahna/85 px-3 py-8
-                          ring-1 ring-track ring-inset backdrop-blur-sm">
+          <div className="relative my-4 grid flex-1 place-items-center rounded-clay bg-sahna/85
+                          px-3 py-8 ring-1 ring-track ring-inset backdrop-blur-sm">
+            {/* Yig'ilgan ball savol USTIDA tug'ilib, yuqoriga uchadi.
+                `key` har javobda o'zgaradi — shunda animatsiya qaytadan
+                o'ynaydi, hatto ketma-ket bir xil son chiqqanda ham. */}
+            {qoshildi > 0 && javob?.togri && (
+              <span key={`${ball}-${qoshildi}`} aria-hidden
+                className={`az-ball pointer-events-none absolute top-3 font-display
+                            text-[19px] leading-none
+                            ${qoshildi > 1 ? "text-brand-orange-d" : "text-brand-green-d"}`}>
+                +{qoshildi}
+              </span>
+            )}
             <div className="text-center">
               {/* Shart — savolning o'zi EMAS, berilgani. Shuning uchun u
                   kichikroq va xiraroq: ko'z avval savolga tushishi kerak. */}

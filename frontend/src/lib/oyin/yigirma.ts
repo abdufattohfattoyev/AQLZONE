@@ -129,6 +129,19 @@ const BUTUN: Shart = { amallar: AMALLAR, butun: true };
 const KASRLI: Shart = { amallar: AMALLAR, butun: false };
 
 /**
+ * Taxtadagi HOZIRGI sonlardan 24 chiqarish hali mumkinmi.
+ *
+ * Boshlang'ich raqamlar emas, o'yin o'rtasidagi holat tekshiriladi —
+ * shu sabab u `darajasi` dan ayrim funksiya. Kerakligi o'yinning eng
+ * og'riqli joyidan chiqdi: ikki sonni noto'g'ri birlashtirgan odam
+ * BERK KO'CHAGA kiradi va buni bilmaydi. U qolgan sonlarni aylantirib,
+ * vaqtini yo'qotadi va oxirida "bu topishmoqning yechimi yo'q ekan"
+ * degan xulosaga keladi — aslida yechim bor edi, faqat boshqa yo'lda.
+ */
+export const yechilarmi = (toshlar: Kasr[]): boolean =>
+  izla(toshlar, KASRLI) !== null;
+
+/**
  * To'rt raqamning qiyinlik darajasi. Yechimi bo'lmasa `null`.
  *
  * Tartib muhim: eng yengil shartdan boshlanadi, chunki bir topishmoq

@@ -60,10 +60,11 @@ interface Props {
   daraja: Daraja;
   onChiq: () => void;
   onTugadi: (n: OyinNatija) => void;
+  rekord: number;
   yakun: ReactElement | null;
 }
 
-export function Xotira({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
+export function Xotira({ oyin, daraja, onChiq, onTugadi, rekord, yakun }: Props) {
   const s = SOZLAMA[daraja];
 
   const [uzunlik, setUzunlik] = useState(s.boshlangich);
@@ -156,6 +157,7 @@ export function Xotira({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
     <OyinSahna
       oyin={oyin} daraja={daraja} onChiq={onChiq}
       ball={ball} ballNomi={t("oyinBall")}
+      rekordOshdi={rekord > 0 && ball > rekord}
     >
       {/* ---- pog'ona ---- */}
       <div className="mt-4 text-center">

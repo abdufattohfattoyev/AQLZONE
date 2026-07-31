@@ -19,7 +19,7 @@
  * xato emas, USUL. Cheklangan qaytarish esa odamni hisoblab bosishga
  * emas, ehtiyot bo'lib bosishga majbur qilardi.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import { OyinSahna } from "./Sahna";
 import { Konfetti } from "../Konfetti";
@@ -28,7 +28,8 @@ import { UNIT_COLORS } from "../../lib/types";
 import { t } from "../../lib/matn";
 import { tebrat } from "../../lib/qobiq";
 import {
-  AMALLAR, birlashtir, kasrMatn, sondan, yangiTopishmoq, yechim, yigirmaTortmi,
+  AMALLAR, birlashtir, kasrMatn, sondan, yangiTopishmoq, yechilarmi, yechim,
+  yigirmaTortmi,
 } from "../../lib/oyin/yigirma";
 import type { Amal, Kasr } from "../../lib/oyin/yigirma";
 import type { Daraja, Oyin, OyinNatija } from "../../lib/oyin/tur";
@@ -43,10 +44,11 @@ interface Props {
   daraja: Daraja;
   onChiq: () => void;
   onTugadi: (n: OyinNatija) => void;
+  rekord: number;
   yakun: ReactElement | null;
 }
 
-export function YigirmaTort({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
+export function YigirmaTort({ oyin, daraja, onChiq, onTugadi, rekord, yakun }: Props) {
   const jamiVaqt = (oyin.vaqt ?? [180, 180, 180])[daraja - 1];
 
   const [raqamlar, setRaqamlar] = useState<number[]>(() => yangiTopishmoq(daraja));
@@ -62,6 +64,22 @@ export function YigirmaTort({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
   const [korsatilgan, setKorsatilgan] = useState<string | null>(null);
   const [qolganMs, setQolganMs] = useState(jamiVaqt * 1000);
   const [tugadi, setTugadi] = useState(false);
+
+  /**
+   * Hozirgi taxtadan 24 chiqarish hali mumkinmi.
+   *
+   * `useMemo` SHART: yechuvchi har renderda qaytadan yugurmasligi
+   * kerak — u soat urgan har yuz millisekundda ham chaqirilardi.
+   * Taxta o'zgargandagina hisoblanadi.
+   */
+  const berk = useMemo(
+    // Bitta tosh qolgan holat ALOHIDA tekshiriladi. `yechilarmi` u
+    // yerda ham to'g'ri javob beradi, lekin bu eng ko'p uchraydigan
+    // berk ko'cha: odam oxirgi ikki sonni birlashtiradi, 24 o'rniga
+    // boshqa son chiqadi va ekranda hech qanday ishora bo'lmasdi.
+    () => toshlar.length > 0 && !yechilarmi(toshlar),
+    [toshlar],
+  );
 
   const muddat = useRef(0);
   const tugaganRef = useRef(false);
@@ -176,12 +194,17 @@ export function YigirmaTort({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
 
   const rang = UNIT_COLORS[oyin.rang];
   const soniya = Math.max(0, Math.ceil(qolganMs / 1000));
+  // Nishonlash yoki yechim ko'rsatilayotgan lahzada ogohlantirish
+  // chiqmasin: taxta hali eski holatda turadi va "24 chiqmaydi" degan
+  // yozuv aynan 24 topilgan sekundda paydo bo'lib qolardi.
+  const berkKorsat = berk && !korsatilgan && !nishon;
 
   return (
     <OyinSahna
       oyin={oyin} daraja={daraja} onChiq={onChiq}
       ball={yechilgan} ballNomi={t("oyinBall")}
       qolgan={qolganMs / (jamiVaqt * 1000)} soniya={soniya}
+      rekordOshdi={rekord > 0 && yechilgan > rekord}
     >
       {/* ---- maqsad ---- */}
       <div className="mt-4 text-center">
@@ -247,10 +270,14 @@ export function YigirmaTort({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
 
       {/* ---- pastki tugmalar ---- */}
       <div className="mt-2.5 flex gap-2.5">
+        {/* Berk ko'chada "Ortga qaytar" YORQIN bo'ladi: shu payt u
+            yagona to'g'ri harakat va uni izlab topish kerak emas. */}
         <button type="button" onClick={qaytar} disabled={!tarix.length}
           className={`clay-press flex flex-1 items-center justify-center gap-1.5 rounded-clay
-                      bg-karta py-3 text-[13px] text-ink-soft shadow-clay-sm
-                      ${tarix.length ? "" : "opacity-40"}`}>
+                      py-3 text-[13px] shadow-clay-sm transition-colors
+                      ${!tarix.length ? "bg-karta text-ink-soft opacity-40"
+                        : berkKorsat ? "bg-brand-red text-white"
+                        : "bg-karta text-ink-soft"}`}>
           <Icon name="repeat" size={16} />
           {t("oyin24Qaytar")}
         </button>
@@ -262,8 +289,28 @@ export function YigirmaTort({ oyin, daraja, onChiq, onTugadi, yakun }: Props) {
         </button>
       </div>
 
-      <p className="mt-2 text-center text-[11px] text-ink-soft/80">
-        {tanlangan === null ? t("oyin24Sonlar") : t("oyin24Qoida")}
+      {/* ---- pastki satr ----
+          Uchta vazifani bitta joy bajaradi va tartib muhimlik bo'yicha:
+
+            1. BERK KO'CHA  — eng shoshilinch xabar, boshqa hammasidan ustun
+            2. YIG'ILAYOTGAN IFODA — "8 +" bo'lib turadi
+            3. Qoida — faqat hech narsa tanlanmaganda
+
+          Ilgari bu yerda ikki qatorli qoida DOIM turardi. U birinchi
+          topishmoqdan keyin hech kimga kerak emas, lekin ekranning
+          pastini egallab, o'yinning eng kerakli ma'lumotiga joy
+          qoldirmasdi. */}
+      <p className={`mt-2 min-h-[30px] text-center leading-snug
+                     ${berkKorsat
+                       ? "font-display text-[12px] text-brand-red"
+                       : tanlangan !== null
+                         ? "font-display text-[17px] text-ink"
+                         : "text-[11px] text-ink-soft/80"}`}>
+        {berkKorsat
+          ? t("oyin24Berk")
+          : tanlangan !== null
+            ? `${kasrMatn(toshlar[tanlangan])}${amal ? ` ${amal}` : ""}`
+            : t("oyin24Qoida")}
       </p>
     </OyinSahna>
   );

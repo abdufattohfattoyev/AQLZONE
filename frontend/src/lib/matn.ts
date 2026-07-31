@@ -621,6 +621,11 @@ const S = {
   oyinOldingi: ["Oldingi rekord: {n}", "Прошлый рекорд: {n}"],
   oyinYaqin: ["Rekordgacha {n} ball qoldi", "До рекорда осталось {n}"],
 
+  /* ---------------- zanjir (ketma-ket to'g'ri javob) ---------------- */
+  oyinZanjir: ["{n} ketma-ket", "{n} подряд"],
+  oyinZanjirBoshlandi: ["Zanjir boshlandi!", "Серия пошла!"],
+  oyinRekorddan: ["Rekordingdan oshding!", "Ты обошёл свой рекорд!"],
+
   /* ---------------- 24 o'yini ---------------- */
   oyin24Nishon: ["24 ni yig'", "Собери 24"],
   oyin24Qaytar: ["Ortga qaytar", "Отменить"],
@@ -629,6 +634,10 @@ const S = {
   oyin24Topildi: ["Topding!", "Нашёл!"],
   oyin24Sanoq: ["Yechilgan: {n}", "Решено: {n}"],
   oyin24Sonlar: ["Sonlarni bos", "Нажимай на числа"],
+  oyin24Berk: [
+    "Bu yo'ldan 24 chiqmaydi — ortga qayt",
+    "Отсюда 24 уже не получить — отмени ход",
+  ],
 
   /* ---------------- xotira o'yini ---------------- */
   xotiraPogona: ["{n}-pog'ona", "Ступень {n}"],

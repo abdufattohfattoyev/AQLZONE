@@ -43,11 +43,28 @@ interface SahnaProps {
   qolgan?: number;
   /** Qolgan soniya — chiziq ustidagi raqam. */
   soniya?: number;
+  /**
+   * Ketma-ket to'g'ri javoblar soni. Uch va undan ko'p bo'lganda
+   * ball yonida olov belgisi bilan ko'rinadi.
+   */
+  zanjir?: number;
+  /**
+   * Ball allaqachon eski rekorddan oshdimi.
+   *
+   * O'yin TUGAGANDA emas, AYNI PAYTDA ko'rsatiladi va farqi katta:
+   * rekordini ortda qoldirganini bilgan odam oxirigacha o'ynaydi,
+   * bilmagan esa "baribir chiqmaydi" deb qo'yib yuboradi.
+   */
+  rekordOshdi?: boolean;
   children: ReactNode;
 }
 
+/** Nechta ketma-ket javobdan keyin zanjir ko'rina boshlaydi. */
+export const ZANJIR_KORIN = 3;
+
 export function OyinSahna({
-  oyin, daraja, onChiq, ball, ballNomi, qolgan, soniya, children,
+  oyin, daraja, onChiq, ball, ballNomi, qolgan, soniya,
+  zanjir = 0, rekordOshdi = false, children,
 }: SahnaProps) {
   const rang = UNIT_COLORS[oyin.rang];
   const d = darajaMa(daraja);
@@ -74,8 +91,25 @@ export function OyinSahna({
         </div>
 
         <div className="shrink-0 text-right">
-          <div className={`font-display text-[22px] leading-none ${rang.ring}`}>{ball}</div>
-          <div className="mt-0.5 text-[10px] leading-none text-ink-soft">{ballNomi}</div>
+          <div className="flex items-center justify-end gap-1.5">
+            {/* Zanjir belgisi ball CHAPIDA turadi: ball o'ng chetda
+                qotib turishi kerak, aks holda olov paydo bo'lganda
+                butun son joyidan siljib, ko'z uni qaytadan izlardi. */}
+            {zanjir >= ZANJIR_KORIN && (
+              <span key={zanjir}
+                className="az-xabar flex items-center gap-0.5 rounded-full bg-brand-orange/15
+                           px-1.5 py-0.5 font-display text-[11px] leading-none text-brand-orange-d">
+                🔥{zanjir}
+              </span>
+            )}
+            <span className={`font-display text-[22px] leading-none
+                              ${rekordOshdi ? "text-brand-gold" : rang.ring}`}>
+              {ball}
+            </span>
+          </div>
+          <div className="mt-0.5 text-[10px] leading-none text-ink-soft">
+            {rekordOshdi ? "🏆" : ballNomi}
+          </div>
         </div>
       </div>
 
