@@ -50,7 +50,7 @@ interface TgChet {
  */
 interface TgWebApp {
   initData?: string;
-  initDataUnsafe?: { start_param?: string };
+  initDataUnsafe?: { start_param?: string; user?: { id?: number } };
   version?: string;
   platform?: string;
   colorScheme?: "light" | "dark";
@@ -155,6 +155,29 @@ export type Qobiq = "veb" | "tg" | "apk";
  * esa faqat Telegram ichida beriladi.
  */
 export const tgda = (): boolean => Boolean(tgWebApp()?.initData);
+
+/**
+ * Ayni paytda ekran oldida turgan Telegram foydalanuvchisining raqami.
+ * Telegram tashqarisida — bo'sh satr.
+ *
+ * DIQQAT: bu qiymat `initDataUnsafe` dan olinadi va u IMZOLANMAGAN —
+ * nomi ham shundan. Uni hech qachon "kim ekani"ning DALILI sifatida
+ * ishlatib bo'lmaydi; kirish har doim imzolangan `initData` bilan
+ * serverda tekshiriladi.
+ *
+ * Bu yerda u faqat KESH KALITI: "saqlangan token shu odamnikimi?"
+ * degan savolga tez javob berish uchun. Qalbakilashtirilgan qiymat
+ * ortiqcha bir marta qayta kirishga olib keladi, xolos — va u
+ * kirish baribir serverda tasdiqlanadi.
+ */
+export function tgFoydalanuvchi(): string {
+  try {
+    const id = tgWebApp()?.initDataUnsafe?.user?.id;
+    return id ? String(id) : "";
+  } catch {
+    return "";
+  }
+}
 
 export const qobiq = (): Qobiq =>
   tgda() ? "tg" : (import.meta.env.VITE_ROUTER === "hash" ? "apk" : "veb");

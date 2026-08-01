@@ -8,7 +8,7 @@
  * Shu sabab bu fayl kelajakdagi mobil ilovada ham o'zgarishsiz ishlaydi.
  */
 import { t } from "./matn";
-import { tgWebApp, tgda } from "./qobiq";
+import { tgFoydalanuvchi, tgWebApp, tgda } from "./qobiq";
 
 const TOKEN_KEY = "az_token";
 const DEVICE_KEY = "az_device";
@@ -114,6 +114,32 @@ let kirishJarayoni: Promise<boolean> | null = null;
  */
 const TG_KEY = "az_tg_boglandi";
 
+/**
+ * Saqlangan token QAYSI Telegram foydalanuvchisiniki.
+ *
+ * Shu bitta qiymat butun tekshiruvni tez qiladi: ekrandagi odam
+ * o'zgarmagan bo'lsa, ilova serverga umuman murojaat qilmaydi va
+ * darhol ishlay boshlaydi.
+ */
+const TG_ID_KEY = "az_tg_id";
+
+/**
+ * "Bu token shu Telegram foydalanuvchisiniki" deb belgilab qo'yadi.
+ *
+ * Ikkala bayroq BIRGA yoziladi va bu ataylab: ular alohida yozilsa,
+ * biri yozilib ikkinchisi unutilgan holat paydo bo'lardi — va o'shanda
+ * tekshiruv jimgina ishlamay qolardi.
+ */
+function tgBelgila(): void {
+  try {
+    localStorage.setItem(TG_KEY, "1");
+    const kim = tgFoydalanuvchi();
+    if (kim) localStorage.setItem(TG_ID_KEY, kim);
+  } catch {
+    /* xotira bloklangan — har ochilishda qayta kiradi, xolos */
+  }
+}
+
 export function signIn(): Promise<boolean> {
   /**
    * Mini App ichida token BOR bo'lsa ham ish qolishi mumkin — va bu
@@ -132,12 +158,27 @@ export function signIn(): Promise<boolean> {
    *    ham ishlayverardi. Duel havolasi buni ochib berdi: chaqiruvni
    *    ochgan odam CHAQIRGANNING hisobiga tushib qolardi.
    *
-   * Shuning uchun Telegram ichida token hech qachon so'zsiz qabul
-   * qilinmaydi: `initData` serverga boradi va hisobni SERVER aytadi.
-   * Narxi — ilova ochilganda bitta so'rov; evaziga hisob doim
-   * ekrandagi odamniki bo'ladi.
+   * Shuning uchun token endi TEKSHIRILADI. Lekin har ochilishda
+   * serverga so'rov yuborish ham to'g'ri yechim emas edi: ilova
+   * sekinlashib, ochilishda bir lahza "chiqib-kirgandek" ko'rinardi.
+   *
+   * Yechim — tokenning EGASINI qurilmada eslab qolish. Ekrandagi
+   * Telegram foydalanuvchisi o'zgarmagan bo'lsa, hech qanday so'rov
+   * ketmaydi va ilova avvalgidek darhol ochiladi. O'zgargan bo'lsa
+   * (yoki hali eslab qolinmagan bo'lsa) — to'liq kirish qaytadan
+   * bo'lib o'tadi.
+   *
+   * Eslab qolingan raqam `initDataUnsafe` dan olinadi va u imzolanmagan
+   * — lekin bu yerda u faqat KESH KALITI. Qalbakilashtirilgan qiymat
+   * eng ko'pi bilan ortiqcha bir marta kirishga olib keladi, hisobni
+   * esa baribir server imzolangan `initData` bo'yicha aytadi.
    */
-  if (token && !tg()?.initData) return Promise.resolve(true);
+  if (token) {
+    const kim = tgFoydalanuvchi();
+    // Telegram tashqarisida (veb, APK) tekshiradigan narsa yo'q.
+    if (!tg()?.initData) return Promise.resolve(true);
+    if (kim && lokal(TG_ID_KEY) === kim) return Promise.resolve(true);
+  }
 
   if (!kirishJarayoni) {
     kirishJarayoni = kirishniBoshla().finally(() => { kirishJarayoni = null; });
@@ -168,7 +209,7 @@ async function kirishniBoshla(): Promise<boolean> {
       if (token && localStorage.getItem(TG_KEY) !== "1") {
         try {
           await post("/api/v1/auth/link", { initData });
-          localStorage.setItem(TG_KEY, "1");
+          tgBelgila();
           return true;
         } catch (e) {
           // Token yaroqsiz bo'lishi mumkin (muddati tugagan). Pastdagi
@@ -181,7 +222,7 @@ async function kirishniBoshla(): Promise<boolean> {
         "/api/v1/auth/telegram", { initData, platform: "tg" }, false,
       );
       tokenniYoz(d.token, d.user?.profillar?.length, d.user?.id);
-      localStorage.setItem(TG_KEY, "1");
+      tgBelgila();
       return true;
     }
 
@@ -193,6 +234,15 @@ async function kirishniBoshla(): Promise<boolean> {
   } catch (e) {
     console.warn("[api] kirish bo'lmadi:", (e as Error).message, "— faqat localStorage ishlaydi");
     return false;
+  }
+}
+
+/** `localStorage` dan xavfsiz o'qish — bloklangan bo'lsa bo'sh satr. */
+function lokal(kalit: string): string {
+  try {
+    return localStorage.getItem(kalit) || "";
+  } catch {
+    return "";
   }
 }
 
