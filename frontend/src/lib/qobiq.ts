@@ -50,6 +50,7 @@ interface TgChet {
  */
 interface TgWebApp {
   initData?: string;
+  initDataUnsafe?: { start_param?: string };
   version?: string;
   platform?: string;
   colorScheme?: "light" | "dark";
@@ -91,6 +92,34 @@ interface TgWebApp {
  */
 export const tgWebApp = (): TgWebApp | undefined =>
   (window as unknown as { Telegram?: { WebApp: TgWebApp } }).Telegram?.WebApp;
+
+/**
+ * Botdagi havoladan kelgan parametr (`t.me/<bot>?startapp=XXX`).
+ *
+ * Duel chaqiruvi shu yo'l bilan keladi: havola Telegram ichida
+ * ochiladi, ilova esa kodni SHU YERDAN oladi va `/duel/<kod>` ga
+ * o'tadi (`App.tsx`).
+ *
+ * Ikki manba tekshiriladi va bu shart: `initDataUnsafe` — Telegram
+ * beradigan asosiy yo'l, `tgWebAppStartParam` esa manzil qatorida
+ * keladi (masalan Telegram Desktop ba'zi versiyalarida). Bittasiga
+ * tayanib qolsak, ba'zi mijozlarda chaqiruv jimgina ochilmasdi.
+ *
+ * Qiymat tozalanadi: faqat harf, raqam, `-` va `_`. Boshqasi kelsa —
+ * bo'sh satr. Bu qiymat manzilga qo'shiladi va tekshirilmasa ochiq
+ * yo'naltirish teshigi bo'lib qolardi.
+ */
+export function boshParametri(): string {
+  let xom = "";
+  try {
+    xom = tgWebApp()?.initDataUnsafe?.start_param
+      ?? new URLSearchParams(location.search).get("tgWebAppStartParam")
+      ?? "";
+  } catch {
+    return "";
+  }
+  return /^[A-Za-z0-9_-]{1,64}$/.test(xom) ? xom : "";
+}
 
 /** Telegram mijozi shu versiyani qo'llab-quvvatlaydimi. */
 function versiyaBor(v: string): boolean {

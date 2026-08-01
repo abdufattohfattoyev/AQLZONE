@@ -283,11 +283,10 @@ def raqam_sora(chat_id: int, matn: str, til: str = "uz") -> None:
         text=matn,
         parse_mode="HTML",
         reply_markup={
-            # Ko'k — bu yordamchi qadam: raqam ixtiyoriy, u faqat
-            # eslatma va hisobni tiklash uchun kerak. Yashil qo'ysak,
-            # majburiydek ko'rinardi.
+            # YASHIL — raqam endi MAJBURIY va bu ekrandagi yagona
+            # harakat. Ilgari u ko'k edi, chunki qadam ixtiyoriy edi.
             "keyboard": [[tugma_yasa(
-                M("tRaqamniYuborish", til), KOK,
+                M("tRaqamniYuborish", til), YASHIL,
                 # Telegram raqamni FAQAT shu tugma orqali beradi.
                 request_contact=True,
             )]],
@@ -309,24 +308,48 @@ def ilova_tugmalari(til: str, havola: str) -> list[list[dict]]:
     o'nlab boshqa varaq bilan to'la. Mini App esa bot suhbatining
     ustida ochiladi va kirish o'z-o'zidan bo'ladi (`initData`).
 
-    Sayt havolasi BUTUNLAY olib tashlanmadi va bu ataylab: Mini App
-    juda eski Telegram mijozlarida ochilmaydi, kompyuterda esa ba'zi
-    odamlar ilovani baribir brauzerda ko'rishni afzal ko'radi. U ikkinchi
-    qatorda, ko'k rangda turadi — ko'rinadi, lekin yo'lda turmaydi.
+    SAYT HAVOLASI YO'Q va bu ataylab. U ilgari ikkinchi qatorda turardi
+    va yonida Telegram'ning "tashqariga chiqasiz" strelkasi (↗)
+    chizilardi. Odamlarning bir qismi aynan o'shani bosardi — chunki u
+    tanish ko'rinadi — va brauzerga chiqib ketardi. U yerda hisobga
+    kirish qaytadan boshlanadi, orqaga qaytish uchun botni qidirish
+    kerak bo'ladi va aynan o'sha yo'lda ko'pchilik yo'qoladi.
+
+    Endi botdan chiqadigan yagona yo'l — ilovaning O'ZI, Telegram
+    ichida.
 
     `MINI_APP_URL` sozlanmagan bo'lsa (lokal ishlab chiqish) sayt
-    havolasi o'z o'rniga qaytadi va yashil bo'ladi.
+    havolasi zaxira bo'lib qaytadi: busiz botdan umuman chiqib
+    bo'lmasdi.
     """
     if not settings.MINI_APP_URL:
         return [[tugma_yasa(M("tSaytgaKirish", til), YASHIL, url=havola)]] if havola else []
 
-    tugmalar = [[tugma_yasa(
+    return [[tugma_yasa(
         M("tIlovaniOchish", til), YASHIL,
         web_app={"url": settings.MINI_APP_URL},
     )]]
-    if havola:
-        tugmalar.append([tugma_yasa(M("tSaytgaKirish", til), KOK, url=havola)])
-    return tugmalar
+
+
+def raqami_yoq(tg_id: str) -> bool:
+    """
+    Shu Telegram hisobida telefon raqami YO'Qmi.
+
+    Raqam MAJBURIY: usiz ilovaga o'tkazilmaydi. Sabab hisobning
+    o'zida — bola telefonni almashtirsa yoki brauzer xotirasi
+    tozalansa, qurilma tokeni yo'qoladi va yulduzlari bilan birga
+    butun progressi begona hisobda qolib ketardi. Raqam esa hisobni
+    qaytarib beradigan yagona narsa.
+
+    Hisob umuman yo'q bo'lsa `False` — bu holatda `/start` uni o'zi
+    yaratadi va o'sha yerda raqam so'raladi.
+    """
+    kirish = (
+        Identity.objects.filter(provider=Identity.TELEGRAM, external_id=tg_id)
+        .select_related("pupil")
+        .first()
+    )
+    return bool(kirish) and not kirish.pupil.telefon
 
 
 def salom_yubor(
@@ -359,6 +382,16 @@ def salom_yubor(
     # Telegram interfeysi ruscha bo'lgani odam darslarni ham ruscha
     # o'qiydi degani emas.
     til = pupil.til or til
+
+    # Raqam YO'Q — ilovaga o'tkazmaymiz. Salom va so'rov BITTA xabarda
+    # ketadi: ikkitaga bo'linsa, odam birinchisiga javob berib,
+    # ikkinchisini o'qimasdi.
+    #
+    # Doimiy klaviatura ham berilmaydi: uning tugmalari ilovani ochadi
+    # va darvoza ochiq qolib ketardi.
+    if not pupil.telefon:
+        raqam_sora(chat_id, salom + M("raqamNegaKerak", til), til)
+        return f"{tg_id}: /start — raqam so'raldi (hisob #{pupil.pk})"
 
     tugmalar = ilova_tugmalari(til, havola)
     klaviatura = asosiy_klaviatura(til)
@@ -579,6 +612,16 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     # yuborilgan klaviaturani o'zi yangilamaydi, ya'ni tilini
     # almashtirgan odamning ekranida eski tildagi tugma qolib ketishi
     # mumkin va u ham ishlashi kerak.
+    # Ilovaga olib boradigan hamma yo'l bitta darvozadan o'tadi.
+    # Tekshiruv SHU YERDA, har bir yuboruvchi funksiyada emas: ular
+    # to'rtta va biriga qo'shishni unutsak, darvozada teshik qolardi.
+    if raqami_yoq(tg_id) and (
+        matn.startswith(("/oyinlar", "/duel", "/maydon", "/reyting"))
+        or matn in barcha("tOyinlar")
+    ):
+        raqam_sora(chat_id, M("raqamNegaKerak", til), til)
+        return f"{tg_id}: raqam so'raldi (ilovaga kirish uchun)"
+
     if matn.startswith("/oyinlar") or matn in barcha("tOyinlar"):
         oyinlarni_yubor(chat_id, til)
         return f"{tg_id}: o'yinlar"

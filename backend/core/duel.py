@@ -113,7 +113,26 @@ def natija_yaroqlimi(ball: int, xato: int, sanoq: list) -> bool:
 
 
 def havola(kod: str) -> str:
-    """Chaqiruv havolasi — ilovaning duel sahifasiga olib boradi."""
+    """
+    Chaqiruv havolasi — BOTGA olib boradi, saytga emas.
+
+    `https://t.me/<bot>?startapp=<kod>` — Telegram bu manzilni bosganda
+    Mini App'ni O'ZIDA ochadi va kodni ilovaga `start_param` bo'lib
+    uzatadi (`frontend/src/lib/qobiq.ts`).
+
+    NEGA SAYT EMAS. Chaqiruv Telegramda ulashiladi va uni ochgan odam
+    Telegram ichida turibdi. Sayt havolasi uni BRAUZERGA chiqarib
+    yuborardi: u yerda hisobga kirish qaytadan boshlanadi, orqaga
+    qaytish uchun botni qidirish kerak bo'ladi va aynan o'sha yo'lda
+    ko'pchilik yo'qoladi.
+
+    Bot nomi sozlanmagan bo'lsa (lokal ishlab chiqish) sayt manzili
+    zaxira bo'lib qoladi — busiz havola umuman bo'lmasdi.
+    """
+    bot = (getattr(settings, "BOT_USERNAME", "") or "").lstrip("@")
+    if bot:
+        return f"https://t.me/{bot}?startapp={kod}"
+
     asos = (
         getattr(settings, "MINI_APP_URL", "")
         or getattr(settings, "SAYT_URL", "")

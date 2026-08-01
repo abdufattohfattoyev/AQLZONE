@@ -624,6 +624,18 @@ class BotTest(TestCase):
             self.yuborilgan.append({"usul": usul, **p}) or {"ok": True}
         )
 
+        # Raqam MAJBURIY bo'lgani uchun sinov hisobida u BOR deb
+        # olinadi: bu klass botning qolgan mantig'ini tekshiradi,
+        # darvozaning o'zi esa `RaqamMajburiyTest` da.
+        # `til` ATAYLAB bo'sh: bu klassda Telegram tili bo'yicha
+        # tekshiruvlar bor va hisobda til turgan bo'lsa u ustun
+        # chiqib, ruscha xabar o'zbekcha bo'lib qolardi.
+        pupil = Pupil.objects.create(first_name="Olim", last_name="Salimov", til="")
+        Identity.objects.create(pupil=pupil, provider=Identity.TELEGRAM,
+                                external_id="555")
+        Identity.objects.create(pupil=pupil, provider=Identity.TELEFON,
+                                external_id="+998900000555")
+
     def tearDown(self):
         self.bot.api = self._eski
 
@@ -713,7 +725,9 @@ class BotTest(TestCase):
     def test_begona_kontakt_rad_etiladi(self):
         """Boshqa odamning vizitkasini yuborib bo'lmaydi."""
         self.bot.yangilikni_qayta_ishla(self.kontakt("+998901112233", egasi=999))
-        self.assertFalse(Identity.objects.filter(provider="phone").exists())
+        self.assertFalse(
+            Identity.objects.filter(provider="phone", external_id="+998901112233").exists()
+        )
         self.assertIn("o'z raqamingizni", self.matnlar())
 
     def test_qolda_kiritilgan_ism_bot_tomonidan_ozgarmaydi(self):
@@ -2077,22 +2091,31 @@ class TugmaRangiTest(TestCase):
 
     @patch("core.management.commands.bot.api")
     def test_start_tugmalari_ranglanadi(self, api):
+        """Raqami BOR hisobga ilova tugmasi yashil bo'lib boradi."""
         from core.management.commands import bot as B
+
+        pupil = Pupil.objects.create(first_name="Ali", last_name="Valiyev")
+        Identity.objects.create(pupil=pupil, provider=Identity.TELEGRAM,
+                                external_id="973358587")
+        Identity.objects.create(pupil=pupil, provider=Identity.TELEFON,
+                                external_id="+998901234567")
 
         with self.settings(SAYT_URL="https://aql-zone.uz",
                            MINI_APP_URL="https://aql-zone.uz"):
             B.salom_yubor(1, "973358587", "Ali", "Valiyev", "uz")
         qatorlar = api.call_args[1]["reply_markup"]["inline_keyboard"]
-        self.assertEqual(qatorlar[0][0]["style"], "success")   # Saytga kirish
-        self.assertEqual(qatorlar[1][0]["style"], "primary")   # Ilovani ochish
+        self.assertEqual(len(qatorlar), 1)                     # sayt havolasi yo'q
+        self.assertEqual(qatorlar[0][0]["style"], "success")
+        self.assertIn("web_app", qatorlar[0][0])
 
     @patch("core.management.commands.bot.api")
-    def test_raqam_tugmasi_kok(self, api):
+    def test_raqam_tugmasi_yashil(self, api):
+        """Raqam MAJBURIY bo'lgach u ekrandagi yagona harakat."""
         from core.management.commands import bot as B
 
         B.raqam_sora(1, "matn", "uz")
         tugma = api.call_args[1]["reply_markup"]["keyboard"][0][0]
-        self.assertEqual(tugma["style"], "primary")
+        self.assertEqual(tugma["style"], "success")
         self.assertTrue(tugma["request_contact"])
 
 
@@ -2116,10 +2139,17 @@ class BotIlovaTugmasiTest(TestCase):
         self.assertEqual(q[0][0]["web_app"], {"url": "https://aql-zone.uz"})
         self.assertEqual(q[0][0]["style"], "success")
 
-    def test_sayt_havolasi_ikkinchi_va_kok(self):
+    def test_sayt_havolasi_umuman_berilmaydi(self):
+        """
+        Botdan chiqadigan yagona yo'l — ilovaning O'ZI.
+
+        Sayt havolasi yonida Telegram "tashqariga chiqasiz" strelkasini
+        chizadi va odamlarning bir qismi aynan o'shani bosib brauzerga
+        chiqib ketardi.
+        """
         q = self.tugmalar()
-        self.assertIn("/kirish/abc", q[1][0]["url"])
-        self.assertEqual(q[1][0]["style"], "primary")
+        self.assertEqual(len(q), 1)
+        self.assertNotIn("url", q[0][0])
 
     def test_mini_app_yoq_bolsa_sayt_yashilga_qaytadi(self):
         q = self.tugmalar(mini_app="")
@@ -2613,3 +2643,84 @@ class BotTugmaRangiTest(TestCase):
         r = self.tugmalar()
         self.assertEqual(r[M("tYordamTugma", "uz")], "danger")
         self.assertEqual(r[M("tIlova", "uz")], "success")
+
+
+class RaqamMajburiyTest(TestCase):
+    """
+    Raqam MAJBURIY: usiz ilovaga o'tkazilmaydi.
+
+    Sabab hisobning o'zida: bola telefonni almashtirsa yoki brauzer
+    xotirasi tozalansa, qurilma tokeni yo'qoladi va butun progressi
+    begona hisobda qolib ketardi. Raqam — uni qaytaradigan yagona narsa.
+    """
+
+    def setUp(self):
+        from core.management.commands import bot as B
+
+        self.B = B
+
+    def hisob(self, tg_id: str, raqam: str = ""):
+        p = Pupil.objects.create(first_name="Ali", last_name="Valiyev")
+        Identity.objects.create(pupil=p, provider=Identity.TELEGRAM, external_id=tg_id)
+        if raqam:
+            Identity.objects.create(pupil=p, provider=Identity.TELEFON, external_id=raqam)
+        return p
+
+    @patch("core.management.commands.bot.api")
+    def test_raqamsiz_startda_ilova_tugmasi_berilmaydi(self, api):
+        with self.settings(SAYT_URL="https://aql-zone.uz",
+                           MINI_APP_URL="https://aql-zone.uz"):
+            self.B.salom_yubor(1, "111", "Ali", "Valiyev", "uz")
+
+        # Kontakt tugmasi yuborilgan bo'lishi kerak.
+        self.assertTrue(
+            any(
+                t.get("request_contact")
+                for c in api.call_args_list
+                for qator in (c[1].get("reply_markup") or {}).get("keyboard", [])
+                for t in qator
+            ),
+            "raqam so'ralmadi",
+        )
+        # Hech qayerda ilovani ochadigan tugma yo'q.
+        for c in api.call_args_list:
+            self.assertNotIn("inline_keyboard", c[1].get("reply_markup", {}))
+
+    @patch("core.management.commands.bot.api")
+    def test_raqam_bor_bolsa_ilova_ochiladi(self, api):
+        self.hisob("222", "+998901234567")
+        with self.settings(SAYT_URL="https://aql-zone.uz",
+                           MINI_APP_URL="https://aql-zone.uz"):
+            self.B.salom_yubor(1, "222", "Ali", "Valiyev", "uz")
+        qatorlar = api.call_args[1]["reply_markup"]["inline_keyboard"]
+        self.assertIn("web_app", qatorlar[0][0])
+
+    def test_raqami_yoq_darvozasi(self):
+        self.hisob("333")
+        self.hisob("444", "+998901112233")
+        self.assertTrue(self.B.raqami_yoq("333"))
+        self.assertFalse(self.B.raqami_yoq("444"))
+        # Hisob umuman yo'q — `/start` uni o'zi yaratadi.
+        self.assertFalse(self.B.raqami_yoq("555"))
+
+    @patch("core.management.commands.bot.api")
+    def test_bolim_buyruqlari_ham_darvozadan_otadi(self, api):
+        self.hisob("666")
+        for buyruq in ("/oyinlar", "/duel", "/maydon", "/reyting"):
+            api.reset_mock()
+            with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+                self.B.yangilikni_qayta_ishla({
+                    "message": {
+                        "chat": {"id": 1}, "from": {"id": 666, "language_code": "uz"},
+                        "text": buyruq,
+                    },
+                })
+            self.assertTrue(
+                any(
+                    t.get("request_contact")
+                    for c in api.call_args_list
+                    for qator in (c[1].get("reply_markup") or {}).get("keyboard", [])
+                    for t in qator
+                ),
+                buyruq,
+            )

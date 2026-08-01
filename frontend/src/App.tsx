@@ -5,9 +5,10 @@
  * noto'g'ri bo'lsa — masalan bola havolani qo'lda o'zgartirsa yoki kurs
  * o'chirilgan bo'lsa — bo'sh ekran o'rniga tushunarli sahifa ko'rsatiladi.
  */
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Panel, TepagaQayt, panelKerakmi } from "./components/Panel";
+import { boshParametri } from "./lib/qobiq";
 import { Dashboard } from "./screens/Dashboard";
 import { Home } from "./screens/Home";
 import { Lesson } from "./screens/Lesson";
@@ -38,7 +39,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolDaftar, yolDars, yolKurs, yolKurslar,
-  yolDuel, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
+  yolDuel, yolDuelKod, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "./lib/yollar";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
@@ -54,10 +55,37 @@ export default function App() {
   return (
     <>
       <TepagaQayt />
+      <BotdanKelgan />
       <Yollar />
       {panelKerakmi(pathname) && <Panel />}
     </>
   );
+}
+
+/**
+ * Botdagi chaqiruv havolasidan kelgan odamni o'z ekraniga olib boradi.
+ *
+ * `t.me/<bot>?startapp=<kod>` bosilganda Telegram Mini App'ni O'ZIDA
+ * ochadi va kodni `start_param` bo'lib uzatadi. Ilova esa oddiy bosh
+ * sahifada ochiladi — ya'ni bu qismsiz odam chaqiruvni ko'rmasdi va
+ * "nega meni shu yerga olib keldi?" degan savol bilan qolardi.
+ *
+ * FAQAT BIR MARTA ishlaydi (`useRef`): odam duel ekranidan chiqib
+ * boshqa joyga o'tsa, uni qaytadan o'sha yerga tortib turmasligi kerak.
+ */
+function BotdanKelgan() {
+  const nav = useNavigate();
+  const otdi = useRef(false);
+
+  useEffect(() => {
+    if (otdi.current) return;
+    const kod = boshParametri();
+    if (!kod) return;
+    otdi.current = true;
+    nav(yolDuelKod(kod), { replace: true });
+  }, [nav]);
+
+  return null;
 }
 
 function Yollar() {

@@ -158,6 +158,24 @@ XABAR: dict[str, dict[str, str]] = {
     "menyuTugma": {"uz": "Ochish", "ru": "Открыть"},
 
     # ------------------------------------------------------------ bot: raqam
+    #: Birinchi kirganda — qisqa va yumshoq. Bu yerda uzun tushuntirish
+    #: ishlamaydi: odam hali ilovani ko'rmagan va nimani himoya
+    #: qilayotganini bilmaydi.
+    #: Raqam MAJBURIY: usiz ilovaga o'tkazilmaydi. Matn shuni ochiq
+    #: aytadi va NEGA kerakligini tushuntiradi — sababsiz talab
+    #: qilingan raqam odamni bot bilan birga yo'qotadi.
+    "raqamNegaKerak": {
+        "uz": (
+            "\n\n📱 Davom etish uchun raqamingizni yuboring.\n\n"
+            "Bu hisobingizni saqlab qoladi: telefon almashsa yoki brauzer "
+            "tozalansa ham yulduzlaringiz joyida qoladi."
+        ),
+        "ru": (
+            "\n\n📱 Для продолжения отправьте свой номер.\n\n"
+            "Это сохранит ваш профиль: при смене телефона или очистке "
+            "браузера звёзды останутся на месте."
+        ),
+    },
     "raqamSora": {
         "uz": (
             "Raqamingizni yuboring — telefon yoki brauzer almashsa ham "
