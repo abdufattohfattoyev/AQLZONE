@@ -2531,3 +2531,65 @@ class DuelJonliTest(TestCase):
                              content_type="application/json", **self.b)
         self.assertEqual(r.status_code, 200, r.content)
         self.assertEqual(r.json()["raqibSanoq"], [20])
+
+
+class BotKlaviaturaTest(TestCase):
+    """
+    Botdagi doimiy klaviatura.
+
+    Har bir tugma ilovaning AYNAN o'z ekranini ochishi kerak — "ilovani
+    oching, keyin o'zingiz toping" emas. Bu sinov aynan shuni tekshiradi:
+    tugmalar `web_app` bo'lishi va manzillari to'g'ri bo'lishi.
+    """
+
+    def klaviatura(self, til: str = "uz"):
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+            return B.asosiy_klaviatura(til)
+
+    def tugmalar(self, til: str = "uz"):
+        return [t for qator in self.klaviatura(til)["keyboard"] for t in qator]
+
+    def test_barcha_bolimlar_ilova_ichida_ochiladi(self):
+        manzillar = {
+            t["web_app"]["url"] for t in self.tugmalar() if "web_app" in t
+        }
+        self.assertEqual(manzillar, {
+            "https://aql-zone.uz",
+            "https://aql-zone.uz/oyinlar",
+            "https://aql-zone.uz/oyinlar/duel",
+            "https://aql-zone.uz/oyinlar/maydon",
+            "https://aql-zone.uz/reyting",
+        })
+
+    def test_klaviatura_doimiy_va_moslashuvchan(self):
+        k = self.klaviatura()
+        self.assertTrue(k["is_persistent"])
+        self.assertTrue(k["resize_keyboard"])
+
+    def test_mini_app_yoq_bolsa_klaviatura_chizilmaydi(self):
+        """Yarim ishlaydigan tugma — yo'qidan yomonroq."""
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL=""):
+            self.assertIsNone(B.asosiy_klaviatura("uz"))
+
+    def test_ruscha_klaviaturada_ham_hamma_tugma_bor(self):
+        self.assertEqual(len(self.tugmalar("ru")), len(self.tugmalar("uz")))
+
+    @patch("core.management.commands.bot.api")
+    def test_duel_buyrugi_duel_ekranini_ochadi(self, api):
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+            B.bolimni_yubor(1, "uz", B.DUEL_YOLI, "duelHaqida")
+        tugma = api.call_args[1]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertEqual(tugma["web_app"]["url"], "https://aql-zone.uz/oyinlar/duel")
+        self.assertEqual(tugma["style"], "success")
+
+    def test_buyruqlar_royxatida_yangi_bolimlar_bor(self):
+        from core.management.commands import bot as B
+
+        nomlar = {c for c, _ in B.BUYRUQLAR}
+        self.assertTrue({"duel", "maydon", "reyting"} <= nomlar)

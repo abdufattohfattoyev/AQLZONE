@@ -91,6 +91,9 @@ XABAR: dict[str, dict[str, str]] = {
     # o'zbekchasidan uzun bo'lishi mumkin.
     "tIlova": {"uz": "🎓 Darslar", "ru": "🎓 Уроки"},
     "tOyinlar": {"uz": "🎮 O'yinlar", "ru": "🎮 Игры"},
+    "tDuel": {"uz": "⚔️ Bellashuv", "ru": "⚔️ Дуэль"},
+    "tMaydon": {"uz": "🏟 Bugungi maydon", "ru": "🏟 Арена дня"},
+    "tReyting": {"uz": "🏆 Reyting", "ru": "🏆 Рейтинг"},
     "tRaqamTugma": {"uz": "📱 Raqam", "ru": "📱 Номер"},
     "tYordamTugma": {"uz": "❓ Yordam", "ru": "❓ Помощь"},
 
@@ -126,6 +129,29 @@ XABAR: dict[str, dict[str, str]] = {
     # qilishini umuman bilmasdi — buyruqni faqat taxmin qilib topardi.
     "buyruqStart": {"uz": "Boshlash va saytga kirish", "ru": "Начать и войти на сайт"},
     "buyruqOyinlar": {"uz": "Matematik o'yinlar", "ru": "Математические игры"},
+    "buyruqDuel": {"uz": "Do'st bilan bellashuv", "ru": "Дуэль с другом"},
+    "buyruqMaydon": {"uz": "Bugungi maydon — 3 bosqich", "ru": "Арена дня — 3 этапа"},
+    "buyruqReyting": {"uz": "Reyting jadvali", "ru": "Таблица рейтинга"},
+    "duelHaqida": {
+        "uz": "⚔️ <b>Do'st bilan bellashuv</b>\n\nIkkalangiz ham AYNAN bir xil "
+              "savollarni yechasiz — 60 soniya. Do'stingiz hozir ilovada bo'lsa, "
+              "birga o'ynaysiz va ballaringiz bir-biringizga ko'rinib turadi. "
+              "Bo'lmasa, chaqiruv havolasi qoladi va u istalgan payt javob beradi.",
+        "ru": "⚔️ <b>Дуэль с другом</b>\n\nВы оба решаете ОДНИ И ТЕ ЖЕ задания — "
+              "60 секунд. Если друг сейчас в приложении, играете вместе и видите "
+              "очки друг друга. Если нет — останется ссылка-вызов.",
+    },
+    "maydonHaqida": {
+        "uz": "🏟 <b>Bugungi maydon</b>\n\nHar kuni uchta bosqich va ular "
+              "hammaga bir xil. Kuniga bir marta, yarim tunda yopiladi.",
+        "ru": "🏟 <b>Арена дня</b>\n\nКаждый день три этапа, "
+              "одинаковых для всех. Один раз в день.",
+    },
+    "reytingHaqida": {
+        "uz": "🏆 <b>Reyting</b>\n\nBarcha kurslar bo'yicha yig'ilgan yulduzlar hisoblanadi.",
+        "ru": "🏆 <b>Рейтинг</b>\n\nСчитаются звёзды по всем курсам.",
+    },
+    "tOchish": {"uz": "Ochish", "ru": "Открыть"},
     "buyruqRaqam": {"uz": "Telefon raqamini bog'lash", "ru": "Привязать номер телефона"},
     "buyruqYordam": {"uz": "Yordam", "ru": "Помощь"},
     #: Kiritish maydoni yonidagi menyu tugmasi.

@@ -179,8 +179,15 @@ def muddat_matni(til: str = "uz") -> str:
     return M("muddatDaqiqa", til, n=d)
 
 
-#: Mini App ichidagi o'yinlar bo'limining yo'li.
+#: Mini App ichidagi bo'limlarning yo'llari.
+#:
+#: Klaviaturadagi har bir tugma ilovaning AYNAN SHU ekranini ochadi —
+#: "ilovani oching, keyin o'zingiz toping" emas. Farqi katta: botdan
+#: kelgan odam bir bosishda kerakli joyga tushadi.
 OYIN_YOLI = "/oyinlar"
+DUEL_YOLI = "/oyinlar/duel"
+MAYDON_YOLI = "/oyinlar/maydon"
+REYTING_YOLI = "/reyting"
 
 
 def ilova_url(yol: str = "") -> str:
@@ -218,9 +225,18 @@ def asosiy_klaviatura(til: str) -> dict | None:
         return None
     return {
         "keyboard": [
+            # Birinchi qator — ENG KENG va eng ko'p bosiladigani.
+            [tugma_yasa(M("tIlova", til), YASHIL, web_app={"url": ilova_url()})],
+            # Ikkinchi qator — ikki kishilik va kunlik: ular bugun
+            # ochilishi kerak bo'lgan narsalar.
             [
-                tugma_yasa(M("tIlova", til), web_app={"url": ilova_url()}),
+                tugma_yasa(M("tDuel", til), KOK, web_app={"url": ilova_url(DUEL_YOLI)}),
+                tugma_yasa(M("tMaydon", til), KOK, web_app={"url": ilova_url(MAYDON_YOLI)}),
+            ],
+            # Uchinchi qator — kamroq kerak bo'ladiganlari.
+            [
                 tugma_yasa(M("tOyinlar", til), web_app={"url": ilova_url(OYIN_YOLI)}),
+                tugma_yasa(M("tReyting", til), web_app={"url": ilova_url(REYTING_YOLI)}),
             ],
             [
                 tugma_yasa(M("tRaqamTugma", til)),
@@ -388,6 +404,34 @@ def oyinlarni_yubor(chat_id: int, til: str) -> None:
     )
 
 
+def bolimni_yubor(chat_id: int, til: str, yol: str, kalit: str) -> None:
+    """
+    Ilovaning bitta bo'limi haqida qisqa gap va uni ochadigan tugma.
+
+    Uchta buyruq (`/duel`, `/maydon`, `/reyting`) shu bitta funksiyadan
+    o'tadi: ular faqat matn va manzil bilan farq qiladi. Har biriga
+    alohida funksiya yozilsa, ulardan biri albatta `ilovaSozlanmagan`
+    holatini unutgan bo'lardi.
+
+    Tugma TO'G'RIDAN-TO'G'RI kerakli ekranga olib boradi — bosh
+    sahifaga emas: odam nima so'raganini aytdi, uni yana qidirishga
+    majburlashning sababi yo'q.
+    """
+    url = ilova_url(yol)
+    if not url:
+        api("sendMessage", chat_id=chat_id, text=M("ilovaSozlanmagan", til))
+        return
+    api(
+        "sendMessage",
+        chat_id=chat_id,
+        text=M(kalit, til),
+        parse_mode="HTML",
+        reply_markup={"inline_keyboard": [[tugma_yasa(
+            M("tOchish", til), YASHIL, web_app={"url": url},
+        )]]},
+    )
+
+
 def ilovani_yubor(chat_id: int, pupil: Pupil, yangi: bool) -> None:
     """Raqam qabul qilingandan keyin — kirish havolasi va Mini App tugmasi."""
     til = pupil.til or "uz"
@@ -534,6 +578,18 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         oyinlarni_yubor(chat_id, til)
         return f"{tg_id}: o'yinlar"
 
+    if matn.startswith("/duel"):
+        bolimni_yubor(chat_id, til, DUEL_YOLI, "duelHaqida")
+        return f"{tg_id}: /duel"
+
+    if matn.startswith("/maydon"):
+        bolimni_yubor(chat_id, til, MAYDON_YOLI, "maydonHaqida")
+        return f"{tg_id}: /maydon"
+
+    if matn.startswith("/reyting"):
+        bolimni_yubor(chat_id, til, REYTING_YOLI, "reytingHaqida")
+        return f"{tg_id}: /reyting"
+
     if matn in barcha("tRaqamTugma"):
         raqam_sora(chat_id, M("raqamSora", til), til)
         return f"{tg_id}: raqam tugmasi"
@@ -595,6 +651,9 @@ def yangilikni_qayta_ishla(u: dict) -> str:
 BUYRUQLAR = (
     ("start", "buyruqStart"),
     ("oyinlar", "buyruqOyinlar"),
+    ("duel", "buyruqDuel"),
+    ("maydon", "buyruqMaydon"),
+    ("reyting", "buyruqReyting"),
     ("raqam", "buyruqRaqam"),
     ("help", "buyruqYordam"),
 )
