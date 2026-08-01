@@ -62,8 +62,19 @@ KUNLIK_CHEGARA = 20
 #: frontendda), shuning uchun chegara tekshiruvi qoladi.
 MAX_BALL_SONIYA = 3
 
-#: O'yin necha soniya davom etadi.
+#: O'yin necha soniya davom etadi (standart).
 VAQT = 60
+
+#: Chaqirgan odam tanlay oladigan qiymatlar.
+#:
+#: Ro'yxat ATAYLAB qisqa: uchtadan. Erkin son so'ralsa, odam "45"
+#: yozib qo'yardi va ikkinchi tomon "nega 45?" degan savol bilan
+#: qolardi — tanlov qancha keng bo'lsa, qaror shuncha og'ir.
+VAQTLAR = (30, 60, 90)
+SAVOLLAR = (10, 20, 30)
+
+#: Ballning eng katta chegarasi shu vaqtdan hisoblanadi.
+MAX_VAQT = max(VAQTLAR)
 
 
 def kod_yasa() -> str:
@@ -77,13 +88,41 @@ def kod_yasa() -> str:
     return secrets.token_urlsafe(8)[:11]
 
 
-def yangi_duel(profile: Profile) -> Duel:
-    """Yangi chaqiruv boshlaydi (hali o'ynalmagan)."""
+def shartlarni_tozala(oyin: str, savollar, vaqt) -> tuple[str, int, int]:
+    """
+    Chaqirgandan kelgan shartlarni tekshiradi.
+
+    Ro'yxatda yo'q qiymat STANDARTGA tushadi, xato qaytarilmaydi: bu
+    shartlar o'yinning ko'rinishini belgilaydi, xavfsizlikka daxli
+    yo'q. Eski ilova yangi maydonlarni umuman yubormasligi ham mumkin
+    va o'shanda duel baribir yasalishi kerak.
+    """
+    return (
+        oyin if oyin in OYINLAR else secrets.choice(OYINLAR),
+        savollar if savollar in SAVOLLAR else 20,
+        vaqt if vaqt in VAQTLAR else VAQT,
+    )
+
+
+def yangi_duel(profile: Profile, oyin: str = "", savollar: int = 0,
+               vaqt: int = 0) -> Duel:
+    """
+    Yangi chaqiruv boshlaydi (hali o'ynalmagan).
+
+    Shartlarni CHAQIRGAN odam tanlaydi va ular ikkalasiga bir xil
+    bo'ladi. Ilgari o'yinni server tasodifiy tanlardi — "chaqirgan odam
+    o'zi kuchli o'yinni tanlab oladi" degan xavotir bilan. Amalda esa
+    duel do'st bilan o'ynaladi: kim kim bilan o'ynashini o'zi
+    kelishadi, va tanlov imkoniyati o'yinni QIZIQARLIROQ qiladi.
+    """
+    oyin, savollar, vaqt = shartlarni_tozala(oyin, savollar, vaqt)
     return Duel.objects.create(
         kod=kod_yasa(),
         urug=secrets.randbelow(2_000_000_000) + 1,
-        oyin=secrets.choice(OYINLAR),
+        oyin=oyin,
         daraja=2,
+        savollar_soni=savollar,
+        vaqt=vaqt,
         chaqirgan=profile,
     )
 
@@ -105,9 +144,9 @@ def natija_yaroqlimi(ball: int, xato: int, sanoq: list) -> bool:
     """
     if ball < 0 or xato < 0:
         return False
-    if ball > VAQT * MAX_BALL_SONIYA:
+    if ball > MAX_VAQT * MAX_BALL_SONIYA:
         return False
-    if not isinstance(sanoq, list) or len(sanoq) > VAQT + 5:
+    if not isinstance(sanoq, list) or len(sanoq) > MAX_VAQT + 5:
         return False
     return all(isinstance(x, int) and 0 <= x <= ball for x in sanoq)
 

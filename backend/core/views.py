@@ -81,6 +81,25 @@ def _profil_json(pr: Profile) -> dict:
     return {"id": pr.pk, "ism": pr.name, "avatar": pr.avatar}
 
 
+def _butun(xom, standart: int = 0) -> int:
+    """
+    Mijozdan kelgan sonni XAVFSIZ o'qiydi.
+
+    `int("abc")` `ValueError` ko'taradi va u tutilmasa butun so'rov 500
+    bo'lib qaytardi. Mijoz yuborgan qiymat esa hech qachon ishonchli
+    emas: eski ilova boshqa turda yuborishi, so'rov yo'lda buzilishi
+    yoki birov qo'lda tekshirib ko'rishi mumkin.
+
+    Bunday joyda 500 noto'g'ri javob: bu serverning nosozligi emas,
+    mijozning e'tiborsizligi. Qiymat standartga tushadi va ish davom
+    etadi — chaqiruvni shu sabab yasay olmaslik ma'nosiz bo'lardi.
+    """
+    try:
+        return int(xom)
+    except (TypeError, ValueError):
+        return standart
+
+
 def _profil_tanla(request) -> Profile:
     """
     So'rov qaysi bolaga tegishli.
@@ -840,6 +859,8 @@ def _duel_json(d, ozim: bool = False) -> dict:
         "kod": d.kod,
         "oyin": d.oyin,
         "daraja": d.daraja,
+        "savollar": d.savollar_soni,
+        "vaqt": d.vaqt,
         "holat": d.holat,
         "chaqirgan": D.korinadigan_ism(d.chaqirgan),
         "ozim": ozim,
@@ -854,11 +875,13 @@ def _duel_json(d, ozim: bool = False) -> dict:
 @permission_classes([IsAuthenticated])
 def duel_boshla(request):
     """
-    Yangi chaqiruv boshlaydi: kod, urug' va o'yin qaytadi.
+    Yangi chaqiruv boshlaydi: kod, urug', o'yin va shartlar qaytadi.
 
-    O'yinni SERVER tanlaydi. Chaqirgan odam o'zi tanlasa, u har doim
-    o'zi eng kuchli bo'lgan o'yinni tanlardi va bellashuv hisoblash
-    mahoratini emas, tanlash mahoratini o'lchab qolardi.
+    Shartlarni CHAQIRGAN odam tanlaydi va ular ikkalasiga bir xil
+    bo'ladi. Qiymatlar `D.shartlarni_tozala` dan o'tadi: ro'yxatda
+    bo'lmagani jimgina standartga tushadi, xato qaytarilmaydi — bu
+    shartlar o'yinning ko'rinishini belgilaydi, xavfsizlikka daxli
+    yo'q va eski ilova ularni umuman yubormasligi ham mumkin.
     """
     profil = _profil_tanla(request)
     if D.bugungi_soni(profil) >= D.KUNLIK_CHEGARA:
@@ -866,7 +889,12 @@ def duel_boshla(request):
             {"detail": "kunlik chegara", "chegara": D.KUNLIK_CHEGARA},
             status=status.HTTP_429_TOO_MANY_REQUESTS,
         )
-    d = D.yangi_duel(profil)
+    d = D.yangi_duel(
+        profil,
+        oyin=str(request.data.get("oyin") or ""),
+        savollar=_butun(request.data.get("savollar")),
+        vaqt=_butun(request.data.get("vaqt")),
+    )
     return Response({**_duel_json(d, ozim=True), "urug": d.urug}, status=201)
 
 

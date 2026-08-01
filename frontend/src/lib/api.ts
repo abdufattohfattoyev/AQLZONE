@@ -853,10 +853,16 @@ async function duelPost<T>(url: string, body: unknown = {}): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+/** Chaqirgan odam tanlaydigan shartlar. */
+export interface DuelShart {
+  oyin: string;
+  savollar: number;
+  vaqt: number;
+}
+
 /** Yangi chaqiruv boshlaydi. Shartlar berilmasa server standartini oladi. */
-export const duelBoshla = (shart?: {
-  oyin: string; savollar: number; vaqt: number;
-}): Promise<DuelHolat> => duelPost<DuelHolat>("/api/v1/duel", shart ?? {});
+export const duelBoshla = (shart?: DuelShart): Promise<DuelHolat> =>
+  duelPost<DuelHolat>("/api/v1/duel", shart ?? {});
 
 /** Chaqiruv haqida ma'lumot (ball bermaydi). */
 export async function duelKorish(kod: string): Promise<DuelHolat | null> {

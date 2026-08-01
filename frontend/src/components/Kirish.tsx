@@ -44,9 +44,28 @@ interface Props {
    * faqat boshqa joyga ko'chirilgani.
    */
   onKeyinroq?: () => void;
+  /**
+   * Tugma qayerga olib borishini bot nomidan yasaydi.
+   *
+   * Standarti — `t.me/<bot>?start=kirish`, ya'ni oddiy kirish. Duel
+   * chaqiruvi esa boshqacha: odam AYNAN o'sha bellashuvni ochmoqchi va
+   * uni avval kirishga, keyin havolani qaytadan qidirishga majburlash
+   * — o'sha yo'lda ko'pchilik yo'qoladi. Shu sabab u yerda tugma
+   * `?startapp=<kod>` bo'ladi va Mini App to'g'ri ekranda ochiladi.
+   */
+  havola?: (bot: string) => string;
+  /**
+   * Tugma ostidagi izoh. Berilmasa standart botli oqim tushuntiriladi.
+   *
+   * `havola` bilan BIRGA kerak bo'ladi: maxsus havola odamni botdagi
+   * "Saytga kirish" tugmasiga emas, to'g'ridan-to'g'ri Mini App'ga
+   * olib boradi — va o'shanda standart izoh bo'lmagan qadamni
+   * tushuntirib turardi.
+   */
+  tagIzoh?: string;
 }
 
-export function Kirish({ xabar, izoh, tugma, onKeyinroq }: Props) {
+export function Kirish({ xabar, izoh, tugma, onKeyinroq, havola, tagIzoh }: Props) {
   const [bot, setBot] = useState<string | null>(null);
   // Mini App ichida tugma ko'rsatilmaydi: u odamni Telegram ichidan
   // yana Telegram'ga yuboradigan halqa bo'lardi. Bu yerga tushish
@@ -82,7 +101,7 @@ export function Kirish({ xabar, izoh, tugma, onKeyinroq }: Props) {
             <div className="h-[56px] animate-pulse rounded-3xl bg-track" />
           ) : bot ? (
             <a
-              href={botHavolasi(bot)}
+              href={havola ? havola(bot) : botHavolasi(bot)}
               className="clay-press flex h-[56px] w-full items-center justify-center gap-3
                          rounded-3xl bg-brand-green font-display text-[16px] text-white"
             >
@@ -104,7 +123,7 @@ export function Kirish({ xabar, izoh, tugma, onKeyinroq }: Props) {
 
         {bot ? (
           <p className="mt-3 px-2 text-[12px] leading-snug text-ink-dim">
-            {t("botIzoh")}
+            {tagIzoh || t("botIzoh")}
           </p>
         ) : null}
 

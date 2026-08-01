@@ -2336,7 +2336,11 @@ class DuelTest(TestCase):
     def test_haqiqatga_sigmaydigan_ball_rad_etiladi(self):
         kod = self.boshla()["kod"]
         # 60 soniyada 3 balldan tez — jismonan mumkin emas.
-        self.assertEqual(self.natija(kod, self.a, D.VAQT * D.MAX_BALL_SONIYA + 1).status_code, 400)
+        # Chegara ENG UZUN dueldan hisoblanadi: shartlar tanlanadigan
+        # bo'lgach, 60 soniyaga bog'lab qo'yish 90 soniyalik duelning
+        # halol natijasini rad etardi.
+        self.assertEqual(
+            self.natija(kod, self.a, D.MAX_VAQT * D.MAX_BALL_SONIYA + 1).status_code, 400)
         self.assertEqual(self.natija(kod, self.a, -5).status_code, 400)
 
     def test_topilmagan_kod_404(self):
@@ -2785,3 +2789,56 @@ class EskiFoydalanuvchiTest(TestCase):
         from core.management.commands import bot as B
 
         self.assertFalse(B.raqam_kerakmi(self.hisob("2026-09-01")))
+
+
+class DuelShartlarTest(TestCase):
+    """Chaqirgan odam o'yin, savollar soni va vaqtni tanlaydi."""
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device",
+                             {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def setUp(self):
+        self.a = self.kir("dev-shart-aaaa1111bbbb")
+
+    def boshla(self, **shart):
+        return self.client.post("/api/v1/duel", shart,
+                                content_type="application/json", **self.a).json()
+
+    def test_tanlangan_shartlar_saqlanadi(self):
+        d = self.boshla(oyin="jadval", savollar=10, vaqt=30)
+        self.assertEqual((d["oyin"], d["savollar"], d["vaqt"]), ("jadval", 10, 30))
+
+    def test_royxatda_yoq_qiymat_standartga_tushadi(self):
+        """Eski ilova yangi maydonlarni umuman yubormasligi mumkin."""
+        d = self.boshla(oyin="yoq-bunday", savollar=999, vaqt=7)
+        self.assertIn(d["oyin"], D.OYINLAR)
+        self.assertEqual((d["savollar"], d["vaqt"]), (20, 60))
+
+    def test_shartsiz_ham_duel_yasaladi(self):
+        d = self.boshla()
+        self.assertIn(d["oyin"], D.OYINLAR)
+        self.assertIn(d["vaqt"], D.VAQTLAR)
+
+    def test_raqam_bolmagan_qiymat_500_bermaydi(self):
+        """
+        Mijozdan kelgan qiymat hech qachon ishonchli emas.
+
+        Ilgari `int("abc")` tutilmasdan ko'tarilib, butun so'rov 500
+        bo'lib qaytardi — holbuki bu serverning nosozligi emas va
+        chaqiruvni shu sabab yasay olmaslik ma'nosiz.
+        """
+        r = self.client.post("/api/v1/duel",
+                             {"oyin": "tezkor", "savollar": "abc", "vaqt": None},
+                             content_type="application/json", **self.a)
+        self.assertEqual(r.status_code, 201)
+        d = r.json()
+        self.assertEqual((d["savollar"], d["vaqt"]), (20, 60))
+
+    def test_ikkinchi_tomon_ham_shu_shartlarni_koradi(self):
+        b = self.kir("dev-shart-cccc2222dddd")
+        d = self.boshla(oyin="tezkor", savollar=30, vaqt=90)
+        r = self.client.get(f"/api/v1/duel/{d['kod']}", **b).json()
+        self.assertEqual((r["oyin"], r["savollar"], r["vaqt"]), ("tezkor", 30, 90))

@@ -542,6 +542,37 @@ const S = {
   ],
   duelSiz: ["Siz", "Вы"],
   duelChaqirish: ["Chaqiruv yuborish", "Отправить вызов"],
+
+  /* ---------------- duel shartlari (chaqirgan tanlaydi) ---------------- */
+  duelShartlar: ["Shartlarni tanlang", "Выберите условия"],
+  duelOyinTanla: ["O'yin", "Игра"],
+  duelSavollarSoni: ["Savollar", "Вопросы"],
+  duelVaqtSoni: ["Vaqt", "Время"],
+  duelSoniya: ["{n} s", "{n} с"],
+  duelShartIzoh: [
+    "Ikkalangiz bir xil savollarni, bir xil tartibda olasiz.",
+    "Вы оба получите одинаковые вопросы в одном порядке.",
+  ],
+  duelShartYakun: [
+    "{oyin} · {savollar} savol · {vaqt} s",
+    "{oyin} · вопросов: {savollar} · {vaqt} с",
+  ],
+
+  /* ---------------- duel: Telegram talab qilinadi ---------------- */
+  duelTgKerak: ["Bellashuv Telegram orqali", "Дуэль — через Telegram"],
+  duelTgIzoh: [
+    "Bellashuvda ismingiz raqibingizga ko'rinadi va natija ikkalangizda saqlanadi — shuning uchun u Telegram hisobi bilan o'ynaladi.",
+    "В дуэли соперник видит ваше имя, а результат сохраняется у обоих — поэтому она играется с аккаунтом Telegram.",
+  ],
+  duelTgTugma: ["Telegramda ochish", "Открыть в Telegram"],
+  duelTgTagIzoh: [
+    "Tugma bellashuvni Telegramda to'g'ridan-to'g'ri ochadi.",
+    "Кнопка откроет дуэль прямо в Telegram.",
+  ],
+  duelTgChaqiruv: [
+    "Sizni bellashuvga chaqirishdi. Ochish uchun Telegram kerak.",
+    "Вас вызвали на дуэль. Чтобы открыть, нужен Telegram.",
+  ],
   duelTayyorlanmoqda: ["Tayyorlanmoqda…", "Готовим…"],
   duelSizChaqirdingiz: ["Chaqiruv tayyor!", "Вызов готов!"],
   duelUlashing: [

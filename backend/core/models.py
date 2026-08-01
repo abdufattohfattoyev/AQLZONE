@@ -599,6 +599,15 @@ class Duel(models.Model):
     oyin = models.CharField(max_length=16)
     daraja = models.SmallIntegerField(default=2)
 
+    #: Duel shartlari — chaqirgan odam tanlaydi, ikkalasiga bir xil.
+    #:
+    #: Ikkalasi ham CHEGARA: o'yin qaysi biri oldin tugasa, o'shanda
+    #: tugaydi. Faqat vaqt bo'lsa, tez o'ynagan odam ko'proq savol
+    #: olardi; faqat savol bo'lsa, o'ylab o'tirgan odam duelni
+    #: cho'zib yuborardi.
+    savollar_soni = models.SmallIntegerField(default=20)
+    vaqt = models.SmallIntegerField(default=60)
+
     chaqirgan = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="yuborgan_duellar"
     )
