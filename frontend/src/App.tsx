@@ -112,6 +112,7 @@ function KurslarSahifasi() {
       onProfillar={() => nav("/profillar")}
       onSozlama={() => nav(yolSozlama())}
       onReyting={() => nav(yolReyting())}
+      onDuel={() => nav(yolDuel())}
       onOyinlar={() => nav(yolOyinlar())}
     />
   );
@@ -362,7 +363,6 @@ function OyinlarSahifasi() {
       onBack={() => nav(yolKurslar())}
       onOyin={(id) => nav(yolOyin(id))}
       onMaydon={() => nav(yolMaydon())}
-      onDuel={() => nav(yolDuel())}
     />
   );
 }

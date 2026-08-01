@@ -16,6 +16,8 @@ import type { Progress } from "../lib/types";
 
 interface Props {
   progressOf: (c: Course) => Progress;
+  /** Do'st bilan bellashuv — o'yinlardan ALOHIDA turadi. */
+  onDuel: () => void;
   onOpen: (c: Course) => void;
   /** Oxirgi kursning keyingi darsiga TO'G'RIDAN-TO'G'RI o'tish. */
   onDavom: (c: Course, ui: number, li: number) => void;
@@ -46,7 +48,7 @@ function joriyBola(h: Hisob | null) {
 }
 
 export function Dashboard({
-  progressOf, onOpen, onDavom, onProfillar, onSozlama, onReyting, onOyinlar,
+  progressOf, onOpen, onDavom, onProfillar, onSozlama, onReyting, onOyinlar, onDuel,
 }: Props) {
   // Sinxron o'qiladi (localStorage) — tugma sakrab chiqmasligi uchun.
   const kopBola = profilSoni() > 1;
@@ -194,6 +196,29 @@ export function Dashboard({
           ko'rsatilmaydi. Bosh sahifa TANLOV ekrani emas, u faqat
           "qayerga borasan?" degan savolga javob beradi. */}
       <OyinlarKarta on={onOyinlar} />
+
+      {/* ---- do'st bilan bellashuv ----
+          O'YINLAR ICHIDA EMAS va bu ataylab. Duel o'yin emas: unda
+          ikkinchi odam bor, xabar boradi va natija ikkalasiga tegishli
+          bo'ladi. Sakkizta o'yin qatoriga qo'yilganda u "to'qqizinchi
+          o'yin" bo'lib ko'rinardi va o'sha yerda yo'qolib ketardi.
+
+          Bosh sahifada, kurslardan OLDIN turadi: ilovani ochgan bola
+          "do'stim meni chaqirganmi?" degan savolga birinchi ekranda
+          javob olsin. */}
+      <button type="button" onClick={onDuel}
+        className="az-kirish tugma-3d mt-4 flex w-full items-center gap-3.5 rounded-clay
+                   bg-brand-orange p-3.5 text-left text-white shadow-clay sm:mt-6"
+        style={kech(50)}>
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20 text-[24px]">
+          ⚔️
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-[16.5px] leading-tight">{t("duel")}</span>
+          <span className="mt-0.5 block text-[12.5px] text-white/85">{t("duelIzoh")}</span>
+        </span>
+        <Icon name="chevron" size={18} className="shrink-0 text-white/80" />
+      </button>
 
       {/* Maktabgacha kurs alohida sarlavha ostida turadi: u sinf emas va
           ota-ona "bolam hali maktabga bormaydi" deganda aynan shu yerni
