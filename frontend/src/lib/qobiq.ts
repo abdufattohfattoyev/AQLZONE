@@ -100,21 +100,33 @@ export const tgWebApp = (): TgWebApp | undefined =>
  * ochiladi, ilova esa kodni SHU YERDAN oladi va `/duel/<kod>` ga
  * o'tadi (`App.tsx`).
  *
- * Ikki manba tekshiriladi va bu shart: `initDataUnsafe` — Telegram
- * beradigan asosiy yo'l, `tgWebAppStartParam` esa manzil qatorida
- * keladi (masalan Telegram Desktop ba'zi versiyalarida). Bittasiga
- * tayanib qolsak, ba'zi mijozlarda chaqiruv jimgina ochilmasdi.
+ * UCHTA manba tekshiriladi va uchalasi ham kerak:
+ *
+ *   1. `initDataUnsafe.start_param` — Telegram beradigan asosiy yo'l,
+ *      lekin u skript yuklanib bo'lgandan KEYIN paydo bo'ladi;
+ *   2. manzil HASHI (`#tgWebAppStartParam=...`) — Telegram Mini App'ni
+ *      aynan shunday ochadi va bu qiymat birinchi kadrdayoq turadi;
+ *   3. oddiy so'rov qatori (`?tgWebAppStartParam=...`) — ba'zi
+ *      mijozlarda shunday keladi.
+ *
+ * Ilgari faqat 1 va 3 tekshirilardi va chaqiruv havolasi jimgina bosh
+ * sahifada ochilib qolardi: kod hashda edi.
  *
  * Qiymat tozalanadi: faqat harf, raqam, `-` va `_`. Boshqasi kelsa —
  * bo'sh satr. Bu qiymat manzilga qo'shiladi va tekshirilmasa ochiq
  * yo'naltirish teshigi bo'lib qolardi.
  */
 export function boshParametri(): string {
+  const oqi = (satr: string): string =>
+    new URLSearchParams(satr).get("tgWebAppStartParam") || "";
+
   let xom = "";
   try {
-    xom = tgWebApp()?.initDataUnsafe?.start_param
-      ?? new URLSearchParams(location.search).get("tgWebAppStartParam")
-      ?? "";
+    xom =
+      tgWebApp()?.initDataUnsafe?.start_param
+      || oqi(location.hash.replace(/^#/, ""))
+      || oqi(location.search.replace(/^\?/, ""))
+      || "";
   } catch {
     return "";
   }

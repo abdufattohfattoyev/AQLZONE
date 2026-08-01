@@ -78,11 +78,24 @@ function BotdanKelgan() {
   const otdi = useRef(false);
 
   useEffect(() => {
-    if (otdi.current) return;
-    const kod = boshParametri();
-    if (!kod) return;
-    otdi.current = true;
-    nav(yolDuelKod(kod), { replace: true });
+    const urin = () => {
+      if (otdi.current) return true;
+      const kod = boshParametri();
+      if (!kod) return false;
+      otdi.current = true;
+      nav(yolDuelKod(kod), { replace: true });
+      return true;
+    };
+
+    if (urin()) return;
+
+    // Telegram skripti KECHIKIB yuklanishi mumkin va o'sha paytda
+    // `initDataUnsafe` hali bo'sh bo'ladi. Bir marta o'qib qo'ysak,
+    // chaqiruv jimgina bosh sahifada ochilib qolardi — shuning uchun
+    // uch soniya davomida qayta tekshiriladi.
+    const id = setInterval(() => { if (urin()) clearInterval(id); }, 300);
+    const toxtat = setTimeout(() => clearInterval(id), 3000);
+    return () => { clearInterval(id); clearTimeout(toxtat); };
   }, [nav]);
 
   return null;
