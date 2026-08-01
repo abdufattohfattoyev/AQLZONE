@@ -22,6 +22,7 @@ from django.utils import timezone
 
 from . import auth as A
 from . import boshqaruv
+from .matn import M
 from . import duel as D
 from . import xabar
 from . import liga as L
@@ -2593,3 +2594,22 @@ class BotKlaviaturaTest(TestCase):
 
         nomlar = {c for c, _ in B.BUYRUQLAR}
         self.assertTrue({"duel", "maydon", "reyting"} <= nomlar)
+
+
+class BotTugmaRangiTest(TestCase):
+    """Klaviaturadagi har bir tugmaning rangi — hammasi ranglangan."""
+
+    def tugmalar(self):
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+            k = B.asosiy_klaviatura("uz")
+        return {t["text"]: t.get("style") for q in k["keyboard"] for t in q}
+
+    def test_hamma_tugma_rangli(self):
+        self.assertTrue(all(self.tugmalar().values()), self.tugmalar())
+
+    def test_yordam_qizil_darslar_yashil(self):
+        r = self.tugmalar()
+        self.assertEqual(r[M("tYordamTugma", "uz")], "danger")
+        self.assertEqual(r[M("tIlova", "uz")], "success")

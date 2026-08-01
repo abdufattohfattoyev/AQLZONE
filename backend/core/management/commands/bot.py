@@ -44,7 +44,7 @@ from core import boshqaruv
 from core.auth import kirish_kodi_yasa, tg_ismi
 from core.matn import TILLAR, M, barcha, tilni_tanla
 from core.models import Identity, KirishKodi, Pupil
-from core.xabar import KOK, YASHIL, tugma_yasa
+from core.xabar import KOK, QIZIL, YASHIL, tugma_yasa
 
 #: Telegram javobni shuncha sekund ushlab turadi (yangilik bo'lmasa).
 KUTISH = 25
@@ -235,12 +235,17 @@ def asosiy_klaviatura(til: str) -> dict | None:
             ],
             # Uchinchi qator — kamroq kerak bo'ladiganlari.
             [
-                tugma_yasa(M("tOyinlar", til), web_app={"url": ilova_url(OYIN_YOLI)}),
-                tugma_yasa(M("tReyting", til), web_app={"url": ilova_url(REYTING_YOLI)}),
+                tugma_yasa(M("tOyinlar", til), KOK, web_app={"url": ilova_url(OYIN_YOLI)}),
+                tugma_yasa(M("tReyting", til), KOK, web_app={"url": ilova_url(REYTING_YOLI)}),
             ],
+            # To'rtinchi qator — ilovani OCHMAYDIGAN ikkita tugma.
+            #
+            # "Yordam" QIZIL: u ilovaga olib bormaydi, balki ishlar
+            # yurishmaganda bosiladi. Rang uni qolgan yettitadan ajratib
+            # turadi va chalg'igan odam uni ko'zi bilan darrov topadi.
             [
-                tugma_yasa(M("tRaqamTugma", til)),
-                tugma_yasa(M("tYordamTugma", til)),
+                tugma_yasa(M("tRaqamTugma", til), KOK),
+                tugma_yasa(M("tYordamTugma", til), QIZIL),
             ],
         ],
         "resize_keyboard": True,
