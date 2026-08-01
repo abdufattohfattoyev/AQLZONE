@@ -164,6 +164,16 @@ XABAR: dict[str, dict[str, str]] = {
     #: Raqam MAJBURIY: usiz ilovaga o'tkazilmaydi. Matn shuni ochiq
     #: aytadi va NEGA kerakligini tushuntiradi — sababsiz talab
     #: qilingan raqam odamni bot bilan birga yo'qotadi.
+    #: `/start` xabarining oxirgi qatori. Havola muddati haqida gap
+    #: YO'Q: kirish endi Mini App orqali, imzo bilan bo'ladi va
+    #: hech qanday muddat qo'yilmaydi.
+    "pastdagiTugma": {
+        "uz": ("\n\n👇 Pastdagi tugmalardan boshlang."
+        ),
+        "ru": (
+            "\n\n👇 Начните с кнопок ниже."
+        ),
+    },
     "raqamNegaKerak": {
         "uz": (
             "\n\n📱 Davom etish uchun raqamingizni yuboring.\n\n"

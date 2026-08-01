@@ -39,6 +39,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 
 from core import boshqaruv
 from core.auth import kirish_kodi_yasa, tg_ismi
@@ -331,25 +332,43 @@ def ilova_tugmalari(til: str, havola: str) -> list[list[dict]]:
     )]]
 
 
+def raqam_kerakmi(pupil: Pupil) -> bool:
+    """
+    Shu hisobdan raqam TALAB QILINADIMI.
+
+    Ikki shart: raqami yo'q VA hisob `RAQAM_MAJBURIY_DAN` sanasidan
+    keyin ochilgan.
+
+    Ikkinchisi muhim. Talab joriy qilingan paytda ilovada allaqachon
+    o'nlab odam bor edi va ular hisobini raqamsiz ochgan. Ularni bir
+    kunda darvoza oldida qoldirish — ishonchni yo'qotishning eng tez
+    yo'li: bola kecha o'ynagan ilovaga bugun kira olmay qoladi va nega
+    ekanini tushunmaydi. Eskilardan raqam KEYINROQ, e'lon orqali
+    so'raladi.
+
+    Sana sozlanmagan bo'lsa raqam hech kimdan talab qilinmaydi.
+    """
+    if pupil.telefon:
+        return False
+
+    xom = (getattr(settings, "RAQAM_MAJBURIY_DAN", "") or "").strip()
+    if not xom:
+        return False
+
+    chegara = parse_date(xom)
+    if chegara is None:                      # `.env` da buzuq sana
+        return False
+    return timezone.localtime(pupil.created_at).date() >= chegara
+
+
 def raqami_yoq(tg_id: str) -> bool:
-    """
-    Shu Telegram hisobida telefon raqami YO'Qmi.
-
-    Raqam MAJBURIY: usiz ilovaga o'tkazilmaydi. Sabab hisobning
-    o'zida — bola telefonni almashtirsa yoki brauzer xotirasi
-    tozalansa, qurilma tokeni yo'qoladi va yulduzlari bilan birga
-    butun progressi begona hisobda qolib ketardi. Raqam esa hisobni
-    qaytarib beradigan yagona narsa.
-
-    Hisob umuman yo'q bo'lsa `False` — bu holatda `/start` uni o'zi
-    yaratadi va o'sha yerda raqam so'raladi.
-    """
+    """Shu Telegram hisobidan raqam talab qilinadimi (`raqam_kerakmi`)."""
     kirish = (
         Identity.objects.filter(provider=Identity.TELEGRAM, external_id=tg_id)
         .select_related("pupil")
         .first()
     )
-    return bool(kirish) and not kirish.pupil.telefon
+    return bool(kirish) and raqam_kerakmi(kirish.pupil)
 
 
 def salom_yubor(
@@ -389,7 +408,7 @@ def salom_yubor(
     #
     # Doimiy klaviatura ham berilmaydi: uning tugmalari ilovani ochadi
     # va darvoza ochiq qolib ketardi.
-    if not pupil.telefon:
+    if raqam_kerakmi(pupil):
         raqam_sora(chat_id, salom + M("raqamNegaKerak", til), til)
         return f"{tg_id}: /start — raqam so'raldi (hisob #{pupil.pk})"
 
@@ -399,24 +418,22 @@ def salom_yubor(
     # Menyu tugmasi ham shu odamning tilida bo'lsin.
     menyu_tugmasini_qoy(chat_id, til)
 
-    # Xabar IKKIGA bo'lingan va sabab texnik: bitta xabarda yo doimiy
-    # klaviatura, yo inline tugmalar bo'ladi — ikkalasi birga bo'lmaydi.
-    # Bo'linish tabiiy joydan o'tadi: salom (klaviatura bilan), so'ng
-    # "tugmani bosing" (tugmalar bilan). Ikkinchisi oxirida turadi —
-    # ya'ni odam ko'radigan oxirgi xabar aynan harakat talab qilgani.
+    # BITTA xabar. Ilgari ikkita edi va sabab texnik: bitta xabarda yo
+    # doimiy klaviatura, yo inline tugmalar bo'ladi — ikkalasi birga
+    # bo'lmaydi. Endi inline tugma KERAK EMAS: u ilovani ochardi,
+    # klaviaturaning birinchi tugmasi esa aynan shu ishni qiladi. Ikki
+    # xabar va ikkita bir xil tugma — takrorning eng ochiq turi.
     if klaviatura:
-        api("sendMessage", chat_id=chat_id, text=salom,
-            parse_mode="HTML", reply_markup=klaviatura)
         api("sendMessage", chat_id=chat_id,
-            text=M("tugmaniBos", til, muddat=muddat_matni(til)).strip(),
-            parse_mode="HTML", reply_markup={"inline_keyboard": tugmalar})
+            text=salom + M("pastdagiTugma", til),
+            parse_mode="HTML", reply_markup=klaviatura)
     else:
-        # Mini App sozlanmagan — doimiy klaviatura ham yo'q, hammasi
-        # avvalgidek bitta xabarda ketadi.
+        # Mini App sozlanmagan — klaviatura ham yo'q. Bunday paytda
+        # yagona yo'l sayt havolasi bo'lib qoladi.
         api("sendMessage", chat_id=chat_id,
             text=salom + M("tugmaniBos", til, muddat=muddat_matni(til)),
             parse_mode="HTML", reply_markup={"inline_keyboard": tugmalar})
-    return f"{tg_id}: /start — kirish havolasi yuborildi (hisob #{pupil.pk})"
+    return f"{tg_id}: /start — javob berildi (hisob #{pupil.pk})"
 
 
 def oyinlarni_yubor(chat_id: int, til: str) -> None:

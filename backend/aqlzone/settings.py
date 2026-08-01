@@ -177,6 +177,22 @@ ADMIN_TG = [x for x in env_list("ADMIN_TG_IDS", []) if x]
 # foydalanuvchilar ro'yxatini ochiq qoldirib ketmasligi kerak.
 BOSHQARUV_YONIQ = bool(ADMIN_TG)
 
+# Telefon raqami shu SANADAN keyin ochilgan hisoblar uchun majburiy.
+#
+# Nega sana, hammaga birdan emas: raqam talabi joriy qilingan paytda
+# ilovada allaqachon o'nlab odam bor edi va ular hisobini raqamsiz
+# ochgan. Ularni bir kunda darvoza oldida qoldirish — ishonchni
+# yo'qotishning eng tez yo'li: bola kecha o'ynagan ilovaga bugun kira
+# olmay qoladi va nega ekanini tushunmaydi.
+#
+# Eskilar avvalgidek ishlaydi, raqam esa ulardan KEYINROQ, e'lon
+# orqali so'raladi (`/boshqaruv/reklama`).
+#
+# Sana `.env` da o'zgartiriladi. Bo'sh qoldirilsa raqam hech kimga
+# majburiy bo'lmaydi — ya'ni standart holat "yopiq" emas, "ochiq":
+# noto'g'ri sozlangan server odamlarni ilovadan chiqarib yubormaydi.
+RAQAM_MAJBURIY_DAN = env("RAQAM_MAJBURIY_DAN", "")
+
 # Sinov ishlayaptimi (`manage.py test`).
 #
 # Faqat BIR narsa uchun kerak: yangi ro'yxatdan o'tganda adminga

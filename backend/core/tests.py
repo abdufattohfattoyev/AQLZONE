@@ -605,6 +605,7 @@ class SpaTest(TestCase):
         self.assertEqual(self.client.get("/api/v1/yoq").status_code, 404)
 
 
+@override_settings(RAQAM_MAJBURIY_DAN="2020-01-01")
 class BotTest(TestCase):
     """
     Bot mantiqi — Telegram'ga chiqmasdan.
@@ -2103,10 +2104,14 @@ class TugmaRangiTest(TestCase):
         with self.settings(SAYT_URL="https://aql-zone.uz",
                            MINI_APP_URL="https://aql-zone.uz"):
             B.salom_yubor(1, "973358587", "Ali", "Valiyev", "uz")
-        qatorlar = api.call_args[1]["reply_markup"]["inline_keyboard"]
-        self.assertEqual(len(qatorlar), 1)                     # sayt havolasi yo'q
-        self.assertEqual(qatorlar[0][0]["style"], "success")
-        self.assertIn("web_app", qatorlar[0][0])
+
+        # Bitta xabar, bitta klaviatura — inline tugmalar takroriga
+        # aylangani uchun olib tashlangan.
+        xabarlar = [c for c in api.call_args_list if c[0][0] == "sendMessage"]
+        self.assertEqual(len(xabarlar), 1)
+        k = xabarlar[0][1]["reply_markup"]["keyboard"]
+        self.assertEqual(k[0][0]["style"], "success")
+        self.assertIn("web_app", k[0][0])
 
     @patch("core.management.commands.bot.api")
     def test_raqam_tugmasi_yashil(self, api):
@@ -2645,6 +2650,7 @@ class BotTugmaRangiTest(TestCase):
         self.assertEqual(r[M("tIlova", "uz")], "success")
 
 
+@override_settings(RAQAM_MAJBURIY_DAN="2020-01-01")
 class RaqamMajburiyTest(TestCase):
     """
     Raqam MAJBURIY: usiz ilovaga o'tkazilmaydi.
@@ -2692,8 +2698,9 @@ class RaqamMajburiyTest(TestCase):
         with self.settings(SAYT_URL="https://aql-zone.uz",
                            MINI_APP_URL="https://aql-zone.uz"):
             self.B.salom_yubor(1, "222", "Ali", "Valiyev", "uz")
-        qatorlar = api.call_args[1]["reply_markup"]["inline_keyboard"]
-        self.assertIn("web_app", qatorlar[0][0])
+        # `/start` BITTA xabar yuboradi — doimiy klaviatura bilan.
+        k = api.call_args[1]["reply_markup"]["keyboard"]
+        self.assertIn("web_app", k[0][0])
 
     def test_raqami_yoq_darvozasi(self):
         self.hisob("333")
@@ -2724,3 +2731,45 @@ class RaqamMajburiyTest(TestCase):
                 ),
                 buyruq,
             )
+
+
+@override_settings(RAQAM_MAJBURIY_DAN="2026-08-01")
+class EskiFoydalanuvchiTest(TestCase):
+    """
+    Eski hisoblardan raqam SO'RALMAYDI.
+
+    Talab joriy qilingan paytda ilovada allaqachon o'nlab odam bor edi.
+    Ularni bir kunda darvoza oldida qoldirish — ishonchni yo'qotishning
+    eng tez yo'li: bola kecha o'ynagan ilovaga bugun kira olmay qoladi
+    va nega ekanini tushunmaydi.
+    """
+
+    def hisob(self, kun: str):
+        from django.utils.dateparse import parse_datetime
+
+        p = Pupil.objects.create(first_name="Ali", last_name="Valiyev")
+        Pupil.objects.filter(pk=p.pk).update(
+            created_at=parse_datetime(f"{kun}T10:00:00+05:00")
+        )
+        return Pupil.objects.get(pk=p.pk)
+
+    def test_eskidan_soralmaydi_yangidan_soraladi(self):
+        from core.management.commands import bot as B
+
+        self.assertFalse(B.raqam_kerakmi(self.hisob("2026-07-20")))
+        self.assertTrue(B.raqam_kerakmi(self.hisob("2026-08-15")))
+        # Chegaraning O'ZI ham yangi hisoblanadi.
+        self.assertTrue(B.raqam_kerakmi(self.hisob("2026-08-01")))
+
+    @override_settings(RAQAM_MAJBURIY_DAN="")
+    def test_sana_sozlanmagan_bolsa_hech_kimdan_soralmaydi(self):
+        from core.management.commands import bot as B
+
+        self.assertFalse(B.raqam_kerakmi(self.hisob("2026-09-01")))
+
+    @override_settings(RAQAM_MAJBURIY_DAN="buzuq-sana")
+    def test_buzuq_sana_darvozani_ochiq_qoldiradi(self):
+        """Noto'g'ri sozlangan server odamlarni ilovadan chiqarmasin."""
+        from core.management.commands import bot as B
+
+        self.assertFalse(B.raqam_kerakmi(self.hisob("2026-09-01")))
