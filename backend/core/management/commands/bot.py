@@ -239,15 +239,18 @@ def asosiy_klaviatura(til: str) -> dict | None:
                 tugma_yasa(M("tOyinlar", til), KOK, web_app={"url": ilova_url(OYIN_YOLI)}),
                 tugma_yasa(M("tReyting", til), KOK, web_app={"url": ilova_url(REYTING_YOLI)}),
             ],
-            # To'rtinchi qator — ilovani OCHMAYDIGAN ikkita tugma.
+            # To'rtinchi qator — ilovani OCHMAYDIGAN yagona tugma.
+            #
+            # "Raqam" bu yerdan OLIB TASHLANDI: raqam bir marta beriladi
+            # va undan keyin bu tugma hech qachon kerak bo'lmaydi, lekin
+            # ekranning sakkizdan birini egallab turardi. U hamon
+            # `/raqam` buyrug'i bo'lib qoladi — ya'ni kerak bo'lganda
+            # topiladi, lekin yo'lda turmaydi.
             #
             # "Yordam" QIZIL: u ilovaga olib bormaydi, balki ishlar
-            # yurishmaganda bosiladi. Rang uni qolgan yettitadan ajratib
-            # turadi va chalg'igan odam uni ko'zi bilan darrov topadi.
-            [
-                tugma_yasa(M("tRaqamTugma", til), KOK),
-                tugma_yasa(M("tYordamTugma", til), QIZIL),
-            ],
+            # yurishmaganda bosiladi. Rang uni qolganidan ajratib turadi
+            # va chalg'igan odam uni ko'zi bilan darrov topadi.
+            [tugma_yasa(M("tYordamTugma", til), QIZIL)],
         ],
         "resize_keyboard": True,
         "is_persistent": True,

@@ -2599,6 +2599,18 @@ class BotKlaviaturaTest(TestCase):
             "https://aql-zone.uz/reyting",
         })
 
+    def test_raqam_tugmasi_klaviaturada_yoq(self):
+        """
+        Raqam bir marta beriladi.
+
+        Tugma undan keyin hech qachon kerak bo'lmaydi, lekin ekranning
+        sakkizdan birini egallab turardi. `/raqam` buyrug'i qoladi —
+        kerak bo'lganda topiladi, lekin yo'lda turmaydi.
+        """
+        matnlar = [t["text"] for t in self.tugmalar()]
+        self.assertNotIn(M("tRaqamTugma", "uz"), matnlar)
+        self.assertIn(M("tYordamTugma", "uz"), matnlar)
+
     def test_klaviatura_doimiy_va_moslashuvchan(self):
         k = self.klaviatura()
         self.assertTrue(k["is_persistent"])
