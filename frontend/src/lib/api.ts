@@ -115,15 +115,29 @@ let kirishJarayoni: Promise<boolean> | null = null;
 const TG_KEY = "az_tg_boglandi";
 
 export function signIn(): Promise<boolean> {
-  // Mini App ichida token BO'LGANDA ham ish qolishi mumkin.
-  //
-  // Ilova ilgari oddiy brauzerdek ochilgan bo'lsa (yoki Telegram
-  // skripti hali qo'shilmagan paytda), localStorage da ANONIM hisobning
-  // tokeni yotadi. "Token bor — demak kirdik" desak, Telegram hisobi
-  // hech qachon ulanmaydi va odam Telegram ICHIDA "kiring" degan
-  // ekranni ko'radi. Aynan shu xato bo'lgan.
-  const boglashKerak = Boolean(tg()?.initData) && localStorage.getItem(TG_KEY) !== "1";
-  if (token && !boglashKerak) return Promise.resolve(true);
+  /**
+   * Mini App ichida token BOR bo'lsa ham ish qolishi mumkin — va bu
+   * shart ikki xil nosozlikni yopadi.
+   *
+   * 1. **Anonim token.** Ilova ilgari oddiy brauzerdek ochilgan bo'lsa,
+   *    localStorage da anonim hisobning tokeni yotadi. "Token bor —
+   *    demak kirdik" desak, Telegram hisobi hech qachon ulanmaydi va
+   *    odam Telegram ICHIDA "kiring" degan ekranni ko'radi.
+   *
+   * 2. **BEGONA token.** Ilgari bu yerda `az_tg_boglandi` bayrog'i
+   *    tekshirilardi: u "1" bo'lsa token to'g'ri deb hisoblanib,
+   *    `initData` bilan UMUMAN solishtirilmasdi. Natijada saqlangan
+   *    token kimniki ekani hech qachon tasdiqlanmasdi — bir marta
+   *    yozilgan token o'sha qurilmada boshqa Telegram hisobi ostida
+   *    ham ishlayverardi. Duel havolasi buni ochib berdi: chaqiruvni
+   *    ochgan odam CHAQIRGANNING hisobiga tushib qolardi.
+   *
+   * Shuning uchun Telegram ichida token hech qachon so'zsiz qabul
+   * qilinmaydi: `initData` serverga boradi va hisobni SERVER aytadi.
+   * Narxi — ilova ochilganda bitta so'rov; evaziga hisob doim
+   * ekrandagi odamniki bo'ladi.
+   */
+  if (token && !tg()?.initData) return Promise.resolve(true);
 
   if (!kirishJarayoni) {
     kirishJarayoni = kirishniBoshla().finally(() => { kirishJarayoni = null; });
@@ -134,7 +148,7 @@ export function signIn(): Promise<boolean> {
 async function kirishniBoshla(): Promise<boolean> {
   // Kirish javobi hisob bilan birga profillar ro'yxatini ham beradi —
   // sonini shu yerdayoq eslab qolamiz, alohida so'rov kerak bo'lmaydi.
-  type Kirish = { token: string; user?: { profillar?: unknown[] } };
+  type Kirish = { token: string; user?: { id?: number; profillar?: unknown[] } };
   const t = tg();
   const initData = t?.initData;
 
@@ -142,10 +156,16 @@ async function kirishniBoshla(): Promise<boolean> {
     if (initData) {
       t?.ready?.(); t?.expand?.();
 
-      // Anonim hisob allaqachon bor — uni Telegram'ga BOG'LAYMIZ.
-      // Yangi kirish qilsak, bola shu qurilmada yig'gan yulduzlari
-      // bilan birga eski hisobda qolib ketardi.
-      if (token) {
+      // ANONIM hisob bor — uni Telegram'ga bog'laymiz. Yangi kirish
+      // qilsak, bola shu qurilmada yig'gan yulduzlari bilan birga eski
+      // hisobda qolib ketardi.
+      //
+      // `az_tg_boglandi` SHARTI muhim: u "1" bo'lsa, tokendagi hisob
+      // allaqachon biror Telegram hisobiga tegishli va uni ekrandagi
+      // odamga "bog'lash" mumkin emas — bu ikki begona hisobni
+      // qo'shib yuborardi. Bunday holatda pastdagi oddiy kirish
+      // ishlaydi va hisobni SERVER `initData` bo'yicha aytadi.
+      if (token && localStorage.getItem(TG_KEY) !== "1") {
         try {
           await post("/api/v1/auth/link", { initData });
           localStorage.setItem(TG_KEY, "1");
@@ -160,7 +180,7 @@ async function kirishniBoshla(): Promise<boolean> {
       const d = await post<Kirish>(
         "/api/v1/auth/telegram", { initData, platform: "tg" }, false,
       );
-      tokenniYoz(d.token, d.user?.profillar?.length);
+      tokenniYoz(d.token, d.user?.profillar?.length, d.user?.id);
       localStorage.setItem(TG_KEY, "1");
       return true;
     }
@@ -168,7 +188,7 @@ async function kirishniBoshla(): Promise<boolean> {
     const d = await post<Kirish>(
       "/api/v1/auth/device", { deviceId: deviceId(), platform: "web" }, false,
     );
-    tokenniYoz(d.token, d.user?.profillar?.length);
+    tokenniYoz(d.token, d.user?.profillar?.length, d.user?.id);
     return true;
   } catch (e) {
     console.warn("[api] kirish bo'lmadi:", (e as Error).message, "— faqat localStorage ishlaydi");
@@ -176,10 +196,42 @@ async function kirishniBoshla(): Promise<boolean> {
   }
 }
 
-function tokenniYoz(yangi: string, profilSon?: number): void {
+/** Oxirgi marta qaysi HISOB kirgani — profil kalitini tozalash uchun. */
+const HISOB_KEY = "az_hisob";
+
+/**
+ * Tanlangan bolaning profili qaysi hisobga tegishli ekanini eslab
+ * qoladi va hisob ALMASHSA uni tozalaydi.
+ *
+ * Server o'zi himoyalangan: `_profil_tanla` profilni faqat so'rov
+ * egasining ichidan qidiradi, ya'ni begona `profileId` bilan boshqa
+ * bolaning progressini olib bo'lmaydi. Lekin qurilmadagi keshlar
+ * profil raqami bilan kalitlanadi (`azapp_...::<id>`) — tozalanmasa,
+ * bir telefonda ikkinchi odam kirganda uning rekordlari begona
+ * raqam ostiga yozilib, aralashib ketardi.
+ *
+ * Bir xil hisob qayta kirganda TEGILMAYDI: ko'p bolali oilada
+ * tanlangan bola har ochilishda nolga tushib ketmasligi kerak.
+ */
+function hisobniBelgila(hisobId: unknown): void {
+  const yangi = hisobId == null ? "" : String(hisobId);
+  if (!yangi) return;
+  let eski = "";
+  try {
+    eski = localStorage.getItem(HISOB_KEY) || "";
+  } catch { /* xotira bloklangan */ }
+  if (eski === yangi) return;
+  try {
+    localStorage.setItem(HISOB_KEY, yangi);
+    if (eski) profilniTanla(null);
+  } catch { /* xotira bloklangan — keshlar aralashishi mumkin, xolos */ }
+}
+
+function tokenniYoz(yangi: string, profilSon?: number, hisobId?: unknown): void {
   token = yangi;
   if (typeof profilSon === "number") profilSoniniYoz(profilSon);
   localStorage.setItem(TOKEN_KEY, yangi);
+  hisobniBelgila(hisobId);
 }
 
 export interface RemoteState { state: Record<string, string>; stars: number }
@@ -649,6 +701,9 @@ export interface DuelHolat {
   kod: string;
   oyin: string;
   daraja: number;
+  /** Nechta savol va necha soniya — chaqirgan odam tanlaydi. */
+  savollar: number;
+  vaqt: number;
   /** `boshlanmagan` | `kutyapti` | `tugadi` | `muddati_otdi` */
   holat: string;
   chaqirgan: string;
@@ -748,9 +803,10 @@ async function duelPost<T>(url: string, body: unknown = {}): Promise<T> {
   return r.json() as Promise<T>;
 }
 
-/** Yangi chaqiruv boshlaydi — urug' va o'yin serverdan keladi. */
-export const duelBoshla = (): Promise<DuelHolat> =>
-  duelPost<DuelHolat>("/api/v1/duel");
+/** Yangi chaqiruv boshlaydi. Shartlar berilmasa server standartini oladi. */
+export const duelBoshla = (shart?: {
+  oyin: string; savollar: number; vaqt: number;
+}): Promise<DuelHolat> => duelPost<DuelHolat>("/api/v1/duel", shart ?? {});
 
 /** Chaqiruv haqida ma'lumot (ball bermaydi). */
 export async function duelKorish(kod: string): Promise<DuelHolat | null> {
