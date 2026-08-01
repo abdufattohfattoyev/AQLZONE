@@ -24,5 +24,8 @@ urlpatterns = [
     path("duel/royxat", views.duel_royxat, name="duel-royxat"),
     path("duel/<str:kod>", views.duel_korish, name="duel-korish"),
     path("duel/<str:kod>/qabul", views.duel_qabul, name="duel-qabul"),
+    path("duel/<str:kod>/tayyor", views.duel_tayyor, name="duel-tayyor"),
+    path("duel/<str:kod>/holat", views.duel_holat, name="duel-holat"),
+    path("duel/<str:kod>/ball", views.duel_ball, name="duel-ball"),
     path("duel/<str:kod>/natija", views.duel_natija, name="duel-natija"),
 ]

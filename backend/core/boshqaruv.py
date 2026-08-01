@@ -766,6 +766,12 @@ def duel_statistika(kunlar: int = 30) -> dict:
         .values("oyin").annotate(soni=Count("id")).order_by("-soni")
     )
 
+    # Jonli duel — ikkalasi ham "tayyorman" bosgani. Asinxrondan farqi
+    # katta va uni alohida ko'rish kerak: agar jonli duellar deyarli
+    # bo'lmasa, demak odamlar bir vaqtda onlayn bo'lmayapti va havolali
+    # chaqiruv yagona ishlaydigan yo'l.
+    jonli = qs.filter(chaqirgan_tayyor=True, qabul_tayyor=True).count()
+
     tugaganlar = qs.filter(qabul_tugatdi=True)
     ortacha = tugaganlar.aggregate(
         ch=Sum("chaqirgan_ball"), qa=Sum("qabul_ball"),
@@ -789,6 +795,7 @@ def duel_statistika(kunlar: int = 30) -> dict:
             "tayyor": tayyor,
             "qabul_foiz": qabul_foiz,
             "ortacha_ball": round(((ortacha["ch"] or 0) + (ortacha["qa"] or 0)) / (n * 2)),
+            "jonli": jonli,
             "bugun": Duel.objects.filter(
                 created_at__date=timezone.localtime(hozir).date()
             ).count(),

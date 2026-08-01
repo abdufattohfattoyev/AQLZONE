@@ -102,13 +102,25 @@ interface Props {
    * ko'rsatilmaydi ham: u ko'rinsa duel "nishonga urish" ga aylanadi,
    * o'yinchi kerakli ballni o'tishi bilan to'xtaydi.
    */
-  raqib?: { nom: string; sanoq: number[] };
+  raqib?: {
+    nom: string;
+    /** Asinxron duel: raqibning yozib olingan sanog'i. */
+    sanoq?: number[];
+    /** Jonli duel: raqibning AYNI PAYTDAGI bali (2 soniyada yangilanadi). */
+    ball?: number;
+  };
+  /**
+   * Har javobdan keyin chaqiriladi — jonli duelda ball serverga shu
+   * orqali boradi. Chaqiruv `Oqim` dan tashqarida hal qilinadi: bu
+   * komponent tarmoq haqida hech narsa bilmasligi kerak.
+   */
+  onBall?: (ball: number, sanoq: number[]) => void;
 }
 
 type Holat = "sanoq" | "oyin" | "tugadi";
 
 export function Oqim({
-  oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, vaqt, raqib,
+  oyin, daraja, onChiq, onTugadi, rekord, yakun, savollar, vaqt, raqib, onBall,
 }: Props) {
   const gen = oyin.gen!;
   const jamiVaqt = vaqt ?? (oyin.vaqt ?? [60, 60, 60])[daraja - 1];
@@ -253,11 +265,9 @@ export function Oqim({
     // yasaladi. Yozuv javob berilgan LAHZADA bo'lishi kerak, aks holda
     // ikki javob orasidagi sakrash chiziqda ko'rinmasdi.
     if (boshlandi.current) {
-      sanoqniYoz(
-        sanoqRef.current,
-        (Date.now() - boshlandi.current) / 1000,
-        togri ? ballRef.current + ballHisobi(zanjir + 1) : ballRef.current,
-      );
+      const yangiBall = togri ? ballRef.current + ballHisobi(zanjir + 1) : ballRef.current;
+      sanoqniYoz(sanoqRef.current, (Date.now() - boshlandi.current) / 1000, yangiBall);
+      onBall?.(yangiBall, [...sanoqRef.current]);
     }
 
     setTimeout(() => {
@@ -280,7 +290,11 @@ export function Oqim({
   // Raqibning SHU LAHZADAGI bali. Soat har 100 ms da yangilanadi,
   // ya'ni chiziq o'z-o'zidan harakatlanadi.
   const otgan = boshlandi.current ? (Date.now() - boshlandi.current) / 1000 : 0;
-  const raqibHozir = raqib ? raqibBali(raqib.sanoq, otgan) : 0;
+  // Jonli duelda raqibning bali serverdan keladi, asinxronda esa
+  // yozib olingan sanoqdan hisoblanadi.
+  const raqibHozir = !raqib ? 0
+    : raqib.ball !== undefined ? raqib.ball
+    : raqibBali(raqib.sanoq ?? [], otgan);
   const engKatta = Math.max(1, ball, raqibHozir);
 
   return (

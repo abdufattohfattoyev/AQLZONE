@@ -844,6 +844,9 @@ def _duel_json(d, ozim: bool = False) -> dict:
         "chaqirgan": D.korinadigan_ism(d.chaqirgan),
         "ozim": ozim,
         "havola": D.havola(d.kod),
+        "menTayyor": (d.chaqirgan_tayyor if ozim else d.qabul_tayyor),
+        "boshlanishSoniya": D.boshlanishga_qolgan(d),
+        **D.raqib_holati(d, chaqirganmi=ozim),
     }
 
 
@@ -935,29 +938,42 @@ def duel_natija(request, kod: str):
 
     profil = _profil_tanla(request)
     chaqirganmi = d.chaqirgan_id == profil.pk
+    jonli = d.jonlimi
 
     if chaqirganmi and d.chaqirgan_tugatdi:
         return Response({"detail": "allaqachon yozilgan"}, status=409)
     if not chaqirganmi and d.qabul_tugatdi:
         return Response({"detail": "allaqachon oynalgan"}, status=409)
-    if not chaqirganmi and not d.chaqirgan_tugatdi:
+    # Asinxron duelda tartib qat'iy: avval chaqirgan o'ynaydi. Jonli
+    # duelda esa ikkalasi bir vaqtda o'ynaydi va kim birinchi tugatishi
+    # oldindan ma'lum emas.
+    if not chaqirganmi and not jonli and not d.chaqirgan_tugatdi:
         return Response({"detail": "tayyor emas"}, status=409)
-    if not chaqirganmi and d.muddati_otdimi:
+    if not chaqirganmi and not jonli and d.muddati_otdimi:
         return Response({"detail": "muddati otdi"}, status=410)
+    if not chaqirganmi and d.qabul_id not in (None, profil.pk):
+        return Response({"detail": "band"}, status=409)
 
-    kim = D.natijani_yoz(d, profil, ball, xato, sanoq)
+    d = D.natijani_yoz(d, profil, chaqirganmi, ball, xato, sanoq)
 
-    if kim == "chaqirgan":
-        # Chaqiruv endi tayyor — havola beriladi.
+    tugadi = d.chaqirgan_tugatdi and d.qabul_tugatdi
+    if tugadi:
+        D.natija_xabari(d)
+
+    # Chaqirgan odam ASINXRON duelda birinchi bo'lib tugatdi — unga
+    # ulashiladigan havola kerak.
+    if chaqirganmi and not jonli and not tugadi:
         return Response({**_duel_json(d, ozim=True), "havola": D.havola(d.kod)})
 
-    D.natija_xabari(d)
     return Response({
         "kod": d.kod,
+        "holat": d.holat,
+        "tugadi": tugadi,
         "golib": d.golib,
-        "meniki": d.qabul_ball,
-        "raqib": d.chaqirgan_ball,
-        "raqibIsm": D.korinadigan_ism(d.chaqirgan),
+        "meniki": d.chaqirgan_ball if chaqirganmi else d.qabul_ball,
+        "raqib": d.qabul_ball if chaqirganmi else d.chaqirgan_ball,
+        "raqibIsm": D.korinadigan_ism(d.qabul if chaqirganmi else d.chaqirgan),
+        "menChaqirdim": chaqirganmi,
     })
 
 
@@ -997,3 +1013,97 @@ def duel_royxat(request):
             "havola": D.havola(d.kod) if meniki else "",
         })
     return Response({"duellar": ro})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_tayyor(request, kod: str):
+    """
+    "Men tayyorman". Ikkalasi bosgach o'yin boshlanadi.
+
+    Chaqiruvni ochgan odam uchun bu ayni paytda QO'SHILISH ham: u
+    duelga shu yerda biriktiriladi. Alohida "qabul qilish" qadami
+    ortiqcha bo'lardi — odam allaqachon "tayyorman" deb aytdi.
+    """
+    d = Duel.objects.select_related("chaqirgan", "qabul").filter(kod=kod).first()
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    if d.chaqirgan_tugatdi and d.qabul_tugatdi:
+        return Response({"detail": "allaqachon oynalgan"}, status=409)
+    if d.muddati_otdimi:
+        return Response({"detail": "muddati otdi"}, status=410)
+
+    profil = _profil_tanla(request)
+    chaqirganmi = d.chaqirgan_id == profil.pk
+
+    # Boshqa odam allaqachon qo'shilgan bo'lsa, uchinchisi kira olmaydi.
+    if not chaqirganmi and d.qabul_id not in (None, profil.pk):
+        return Response({"detail": "band"}, status=409)
+
+    d = D.tayyorlash(d, profil, chaqirganmi)
+    return Response(_duel_json(d, ozim=chaqirganmi))
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def duel_holat(request, kod: str):
+    """
+    Jonli holat — har 2 soniyada so'raladi.
+
+    Javob ATAYLAB kichik: bir necha son va ikkita bayroq. Duel
+    davomida bu manzil sekundiga bir marta chaqiriladi va og'ir javob
+    bir necha o'nlab duelda serverni bo'g'ib qo'yardi.
+
+    So'rovning o'zi belgi ham qo'yadi ("men shu yerdaman") — alohida
+    "tirikman" so'rovi kerak emas.
+    """
+    d = Duel.objects.select_related("chaqirgan", "qabul").filter(kod=kod).first()
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    profil = _profil_tanla(request)
+    chaqirganmi = d.chaqirgan_id == profil.pk
+    if not chaqirganmi and d.qabul_id not in (None, profil.pk):
+        return Response({"detail": "band"}, status=409)
+
+    D.belgi_qoy(d, chaqirganmi)
+    return Response({
+        "holat": d.holat,
+        "menTayyor": (d.chaqirgan_tayyor if chaqirganmi else d.qabul_tayyor),
+        "boshlanishSoniya": D.boshlanishga_qolgan(d),
+        "golib": d.golib,
+        "meniki": d.chaqirgan_ball if chaqirganmi else d.qabul_ball,
+        **D.raqib_holati(d, chaqirganmi),
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_ball(request, kod: str):
+    """
+    O'yin paytidagi ballni yuboradi va raqibnikini oladi.
+
+    Yakuniy natija EMAS: bu yerda g'olib aniqlanmaydi va o'yin
+    yopilmaydi. Ikkisini bir manzilga qo'shsak, tarmoq kechikkanda
+    o'rtadagi ball "yakuniy" bo'lib yozilib qolardi.
+    """
+    d = Duel.objects.select_related("chaqirgan", "qabul").filter(kod=kod).first()
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    ball = int(request.data.get("ball") or 0)
+    sanoq = request.data.get("sanoq") or []
+    if not D.natija_yaroqlimi(ball, 0, sanoq):
+        return Response({"detail": "notogri natija"}, status=400)
+
+    profil = _profil_tanla(request)
+    chaqirganmi = d.chaqirgan_id == profil.pk
+    if not chaqirganmi and d.qabul_id not in (None, profil.pk):
+        return Response({"detail": "band"}, status=409)
+
+    D.jonli_ball(d, chaqirganmi, ball, sanoq)
+    d.refresh_from_db()
+    return Response({
+        "holat": d.holat,
+        **D.raqib_holati(d, chaqirganmi),
+    })

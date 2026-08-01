@@ -60,6 +60,11 @@ emas, o'yinning o'zida.
       <div class="qosh">chaqiruv yasaldi, o'ynalmadi</div>
     </div>
     <div class="karta olchov">
+      <div class="nom">Jonli duel</div>
+      <div class="son">{{ duel.jonli }}</div>
+      <div class="qosh">ikkalasi bir vaqtda o'ynagan</div>
+    </div>
+    <div class="karta olchov">
       <div class="nom">O'rtacha ball</div>
       <div class="son">{{ duel.ortacha_ball }}</div>
       <div class="qosh">tugagan duellarda</div>
@@ -151,6 +156,10 @@ emas, o'yinning o'zida.
                 {% else %}
                   <span class="belgi yashil">tugadi</span>
                 {% endif %}
+              {% elif d.holat == "jonli" %}
+                <span class="belgi moviy">jonli ketyapti</span>
+              {% elif d.holat == "jonli_kutyapti" %}
+                <span class="belgi moviy">do'stini kutyapti</span>
               {% elif d.holat == "kutyapti" %}
                 <span class="belgi sariq">kutyapti</span>
               {% elif d.holat == "muddati_otdi" %}

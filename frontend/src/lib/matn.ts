@@ -575,6 +575,17 @@ const S = {
   duelXato: ["Aloqa yo'q — qaytadan urinib ko'ring", "Нет связи — попробуйте снова"],
   duelKutyapti: ["Javob kutilmoqda", "Ожидает ответа"],
   duelTarix: ["So'nggi bellashuvlar", "Последние дуэли"],
+  duelTayyorman: ["Men tayyorman", "Я готов"],
+  duelTayyorBelgi: ["tayyor", "готов"],
+  duelLobbiKutyapti: ["kutyapti", "ждёт"],
+  duelUlanmagan: ["hali yo'q", "ещё нет"],
+  duelDostKutilmoqda: ["Do'stingiz", "Ваш друг"],
+  duelRaqibKutilmoqda: ["Raqib tayyor bo'lishini kutamiz…", "Ждём готовности соперника…"],
+  duelBoshlanmoqda: ["Boshlanmoqda!", "Начинаем!"],
+  duelKutmayman: ["Kutmayman — hozir o'ynayman", "Не жду — сыграю сейчас"],
+  duelRaqibTugatmoqda: ["Raqib hali o'ynayapti…", "Соперник ещё играет…"],
+  duelRaqibBali: ["Uning bali: {n}", "Его результат: {n}"],
+  duelRaqib: ["Raqib", "Соперник"],
 
   /* ---------------- bugungi maydon ---------------- */
   maydon: ["Bugungi maydon", "Сегодняшняя арена"],

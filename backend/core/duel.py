@@ -31,6 +31,7 @@ urinmaydi.
 from __future__ import annotations
 
 import secrets
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -215,32 +216,143 @@ def natija_xabari(duel: Duel) -> None:
 
 
 @transaction.atomic
-def natijani_yoz(duel: Duel, profile: Profile, ball: int, xato: int, sanoq: list) -> str:
+def natijani_yoz(duel: Duel, profile: Profile, chaqirganmi: bool,
+                 ball: int, xato: int, sanoq: list) -> Duel:
     """
-    Natijani tegishli tomonga yozadi va kerak bo'lsa g'olibni aniqlaydi.
+    Natijani tegishli tomonga yozadi.
 
-    Qaytaradi: `"chaqirgan"` | `"qabul"` — kimning natijasi yozilgani.
-    Xato holatlar chaqiruvchida tekshiriladi.
+    G'olib FAQAT ikkalasi ham tugatgach aniqlanadi. Ilgari u qabul
+    qilgan tomon tugatishi bilan hisoblanardi va asinxron duelda bu
+    to'g'ri edi — jonli duelda esa ikkalasi bir vaqtda o'ynaydi va
+    kim birinchi tugatishi oldindan ma'lum emas.
+
+    Qator qulflanadi: jonli duelda ikkala natija bir soniyada kelishi
+    mumkin va ikkinchisi birinchisining yozuvini ko'rmasa, g'olib ikki
+    marta (yoki umuman) hisoblanmasdi.
     """
-    if duel.chaqirgan_id == profile.pk and not duel.chaqirgan_tugatdi:
-        duel.chaqirgan_ball = ball
-        duel.chaqirgan_xato = xato
-        duel.chaqirgan_sanoq = sanoq
-        duel.chaqirgan_tugatdi = True
-        duel.save(update_fields=[
-            "chaqirgan_ball", "chaqirgan_xato", "chaqirgan_sanoq", "chaqirgan_tugatdi",
-        ])
-        return "chaqirgan"
+    d = Duel.objects.select_for_update().get(pk=duel.pk)
 
-    duel.qabul = profile
-    duel.qabul_ball = ball
-    duel.qabul_xato = xato
-    duel.qabul_sanoq = sanoq
-    duel.qabul_tugatdi = True
-    duel.golib = duel.golibni_aniqla()
-    duel.tugadi_at = timezone.now()
-    duel.save(update_fields=[
-        "qabul", "qabul_ball", "qabul_xato", "qabul_sanoq", "qabul_tugatdi",
-        "golib", "tugadi_at",
+    if chaqirganmi:
+        d.chaqirgan_ball, d.chaqirgan_xato = ball, xato
+        d.chaqirgan_sanoq, d.chaqirgan_tugatdi = sanoq, True
+    else:
+        d.qabul = profile
+        d.qabul_ball, d.qabul_xato = ball, xato
+        d.qabul_sanoq, d.qabul_tugatdi = sanoq, True
+
+    if d.chaqirgan_tugatdi and d.qabul_tugatdi and not d.golib:
+        d.golib = d.golibni_aniqla()
+        d.tugadi_at = timezone.now()
+        # Jonli duel tugadi — endi boshlanish vaqti kerak emas va u
+        # qolsa, holat hisobi duelni "hali ketyapti" deb ko'rsatardi.
+        d.boshlanadi = None
+
+    d.save()
+    return d
+
+
+# ------------------------------------------------------------ jonli rejim
+
+
+def belgi_qoy(duel: Duel, chaqirganmi: bool) -> None:
+    """
+    "Men shu yerdaman" belgisi.
+
+    Har so'rovda yangilanadi (holat so'rash ham, ball yuborish ham).
+    Shu belgi ikki savolga javob beradi: chaqirgan odam hali kutyaptimi
+    va o'yin o'rtasida raqib uzilib qolmadimi.
+    """
+    maydon = "chaqirgan_belgi" if chaqirganmi else "qabul_belgi"
+    setattr(duel, maydon, timezone.now())
+    Duel.objects.filter(pk=duel.pk).update(**{maydon: timezone.now()})
+
+
+@transaction.atomic
+def tayyorlash(duel: Duel, profile: Profile, chaqirganmi: bool) -> Duel:
+    """
+    "Men tayyorman" — va ikkalasi tayyor bo'lsa o'yinni boshlaydi.
+
+    Boshlanish vaqti SERVERDA belgilanadi va mijozga "necha soniya
+    qoldi" bo'lib uzatiladi. Mijozning o'z soatiga tayanib bo'lmaydi:
+    telefon soati bir necha soniya oldinda bo'lgan o'yinchi duelni erta
+    boshlab, tekin ustunlik olardi.
+
+    Qulflangan qator (`select_for_update`) ham shart: ikkalasi
+    "tayyorman" ni bir vaqtda bosishi mumkin va o'shanda ikkala so'rov
+    ham "men birinchiman" deb boshlanish vaqtini ikki marta yozardi.
+    """
+    d = Duel.objects.select_for_update().get(pk=duel.pk)
+
+    if chaqirganmi:
+        d.chaqirgan_tayyor = True
+        d.chaqirgan_belgi = timezone.now()
+    else:
+        d.qabul = profile
+        d.qabul_tayyor = True
+        d.qabul_belgi = timezone.now()
+
+    if d.ikkalasi_tayyormi and d.boshlanadi is None:
+        d.boshlanadi = timezone.now() + timedelta(seconds=Duel.SANOQ_SONIYA)
+
+    d.save(update_fields=[
+        "chaqirgan_tayyor", "chaqirgan_belgi",
+        "qabul", "qabul_tayyor", "qabul_belgi", "boshlanadi",
     ])
-    return "qabul"
+    return d
+
+
+def boshlanishga_qolgan(duel: Duel) -> float | None:
+    """Boshlanishga necha soniya qoldi. `None` — hali tayyor emas."""
+    if duel.boshlanadi is None:
+        return None
+    return max(0.0, (duel.boshlanadi - timezone.now()).total_seconds())
+
+
+@transaction.atomic
+def jonli_ball(duel: Duel, chaqirganmi: bool, ball: int, sanoq: list) -> None:
+    """
+    O'yin PAYTIDAGI ballni yozadi.
+
+    Yakuniy natija emas — shuning uchun `*_tugatdi` tegilmaydi va
+    g'olib aniqlanmaydi. Bu qatorlar faqat raqibning ekranida chiziq
+    bo'lib ko'rinishi uchun kerak.
+
+    Ball faqat OSHADI: kechikib kelgan so'rov (tarmoq navbati) eski,
+    kichikroq qiymat bilan ustiga yozib, raqibning chizig'ini orqaga
+    tashlab yuborardi.
+    """
+    d = Duel.objects.select_for_update().get(pk=duel.pk)
+    hozirgi = d.chaqirgan_ball if chaqirganmi else d.qabul_ball
+    if ball < hozirgi:
+        return
+
+    if chaqirganmi:
+        d.chaqirgan_ball, d.chaqirgan_sanoq = ball, sanoq
+        d.chaqirgan_belgi = timezone.now()
+        d.save(update_fields=["chaqirgan_ball", "chaqirgan_sanoq", "chaqirgan_belgi"])
+    else:
+        d.qabul_ball, d.qabul_sanoq = ball, sanoq
+        d.qabul_belgi = timezone.now()
+        d.save(update_fields=["qabul_ball", "qabul_sanoq", "qabul_belgi"])
+
+
+def raqib_holati(duel: Duel, chaqirganmi: bool) -> dict:
+    """Raqib haqidagi jonli ma'lumot — so'rov javobiga qo'shiladi."""
+    if chaqirganmi:
+        raqib = duel.qabul
+        return {
+            "raqibBor": raqib is not None,
+            "raqibNom": korinadigan_ism(raqib) if raqib else "",
+            "raqibTayyor": duel.qabul_tayyor,
+            "raqibBall": duel.qabul_ball,
+            "raqibTugadi": duel.qabul_tugatdi,
+            "raqibShuYerda": duel.belgisi_yangimi(chaqirgan=False),
+        }
+    return {
+        "raqibBor": True,
+        "raqibNom": korinadigan_ism(duel.chaqirgan),
+        "raqibTayyor": duel.chaqirgan_tayyor,
+        "raqibBall": duel.chaqirgan_ball,
+        "raqibTugadi": duel.chaqirgan_tugatdi,
+        "raqibShuYerda": duel.belgisi_yangimi(chaqirgan=True),
+    }

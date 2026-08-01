@@ -2383,3 +2383,151 @@ class BoshqaruvDuelTest(TestCase):
         self.assertIn("Aziz", matn)
         self.assertIn("Malika", matn)
         self.assertIn("30 : 41", matn)
+
+
+class DuelJonliTest(TestCase):
+    """
+    Jonli duel: ikkalasi bir vaqtda o'ynaydi.
+
+    Eng muhim tekshiruv — G'OLIB FAQAT IKKALASI TUGATGACH aniqlanadi.
+    Asinxron duelda tartib qat'iy edi va shu sababdan g'olibni qabul
+    qilgan tomon tugatishi bilan hisoblasa bo'lardi; jonli duelda esa
+    kim birinchi tugatishi oldindan ma'lum emas.
+    """
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post(
+            "/api/v1/auth/device",
+            {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def setUp(self):
+        self.a = self.kir("dev-jonli-aaaa1111bbbb")
+        self.b = self.kir("dev-jonli-cccc2222dddd")
+        r = self.client.post("/api/v1/duel", {}, content_type="application/json", **self.a)
+        self.kod = r.json()["kod"]
+
+    def tayyor(self, kim: dict):
+        return self.client.post(f"/api/v1/duel/{self.kod}/tayyor", {},
+                                content_type="application/json", **kim)
+
+    def holat(self, kim: dict):
+        return self.client.get(f"/api/v1/duel/{self.kod}/holat", **kim).json()
+
+    def ball(self, kim: dict, ball: int):
+        return self.client.post(f"/api/v1/duel/{self.kod}/ball",
+                                {"ball": ball, "sanoq": [ball]},
+                                content_type="application/json", **kim)
+
+    def natija(self, kim: dict, ball: int, xato: int = 0):
+        return self.client.post(f"/api/v1/duel/{self.kod}/natija",
+                                {"ball": ball, "xato": xato, "sanoq": [ball]},
+                                content_type="application/json", **kim)
+
+    # ------------------------------------------------------ tayyorlik
+
+    def test_bittasi_tayyor_bolsa_oyin_boshlanmaydi(self):
+        r = self.tayyor(self.a)
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertIsNone(r.json()["boshlanishSoniya"])
+        self.assertTrue(r.json()["menTayyor"])
+        self.assertFalse(r.json()["raqibBor"])
+
+    def test_ikkalasi_tayyor_bolsa_sanoq_boshlanadi(self):
+        self.tayyor(self.a)
+        r = self.tayyor(self.b)
+        self.assertEqual(r.status_code, 200, r.content)
+        qolgan = r.json()["boshlanishSoniya"]
+        self.assertIsNotNone(qolgan)
+        self.assertLessEqual(qolgan, Duel.SANOQ_SONIYA)
+        self.assertGreater(qolgan, 0)
+
+        # Ikkala tomon ham bir xil vaqtni ko'radi (farq bir soniyagacha).
+        self.assertAlmostEqual(self.holat(self.a)["boshlanishSoniya"], qolgan, delta=1.5)
+
+    def test_boshlanish_vaqti_ikki_marta_yozilmaydi(self):
+        self.tayyor(self.a)
+        self.tayyor(self.b)
+        birinchi = Duel.objects.get(kod=self.kod).boshlanadi
+        self.tayyor(self.b)                       # takroriy bosish
+        self.assertEqual(Duel.objects.get(kod=self.kod).boshlanadi, birinchi)
+
+    def test_uchinchi_odam_qosila_olmaydi(self):
+        self.tayyor(self.a)
+        self.tayyor(self.b)
+        c = self.kir("dev-jonli-eeee3333ffff")
+        self.assertEqual(self.tayyor(c).status_code, 409)
+        self.assertEqual(
+            self.client.get(f"/api/v1/duel/{self.kod}/holat", **c).status_code, 409)
+
+    # ------------------------------------------------------ jonli ball
+
+    def test_ball_raqibga_korinadi(self):
+        self.tayyor(self.a); self.tayyor(self.b)
+        self.ball(self.a, 12)
+        self.assertEqual(self.holat(self.b)["raqibBall"], 12)
+        self.ball(self.b, 20)
+        self.assertEqual(self.holat(self.a)["raqibBall"], 20)
+
+    def test_kechikkan_sorov_ballni_orqaga_tashlamaydi(self):
+        self.tayyor(self.a); self.tayyor(self.b)
+        self.ball(self.a, 20)
+        self.ball(self.a, 12)                     # tarmoqda kechikib kelgan eski qiymat
+        self.assertEqual(self.holat(self.b)["raqibBall"], 20)
+
+    def test_jonli_ball_duelni_yopmaydi(self):
+        self.tayyor(self.a); self.tayyor(self.b)
+        self.ball(self.a, 30)
+        d = Duel.objects.get(kod=self.kod)
+        self.assertFalse(d.chaqirgan_tugatdi)
+        self.assertEqual(d.golib, "")
+
+    # ------------------------------------------------------ yakun
+
+    def test_golib_faqat_ikkalasi_tugatgach(self):
+        self.tayyor(self.a); self.tayyor(self.b)
+
+        # Qabul qilgan BIRINCHI bo'lib tugatdi — asinxron duelda bunday
+        # bo'lishi mumkin emas edi.
+        r = self.natija(self.b, 41)
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertFalse(r.json()["tugadi"])
+        self.assertEqual(r.json()["golib"], "")
+
+        r = self.natija(self.a, 30)
+        self.assertTrue(r.json()["tugadi"])
+        self.assertEqual(r.json()["golib"], "qabul")
+        self.assertEqual(r.json()["meniki"], 30)
+        self.assertEqual(r.json()["raqib"], 41)
+
+        d = Duel.objects.get(kod=self.kod)
+        self.assertEqual(d.holat, "tugadi")
+        self.assertIsNone(d.boshlanadi)
+
+    def test_birinchi_tugatgan_raqibni_kutadi(self):
+        self.tayyor(self.a); self.tayyor(self.b)
+        self.natija(self.a, 30)
+        h = self.holat(self.a)
+        self.assertFalse(h["raqibTugadi"])
+        self.natija(self.b, 25)
+        self.assertTrue(self.holat(self.a)["raqibTugadi"])
+        self.assertEqual(self.holat(self.a)["golib"], "chaqirgan")
+
+    def test_belgisi_eskirgan_raqib_shu_yerda_emas(self):
+        self.tayyor(self.a); self.tayyor(self.b)
+        eski = timezone.now() - timedelta(seconds=Duel.BELGI_SONIYA + 5)
+        Duel.objects.filter(kod=self.kod).update(qabul_belgi=eski)
+        self.assertFalse(self.holat(self.a)["raqibShuYerda"])
+
+    def test_jonli_duel_asinxronni_buzmaydi(self):
+        """Chaqiruv havolasi jonli boshlanmagan bo'lsa eski yo'l ishlaydi."""
+        r = self.client.post("/api/v1/duel", {}, content_type="application/json", **self.a)
+        kod = r.json()["kod"]
+        self.client.post(f"/api/v1/duel/{kod}/natija", {"ball": 20, "xato": 1, "sanoq": [20]},
+                         content_type="application/json", **self.a)
+        r = self.client.post(f"/api/v1/duel/{kod}/qabul", {},
+                             content_type="application/json", **self.b)
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(r.json()["raqibSanoq"], [20])

@@ -621,11 +621,62 @@ class Duel(models.Model):
     #: Kim yutdi: "chaqirgan" | "qabul" | "durang" | "" (hali tugamagan).
     golib = models.CharField(max_length=10, default="", blank=True)
 
+    # ---------------------------------------------------- jonli rejim
+    #
+    # Duel IKKI XIL bo'ladi va farqi bitta maydonda:
+    #
+    #   asinxron  chaqirgan avval o'ynaydi, do'sti keyin — istalgan payt
+    #   jonli     ikkalasi bir vaqtda o'ynaydi, ballar bir-biriga ko'rinadi
+    #
+    # Rejim ATAYLAB alohida ustunda emas: u `boshlanadi` bo'sh-to'laligidan
+    # kelib chiqadi. Ikkita haqiqat manbai bo'lsa, ular albatta bir kun
+    # kelib bir-biriga zid bo'lib qoladi — masalan "jonli" deb belgilangan,
+    # lekin boshlanish vaqti yo'q duel.
+
+    #: Ikkalasi TAYYOR bo'lgan payt + qisqa sanoq. Bo'sh — asinxron duel.
+    #:
+    #: Vaqt SERVERDA belgilanadi va mijozga "necha soniya qoldi" bo'lib
+    #: uzatiladi. Mijozning o'z soatiga tayanib bo'lmaydi: telefon soati
+    #: bir necha soniya oldinda bo'lsa, o'sha o'yinchi duelni erta
+    #: boshlab, tekin ustunlik olardi.
+    boshlanadi = models.DateTimeField(null=True, blank=True)
+
+    #: Oxirgi belgi — "men shu yerdaman" degani (har 2 soniyada).
+    #:
+    #: Ikki ish qiladi: chaqirgan odam hali KUTYAPTIMI (do'sti havolani
+    #: ochganda jonli boshlash mumkinmi) va o'yin o'rtasida raqib
+    #: uzilib qolmadimi.
+    chaqirgan_belgi = models.DateTimeField(null=True, blank=True)
+    qabul_belgi = models.DateTimeField(null=True, blank=True)
+
+    #: "Men tayyorman" belgisi. IKKALASI ham bosgach o'yin boshlanadi.
+    #:
+    #: Avtomatik boshlash ham mumkin edi (do'sti havolani ochishi bilan),
+    #: lekin unda odam telefonini cho'ntagidan chiqarayotganda o'yin
+    #: allaqachon ketayotgan bo'lardi. Tayyorlik tugmasi bir vaqtning
+    #: o'zida ikkinchi ishni ham qiladi: u yerda o'yin nomi va qoidasi
+    #: turadi, ya'ni ikkalasi ham nima o'ynashini BILIB boshlaydi.
+    chaqirgan_tayyor = models.BooleanField(default=False)
+    qabul_tayyor = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(default=timezone.now)
     tugadi_at = models.DateTimeField(null=True, blank=True)
 
     #: Chaqiruv shuncha soatdan keyin kuchini yo'qotadi.
     MUDDAT_SOAT = 24
+
+    #: Belgi shuncha soniyadan eski bo'lsa, o'yinchi ketgan hisoblanadi.
+    #:
+    #: Uch marta o'tkazib yuborilgan belgiga to'g'ri keladi (har 2
+    #: soniyada bittadan). Qisqaroq qilinsa, sekin internetda o'ynayotgan
+    #: bola "chiqib ketdi" bo'lib qolardi.
+    BELGI_SONIYA = 8
+
+    #: Ikkalasi tayyor bo'lgach o'yin shuncha soniyadan keyin boshlanadi.
+    #:
+    #: Bu vaqt ikki narsaga kerak: ikkala ekranga "3, 2, 1" sanog'ini
+    #: chizishga va sekinroq telefonning savollarni yasab ulgurishiga.
+    SANOQ_SONIYA = 5
 
     class Meta:
         db_table = "duel"
@@ -644,10 +695,41 @@ class Duel(models.Model):
         return yosh.total_seconds() > self.MUDDAT_SOAT * 3600
 
     @property
+    def jonlimi(self) -> bool:
+        """Ikkalasi bir vaqtda o'ynayotgan duelmi."""
+        return self.boshlanadi is not None
+
+    def belgisi_yangimi(self, chaqirgan: bool) -> bool:
+        """O'yinchi hozir shu yerdami (oxirgi belgisi yaqindami)."""
+        belgi = self.chaqirgan_belgi if chaqirgan else self.qabul_belgi
+        if belgi is None:
+            return False
+        return (timezone.now() - belgi).total_seconds() <= self.BELGI_SONIYA
+
+    @property
+    def jonli_kutyaptimi(self) -> bool:
+        """
+        Chaqirgan odam AYNI PAYTDA do'stini kutyaptimi.
+
+        Shu savolga javob "havolani ochgan odam jonli o'ynay oladimi"
+        degan qarorni beradi. Ikki shart: chaqirgan hali o'ynamagan va
+        uning belgisi yangi (ya'ni u shu daqiqada ekran oldida).
+        """
+        return not self.chaqirgan_tugatdi and self.belgisi_yangimi(chaqirgan=True)
+
+    @property
+    def ikkalasi_tayyormi(self) -> bool:
+        return self.chaqirgan_tayyor and self.qabul_tayyor
+
+    @property
     def holat(self) -> str:
-        """`boshlanmagan` | `kutyapti` | `tugadi` | `muddati_otdi`."""
+        """`boshlanmagan` | `jonli_kutyapti` | `jonli` | `kutyapti` | `tugadi` | `muddati_otdi`."""
+        if self.qabul_tugatdi and self.chaqirgan_tugatdi:
+            return "tugadi"
+        if self.jonlimi:
+            return "jonli"
         if not self.chaqirgan_tugatdi:
-            return "boshlanmagan"
+            return "jonli_kutyapti" if self.jonli_kutyaptimi else "boshlanmagan"
         if self.qabul_tugatdi:
             return "tugadi"
         return "muddati_otdi" if self.muddati_otdimi else "kutyapti"
@@ -660,7 +742,7 @@ class Duel(models.Model):
         juda tez-tez chiqardi: ball 60 soniyada yig'iladi va ikki
         o'yinchi bir xil songa kelib qolishi oson.
         """
-        if self.chaqirgan_ball != self.qabul_ball:
+        if self.chaqirgan_ball != self.qabul_ball:  # noqa: RET505
             return "chaqirgan" if self.chaqirgan_ball > self.qabul_ball else "qabul"
         if self.chaqirgan_xato != self.qabul_xato:
             return "chaqirgan" if self.chaqirgan_xato < self.qabul_xato else "qabul"

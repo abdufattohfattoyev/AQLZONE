@@ -665,6 +665,23 @@ export interface DuelHolat {
   raqibSanoq?: number[];
 }
 
+/** Jonli duel holati — har 2 soniyada so'raladi. */
+export interface DuelJonli {
+  holat: string;
+  menTayyor: boolean;
+  /** Boshlanishga necha soniya qoldi. `null` — hali ikkalasi tayyor emas. */
+  boshlanishSoniya: number | null;
+  golib: string;
+  meniki: number;
+  raqibBor: boolean;
+  raqibNom: string;
+  raqibTayyor: boolean;
+  raqibBall: number;
+  raqibTugadi: boolean;
+  /** Raqibning oxirgi belgisi yangimi — u hozir ekran oldidami. */
+  raqibShuYerda: boolean;
+}
+
 export interface DuelNatija {
   kod: string;
   /** `chaqirgan` | `qabul` | `durang` */
@@ -672,6 +689,13 @@ export interface DuelNatija {
   meniki: number;
   raqib: number;
   raqibIsm: string;
+}
+
+/** Natija javobi — jonli duelda raqib hali tugatmagan bo'lishi mumkin. */
+export interface DuelYakun extends DuelNatija {
+  holat: string;
+  tugadi: boolean;
+  menChaqirdim: boolean;
 }
 
 export interface DuelYozuv {
@@ -749,6 +773,38 @@ export const duelNatija = <T>(
   kod: string, ball: number, xato: number, sanoq: number[],
 ): Promise<T> =>
   duelPost<T>(`/api/v1/duel/${encodeURIComponent(kod)}/natija`, { ball, xato, sanoq });
+
+/** "Men tayyorman" — ikkalasi bosgach o'yin boshlanadi. */
+export const duelTayyor = (kod: string): Promise<DuelHolat & DuelJonli> =>
+  duelPost<DuelHolat & DuelJonli>(`/api/v1/duel/${encodeURIComponent(kod)}/tayyor`);
+
+/** Jonli holat. So'rovning o'zi "men shu yerdaman" belgisini ham qo'yadi. */
+export async function duelHolat(kod: string): Promise<DuelJonli | null> {
+  if (!token && !(await signIn())) return null;
+  try {
+    const r = await fetch(`/api/v1/duel/${encodeURIComponent(kod)}/holat${profilQuery()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as DuelJonli;
+  } catch { return null; }
+}
+
+/**
+ * O'yin PAYTIDAGI ballni yuboradi va raqibnikini oladi.
+ *
+ * Yakuniy natija emas: bu chaqiruv duelni yopmaydi va g'olibni
+ * aniqlamaydi. Xato bo'lsa jim qaytadi — o'yin davom etaveradi va
+ * raqib chizig'i shunchaki bir necha soniya qotib turadi.
+ */
+export async function duelBall(
+  kod: string, ball: number, sanoq: number[],
+): Promise<DuelJonli | null> {
+  try {
+    return await duelPost<DuelJonli>(
+      `/api/v1/duel/${encodeURIComponent(kod)}/ball`, { ball, sanoq });
+  } catch { return null; }
+}
 
 /** O'z duellarim — oxirgi 20 tasi. */
 export async function duelRoyxat(): Promise<DuelYozuv[]> {
