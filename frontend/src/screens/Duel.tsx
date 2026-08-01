@@ -288,11 +288,42 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
         </div>
       )}
 
+      {/* ---- 1-qadam: havola ----
+          CHAQIRGAN odamda birinchi va eng katta harakat aynan shu.
+          Ilgari ulashish tugmasi pastda, "tayyorman" dan keyin turardi
+          va ekran "nimani kutyapman?" degan savol bilan qolardi: odam
+          do'stiga havola YUBORISHI kerakligini tushunmasdi.
+
+          Endi qadamlar RAQAMLANGAN: avval havola, keyin tayyorlik. */}
+      {menChaqirdim && (
+        <div className="mt-6 text-left">
+          <div className="ml-1 font-display text-[14px]">{t("duelQadam1")}</div>
+          <div className="mt-0.5 ml-1 text-[12.5px] text-ink-soft">{t("duelQadam1Izoh")}</div>
+          <button type="button" onClick={() => havolaniOch(
+            `https://t.me/share/url?url=${encodeURIComponent(duel.havola)}` +
+            `&text=${encodeURIComponent(t("duelUlashMatn"))}`,
+          )}
+            className="tugma-3d az-yaltir mt-2 flex w-full items-center justify-center gap-2
+                       rounded-3xl bg-brand-blue py-3.5 font-display text-[16px] text-white
+                       shadow-[0_5px_0_var(--color-brand-blue-d)]">
+            <Icon name="send" size={18} />
+            {t("duelUlash")}
+          </button>
+        </div>
+      )}
+
+      {menChaqirdim && (
+        <div className="mt-5 text-left">
+          <div className="ml-1 font-display text-[14px]">{t("duelQadam2")}</div>
+          <div className="mt-0.5 ml-1 text-[12.5px] text-ink-soft">{t("duelQadam2Izoh")}</div>
+        </div>
+      )}
+
       {/* ---- ikki tomonning holati ----
           Raqib qo'shilganini va tayyorligini KO'RSATISH shart: busiz
           "tayyorman" ni bosgan odam bo'sh ekranga qarab, nima
           kutayotganini bilmay turardi. */}
-      <div className="mt-6 space-y-2">
+      <div className="mt-2.5 space-y-2">
         <Qator nom={t("duelSiz")} tayyor={menTayyor} bor />
         <Qator
           nom={holat?.raqibNom || (menChaqirdim ? t("duelDostKutilmoqda") : duel.chaqirgan)}
@@ -303,36 +334,24 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
 
       {!menTayyor ? (
         <button type="button" onClick={tayyorla} disabled={tayyorlanmoqda}
-          className="tugma-3d az-yaltir mt-7 w-full rounded-3xl bg-brand-green py-4 font-display
+          className="tugma-3d az-yaltir mt-4 w-full rounded-3xl bg-brand-green py-4 font-display
                      text-[18px] text-white shadow-[0_6px_0_var(--color-brand-green-d)]
                      disabled:opacity-60">
           {t("duelTayyorman")}
         </button>
       ) : (
-        <div className="mt-7 rounded-3xl bg-karta py-4 font-display text-[16px] text-ink-soft
+        <div className="mt-4 rounded-3xl bg-karta py-3.5 font-display text-[15px] text-ink-soft
                         shadow-clay-sm">
           {t("duelRaqibKutilmoqda")}
         </div>
       )}
 
+      {/* Kutish MAJBURIY emas: do'sti kelmasa ham o'yin bo'ladi. */}
       {menChaqirdim && (
-        <>
-          <button type="button" onClick={() => havolaniOch(
-            `https://t.me/share/url?url=${encodeURIComponent(duel.havola)}` +
-            `&text=${encodeURIComponent(t("duelUlashMatn"))}`,
-          )}
-            className="clay-press mt-3 flex w-full items-center justify-center gap-2 rounded-3xl
-                       bg-brand-blue py-3.5 font-display text-[15.5px] text-white">
-            <Icon name="send" size={17} />
-            {t("duelUlash")}
-          </button>
-
-          {/* Kutish MAJBURIY emas: do'sti kelmasa ham o'yin bo'ladi. */}
-          <button type="button" onClick={onYolgiz}
-            className="mt-3 w-full py-2 text-[13.5px] font-semibold text-ink-dim">
-            {t("duelKutmayman")}
-          </button>
-        </>
+        <button type="button" onClick={onYolgiz}
+          className="mt-3 w-full py-2 text-[13.5px] font-semibold text-ink-dim">
+          {t("duelKutmayman")}
+        </button>
       )}
 
       <button type="button" onClick={onChiq}

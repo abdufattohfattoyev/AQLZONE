@@ -583,6 +583,16 @@ const S = {
   duelRaqibKutilmoqda: ["Raqib tayyor bo'lishini kutamiz…", "Ждём готовности соперника…"],
   duelBoshlanmoqda: ["Boshlanmoqda!", "Начинаем!"],
   duelKutmayman: ["Kutmayman — hozir o'ynayman", "Не жду — сыграю сейчас"],
+  duelQadam1: ["1. Do'stingizga havola yuboring", "1. Отправьте другу ссылку"],
+  duelQadam1Izoh: [
+    "U havolani ochsa, shu yerda paydo bo'ladi.",
+    "Как только он откроет ссылку — появится здесь.",
+  ],
+  duelQadam2: ["2. Ikkalangiz tayyor bo'ling", "2. Оба нажмите «Готов»"],
+  duelQadam2Izoh: [
+    "Ikkalangiz bosgach, o'yin birga boshlanadi.",
+    "Когда оба нажмёте — игра начнётся одновременно.",
+  ],
   duelRaqibTugatmoqda: ["Raqib hali o'ynayapti…", "Соперник ещё играет…"],
   duelRaqibBali: ["Uning bali: {n}", "Его результат: {n}"],
   duelRaqib: ["Raqib", "Соперник"],
