@@ -11,6 +11,7 @@ Do'st bilan bellashuv — chaqiruv havolasi orqali.
     5. Do'sti     POST /duel/<kod>/qabul → o'sha urug' + raqib sanog'i
     6. Do'sti o'ynaydi
     7. Do'sti     POST /duel/<kod>/natija → g'olib aniqlanadi, botga xabar
+    8. Ikkalasi   POST /duel/<kod>/yana   → ikkalasi bossa YANGI duel
 
 ─────────────────── O'YINNI SERVER TANLAYDI ───────────────────
 
@@ -35,6 +36,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from .models import Duel, Identity, Profile
@@ -431,4 +433,132 @@ def raqib_holati(duel: Duel, chaqirganmi: bool) -> dict:
         "raqibBall": duel.chaqirgan_ball,
         "raqibTugadi": duel.chaqirgan_tugatdi,
         "raqibShuYerda": duel.belgisi_yangimi(chaqirgan=True),
+    }
+
+
+# ------------------------------------------------------------ umumiy hisob
+
+
+def juft_hisob(men: Profile | None, raqib: Profile | None) -> dict | None:
+    """
+    Ikki o'yinchi orasidagi UMUMIY hisob — "Aziz bilan 4:3".
+
+    ─────────────────── NEGA KERAK ───────────────────
+
+    Bitta duelning bali ertaga esdan chiqadi, "4:3" esa qolib ketadi:
+    u ikki bolani doimiy raqibga aylantiradi va keyingi duelga sabab
+    yaratadi. Reyting (mavhum son) bu ishni qilolmaydi — undagi 1240
+    hech kimga hech narsa demaydi, 4:3 esa hammaga tushunarli.
+
+    ─────────────────── NEGA SAQLANMAYDI ───────────────────
+
+    Hisob alohida jadvalda EMAS, har safar duellardan sanaladi.
+    Sabab: saqlangan son bir kun kelib haqiqatdan farq qila boshlaydi
+    (duel o'chirilsa, natija qo'lda tuzatilsa), sanash esa hech qachon
+    yolg'on gapirmaydi. Bir juftlikda o'nlab duel bo'ladi, yuzlab
+    emas — bu bitta arzon so'rov.
+    """
+    if men is None or raqib is None or men.pk == raqib.pk:
+        return None
+
+    qs = Duel.objects.filter(
+        Q(chaqirgan=men, qabul=raqib) | Q(chaqirgan=raqib, qabul=men),
+    ).exclude(golib="")
+
+    hisob = {"men": 0, "raqib": 0, "durang": 0, "jami": 0}
+    for chaqirgan_id, golib in qs.values_list("chaqirgan_id", "golib"):
+        hisob["jami"] += 1
+        if golib == "durang":
+            hisob["durang"] += 1
+        elif (golib == "chaqirgan") == (chaqirgan_id == men.pk):
+            hisob["men"] += 1
+        else:
+            hisob["raqib"] += 1
+    return hisob
+
+
+# ------------------------------------------------------------ qayta bellashuv
+
+
+def qayta_duel(oldingi: Duel) -> Duel:
+    """
+    O'sha ikki o'yinchi uchun yangi duel — eski shartlar, YANGI urug'.
+
+    Urug' yangilanadi: eski urug' bilan savollar ham eski bo'lardi va
+    ikkinchi bellashuv "kim yaxshiroq eslab qolgan" o'yiniga aylanardi.
+
+    Ikkalasi darhol TAYYOR deb belgilanadi va sanoq shu yerda
+    boshlanadi. "Yana o'ynaymizmi?" degan savolga "ha" degan odamdan
+    yana bir marta "tayyorman" so'rash — bir xil savolni ikki marta
+    berish demak, va o'sha ikkinchi bosishda odam yo'qoladi.
+    """
+    return Duel.objects.create(
+        kod=kod_yasa(),
+        urug=secrets.randbelow(2_000_000_000) + 1,
+        oyin=oldingi.oyin,
+        daraja=oldingi.daraja,
+        savollar_soni=oldingi.savollar_soni,
+        vaqt=oldingi.vaqt,
+        chaqirgan=oldingi.chaqirgan,
+        qabul=oldingi.qabul,
+        chaqirgan_tayyor=True,
+        qabul_tayyor=True,
+        chaqirgan_belgi=timezone.now(),
+        qabul_belgi=timezone.now(),
+        boshlanadi=timezone.now() + timedelta(seconds=Duel.SANOQ_SONIYA),
+    )
+
+
+@transaction.atomic
+def yana_soradi(duel: Duel, chaqirganmi: bool) -> Duel:
+    """
+    "Yana o'ynaymizmi?" — tugagan duelda bosiladi.
+
+    Yangi duel FAQAT ikkita shart bajarilganda yasaladi:
+
+      1. IKKALASI ham so'ragan bo'lsin. Bir tomonning xohishi yetarli
+         bo'lsa, raqib o'zi bilmagan holda o'yin ichida paydo bo'lardi.
+      2. Ikkalasining belgisi ham YANGI bo'lsin, ya'ni ikkalasi shu
+         daqiqada ekran oldida. Taklifni bosib telefonni cho'ntagiga
+         solgan odam bilan boshlangan duel ikkalasiga ham yolg'on
+         natija yozardi.
+
+    Qator qulflanadi: ikkalasi tugmani bir soniyada bosishi mumkin va
+    o'shanda ikkita yangi duel yasalib, har biri o'zinikida yolg'iz
+    qolardi.
+    """
+    d = Duel.objects.select_for_update().select_related("keyingi").get(pk=duel.pk)
+
+    # Allaqachon yasalgan — ikkinchi bosish hech narsani o'zgartirmaydi.
+    if d.keyingi_id:
+        return d
+
+    if chaqirganmi:
+        d.chaqirgan_yana = True
+        d.chaqirgan_belgi = timezone.now()
+    else:
+        d.qabul_yana = True
+        d.qabul_belgi = timezone.now()
+
+    if (
+        d.chaqirgan_yana and d.qabul_yana
+        and d.qabul_id is not None
+        and d.belgisi_yangimi(chaqirgan=True)
+        and d.belgisi_yangimi(chaqirgan=False)
+    ):
+        d.keyingi = qayta_duel(d)
+
+    d.save(update_fields=[
+        "chaqirgan_yana", "chaqirgan_belgi",
+        "qabul_yana", "qabul_belgi", "keyingi",
+    ])
+    return d
+
+
+def yana_holati(duel: Duel, chaqirganmi: bool) -> dict:
+    """Qayta bellashuv holati — so'rov javobiga qo'shiladi."""
+    return {
+        "menYana": duel.chaqirgan_yana if chaqirganmi else duel.qabul_yana,
+        "raqibYana": duel.qabul_yana if chaqirganmi else duel.chaqirgan_yana,
+        "keyingiKod": duel.keyingi.kod if duel.keyingi_id else "",
     }

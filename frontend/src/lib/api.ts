@@ -747,6 +747,20 @@ export async function getKanal(): Promise<KanalHolat | null> {
 
 /* ================= DUEL — do'st bilan bellashuv ================= */
 
+/**
+ * Ikki o'yinchi orasidagi UMUMIY hisob — "Aziz bilan 4:3".
+ *
+ * Bitta duelning bali ertaga esdan chiqadi, bu son esa qolib ketadi va
+ * keyingi bellashuvga sabab bo'ladi. `null` — bu odam bilan hali
+ * tugagan duel bo'lmagan.
+ */
+export interface DuelHisob {
+  men: number;
+  raqib: number;
+  durang: number;
+  jami: number;
+}
+
 export interface DuelHolat {
   kod: string;
   oyin: string;
@@ -759,6 +773,12 @@ export interface DuelHolat {
   chaqirgan: string;
   ozim: boolean;
   havola: string;
+  /**
+   * Boshlanishga necha soniya qoldi. Odatda `null` — lekin QAYTA
+   * bellashuvda duel allaqachon boshlangan bo'ladi va sanoq shu
+   * qiymatdan ketadi.
+   */
+  boshlanishSoniya?: number | null;
   /** Faqat boshlashda va qabul qilishda keladi. */
   urug?: number;
   /**
@@ -768,6 +788,8 @@ export interface DuelHolat {
    * aylanadi va o'yinchi kerakli sonni o'tishi bilan to'xtaydi.
    */
   raqibSanoq?: number[];
+  /** Shu raqib bilan umumiy hisob. Raqib hali noma'lum bo'lsa — `null`. */
+  hisob?: DuelHisob | null;
 }
 
 /** Jonli duel holati — har 2 soniyada so'raladi. */
@@ -785,6 +807,14 @@ export interface DuelJonli {
   raqibTugadi: boolean;
   /** Raqibning oxirgi belgisi yangimi — u hozir ekran oldidami. */
   raqibShuYerda: boolean;
+  /** Duel tugagach — shu raqib bilan umumiy hisob. */
+  hisob?: DuelHisob | null;
+  /** "Yana o'ynaymizmi?" ni men bosdimmi. */
+  menYana?: boolean;
+  /** Raqib bosdimi — u meni kutyapti. */
+  raqibYana?: boolean;
+  /** Ikkalasi ham bosgach yasalgan yangi duel kodi. Bo'sh — hali yo'q. */
+  keyingiKod?: string;
 }
 
 export interface DuelNatija {
@@ -794,6 +824,8 @@ export interface DuelNatija {
   meniki: number;
   raqib: number;
   raqibIsm: string;
+  /** Shu raqib bilan umumiy hisob — bu duel ham sanalgan holda. */
+  hisob?: DuelHisob | null;
 }
 
 /** Natija javobi — jonli duelda raqib hali tugatmagan bo'lishi mumkin. */
@@ -916,6 +948,27 @@ export async function duelBall(
     return await duelPost<DuelJonli>(
       `/api/v1/duel/${encodeURIComponent(kod)}/ball`, { ball, sanoq });
   } catch { return null; }
+}
+
+/**
+ * "Yana o'ynaymizmi?" — tugagan duelda.
+ *
+ * Ikkalasi ham bosgach javobda yangi duel kodi keladi (`keyingiKod`).
+ * Bitta bosish yetarli emas: raqib rozi bo'lmaguncha tugma
+ * "javobini kutyapmiz" holatida qoladi.
+ */
+export async function duelYana(kod: string): Promise<DuelYanaHolat | null> {
+  try {
+    return await duelPost<DuelYanaHolat>(`/api/v1/duel/${encodeURIComponent(kod)}/yana`);
+  } catch { return null; }
+}
+
+/** "Yana o'ynaymizmi?" javobi — kim so'radi va yangi duel yasaldimi. */
+export interface DuelYanaHolat {
+  menYana: boolean;
+  raqibYana: boolean;
+  /** Bo'sh — hali ikkalasi rozi emas. */
+  keyingiKod: string;
 }
 
 /** O'z duellarim — oxirgi 20 tasi. */

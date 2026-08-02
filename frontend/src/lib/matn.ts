@@ -112,6 +112,106 @@ const S = {
   // o'sha kenglikda oxirgi harflarini yo'qotardi — "Родители" esa sig'adi
   // va navigatsiya yozuvi sifatida bir xil tushunarli.
   tabOtaOna: ["Ota-ona", "Родители"],
+  tabOyinlar: ["O'yinlar", "Игры"],
+  tabMenyu: ["Menyu", "Меню"],
+
+  /* ---------------- menyu (yon panel) ----------------
+     Ilovaning to'liq ro'yxati. Har satrning izohi bor: menyu
+     "qayerga borish mumkin" degan savolga emas, "u yerda nima bo'ladi"
+     degan savolga javob berishi kerak. */
+  menyu: ["Menyu", "Меню"],
+  menyuIzoh: [
+    "Ilovada nima bor — hammasi shu yerda",
+    "Что есть в приложении — всё здесь",
+  ],
+  menyuTalim: ["Ta'lim", "Учёба"],
+  menyuOyinBolim: ["O'yin va bellashuv", "Игры и дуэли"],
+  menyuYutuq: ["Yutuq va reyting", "Награды и рейтинг"],
+  menyuHisobBolim: ["Hisob va sozlamalar", "Профиль и настройки"],
+  menyuBarchaOyin: ["Sakkizta o'yin", "Восемь игр"],
+
+  menyuDarslarIzoh: [
+    "Bob-bob yo'l xaritasi. Har dars uchta yulduzgacha.",
+    "Карта уроков по разделам. За урок — до трёх звёзд.",
+  ],
+  menyuSinovIzoh: [
+    "Kuniga olti savol. Tangasi ikki barobar.",
+    "Шесть вопросов в день. Монет — вдвое больше.",
+  ],
+  menyuDaftarIzoh: [
+    "Qiynalgan savollar yangi sonlar bilan qaytadi.",
+    "Трудные вопросы возвращаются с новыми числами.",
+  ],
+  menyuKurslarIzoh: [
+    "Maktabgacha va 1–4-sinf kurslarini tanlash.",
+    "Выбор курсов: подготовка к школе и 1–4 класс.",
+  ],
+  menyuOyinlarIzoh: [
+    "Yulduz emas — rekord va tanga. Har o'yinda uch daraja.",
+    "Не звёзды, а рекорд и монеты. В каждой игре три уровня.",
+  ],
+  menyuMaydonIzoh: [
+    "Kuniga bir marta. Uch bosqich, hammaga bir xil savol.",
+    "Раз в день. Три этапа, у всех одни и те же задания.",
+  ],
+  menyuDuelIzoh: [
+    "Do'stni chaqirasan — ikkalangizga bir xil savol tushadi.",
+    "Зовёшь друга — вопросы у вас одинаковые.",
+  ],
+  menyuNishonIzoh: [
+    "Qo'lga kiritilgan va hali ochilmagan nishonlar.",
+    "Полученные и ещё не открытые награды.",
+  ],
+  menyuDokonIzoh: [
+    "Tangaga ko'rinish sotib olinadi.",
+    "За монеты покупается оформление.",
+  ],
+  menyuReytingIzoh: [
+    "Barcha kurslar yulduzi bo'yicha umumiy jadval.",
+    "Общая таблица по звёздам всех курсов.",
+  ],
+  menyuOtaOnaIzoh: [
+    "Bola qancha ishladi, qaysi dars qiyin kechdi.",
+    "Сколько ребёнок занимался и какие уроки даются трудно.",
+  ],
+  menyuSozlamaIzoh: [
+    "Ism, kirish usullari, yangi bola qo'shish.",
+    "Имя, способы входа, добавление ребёнка.",
+  ],
+  menyuProfilIzoh: [
+    "Bir telefonda bir nechta bola — profilni almashtirish.",
+    "Несколько детей на одном телефоне — смена профиля.",
+  ],
+  menyuTilIzoh: [
+    "Ilova va bot shu tilda gapiradi.",
+    "На этом языке говорит приложение и бот.",
+  ],
+
+  /* ---------------- menyu: ball qanday yig'iladi ----------------
+     Eng ko'p so'raladigan savol. Ilgari javob hech qayerda yozilmagan
+     edi: yulduz darsdan, tanga o'yindan kelardi va farqni faqat uzoq
+     o'ynagan odam sezardi. */
+  menyuBall: ["Ball qanday yig'iladi", "Как начисляются баллы"],
+  menyuBallYulduz: ["Yulduz", "Звёзды"],
+  menyuBallYulduzIzoh: [
+    "Faqat darsda beriladi: xatosiz dars — 3 yulduz. Reyting shunga qarab tuziladi.",
+    "Только за уроки: урок без ошибок — 3 звезды. По ним и строится рейтинг.",
+  ],
+  menyuBallTanga: ["Tanga", "Монеты"],
+  menyuBallTangaIzoh: [
+    "Darsda har to'g'ri javob — 2 tanga, kunlik sinovda 4. O'yinda har 3 balldan 1 tanga, kuniga birinchi o'ynaganda ikki barobar.",
+    "В уроке за верный ответ — 2 монеты, в испытании дня — 4. В игре 1 монета за каждые 3 балла, а за первую игру в день — вдвое.",
+  ],
+  menyuBallZanjir: ["Zanjir", "Серия"],
+  menyuBallZanjirIzoh: [
+    "Kuniga 10 ta savol yechilsa zanjir uzilmaydi. Uzilib qolsa — tanga bilan tiklanadi.",
+    "Решай 10 вопросов в день — серия не прервётся. А если прервалась, её можно восстановить за монеты.",
+  ],
+  menyuBallRekord: ["Rekord", "Рекорд"],
+  menyuBallRekordIzoh: [
+    "O'yinda yulduz yo'q: o'yin va daraja bo'yicha eng yaxshi natijang saqlanadi.",
+    "В играх звёзд нет: сохраняется лучший результат по каждой игре и уровню.",
+  ],
 
   /* ---------------- dars (Lesson) ---------------- */
   togriJavob: ["To'g'ri! 👏", "Верно! 👏"],
@@ -637,6 +737,24 @@ const S = {
   duelTarixYutdi: ["yutdingiz", "победа"],
   duelTarixYutqazdi: ["yutqazdingiz", "поражение"],
   duelTarixKutyapti: ["javob kutilmoqda", "ждёт ответа"],
+
+  /* ---------------- yana o'ynash va umumiy hisob ----------------
+     "Qasos" degan so'z ATAYLAB ishlatilmaydi: bu bolalar ilovasi va
+     yutqazgan bolaga qaytishning sababi o'ch olish emas, o'yinning
+     o'zi bo'lishi kerak. Shuning uchun taklif ochiq va do'stona
+     ohangda — "Yana o'ynaymizmi?" */
+  duelYanaSoray: ["Yana o'ynaymizmi?", "Сыграем ещё?"],
+  duelYanaKutilmoqda: ["Javobini kutyapmiz…", "Ждём его ответа…"],
+  duelYanaTaklif: [
+    "{nom} yana o'ynashni taklif qilyapti",
+    "{nom} предлагает сыграть ещё",
+  ],
+  duelYanaRozi: ["Roziman — boshladik!", "Согласен — начали!"],
+  duelYanaBoshlanmoqda: ["Yangi bellashuv boshlanmoqda…", "Новая дуэль начинается…"],
+  duelYanaKetdi: ["Raqibingiz chiqib ketdi", "Соперник вышел"],
+  duelUmumiyHisob: ["Umumiy hisob", "Общий счёт"],
+  duelHisobNom: ["{nom} bilan {men} : {raqib}", "С {nom}: {men} : {raqib}"],
+  duelHisobDurang: ["{n} durang", "ничьих: {n}"],
 
   /* ---------------- bugungi maydon ---------------- */
   maydon: ["Bugungi maydon", "Сегодняшняя арена"],

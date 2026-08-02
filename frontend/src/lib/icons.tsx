@@ -179,6 +179,13 @@ const PATHS = {
     </>
   ),
   chevron: <path d="M8.5 5l7 7-7 7" />,
+  // Uchta chiziq. Pastkisi ATAYLAB qisqa: teng uchta chiziq boshqa
+  // belgilarga (`order`, `equals`) o'xshab ketardi va panelda ikkitasi
+  // yonma-yon turganda ular bir xil ko'rinardi.
+  menu: <path d="M4.5 7h15M4.5 12h15M4.5 17h9" />,
+  // Yopish — menyuning o'z tugmasi. `times` dan farqi o'lchamda: bu
+  // chiziqlar kaltaroq va doira ichida markazda o'tiradi.
+  close: <path d="M6.8 6.8l10.4 10.4M17.2 6.8L6.8 17.2" />,
   phone: (
     <>
       <rect x="6.5" y="2.5" width="11" height="19" rx="2.6" />

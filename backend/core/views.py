@@ -846,7 +846,7 @@ def kanal(request):
 # ------------------------------------------------------------------ duel
 
 
-def _duel_json(d, ozim: bool = False) -> dict:
+def _duel_json(d, ozim: bool = False, men=None) -> dict:
     """
     Duel haqidagi ochiq ma'lumot.
 
@@ -854,6 +854,10 @@ def _duel_json(d, ozim: bool = False) -> dict:
     oldindan bilsa, duel "nishonga urish" ga aylanadi — kerakli sonni
     o'tishi bilan to'xtaydi va oxirigacha urinmaydi. Ball faqat o'yin
     tugagach, natija ekranida ko'rinadi.
+
+    `men` berilsa — UMUMIY HISOB ham qo'shiladi ("Aziz bilan 4:3").
+    U duel oldida ko'rinishi kerak: o'yinni qiziqarli qiladigan narsa
+    shu sondir, chaqiruvning o'zi emas.
     """
     return {
         "kod": d.kod,
@@ -867,6 +871,7 @@ def _duel_json(d, ozim: bool = False) -> dict:
         "havola": D.havola(d.kod),
         "menTayyor": (d.chaqirgan_tayyor if ozim else d.qabul_tayyor),
         "boshlanishSoniya": D.boshlanishga_qolgan(d),
+        "hisob": D.juft_hisob(men, d.qabul if ozim else d.chaqirgan),
         **D.raqib_holati(d, chaqirganmi=ozim),
     }
 
@@ -902,12 +907,24 @@ def duel_boshla(request):
 @permission_classes([IsAuthenticated])
 def duel_korish(request, kod: str):
     """Chaqiruv haqida: kim chaqirgan, qaysi o'yin, hali ochiqmi."""
-    d = Duel.objects.select_related("chaqirgan").filter(kod=kod).first()
+    d = Duel.objects.select_related("chaqirgan", "qabul").filter(kod=kod).first()
     if d is None:
         return Response({"detail": "topilmadi"}, status=404)
 
     profil = _profil_tanla(request)
-    return Response(_duel_json(d, ozim=d.chaqirgan_id == profil.pk))
+    ozim = d.chaqirgan_id == profil.pk
+    javob = _duel_json(d, ozim=ozim, men=profil)
+
+    # Urug' faqat QATNASHCHIGA beriladi.
+    #
+    # Qayta bellashuvda yangi duelga ikkala tomon ham shu manzil orqali
+    # kiradi (kod ularga natija ekranida keladi) va o'yinni boshlash
+    # uchun urug' kerak. Begona odam esa uni ololmaydi: unga `qabul`
+    # bo'sh yoki boshqa odam bo'lib ko'rinadi.
+    if ozim or d.qabul_id == profil.pk:
+        javob["urug"] = d.urug
+
+    return Response(javob)
 
 
 @api_view(["POST"])
@@ -938,7 +955,7 @@ def duel_qabul(request, kod: str):
         return Response({"detail": "muddati otdi"}, status=410)
 
     return Response({
-        **_duel_json(d),
+        **_duel_json(d, men=profil),
         "urug": d.urug,
         # Faqat SANOQ — raqibning chizig'i uchun. Yakuniy ball emas.
         "raqibSanoq": d.chaqirgan_sanoq,
@@ -991,8 +1008,11 @@ def duel_natija(request, kod: str):
     # Chaqirgan odam ASINXRON duelda birinchi bo'lib tugatdi — unga
     # ulashiladigan havola kerak.
     if chaqirganmi and not jonli and not tugadi:
-        return Response({**_duel_json(d, ozim=True), "havola": D.havola(d.kod)})
+        return Response({
+            **_duel_json(d, ozim=True, men=profil), "havola": D.havola(d.kod),
+        })
 
+    raqib_profil = d.qabul if chaqirganmi else d.chaqirgan
     return Response({
         "kod": d.kod,
         "holat": d.holat,
@@ -1000,8 +1020,11 @@ def duel_natija(request, kod: str):
         "golib": d.golib,
         "meniki": d.chaqirgan_ball if chaqirganmi else d.qabul_ball,
         "raqib": d.qabul_ball if chaqirganmi else d.chaqirgan_ball,
-        "raqibIsm": D.korinadigan_ism(d.qabul if chaqirganmi else d.chaqirgan),
+        "raqibIsm": D.korinadigan_ism(raqib_profil),
         "menChaqirdim": chaqirganmi,
+        # Umumiy hisob SHU duel bilan birga: natija ekranida "3:2"
+        # bitta o'yinning balidan ko'ra ko'proq narsa aytadi.
+        "hisob": D.juft_hisob(profil, raqib_profil) if tugadi else None,
     })
 
 
@@ -1083,9 +1106,15 @@ def duel_holat(request, kod: str):
     bir necha o'nlab duelda serverni bo'g'ib qo'yardi.
 
     So'rovning o'zi belgi ham qo'yadi ("men shu yerdaman") — alohida
-    "tirikman" so'rovi kerak emas.
+    "tirikman" so'rovi kerak emas. Duel tugagach ham shu so'rov davom
+    etadi: natija ekranida turgan odam raqibiga "men hali shu yerdaman"
+    deb turadi va aynan shu "yana o'ynaymizmi?" ni mumkin qiladi.
     """
-    d = Duel.objects.select_related("chaqirgan", "qabul").filter(kod=kod).first()
+    d = (
+        Duel.objects
+        .select_related("chaqirgan", "qabul", "keyingi")
+        .filter(kod=kod).first()
+    )
     if d is None:
         return Response({"detail": "topilmadi"}, status=404)
 
@@ -1101,7 +1130,15 @@ def duel_holat(request, kod: str):
         "boshlanishSoniya": D.boshlanishga_qolgan(d),
         "golib": d.golib,
         "meniki": d.chaqirgan_ball if chaqirganmi else d.qabul_ball,
+        # Umumiy hisob FAQAT duel tugagach sanaladi: bu so'rov har 2
+        # soniyada keladi va o'yin davomida qo'shimcha so'rovning hech
+        # qanday foydasi yo'q — hisob natija ekranida kerak.
+        "hisob": (
+            D.juft_hisob(profil, d.qabul if chaqirganmi else d.chaqirgan)
+            if d.golib else None
+        ),
         **D.raqib_holati(d, chaqirganmi),
+        **D.yana_holati(d, chaqirganmi),
     })
 
 
@@ -1135,3 +1172,37 @@ def duel_ball(request, kod: str):
         "holat": d.holat,
         **D.raqib_holati(d, chaqirganmi),
     })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_yana(request, kod: str):
+    """
+    "Yana o'ynaymizmi?" — tugagan duelda.
+
+    Ikkalasi ham bosgach YANGI duel yasaladi va javobda uning kodi
+    keladi (`keyingiKod`). Bitta bosish yetarli emas: raqib rozi
+    bo'lmasa, duel yasalmaydi va tugma "javobini kutyapmiz" holatida
+    qoladi.
+
+    NEGA SHU YERDA, natija ekranida. Ikkalasi ham AYNI PAYTDA ekran
+    oldida turgan yagona lahza — shu. Botdan keladigan chaqiruv esa
+    ertaga ochiladi va o'shanda raqib boshqa joyda bo'ladi.
+    """
+    d = (
+        Duel.objects
+        .select_related("chaqirgan", "qabul", "keyingi")
+        .filter(kod=kod).first()
+    )
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    profil = _profil_tanla(request)
+    chaqirganmi = d.chaqirgan_id == profil.pk
+    if not chaqirganmi and d.qabul_id != profil.pk:
+        return Response({"detail": "begona"}, status=403)
+    if not d.golib:
+        return Response({"detail": "tugamagan"}, status=409)
+
+    d = D.yana_soradi(d, chaqirganmi)
+    return Response(D.yana_holati(d, chaqirganmi))

@@ -8,9 +8,31 @@
  * boshqa ekranga o'tgan bola ularni butunlay yo'qotardi va orqaga qaytish
  * tugmasini qidirishga majbur bo'lardi.
  *
- * To'rtta tugma KURSGA bog'liq (darslar, nishonlar, do'kon, ota-ona),
- * ikkitasi bog'liq emas (bosh sahifa, reyting). Kursga bog'liqlari qaysi
- * kursni ochadi degan savol bor va javob uch bosqichli:
+ * ────────────── NEGA OLTITA TUGMA BESHTAGA TUSHDI ──────────────
+ *
+ * Ilgari panelda oltita tugma turardi: bosh, darslar, nishonlar,
+ * do'kon, reyting, ota-ona. Uchta muammosi bor edi.
+ *
+ *   O'YINLAR YO'Q EDI.  Ilovaning yarmi — sakkizta o'yin, bugungi
+ *   maydon, duel — panelda umuman ko'rinmasdi. Ularga faqat bosh
+ *   sahifadagi bitta kartadan kirilardi, ya'ni boshqa ekranga o'tgan
+ *   odam ularni yo'qotardi.
+ *
+ *   OLTITA YOZUV SIG'MASDI.  320px li telefonda bir tugmaga ~53px
+ *   qolardi va yozuvlar kesilib ketardi.
+ *
+ *   TENG TUGMA — TENG MA'NO.  Do'kon va ota-ona paneli har kuni
+ *   bosiladigan joylar emas, lekin panelda ular "Darslar" bilan bir
+ *   xil og'irlikda turardi.
+ *
+ * Endi panelda faqat HAR KUNI kerak bo'ladigan to'rttasi va menyu
+ * bor. Nishonlar, do'kon, ota-ona paneli, sozlamalar, kunlik sinov,
+ * xatolar daftari — hammasi menyuda, izohi bilan
+ * (`components/Menyu.tsx`).
+ *
+ * Ikkita tugma KURSGA bog'liq (darslar va menyuning ichidagilar),
+ * qolgani bog'liq emas. Kursga bog'liqlari qaysi kursni ochadi degan
+ * savol bor va javob uch bosqichli:
  *
  *   1. Ayni paytda kurs sahifasidamiz — o'sha kurs.
  *   2. Emasmiz (masalan reytingda) — oxirgi ochilgan kurs (`lib/oxirgi`).
@@ -19,16 +41,15 @@
  * Busiz bosh sahifada turgan bola "Do'kon" ni bosganda hech narsa
  * bo'lmasdi: qaysi kursning do'koni ochilishi noma'lum edi.
  */
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { Icon } from "../lib/icons";
+import { Menyu } from "./Menyu";
 import { COURSES, courseBySlug } from "../lib/curriculum";
 import { oxirgiKurs } from "../lib/oxirgi";
 import { useProgress } from "../lib/progress";
 import { nishonlar, olingan } from "../lib/nishon";
-import {
-  yolDokon, yolKurs, yolKurslar, yolNishon, yolOtaOna, yolReyting,
-} from "../lib/yollar";
+import { yolKurs, yolKurslar, yolOyinlar, yolReyting } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
 
@@ -65,6 +86,7 @@ export function Panel() {
   const { pathname } = useLocation();
   const nav = useNavigate();
   const { progressOf, kunlik } = useProgress();
+  const [menyu, setMenyu] = useState(false);
 
   // Manzildagi kurs, bo'lmasa oxirgi ochilgani, bo'lmasa birinchisi.
   const kurs =
@@ -83,34 +105,16 @@ export function Panel() {
 
   const bosh = pathname === yolKurslar();
   const darslar = /^\/kurs\/[^/]+$/.test(pathname);
+  // O'yinlar tugmasi butun BO'LIM uchun yonadi: ro'yxat, daraja
+  // tanlash, maydon, duel — hammasi `/oyinlar` ostida. Faqat ro'yxatning
+  // o'ziga qarasa, daraja tanlash ekranida panel "hech qayerdasiz" deb
+  // turardi.
+  const oyinlar = pathname.startsWith("/oyinlar");
 
   // Tugmalar ro'yxat bo'lib turadi, chunki siljiydigan belgiga FAOL
   // TUGMANING INDEKSI kerak. Alohida yozilganda uni sanash uchun har
   // safar qo'lda tartib raqami yozib qo'yishga to'g'ri kelardi — tugma
   // qo'shilganda unutiladigan qadam.
-  const tablar = [
-    { ic: "home", nom: t("tabBosh"), yol: yolKurslar(), faol: bosh },
-    { ic: "map", nom: t("tabDarslar"), yol: yolKurs(kurs), faol: darslar },
-    {
-      ic: "trophy", nom: t("tabNishonlar"), yol: yolNishon(kurs),
-      faol: pathname === yolNishon(kurs), nuqta: yangiNishon,
-    },
-    { ic: "palette", nom: t("tabDokon"), yol: yolDokon(kurs), faol: pathname === yolDokon(kurs) },
-    { ic: "order", nom: t("tabReyting"), yol: yolReyting(), faol: pathname === yolReyting() },
-    // Ota-ona paneli ENG O'NGDA turadi va bu ataylab: u bolaga emas,
-    // kattaga mo'ljallangan. Bola panelni chapdan o'ngga o'rganadi
-    // (darslar → nishonlar → do'kon), shuning uchun eng oxirgi joy uning
-    // yo'lidan eng uzoq nuqta — bexosdan bosilishi kamayadi. Yuqoridagi
-    // kichik tugma o'z joyida qoladi: kurs sahifasida turgan ota-ona uni
-    // pastdan izlamaydi.
-    { ic: "parent", nom: t("tabOtaOna"), yol: yolOtaOna(kurs), faol: pathname === yolOtaOna(kurs) },
-  ] as const;
-
-  // -1 bo'lishi mumkin: sozlamalar va profillar sahifasida hech bir tugma
-  // faol emas. Bunda belgi umuman chizilmaydi — noto'g'ri joyda turgan
-  // belgi "shu yerdasiz" deb yolg'on aytardi.
-  const faolIndeks = tablar.findIndex((t) => t.faol);
-
   /**
    * Faol tugma qayta bosilsa — sahifa boshiga qaytadi.
    *
@@ -126,12 +130,38 @@ export function Panel() {
     else nav(yol);
   };
 
+  const tablar = [
+    { ic: "home", nom: t("tabBosh"), faol: bosh, on: yur(yolKurslar(), bosh) },
+    { ic: "map", nom: t("tabDarslar"), faol: darslar, on: yur(yolKurs(kurs), darslar) },
+    // O'yinlar ENG O'RTADA — paneldagi eng oson yetiladigan joy. Bu
+    // yerda o'yin, bugungi maydon va duel bir eshik ortida turadi.
+    { ic: "puzzle", nom: t("tabOyinlar"), faol: oyinlar, on: yur(yolOyinlar(), oyinlar) },
+    {
+      ic: "order", nom: t("tabReyting"), faol: pathname === yolReyting(),
+      on: yur(yolReyting(), pathname === yolReyting()),
+    },
+    // Menyu ENG O'NGDA: u manzil emas, ochiladigan ro'yxat. Qizil nuqta
+    // ham shu yerga ko'chdi — nishon endi menyu ichida va odam yangi
+    // nishonini boshqa hech qayerdan sezmasdi.
+    {
+      ic: "menu", nom: t("tabMenyu"), faol: menyu, nuqta: yangiNishon,
+      on: () => { tebrat("tanlov"); setMenyu(true); },
+    },
+  ] as const;
+
+  // -1 bo'lishi mumkin: sozlamalar, do'kon va nishonlar sahifasida hech
+  // bir tugma faol emas. Bunda belgi umuman chizilmaydi — noto'g'ri
+  // joyda turgan belgi "shu yerdasiz" deb yolg'on aytardi.
+  const faolIndeks = tablar.findIndex((t) => t.faol);
+
   return (
     <>
       {/* Oddiy oqimdagi bo'shliq: panel `fixed` bo'lgani uchun sahifa
           oxiri uning ostiga kirib qolardi. Bo'shliq shu yerda turadi va
           panel bilan BIRGA paydo bo'ladi — darsda ikkalasi ham yo'q. */}
       <div aria-hidden className="h-[calc(4rem+var(--az-past))]" />
+
+      <Menyu ochiq={menyu} onYop={() => setMenyu(false)} kurs={kurs} />
 
       <nav data-tur="panel"
         className="az-shisha fixed inset-x-0 bottom-0 z-30 border-t border-karta/45
@@ -153,7 +183,7 @@ export function Panel() {
             {tablar.map((t) => (
               <Tab key={t.nom} ic={t.ic} nom={t.nom} faol={t.faol}
                 nuqta={"nuqta" in t ? t.nuqta : false}
-                on={yur(t.yol, t.faol)} />
+                on={t.on} />
             ))}
           </div>
         </div>
@@ -164,7 +194,7 @@ export function Panel() {
 
 /** Panelning bitta tugmasi. Balandligi 56px — barmoq uchun yetarli. */
 function Tab({ ic, nom, on, faol = false, nuqta = false }: {
-  ic: "home" | "map" | "trophy" | "palette" | "order" | "parent";
+  ic: "home" | "map" | "puzzle" | "order" | "menu";
   nom: string;
   on: () => void;
   faol?: boolean;
@@ -192,11 +222,11 @@ function Tab({ ic, nom, on, faol = false, nuqta = false }: {
           <span className="az-nuqta absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
         )}
       </span>
-      {/* Oltita yozuv 320px li telefonga ham sig'ishi kerak. Eng uzuni —
-          "Nishonlar" (ruschada "Родителям"), ya'ni bir tugmaga ~53px
-          qoladi. Shu sabab yozuv kichraytirilgan va `truncate` bilan
-          chegaralangan: chetdan chiqib ketgan harf butun qatorni
-          qiyshaytirardi. */}
+      {/* Beshta yozuv 320px li telefonga ham sig'ishi kerak — bir
+          tugmaga ~64px qoladi. Oltitasida bu ~53px edi va eng uzun
+          yozuv ("Родители") kesilib ketardi; beshtasida joy yetadi,
+          lekin `truncate` baribir turadi: chetdan chiqib ketgan harf
+          butun qatorni qiyshaytirardi. */}
       <span className="w-full truncate px-0.5 text-center text-[10.5px] leading-none">{nom}</span>
     </button>
   );

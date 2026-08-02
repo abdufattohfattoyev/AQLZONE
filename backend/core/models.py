@@ -668,6 +668,26 @@ class Duel(models.Model):
     chaqirgan_tayyor = models.BooleanField(default=False)
     qabul_tayyor = models.BooleanField(default=False)
 
+    # ---------------------------------------------------- qayta bellashuv
+    #
+    # "Yana o'ynaymizmi?" — duel TUGAGANDAN keyin, ikkalasi hali ekran
+    # oldida turganda so'raladi. Ikkalasi ham rozi bo'lsa YANGI duel
+    # yasaladi (o'sha shartlar, yangi urug') va shu yerda `keyingi`
+    # bo'lib yoziladi.
+    #
+    # Nega yangi qator: eski duelni qayta ochish natijani ham,
+    # sanoqlarni ham o'chirib yuborardi — ya'ni tarix yo'qolardi.
+    # Zanjir esa `keyingi` orqali butun bo'lib qoladi.
+
+    chaqirgan_yana = models.BooleanField(default=False)
+    qabul_yana = models.BooleanField(default=False)
+
+    #: Ikkalasi rozi bo'lgach yasalgan yangi duel.
+    keyingi = models.OneToOneField(
+        "self", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="avvalgi",
+    )
+
     created_at = models.DateTimeField(default=timezone.now)
     tugadi_at = models.DateTimeField(null=True, blank=True)
 

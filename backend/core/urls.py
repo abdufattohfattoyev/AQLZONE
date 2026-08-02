@@ -28,4 +28,5 @@ urlpatterns = [
     path("duel/<str:kod>/holat", views.duel_holat, name="duel-holat"),
     path("duel/<str:kod>/ball", views.duel_ball, name="duel-ball"),
     path("duel/<str:kod>/natija", views.duel_natija, name="duel-natija"),
+    path("duel/<str:kod>/yana", views.duel_yana, name="duel-yana"),
 ]

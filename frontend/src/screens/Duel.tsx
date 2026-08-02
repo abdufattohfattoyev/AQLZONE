@@ -44,14 +44,26 @@ import { DUEL_SAVOLLAR, DUEL_VAQTLAR, duelSavollari } from "../lib/oyin/duel";
 import { tangaHisobi } from "../lib/oyin/rekord";
 import {
   DuelXato, duelBall, duelBoshla, duelHolat, duelKorish, duelNatija,
-  duelQabul, duelRoyxat, duelTayyor,
+  duelQabul, duelRoyxat, duelTayyor, duelYana,
 } from "../lib/api";
-import type { DuelHolat, DuelJonli, DuelShart, DuelYakun, DuelYozuv } from "../lib/api";
+import type {
+  DuelHisob, DuelHolat, DuelJonli, DuelShart, DuelYakun, DuelYozuv,
+} from "../lib/api";
 import type { Daraja, Oyin as OyinTur, OyinNatija } from "../lib/oyin/tur";
 import { UNIT_COLORS } from "../lib/types";
 
 /** Jonli holat necha millisekundda bir so'raladi. */
 const SOROV = 2000;
+
+/**
+ * Natija ekranida so'rov necha marta takrorlanadi (≈3 daqiqa).
+ *
+ * Bu ekran ochiq qolib ketishi mumkin: bola telefonni qo'yib, boshqa
+ * ishga o'tadi. Chegarasiz so'rov esa batareyani ham, serverni ham
+ * behuda yeydi. Raqib esa amalda bir necha soniya ichida javob beradi
+ * — u shuncha kutmasa, "yana o'ynash" baribir bo'lmaydi.
+ */
+const NATIJA_SOROV = 90;
 
 /* ============================ chaqiruv yasash ============================ */
 
@@ -88,6 +100,16 @@ export function Duel({ onChiq, onOyin }: {
       });
   };
 
+  // Ikkalasi "yana o'ynaymiz" deganda server YANGI duel yasaydi va
+  // uning kodini beradi. Duel allaqachon boshlangan bo'ladi: lobbi
+  // ochilishi bilan sanoq ketadi, "tayyorman" qaytadan so'ralmaydi.
+  const yangiDuelga = useCallback((kod: string) => {
+    setBosqich({ nima: "yuklanmoqda" });
+    duelKorish(kod).then((d) => setBosqich(
+      d ? { nima: "lobbi", duel: d } : { nima: "xato", matn: t("duelXato") },
+    ));
+  }, []);
+
   // Bellashuv Telegram hisobisiz o'ynalmaydi — pastdagi izohga qarang.
   // Hukm BIRINCHI RENDERDA chiqarilmaydi: Telegram obyekti tashqi
   // skriptdan keladi va u sekin yuklansa, Telegram ICHIDA turgan odam
@@ -114,6 +136,7 @@ export function Duel({ onChiq, onOyin }: {
           savollar: bosqich.duel.savollar,
           vaqt: bosqich.duel.vaqt,
         })}
+        onYangi={yangiDuelga}
         onMashq={onOyin}
         onChiq={onChiq}
       />
@@ -387,6 +410,16 @@ export function DuelQabul({ kod, onChiq, onDuel, onOyin }: {
     return () => { bekor = true; };
   }, [kod, tg]);
 
+  // Qayta bellashuv — chaqirgan odam O'ZGARMAYDI, ya'ni bu yerda men
+  // yana qabul qilgan tomon bo'lib qolaveraman va lobbi ham shu
+  // ko'rinishda ochiladi.
+  const yangiDuelga = useCallback((yangiKod: string) => {
+    setBosqich({ nima: "yuklanmoqda" });
+    duelKorish(yangiKod).then((d) => setBosqich(
+      d ? { nima: "lobbi", duel: d } : { nima: "xato", matn: t("duelXato") },
+    ));
+  }, []);
+
   const asinxronBoshla = () => {
     setBosqich({ nima: "yuklanmoqda" });
     duelQabul(kod)
@@ -441,6 +474,7 @@ export function DuelQabul({ kod, onChiq, onDuel, onOyin }: {
         // bo'ladi — ya'ni oddiy duel ekraniga o'tadi va shartlarni
         // o'zi tanlaydi. Zanjir shu yerda almashadi.
         onQayta={onDuel}
+        onYangi={yangiDuelga}
         onMashq={onOyin}
         onChiq={onChiq}
       />
@@ -519,10 +553,16 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
 
   // Sanoq boshlangach — so'rovni kutmasdan, o'z soatimiz bilan
   // hisoblaymiz: 2 soniyalik so'rov oralig'ida sanoq sakrab ketardi.
+  //
+  // Boshlang'ich qiymat DUELNING O'ZIDAN olinadi. Qayta bellashuvda
+  // o'yin allaqachon boshlangan bo'ladi (ikkalasi rozi bo'lgan payt
+  // serverda belgilangan) va busiz birinchi so'rov kelgunicha ekranda
+  // "do'stingizga havola yuboring" degan qadam ko'rinib ketardi.
+  const boshlanish = holat?.boshlanishSoniya ?? duel.boshlanishSoniya ?? null;
   const [sanoq, setSanoq] = useState<number | null>(null);
   useEffect(() => {
-    if (holat?.boshlanishSoniya == null) { setSanoq(null); return; }
-    let qolgan = holat.boshlanishSoniya;
+    if (boshlanish == null) { setSanoq(null); return; }
+    let qolgan = boshlanish;
     setSanoq(Math.ceil(qolgan));
     const id = setInterval(() => {
       qolgan -= 0.25;
@@ -535,7 +575,7 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
     }, 250);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [holat?.boshlanishSoniya !== null]);
+  }, [boshlanish !== null]);
 
   const tayyorla = () => {
     setTayyorlanmoqda(true);
@@ -580,6 +620,8 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
           </span>
         </div>
       )}
+
+      <Hisob hisob={duel.hisob} />
 
       {/* ---- 1-qadam: havola ----
           CHAQIRGAN odamda birinchi va eng katta harakat aynan shu.
@@ -651,6 +693,34 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
         className="mt-1 w-full py-2 text-[13px] font-semibold text-ink-dim/80">
         {t("duelOyinlarga")}
       </button>
+    </div>
+  );
+}
+
+/**
+ * Umumiy hisob — "Aziz bilan 4:3".
+ *
+ * NEGA KERAK. Bitta duelning bali ertaga esdan chiqadi, bu son esa
+ * qolib ketadi: u ikki bolani doimiy raqibga aylantiradi va keyingi
+ * bellashuvga sabab yaratadi. Shuning uchun u duel OLDIDA ham, natija
+ * ekranida ham ko'rinadi.
+ *
+ * Birinchi uchrashuvda hech narsa chizilmaydi: "0 : 0" degan qator
+ * ma'no bermaydi va ekranni behuda band qiladi.
+ */
+function Hisob({ hisob }: { hisob?: DuelHisob | null }) {
+  if (!hisob?.jami) return null;
+
+  return (
+    <div className="mx-auto mt-3 flex w-fit items-center gap-2 rounded-full bg-karta
+                    px-3.5 py-1.5 shadow-clay-sm">
+      <span className="text-[12px] text-ink-soft">{t("duelUmumiyHisob")}</span>
+      <span className="font-display text-[14.5px]">{hisob.men} : {hisob.raqib}</span>
+      {hisob.durang > 0 && (
+        <span className="text-[11.5px] text-ink-dim">
+          · {t("duelHisobDurang", { n: hisob.durang })}
+        </span>
+      )}
     </div>
   );
 }
@@ -728,7 +798,7 @@ function Bellashuv({ duel, jonli, menChaqirdim, onChiq, onHavola, onYakun }: {
         onYakun({
           kod, holat: h.holat, tugadi: true, golib: h.golib,
           meniki: h.meniki, raqib: h.raqibBall, raqibIsm: h.raqibNom,
-          menChaqirdim,
+          menChaqirdim, hisob: h.hisob,
         }, xatoRef.current);
       }
     }, SOROV);
@@ -871,6 +941,10 @@ function Taklif({ duel, onQabul, onChiq }: {
         </div>
       )}
 
+      {/* Umumiy hisob AYNAN shu yerda eng kuchli ishlaydi: "3:2 orqadasiz"
+          degan qator chaqiruvni qabul qilishning eng katta sababi. */}
+      <Hisob hisob={duel.hisob} />
+
       <button type="button" onClick={onQabul}
         className="tugma-3d az-yaltir mt-8 w-full rounded-3xl bg-brand-green py-4 font-display
                    text-[18px] text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
@@ -888,29 +962,99 @@ function Taklif({ duel, onQabul, onChiq }: {
 /**
  * Duel natijasi.
  *
- * Uchta tugma va uchalasi ham ATAYLAB shu tartibda:
+ * Tugmalar ATAYLAB shu tartibda:
  *
- *   "Javob berish"  — duelni ZANJIRGA aylantiradi. Bitta zarbadan
- *                     keyin tugaydigan bellashuv qaytish sababi
- *                     yaratmaydi; javob qaytarish esa ikki bolani bir
- *                     kunda o'n marta ilovaga qaytaradi.
+ *   "Yana o'ynaymizmi?" — raqib SHU DAQIQADA ekran oldida bo'lsa.
+ *                     Ikkalasi ham bosgach o'sha zahoti yangi duel
+ *                     boshlanadi. Bu — eng qimmatli lahza: ikki odam
+ *                     bir vaqtda ilovada turgan yagona payt.
+ *   "Javob berish"  — raqib ketgan bo'lsa. Yangi chaqiruv yasaladi va
+ *                     u botdan xabar bo'lib boradi.
  *   "Mashq qilish"  — xato qilgan bolani O'SHA o'yinga olib boradi.
  *                     O'yin oxiri — o'rganishga eng ochiq lahza.
  *   "O'yinlarga"    — chiqish.
+ *
+ * ─────────────── NEGA "QASOS" EMAS ───────────────
+ *
+ * Yutqazgan bolani qaytaradigan narsa o'ch olish emas, o'yinning o'zi
+ * bo'lishi kerak. Shuning uchun taklif ikkala tomonga ham bir xil
+ * do'stona ohangda ko'rinadi va uni YUTGAN odam ham birinchi bo'lib
+ * bosishi mumkin.
  */
-function Natija({ yakun, xato, oyinId, onQayta, onMashq, onChiq }: {
+function Natija({ yakun, xato, oyinId, onQayta, onYangi, onMashq, onChiq }: {
   yakun: DuelYakun;
   /** Shu duelda nechta xato qilingan. */
   xato?: number;
   /** Qaysi o'yin edi — mashqqa o'sha ochiladi. */
   oyinId?: string;
   onQayta?: () => void;
+  /** Qayta bellashuv boshlandi — yangi duel kodi bilan. */
+  onYangi?: (kod: string) => void;
   onMashq?: (id: string) => void;
   onChiq: () => void;
 }) {
   const meniki = yakun.menChaqirdim ? "chaqirgan" : "qabul";
   const yutdi = yakun.golib === meniki;
   const durang = yakun.golib === "durang";
+  const raqibNom = yakun.raqibIsm || t("duelRaqib");
+
+  /* ---- raqib hali shu yerdami ----
+     Har 2 soniyada so'raymiz va so'rovning O'ZI "men ham shu
+     yerdaman" belgisini qo'yadi. Server qayta bellashuvni faqat
+     IKKALASINING belgisi yangi bo'lganda boshlaydi — ya'ni ikkalasi
+     ham chindan ekran oldida. */
+  const [jonli, setJonli] = useState<DuelJonli | null>(null);
+  const [tekshirildi, setTekshirildi] = useState(false);
+  const [menSoradim, setMenSoradim] = useState(false);
+  const [boshlanmoqda, setBoshlanmoqda] = useState(false);
+  const ketdiRef = useRef(false);
+
+  const yangiga = useCallback((kod: string) => {
+    if (ketdiRef.current) return;
+    ketdiRef.current = true;
+    setBoshlanmoqda(true);
+    onYangi?.(kod);
+  }, [onYangi]);
+
+  useEffect(() => {
+    if (!onYangi) return;
+    let bekor = false;
+    let qolgan = NATIJA_SOROV;
+    const sora = async () => {
+      const h = await duelHolat(yakun.kod);
+      if (bekor) return;
+      setTekshirildi(true);
+      if (!h) return;
+      setJonli(h);
+      if (h.keyingiKod) yangiga(h.keyingiKod);
+    };
+    void sora();
+    const id = setInterval(() => {
+      // Chegara tugadi — raqib bu ekranga endi kelmaydi. So'rov
+      // to'xtagach mening belgim ham eskiradi va server qayta
+      // bellashuvni boshlamaydi: ikkala tomon bir xil xulosaga keladi.
+      if (--qolgan <= 0) { clearInterval(id); setJonli(null); return; }
+      void sora();
+    }, SOROV);
+    return () => { bekor = true; clearInterval(id); };
+  }, [yakun.kod, onYangi, yangiga]);
+
+  const menYana = menSoradim || (jonli?.menYana ?? false);
+  const raqibYana = jonli?.raqibYana ?? false;
+  const raqibShuYerda = jonli?.raqibShuYerda ?? false;
+
+  const yanaSora = () => {
+    setMenSoradim(true);
+    duelYana(yakun.kod).then((h) => {
+      if (!h) { setMenSoradim(false); return; }
+      if (h.keyingiKod) yangiga(h.keyingiKod);
+    });
+  };
+
+  // Yangi chaqiruv tugmasi FAQAT raqib ketgan bo'lsa ko'rinadi: u
+  // yerda turganda "yana o'ynaymizmi?" har jihatdan yaxshiroq va ikki
+  // yashil tugma yonma-yon turishi tanlovni og'irlashtirardi.
+  const yangiChaqiruv = onQayta && (!onYangi || (tekshirildi && !raqibShuYerda));
 
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-10 pb-10 text-center sm:max-w-[560px]">
@@ -929,9 +1073,13 @@ function Natija({ yakun, xato, oyinId, onQayta, onMashq, onChiq }: {
       <div className="mt-5 flex items-center justify-center gap-3">
         <Taraf nom={t("duelSiz")} ball={yakun.meniki} kuchli={yutdi} />
         <span className="font-display text-[20px] text-ink-dim">:</span>
-        <Taraf nom={yakun.raqibIsm || t("duelRaqib")} ball={yakun.raqib}
-               kuchli={!yutdi && !durang} />
+        <Taraf nom={raqibNom} ball={yakun.raqib} kuchli={!yutdi && !durang} />
       </div>
+
+      {/* Umumiy hisob shu duel bilan birga yangilangan holda keladi:
+          bugungi mag'lubiyat "3:2" ichida boshqacha ko'rinadi va
+          ertaga qaytish uchun sabab bo'ladi. */}
+      <Hisob hisob={yakun.hisob} />
 
       {/* Xato bo'lsa — uni YASHIRMAYMIZ. "3 ta xato" degan qator
           aybdorlik emas, keyingi qadam: pastdagi mashq tugmasi aynan
@@ -940,7 +1088,35 @@ function Natija({ yakun, xato, oyinId, onQayta, onMashq, onChiq }: {
         <p className="mt-3 text-[13px] text-ink-soft">{t("duelXatolar", { n: xato })}</p>
       )}
 
-      {onQayta && (
+      {/* ---- yana o'ynash: ikkalasi ham shu yerda ---- */}
+      {onYangi && raqibShuYerda && !menYana && (
+        <>
+          {raqibYana && (
+            <p className="mt-6 mb-1 text-[13.5px] font-semibold text-brand-green-d">
+              {t("duelYanaTaklif", { nom: raqibNom })}
+            </p>
+          )}
+          <button type="button" onClick={yanaSora}
+            className={`tugma-3d az-yaltir w-full rounded-3xl bg-brand-green py-3.5
+                        font-display text-[17px] text-white
+                        shadow-[0_5px_0_var(--color-brand-green-d)] ${raqibYana ? "" : "mt-6"}`}>
+            {raqibYana ? t("duelYanaRozi") : t("duelYanaSoray")}
+          </button>
+        </>
+      )}
+
+      {/* Men so'radim — endi raqibning javobini kutamiz. Tugma
+          o'rniga jimgina qator: ikkinchi bosishning ma'nosi yo'q. */}
+      {onYangi && menYana && (
+        <div className="mt-6 rounded-3xl bg-karta py-3.5 font-display text-[15px]
+                        text-ink-soft shadow-clay-sm">
+          {boshlanmoqda ? t("duelYanaBoshlanmoqda")
+            : raqibShuYerda ? t("duelYanaKutilmoqda")
+            : t("duelYanaKetdi")}
+        </div>
+      )}
+
+      {yangiChaqiruv && (
         <button type="button" onClick={onQayta}
           className="tugma-3d az-yaltir mt-6 w-full rounded-3xl bg-brand-green py-3.5
                      font-display text-[17px] text-white
@@ -959,7 +1135,7 @@ function Natija({ yakun, xato, oyinId, onQayta, onMashq, onChiq }: {
 
       <button type="button" onClick={onChiq}
         className={`w-full py-2 text-[13.5px] font-semibold text-ink-dim
-                    ${onQayta ? "mt-3" : "mt-8"}`}>
+                    ${onQayta || onYangi ? "mt-3" : "mt-8"}`}>
         {t("duelOyinlarga")}
       </button>
     </div>
