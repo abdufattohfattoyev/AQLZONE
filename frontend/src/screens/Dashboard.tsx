@@ -80,7 +80,11 @@ export function Dashboard({
     /* Kenglik ekranga qarab o'sadi. Telefonda bitta ustun — kartalar katta va
        bosish oson. Planshetdan boshlab kurslar yonma-yon turadi, aks holda
        katta ekranda ro'yxat ingichka tasma bo'lib cho'zilib ketardi. */
-    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-2.5 pb-10 sm:max-w-[700px] sm:px-6 sm:pt-5 lg:max-w-[1020px]">
+    /* Balandlik ham moslashadi: Telegram Desktop'da Mini App past
+       oynada ochiladi va u yerda qat'iy bo'shliqlar bilan kurslar
+       ekrandan chiqib ketardi. */
+    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-[clamp(6px,1.5vh,14px)]
+                    pb-10 sm:max-w-[700px] sm:px-6 lg:max-w-[1020px]">
       {/* ---- til ----
           Eng tepada, o'ng chetda. Bosh sahifa brendning kirish eshigi va
           til shu yerda tanlanadi: noto'g'ri tilda ochilgan ilovada odam
@@ -207,10 +211,12 @@ export function Dashboard({
           "do'stim meni chaqirganmi?" degan savolga birinchi ekranda
           javob olsin. */}
       <button type="button" onClick={onDuel}
-        className="az-kirish tugma-3d mt-4 flex w-full items-center gap-3.5 rounded-clay
-                   bg-brand-orange p-3.5 text-left text-white shadow-clay sm:mt-6"
+        className="az-kirish tugma-3d mt-[clamp(10px,2vh,18px)] flex w-full items-center gap-3.5
+                   rounded-clay bg-brand-orange p-[clamp(11px,2vh,14px)] text-left text-white
+                   shadow-clay"
         style={kech(50)}>
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20 text-[24px]">
+        <span className="grid size-[clamp(40px,7vh,48px)] shrink-0 place-items-center rounded-2xl
+                         bg-white/20 text-[clamp(20px,3.6vh,24px)]">
           ⚔️
         </span>
         <span className="min-w-0 flex-1">
@@ -285,8 +291,9 @@ function Davom({ c, keyingi, onDavom }: {
         </h2>
         <button type="button" onClick={onDavom}
           className="tugma-3d az-yaltir flex w-full items-center gap-3 rounded-clay bg-brand-green
-                     p-3.5 text-left text-white shadow-clay">
-          <span className="grid size-12 shrink-0 place-items-center rounded-[16px] bg-white/20">
+                     p-[clamp(11px,2vh,14px)] text-left text-white shadow-clay">
+          <span className="grid size-[clamp(40px,7vh,48px)] shrink-0 place-items-center
+                           rounded-[16px] bg-white/20">
             <Icon name={U.lessons[keyingi.li].ic} size={26} />
           </span>
           {/* Ikki qator: HARAKAT tepada, MANZIL pastda.
