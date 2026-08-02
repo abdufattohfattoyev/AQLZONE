@@ -29,7 +29,7 @@
  * Hech biri majburiy emas: har bir chaqiruv himoyalangan va eski
  * Telegram mijozida (yoki oddiy brauzerda) shunchaki hech narsa qilmaydi.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /* ------------------------------------------------ Telegram WebApp turi */
 
@@ -441,4 +441,43 @@ export function tebrat(tur: Tebranish): void {
   } catch {
     /* mijoz qo'llab-quvvatlamadi — jimgina o'tamiz */
   }
+}
+
+
+/**
+ * Telegram obyektini KUTADI va shundan keyin hukm chiqaradi.
+ *
+ * `tgda()` ni to'g'ridan-to'g'ri ishlatib bo'lmaydi: u birinchi
+ * renderda javob beradi, `window.Telegram.WebApp` esa tashqi skriptdan
+ * keladi (`telegram.org/js/telegram-web-app.js`). Skript sekin
+ * yuklansa yoki tarmoq bir zumga uzilsa, o'sha lahzada javob "yo'q"
+ * bo'ladi va ekran Telegram ICHIDA turgan odamga "Telegramda oching"
+ * degan oynani ko'rsatib qo'yadi — u bosadi, bot ochiladi, ilova
+ * qaytadan yuklanadi va halqa takrorlanadi.
+ *
+ * Shuning uchun uch holat: `kutilmoqda` (hali ma'lum emas), `ha`,
+ * `yoq`. Kutish qisqa — oddiy brauzerdagi odam ikki soniyadan ortiq
+ * bo'sh ekranga qaramasligi kerak.
+ */
+export function tgKutish(kut = 2500): "kutilmoqda" | "ha" | "yoq" {
+  const [holat, setHolat] = useState<"kutilmoqda" | "ha" | "yoq">(
+    () => (tgda() ? "ha" : "kutilmoqda"),
+  );
+
+  useEffect(() => {
+    if (holat !== "kutilmoqda") return;
+    const boshlandi = Date.now();
+    const id = setInterval(() => {
+      if (tgda()) {
+        setHolat("ha");
+        clearInterval(id);
+      } else if (Date.now() - boshlandi > kut) {
+        setHolat("yoq");
+        clearInterval(id);
+      }
+    }, 150);
+    return () => clearInterval(id);
+  }, [holat, kut]);
+
+  return holat;
 }

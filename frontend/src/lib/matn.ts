@@ -456,9 +456,12 @@ const S = {
     "Telegram orqali kirish sozlanmagan. Iltimos, keyinroq urinib ko'ring.",
     "Вход через Telegram не настроен. Пожалуйста, попробуйте позже.",
   ],
+  /* Botdagi tugma nomi o'zgardi: "Saytga kirish" olib tashlandi va
+     endi ilova Telegram ICHIDA ochiladi. Matn ham shunga moslashdi —
+     aks holda odam bo'lmagan tugmani qidirardi. */
   botIzoh: [
-    "Botda «Saytga kirish» tugmasi chiqadi — uni bossangiz shu yerga qaytasiz va avtomatik kirasiz.",
-    "В боте появится кнопка «Войти на сайт» — нажмёте её, вернётесь сюда и войдёте автоматически.",
+    "Botdagi «Darslar» tugmasini bossangiz ilova shu yerda ochiladi va avtomatik kirasiz.",
+    "Нажмите в боте кнопку «Уроки» — приложение откроется прямо здесь, вход произойдёт автоматически.",
   ],
   havolaEskirdi: [
     "Havolaning muddati tugagan — u bir soat amal qiladi. Yangisini olish uchun tugmani bosing.",

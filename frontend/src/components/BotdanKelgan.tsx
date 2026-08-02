@@ -16,11 +16,22 @@
  * Endi u eng tashqarida turadi: manzil darhol almashadi, tanishuv
  * ekranlari esa ustidan o'z ishini qilaveradi va tugagach odam to'g'ri
  * duel ekranida bo'ladi.
+ *
+ * ──────────── BIR KOD — BIR MARTA ────────────
+ *
+ * Telegram `start_param` ni SESSIYADA saqlab qo'yadi: ilova o'sha
+ * suhbatda qayta ochilganda u yana o'sha kodni beradi. Belgisiz odam
+ * bir marta chaqiruvni ochib, keyin ilovaga har kirganda o'sha eski
+ * duelga qaytarilaverardi. Shuning uchun ishlatilgan kod
+ * `sessionStorage` ga yoziladi va ikkinchi marta e'tiborsiz qoladi.
  */
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { boshParametri } from "../lib/qobiq";
 import { yolDuelKod } from "../lib/yollar";
+
+/** Ishlatilgan kod shu yerda qoladi — sessiya davomida. */
+const KALIT = "az_duel_kod";
 
 export function BotdanKelgan() {
   const nav = useNavigate();
@@ -31,7 +42,14 @@ export function BotdanKelgan() {
       if (otdi.current) return true;
       const kod = boshParametri();
       if (!kod) return false;
+
       otdi.current = true;
+      try {
+        if (sessionStorage.getItem(KALIT) === kod) return true;   // allaqachon ochilgan
+        sessionStorage.setItem(KALIT, kod);
+      } catch {
+        /* xotira yopiq — u holda oddiygina o'tamiz */
+      }
       nav(yolDuelKod(kod), { replace: true });
       return true;
     };

@@ -36,7 +36,7 @@ import { Konfetti } from "../components/Konfetti";
 import { Kutish } from "../components/Kutish";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { useOrqaga, havolaniOch } from "../lib/qobiq";
+import { useOrqaga, havolaniOch, tgKutish } from "../lib/qobiq";
 import { Kirish } from "../components/Kirish";
 import { useProgress } from "../lib/progress";
 import { OYINLAR, oyinById } from "../lib/oyin";
@@ -44,7 +44,7 @@ import { DUEL_SAVOLLAR, DUEL_VAQTLAR, duelSavollari } from "../lib/oyin/duel";
 import { tangaHisobi } from "../lib/oyin/rekord";
 import {
   DuelXato, duelBall, duelBoshla, duelHolat, duelKorish, duelNatija,
-  duelQabul, duelTayyor, miniAppda,
+  duelQabul, duelTayyor,
 } from "../lib/api";
 import type { DuelHolat, DuelJonli, DuelShart, DuelYakun } from "../lib/api";
 import type { Daraja, Oyin as OyinTur, OyinNatija } from "../lib/oyin/tur";
@@ -65,6 +65,7 @@ type Bosqich =
   | { nima: "yakun"; yakun: DuelYakun };
 
 export function Duel({ onChiq }: { onChiq: () => void }) {
+  const tg = tgKutish();
   // Chaqiruv endi DARHOL yasalmaydi: avval shartlar so'raladi. Ilgari
   // ekran ochilishi bilan server o'yinni o'zi tanlab, duel yasab
   // qo'yardi — ya'ni fikrini o'zgartirgan odamdan keyin bazada bo'sh
@@ -84,7 +85,11 @@ export function Duel({ onChiq }: { onChiq: () => void }) {
   };
 
   // Bellashuv Telegram hisobisiz o'ynalmaydi — pastdagi izohga qarang.
-  if (!miniAppda()) {
+  // Hukm BIRINCHI RENDERDA chiqarilmaydi: Telegram obyekti tashqi
+  // skriptdan keladi va u sekin yuklansa, Telegram ICHIDA turgan odam
+  // "Telegramda oching" oynasini ko'rib qolardi.
+  if (tg === "kutilmoqda") return <Kutish />;
+  if (tg === "yoq") {
     return <Kirish izoh={t("duelTgKerak")} xabar={t("duelTgIzoh")} tugma={t("duelTgTugma")}
       onKeyinroq={onChiq} />;
   }
@@ -253,6 +258,7 @@ type QBosqich =
   | { nima: "yakun"; yakun: DuelYakun };
 
 export function DuelQabul({ kod, onChiq }: { kod: string; onChiq: () => void }) {
+  const tg = tgKutish();
   const [bosqich, setBosqich] = useState<QBosqich>({ nima: "yuklanmoqda" });
 
   useOrqaga(onChiq);
@@ -261,7 +267,7 @@ export function DuelQabul({ kod, onChiq }: { kod: string; onChiq: () => void }) 
     // Telegram tashqarisida so'rov yuborishning ma'nosi yo'q: pastda
     // baribir kirish ekrani chiqadi va anonim hisob bilan olingan
     // javob faqat bekorga chaqiruvni "ko'rilgan" qilib qo'yardi.
-    if (!miniAppda()) return;
+    if (tg !== "ha") return;
     let bekor = false;
     duelKorish(kod).then((d) => {
       if (bekor) return;
@@ -279,7 +285,7 @@ export function DuelQabul({ kod, onChiq }: { kod: string; onChiq: () => void }) 
       setBosqich({ nima: "taklif", duel: d });
     });
     return () => { bekor = true; };
-  }, [kod]);
+  }, [kod, tg]);
 
   const asinxronBoshla = () => {
     setBosqich({ nima: "yuklanmoqda" });
@@ -311,7 +317,8 @@ export function DuelQabul({ kod, onChiq }: { kod: string; onChiq: () => void }) 
    * Tekshiruv hamma hooklardan KEYIN turadi: erta qaytish React
    * qoidasini buzib, keyingi hooklarni o'tkazib yuborardi.
    */
-  if (!miniAppda()) {
+  if (tg === "kutilmoqda") return <Kutish />;
+  if (tg === "yoq") {
     return (
       <Kirish
         izoh={t("duelTgKerak")}
