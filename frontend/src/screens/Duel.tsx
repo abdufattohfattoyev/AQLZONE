@@ -44,9 +44,9 @@ import { DUEL_SAVOLLAR, DUEL_VAQTLAR, duelSavollari } from "../lib/oyin/duel";
 import { tangaHisobi } from "../lib/oyin/rekord";
 import {
   DuelXato, duelBall, duelBoshla, duelHolat, duelKorish, duelNatija,
-  duelQabul, duelTayyor,
+  duelQabul, duelRoyxat, duelTayyor,
 } from "../lib/api";
-import type { DuelHolat, DuelJonli, DuelShart, DuelYakun } from "../lib/api";
+import type { DuelHolat, DuelJonli, DuelShart, DuelYakun, DuelYozuv } from "../lib/api";
 import type { Daraja, Oyin as OyinTur, OyinNatija } from "../lib/oyin/tur";
 import { UNIT_COLORS } from "../lib/types";
 
@@ -62,9 +62,13 @@ type Bosqich =
   | { nima: "lobbi"; duel: DuelHolat }
   | { nima: "oyin"; duel: DuelHolat; jonli: boolean }
   | { nima: "havola"; duel: DuelHolat }
-  | { nima: "yakun"; yakun: DuelYakun };
+  | { nima: "yakun"; yakun: DuelYakun; duel: DuelHolat; xato: number };
 
-export function Duel({ onChiq }: { onChiq: () => void }) {
+export function Duel({ onChiq, onOyin }: {
+  onChiq: () => void;
+  /** Mashq rejimi — natijadagi "shu o'yinni mashq qilish". */
+  onOyin?: (id: string) => void;
+}) {
   const tg = tgKutish();
   // Chaqiruv endi DARHOL yasalmaydi: avval shartlar so'raladi. Ilgari
   // ekran ochilishi bilan server o'yinni o'zi tanlab, duel yasab
@@ -98,7 +102,23 @@ export function Duel({ onChiq }: { onChiq: () => void }) {
   if (bosqich.nima === "yuklanmoqda") return <Kutish />;
   if (bosqich.nima === "xato") return <Xabar belgi="⚠️" sarlavha={bosqich.matn} onChiq={onChiq} />;
   if (bosqich.nima === "havola") return <HavolaEkrani duel={bosqich.duel} onChiq={onChiq} />;
-  if (bosqich.nima === "yakun") return <Natija yakun={bosqich.yakun} onChiq={onChiq} />;
+  if (bosqich.nima === "yakun") {
+    return (
+      <Natija
+        yakun={bosqich.yakun} xato={bosqich.xato} oyinId={bosqich.duel.oyin}
+        // Javob berish — AYNAN shu shartlar bilan yangi chaqiruv.
+        // Shartlarni qaytadan tanlash "yana o'ynayman" degan qarorni
+        // uch bosishga cho'zib yuborardi.
+        onQayta={() => yasa({
+          oyin: bosqich.duel.oyin,
+          savollar: bosqich.duel.savollar,
+          vaqt: bosqich.duel.vaqt,
+        })}
+        onMashq={onOyin}
+        onChiq={onChiq}
+      />
+    );
+  }
 
   if (bosqich.nima === "lobbi") {
     return (
@@ -116,7 +136,9 @@ export function Duel({ onChiq }: { onChiq: () => void }) {
       duel={bosqich.duel} jonli={bosqich.jonli} menChaqirdim
       onChiq={onChiq}
       onHavola={(d) => setBosqich({ nima: "havola", duel: d })}
-      onYakun={(y) => setBosqich({ nima: "yakun", yakun: y })}
+      onYakun={(y, xato) => setBosqich({
+        nima: "yakun", yakun: y, duel: bosqich.duel, xato,
+      })}
     />
   );
 }
@@ -229,6 +251,62 @@ function Shartlar({ onTanladi, onChiq }: {
         className="mt-2.5 w-full py-2 text-[13.5px] font-semibold text-ink-dim">
         {t("duelOyinlarga")}
       </button>
+
+      <Tarix />
+    </div>
+  );
+}
+
+/**
+ * So'nggi bellashuvlar.
+ *
+ * NEGA KERAK. Duel bir martalik o'yin bo'lib qolmasligi kerak: bola
+ * kim bilan o'ynaganini va qanday tugaganini ko'rsa, u "o'yin" emas,
+ * MUNOSABAT bo'lib qoladi. Yana bir foydasi — javobsiz qolgan
+ * chaqiruvlar ham shu yerda ko'rinadi va odam do'stiga eslatib qo'yadi.
+ *
+ * Ro'yxat KUTILMAYDI: u ekranning pastida, sozlamalardan keyin turadi.
+ * Yuklanmasa yoki bo'sh bo'lsa — hech narsa chizilmaydi va yuqoridagi
+ * asosiy ish (chaqiruv yasash) hech qanday kechikish ko'rmaydi.
+ */
+function Tarix() {
+  const [ro, setRo] = useState<DuelYozuv[] | null>(null);
+
+  useEffect(() => {
+    let bekor = false;
+    duelRoyxat().then((d) => { if (!bekor) setRo(d); });
+    return () => { bekor = true; };
+  }, []);
+
+  if (!ro?.length) return null;
+
+  return (
+    <div className="mt-7">
+      <h2 className="mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
+        {t("duelTarix")}
+      </h2>
+      <div className="space-y-1.5">
+        {ro.slice(0, 5).map((d) => (
+          <div key={d.kod}
+            className="flex items-center gap-2.5 rounded-clay bg-karta px-3 py-2.5 shadow-clay-sm">
+            <span className={`grid size-7 shrink-0 place-items-center rounded-full text-[13px]
+              ${d.yutdim === null ? "bg-track text-ink-dim"
+                : d.durang ? "bg-track text-ink-soft"
+                : d.yutdim ? "bg-brand-green/15 text-brand-green-d"
+                : "bg-brand-red/15 text-brand-red"}`}>
+              {d.yutdim === null ? "…" : d.durang ? "=" : d.yutdim ? "🏆" : "·"}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[13px]">
+              {d.raqib || t("duelRaqib")}
+            </span>
+            <span className="shrink-0 text-[12px] text-ink-soft">
+              {d.yutdim === null
+                ? t("duelTarixKutyapti")
+                : `${d.meniki} : ${d.raqibBall}`}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -271,9 +349,15 @@ type QBosqich =
   | { nima: "lobbi"; duel: DuelHolat }
   | { nima: "taklif"; duel: DuelHolat }
   | { nima: "oyin"; duel: DuelHolat; jonli: boolean }
-  | { nima: "yakun"; yakun: DuelYakun };
+  | { nima: "yakun"; yakun: DuelYakun; duel: DuelHolat; xato: number };
 
-export function DuelQabul({ kod, onChiq }: { kod: string; onChiq: () => void }) {
+export function DuelQabul({ kod, onChiq, onDuel, onOyin }: {
+  kod: string;
+  onChiq: () => void;
+  /** "Javob berish" — o'z chaqiruvingizni yasash ekraniga. */
+  onDuel?: () => void;
+  onOyin?: (id: string) => void;
+}) {
   const tg = tgKutish();
   const [bosqich, setBosqich] = useState<QBosqich>({ nima: "yuklanmoqda" });
 
@@ -349,7 +433,19 @@ export function DuelQabul({ kod, onChiq }: { kod: string; onChiq: () => void }) 
 
   if (bosqich.nima === "yuklanmoqda") return <Kutish />;
   if (bosqich.nima === "xato") return <Xabar belgi="🙈" sarlavha={bosqich.matn} onChiq={onChiq} />;
-  if (bosqich.nima === "yakun") return <Natija yakun={bosqich.yakun} onChiq={onChiq} />;
+  if (bosqich.nima === "yakun") {
+    return (
+      <Natija
+        yakun={bosqich.yakun} xato={bosqich.xato} oyinId={bosqich.duel.oyin}
+        // Chaqiruvni OCHGAN odam javob qaytarganda O'ZI chaqiruvchi
+        // bo'ladi — ya'ni oddiy duel ekraniga o'tadi va shartlarni
+        // o'zi tanlaydi. Zanjir shu yerda almashadi.
+        onQayta={onDuel}
+        onMashq={onOyin}
+        onChiq={onChiq}
+      />
+    );
+  }
 
   if (bosqich.nima === "taklif") {
     return <Taklif duel={bosqich.duel} onQabul={asinxronBoshla} onChiq={onChiq} />;
@@ -369,7 +465,9 @@ export function DuelQabul({ kod, onChiq }: { kod: string; onChiq: () => void }) 
     <Bellashuv
       duel={bosqich.duel} jonli={bosqich.jonli} menChaqirdim={false}
       onChiq={onChiq}
-      onYakun={(y) => setBosqich({ nima: "yakun", yakun: y })}
+      onYakun={(y, xato) => setBosqich({
+        nima: "yakun", yakun: y, duel: bosqich.duel, xato,
+      })}
     />
   );
 }
@@ -587,7 +685,7 @@ function Bellashuv({ duel, jonli, menChaqirdim, onChiq, onHavola, onYakun }: {
   menChaqirdim: boolean;
   onChiq: () => void;
   onHavola?: (d: DuelHolat) => void;
-  onYakun: (y: DuelYakun) => void;
+  onYakun: (y: DuelYakun, xato: number) => void;
 }) {
   const { oyinTugadi } = useProgress();
   const [raqibBall, setRaqibBall] = useState(0);
@@ -617,6 +715,8 @@ function Bellashuv({ duel, jonli, menChaqirdim, onChiq, onHavola, onYakun }: {
   }, [jonli, duel.kod]);
 
   /* --- natija kelguncha kutish --- */
+  const xatoRef = useRef(0);
+
   const kut = useCallback((kod: string) => {
     setKutilmoqda(true);
     const id = setInterval(async () => {
@@ -629,13 +729,14 @@ function Bellashuv({ duel, jonli, menChaqirdim, onChiq, onHavola, onYakun }: {
           kod, holat: h.holat, tugadi: true, golib: h.golib,
           meniki: h.meniki, raqib: h.raqibBall, raqibIsm: h.raqibNom,
           menChaqirdim,
-        });
+        }, xatoRef.current);
       }
     }, SOROV);
     return () => clearInterval(id);
   }, [menChaqirdim, onYakun]);
 
   const tugadi = (n: OyinNatija) => {
+    xatoRef.current = n.xato ?? 0;
     oyinTugadi(tangaHisobi(n.ball, false), n.savollar);
     duelNatija<DuelYakun>(duel.kod, n.ball, n.xato ?? 0, n.sanoq ?? [])
       .then((y) => {
@@ -644,7 +745,7 @@ function Bellashuv({ duel, jonli, menChaqirdim, onChiq, onHavola, onYakun }: {
           onHavola?.({ ...duel, ...(y as unknown as DuelHolat) });
           return;
         }
-        if (y.tugadi) { onYakun(y); return; }
+        if (y.tugadi) { onYakun(y, n.xato ?? 0); return; }
         // Jonli duelda raqib hali tugatmagan — kutamiz.
         kut(duel.kod);
       })
@@ -784,7 +885,29 @@ function Taklif({ duel, onQabul, onChiq }: {
   );
 }
 
-function Natija({ yakun, onChiq }: { yakun: DuelYakun; onChiq: () => void }) {
+/**
+ * Duel natijasi.
+ *
+ * Uchta tugma va uchalasi ham ATAYLAB shu tartibda:
+ *
+ *   "Javob berish"  — duelni ZANJIRGA aylantiradi. Bitta zarbadan
+ *                     keyin tugaydigan bellashuv qaytish sababi
+ *                     yaratmaydi; javob qaytarish esa ikki bolani bir
+ *                     kunda o'n marta ilovaga qaytaradi.
+ *   "Mashq qilish"  — xato qilgan bolani O'SHA o'yinga olib boradi.
+ *                     O'yin oxiri — o'rganishga eng ochiq lahza.
+ *   "O'yinlarga"    — chiqish.
+ */
+function Natija({ yakun, xato, oyinId, onQayta, onMashq, onChiq }: {
+  yakun: DuelYakun;
+  /** Shu duelda nechta xato qilingan. */
+  xato?: number;
+  /** Qaysi o'yin edi — mashqqa o'sha ochiladi. */
+  oyinId?: string;
+  onQayta?: () => void;
+  onMashq?: (id: string) => void;
+  onChiq: () => void;
+}) {
   const meniki = yakun.menChaqirdim ? "chaqirgan" : "qabul";
   const yutdi = yakun.golib === meniki;
   const durang = yakun.golib === "durang";
@@ -810,9 +933,33 @@ function Natija({ yakun, onChiq }: { yakun: DuelYakun; onChiq: () => void }) {
                kuchli={!yutdi && !durang} />
       </div>
 
+      {/* Xato bo'lsa — uni YASHIRMAYMIZ. "3 ta xato" degan qator
+          aybdorlik emas, keyingi qadam: pastdagi mashq tugmasi aynan
+          shu sonni ko'rgan odam uchun ma'noga ega bo'ladi. */}
+      {typeof xato === "number" && xato > 0 && (
+        <p className="mt-3 text-[13px] text-ink-soft">{t("duelXatolar", { n: xato })}</p>
+      )}
+
+      {onQayta && (
+        <button type="button" onClick={onQayta}
+          className="tugma-3d az-yaltir mt-6 w-full rounded-3xl bg-brand-green py-3.5
+                     font-display text-[17px] text-white
+                     shadow-[0_5px_0_var(--color-brand-green-d)]">
+          {t("duelJavobBerish")}
+        </button>
+      )}
+
+      {onMashq && oyinId && (
+        <button type="button" onClick={() => onMashq(oyinId)}
+          className="clay-press mt-2.5 w-full rounded-3xl bg-karta py-3 font-display
+                     text-[15px] text-ink-soft shadow-clay-sm">
+          {t("duelMashqQil")}
+        </button>
+      )}
+
       <button type="button" onClick={onChiq}
-        className="tugma-3d mt-8 w-full rounded-3xl bg-brand-green py-3.5 font-display
-                   text-[17px] text-white shadow-[0_5px_0_var(--color-brand-green-d)]">
+        className={`w-full py-2 text-[13.5px] font-semibold text-ink-dim
+                    ${onQayta ? "mt-3" : "mt-8"}`}>
         {t("duelOyinlarga")}
       </button>
     </div>

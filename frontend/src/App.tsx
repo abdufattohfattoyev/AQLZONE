@@ -376,7 +376,7 @@ function MaydonSahifasi() {
 function DuelSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
-  return <Duel onChiq={() => nav(yolOyinlar())} />;
+  return <Duel onChiq={() => nav(yolOyinlar())} onOyin={(id) => nav(yolOyin(id))} />;
 }
 
 /**
@@ -389,7 +389,14 @@ function DuelQabulSahifasi() {
   const nav = useNavigate();
   const { kod } = useParams();
   useTema("bosh");
-  return <DuelQabul kod={kod ?? ""} onChiq={() => nav(yolOyinlar())} />;
+  return (
+    <DuelQabul
+      kod={kod ?? ""}
+      onChiq={() => nav(yolOyinlar())}
+      onDuel={() => nav(yolDuel())}
+      onOyin={(id) => nav(yolOyin(id))}
+    />
+  );
 }
 
 function OyinDarajaSahifasi() {

@@ -630,6 +630,13 @@ const S = {
   duelRaqibTugatmoqda: ["Raqib hali o'ynayapti…", "Соперник ещё играет…"],
   duelRaqibBali: ["Uning bali: {n}", "Его результат: {n}"],
   duelRaqib: ["Raqib", "Соперник"],
+  duelJavobBerish: ["⚔️ Javob berish", "⚔️ Ответить"],
+  duelMashqQil: ["Shu o'yinni mashq qilish", "Потренироваться в этой игре"],
+  duelXatolar: ["Bu duelda {n} ta xato qildingiz", "В этой дуэли {n} ошибок"],
+  duelTarixBosh: ["Hali bellashuv bo'lmagan", "Дуэлей пока не было"],
+  duelTarixYutdi: ["yutdingiz", "победа"],
+  duelTarixYutqazdi: ["yutqazdingiz", "поражение"],
+  duelTarixKutyapti: ["javob kutilmoqda", "ждёт ответа"],
 
   /* ---------------- bugungi maydon ---------------- */
   maydon: ["Bugungi maydon", "Сегодняшняя арена"],

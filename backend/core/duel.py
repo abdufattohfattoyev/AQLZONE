@@ -259,7 +259,13 @@ def natija_xabari(duel: Duel) -> None:
             ch_matn = f"😔 <b>{qa_ism} sizni yutdi</b>\n\nHisob: {hisob_ch}"
             qa_matn = f"🏆 <b>Siz yutdingiz!</b>\n\n{ch_ism} — {hisob_qa}"
 
-        ilova = X.ilova_havolasi()
+        # "Javob berish" duel ekraniga olib boradi, bosh sahifaga emas:
+        # zanjir uzilmasligi kerak, odam esa chaqiruvni yana qidirib
+        # o'tirmasin.
+        ilova = (
+            f"{settings.MINI_APP_URL.rstrip('/')}/oyinlar/duel"
+            if getattr(settings, "MINI_APP_URL", "") else X.ilova_havolasi()
+        )
         ilovada = bool(getattr(settings, "MINI_APP_URL", ""))
     except Exception:                                # noqa: BLE001
         return
