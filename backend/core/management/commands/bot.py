@@ -226,18 +226,26 @@ def asosiy_klaviatura(til: str) -> dict | None:
         return None
     return {
         "keyboard": [
-            # Birinchi qator — ENG KENG va eng ko'p bosiladigani.
-            [tugma_yasa(M("tIlova", til), YASHIL, web_app={"url": ilova_url()})],
-            # Ikkinchi qator — ikki kishilik va kunlik: ular bugun
-            # ochilishi kerak bo'lgan narsalar.
+            # ─────────── NEGA `web_app` EMAS, ODDIY MATN ───────────
+            #
+            # Telegram hujjatiga ko'ra REPLY-KLAVIATURA tugmasidan
+            # ochilgan Mini App `initData` OLMAYDI — u bo'sh keladi.
+            # Ya'ni ilova odamni tanimaydi: hisob anonim bo'lib qoladi,
+            # duel esa umuman ishlamaydi (raqib kimligi Telegram
+            # hisobidan aniqlanadi).
+            #
+            # Shuning uchun bu tugmalar oddiy MATN yuboradi, bot esa
+            # javobida INLINE tugma qaytaradi — inline tugmadan
+            # ochilgan Mini App to'liq `initData` oladi. Bitta
+            # qo'shimcha bosish, evaziga ishlaydigan hisob.
+            [tugma_yasa(M("tIlova", til), YASHIL)],
             [
-                tugma_yasa(M("tDuel", til), KOK, web_app={"url": ilova_url(DUEL_YOLI)}),
-                tugma_yasa(M("tMaydon", til), KOK, web_app={"url": ilova_url(MAYDON_YOLI)}),
+                tugma_yasa(M("tDuel", til), KOK),
+                tugma_yasa(M("tMaydon", til), KOK),
             ],
-            # Uchinchi qator — kamroq kerak bo'ladiganlari.
             [
-                tugma_yasa(M("tOyinlar", til), KOK, web_app={"url": ilova_url(OYIN_YOLI)}),
-                tugma_yasa(M("tReyting", til), KOK, web_app={"url": ilova_url(REYTING_YOLI)}),
+                tugma_yasa(M("tOyinlar", til), KOK),
+                tugma_yasa(M("tReyting", til), KOK),
             ],
             # To'rtinchi qator — ilovani OCHMAYDIGAN yagona tugma.
             #
@@ -613,6 +621,18 @@ def yangilikni_qayta_ishla(u: dict) -> str:
 
     # --- matn keldi ---
     matn = (xabar.get("text") or "").strip()
+    # Chaqiruv havolasi: `/start duel_<kod>`.
+    #
+    # Javob INLINE tugma bilan ketadi va bu ataylab: reply-klaviatura
+    # tugmasidan ochilgan Mini App `initData` OLMAYDI (Telegram
+    # hujjati), ya'ni ilova odamni tanimaydi va duel o'ynab bo'lmaydi.
+    # Inline tugma esa to'liq `initData` beradi.
+    if matn.startswith("/start duel_"):
+        kod = matn.split("duel_", 1)[1].strip()[:16]
+        if kod.replace("-", "").replace("_", "").isalnum():
+            bolimni_yubor(chat_id, til, f"/duel/{kod}", "duelChaqiruvBot")
+            return f"{tg_id}: chaqiruv havolasi ({kod})"
+
     if matn.startswith("/start"):
         # Odam o'zi yozdi — demak xabarlarga qarshi emas. "Boshqa
         # yozmang" belgisi olib tashlanadi, aks holda u eslatmalardan
@@ -642,9 +662,25 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         raqam_sora(chat_id, M("raqamNegaKerak", til), til)
         return f"{tg_id}: raqam so'raldi (ilovaga kirish uchun)"
 
+    if matn in barcha("tIlova"):
+        bolimni_yubor(chat_id, til, "", "darslarHaqida")
+        return f"{tg_id}: darslar"
+
     if matn.startswith("/oyinlar") or matn in barcha("tOyinlar"):
         oyinlarni_yubor(chat_id, til)
         return f"{tg_id}: o'yinlar"
+
+    if matn in barcha("tDuel"):
+        bolimni_yubor(chat_id, til, DUEL_YOLI, "duelHaqida")
+        return f"{tg_id}: duel tugmasi"
+
+    if matn in barcha("tMaydon"):
+        bolimni_yubor(chat_id, til, MAYDON_YOLI, "maydonHaqida")
+        return f"{tg_id}: maydon tugmasi"
+
+    if matn in barcha("tReyting"):
+        bolimni_yubor(chat_id, til, REYTING_YOLI, "reytingHaqida")
+        return f"{tg_id}: reyting tugmasi"
 
     if matn.startswith("/duel"):
         bolimni_yubor(chat_id, til, DUEL_YOLI, "duelHaqida")

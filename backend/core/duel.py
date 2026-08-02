@@ -170,7 +170,19 @@ def havola(kod: str) -> str:
     """
     bot = (getattr(settings, "BOT_USERNAME", "") or "").lstrip("@")
     if bot:
-        return f"https://t.me/{bot}?startapp={kod}"
+        # `?start=` — `?startapp=` EMAS.
+        #
+        # `startapp` Mini App'ni to'g'ridan-to'g'ri ochadi, lekin buning
+        # uchun BotFather'da "Main Mini App" sozlangan bo'lishi SHART.
+        # Sozlanmagan bo'lsa Telegram havolani oddiy bot havolasi deb
+        # qabul qiladi: suhbat ochiladi va `/start` ketadi — odam esa
+        # duel o'rniga salom xabarini ko'radi.
+        #
+        # `?start=duel_<kod>` esa hamma joyda ishlaydi: bot buyruqni
+        # oladi va javobida INLINE tugma yuboradi. Inline tugmadan
+        # ochilgan Mini App esa to'liq `initData` oladi — bu duel uchun
+        # shart, chunki raqib kimligi Telegram hisobidan aniqlanadi.
+        return f"https://t.me/{bot}?start=duel_{kod}"
 
     asos = (
         getattr(settings, "MINI_APP_URL", "")

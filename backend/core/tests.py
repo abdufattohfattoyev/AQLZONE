@@ -785,9 +785,21 @@ class BotTest(TestCase):
         self.assertIn("🎮 O'yinlar", matnlar)
         self.assertIn("🎓 Darslar", matnlar)
 
-        # Ikkita tugma ILOVANI ochadi, xabar yubormaydi.
+        # Tugmalar MATN yuboradi. `web_app` ATAYLAB yo'q: reply
+        # klaviaturadan ochilgan Mini App `initData` olmaydi va ilova
+        # odamni tanimay qolardi.
         oyin = next(t for qator in k for t in qator if "O'yinlar" in t["text"])
-        self.assertEqual(oyin["web_app"]["url"], "https://aql-zone.uz/oyinlar")
+        self.assertNotIn("web_app", oyin)
+
+        # Bosilganda bot inline tugma bilan javob beradi.
+        self.yuborilgan.clear()
+        self.bot.yangilikni_qayta_ishla(self.xabar("🎮 O'yinlar"))
+        ichki = [
+            t for x in self.yuborilgan
+            for q in (x.get("reply_markup") or {}).get("inline_keyboard", [])
+            for t in q
+        ]
+        self.assertEqual(ichki[0]["web_app"]["url"], "https://aql-zone.uz/oyinlar")
 
     @override_settings(MINI_APP_URL="", SAYT_URL="https://aql-zone.uz")
     def test_ilovasiz_klaviatura_chizilmaydi(self):
@@ -2111,7 +2123,6 @@ class TugmaRangiTest(TestCase):
         self.assertEqual(len(xabarlar), 1)
         k = xabarlar[0][1]["reply_markup"]["keyboard"]
         self.assertEqual(k[0][0]["style"], "success")
-        self.assertIn("web_app", k[0][0])
 
     @patch("core.management.commands.bot.api")
     def test_raqam_tugmasi_yashil(self, api):
@@ -2591,17 +2602,49 @@ class BotKlaviaturaTest(TestCase):
     def tugmalar(self, til: str = "uz"):
         return [t for qator in self.klaviatura(til)["keyboard"] for t in qator]
 
-    def test_barcha_bolimlar_ilova_ichida_ochiladi(self):
-        manzillar = {
-            t["web_app"]["url"] for t in self.tugmalar() if "web_app" in t
+    def test_klaviatura_tugmalari_matn_yuboradi(self):
+        """
+        Reply-klaviatura tugmasidan ochilgan Mini App `initData` OLMAYDI
+        (Telegram hujjati) — ya'ni ilova odamni tanimaydi va duel
+        umuman ishlamaydi. Shuning uchun bu tugmalar matn yuboradi, bot
+        esa javobida inline tugma qaytaradi.
+        """
+        self.assertFalse(
+            [t for t in self.tugmalar() if "web_app" in t],
+            "klaviaturada web_app tugmasi qolib ketdi",
+        )
+
+    @patch("core.management.commands.bot.api")
+    def test_har_bir_tugma_oz_ekranini_ochadi(self, api):
+        """Matn yuborilganda bot INLINE tugma bilan javob beradi."""
+        from core.management.commands import bot as B
+
+        kutilgan = {
+            "tIlova": "https://aql-zone.uz",
+            "tOyinlar": "https://aql-zone.uz/oyinlar",
+            "tDuel": "https://aql-zone.uz/oyinlar/duel",
+            "tMaydon": "https://aql-zone.uz/oyinlar/maydon",
+            "tReyting": "https://aql-zone.uz/reyting",
         }
-        self.assertEqual(manzillar, {
-            "https://aql-zone.uz",
-            "https://aql-zone.uz/oyinlar",
-            "https://aql-zone.uz/oyinlar/duel",
-            "https://aql-zone.uz/oyinlar/maydon",
-            "https://aql-zone.uz/reyting",
-        })
+        pupil = Pupil.objects.create(first_name="Ali", last_name="Valiyev")
+        Identity.objects.create(pupil=pupil, provider=Identity.TELEGRAM, external_id="777")
+        Identity.objects.create(pupil=pupil, provider=Identity.TELEFON,
+                                external_id="+998900000777")
+
+        for kalit, manzil in kutilgan.items():
+            api.reset_mock()
+            with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+                B.yangilikni_qayta_ishla({"message": {
+                    "chat": {"id": 1}, "from": {"id": 777, "language_code": "uz"},
+                    "text": M(kalit, "uz"),
+                }})
+            tugmalar = [
+                t for c in api.call_args_list
+                for q in (c[1].get("reply_markup") or {}).get("inline_keyboard", [])
+                for t in q
+            ]
+            self.assertTrue(tugmalar, kalit)
+            self.assertEqual(tugmalar[0]["web_app"]["url"], manzil, kalit)
 
     def test_raqam_tugmasi_klaviaturada_yoq(self):
         """
@@ -2715,8 +2758,11 @@ class RaqamMajburiyTest(TestCase):
                            MINI_APP_URL="https://aql-zone.uz"):
             self.B.salom_yubor(1, "222", "Ali", "Valiyev", "uz")
         # `/start` BITTA xabar yuboradi — doimiy klaviatura bilan.
+        # Tugmalar MATNLI: reply-klaviaturadan ochilgan Mini App
+        # `initData` olmaydi, shuning uchun ular botga matn yuboradi.
         k = api.call_args[1]["reply_markup"]["keyboard"]
-        self.assertIn("web_app", k[0][0])
+        self.assertNotIn("web_app", k[0][0])
+        self.assertTrue(k[0][0]["text"])
 
     def test_raqami_yoq_darvozasi(self):
         self.hisob("333")
@@ -2842,3 +2888,43 @@ class DuelShartlarTest(TestCase):
         d = self.boshla(oyin="tezkor", savollar=30, vaqt=90)
         r = self.client.get(f"/api/v1/duel/{d['kod']}", **b).json()
         self.assertEqual((r["oyin"], r["savollar"], r["vaqt"]), ("tezkor", 30, 90))
+
+
+class DuelChaqiruvHavolasiTest(TestCase):
+    """
+    Chaqiruv havolasi BOTGA olib boradi, `startapp` bilan emas.
+
+    `?startapp=` Mini App'ni to'g'ridan-to'g'ri ochadi, lekin buning
+    uchun BotFather'da "Main Mini App" sozlangan bo'lishi shart.
+    Sozlanmagan bo'lsa Telegram uni oddiy bot havolasi deb qabul
+    qiladi: suhbat ochiladi va odam duel o'rniga salom xabarini
+    ko'radi — aynan shu nosozlik kuzatilgan edi.
+    """
+
+    def test_havola_start_bilan_ketadi(self):
+        with self.settings(BOT_USERNAME="aqlzone_bot"):
+            self.assertEqual(D.havola("ABC123"), "https://t.me/aqlzone_bot?start=duel_ABC123")
+
+    @patch("core.management.commands.bot.api")
+    def test_bot_chaqiruvni_inline_tugma_bilan_ochadi(self, api):
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+            B.yangilikni_qayta_ishla({"message": {
+                "chat": {"id": 1}, "from": {"id": 888, "language_code": "uz"},
+                "text": "/start duel_ABC123",
+            }})
+        tugma = api.call_args[1]["reply_markup"]["inline_keyboard"][0][0]
+        # INLINE tugma — faqat u to'liq `initData` beradi.
+        self.assertEqual(tugma["web_app"]["url"], "https://aql-zone.uz/duel/ABC123")
+
+    @patch("core.management.commands.bot.api")
+    def test_buzuq_kod_oddiy_startga_tushadi(self, api):
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL="https://aql-zone.uz", SAYT_URL="https://aql-zone.uz"):
+            natija = B.yangilikni_qayta_ishla({"message": {
+                "chat": {"id": 1}, "from": {"id": 889, "language_code": "uz"},
+                "text": "/start duel_<script>",
+            }})
+        self.assertIn("/start", natija)

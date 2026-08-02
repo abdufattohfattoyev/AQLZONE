@@ -132,6 +132,30 @@ XABAR: dict[str, dict[str, str]] = {
     "buyruqDuel": {"uz": "Do'st bilan bellashuv", "ru": "Дуэль с другом"},
     "buyruqMaydon": {"uz": "Bugungi maydon — 3 bosqich", "ru": "Арена дня — 3 этапа"},
     "buyruqReyting": {"uz": "Reyting jadvali", "ru": "Таблица рейтинга"},
+    "duelChaqiruvBot": {
+        "uz": (
+            "⚔️ <b>Sizni bellashuvga chaqirishdi!</b>\n\n"
+            "Do‘stingiz bilan bir xil savollarni yechasiz. "
+            "Ochish uchun pastdagi tugmani bosing."
+        ),
+        "ru": (
+            "⚔️ <b>Вас вызвали на дуэль!</b>\n\n"
+            "Вы решите те же задания, что и друг. "
+            "Нажмите кнопку ниже."
+        ),
+    },
+    "darslarHaqida": {
+        "uz": (
+            "🎓 <b>Darslar</b>\n\n"
+            "Yo‘l xaritasi, yulduzlar va har safar yangi savollar. "
+            "Ochish uchun tugmani bosing."
+        ),
+        "ru": (
+            "🎓 <b>Уроки</b>\n\n"
+            "Карта пути, звёзды и каждый раз новые задания. "
+            "Нажмите кнопку."
+        ),
+    },
     "duelHaqida": {
         "uz": "⚔️ <b>Do'st bilan bellashuv</b>\n\nIkkalangiz ham AYNAN bir xil "
               "savollarni yechasiz — 60 soniya. Do'stingiz hozir ilovada bo'lsa, "
