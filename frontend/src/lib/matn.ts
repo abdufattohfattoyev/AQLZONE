@@ -198,7 +198,9 @@ const S = {
      Eng ko'p so'raladigan savol. Ilgari javob hech qayerda yozilmagan
      edi: yulduz darsdan, tanga o'yindan kelardi va farqni faqat uzoq
      o'ynagan odam sezardi. */
-  menyuBall: ["Ball qanday yig'iladi", "Как начисляются баллы"],
+  /* Endi u karta sarlavhasi va bosilib ochiladi — savol bo'lib
+     yozilgani shuning uchun: bosiladigan narsa ekani ko'rinib tursin. */
+  menyuBall: ["Ball qanday yig'iladi?", "Как начисляются баллы?"],
   menyuBallYulduz: ["Yulduz", "Звёзды"],
   menyuBallYulduzIzoh: [
     "Faqat darsda beriladi: xatosiz dars — 3 yulduz. Reyting shunga qarab tuziladi.",
@@ -824,7 +826,11 @@ const S = {
     "Amal belgisi o'rnida savol turadi. Qaysi belgi to'g'ri kelishini top.",
     "Вместо знака стоит вопрос. Найди, какой знак подходит.",
   ],
-  oyinKetma: ["Ketma-ketlik", "Последовательность"],
+  /* Ruscha nom ichida YUMSHOQ TIRE (`­`) turibdi.
+     U ko'rinmaydi va faqat so'z satrga sig'magan joyda tire bo'lib
+     chiqadi. Busiz "Последовательность" menyudagi kichkina chipda
+     "Последовательн / ость" bo'lib, o'rtasidan bo'linib ketardi. */
+  oyinKetma: ["Ketma-ketlik", "Последова­тельность"],
   oyinKetmaIzoh: ["Qonuniyatni top", "Найди закономерность"],
   oyinKetmaQoida: [
     "Sonlar qatori berilgan. Keyingisi qaysi son bo'lishini top.",

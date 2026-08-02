@@ -171,112 +171,118 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
           {/* ======================= ta'lim ======================= */}
           <Bolim>{t("menyuTalim")}</Bolim>
 
-          <Satr ic="map" rang="green" nom={kursMatn(kurs.title)}
-            izoh={t("menyuDarslarIzoh")} on={yur(yolKurs(kurs))} />
-          <Satr ic="home" rang="blue" nom={t("tabBosh")}
-            izoh={t("menyuKurslarIzoh")} on={yur(yolKurslar())} />
-          {/* Kunlik sinov BUGUN bajarilgan bo'lsa satr ham shuni
-              aytadi va bosilmaydi: "6 ta savol" deb turgan, lekin
-              bosilganda kurs sahifasiga qaytarib yuboradigan satr
-              buzuq tuyulardi (`App.tsx` da o'sha qaytarish bor). */}
-          <Satr ic="flame" rang="orange" nom={t("sinovSarlavha")}
-            izoh={sinovBor ? t("menyuSinovIzoh") : t("sinovBajarildi")}
-            on={sinovBor ? yur(yolSinov(kurs)) : undefined}
-            nuqta={sinovBor} />
-          {/* Xatolar daftari bo'sh bo'lsa ham ko'rinadi: odam
-              "bunday narsa bor ekan" deb bilib qo'yishi kerak.
-              Bosilmaydi, chunki bo'sh daftar darrov qaytarib yuboradi. */}
-          <Satr ic="repeat" rang="purple" nom={t("xatolarDaftari")}
-            izoh={daftarSoni > 0
-              ? t("daftarKutyapti", { n: daftarSoni })
-              : t("menyuDaftarIzoh")}
-            on={daftarSoni > 0 ? yur(yolDaftar(kurs)) : undefined} />
+          <Karta>
+            <Satr ic="map" rang="green" nom={kursMatn(kurs.title)}
+              izoh={t("menyuDarslarIzoh")} on={yur(yolKurs(kurs))} />
+            <Satr ic="home" rang="blue" nom={t("tabBosh")}
+              izoh={t("menyuKurslarIzoh")} on={yur(yolKurslar())} />
+            {/* Kunlik sinov BUGUN bajarilgan bo'lsa satr ham shuni
+                aytadi va bosilmaydi: "6 ta savol" deb turgan, lekin
+                bosilganda kurs sahifasiga qaytarib yuboradigan satr
+                buzuq tuyulardi (`App.tsx` da o'sha qaytarish bor). */}
+            <Satr ic="flame" rang="orange" nom={t("sinovSarlavha")}
+              izoh={sinovBor ? t("menyuSinovIzoh") : t("sinovBajarildi")}
+              on={sinovBor ? yur(yolSinov(kurs)) : undefined}
+              nuqta={sinovBor} />
+            {/* Xatolar daftari bo'sh bo'lsa ham ko'rinadi: odam
+                "bunday narsa bor ekan" deb bilib qo'yishi kerak.
+                Bosilmaydi, chunki bo'sh daftar darrov qaytarib yuboradi. */}
+            <Satr ic="repeat" rang="purple" nom={t("xatolarDaftari")}
+              izoh={daftarSoni > 0
+                ? t("daftarKutyapti", { n: daftarSoni })
+                : t("menyuDaftarIzoh")}
+              on={daftarSoni > 0 ? yur(yolDaftar(kurs)) : undefined} />
+          </Karta>
 
           {/* ==================== o'yin va duel ==================== */}
           <Bolim>{t("menyuOyinBolim")}</Bolim>
 
-          <Satr ic="clock" rang="green" nom={t("maydon")}
-            izoh={t("menyuMaydonIzoh")} on={yur(yolMaydon())} />
-          <Satr ic="flame" rang="orange" nom={t("duel")}
-            izoh={t("menyuDuelIzoh")} on={yur(yolDuel())} />
-          <Satr ic="puzzle" rang="purple" nom={t("oyinlarBolim")}
-            izoh={t("menyuOyinlarIzoh")} on={yur(yolOyinlar())} />
+          <Karta>
+            <Satr ic="clock" rang="green" nom={t("maydon")}
+              izoh={t("menyuMaydonIzoh")} on={yur(yolMaydon())} />
+            <Satr ic="flame" rang="orange" nom={t("duel")}
+              izoh={t("menyuDuelIzoh")} on={yur(yolDuel())} />
+            <Satr ic="puzzle" rang="purple" nom={t("oyinlarBolim")}
+              izoh={t("menyuOyinlarIzoh")} on={yur(yolOyinlar())} />
 
-          {/* Sakkizta o'yin TO'LIQ sanaladi.
-              "O'yinlar" satrining o'zi yetarli emas edi: odam u yerda
-              nima borligini bilmasa, umuman bosmaydi. Bu yerda esa
-              nomlar ko'rinib turadi va har biri to'g'ridan-to'g'ri
-              ochiladi — chipning o'zi bitta o'yin.
+            {/* Sakkizta o'yin SHU KARTANING ichida, chiziq ostida.
+                Ular alohida bo'lim emas — "Matematik o'yinlar" satrining
+                ichida nima borligini ochib beradi.
 
-              Chip KICHIK va ikki ustunda: ular ro'yxatning davomi
-              emas, uning ichki tafsiloti. Katta satr bo'lganda
-              sakkiztasi menyuni yolg'iz o'zi to'ldirib yuborardi. */}
-          <div className="mt-1.5 ml-2">
-            <p className="mb-1 text-[10px] tracking-wider text-ink-soft/80 uppercase">
-              {t("menyuBarchaOyin")}
-            </p>
-            <div className="grid grid-cols-2 gap-1">
-              {OYINLAR.map((o) => (
-                <button key={o.id} type="button" onClick={yur(yolOyin(o.id))} title={t(o.nom)}
-                  style={{ backgroundColor: `${UNIT_COLORS[o.rang].road}14` }}
-                  className="clay-press flex items-center gap-1.5 rounded-xl px-2 py-1 text-left">
-                  <span aria-hidden className="shrink-0 text-[15px] leading-none">{o.emoji}</span>
-                  {/* Nom KESILMAYDI, ikki qatorga o'raladi. Ruschada
-                      ("Последовательность") u chipdan uch barobar uzun
-                      va `truncate` bo'lganda "Послед…" bo'lib qolardi —
-                      ya'ni o'yin nomi umuman o'qilmasdi.
+                Chip KICHIK va ikki ustunda: ular ro'yxatning davomi
+                emas, uning ichki tafsiloti. Katta satr bo'lganda
+                sakkiztasi menyuni yolg'iz o'zi to'ldirib yuborardi. */}
+            <div className="px-3 py-2">
+              <p className="mb-1 ml-0.5 text-[10px] tracking-wider text-ink-soft/80 uppercase">
+                {t("menyuBarchaOyin")}
+              </p>
+              <div className="grid grid-cols-2 gap-1">
+                {OYINLAR.map((o) => (
+                  <button key={o.id} type="button" onClick={yur(yolOyin(o.id))} title={t(o.nom)}
+                    style={{ backgroundColor: `${UNIT_COLORS[o.rang].road}14` }}
+                    className="clay-press flex items-center gap-1.5 rounded-xl px-2 py-1 text-left">
+                    <span aria-hidden className="shrink-0 text-[15px] leading-none">{o.emoji}</span>
+                    {/* Nom KESILMAYDI, ikki qatorga o'raladi. Ruschada
+                        ("Последовательность") u chipdan uch barobar uzun
+                        va `truncate` bo'lganda "Послед…" bo'lib qolardi —
+                        ya'ni o'yin nomi umuman o'qilmasdi.
 
-                      `break-words` SHART: o'sha so'z bo'linmasa, u
-                      bitta uzun bo'lak bo'lib chipdan chiqib ketardi
-                      va qo'shni ustunning ustiga chiqardi. */}
-                  <span className="min-w-0 line-clamp-2 hyphens-auto break-words text-[11px]
-                                   leading-tight text-ink">
-                    {t(o.nom)}
-                  </span>
-                </button>
-              ))}
+                        `break-words` SHART: o'sha so'z bo'linmasa, u
+                        bitta uzun bo'lak bo'lib chipdan chiqib ketardi
+                        va qo'shni ustunning ustiga chiqardi. */}
+                    <span className="min-w-0 line-clamp-2 hyphens-auto break-words text-[11px]
+                                     leading-tight text-ink">
+                      {t(o.nom)}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          </Karta>
 
           {/* ======================= yutuqlar ======================= */}
           <Bolim>{t("menyuYutuq")}</Bolim>
 
-          <Satr ic="trophy" rang="gold" nom={t("nishonlar")}
-            izoh={t("menyuNishonIzoh")} on={yur(yolNishon(kurs))} nuqta={yangiNishon} />
-          <Satr ic="palette" rang="blue" nom={t("tabDokon")}
-            izoh={t("menyuDokonIzoh")} on={yur(yolDokon(kurs))} />
-          <Satr ic="order" rang="gold" nom={t("reyting")}
-            izoh={t("menyuReytingIzoh")} on={yur(yolReyting())} />
+          <Karta>
+            <Satr ic="trophy" rang="gold" nom={t("nishonlar")}
+              izoh={t("menyuNishonIzoh")} on={yur(yolNishon(kurs))} nuqta={yangiNishon} />
+            <Satr ic="palette" rang="blue" nom={t("tabDokon")}
+              izoh={t("menyuDokonIzoh")} on={yur(yolDokon(kurs))} />
+            <Satr ic="order" rang="gold" nom={t("reyting")}
+              izoh={t("menyuReytingIzoh")} on={yur(yolReyting())} />
+          </Karta>
 
           {/* ======================== hisob ======================== */}
           <Bolim>{t("menyuHisobBolim")}</Bolim>
 
-          <Satr ic="parent" rang="green" nom={t("otaOnaPaneli")}
-            izoh={t("menyuOtaOnaIzoh")} on={yur(yolOtaOna(kurs))} />
-          <Satr ic="pencil" rang="blue" nom={t("hisobSozlamalari")}
-            izoh={t("menyuSozlamaIzoh")} on={yur(yolSozlama())} />
-          {/* Profil almashtirish faqat IKKI va undan ko'p bola bo'lganda
-              ma'noli — bosh sahifadagi tugma bilan bir xil qoida. */}
-          {kopBola && (
-            <Satr ic="parent" rang="purple" nom={t("kimOynayapti")}
-              izoh={t("menyuProfilIzoh")} on={yur("/profillar")} />
-          )}
+          <Karta>
+            <Satr ic="parent" rang="green" nom={t("otaOnaPaneli")}
+              izoh={t("menyuOtaOnaIzoh")} on={yur(yolOtaOna(kurs))} />
+            <Satr ic="pencil" rang="blue" nom={t("hisobSozlamalari")}
+              izoh={t("menyuSozlamaIzoh")} on={yur(yolSozlama())} />
+            {/* Profil almashtirish faqat IKKI va undan ko'p bola bo'lganda
+                ma'noli — bosh sahifadagi tugma bilan bir xil qoida. */}
+            {kopBola && (
+              <Satr ic="parent" rang="purple" nom={t("kimOynayapti")}
+                izoh={t("menyuProfilIzoh")} on={yur("/profillar")} />
+            )}
 
           {/* Til — yagona satr, u O'ZI ish bajaradi.
               Boshqa ekranga olib bormaydi, shuning uchun tugma ham
               emas: o'ng tomonda UZ|RA almashtirgichning o'zi turadi. */}
-          <div className="mt-1 flex items-center gap-2.5 rounded-clay px-2 py-1.5">
-            <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-track text-ink-soft">
-              <Icon name="ovoz" size={17} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block font-display text-[13px] leading-tight">{t("tilSarlavha")}</span>
-              <span className="mt-px block truncate text-[11px] leading-snug text-ink-soft">
-                {t("menyuTilIzoh")}
+            <div className="flex items-center gap-2.5 px-3 py-2">
+              <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-track text-ink-soft">
+                <Icon name="ovoz" size={17} />
               </span>
-            </span>
-            <TilTugma className="shrink-0" />
-          </div>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[13px] leading-tight">{t("tilSarlavha")}</span>
+                <span className="mt-px block truncate text-[11px] leading-snug text-ink-soft">
+                  {t("menyuTilIzoh")}
+                </span>
+              </span>
+              <TilTugma className="shrink-0" />
+            </div>
+          </Karta>
 
           {/* ================ ball qanday yig'iladi ================
               YOPIQ turadi va bosilganda ochiladi.
@@ -286,15 +292,17 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
               ochgan odam ro'yxatni ko'rish uchun uni surib o'tishga
               majbur bo'lardi. Savol esa bir marta beriladi: javobni
               bir marta o'qigan odam uni qaytadan o'qimaydi. */}
-          <details className="group mt-3">
-            <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-clay
-                                px-2 py-1.5 text-[10px] tracking-widest text-ink-soft uppercase
+          <details className="group mt-3.5 overflow-hidden rounded-clay bg-karta shadow-clay-sm">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5
                                 marker:hidden">
-              {t("menyuBall")}
-              <Icon name="chevron" size={13}
+              <span aria-hidden className="text-[14px] leading-none">💡</span>
+              <span className="flex-1 font-display text-[12.5px] leading-tight">
+                {t("menyuBall")}
+              </span>
+              <Icon name="chevron" size={14}
                 className="text-ink-dim transition-transform group-open:rotate-90" />
             </summary>
-            <div className="mt-1 rounded-clay bg-karta/70 p-3">
+            <div className="border-t border-track px-3 py-2.5">
               <Qoida belgi="⭐" nom={t("menyuBallYulduz")} izoh={t("menyuBallYulduzIzoh")} />
               <Qoida belgi="🪙" nom={t("menyuBallTanga")} izoh={t("menyuBallTangaIzoh")} />
               <Qoida belgi="🔥" nom={t("menyuBallZanjir")} izoh={t("menyuBallZanjirIzoh")} />
@@ -311,9 +319,40 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
 
 function Bolim({ children }: { children: ReactNode }) {
   return (
-    <h3 className="mt-3 mb-0.5 ml-2 text-[10px] tracking-widest text-ink-soft uppercase first:mt-1">
+    <h3 className="mt-3.5 mb-1 ml-1 text-[10px] tracking-widest text-ink-soft uppercase first:mt-0.5">
       {children}
     </h3>
+  );
+}
+
+/**
+ * Bo'limning kartasi — ichidagi satrlar bir butun bo'lib turadi.
+ *
+ * ─────────────────── NEGA KERAK BO'LDI ───────────────────
+ *
+ * Ilgari o'n to'rtta satr fon ustida yakka-yakka turardi va menyu
+ * bitta uzun oqim bo'lib ko'rinardi: qaysi satr qaysi bo'limga
+ * tegishli ekani faqat kichkina kulrang sarlavhadan bilinardi.
+ *
+ * Karta buni ko'z bilan hal qiladi: to'rtta bo'lak sanaladi, o'n
+ * to'rtta satr emas.
+ *
+ * ─────────────────── NEGA SOYA, NEGA FON EMAS ───────────────────
+ *
+ * Ko'k mavzuda `--color-karta` ham, `--color-sahna` ham OQ (`#ffffff`)
+ * — ya'ni "oq karta" oq fonda umuman ko'rinmasdi. Shuning uchun
+ * ajralish rangdan emas, SOYADAN keladi: u har to'rtala mavzuda ham
+ * ishlaydi.
+ *
+ * Ichkaridagi chiziqlar (`divide-track`) ham xuddi shunday tanlangan —
+ * `--color-track` yarim shaffof va u quyuq mavzuda oqarib, yorug'ida
+ * qoraya oladi.
+ */
+function Karta({ children }: { children: ReactNode }) {
+  return (
+    <div className="divide-y divide-track overflow-hidden rounded-clay bg-karta shadow-clay-sm">
+      {children}
+    </div>
   );
 }
 
@@ -337,8 +376,8 @@ function Satr({ ic, rang, nom, izoh, on, nuqta = false }: {
   const c = UNIT_COLORS[rang];
   return (
     <button type="button" onClick={on} disabled={!on} title={nom}
-      className={`flex w-full items-center gap-2.5 rounded-clay px-2 py-1.5 text-left transition-colors
-                  ${on ? "clay-press active:bg-karta/60" : "cursor-default opacity-45"}`}>
+      className={`flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors
+                  ${on ? "active:bg-track" : "cursor-default opacity-45"}`}>
       <span aria-hidden style={{ backgroundColor: `${c.road}1f`, color: c.road }}
         className="relative grid size-8 shrink-0 place-items-center rounded-xl">
         <Icon name={ic} size={17} />
