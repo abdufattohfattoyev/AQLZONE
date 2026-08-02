@@ -334,24 +334,30 @@ function OyinlarKarta({ on }: { on: () => void }) {
       <div className="az-kirish mt-4 sm:mt-6" style={kech(50)}>
         <button type="button" onClick={on}
           className="tugma-3d az-yaltir flex w-full items-center gap-3 rounded-clay bg-brand-purple
-                     p-3.5 text-left text-white shadow-clay">
-          <span className="grid size-12 shrink-0 place-items-center rounded-[16px] bg-white/20">
+                     p-[clamp(11px,2vh,14px)] text-left text-white shadow-clay">
+          <span className="grid size-[clamp(40px,7vh,48px)] shrink-0 place-items-center
+                           rounded-[16px] bg-white/20">
             <Icon name="puzzle" size={26} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-display text-[16px] leading-tight">
               {t("oyinlarBolim")}
             </span>
-            <span className="mt-0.5 block text-[12.5px] leading-snug text-white/85">
+            {/* Izoh BIR QATOR. Ilgari u to'liq chiqardi va uchta qatorga
+                bo'linib ketardi: karta yonidagi ikkitasidan ikki barobar
+                baland bo'lib, uchtasi tekis qator bo'lish o'rniga
+                pog'onaga aylanardi. Qolgan gap o'yinlar ekranida
+                baribir turibdi. */}
+            <span className="mt-0.5 line-clamp-1 text-[12.5px] leading-snug text-white/85">
               {t("oyinlarIzoh")}
             </span>
           </span>
-          {/* 375px dan tor telefonda belgilar yashiriladi: u yerda
-              yozuv uchun har piksel qimmat va uchta emoji qatorni
-              ikkiga bo'lib yuborardi. */}
-          <span aria-hidden className="hidden shrink-0 gap-1 text-[19px] min-[380px]:flex">
+          {/* Belgilar faqat KENG ekranda. Tor telefonda ular yozuvdan
+              joy o'g'irlab, izohni yana ikki qatorga bo'lib yuborardi. */}
+          <span aria-hidden className="hidden shrink-0 gap-1 text-[19px] min-[420px]:flex">
             <span>⚡</span><span>🎲</span><span>🧠</span>
           </span>
+          <Icon name="chevron" size={18} className="shrink-0 text-white/80" />
         </button>
       </div>
     </Reveal>
