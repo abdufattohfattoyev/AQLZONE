@@ -75,6 +75,21 @@ XABAR: dict[str, dict[str, str]] = {
             "Кнопка действует {muddat}."
         ),
     },
+    #: `/start` dagi IKKINCHI xabar — ilovani birinchi marta ochadigan
+    #: yashil tugma bilan birga ketadi.
+    #:
+    #: NEGA ALOHIDA XABAR. Bitta xabarda yo doimiy klaviatura, yo inline
+    #: tugma bo'ladi — ikkalasi birga bo'lmaydi. Klaviatura tugmalari
+    #: ilovani o'zi ochadi, lekin Telegram REPLY-klaviaturadan ochilgan
+    #: Mini App ga `initData` bermaydi: birinchi kirish o'sha yerdan
+    #: bo'lsa, ilova odamni tanimay anonim hisob yasab qo'yardi. Inline
+    #: tugma esa `initData` beradi — shuning uchun birinchi ochilish
+    #: AYNAN shu tugmadan bo'lishi kerak. Undan keyin hisob qurilmada
+    #: saqlanadi va klaviatura tugmalari ham to'g'ri hisobga tushadi.
+    "birinchiOchish": {
+        "uz": "👇 Boshlash uchun shu tugmani bosing.",
+        "ru": "👇 Нажмите эту кнопку, чтобы начать.",
+    },
     "tSaytgaKirish": {"uz": "✅ Saytga kirish", "ru": "✅ Войти на сайт"},
     "tIlovaniOchish": {"uz": "🎓 Ilovani ochish", "ru": "🎓 Открыть приложение"},
     "tRaqamniYuborish": {"uz": "📱 Raqamni yuborish", "ru": "📱 Отправить номер"},

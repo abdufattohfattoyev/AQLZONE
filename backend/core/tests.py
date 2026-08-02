@@ -785,13 +785,12 @@ class BotTest(TestCase):
         self.assertIn("🎮 O'yinlar", matnlar)
         self.assertIn("🎓 Darslar", matnlar)
 
-        # Tugmalar MATN yuboradi. `web_app` ATAYLAB yo'q: reply
-        # klaviaturadan ochilgan Mini App `initData` olmaydi va ilova
-        # odamni tanimay qolardi.
+        # Tugma ILOVANI O'ZI ochadi — oraliq "Ochish" xabari yo'q.
         oyin = next(t for qator in k for t in qator if "O'yinlar" in t["text"])
-        self.assertNotIn("web_app", oyin)
+        self.assertEqual(oyin["web_app"]["url"], "https://aql-zone.uz/oyinlar")
 
-        # Bosilganda bot inline tugma bilan javob beradi.
+        # Eski klaviatura ekranda qolgan odamlar uchun matnli yo'l ham
+        # ishlayveradi: bot javobida inline tugma qaytaradi.
         self.yuborilgan.clear()
         self.bot.yangilikni_qayta_ishla(self.xabar("🎮 O'yinlar"))
         ichki = [
@@ -2117,12 +2116,14 @@ class TugmaRangiTest(TestCase):
                            MINI_APP_URL="https://aql-zone.uz"):
             B.salom_yubor(1, "973358587", "Ali", "Valiyev", "uz")
 
-        # Bitta xabar, bitta klaviatura — inline tugmalar takroriga
-        # aylangani uchun olib tashlangan.
+        # Ikkita xabar: klaviatura va birinchi kirish uchun inline tugma.
+        # Ikkalasi ham yashil — bu odam yuradigan asosiy yo'l.
         xabarlar = [c for c in api.call_args_list if c[0][0] == "sendMessage"]
-        self.assertEqual(len(xabarlar), 1)
+        self.assertEqual(len(xabarlar), 2)
         k = xabarlar[0][1]["reply_markup"]["keyboard"]
         self.assertEqual(k[0][0]["style"], "success")
+        ichki = xabarlar[1][1]["reply_markup"]["inline_keyboard"]
+        self.assertEqual(ichki[0][0]["style"], "success")
 
     @patch("core.management.commands.bot.api")
     def test_raqam_tugmasi_yashil(self, api):
@@ -2776,21 +2777,33 @@ class BotKlaviaturaTest(TestCase):
     def tugmalar(self, til: str = "uz"):
         return [t for qator in self.klaviatura(til)["keyboard"] for t in qator]
 
-    def test_klaviatura_tugmalari_matn_yuboradi(self):
+    def test_har_bir_tugma_ilovani_ozi_ochadi(self):
         """
-        Reply-klaviatura tugmasidan ochilgan Mini App `initData` OLMAYDI
-        (Telegram hujjati) — ya'ni ilova odamni tanimaydi va duel
-        umuman ishlamaydi. Shuning uchun bu tugmalar matn yuboradi, bot
-        esa javobida inline tugma qaytaradi.
+        Tugma bosilishi bilan ilova ochiladi — oraliq "Ochish" xabari
+        yo'q. Ilgari ular matn yuborardi va odam reyting o'rniga yana
+        bitta tugmani ko'rardi.
         """
-        self.assertFalse(
-            [t for t in self.tugmalar() if "web_app" in t],
-            "klaviaturada web_app tugmasi qolib ketdi",
-        )
+        kutilgan = {
+            M("tIlova", "uz"): "https://aql-zone.uz",
+            M("tOyinlar", "uz"): "https://aql-zone.uz/oyinlar",
+            M("tDuel", "uz"): "https://aql-zone.uz/oyinlar/duel",
+            M("tMaydon", "uz"): "https://aql-zone.uz/oyinlar/maydon",
+            M("tReyting", "uz"): "https://aql-zone.uz/reyting",
+        }
+        tugmalar = {t["text"]: t for t in self.tugmalar()}
+        for matn, manzil in kutilgan.items():
+            self.assertEqual(tugmalar[matn]["web_app"]["url"], manzil, matn)
+
+        # "Yordam" — ilovaga olib bormaydigan yagona tugma.
+        self.assertNotIn("web_app", tugmalar[M("tYordamTugma", "uz")])
 
     @patch("core.management.commands.bot.api")
-    def test_har_bir_tugma_oz_ekranini_ochadi(self, api):
-        """Matn yuborilganda bot INLINE tugma bilan javob beradi."""
+    def test_eski_klaviaturadagi_matn_ham_ishlaydi(self, api):
+        """
+        Telegram ekrandagi klaviaturani o'zi yangilamaydi: eski matnli
+        tugma bosilishi mumkin. Bunda bot avvalgidek inline tugma bilan
+        javob beradi.
+        """
         from core.management.commands import bot as B
 
         kutilgan = {
@@ -2931,12 +2944,18 @@ class RaqamMajburiyTest(TestCase):
         with self.settings(SAYT_URL="https://aql-zone.uz",
                            MINI_APP_URL="https://aql-zone.uz"):
             self.B.salom_yubor(1, "222", "Ali", "Valiyev", "uz")
-        # `/start` BITTA xabar yuboradi — doimiy klaviatura bilan.
-        # Tugmalar MATNLI: reply-klaviaturadan ochilgan Mini App
-        # `initData` olmaydi, shuning uchun ular botga matn yuboradi.
-        k = api.call_args[1]["reply_markup"]["keyboard"]
-        self.assertNotIn("web_app", k[0][0])
+        xabarlar = [c for c in api.call_args_list if c[0][0] == "sendMessage"]
+
+        # Birinchi xabar — doimiy klaviatura. Uning birinchi tugmasi
+        # ("Darslar") ilovani o'zi ochadi.
+        k = xabarlar[0][1]["reply_markup"]["keyboard"]
+        self.assertEqual(k[0][0]["web_app"]["url"], "https://aql-zone.uz")
         self.assertTrue(k[0][0]["text"])
+
+        # Ikkinchi xabar — BIRINCHI kirish uchun inline tugma: faqat u
+        # ilovaga `initData` beradi, ya'ni hisob anonim bo'lib qolmaydi.
+        ichki = xabarlar[1][1]["reply_markup"]["inline_keyboard"]
+        self.assertEqual(ichki[0][0]["web_app"]["url"], "https://aql-zone.uz")
 
     def test_raqami_yoq_darvozasi(self):
         self.hisob("333")
@@ -2967,6 +2986,30 @@ class RaqamMajburiyTest(TestCase):
                 ),
                 buyruq,
             )
+
+    @patch("core.management.commands.bot.api")
+    def test_raqamsiz_odamga_klaviatura_berilmaydi(self, api):
+        """
+        Klaviatura tugmalari endi ilovani O'ZI ochadi va bot ular
+        haqida hech qanday xabar olmaydi — ya'ni tugma bosilgandan
+        keyin raqamni so'rab bo'lmaydi. Yagona darvoza — klaviaturani
+        umuman bermaslik.
+        """
+        self.hisob("888")
+        with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+            self.B.yangilikni_qayta_ishla({"message": {
+                "chat": {"id": 1}, "from": {"id": 888, "language_code": "uz"},
+                "text": "salom",
+            }})
+
+        tugmalar = [
+            t for c in api.call_args_list
+            for qator in (c[1].get("reply_markup") or {}).get("keyboard", [])
+            for t in qator
+        ]
+        self.assertTrue(any(t.get("request_contact") for t in tugmalar))
+        self.assertFalse([t for t in tugmalar if "web_app" in t],
+                         "raqamsiz odam ilovani ochadigan tugma oldi")
 
 
 @override_settings(RAQAM_MAJBURIY_DAN="2026-08-01")

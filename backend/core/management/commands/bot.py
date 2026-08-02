@@ -212,9 +212,9 @@ def asosiy_klaviatura(til: str) -> dict | None:
     yuboring" degan javob olardi — ya'ni bot bilgan narsasini o'zi
     yashirib turardi. Buyruqni eslab qolish esa hech kimning ishi emas.
 
-    Ikkita tugma to'g'ridan-to'g'ri ILOVANI ochadi (`web_app`), ya'ni
-    ular xabar yubormaydi — bosilishi bilan darslar yoki o'yinlar
-    ochiladi. Qolgan ikkitasi oddiy matn yuboradi va uni bot tanib oladi.
+    Ilovaga olib boradigan BESHTA tugma ham to'g'ridan-to'g'ri
+    ILOVANI ochadi (`web_app`): ular xabar yubormaydi, bosilishi bilan
+    kerakli bo'lim ochiladi. Faqat "Yordam" oddiy matn yuboradi.
 
     `is_persistent` — klaviatura yopilib qolmasin: aks holda odam uni
     bir marta yashirsa, boshqa hech qachon topolmaydi.
@@ -226,26 +226,32 @@ def asosiy_klaviatura(til: str) -> dict | None:
         return None
     return {
         "keyboard": [
-            # ─────────── NEGA `web_app` EMAS, ODDIY MATN ───────────
+            # ─────────── BITTA BOSISH, IKKITA EMAS ───────────
             #
-            # Telegram hujjatiga ko'ra REPLY-KLAVIATURA tugmasidan
-            # ochilgan Mini App `initData` OLMAYDI — u bo'sh keladi.
-            # Ya'ni ilova odamni tanimaydi: hisob anonim bo'lib qoladi,
-            # duel esa umuman ishlamaydi (raqib kimligi Telegram
-            # hisobidan aniqlanadi).
+            # Ilgari bu tugmalar oddiy MATN yuborardi, bot esa javobida
+            # INLINE "Ochish" tugmasini qaytarardi. Sabab texnik edi:
+            # reply-klaviatura tugmasidan ochilgan Mini App `initData`
+            # olmaydi, ya'ni ilova odamni Telegram hisobidan tanimaydi.
             #
-            # Shuning uchun bu tugmalar oddiy MATN yuboradi, bot esa
-            # javobida INLINE tugma qaytaradi — inline tugmadan
-            # ochilgan Mini App to'liq `initData` oladi. Bitta
-            # qo'shimcha bosish, evaziga ishlaydigan hisob.
-            [tugma_yasa(M("tIlova", til), YASHIL)],
+            # Amalda esa bu ikki bosishga aylanardi: "Reyting" bosgan
+            # odam reytingni emas, yana bitta tugmani ko'rardi. Ilova
+            # bir marta `initData` bilan ochilgach (menyu tugmasi,
+            # inline tugma yoki havola orqali) tokeni SHU qurilmada
+            # saqlanadi va keyingi ochilishlarda `initData` kerak
+            # bo'lmaydi — ya'ni bu tugmalar ham to'g'ri hisobga tushadi.
+            [tugma_yasa(M("tIlova", til), YASHIL,
+                        web_app={"url": ilova_url()})],
             [
-                tugma_yasa(M("tDuel", til), KOK),
-                tugma_yasa(M("tMaydon", til), KOK),
+                tugma_yasa(M("tDuel", til), KOK,
+                           web_app={"url": ilova_url(DUEL_YOLI)}),
+                tugma_yasa(M("tMaydon", til), KOK,
+                           web_app={"url": ilova_url(MAYDON_YOLI)}),
             ],
             [
-                tugma_yasa(M("tOyinlar", til), KOK),
-                tugma_yasa(M("tReyting", til), KOK),
+                tugma_yasa(M("tOyinlar", til), KOK,
+                           web_app={"url": ilova_url(OYIN_YOLI)}),
+                tugma_yasa(M("tReyting", til), KOK,
+                           web_app={"url": ilova_url(REYTING_YOLI)}),
             ],
             # To'rtinchi qator — ilovani OCHMAYDIGAN yagona tugma.
             #
@@ -429,21 +435,35 @@ def salom_yubor(
     # Menyu tugmasi ham shu odamning tilida bo'lsin.
     menyu_tugmasini_qoy(chat_id, til)
 
-    # BITTA xabar. Ilgari ikkita edi va sabab texnik: bitta xabarda yo
-    # doimiy klaviatura, yo inline tugmalar bo'ladi — ikkalasi birga
-    # bo'lmaydi. Endi inline tugma KERAK EMAS: u ilovani ochardi,
-    # klaviaturaning birinchi tugmasi esa aynan shu ishni qiladi. Ikki
-    # xabar va ikkita bir xil tugma — takrorning eng ochiq turi.
-    if klaviatura:
-        api("sendMessage", chat_id=chat_id,
-            text=salom + M("pastdagiTugma", til),
-            parse_mode="HTML", reply_markup=klaviatura)
-    else:
+    if not klaviatura:
         # Mini App sozlanmagan — klaviatura ham yo'q. Bunday paytda
         # yagona yo'l sayt havolasi bo'lib qoladi.
         api("sendMessage", chat_id=chat_id,
             text=salom + M("tugmaniBos", til, muddat=muddat_matni(til)),
             parse_mode="HTML", reply_markup={"inline_keyboard": tugmalar})
+        return f"{tg_id}: /start — javob berildi (hisob #{pupil.pk})"
+
+    # IKKITA xabar, va sabab texnik: bitta xabarda yo doimiy klaviatura,
+    # yo inline tugma bo'ladi — ikkalasi birga bo'lmaydi. Bu yerda
+    # ikkalasi ham kerak va ular bir xil ish qilmaydi:
+    #
+    #   • klaviatura — HAR KUNGI yo'l. Tugmalari ilovani o'zi ochadi va
+    #     suhbat ostida doim turadi.
+    #   • inline tugma — BIRINCHI kirish. Telegram reply-klaviaturadan
+    #     ochilgan Mini App ga `initData` bermaydi, ya'ni ilova odamni
+    #     tanimaydi. Inline tugma esa beradi. Birinchi ochilish shu
+    #     yerdan bo'lsa, hisob qurilmada saqlanadi va undan keyin
+    #     klaviatura tugmalari ham to'g'ri hisobga tushadi.
+    #
+    # Tartib ham shundan: salom va klaviatura oldin, yashil tugma esa
+    # OXIRGI xabarda — ya'ni odam ko'radigan eng pastki narsa aynan
+    # bosilishi kerak bo'lgan tugma bo'ladi.
+    api("sendMessage", chat_id=chat_id,
+        text=salom + M("pastdagiTugma", til),
+        parse_mode="HTML", reply_markup=klaviatura)
+    api("sendMessage", chat_id=chat_id,
+        text=M("birinchiOchish", til),
+        parse_mode="HTML", reply_markup={"inline_keyboard": tugmalar})
     return f"{tg_id}: /start — javob berildi (hisob #{pupil.pk})"
 
 
@@ -744,6 +764,15 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     # oldin botdan foydalangan odamlarda u umuman yo'q va ular /start ni
     # boshqa hech qachon yozmasligi mumkin. Endi esa istalgan xabar
     # ularga tugmalarni qaytaradi.
+    #
+    # LEKIN raqami yo'q odamga BERILMAYDI. Klaviatura tugmalari endi
+    # ilovani o'zi ochadi va bot ular haqida hech qanday xabar olmaydi —
+    # ya'ni "raqamni so'rash" darvozasi tugma bosilgandan KEYIN ishlay
+    # olmaydi. Yagona joy — klaviaturaning o'zini bermaslik.
+    if raqami_yoq(tg_id):
+        raqam_sora(chat_id, M("raqamNegaKerak", til), til)
+        return f"{tg_id}: boshqa xabar — raqam so'raldi"
+
     klaviatura = asosiy_klaviatura(til)
     api("sendMessage", chat_id=chat_id,
         text=M("boshlaTugma" if klaviatura else "boshlaStart", til),
