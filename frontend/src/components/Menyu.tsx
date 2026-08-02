@@ -134,10 +134,16 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
             Yopiq holatda ham DOMda turadi, shuning uchun `pt` xavfsiz
             zonani hisobga oladi: Telegramda menyu tepasi sarlavha
             ostidan boshlanadi. */}
-        <header className="flex shrink-0 items-start gap-3 px-4 pt-[calc(1rem+var(--az-tepa,0px))] pb-3">
+        <header className="flex shrink-0 items-center gap-3 px-4 pt-[calc(0.75rem+var(--az-tepa,0px))] pb-2">
           <div className="min-w-0 flex-1">
-            <h2 className="font-display text-[19px] leading-tight">{t("menyu")}</h2>
-            <p className="mt-0.5 text-[12px] leading-snug text-ink-soft">{t("menyuIzoh")}</p>
+            <h2 className="font-display text-[17px] leading-tight">{t("menyu")}</h2>
+            {/* Izoh past ekranda YASHIRILADI: u bir martalik tushuntirish
+                va uni ikkinchi marta o'qiydigan odam yo'q, o'sha 18px
+                esa ro'yxatning bir satriga yetadi. */}
+            <p className="mt-0.5 hidden text-[11.5px] leading-snug text-ink-soft
+                          [@media(min-height:700px)]:block">
+              {t("menyuIzoh")}
+            </p>
           </div>
           <button type="button" onClick={onYop} title={t("yopish")}
             className="clay-press grid size-9 shrink-0 place-items-center rounded-full bg-karta
@@ -151,7 +157,7 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
             turadi, chunki pastdagi "ball qanday yig'iladi" bo'limi
             aynan shu uchtasini tushuntiradi — savol va javob bitta
             ekranda bo'lsin. */}
-        <div className="flex shrink-0 gap-1.5 px-4 pb-3">
+        <div className="flex shrink-0 gap-1.5 px-4 pb-2">
           <Son ic="star" rang="text-brand-gold" n={p.stars} nom={t("menyuBallYulduz")} />
           <Son ic="coin" rang="text-brand-gold" n={jamiTanga} nom={t("menyuBallTanga")} />
           <Son ic="flame" rang="text-brand-orange" n={kunlik.kunlar} nom={t("menyuBallZanjir")} />
@@ -161,7 +167,7 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
             joyida qotib turadi: menyuni pastigacha surgan odam ham
             "Yopish" tugmasini yo'qotmasin. */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4
-                        pb-[calc(1.5rem+var(--az-past))]">
+                        pb-[calc(1rem+var(--az-past))]">
           {/* ======================= ta'lim ======================= */}
           <Bolim>{t("menyuTalim")}</Bolim>
 
@@ -206,20 +212,25 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
               emas, uning ichki tafsiloti. Katta satr bo'lganda
               sakkiztasi menyuni yolg'iz o'zi to'ldirib yuborardi. */}
           <div className="mt-1.5 ml-2">
-            <p className="mb-1.5 text-[10.5px] tracking-wider text-ink-soft/80 uppercase">
+            <p className="mb-1 text-[10px] tracking-wider text-ink-soft/80 uppercase">
               {t("menyuBarchaOyin")}
             </p>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-1">
               {OYINLAR.map((o) => (
                 <button key={o.id} type="button" onClick={yur(yolOyin(o.id))} title={t(o.nom)}
                   style={{ backgroundColor: `${UNIT_COLORS[o.rang].road}14` }}
-                  className="clay-press flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-left">
+                  className="clay-press flex items-center gap-1.5 rounded-xl px-2 py-1 text-left">
                   <span aria-hidden className="shrink-0 text-[15px] leading-none">{o.emoji}</span>
                   {/* Nom KESILMAYDI, ikki qatorga o'raladi. Ruschada
                       ("Последовательность") u chipdan uch barobar uzun
                       va `truncate` bo'lganda "Послед…" bo'lib qolardi —
-                      ya'ni o'yin nomi umuman o'qilmasdi. */}
-                  <span className="min-w-0 line-clamp-2 text-[11px] leading-tight text-ink">
+                      ya'ni o'yin nomi umuman o'qilmasdi.
+
+                      `break-words` SHART: o'sha so'z bo'linmasa, u
+                      bitta uzun bo'lak bo'lib chipdan chiqib ketardi
+                      va qo'shni ustunning ustiga chiqardi. */}
+                  <span className="min-w-0 line-clamp-2 hyphens-auto break-words text-[11px]
+                                   leading-tight text-ink">
                     {t(o.nom)}
                   </span>
                 </button>
@@ -254,28 +265,42 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
           {/* Til — yagona satr, u O'ZI ish bajaradi.
               Boshqa ekranga olib bormaydi, shuning uchun tugma ham
               emas: o'ng tomonda UZ|RA almashtirgichning o'zi turadi. */}
-          <div className="mt-1.5 flex items-center gap-3 rounded-clay px-2 py-2.5">
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-track text-ink-soft">
-              <Icon name="ovoz" size={19} />
+          <div className="mt-1 flex items-center gap-2.5 rounded-clay px-2 py-1.5">
+            <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-track text-ink-soft">
+              <Icon name="ovoz" size={17} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block font-display text-[13.5px] leading-tight">{t("tilSarlavha")}</span>
-              <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-soft">
+              <span className="block font-display text-[13px] leading-tight">{t("tilSarlavha")}</span>
+              <span className="mt-px block truncate text-[11px] leading-snug text-ink-soft">
                 {t("menyuTilIzoh")}
               </span>
             </span>
             <TilTugma className="shrink-0" />
           </div>
 
-          {/* ================ ball qanday yig'iladi ================ */}
-          <Bolim>{t("menyuBall")}</Bolim>
+          {/* ================ ball qanday yig'iladi ================
+              YOPIQ turadi va bosilganda ochiladi.
 
-          <div className="rounded-clay bg-karta/70 p-3">
-            <Qoida belgi="⭐" nom={t("menyuBallYulduz")} izoh={t("menyuBallYulduzIzoh")} />
-            <Qoida belgi="🪙" nom={t("menyuBallTanga")} izoh={t("menyuBallTangaIzoh")} />
-            <Qoida belgi="🔥" nom={t("menyuBallZanjir")} izoh={t("menyuBallZanjirIzoh")} />
-            <Qoida belgi="🏆" nom={t("menyuBallRekord")} izoh={t("menyuBallRekordIzoh")} />
-          </div>
+              Bu to'rt qoida menyuning eng uzun bo'lagi — ochiq holda u
+              yolg'iz o'zi butun ekranni egallardi va har safar menyu
+              ochgan odam ro'yxatni ko'rish uchun uni surib o'tishga
+              majbur bo'lardi. Savol esa bir marta beriladi: javobni
+              bir marta o'qigan odam uni qaytadan o'qimaydi. */}
+          <details className="group mt-3">
+            <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-clay
+                                px-2 py-1.5 text-[10px] tracking-widest text-ink-soft uppercase
+                                marker:hidden">
+              {t("menyuBall")}
+              <Icon name="chevron" size={13}
+                className="text-ink-dim transition-transform group-open:rotate-90" />
+            </summary>
+            <div className="mt-1 rounded-clay bg-karta/70 p-3">
+              <Qoida belgi="⭐" nom={t("menyuBallYulduz")} izoh={t("menyuBallYulduzIzoh")} />
+              <Qoida belgi="🪙" nom={t("menyuBallTanga")} izoh={t("menyuBallTangaIzoh")} />
+              <Qoida belgi="🔥" nom={t("menyuBallZanjir")} izoh={t("menyuBallZanjirIzoh")} />
+              <Qoida belgi="🏆" nom={t("menyuBallRekord")} izoh={t("menyuBallRekordIzoh")} />
+            </div>
+          </details>
         </div>
       </aside>
     </>
@@ -286,7 +311,7 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
 
 function Bolim({ children }: { children: ReactNode }) {
   return (
-    <h3 className="mt-4 mb-1 ml-2 text-[10.5px] tracking-widest text-ink-soft uppercase first:mt-1">
+    <h3 className="mt-3 mb-0.5 ml-2 text-[10px] tracking-widest text-ink-soft uppercase first:mt-1">
       {children}
     </h3>
   );
@@ -312,25 +337,27 @@ function Satr({ ic, rang, nom, izoh, on, nuqta = false }: {
   const c = UNIT_COLORS[rang];
   return (
     <button type="button" onClick={on} disabled={!on} title={nom}
-      className={`flex w-full items-center gap-3 rounded-clay px-2 py-2.5 text-left transition-colors
+      className={`flex w-full items-center gap-2.5 rounded-clay px-2 py-1.5 text-left transition-colors
                   ${on ? "clay-press active:bg-karta/60" : "cursor-default opacity-45"}`}>
       <span aria-hidden style={{ backgroundColor: `${c.road}1f`, color: c.road }}
-        className="relative grid size-9 shrink-0 place-items-center rounded-xl">
-        <Icon name={ic} size={19} />
+        className="relative grid size-8 shrink-0 place-items-center rounded-xl">
+        <Icon name={ic} size={17} />
         {nuqta && (
           <span className="az-nuqta absolute -top-0.5 -right-0.5 size-2.5 rounded-full
                            bg-brand-red ring-2 ring-sahna" />
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-display text-[13.5px] leading-tight">{nom}</span>
-        {/* Izoh ikki qatorgacha: ruscha tarjimalar o'zbekchadan uzunroq
-            va uchinchi qator satrlarni pog'onaga aylantirib yuborardi. */}
-        <span className="mt-0.5 line-clamp-2 block text-[11.5px] leading-snug text-ink-soft">
+        <span className="block truncate font-display text-[13px] leading-tight">{nom}</span>
+        {/* Izoh BIR qator: matnlar shunga qarab qisqartirilgan
+            (`matn.ts` dagi izohga qarang). `truncate` baribir qoladi —
+            u yerda kunlik holat ham chiqishi mumkin ("3 ta savol
+            kutyapti") va u har kuni har xil uzunlikda bo'ladi. */}
+        <span className="mt-px block truncate text-[11px] leading-snug text-ink-soft">
           {izoh}
         </span>
       </span>
-      {on && <Icon name="chevron" size={16} className="shrink-0 text-ink-dim" />}
+      {on && <Icon name="chevron" size={15} className="shrink-0 text-ink-dim" />}
     </button>
   );
 }
@@ -338,12 +365,13 @@ function Satr({ ic, rang, nom, izoh, on, nuqta = false }: {
 /** Tepadagi kichik hisob: belgi, son, nom. */
 function Son({ ic, rang, n, nom }: { ic: IconName; rang: string; n: number; nom: string }) {
   return (
-    <span className="flex flex-1 flex-col items-center gap-0.5 rounded-2xl bg-karta/70 px-1 py-2">
-      <span className="flex items-center gap-1">
-        <Icon name={ic} size={14} className={rang} />
-        <span className="font-display text-[14px] leading-none">{n}</span>
-      </span>
-      <span className="w-full truncate text-center text-[10px] leading-none text-ink-soft">{nom}</span>
+    /* Belgi, son va nom BIR QATORDA. Ilgari ular ustma-ust turardi va
+       uchta kataksimon "kartochka" menyu tepasidan 56px olardi —
+       bu ro'yxatning bir satriga teng. */
+    <span className="flex flex-1 items-center justify-center gap-1 rounded-2xl bg-karta/70 px-1 py-1.5">
+      <Icon name={ic} size={13} className={`shrink-0 ${rang}`} />
+      <span className="font-display text-[13px] leading-none">{n}</span>
+      <span className="min-w-0 truncate text-[10px] leading-none text-ink-soft">{nom}</span>
     </span>
   );
 }

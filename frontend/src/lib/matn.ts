@@ -130,61 +130,68 @@ const S = {
   menyuHisobBolim: ["Hisob va sozlamalar", "Профиль и настройки"],
   menyuBarchaOyin: ["Sakkizta o'yin", "Восемь игр"],
 
+  /* Izohlar BIR QATORGA sig'ishi kerak.
+     Telefonda menyu 360px, satrdagi matnga esa 250px qoladi — bu
+     taxminan 40 belgi. Uzunroq izoh ikkinchi qatorga tushadi va har
+     satr 56px dan 70px ga o'sadi: o'n to'rtta satrda bu butun bir
+     ekran demak, ya'ni menyu ikki barobar uzun suriladi. */
   menyuDarslarIzoh: [
-    "Bob-bob yo'l xaritasi. Har dars uchta yulduzgacha.",
-    "Карта уроков по разделам. За урок — до трёх звёзд.",
+    "Bob-bob yo'l xaritasi, uchta yulduz.",
+    "Карта уроков, до трёх звёзд.",
   ],
   menyuSinovIzoh: [
-    "Kuniga olti savol. Tangasi ikki barobar.",
-    "Шесть вопросов в день. Монет — вдвое больше.",
+    "Kuniga olti savol, tangasi ikki barobar.",
+    "Шесть вопросов в день, монет вдвое.",
   ],
   menyuDaftarIzoh: [
-    "Qiynalgan savollar yangi sonlar bilan qaytadi.",
-    "Трудные вопросы возвращаются с новыми числами.",
+    "Qiynalgan savollar qaytib keladi.",
+    "Трудные вопросы возвращаются.",
   ],
   menyuKurslarIzoh: [
-    "Maktabgacha va 1–4-sinf kurslarini tanlash.",
-    "Выбор курсов: подготовка к школе и 1–4 класс.",
+    "Maktabgacha va 1–4-sinf kurslari.",
+    "Курсы: до школы и 1–4 класс.",
   ],
   menyuOyinlarIzoh: [
-    "Yulduz emas — rekord va tanga. Har o'yinda uch daraja.",
-    "Не звёзды, а рекорд и монеты. В каждой игре три уровня.",
+    "Rekord va tanga, uch daraja.",
+    "Рекорд и монеты, три уровня.",
   ],
   menyuMaydonIzoh: [
-    "Kuniga bir marta. Uch bosqich, hammaga bir xil savol.",
-    "Раз в день. Три этапа, у всех одни и те же задания.",
+    "Kuniga bir marta, uch bosqich.",
+    "Раз в день, три этапа.",
   ],
   menyuDuelIzoh: [
-    "Do'stni chaqirasan — ikkalangizga bir xil savol tushadi.",
-    "Зовёшь друга — вопросы у вас одинаковые.",
+    "Do'st bilan bir xil savollar.",
+    "С другом — одни и те же вопросы.",
   ],
   menyuNishonIzoh: [
-    "Qo'lga kiritilgan va hali ochilmagan nishonlar.",
-    "Полученные и ещё не открытые награды.",
+    "Ochilgan va ochilmagan nishonlar.",
+    "Открытые и закрытые награды.",
   ],
   menyuDokonIzoh: [
     "Tangaga ko'rinish sotib olinadi.",
-    "За монеты покупается оформление.",
+    "За монеты — оформление.",
   ],
   menyuReytingIzoh: [
-    "Barcha kurslar yulduzi bo'yicha umumiy jadval.",
-    "Общая таблица по звёздам всех курсов.",
+    "Barcha kurslar bo'yicha jadval.",
+    "Общая таблица по всем курсам.",
   ],
   menyuOtaOnaIzoh: [
-    "Bola qancha ishladi, qaysi dars qiyin kechdi.",
-    "Сколько ребёнок занимался и какие уроки даются трудно.",
+    "Bola qancha ishladi, nima qiyin.",
+    "Сколько занимался, что трудно.",
   ],
   menyuSozlamaIzoh: [
-    "Ism, kirish usullari, yangi bola qo'shish.",
-    "Имя, способы входа, добавление ребёнка.",
+    "Ism, kirish, yangi bola qo'shish.",
+    "Имя, вход, добавить ребёнка.",
   ],
   menyuProfilIzoh: [
-    "Bir telefonda bir nechta bola — profilni almashtirish.",
-    "Несколько детей на одном телефоне — смена профиля.",
+    "Bir telefonda bir nechta bola.",
+    "Несколько детей на телефоне.",
   ],
+  /* Til satri qisqaroq: uning o'ng tomonida UZ|RU almashtirgichi
+     turadi va matnga qolgan joy boshqa satrlardagidan kam. */
   menyuTilIzoh: [
-    "Ilova va bot shu tilda gapiradi.",
-    "На этом языке говорит приложение и бот.",
+    "Ilova va bot shu tilda.",
+    "Язык приложения и бота.",
   ],
 
   /* ---------------- menyu: ball qanday yig'iladi ----------------
