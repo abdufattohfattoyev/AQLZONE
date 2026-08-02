@@ -21,6 +21,9 @@ const dataset: Record<string, string> = {};
 
 const tgWebApp = {
   initData: "user=%7B%22id%22%3A1%7D&hash=xxx",
+  // Haqiqiy mijozda "android"/"ios"/"tdesktop", oddiy brauzerda
+  // "unknown". Pastdagi sinov aynan shu farqqa suyanadi.
+  platform: "android",
   version: "8.0",
   viewportHeight: 640,
   viewportStableHeight: 604,
@@ -126,6 +129,35 @@ tekshir("tebranishlar to'g'ri turda", [
   { usul: "impact", arg: "heavy" },
   { usul: "selection" },
 ], jurnal);
+
+/* ---------------------------------------- klaviatura tugmasidan ochilgan */
+/**
+ * Telegram REPLY-KLAVIATURA tugmasidan ochilgan Mini App'ga `initData`
+ * BERMAYDI. Ilova esa o'sha paytda ham Telegram ICHIDA turadi.
+ *
+ * Ikkalasi bir xil deb qaralgani ishlab chiqarishda ko'rindi: bellashuv
+ * havolasi `window.open` bilan ochilib, odam Telegram'dan tashqi
+ * brauzerga uloqtirilardi va chaqiruv jo'natilmay qolardi.
+ */
+tgWebApp.initData = "";
+
+tekshir("initData yo'q — kirish tekshiruvi 'yo'q' deydi", false, Q.tgda());
+tekshir("lekin qobiq HAMON Telegram", true, Q.tgQobiqda());
+tekshir("qobiq() → tg", "tg", Q.qobiq());
+
+jurnal.length = 0;
+Q.havolaniOch("https://t.me/AqlZoneUz?startapp=ABC123");
+tekshir("chaqiruv havolasi Telegram ichida ochiladi",
+  "openTelegramLink", jurnal[0]?.usul);
+tekshir("brauzerga uloqtirilmaydi", false,
+  jurnal.some((c) => c.usul === "window.open"));
+
+// Oddiy brauzer: obyekt bor, lekin ichi bo'sh — bu Telegram EMAS.
+tgWebApp.platform = "unknown";
+tekshir("brauzerda qobiq Telegram emas", false, Q.tgQobiqda());
+jurnal.length = 0;
+Q.havolaniOch("https://t.me/AqlZoneUz");
+tekshir("brauzerda oddiy oyna ochiladi", "window.open", jurnal[0]?.usul);
 
 console.log(xato === 0 ? "\n✅ qobiq: hammasi joyida" : `\n❌ ${xato} ta xato`);
 if (xato) process.exit(1);

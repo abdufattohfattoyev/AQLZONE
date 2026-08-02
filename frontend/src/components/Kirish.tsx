@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import { Logo } from "./Logo";
 import { botHavolasi, botNomi, miniAppda } from "../lib/api";
+import { havolaniOch, tgQobiqda } from "../lib/qobiq";
 import { t } from "../lib/matn";
 
 interface Props {
@@ -102,6 +103,22 @@ export function Kirish({ xabar, izoh, tugma, onKeyinroq, havola, tagIzoh }: Prop
           ) : bot ? (
             <a
               href={havola ? havola(bot) : botHavolasi(bot)}
+              /**
+               * Telegram ICHIDA `<a>` ning o'zi yetarli emas.
+               *
+               * Bu ekran endi Telegram ichida ham chiqishi mumkin:
+               * klaviatura tugmasidan ochilgan Mini App hisob
+               * ma'lumotini olmaydi va odam shu yerga tushadi. O'shanda
+               * oddiy havola tashqi brauzerni ochib, uni Telegram'dan
+               * butunlay chiqarib yuborardi. `havolaniOch` esa
+               * `openTelegramLink` bilan botni Telegram'ning O'ZIDA
+               * ochadi — bir bosishda, orqaga qaytish saqlanib.
+               */
+              onClick={(e) => {
+                if (!tgQobiqda()) return;      // brauzer — oddiy havola
+                e.preventDefault();
+                havolaniOch(e.currentTarget.href);
+              }}
               className="clay-press flex h-[56px] w-full items-center justify-center gap-3
                          rounded-3xl bg-brand-green font-display text-[16px] text-white"
             >

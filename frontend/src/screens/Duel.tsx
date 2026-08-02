@@ -36,7 +36,8 @@ import { Konfetti } from "../components/Konfetti";
 import { Kutish } from "../components/Kutish";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { useOrqaga, havolaniOch, tgKutish } from "../lib/qobiq";
+import { useOrqaga, havolaniOch } from "../lib/qobiq";
+import { useTgHisob } from "../lib/tgHisob";
 import { Kirish } from "../components/Kirish";
 import { useProgress } from "../lib/progress";
 import { OYINLAR, oyinById } from "../lib/oyin";
@@ -81,7 +82,7 @@ export function Duel({ onChiq, onOyin }: {
   /** Mashq rejimi — natijadagi "shu o'yinni mashq qilish". */
   onOyin?: (id: string) => void;
 }) {
-  const tg = tgKutish();
+  const tg = useTgHisob();
   // Chaqiruv endi DARHOL yasalmaydi: avval shartlar so'raladi. Ilgari
   // ekran ochilishi bilan server o'yinni o'zi tanlab, duel yasab
   // qo'yardi — ya'ni fikrini o'zgartirgan odamdan keyin bazada bo'sh
@@ -110,10 +111,12 @@ export function Duel({ onChiq, onOyin }: {
     ));
   }, []);
 
-  // Bellashuv Telegram hisobisiz o'ynalmaydi — pastdagi izohga qarang.
-  // Hukm BIRINCHI RENDERDA chiqarilmaydi: Telegram obyekti tashqi
-  // skriptdan keladi va u sekin yuklansa, Telegram ICHIDA turgan odam
-  // "Telegramda oching" oynasini ko'rib qolardi.
+  // Bellashuv Telegram HISOBISIZ o'ynalmaydi — pastdagi izohga qarang.
+  //
+  // Savol "hozir Telegram'dan ochildimi" emas, "hisob Telegram'ganmi"
+  // (`useTgHisob`). Farqi katta: bot klaviaturasidagi tugmadan ochilgan
+  // Mini App `initData` olmaydi va eski tekshiruv o'z hisobi bilan
+  // turgan odamni ham devorga urardi.
   if (tg === "kutilmoqda") return <Kutish />;
   if (tg === "yoq") {
     return <Kirish izoh={t("duelTgKerak")} xabar={t("duelTgIzoh")} tugma={t("duelTgTugma")}
@@ -381,7 +384,7 @@ export function DuelQabul({ kod, onChiq, onDuel, onOyin }: {
   onDuel?: () => void;
   onOyin?: (id: string) => void;
 }) {
-  const tg = tgKutish();
+  const tg = useTgHisob();
   const [bosqich, setBosqich] = useState<QBosqich>({ nima: "yuklanmoqda" });
 
   useOrqaga(onChiq);

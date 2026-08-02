@@ -29,7 +29,7 @@
  * Hech biri majburiy emas: har bir chaqiruv himoyalangan va eski
  * Telegram mijozida (yoki oddiy brauzerda) shunchaki hech narsa qilmaydi.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 /* ------------------------------------------------ Telegram WebApp turi */
 
@@ -180,6 +180,32 @@ export type Qobiq = "veb" | "tg" | "apk";
 export const tgda = (): boolean => Boolean(tgWebApp()?.initData);
 
 /**
+ * Ilova haqiqiy Telegram MIJOZI ichida chizilyaptimi.
+ *
+ * `tgda()` dan farqi bor va u muhim. `tgda()` — "hisob ma'lumoti
+ * keldimi" degan KIRISH savoli. Bu esa "atrofimizda Telegram bormi"
+ * degan QOBIQ savoli: havolani qanday ochish, tebratsa bo'ladimi,
+ * sarlavhani bo'yaymizmi — bularning hech biri hisobga bog'liq emas.
+ *
+ * Ikkisi bir xil deb qaralgani nosozlik keltirdi: Telegram
+ * reply-klaviatura tugmasidan ochilgan Mini App'ga `initData` bermaydi
+ * va o'sha ilova ichida `havolaniOch` bellashuv havolasini
+ * `window.open` bilan ochib, odamni Telegram'dan tashqi brauzerga
+ * uloqtirardi — ya'ni chaqiruv jo'natilmay qolardi.
+ *
+ * `platform` — Telegram skriptining o'zi qo'yadigan maydon. Oddiy
+ * brauzerda u "unknown" bo'ladi, mijoz ichida esa "android", "ios",
+ * "tdesktop" va hokazo. `initData` bo'lsa savol umuman tug'ilmaydi.
+ */
+export function tgQobiqda(): boolean {
+  const w = tgWebApp();
+  if (!w) return false;
+  if (w.initData) return true;
+  const p = (w.platform || "").toLowerCase();
+  return Boolean(p) && p !== "unknown";
+}
+
+/**
  * Ayni paytda ekran oldida turgan Telegram foydalanuvchisining raqami.
  * Telegram tashqarisida — bo'sh satr.
  *
@@ -202,8 +228,10 @@ export function tgFoydalanuvchi(): string {
   }
 }
 
+// Sirt — QOBIQ savoli: ilova qayerda chizilyapti. Hisob bor-yo'qligi
+// buni o'zgartirmaydi, shuning uchun `tgQobiqda()`.
 export const qobiq = (): Qobiq =>
-  tgda() ? "tg" : (import.meta.env.VITE_ROUTER === "hash" ? "apk" : "veb");
+  tgQobiqda() ? "tg" : (import.meta.env.VITE_ROUTER === "hash" ? "apk" : "veb");
 
 /* ------------------------------------------------- o'lcham va ranglar */
 
@@ -263,7 +291,7 @@ function olchamlarniYangila(): void {
  */
 export function fonRangi(hex: string): void {
   const w = tgWebApp();
-  if (!w || !tgda()) return;
+  if (!w || !tgQobiqda()) return;
   const rang = hex.trim();
   if (!/^#[0-9a-f]{6}$/i.test(rang)) return;
   try {
@@ -278,7 +306,7 @@ export function fonRangi(hex: string): void {
 
 /** Joriy temaning fon rangini o'qib, Telegram'ga uzatadi. */
 export function temaRanginiUzat(): void {
-  if (!tgda()) return;
+  if (!tgQobiqda()) return;
   const rang = getComputedStyle(document.documentElement)
     .getPropertyValue("--az-body")
     .trim();
@@ -298,7 +326,7 @@ export function qobiqniUlash(): void {
   document.documentElement.dataset.qobiq = qobiq();
 
   const w = tgWebApp();
-  if (!w || !tgda()) return;
+  if (!w || !tgQobiqda()) return;
 
   try {
     w.ready?.();
@@ -347,7 +375,7 @@ export function qobiqniUlash(): void {
  * toza qoladi.
  */
 export function useOrqaga(onBack: () => void, kerak = true): boolean {
-  const nativ = tgda();
+  const nativ = tgQobiqda();
 
   /**
    * Chaqiruv `ref` da turadi va bu SHART.
@@ -386,7 +414,7 @@ export function useOrqaga(onBack: () => void, kerak = true): boolean {
   // Nativ tugma BO'LMASA o'zimizniki chiziladi. Eski Telegram mijozida
   // `BackButton` yo'q va o'shanda ekran umuman qaytib bo'lmaydigan
   // tuzoqqa aylanardi — shuning uchun tekshiruv obyektning o'ziga
-  // qaraydi, `tgda()` ga emas.
+  // qaraydi, `tgQobiqda()` ga emas.
   return !(nativ && Boolean(tgWebApp()?.BackButton));
 }
 
@@ -402,7 +430,7 @@ export function useOrqaga(onBack: () => void, kerak = true): boolean {
  */
 export function havolaniOch(url: string): void {
   const w = tgWebApp();
-  if (tgda() && w) {
+  if (tgQobiqda() && w) {
     try {
       const tg = /^https?:\/\/t\.me\//i.test(url);
       if (tg && w.openTelegramLink) return w.openTelegramLink(url);
@@ -432,7 +460,7 @@ export type Tebranish = "togri" | "xato" | "yutuq" | "tanlov";
  */
 export function tebrat(tur: Tebranish): void {
   const h = tgWebApp()?.HapticFeedback;
-  if (!tgda() || !h) return;
+  if (!tgQobiqda() || !h) return;
   try {
     if (tur === "togri") h.notificationOccurred("success");
     else if (tur === "xato") h.notificationOccurred("error");
@@ -443,41 +471,8 @@ export function tebrat(tur: Tebranish): void {
   }
 }
 
-
-/**
- * Telegram obyektini KUTADI va shundan keyin hukm chiqaradi.
- *
- * `tgda()` ni to'g'ridan-to'g'ri ishlatib bo'lmaydi: u birinchi
- * renderda javob beradi, `window.Telegram.WebApp` esa tashqi skriptdan
- * keladi (`telegram.org/js/telegram-web-app.js`). Skript sekin
- * yuklansa yoki tarmoq bir zumga uzilsa, o'sha lahzada javob "yo'q"
- * bo'ladi va ekran Telegram ICHIDA turgan odamga "Telegramda oching"
- * degan oynani ko'rsatib qo'yadi — u bosadi, bot ochiladi, ilova
- * qaytadan yuklanadi va halqa takrorlanadi.
- *
- * Shuning uchun uch holat: `kutilmoqda` (hali ma'lum emas), `ha`,
- * `yoq`. Kutish qisqa — oddiy brauzerdagi odam ikki soniyadan ortiq
- * bo'sh ekranga qaramasligi kerak.
- */
-export function tgKutish(kut = 2500): "kutilmoqda" | "ha" | "yoq" {
-  const [holat, setHolat] = useState<"kutilmoqda" | "ha" | "yoq">(
-    () => (tgda() ? "ha" : "kutilmoqda"),
-  );
-
-  useEffect(() => {
-    if (holat !== "kutilmoqda") return;
-    const boshlandi = Date.now();
-    const id = setInterval(() => {
-      if (tgda()) {
-        setHolat("ha");
-        clearInterval(id);
-      } else if (Date.now() - boshlandi > kut) {
-        setHolat("yoq");
-        clearInterval(id);
-      }
-    }, 150);
-    return () => clearInterval(id);
-  }, [holat, kut]);
-
-  return holat;
-}
+// `tgKutish` SHU YERDA EDI va olib tashlandi. U "`initData` bormi"
+// degan savolga javob berardi, bellashuv esa "hisob Telegram'ganmi"
+// deb so'raydi — ikkalasi bir xil emas va farqi odamni devorga urardi
+// (`lib/tgHisob.ts` dagi izohga qarang). Ikkinchi, deyarli to'g'ri
+// tekshiruvni qoldirish — ertami-kechmi yana o'sha xato.

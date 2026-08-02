@@ -558,8 +558,8 @@ const S = {
   telegramBilanKirish: ["Telegram bilan kirish", "Войти через Telegram"],
   telegramBilanSaqlash: ["Telegram bilan saqlash", "Сохранить через Telegram"],
   tgMalumotKelmadi: [
-    "Telegram ma'lumoti kelmadi. Ilovani yopib, botdagi tugma orqali qaytadan oching.",
-    "Данные Telegram не пришли. Закройте приложение и откройте заново кнопкой в боте.",
+    "Telegram ma'lumoti kelmadi. Ilovani yopib, botga /start yozing va yashil «🎓 Ilovani ochish» tugmasini bosing.",
+    "Данные Telegram не пришли. Закройте приложение, отправьте боту /start и нажмите зелёную кнопку «🎓 Открыть приложение».",
   ],
   tgSozlanmagan: [
     "Telegram orqali kirish sozlanmagan. Iltimos, keyinroq urinib ko'ring.",
@@ -568,9 +568,13 @@ const S = {
   /* Botdagi tugma nomi o'zgardi: "Saytga kirish" olib tashlandi va
      endi ilova Telegram ICHIDA ochiladi. Matn ham shunga moslashdi —
      aks holda odam bo'lmagan tugmani qidirardi. */
+  // AYNAN «Ilovani ochish» tugmasi aytiladi, klaviaturadagi «Darslar»
+  // emas. Ikkalasi ham ilovani ochadi, lekin Telegram pastdagi
+  // klaviaturadan ochilgan ilovaga hisob ma'lumotini BERMAYDI — ya'ni
+  // eski maslahat odamni aynan shu ekranga qaytarardi.
   botIzoh: [
-    "Botdagi «Darslar» tugmasini bossangiz ilova shu yerda ochiladi va avtomatik kirasiz.",
-    "Нажмите в боте кнопку «Уроки» — приложение откроется прямо здесь, вход произойдёт автоматически.",
+    "Botga /start yozing va yashil «🎓 Ilovani ochish» tugmasini bosing — ilova shu yerda ochiladi va avtomatik kirasiz.",
+    "Отправьте боту /start и нажмите зелёную кнопку «🎓 Открыть приложение» — приложение откроется здесь, вход произойдёт автоматически.",
   ],
   havolaEskirdi: [
     "Havolaning muddati tugagan — u bir soat amal qiladi. Yangisini olish uchun tugmani bosing.",

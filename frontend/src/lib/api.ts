@@ -513,6 +513,50 @@ export async function getLiga(): Promise<Liga | null> {
  */
 export const miniAppda = (): boolean => tgda();
 
+/**
+ * Javob shu ilova ochilishi davomida saqlanadi.
+ *
+ * "Ha" o'zgarmaydi — hisob Telegram'dan uzilmaydi. "Yo'q" ham
+ * keshlanadi, aks holda bellashuv ekraniga har kirganda `/me` so'rovi
+ * ketardi.
+ */
+let tgHisobKesh: boolean | null = null;
+
+/**
+ * Joriy HISOB Telegram'ga bog'langanmi.
+ *
+ * NEGA `miniAppda()` YETARLI EMAS. U `initData` borligiga qaraydi, ya'ni
+ * "ilova AYNAN HOZIR Telegram'dan ochildimi" degan savolga javob beradi.
+ * Bellashuv uchun esa boshqa narsa kerak: raqibga ko'rsatiladigan ism va
+ * xabar boradigan hisob — bular `initData` da emas, hisobning O'ZIDA
+ * turadi.
+ *
+ * Farq amalda ko'rindi. Telegram REPLY-KLAVIATURA tugmasidan ochilgan
+ * Mini App'ga `initData` bermaydi. Bot klaviaturasidagi «Bellashuv»ni
+ * bosgan odam — ya'ni Telegram ichida, o'z hisobi bilan turgan odam —
+ * "Bellashuv Telegram orqali o'ynaladi" degan devorga urilardi. Hisob
+ * esa allaqachon o'shaniki edi.
+ *
+ * Shuning uchun savol SERVERGA beriladi: `/me` javobidagi `telegram`
+ * bayrog'i — yagona ishonchli manba. Qurilmadagi bayroqqa (`az_tg_...`)
+ * suyanib bo'lmaydi: token eskirib, hisob anonimga tushib qolgan
+ * holatda u "1" bo'lib qolaverardi.
+ *
+ * Aloqa yo'q bo'lsa `false` qaytadi va KESHLANMAYDI — internet
+ * qaytganda keyingi urinish to'g'ri javob beradi.
+ */
+export async function telegramHisobmi(): Promise<boolean> {
+  // `initData` bor — kirish albatta Telegram hisobiga olib boradi,
+  // so'rov kutib o'tirishning hojati yo'q.
+  if (tgda()) return true;
+  if (tgHisobKesh !== null) return tgHisobKesh;
+
+  const hisob = await getHisob();
+  if (hisob === null) return false;
+  tgHisobKesh = Boolean(hisob.telegram);
+  return tgHisobKesh;
+}
+
 /* ------------------------------------------------- ota-ona paneli */
 
 export interface Xulosa {
