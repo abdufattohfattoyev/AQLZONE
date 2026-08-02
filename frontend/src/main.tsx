@@ -6,6 +6,7 @@ import App from "./App.tsx";
 import { Fon } from "./components/Fon";
 import { Holat } from "./components/Holat";
 import { XatoUshlagich } from "./components/XatoUshlagich";
+import { BotdanKelgan } from "./components/BotdanKelgan";
 import { Tanishuv } from "./components/Tanishuv";
 import { Kanal } from "./components/Kanal";
 import { ProgressProvider } from "./lib/progress";
@@ -55,6 +56,10 @@ createRoot(document.getElementById("root")!).render(
     <XatoUshlagich qayer="ilova">
       <Router>
         <ProgressProvider>
+          {/* Chaqiruv havolasidan kelgan kod ENG BIRINCHI o'qiladi —
+              `Tanishuv` dan ham oldin. U til so'ralayotgan paytda
+              ilovani umuman chizmaydi va kod yo'qolib ketardi. */}
+          <BotdanKelgan />
           {/* Mini App'ga birinchi kirganda ism so'raladi. Boshqa hamma
               holatda bu qatlam ko'rinmaydi va hech narsa qilmaydi. */}
           <Tanishuv>

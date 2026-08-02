@@ -117,15 +117,38 @@ export const tgWebApp = (): TgWebApp | undefined =>
  * yo'naltirish teshigi bo'lib qolardi.
  */
 export function boshParametri(): string {
-  const oqi = (satr: string): string =>
-    new URLSearchParams(satr).get("tgWebAppStartParam") || "";
+  /** `?a=1&b=2` ko'rinishidagi satrdan bitta kalitni oladi. */
+  const olib = (satr: string, kalit: string): string =>
+    new URLSearchParams(satr).get(kalit) || "";
+
+  /**
+   * `tgWebAppData` ICHIDAN oladi.
+   *
+   * Telegram ko'p mijozda kodni alohida kalit qilib emas, imzolangan
+   * `tgWebAppData` ning ichiga solib yuboradi:
+   *
+   *   #tgWebAppData=query_id%3D..%26start_param%3DKOD%26hash%3D..
+   *
+   * `URLSearchParams` tashqi qiymatni o'zi dekodlaydi, shuning uchun
+   * uni ikkinchi marta so'rov satri sifatida o'qish yetarli.
+   */
+  const ichidan = (satr: string): string => {
+    const ma = olib(satr, "tgWebAppData");
+    return ma ? olib(ma, "start_param") : "";
+  };
 
   let xom = "";
   try {
+    const hash = location.hash.replace(/^#/, "");
+    const soro = location.search.replace(/^\?/, "");
     xom =
       tgWebApp()?.initDataUnsafe?.start_param
-      || oqi(location.hash.replace(/^#/, ""))
-      || oqi(location.search.replace(/^\?/, ""))
+      // Imzolangan satrning O'ZI — Telegram ichida eng ishonchli manba.
+      || olib(tgWebApp()?.initData || "", "start_param")
+      || ichidan(hash)
+      || olib(hash, "tgWebAppStartParam")
+      || ichidan(soro)
+      || olib(soro, "tgWebAppStartParam")
       || "";
   } catch {
     return "";
