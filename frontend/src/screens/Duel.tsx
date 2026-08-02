@@ -158,21 +158,31 @@ function Shartlar({ onTanladi, onChiq }: {
   const [vaqt, setVaqt] = useState<number>(60);
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-6 pb-10 sm:max-w-[560px]">
+    /* Kenglik ekranga qarab o'sadi, balandlik esa SIQILADI. Telegram
+       Desktop'da Mini App tor VA past oynada ochiladi: u yerda qat'iy
+       bo'shliqlar bilan "Chaqirish" tugmasi ekrandan chiqib ketardi va
+       odam uni umuman ko'rmasdi. `clamp` bilan tepa qismi past oynada
+       o'zi kichrayadi. */
+    <div className="mx-auto w-full max-w-[430px] px-4 pt-[clamp(10px,2.5vh,24px)]
+                    pb-8 sm:max-w-[600px] lg:max-w-[760px]">
       <div className="text-center">
-        <span className="mx-auto grid size-[72px] place-items-center rounded-[24px]
-                         bg-brand-orange text-[34px] shadow-clay">
+        <span className="mx-auto grid place-items-center rounded-[24px] bg-brand-orange shadow-clay
+                         size-[clamp(52px,9vh,72px)] text-[clamp(26px,4.5vh,34px)]">
           ⚔️
         </span>
-        <h1 className="mt-3 text-[22px] leading-tight">{t("duel")}</h1>
-        <p className="mt-1.5 text-[13px] leading-snug text-ink-soft">{t("duelShartIzoh")}</p>
+        <h1 className="mt-2.5 text-[clamp(19px,3.4vh,23px)] leading-tight">{t("duel")}</h1>
+        <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">{t("duelShartIzoh")}</p>
       </div>
 
       {/* ---- o'yin ---- */}
-      <h2 className="mt-6 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
+      <h2 className="mt-[clamp(14px,2.5vh,24px)] mb-2 ml-1.5 text-[11px] tracking-widest
+                     text-ink-soft uppercase">
         {t("duelOyinTanla")}
       </h2>
-      <div className="grid grid-cols-3 gap-2">
+      {/* Oltita o'yin: tor telefonda 3×2, kengroq ekranda bitta qatorda.
+          `min-w-0` SHART — busiz uzun nom katakni kengaytirib, setkani
+          buzib yuborardi. */}
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {DUEL_OYINLAR.map((o) => {
           const tanlangan = o.id === oyin.id;
           const rang = UNIT_COLORS[o.rang];
@@ -180,11 +190,14 @@ function Shartlar({ onTanladi, onChiq }: {
             <button key={o.id} type="button" onClick={() => setOyin(o)} title={t(o.nom)}
               aria-pressed={tanlangan}
               style={tanlangan ? undefined : { backgroundColor: `${rang.road}14` }}
-              className={`clay-press flex flex-col items-center gap-1 rounded-clay p-2.5
-                          text-center transition-colors
+              className={`clay-press flex min-w-0 flex-col items-center justify-start gap-1
+                          rounded-clay px-1.5 py-2.5 text-center transition-colors
                           ${tanlangan ? `${rang.bg} text-white shadow-clay` : "text-ink shadow-clay-sm"}`}>
-              <span className="text-[24px] leading-none">{o.emoji}</span>
-              <span className="w-full truncate font-display text-[11px] leading-tight">
+              <span className="text-[clamp(20px,3.4vh,24px)] leading-none">{o.emoji}</span>
+              {/* Nom KESILMAYDI, ikki qatorgacha o'raladi: "Ko'paytirish
+                  jadvali" kesilganda "Ko'paytirish jad…" bo'lib qolardi
+                  va bola qaysi o'yin ekanini bilmasdi. */}
+              <span className="hyphens-auto font-display text-[10.5px] leading-[1.15] break-words">
                 {t(o.nom)}
               </span>
             </button>
@@ -201,13 +214,14 @@ function Shartlar({ onTanladi, onChiq }: {
       {/* Tanlangan shartlar bitta qatorda takrorlanadi: uchta tanlov uch
           joyda turadi va ularni birga ko'rmasdan "nima chiqdi?" degan
           savolga javob berib bo'lmaydi. */}
-      <p className="mt-5 text-center text-[12.5px] text-ink-soft">
+      <p className="mt-[clamp(10px,2vh,20px)] text-center text-[12.5px] text-ink-soft">
         {t("duelShartYakun", { oyin: t(oyin.nom), savollar, vaqt })}
       </p>
 
       <button type="button" onClick={() => onTanladi({ oyin: oyin.id, savollar, vaqt })}
-        className="tugma-3d az-yaltir mt-3 w-full rounded-3xl bg-brand-green py-4 font-display
-                   text-[17px] text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
+        className="tugma-3d az-yaltir mt-2.5 w-full rounded-3xl bg-brand-green
+                   py-[clamp(11px,2.2vh,16px)] font-display text-[17px] text-white
+                   shadow-[0_6px_0_var(--color-brand-green-d)]">
         {t("duelChaqirish")}
       </button>
 
@@ -229,13 +243,15 @@ function ShartQator({ nom, qiymatlar, joriy, onTanla, yozuv }: {
 }) {
   return (
     <>
-      <h2 className="mt-5 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
+      <h2 className="mt-[clamp(12px,2.2vh,20px)] mb-1.5 ml-1.5 text-[11px] tracking-widest
+                     text-ink-soft uppercase">
         {nom}
       </h2>
       <div className="flex gap-2">
         {qiymatlar.map((n) => (
           <button key={n} type="button" onClick={() => onTanla(n)} aria-pressed={n === joriy}
-            className={`clay-press flex-1 rounded-clay py-3 font-display text-[16px]
+            className={`clay-press min-w-0 flex-1 rounded-clay py-[clamp(9px,1.8vh,13px)]
+                        font-display text-[clamp(14px,2.4vh,16px)] whitespace-nowrap
                         transition-colors ${n === joriy
                           ? "bg-brand-blue text-white shadow-clay"
                           : "bg-karta text-ink-soft shadow-clay-sm"}`}>
