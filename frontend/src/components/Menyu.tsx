@@ -11,9 +11,31 @@
  * boshqa ekranga o'tgan odam ularni butunlay yo'qotardi.
  *
  * Shu sabab menyu ro'yxat emas, IZOHLI ro'yxat: har satrning ostida
- * bir qatorlik javob turadi — "u yerda nima bo'ladi". Ro'yxat esa
- * bo'limlarga bo'lingan (ta'lim, o'yin, yutuq, hisob), chunki o'n
- * to'rtta teng satr ham xuddi oltita teng tugmadek chalkash bo'lardi.
+ * bir qatorlik javob turadi — "u yerda nima bo'ladi".
+ *
+ * ─────────────────── nega u YOPILADIGAN bo'ldi ───────────────────
+ *
+ * Izohli satrlar bilan ro'yxat o'n to'rttaga yetdi va uning ustiga
+ * sakkizta o'yin chipi qo'shilgan edi. Natijada menyu ikki ekrandan
+ * uzun bo'lib qoldi: uni ochgan odam kerakli satrni O'QIB emas,
+ * SURIB qidirardi.
+ *
+ * Menyu esa o'qish uchun ochilmaydi — bir joyga borish uchun
+ * ochiladi. Endi u to'rtta kategoriya: ta'lim, o'yin, yutuq, hisob.
+ * Bittasi ochiq bo'ladi (ta'lim — ilovaning asosiy ishi), qolgani
+ * yopiq va bosilganda ochiladi. Bir vaqtda faqat BITTASI ochiq
+ * turadi, aks holda hammasini ochib qo'ygan odam yana o'sha uzun
+ * ro'yxatga qaytardi.
+ *
+ * Yopiq kategoriya ichidagi ogohlantirishni YUTMAYDI: bajarilmagan
+ * kunlik sinov yoki yangi nishon bo'lsa, qizil nuqta kategoriyaning
+ * o'zida chiqadi. Busiz "bugun bir ish bor" degan xabar bosilmagan
+ * yig'ma ostida ko'rinmay ketardi.
+ *
+ * SAKKIZTA O'YIN CHIPI OLIB TASHLANDI. Ular "Matematik o'yinlar"
+ * satrining ostida turardi va o'sha satr allaqachon o'yinlar
+ * ekraniga olib boradi — ya'ni menyuning eng baland bo'lagi butun
+ * bir ekranning takrori edi.
  *
  * ENG PASTDA — "ball qanday yig'iladi". Bu ilovaning eng ko'p
  * so'raladigan savoli va javobi ilgari hech qayerda yozilmagan edi:
@@ -23,13 +45,12 @@
  * O'NG TOMONDAN chiqadi — uni ochadigan tugma ham panelning eng
  * o'ngida turadi, ya'ni menyu bosilgan joydan "o'sib chiqadi".
  */
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { TilTugma } from "./TilTugma";
-import { OYINLAR } from "../lib/oyin";
 import { UNIT_COLORS } from "../lib/types";
 import type { Course } from "../lib/curriculum";
 import { profilSoni } from "../lib/api";
@@ -39,7 +60,7 @@ import { sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import {
   yolDaftar, yolDokon, yolDuel, yolKurs, yolKurslar, yolMaydon, yolNishon,
-  yolOtaOna, yolOyin, yolOyinlar, yolReyting, yolSinov, yolSozlama,
+  yolOtaOna, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
@@ -68,6 +89,30 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
     })) > 0,
     [p, kunlik, kurs],
   );
+
+  /**
+   * Qaysi kategoriya ochiq — bir vaqtda faqat BITTASI.
+   *
+   * Holat React'da turadi, `<details name>` ning o'z akkordeoniga
+   * suyanilmadi: u yangi xossa va eski Telegram WebView'da to'rttala
+   * bo'lim birdan ochilib, menyu yana uzun ro'yxatga aylanardi.
+   *
+   * Boshlang'ich qiymat — "ta'lim": ilovaning asosiy ishi shu va
+   * to'rttasi ham yopiq turgan menyu birinchi ochilishda bo'sh
+   * tuyulardi.
+   */
+  const [ochiqBolim, setOchiqBolim] = useState<BolimId | null>("talim");
+
+  /**
+   * Menyu yopilganda kategoriyalar boshlang'ich holatga qaytadi.
+   *
+   * Busiz menyu har safar odam OXIRGI marta qoldirgan holatida
+   * ochilardi: kecha "Hisob" ni ochgan bola bugun menyuni ochib,
+   * darslar o'rniga sozlamalar ro'yxatini ko'rardi.
+   */
+  useEffect(() => {
+    if (!ochiq) setOchiqBolim("talim");
+  }, [ochiq]);
 
   /**
    * Menyu ochiq turganda sahifaning o'zi surilmasin.
@@ -169,9 +214,11 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4
                         pb-[calc(1rem+var(--az-past))]">
           {/* ======================= ta'lim ======================= */}
-          <Bolim>{t("menyuTalim")}</Bolim>
-
-          <Karta>
+          <Bolim id="talim" ic="map" nom={t("menyuTalim")}
+            ochiq={ochiqBolim} onOchiq={setOchiqBolim}
+            /* Bugun bajarilmagan sinov ham, kutayotgan xatolar ham shu
+               ichkarida — nuqta ikkalasidan biri bo'lsa chiqadi. */
+            nuqta={sinovBor || daftarSoni > 0}>
             <Satr ic="map" rang="green" nom={kursMatn(kurs.title)}
               izoh={t("menyuDarslarIzoh")} on={yur(yolKurs(kurs))} />
             <Satr ic="home" rang="blue" nom={t("tabBosh")}
@@ -192,70 +239,37 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
                 ? t("daftarKutyapti", { n: daftarSoni })
                 : t("menyuDaftarIzoh")}
               on={daftarSoni > 0 ? yur(yolDaftar(kurs)) : undefined} />
-          </Karta>
+          </Bolim>
 
-          {/* ==================== o'yin va duel ==================== */}
-          <Bolim>{t("menyuOyinBolim")}</Bolim>
-
-          <Karta>
+          {/* ==================== o'yin va duel ====================
+              Sakkizta o'yin chipi SHU YERDA edi va olib tashlandi:
+              "Matematik o'yinlar" satri allaqachon o'sha ekranga olib
+              boradi, ya'ni chiplar butun bir ekranning takrori edi —
+              menyudagi eng baland bo'lak esa aynan o'sha edi. */}
+          <Bolim id="oyin" ic="puzzle" nom={t("menyuOyinBolim")}
+            ochiq={ochiqBolim} onOchiq={setOchiqBolim}>
             <Satr ic="clock" rang="green" nom={t("maydon")}
               izoh={t("menyuMaydonIzoh")} on={yur(yolMaydon())} />
             <Satr ic="flame" rang="orange" nom={t("duel")}
               izoh={t("menyuDuelIzoh")} on={yur(yolDuel())} />
             <Satr ic="puzzle" rang="purple" nom={t("oyinlarBolim")}
               izoh={t("menyuOyinlarIzoh")} on={yur(yolOyinlar())} />
-
-            {/* Sakkizta o'yin SHU KARTANING ichida, chiziq ostida.
-                Ular alohida bo'lim emas — "Matematik o'yinlar" satrining
-                ichida nima borligini ochib beradi.
-
-                Chip KICHIK va ikki ustunda: ular ro'yxatning davomi
-                emas, uning ichki tafsiloti. Katta satr bo'lganda
-                sakkiztasi menyuni yolg'iz o'zi to'ldirib yuborardi. */}
-            <div className="px-3 py-2">
-              <p className="mb-1 ml-0.5 text-[10px] tracking-wider text-ink-soft/80 uppercase">
-                {t("menyuBarchaOyin")}
-              </p>
-              <div className="grid grid-cols-2 gap-1">
-                {OYINLAR.map((o) => (
-                  <button key={o.id} type="button" onClick={yur(yolOyin(o.id))} title={t(o.nom)}
-                    style={{ backgroundColor: `${UNIT_COLORS[o.rang].road}14` }}
-                    className="clay-press flex items-center gap-1.5 rounded-xl px-2 py-1 text-left">
-                    <span aria-hidden className="shrink-0 text-[15px] leading-none">{o.emoji}</span>
-                    {/* Nom KESILMAYDI, ikki qatorga o'raladi. Ruschada
-                        ("Последовательность") u chipdan uch barobar uzun
-                        va `truncate` bo'lganda "Послед…" bo'lib qolardi —
-                        ya'ni o'yin nomi umuman o'qilmasdi.
-
-                        `break-words` SHART: o'sha so'z bo'linmasa, u
-                        bitta uzun bo'lak bo'lib chipdan chiqib ketardi
-                        va qo'shni ustunning ustiga chiqardi. */}
-                    <span className="min-w-0 line-clamp-2 hyphens-auto break-words text-[11px]
-                                     leading-tight text-ink">
-                      {t(o.nom)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </Karta>
+          </Bolim>
 
           {/* ======================= yutuqlar ======================= */}
-          <Bolim>{t("menyuYutuq")}</Bolim>
-
-          <Karta>
+          <Bolim id="yutuq" ic="trophy" nom={t("menyuYutuq")}
+            ochiq={ochiqBolim} onOchiq={setOchiqBolim} nuqta={yangiNishon}>
             <Satr ic="trophy" rang="gold" nom={t("nishonlar")}
               izoh={t("menyuNishonIzoh")} on={yur(yolNishon(kurs))} nuqta={yangiNishon} />
             <Satr ic="palette" rang="blue" nom={t("tabDokon")}
               izoh={t("menyuDokonIzoh")} on={yur(yolDokon(kurs))} />
             <Satr ic="order" rang="gold" nom={t("reyting")}
               izoh={t("menyuReytingIzoh")} on={yur(yolReyting())} />
-          </Karta>
+          </Bolim>
 
           {/* ======================== hisob ======================== */}
-          <Bolim>{t("menyuHisobBolim")}</Bolim>
-
-          <Karta>
+          <Bolim id="hisob" ic="pencil" nom={t("menyuHisobBolim")}
+            ochiq={ochiqBolim} onOchiq={setOchiqBolim}>
             <Satr ic="parent" rang="green" nom={t("otaOnaPaneli")}
               izoh={t("menyuOtaOnaIzoh")} on={yur(yolOtaOna(kurs))} />
             <Satr ic="pencil" rang="blue" nom={t("hisobSozlamalari")}
@@ -282,7 +296,7 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
               </span>
               <TilTugma className="shrink-0" />
             </div>
-          </Karta>
+          </Bolim>
 
           {/* ================ ball qanday yig'iladi ================
               YOPIQ turadi va bosilganda ochiladi.
@@ -317,25 +331,29 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
 
 /* ------------------------------------------------------------------ */
 
-function Bolim({ children }: { children: ReactNode }) {
-  return (
-    <h3 className="mt-3.5 mb-1 ml-1 text-[10px] tracking-widest text-ink-soft uppercase first:mt-0.5">
-      {children}
-    </h3>
-  );
-}
+/** Kategoriyalar. Ro'yxatdagi tartib ham shu. */
+type BolimId = "talim" | "oyin" | "yutuq" | "hisob";
 
 /**
- * Bo'limning kartasi — ichidagi satrlar bir butun bo'lib turadi.
+ * Yopiladigan kategoriya.
  *
- * ─────────────────── NEGA KERAK BO'LDI ───────────────────
+ * ─────────────────── NEGA YOPILADI ───────────────────
  *
- * Ilgari o'n to'rtta satr fon ustida yakka-yakka turardi va menyu
- * bitta uzun oqim bo'lib ko'rinardi: qaysi satr qaysi bo'limga
- * tegishli ekani faqat kichkina kulrang sarlavhadan bilinardi.
+ * Ilgari to'rttala bo'lim ham ochiq turardi: o'n to'rtta izohli satr
+ * va sakkizta o'yin chipi. Menyu ikki ekrandan uzun edi va uni
+ * ochgan odam kerakli joyni o'qib emas, SURIB qidirardi.
  *
- * Karta buni ko'z bilan hal qiladi: to'rtta bo'lak sanaladi, o'n
- * to'rtta satr emas.
+ * Endi bir vaqtda bittasi ochiq. Bu bir bosish qo'shadi, lekin
+ * o'rniga surish va ko'z bilan qidirishni butunlay olib tashlaydi —
+ * bola uchun bu almashuv foydali: u "Reyting"ni qidirmaydi, "Yutuq
+ * va reyting"ni bosadi.
+ *
+ * ─────────────────── NEGA NUQTA SARLAVHADA ───────────────────
+ *
+ * Yopiq kategoriya ichidagi ogohlantirishni yutib yuborardi:
+ * bajarilmagan kunlik sinovning qizil nuqtasi bosilmagan yig'ma
+ * ostida qolardi va bola bugun bir ish borligini bilmasdi. Shuning
+ * uchun nuqta ichkaridan sarlavhaga ko'tariladi.
  *
  * ─────────────────── NEGA SOYA, NEGA FON EMAS ───────────────────
  *
@@ -343,16 +361,59 @@ function Bolim({ children }: { children: ReactNode }) {
  * — ya'ni "oq karta" oq fonda umuman ko'rinmasdi. Shuning uchun
  * ajralish rangdan emas, SOYADAN keladi: u har to'rtala mavzuda ham
  * ishlaydi.
- *
- * Ichkaridagi chiziqlar (`divide-track`) ham xuddi shunday tanlangan —
- * `--color-track` yarim shaffof va u quyuq mavzuda oqarib, yorug'ida
- * qoraya oladi.
  */
-function Karta({ children }: { children: ReactNode }) {
+function Bolim({ id, ic, nom, ochiq, onOchiq, nuqta = false, children }: {
+  id: BolimId;
+  ic: IconName;
+  nom: string;
+  /** Ayni paytda qaysi kategoriya ochiq. */
+  ochiq: BolimId | null;
+  onOchiq: (yangi: BolimId | null) => void;
+  nuqta?: boolean;
+  children: ReactNode;
+}) {
+  const buOchiq = ochiq === id;
+
   return (
-    <div className="divide-y divide-track overflow-hidden rounded-clay bg-karta shadow-clay-sm">
-      {children}
-    </div>
+    <details
+      open={buOchiq}
+      /**
+       * `onToggle` YOPILISHDA ham chaqiriladi va bu tuzoq.
+       *
+       * Yangi kategoriya ochilganda React eskisini yopadi, eskisi esa
+       * o'z navbatida "meni yoping" deb xabar beradi. To'g'ridan-to'g'ri
+       * `null` qo'ysak, u endigina ochilgan kategoriyani ham yopib
+       * qo'yardi — bosish ishlamayotgandek tuyulardi.
+       *
+       * Shuning uchun yopilish faqat O'ZI ochiq bo'lgan kategoriyaga
+       * ta'sir qiladi.
+       */
+      onToggle={(e) => {
+        const endi = e.currentTarget.open;
+        if (endi) onOchiq(id);
+        else if (buOchiq) onOchiq(null);
+      }}
+      className="group mt-2.5 overflow-hidden rounded-clay bg-karta shadow-clay-sm first:mt-0.5">
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-3 py-2.5
+                          marker:hidden">
+        <span aria-hidden
+          className="relative grid size-8 shrink-0 place-items-center rounded-xl bg-track text-ink-soft">
+          <Icon name={ic} size={17} />
+          {nuqta && (
+            <span className="az-nuqta absolute -top-0.5 -right-0.5 size-2.5 rounded-full
+                             bg-brand-red ring-2 ring-karta" />
+          )}
+        </span>
+        <span className="min-w-0 flex-1 truncate font-display text-[13.5px] leading-tight">
+          {nom}
+        </span>
+        <Icon name="chevron" size={15}
+          className="shrink-0 text-ink-dim transition-transform group-open:rotate-90" />
+      </summary>
+      {/* Ichkaridagi chiziqlar `--color-track` da: u yarim shaffof va
+          quyuq mavzuda oqarib, yorug'ida qoraya oladi. */}
+      <div className="divide-y divide-track border-t border-track">{children}</div>
+    </details>
   );
 }
 

@@ -128,7 +128,9 @@ const S = {
   menyuOyinBolim: ["O'yin va bellashuv", "Игры и дуэли"],
   menyuYutuq: ["Yutuq va reyting", "Награды и рейтинг"],
   menyuHisobBolim: ["Hisob va sozlamalar", "Профиль и настройки"],
-  menyuBarchaOyin: ["Sakkizta o'yin", "Восемь игр"],
+  // `menyuBarchaOyin` shu yerda edi — sakkizta o'yin chipi menyudan
+  // olib tashlangach kerak bo'lmay qoldi (`Menyu.tsx` dagi izohga
+  // qarang). O'yinlar ro'yxati o'zining ekranida turibdi.
 
   /* Izohlar BIR QATORGA sig'ishi kerak.
      Telefonda menyu 360px, satrdagi matnga esa 250px qoladi — bu
