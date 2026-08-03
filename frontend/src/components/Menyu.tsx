@@ -149,11 +149,17 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
   return (
     <>
       {/* Xira fon. Bosilganda yopiladi — menyudan chiqishning eng
-          ko'p ishlatiladigan yo'li aynan shu, "Yopish" tugmasi emas. */}
+          ko'p ishlatiladigan yo'li aynan shu, "Yopish" tugmasi emas.
+
+          MUDDAT va EGRI CHIZIQ menyunikiga TENG. Ilgari fon 200ms,
+          menyu esa 300ms edi: yopilganda fon avval yo'qolib, menyu
+          yalang'och holda sirg'alib chiqardi — ikkitasi bir narsaning
+          bo'lagidek emas, alohida-alohida qimirlardi. */}
       <div
         aria-hidden
         onClick={onYop}
-        className={`fixed inset-0 z-40 bg-ink/35 backdrop-blur-[2px] transition-opacity duration-200
+        className={`fixed inset-0 z-40 bg-ink/35 backdrop-blur-[2px]
+                    transition-opacity duration-300 ease-out
                     ${ochiq ? "opacity-100" : "pointer-events-none opacity-0"}`}
       />
 

@@ -143,8 +143,19 @@ export function Panel() {
     // Menyu ENG O'NGDA: u manzil emas, ochiladigan ro'yxat. Qizil nuqta
     // ham shu yerga ko'chdi — nishon endi menyu ichida va odam yangi
     // nishonini boshqa hech qayerdan sezmasdi.
+    //
+    // `faol` EMAS, `yoniq`. Farq katta va u ko'rinib turadi: `faol`
+    // siljiydigan yashil belgini o'ziga tortadi, ya'ni menyu ochilishi
+    // bilan belgi joriy sahifadan Menyuga qarab yugurardi va turgan
+    // sahifa tugmasi kulrangga aylanardi — panel SAHIFA ALMASHDI deb
+    // yolg'on aytardi. Ustiga menyuning o'zi o'ng tomondan chiqadi:
+    // bir vaqtda ikki narsa qarama-qarshi tomonga qimirlardi.
+    //
+    // Menyu esa manzil emas — u shu sahifa USTIDA ochiladigan oyna.
+    // Shuning uchun belgi joyida qoladi, tugma faqat yonadi.
     {
-      ic: "menu", nom: t("tabMenyu"), faol: menyu, nuqta: yangiNishon,
+      ic: "menu", nom: t("tabMenyu"), faol: false, yoniq: menyu,
+      nuqta: yangiNishon,
       on: () => { tebrat("tanlov"); setMenyu(true); },
     },
   ] as const;
@@ -184,6 +195,7 @@ export function Panel() {
             )}
             {tablar.map((t) => (
               <Tab key={t.nom} ic={t.ic} nom={t.nom} faol={t.faol}
+                yoniq={"yoniq" in t ? t.yoniq : false}
                 nuqta={"nuqta" in t ? t.nuqta : false}
                 on={t.on} />
             ))}
@@ -194,14 +206,30 @@ export function Panel() {
   );
 }
 
-/** Panelning bitta tugmasi. Balandligi 56px — barmoq uchun yetarli. */
-function Tab({ ic, nom, on, faol = false, nuqta = false }: {
+/**
+ * Panelning bitta tugmasi. Balandligi 56px — barmoq uchun yetarli.
+ *
+ * `faol` va `yoniq` — ATAYLAB ikki xil narsa:
+ *
+ *   faol   "siz shu sahifadasiz". Siljiydigan yashil belgi shunga
+ *          boradi va ekran o'quvchi `aria-current="page"` ni o'qiydi.
+ *   yoniq  "shu tugma ochgan narsa hozir ekranda". Menyu shunday: u
+ *          sahifa emas, shu sahifa ustidagi oyna. Tugma yonadi, lekin
+ *          belgi joyidan qimirlamaydi va manzil o'zgarmagani uchun
+ *          `aria-current` ham berilmaydi.
+ */
+function Tab({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
   ic: "home" | "map" | "puzzle" | "order" | "menu";
   nom: string;
   on: () => void;
   faol?: boolean;
+  yoniq?: boolean;
   nuqta?: boolean;
 }) {
+  // Rang va sakrash ikkalasiga ham tegishli — bosilgan tugma javob
+  // berishi kerak, bu sahifa bo'ladimi yoki oyna.
+  const belgili = faol || yoniq;
+
   return (
     // `relative` — tugma siljiydigan belgi USTIDA turishi uchun: belgi
     // absolyut joylashgan va joylashgansiz element uni bosib qolardi.
@@ -212,13 +240,13 @@ function Tab({ ic, nom, on, faol = false, nuqta = false }: {
          siqib qo'yadi — natijada siljiydigan belgi ham joyidan chiqadi.
          U bilan esa yozuv `truncate` ga bo'ysunadi. */
       className={`clay-press relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2
-                  transition-colors ${faol ? "text-brand-green-d" : "text-ink-soft"}`}>
+                  transition-colors ${belgili ? "text-brand-green-d" : "text-ink-soft"}`}>
       {/* `key` faollik bilan almashadi va shu sabab element QAYTA
           yasaladi — sakrash animatsiyasi aynan shunda qaytadan
           o'ynaydi. Faqat klass qo'shilsa, brauzer uni qayta ishga
           tushirmasdi. */}
-      <span key={faol ? "faol" : "oddiy"}
-        className={`relative ${faol ? "az-tab-sakra" : ""}`}>
+      <span key={belgili ? "faol" : "oddiy"}
+        className={`relative ${belgili ? "az-tab-sakra" : ""}`}>
         <Icon name={ic} size={22} />
         {nuqta && (
           <span className="az-nuqta absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
