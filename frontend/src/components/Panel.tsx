@@ -163,9 +163,11 @@ export function Panel() {
 
       <Menyu ochiq={menyu} onYop={() => setMenyu(false)} kurs={kurs} />
 
+      {/* Chegara `border-t` EMAS, `.az-panel` ichidagi soya bilan
+          chiziladi. Ilgari u `border-karta/45` edi — ya'ni oq kartada
+          oq chiziq, ko'rinmaydigan chegara. */}
       <nav data-tur="panel"
-        className="az-shisha fixed inset-x-0 bottom-0 z-30 border-t border-karta/45
-                   pb-[var(--az-past)]">
+        className="az-panel fixed inset-x-0 bottom-0 z-30 pb-[var(--az-past)]">
         <div className="mx-auto w-full max-w-[430px] px-1 sm:max-w-[560px]">
           {/* `relative` AYNAN shu yerda: belgining eni foizda beriladi va
               u tugmalar qatoriga nisbatan o'lchanishi kerak. Tashqi

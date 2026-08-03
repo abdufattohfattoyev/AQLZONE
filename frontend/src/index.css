@@ -560,6 +560,50 @@
 
 /* ----------------------------------------------------- pastki panel */
 
+/* Panel — sahifaning davomi emas, ustidagi ALOHIDA yuza.
+
+   Ilgari u `az-shisha` edi, ya'ni kartaning atigi 45% i. Manzarali fon
+   ustida bu panelni deyarli yo'q qilardi: ostidan o'tayotgan kartalar
+   tugmalar bilan aralashib ko'rinardi va panel mustaqil narsa bo'lib
+   o'qilmasdi. Bola uchun bu ayniqsa yomon — chegara ko'rinmasa, u
+   tugmalarni sahifaning bir bo'lagi deb o'ylaydi va ularni qidirib
+   sahifani aylantirib ketadi.
+
+   Uch narsa birga ishlaydi:
+     1. yuza deyarli berk (92%) — orqadagi mazmun o'qilmay qoladi;
+     2. tepasida yupqa chiziq — chegaraning o'zi;
+     3. YUQORIGA tushadigan soya — panel sahifadan ko'tarilgandek
+        turadi. Chiziqning o'zi yetarli emas: ko'z hajmni soyadan
+        o'qiydi.
+
+   Shishaning ozgina qolgani ataylab: butunlay tekis rang manzara
+   ustida kesib qo'yilgan qog'ozdek ko'rinardi. Rang `--color-karta`
+   dan olinadi, shuning uchun uchala temada ham o'zidan-o'zi to'g'ri
+   chiqadi va bu yerda qo'lda yozilgan rang yo'q. */
+.az-panel {
+  background: color-mix(in srgb, var(--color-karta) 92%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow:
+    inset 0 1px 0 var(--color-track),
+    0 -10px 26px -14px rgb(0 0 0 / 0.45);
+}
+
+/* Tungi temada fon quyuq va yumshoq soya unda ko'rinmaydi — panel yana
+   fon bilan qo'shilib ketardi. Shuning uchun u yerda soya quyuqroq. */
+:root[data-tema="katta"] .az-panel {
+  box-shadow:
+    inset 0 1px 0 var(--color-track),
+    0 -12px 30px -12px rgb(0 0 0 / 0.75);
+}
+
+/* Blur qo'llab-quvvatlanmasa (eski WebView) shaffoflik xavfli bo'lib
+   qoladi: 8% ham yetarli, ostidagi yozuv tugmalar orasidan ko'rinib
+   turardi. Bunday mijozda panel butunlay berk bo'ladi. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .az-panel { background: var(--color-karta); }
+}
+
 /* Faol tugma ostidagi belgi bir tugmadan ikkinchisiga SILJIYDI.
    Paydo bo'lib-yo'qolsa, panel "chaqnab" turgandek tuyulardi va bola
    qayerdan qayerga o'tganini ko'rmasdi. Siljish esa ikki ekran o'rtasida
