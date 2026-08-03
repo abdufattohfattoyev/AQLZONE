@@ -576,14 +576,17 @@
         turadi. Chiziqning o'zi yetarli emas: ko'z hajmni soyadan
         o'qiydi.
 
-   Shishaning ozgina qolgani ataylab: butunlay tekis rang manzara
-   ustida kesib qo'yilgan qog'ozdek ko'rinardi. Rang `--color-karta`
-   dan olinadi, shuning uchun uchala temada ham o'zidan-o'zi to'g'ri
-   chiqadi va bu yerda qo'lda yozilgan rang yo'q. */
+   YUZA TO'LIQ BERK va bu ikkinchi urinish. Avval u 92% edi — orqadan
+   blur o'tsin degan niyatda. Telefonda esa ostidagi yozuv tugmalar
+   orasidan o'qilib turdi: Telegram WebView `-webkit-backdrop-filter`
+   ni "bor" deb aytadi-yu, amalda xiralashtirmaydi, ya'ni `@supports`
+   zaxirasi ham ishga tushmaydi. 8% shaffoflik shu qadar arzon narsa
+   emas ekan — panel endi butunlay berk.
+
+   Rang `--color-karta` dan olinadi, shuning uchun uchala temada ham
+   o'zidan-o'zi to'g'ri chiqadi va bu yerda qo'lda yozilgan rang yo'q. */
 .az-panel {
-  background: color-mix(in srgb, var(--color-karta) 92%, transparent);
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  background: var(--color-karta);
   box-shadow:
     inset 0 1px 0 var(--color-track),
     0 -10px 26px -14px rgb(0 0 0 / 0.45);
@@ -597,32 +600,41 @@
     0 -12px 30px -12px rgb(0 0 0 / 0.75);
 }
 
-/* Blur qo'llab-quvvatlanmasa (eski WebView) shaffoflik xavfli bo'lib
-   qoladi: 8% ham yetarli, ostidagi yozuv tugmalar orasidan ko'rinib
-   turardi. Bunday mijozda panel butunlay berk bo'ladi. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .az-panel { background: var(--color-karta); }
+/* ---- faol tugmaning yostig'i ----
+
+   ILGARI BITTA YOSTIQ BOR EDI va u tugmadan tugmaga SILJIRDI. Fikr
+   yomon emasdi — ikki ekran o'rtasida bog'lanish yasardi — lekin
+   telefonda u boshqacha o'qildi: butun panel bo'ylab yuguradigan
+   yashil dog' "menda nimadir joyidan qimirladi" degan tuyg'u berardi
+   va ko'z tugmani emas, o'sha yuguruvchini kuzatardi.
+
+   Endi HAR TUGMANING O'Z yostig'i bor. Hech narsa hech qayerga
+   ketmaydi: ketayotgani joyida so'nadi, kelayotgani joyida ochiladi.
+   Tugmalar shu bilan bir-biridan ham ajraladi — har biri o'z
+   chegarasiga ega bo'ladi.
+
+   O'lcham `scale` bilan beriladi, `width`/`inset` bilan emas: ular
+   sahifani qayta o'lchashga majbur qiladi va past telefonda animatsiya
+   sakrab-sakrab ketardi.
+
+   `scale` VA `transform` — ikkalasi ham sanaladi. Tailwind 4 `scale-90`
+   ni ALOHIDA `scale` xossasi bilan beradi (`transform` emas), ya'ni
+   faqat `transform` yozilsa o'tish umuman bo'lmay, o'lcham sakrab
+   o'zgarardi. `transform` esa qo'lda yozilgan uslublar uchun qoladi. */
+.az-tab-yostiq {
+  transition:
+    opacity 200ms ease-out,
+    scale 240ms cubic-bezier(0.34, 1.32, 0.64, 1),
+    transform 240ms cubic-bezier(0.34, 1.32, 0.64, 1);
 }
 
-/* Faol tugma ostidagi belgi bir tugmadan ikkinchisiga SILJIYDI.
-   Paydo bo'lib-yo'qolsa, panel "chaqnab" turgandek tuyulardi va bola
-   qayerdan qayerga o'tganini ko'rmasdi. Siljish esa ikki ekran o'rtasida
-   bog'lanish yasaydi.
-
-   Enini va o'rnini React beradi (`Panel.tsx`): tugmalar teng kenglikda,
-   shuning uchun belgi eni 1/5 va siljishi `indeks * 100%`. */
-.az-panel-belgi {
-  transition: transform 340ms cubic-bezier(0.34, 1.4, 0.64, 1);
-}
-
-/* Yangi tugma faol bo'lganda belgisi bir sakraydi. Animatsiya har safar
-   qaytadan ishga tushishi uchun React o'sha elementni `key` bilan
-   almashtiradi — CSS klass qo'shishning o'zi uni qayta o'ynatmaydi. */
-@keyframes az-tab-sakra {
-  0%   { transform: scale(1); }
-  38%  { transform: scale(1.24) translateY(-2px); }
-  68%  { transform: scale(0.95); }
-  100% { transform: scale(1); }
+/* Belgi ham yumshoq kattalashadi — lekin JOYIDAN QIMIRLAMAYDI.
+   Eski `az-tab-sakra` uni yuqoriga irg'itardi (`translateY(-2px)`) va
+   qatordagi beshta belgi bir tekisda turmay qolardi. */
+.az-tab-belgi {
+  transition:
+    scale 240ms cubic-bezier(0.34, 1.32, 0.64, 1),
+    transform 240ms cubic-bezier(0.34, 1.32, 0.64, 1);
 }
 
 /* Yangi nishon nuqtasi sekin nafas oladi — ko'zga tashlanadi, lekin
@@ -633,13 +645,14 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .az-tab-sakra { animation: az-tab-sakra 440ms cubic-bezier(0.34, 1.56, 0.64, 1); }
-  .az-nuqta     { animation: az-nuqta-nafas 2.2s ease-in-out infinite; }
+  .az-nuqta { animation: az-nuqta-nafas 2.2s ease-in-out infinite; }
 }
 
-/* Harakat kamaytirilgan bo'lsa belgi sakramasdan, darhol joyiga o'tadi. */
+/* Harakat kamaytirilgan bo'lsa yostiq ham, belgi ham darhol joyiga
+   o'tadi — ko'rinish o'zgaradi, o'tish esa bo'lmaydi. */
 @media (prefers-reduced-motion: reduce) {
-  .az-panel-belgi { transition: none; }
+  .az-tab-yostiq,
+  .az-tab-belgi { transition-duration: 0s; }
 }
 
 /* Kutish chizig'i (Kutish.tsx). `index.html` dagi dastlabki ekranda ham

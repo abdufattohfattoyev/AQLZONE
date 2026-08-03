@@ -160,11 +160,6 @@ export function Panel() {
     },
   ] as const;
 
-  // -1 bo'lishi mumkin: sozlamalar, do'kon va nishonlar sahifasida hech
-  // bir tugma faol emas. Bunda belgi umuman chizilmaydi — noto'g'ri
-  // joyda turgan belgi "shu yerdasiz" deb yolg'on aytardi.
-  const faolIndeks = tablar.findIndex((t) => t.faol);
-
   return (
     <>
       {/* Oddiy oqimdagi bo'shliq: panel `fixed` bo'lgani uchun sahifa
@@ -180,19 +175,11 @@ export function Panel() {
       <nav data-tur="panel"
         className="az-panel fixed inset-x-0 bottom-0 z-30 pb-[var(--az-past)]">
         <div className="mx-auto w-full max-w-[430px] px-1 sm:max-w-[560px]">
-          {/* `relative` AYNAN shu yerda: belgining eni foizda beriladi va
-              u tugmalar qatoriga nisbatan o'lchanishi kerak. Tashqi
-              idishda bo'lsa, yon bo'shliq ham hisobga kirib, belgi
-              tugmadan bir necha piksel keng bo'lib qolardi. */}
-          <div className="relative flex">
-            {faolIndeks >= 0 && (
-              <span aria-hidden
-                style={{
-                  width: `${100 / tablar.length}%`,
-                  transform: `translateX(${faolIndeks * 100}%)`,
-                }}
-                className="az-panel-belgi absolute inset-y-1 left-0 rounded-2xl bg-brand-green/12" />
-            )}
+          {/* Yostiq endi UMUMIY EMAS — har tugmaning o'zida (`Tab`).
+              Ilgari shu yerda bitta yostiq turardi va tugmadan tugmaga
+              siljirdi: butun panel bo'ylab yuguradigan yashil dog'
+              "nimadir joyidan qimirladi" degan tuyg'u berardi. */}
+          <div className="flex">
             {tablar.map((t) => (
               <Tab key={t.nom} ic={t.ic} nom={t.nom} faol={t.faol}
                 yoniq={"yoniq" in t ? t.yoniq : false}
@@ -211,12 +198,16 @@ export function Panel() {
  *
  * `faol` va `yoniq` — ATAYLAB ikki xil narsa:
  *
- *   faol   "siz shu sahifadasiz". Siljiydigan yashil belgi shunga
- *          boradi va ekran o'quvchi `aria-current="page"` ni o'qiydi.
+ *   faol   "siz shu sahifadasiz". Ekran o'quvchi `aria-current="page"`
+ *          ni o'qiydi.
  *   yoniq  "shu tugma ochgan narsa hozir ekranda". Menyu shunday: u
  *          sahifa emas, shu sahifa ustidagi oyna. Tugma yonadi, lekin
- *          belgi joyidan qimirlamaydi va manzil o'zgarmagani uchun
- *          `aria-current` ham berilmaydi.
+ *          manzil o'zgarmagani uchun `aria-current` berilmaydi.
+ *
+ * Yostiq HAR TUGMANING O'ZIDA. Ilgari butun panelga bitta yostiq
+ * bor edi va u tugmadan tugmaga siljirdi — ko'z tugmani emas, o'sha
+ * yuguruvchini kuzatardi. Endi ketayotgani joyida so'nadi, kelayotgani
+ * joyida ochiladi: panelda hech narsa hech qayerga ketmaydi.
  */
 function Tab({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
   ic: "home" | "map" | "puzzle" | "order" | "menu";
@@ -226,28 +217,36 @@ function Tab({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
   yoniq?: boolean;
   nuqta?: boolean;
 }) {
-  // Rang va sakrash ikkalasiga ham tegishli — bosilgan tugma javob
-  // berishi kerak, bu sahifa bo'ladimi yoki oyna.
+  // Ko'rinish ikkalasiga ham tegishli — bosilgan tugma javob berishi
+  // kerak, bu sahifa bo'ladimi yoki oyna.
   const belgili = faol || yoniq;
 
   return (
-    // `relative` — tugma siljiydigan belgi USTIDA turishi uchun: belgi
-    // absolyut joylashgan va joylashgansiz element uni bosib qolardi.
+    // `relative` — yostiq shu tugma ICHIDA joylashadi.
     <button type="button" onClick={on} title={nom}
       aria-current={faol ? "page" : undefined}
       /* `min-w-0` SHART: usiz flex elementi o'z mazmunidan kichrayolmaydi
          va uzun yozuv ("Родителям") tugmani kengaytirib, qolgan beshtasini
-         siqib qo'yadi — natijada siljiydigan belgi ham joyidan chiqadi.
-         U bilan esa yozuv `truncate` ga bo'ysunadi. */
+         siqib qo'yadi. U bilan esa yozuv `truncate` ga bo'ysunadi. */
       className={`clay-press relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2
-                  transition-colors ${belgili ? "text-brand-green-d" : "text-ink-soft"}`}>
-      {/* `key` faollik bilan almashadi va shu sabab element QAYTA
-          yasaladi — sakrash animatsiyasi aynan shunda qaytadan
-          o'ynaydi. Faqat klass qo'shilsa, brauzer uni qayta ishga
-          tushirmasdi. */}
-      <span key={belgili ? "faol" : "oddiy"}
-        className={`relative ${belgili ? "az-tab-sakra" : ""}`}>
-        <Icon name={ic} size={22} />
+                  transition-colors duration-200
+                  ${belgili ? "text-brand-green-d" : "text-ink-soft"}`}>
+      {/* Yostiq — tugmaning O'Z chegarasi.
+          `inset-x-1` yon bo'shliq qoldiradi: yostiqlar bir-biriga
+          tegib ketsa, beshta tugma bitta uzun tasmaga aylanardi.
+          O'lcham `scale` bilan o'zgaradi — `width` sahifani qayta
+          o'lchashga majbur qiladi va past telefonda sakrab ketardi. */}
+      <span aria-hidden
+        className={`az-tab-yostiq absolute inset-x-1 inset-y-1 rounded-2xl
+                    bg-brand-green/12 ring-1 ring-brand-green/15
+                    ${belgili ? "scale-100 opacity-100" : "scale-90 opacity-0"}`} />
+
+      {/* Belgi va yozuv yostiq USTIDA turishi kerak: joylashgansiz
+          element joylashganning ostida chiziladi. */}
+      <span className="relative">
+        <span className={`az-tab-belgi block ${belgili ? "scale-110" : "scale-100"}`}>
+          <Icon name={ic} size={22} />
+        </span>
         {nuqta && (
           <span className="az-nuqta absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
         )}
@@ -257,7 +256,13 @@ function Tab({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
           yozuv ("Родители") kesilib ketardi; beshtasida joy yetadi,
           lekin `truncate` baribir turadi: chetdan chiqib ketgan harf
           butun qatorni qiyshaytirardi. */}
-      <span className="w-full truncate px-0.5 text-center text-[10.5px] leading-none">{nom}</span>
+      {/* Yozuv shrifti FAOLLIKDA O'ZGARMAYDI. Sinab ko'rildi: `Fredoka`
+          ga almashtirilganda 10.5px yozuv boshqa kenglikda chizilib,
+          tugma almashganda titrab ketgandek tuyulardi. Ajratish uchun
+          yostiq va rang yetarli. */}
+      <span className="relative w-full truncate px-0.5 text-center text-[10.5px] leading-none">
+        {nom}
+      </span>
     </button>
   );
 }
