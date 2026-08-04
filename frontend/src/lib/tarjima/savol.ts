@@ -330,6 +330,402 @@ const S = {
   jChapda: ["chapda", "слева"],
   jOngda: ["o'ngda", "справа"],
   jOrtada: ["o'rtada", "в середине"],
+
+  /* ======================================================================
+   *                              5-SINF
+   * ================================================================== */
+
+  /* ---------------- natural sonlar ---------------- */
+  naturalSon: ["Natural sonlar qatorini eslaymiz!", "Вспоминаем ряд натуральных чисел!"],
+  kattaSonSolishtir: [
+    "Xonalarni chapdan boshlab solishtir!",
+    "Сравнивай разряды слева направо!",
+  ],
+  yaxlitla: ["Yaxlitla: qo'shni raqamga qara!", "Округли: смотри на соседнюю цифру!"],
+  naturalQosh: ["Xonama-xona qo'sh!", "Складывай разряд за разрядом!"],
+  naturalAyir: ["Xonama-xona ayir!", "Вычитай разряд за разрядом!"],
+  nomalumAyriluvchi: ["Noma'lum ayriluvchini top: x = ?", "Найди неизвестное вычитаемое: x = ?"],
+  nomalumBolinuvchi: ["Noma'lum bo'linuvchini top: x = ?", "Найди неизвестное делимое: x = ?"],
+  txtEngKichikNatural: ["Eng kichik natural son?", "Наименьшее натуральное число?"],
+  txtKeyingiSon: ["{n} dan keyingi son?", "Число, следующее за {n}?"],
+  txtOldingiSon: ["{n} dan oldingi son?", "Число, предшествующее {n}?"],
+
+  /* ---------------- ko'paytirish va bo'lish ---------------- */
+  kopXonaliKopaytir2: ["Uch xonalini ikki xonaliga ko'paytir!", "Умножь трёхзначное на двузначное!"],
+  kopXonaliBol2: ["Ikki xonali songa bo'l!", "Раздели на двузначное число!"],
+  qoldiqliBol: [
+    "Qoldiqli bo'lish: to'liq bo'linmani top!",
+    "Деление с остатком: найди неполное частное!",
+  ],
+  qulayKopaytir: [
+    "Qulay juftni top: avval ularni ko'paytir!",
+    "Найди удобную пару: сначала перемножь её!",
+  ],
+  qulayQosh: [
+    "Yumaloq songa to'ldiradigan juftni top!",
+    "Найди пару, дающую круглое число!",
+  ],
+  soddalashtir: [
+    "Ifodani soddalashtir: o'xshash hadlarni yig'!",
+    "Упрости выражение: приведи подобные слагаемые!",
+  ],
+  kvadratTop: ["Sonning kvadrati: a² = a × a", "Квадрат числа: a² = a × a"],
+  kubTop: ["Sonning kubi: a³ = a × a × a", "Куб числа: a³ = a × a × a"],
+  darajaTop: [
+    "Daraja — asosni ko'rsatkich marta ko'paytir!",
+    "Степень — умножь основание столько раз, каков показатель!",
+  ],
+
+  /* ---------------- matnli masalalar ---------------- */
+  qismlarMasala: ["Kichik qismni 1 qism deb ol!", "Прими меньшую часть за одну часть!"],
+  narxMasala: ["Qiymat = narx × miqdor", "Стоимость = цена × количество"],
+  narxTop: ["Narx = qiymat ÷ miqdor", "Цена = стоимость ÷ количество"],
+  ishMasala: ["Ish = unumdorlik × vaqt", "Работа = производительность × время"],
+  unumTop: ["Unumdorlik = ish ÷ vaqt", "Производительность = работа ÷ время"],
+  ikkiJismQarshi: ["Yaqinlashish tezligi = v₁ + v₂", "Скорость сближения = v₁ + v₂"],
+  ikkiJismQuvish: ["Quvish tezligi = v₁ − v₂", "Скорость сближения при погоне = v₁ − v₂"],
+  txtQismlar: [
+    "Jami {jami}. Biri ikkinchisidan {k} marta katta. Kichigi = ?",
+    "Всего {jami}. Одно в {k} раза больше другого. Меньшее = ?",
+  ],
+  txtNarxMiqdor: ["1 ta — {narx} so'm,  {n} ta.   Jami = ?", "1 шт. — {narx} сум,  {n} шт.   Всего = ?"],
+  txtQiymatMiqdor: ["{n} ta — {q} so'm.   1 ta = ?", "{n} шт. — {q} сум.   1 шт. = ?"],
+  txtIshUnum: ["1 soatda {u} ta,  {t} soat.   Jami = ?", "За 1 ч — {u} шт.,  {t} ч.   Всего = ?"],
+  txtIshVaqt: ["{t} soatda {ish} ta.   1 soatda = ?", "За {t} ч — {ish} шт.   За 1 ч = ?"],
+  txtIkkiQarshi: [
+    "v₁ = {v1},  v₂ = {v2},  t = {t} soat.   s = ?",
+    "v₁ = {v1},  v₂ = {v2},  t = {t} ч.   s = ?",
+  ],
+  txtIkkiQuvish: [
+    "v₁ = {v1} quvadi,  v₂ = {v2},  t = {t} soat.   s = ?",
+    "v₁ = {v1} догоняет,  v₂ = {v2},  t = {t} ч.   s = ?",
+  ],
+
+  /* ---------------- burchak, siniq chiziq, yuza ---------------- */
+  burchakTuri: ["Bu qanday burchak?", "Какой это угол?"],
+  burchakYigindi: ["Burchaklarni qo'sh!", "Сложи углы!"],
+  burchakToldiruvchi: [
+    "Yoyiq burchak 180°. Qolgani nechchi?",
+    "Развёрнутый угол — 180°. Сколько осталось?",
+  ],
+  siniqChiziq: [
+    "Siniq chiziq uzunligi — bo'g'inlar yig'indisi!",
+    "Длина ломаной — сумма её звеньев!",
+  ],
+  kopburchakPerim: ["Perimetr = tomon × tomonlar soni", "Периметр = сторона × число сторон"],
+  murakkabYuza: [
+    "Shaklni ikki to'rtburchakka bo'l va yuzalarni qo'sh!",
+    "Раздели фигуру на два прямоугольника и сложи площади!",
+  ],
+  yuzBirlik: ["Yuz o'lchov birliklarini eslaymiz!", "Вспоминаем единицы площади!"],
+  txtBurchakQosh: ["∠AOB = {a}°,  ∠BOC = {b}°.   ∠AOC = ?", "∠AOB = {a}°,  ∠BOC = {b}°.   ∠AOC = ?"],
+  txtBurchakTold: [
+    "Yoyiq burchakning bir qismi {a}°. Ikkinchisi = ?",
+    "Одна часть развёрнутого угла — {a}°. Вторая = ?",
+  ],
+  txtSm: ["sm", "см"],
+  txtKopburchak: [
+    "Teng tomonli {n}-burchak, tomoni {a} sm.   P = ?",
+    "Правильный {n}-угольник, сторона {a} см.   P = ?",
+  ],
+  txtIkkiTortburchak: ["{a} × {b}  va  {c} × {d}.   S = ?", "{a} × {b}  и  {c} × {d}.   S = ?"],
+  uSm2Mm2: ["1 sm² = ? mm²", "1 см² = ? мм²"],
+  uGaAr: ["1 ga = ? ar", "1 га = ? ар"],
+  uGaM2: ["1 ga = ? m²", "1 га = ? м²"],
+  uKm2M2: ["1 km² = ? m²", "1 км² = ? м²"],
+  jOtkir: ["o'tkir burchak", "острый угол"],
+  jTogri: ["to'g'ri burchak", "прямой угол"],
+  jOtmas: ["o'tmas burchak", "тупой угол"],
+  jYoyiq: ["yoyiq burchak", "развёрнутый угол"],
+
+  /* ---------------- oddiy kasrlar ---------------- */
+  kasrQaysi: [
+    "Bo'yalgan qism qaysi kasr bilan yoziladi?",
+    "Какой дробью записана закрашенная часть?",
+  ],
+  maxrajTeng: [
+    "Maxrajlar teng — surati katta kasr katta!",
+    "Знаменатели равны — больше та дробь, у которой числитель больше!",
+  ],
+  suratTeng: [
+    "Suratlar teng — maxraji kichik kasr katta!",
+    "Числители равны — больше та дробь, у которой знаменатель меньше!",
+  ],
+  togriNotogri: ["Bu to'g'ri kasrmi yoki noto'g'rimi?", "Это правильная или неправильная дробь?"],
+  bolishKasr: ["Bo'linmani kasr ko'rinishida yoz!", "Запиши частное в виде дроби!"],
+  aralashYoz: [
+    "Noto'g'ri kasrni aralash son ko'rinishida yoz!",
+    "Запиши неправильную дробь в виде смешанного числа!",
+  ],
+  notogriYoz: [
+    "Aralash sonni noto'g'ri kasr ko'rinishida yoz!",
+    "Запиши смешанное число в виде неправильной дроби!",
+  ],
+  aralashQoshAyir: ["Butunni butunga, kasrni kasrga!", "Целые с целыми, дробные с дробными!"],
+  sonningQismi: ["Sonning qismi: son × kasr", "Часть числа: число × дробь"],
+  jTogriKasr: ["to'g'ri kasr", "правильная дробь"],
+  jNotogriKasr: ["noto'g'ri kasr", "неправильная дробь"],
+  txtSonQism: ["{n} ning {t} qismi = ?", "{t} от {n} = ?"],
+
+  /* ---------------- fazoviy shakllar ---------------- */
+  fazoviyShakl: ["Bu qanday fazoviy shakl?", "Что это за пространственная фигура?"],
+  kubElement: ["Kubning elementlarini sanaymiz!", "Считаем элементы куба!"],
+  hajmF: ["Hajm: V = a × b × c", "Объём: V = a × b × c"],
+  kubHajm: ["Kub hajmi: V = a³", "Объём куба: V = a³"],
+  kubQirraTop: ["Hajmdan qirrani top: a³ = V", "Найди ребро по объёму: a³ = V"],
+  txtKubTarif: [
+    "Barcha yoqlari teng kvadrat bo'lgan shakl",
+    "Фигура, все грани которой — равные квадраты",
+  ],
+  txtParTarif: [
+    "Oltala yog'i ham to'g'ri to'rtburchak bo'lgan shakl",
+    "Фигура, все шесть граней которой — прямоугольники",
+  ],
+  txtSilindrTarif: [
+    "Ikki asosi doira, yon sirti yumaloq shakl",
+    "Фигура с двумя круглыми основаниями и круглой боковой поверхностью",
+  ],
+  txtSharTarif: ["Har tomondan bir xil yumaloq shakl", "Фигура, одинаково круглая со всех сторон"],
+  txtKonusTarif: [
+    "Asosi doira, tepasi bitta nuqtada birlashgan shakl",
+    "Фигура с круглым основанием и одной вершиной",
+  ],
+  txtPiramidaTarif: [
+    "Asosi ko'pburchak, yon yoqlari uchburchak",
+    "Основание — многоугольник, боковые грани — треугольники",
+  ],
+  txtYoqSoni: ["Kubning nechta yog'i bor?", "Сколько граней у куба?"],
+  txtQirraSoni: ["Kubning nechta qirrasi bor?", "Сколько рёбер у куба?"],
+  txtUchSoni: ["Kubning nechta uchi bor?", "Сколько вершин у куба?"],
+  txtQirralari: ["a = {a},  b = {b},  c = {c}.   V = ?", "a = {a},  b = {b},  c = {c}.   V = ?"],
+  txtKubQirra: ["Kub qirrasi {a} sm.   V = ?", "Ребро куба {a} см.   V = ?"],
+  txtKubHajm: ["Kub hajmi {v} sm³.   Qirrasi = ?", "Объём куба {v} см³.   Ребро = ?"],
+  jKub: ["kub", "куб"],
+  jParallelepiped: ["parallelepiped", "параллелепипед"],
+  jSilindr: ["silindr", "цилиндр"],
+  jShar: ["shar", "шар"],
+  jKonus: ["konus", "конус"],
+  jPiramida: ["piramida", "пирамида"],
+
+  /* ---------------- o'nli kasrlar va foiz ---------------- */
+  onliKasrYoz: ["O'nli kasr ko'rinishida yoz!", "Запиши в виде десятичной дроби!"],
+  kasrdanOnli: [
+    "Oddiy kasrni o'nli kasrga aylantir!",
+    "Переведи обыкновенную дробь в десятичную!",
+  ],
+  onliTaqqosla: [
+    "Avval butun qismni, so'ng xonalarni solishtir!",
+    "Сначала сравни целые части, потом разряды!",
+  ],
+  onliQosh: ["Vergulni vergul ostiga qo'yib qo'sh!", "Складывай, записав запятую под запятой!"],
+  onliAyir: ["Vergulni vergul ostiga qo'yib ayir!", "Вычитай, записав запятую под запятой!"],
+  onliYaxlit: ["O'nli kasrni yaxlitla!", "Округли десятичную дробь!"],
+  onliNaturalKopaytir: [
+    "Vergulni unutma: nechta raqam bo'lgan bo'lsa — shuncha!",
+    "Не забудь запятую: столько знаков, сколько было!",
+  ],
+  onliNaturalBol: [
+    "Bo'linmada vergulni o'z joyiga qo'y!",
+    "Поставь запятую в частном на своё место!",
+  ],
+  onliKopaytir: [
+    "Verguldan keyingi raqamlar sonini QO'SH!",
+    "Сложи количество знаков после запятой!",
+  ],
+  onliBol: [
+    "Ikkala sondagi vergulni birdek surib yubor!",
+    "Перенеси запятую в обоих числах одинаково!",
+  ],
+  foizTop: ["1% — sonning yuzdan bir qismi!", "1% — сотая часть числа!"],
+  nechaFoiz: ["Qism ÷ butun × 100 = foiz", "Часть ÷ целое × 100 = процент"],
+  txtButunOndan: ["{w} butun {n} o'ndan = ?", "{w} целых {n} десятых = ?"],
+  txtOndanBirgacha: ["(o'ndan birgacha)", "(до десятых)"],
+  txtButungacha: ["(butungacha)", "(до целых)"],
+  txtFoiz: ["{n} ning {f}% i = ?", "{f}% от {n} = ?"],
+  txtNechaFoiz: ["{qism} — bu {n} ning necha foizi?", "{qism} — сколько процентов от {n}?"],
+
+  /* ---------------- ma'lumotlar tahlili ---------------- */
+  ortaArifmetik: [
+    "O'rta arifmetik = yig'indi ÷ sonlar soni",
+    "Среднее арифметическое = сумма ÷ количество чисел",
+  ],
+  qatorEngKatta: ["Qatordagi eng katta sonni top!", "Найди наибольшее число в ряду!"],
+  qatorFarq: ["Eng katta bilan eng kichigining farqi?", "Разность наибольшего и наименьшего?"],
+
+  /* ======================================================================
+   *                              6-SINF
+   * ================================================================== */
+
+  /* ---------------- bo'linish belgilari ---------------- */
+  boluvchiQaysi: ["Qaysi son uning bo'luvchisi?", "Какое число является его делителем?"],
+  karraliQaysi: ["Qaysi son unga karrali?", "Какое число ему кратно?"],
+  bolinishBelgisi: ["Bo'linish belgisini eslab qol!", "Вспомни признак делимости!"],
+  tubMurakkab: [
+    "Qaysi son tub? Uning ikkitagina bo'luvchisi bor!",
+    "Какое число простое? У него только два делителя!",
+  ],
+  tubMi: ["Bu son tubmi yoki murakkabmi?", "Это число простое или составное?"],
+  tubKopaytuvchi: ["Tub ko'paytuvchilarga ajrat!", "Разложи на простые множители!"],
+  ekubTop: ["Eng katta umumiy bo'luvchini top!", "Найди наибольший общий делитель!"],
+  ekukTop: ["Eng kichik umumiy karralini top!", "Найди наименьшее общее кратное!"],
+  ozaroTub: ["O'zaro tub sonlarning EKUBi 1 ga teng!", "У взаимно простых чисел НОД равен 1!"],
+  jTub: ["tub son", "простое число"],
+  jMurakkab: ["murakkab son", "составное число"],
+  txtBoluvchi: ["{n} sonining bo'luvchisi?", "Делитель числа {n}?"],
+  txtKarrali: ["{n} ga karrali son?", "Число, кратное {n}?"],
+  txtQaysiBolinadi: ["Qaysi son {d} ga bo'linadi?", "Какое число делится на {d}?"],
+  txtTubQaysi: ["Qaysi biri tub son?", "Какое из них простое число?"],
+  txtEKUB: ["EKUB ({a}; {b}) = ?", "НОД ({a}; {b}) = ?"],
+  txtEKUK: ["EKUK ({a}; {b}) = ?", "НОК ({a}; {b}) = ?"],
+  txtQaysiOzaroTub: ["Qaysi juft o'zaro tub?", "Какая пара взаимно простая?"],
+
+  /* ---------------- har xil maxrajli kasrlar ---------------- */
+  kasrXossa: [
+    "Surat va maxrajni bir xil songa ko'paytir!",
+    "Умножь числитель и знаменатель на одно и то же число!",
+  ],
+  kasrQisqartir: [
+    "Surat va maxrajni EKUBga bo'l!",
+    "Раздели числитель и знаменатель на их НОД!",
+  ],
+  umumiyMaxraj: ["Eng kichik umumiy maxrajni top!", "Найди наименьший общий знаменатель!"],
+  harXilTaqqosla: [
+    "Umumiy maxrajga keltirib solishtir!",
+    "Приведи к общему знаменателю и сравни!",
+  ],
+  harXilQosh: ["Umumiy maxrajga keltirib qo'sh!", "Приведи к общему знаменателю и сложи!"],
+  harXilAyir: ["Umumiy maxrajga keltirib ayir!", "Приведи к общему знаменателю и вычти!"],
+  aralashQosh: [
+    "Butunni butunga, kasrni kasrga qo'sh!",
+    "Складывай целые с целыми, дробные с дробными!",
+  ],
+  aralashAyir: [
+    "Kerak bo'lsa butun qismdan bir birlik ol!",
+    "Если нужно, займи единицу у целой части!",
+  ],
+
+  /* ---------------- kasrlarni ko'paytirish va bo'lish ---------------- */
+  kasrKopaytir: [
+    "Suratni suratga, maxrajni maxrajga!",
+    "Числитель на числитель, знаменатель на знаменатель!",
+  ],
+  aralashKopaytir: ["Avval noto'g'ri kasrga aylantir!", "Сначала переведи в неправильную дробь!"],
+  taqsimotQonuni: ["(a + b) × c = a × c + b × c", "(a + b) × c = a × c + b × c"],
+  teskariSon: [
+    "Ko'paytmasi 1 ga teng bo'ladigan sonni top!",
+    "Найди число, произведение с которым равно 1!",
+  ],
+  kasrBol: ["Bo'lish — teskari songa ko'paytirish!", "Деление — умножение на обратное число!"],
+  qismdanSon: [
+    "Qismni kasrga bo'l — butun son chiqadi!",
+    "Раздели часть на дробь — получится всё число!",
+  ],
+  txtQismdanSon: ["Sonning {t} qismi — {qism}.   Son = ?", "{t} числа — это {qism}.   Число = ?"],
+
+  /* ---------------- nisbat va proporsiya ---------------- */
+  nisbatQisqartir: ["Nisbatni qisqartir!", "Сократи отношение!"],
+  proporsiyaHad: ["Proporsiyaning asosiy xossasi: ad = bc", "Основное свойство пропорции: ad = bc"],
+  togriProporsional: [
+    "Miqdor necha marta ko'paysa — qiymat ham shuncha!",
+    "Во сколько раз больше количество — во столько же больше стоимость!",
+  ],
+  teskariProporsional: [
+    "Ishchi ko'paysa — vaqt shuncha marta kamayadi!",
+    "Больше рабочих — во столько же раз меньше времени!",
+  ],
+  masshtab: [
+    "Masshtab: xaritadagi 1 sm — yerda necha m?",
+    "Масштаб: 1 см на карте — сколько м на местности?",
+  ],
+  txtTogriProp: ["{n1} ta — {s1} so'm.   {n2} ta = ?", "{n1} шт. — {s1} сум.   {n2} шт. = ?"],
+  txtTeskariProp: ["{a} ishchi — {t1} kun.   {b} ishchi = ?", "{a} рабочих — {t1} дн.   {b} рабочих = ?"],
+  txtMasshtab: [
+    "M 1 : {m}.  Xaritada {sm} sm.   Yerda ? m",
+    "М 1 : {m}.  На карте {sm} см.   На местности ? м",
+  ],
+
+  /* ---------------- musbat va manfiy sonlar ---------------- */
+  musbatManfiy: ["Qaysi son bunga mos keladi?", "Какое число этому соответствует?"],
+  qaramaQarshi: ["Qarama-qarshi sonni top!", "Найди противоположное число!"],
+  modulTop: [
+    "Modul — nolgacha bo'lgan masofa, u manfiy bo'lmaydi!",
+    "Модуль — расстояние до нуля, он не бывает отрицательным!",
+  ],
+  butunTaqqosla: ["Son o'qida o'ngdagisi katta!", "На числовой прямой правое число больше!"],
+  birXilIshoraQosh: [
+    "Ishoralar bir xil — modullarni qo'sh, ishorani saqla!",
+    "Знаки одинаковые — сложи модули, знак сохрани!",
+  ],
+  harXilIshoraQosh: [
+    "Ishoralar har xil — modullarni ayir, kattasining ishorasini ol!",
+    "Знаки разные — вычти модули, возьми знак большего!",
+  ],
+  butunAyir: [
+    "Ayirish — qarama-qarshi sonni qo'shish!",
+    "Вычитание — прибавление противоположного числа!",
+  ],
+  butunKopaytir: [
+    "Ishoralar bir xil — musbat, har xil — manfiy!",
+    "Знаки одинаковые — плюс, разные — минус!",
+  ],
+  butunBol: [
+    "Ishoralar bir xil — musbat, har xil — manfiy!",
+    "Знаки одинаковые — плюс, разные — минус!",
+  ],
+  manfiyDaraja: [
+    "Juft daraja — musbat, toq daraja — manfiy!",
+    "Чётная степень — плюс, нечётная — минус!",
+  ],
+  ildizTop: [
+    "Kvadrati shu songa teng bo'lgan sonni top!",
+    "Найди число, квадрат которого равен этому числу!",
+  ],
+  txtHaroratPast: ["Havo noldan {n}° past", "Температура на {n}° ниже нуля"],
+  txtHaroratYuqori: ["Havo noldan {n}° yuqori", "Температура на {n}° выше нуля"],
+  txtChuqurlik: ["Dengiz sathidan {n} m past", "На {n} м ниже уровня моря"],
+  txtQarz: ["{n} so'm qarz", "Долг {n} сум"],
+
+  /* ---------------- tenglamalar ---------------- */
+  qavsOch: [
+    "Qavs oldida minus — ichidagi ishoralar almashadi!",
+    "Минус перед скобкой — знаки внутри меняются!",
+  ],
+  koeffitsiyent: ["Harf oldidagi son — koeffitsiyent!", "Число перед буквой — коэффициент!"],
+  chiziqliTenglama: [
+    "Noma'lumni bir tomonga, sonlarni ikkinchisiga!",
+    "Неизвестное — в одну сторону, числа — в другую!",
+  ],
+  kasrTenglama: ["Ikkala tomonni maxrajga ko'paytir!", "Умножь обе части на знаменатель!"],
+
+  /* ---------------- kombinatorika va geometriya ---------------- */
+  kombinatorika: ["Ko'paytirish qoidasi: a × b", "Правило умножения: a × b"],
+  uchburchakTuri: ["Tomonlariga ko'ra qanday uchburchak?", "Какой это треугольник по сторонам?"],
+  uchburchakPerim: ["Perimetr — barcha tomonlar yig'indisi!", "Периметр — сумма всех сторон!"],
+  uchburchakBurchak: [
+    "Uchburchak burchaklari yig'indisi — 180°!",
+    "Сумма углов треугольника — 180°!",
+  ],
+  uchburchakYuzaF: ["Uchburchak yuzi: S = a × h ÷ 2", "Площадь треугольника: S = a × h ÷ 2"],
+  aylanaUzunlik: [
+    "Aylana uzunligi: C = 2 × π × r,  π ≈ 3,14",
+    "Длина окружности: C = 2 × π × r,  π ≈ 3,14",
+  ],
+  doiraYuza: ["Doira yuzi: S = π × r²,  π ≈ 3,14", "Площадь круга: S = π × r²,  π ≈ 3,14"],
+  jTengTomonli: ["teng tomonli", "равносторонний"],
+  jTengYonli: ["teng yonli", "равнобедренный"],
+  jTurliTomonli: ["turli tomonli", "разносторонний"],
+  jTogriburchakli: ["to'g'ri burchakli", "прямоугольный"],
+  txtKombinatorika: [
+    "{a} ta ko'ylak,  {b} ta shim.   Nechta to'plam?",
+    "{a} рубашек,  {b} брюк.   Сколько комплектов?",
+  ],
+  txtUchburchakTomon: ["a = {a},  b = {b},  c = {c} sm.   P = ?", "a = {a},  b = {b},  c = {c} см.   P = ?"],
+  txtUchburchakBurchak: ["∠A = {a}°,  ∠B = {b}°.   ∠C = ?", "∠A = {a}°,  ∠B = {b}°.   ∠C = ?"],
+  txtUchburchakYuza: [
+    "a = {a} sm,  h = {h} sm.   S = ?  (sm²)",
+    "a = {a} см,  h = {h} см.   S = ?  (см²)",
+  ],
+  txtRadius: ["r = {r} sm", "r = {r} см"],
 } satisfies Record<string, [string, string]>;
 
 export type SavolKalit = keyof typeof S;

@@ -1,6 +1,6 @@
 # Aql Zone
 
-Maktabgacha yosh (4–6) va 1–4-sinf matematikasi. Bola boblar bo'ylab yo'l
+Maktabgacha yosh (4–6) va 1–6-sinf matematikasi. Bola boblar bo'ylab yo'l
 xaritasida yuradi, har bir darsda 6 ta savol yechadi va yulduz yig'adi.
 Savollar **har safar qaytadan yasaladi** — darsni ikkinchi marta ochsa
 sonlar boshqacha bo'ladi.
@@ -614,12 +614,26 @@ u faqat savol so'raydi va javobni taqqoslaydi. Matnlar `lib/matn.ts` da,
 | 2-sinf | 10 | 38 | 100 ichida qo'shish |
 | 3-sinf | 10 | 45 | 1000 ichida sonlar |
 | 4-sinf | 12 | 50 | Million gacha sonlar |
+| 5-sinf | 16 | 75 | Natural sonlar, kasr, foiz |
+| 6-sinf | 15 | 71 | Bo'linish belgilari, manfiy sonlar |
 
 **1-sinf alohida tuzilgan.** Bu yoshdagi bola hali o'qiy olmaydi, shuning
 uchun kurs matematikadan emas, tanishdan boshlanadi: rangni topish,
 hayvonni tanish, sanash. Bu darslarda javob tugmalari ham matn emas —
 rangli doira yoki katta rasm. Bola savolni hech kimning yordamisiz yechadi.
 Keyin asta-sekin sonlarga va amallarga o'tiladi.
+
+**5–6-sinfda javob endi butun son emas.** Bu yoshda kasr ("3/4"), aralash
+son ("2 1/2"), o'nli kasr ("0,75") va manfiy son ham javob bo'la oladi.
+Javob `String(tanlangan) === String(answer)` bilan solishtirilgani uchun
+matn javob ham son kabi ishlaydi, lekin u HAR DOIM bitta ko'rinishda
+yasalishi shart — buning uchun `lib/generators.ts` da `fr`, `mx` va `dc`
+yordamchilari bor. Manfiy javob esa faqat 6-sinfdan boshlab ruxsat
+etiladi: `scripts/tekshir.ts` undan pastda uni xato deb ushlaydi.
+
+5-sinf manbasi — B. Q. Xaydarov, "Matematika 5-sinf" (2020, ikki qism);
+6-sinf — M. A. Mirzaxmedov va boshq., "Matematika 6" (O'qituvchi, 2017).
+Ikkalasida ham boblar darslikning o'z tartibida boradi.
 
 ## Pastki panel — oltita tugma
 
@@ -742,11 +756,11 @@ tilda ham gorizontal skroll yo'q va hech bir yozuv kesilmaydi.
 
 ## Dizayn: uchta tema
 
-4-sinf o'quvchisi "kichkinalar o'yini"ni yoqtirmaydi, 1-sinf bolasi esa
+Yuqori sinf o'quvchisi "kichkinalar o'yini"ni yoqtirmaydi, 1-sinf bolasi esa
 o'ta jiddiy ekranda o'zini yo'qotadi. Bosh sahifa esa ikkalasiga ham
 tegishli emas — u umumiy vitrina. Shuning uchun uchta tema bor:
 
-| | `bosh` (kurslar) | `bolalar` (1-sinf) | `katta` (2–4-sinf) |
+| | `bosh` (kurslar) | `bolalar` (1-sinf) | `katta` (2–6-sinf) |
 |---|---|---|---|
 | Fon | iliq qora tun, aylanuvchi oltin nur, kengayuvchi halqalar | quyoshli osmon, bulutlar, tepaliklar, pufakchalar | chuqur ko'k tun, yulduzlar, aylanuvchi 3D kublar |
 | Kartalar | binafsha-qora, burchagi 24px | oq, burchagi 32px, qalin soya | ko'k shishasimon, burchagi 20px |

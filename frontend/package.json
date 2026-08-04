@@ -2,7 +2,7 @@
   "name": "aql-zone-frontend",
   "private": true,
   "version": "1.0.0",
-  "description": "Aql Zone — 1–4-sinf matematikasi (React + Vite)",
+  "description": "Aql Zone — 1–6-sinf matematikasi (React + Vite)",
   "type": "module",
   "scripts": {
     "dev": "vite",

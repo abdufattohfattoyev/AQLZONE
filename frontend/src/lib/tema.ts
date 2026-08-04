@@ -9,7 +9,7 @@
  *             quyoshli osmon, suzuvchi bulutlar, pufakchalar. Maqsad —
  *             bola ekranni ochishi bilan tabassum qilsin.
  *
- *   "katta"   2–4-sinf. Chuqur ko'k tun, shishasimon kartalar, uchuvchi
+ *   "katta"   2–6-sinf. Chuqur ko'k tun, shishasimon kartalar, uchuvchi
  *             3D kublar. Bu yoshda bola "kichkinalar o'yini" ni yoqtirmaydi.
  *
  * Tema `<html data-tema="...">` orqali beriladi. CSS o'zgaruvchilari shu

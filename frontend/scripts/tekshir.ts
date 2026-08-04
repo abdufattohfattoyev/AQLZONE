@@ -19,6 +19,10 @@ const xatolar: string[] = [];
 let savol = 0;
 
 for (const c of COURSES) {
+  // Manfiy son 6-sinfda MAVZUNING O'ZI ("Musbat va manfiy sonlar"), undan
+  // oldingi sinflarda esa xato belgisi: "8 − 9" kabi savol o'tilmagan
+  // amalga olib boradi. Shuning uchun taqiq sinfga qarab yechiladi.
+  const manfiyMumkin = c.grade >= 6;
   c.units.forEach((U, ui) => {
     U.lessons.forEach((L, li) => {
       const joy = `${c.slug} ${ui}-${li} "${L.n}"`;
@@ -38,7 +42,7 @@ for (const c of COURSES) {
 
         if (a.answer === undefined || a.answer === null || s(a.answer) === "NaN")
           xatolar.push(`${joy}: javob yo'q (${s(a.answer)})`);
-        if (typeof a.answer === "number" && a.answer < 0)
+        if (!manfiyMumkin && typeof a.answer === "number" && a.answer < 0)
           xatolar.push(`${joy}: javob manfiy (${a.answer}) — bu yoshda manfiy son yo'q`);
         if (!a.prompt) xatolar.push(`${joy}: prompt bo'sh`);
 
@@ -50,7 +54,7 @@ for (const c of COURSES) {
           xatolar.push(`${joy}: to'g'ri javob variantlar ichida yo'q — ${s(a.answer)} ∉ [${a.choices.join(", ")}]`);
         if (new Set(a.choices.map(s)).size !== a.choices.length)
           xatolar.push(`${joy}: variantlar takrorlangan — [${a.choices.join(", ")}]`);
-        if (a.choices.some((x) => s(x) === "NaN" || (typeof x === "number" && x < 0)))
+        if (a.choices.some((x) => s(x) === "NaN" || (!manfiyMumkin && typeof x === "number" && x < 0)))
           xatolar.push(`${joy}: variantda yaroqsiz qiymat — [${a.choices.join(", ")}]`);
       }
     });

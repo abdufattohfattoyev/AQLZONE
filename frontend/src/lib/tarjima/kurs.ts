@@ -2,8 +2,8 @@
  * Kurs, bob va dars nomlarining ruscha tarjimasi.
  *
  * Lug'at KALITI — o'zbekcha matnning o'zi, tarjima esa qiymat. Nega
- * shunday: `lib/curriculum/` da besh fayl, 60 dan ortiq bob va 170 dan
- * ortiq dars bor. Har biriga ikki tilli obyekt qo'ysak, o'sha beshta
+ * shunday: `lib/curriculum/` da yettita fayl, 90 dan ortiq bob va 400 dan
+ * ortiq dars bor. Har biriga ikki tilli obyekt qo'ysak, o'sha yettita
  * fayl butunlay qayta yozilishi kerak bo'lardi va yangi dars qo'shish
  * ikki barobar mashaqqatga aylanardi. Bu yerda esa dastur o'zgarmaydi,
  * tarjima ustiga qo'yiladi.
@@ -419,12 +419,243 @@ const RU: Record<string, string> = {
   "Qavs, ko'paytirish-bo'lish, qo'shish-ayirish tartibi. Harfli ifodalar va tenglamalar.":
     "Скобки, умножение и деление, потом сложение и вычитание. Буквенные выражения и уравнения.",
 
+  /* =============== 5–6-sinf: boblar =============== */
+  "Takrorlash: 4-sinf materiali": "Повторение: материал 4 класса",
+  "Takrorlash: 5-sinf materiali": "Повторение: материал 5 класса",
+  "Natural sonlar va nol": "Натуральные числа и нуль",
+  "Natural sonlarni qo'shish va ayirish": "Сложение и вычитание натуральных чисел",
+  "Natural sonlarni ko'paytirish va bo'lish": "Умножение и деление натуральных чисел",
+  "To'rt amal va daraja": "Четыре действия и степень",
+  "Matnli masalalarni yechish": "Решение текстовых задач",
+  "Burchaklar va siniq chiziq": "Углы и ломаная",
+  "Yuza va yuz o'lchov birliklari": "Площадь и единицы площади",
+  "Oddiy kasrlar": "Обыкновенные дроби",
+  "Aralash sonlar": "Смешанные числа",
+  "Fazoviy shakllar va hajm": "Пространственные фигуры и объём",
+  "O'nli kasrlar": "Десятичные дроби",
+  "O'nli kasrlarni ko'paytirish va bo'lish": "Умножение и деление десятичных дробей",
+  "Foizlar": "Проценты",
+  "Ma'lumotlar tahlili": "Анализ данных",
+  "Sonlarning bo'linish belgilari": "Признаки делимости чисел",
+  "EKUB va EKUK": "НОД и НОК",
+  "Kasrning asosiy xossasi": "Основное свойство дроби",
+  "Har xil maxrajli kasrlarni qo'shish va ayirish":
+    "Сложение и вычитание дробей с разными знаменателями",
+  "Oddiy kasrlarni ko'paytirish": "Умножение обыкновенных дробей",
+  "Oddiy kasrlarni bo'lish": "Деление обыкновенных дробей",
+  "Nisbat va proporsiya": "Отношение и пропорция",
+  "Musbat va manfiy sonlar": "Положительные и отрицательные числа",
+  "Butun sonlarni qo'shish va ayirish": "Сложение и вычитание целых чисел",
+  "Butun sonlarni ko'paytirish va bo'lish": "Умножение и деление целых чисел",
+  "Tenglamalarni yechish": "Решение уравнений",
+  "Ma'lumotlar va kombinatorika": "Данные и комбинаторика",
+  "Geometrik material": "Геометрический материал",
+
+  /* =============== 5–6-sinf: darslar =============== */
+  "Ko'p xonali qo'shish va ayirish": "Сложение и вычитание многозначных чисел",
+  "Kasr va kattaliklar": "Дроби и величины",
+  "Natural sonlar qatori": "Ряд натуральных чисел",
+  "Shkalalar va sonlar nuri": "Шкалы и числовой луч",
+  "Natural sonlarni taqqoslash": "Сравнение натуральных чисел",
+  "Natural sonlarni yaxlitlash": "Округление натуральных чисел",
+  "Natural sonlarni qo'shish": "Сложение натуральных чисел",
+  "Natural sonlarni ayirish": "Вычитание натуральных чисел",
+  "Sonli va harfli ifodalar": "Числовые и буквенные выражения",
+  "Matematik masala va tenglamalar": "Математические задачи и уравнения",
+  "Natural sonlarni ko'paytirish": "Умножение натуральных чисел",
+  "Natural sonlarni bo'lish": "Деление натуральных чисел",
+  "Qulay va tezkor hisoblash": "Удобные и быстрые вычисления",
+  "Ifodalarni soddalashtirish": "Упрощение выражений",
+  "To'rt amalga doir hisoblash": "Вычисления на четыре действия",
+  "Sonning kvadrati va kubi": "Квадрат и куб числа",
+  "Daraja va amallar tartibi": "Степень и порядок действий",
+  "Qismlarga doir masalalar": "Задачи на части",
+  "Geometrik mazmundagi masalalar": "Задачи геометрического содержания",
+  "Harakatga doir masalalar": "Задачи на движение",
+  "Ikki jism harakatiga doir masalalar": "Задачи на движение двух тел",
+  "Iqtisodiy mazmundagi masalalar": "Задачи экономического содержания",
+  "Bajarilgan ishga doir masalalar": "Задачи на выполненную работу",
+  "Burchaklar va ularning turlari": "Углы и их виды",
+  "Burchaklarni o'lchash va qo'shish": "Измерение и сложение углов",
+  "Siniq chiziq va uning uzunligi": "Ломаная и её длина",
+  "Ko'pburchak perimetri": "Периметр многоугольника",
+  "To'g'ri to'rtburchakning yuzi": "Площадь прямоугольника",
+  "Murakkab shakllarning yuzi": "Площадь составных фигур",
+  "Yuz o'lchov birliklari": "Единицы измерения площади",
+  "Ulushlar va oddiy kasrlar": "Доли и обыкновенные дроби",
+  "To'g'ri va noto'g'ri kasrlar": "Правильные и неправильные дроби",
+  "Bir xil maxrajli kasrlarni qo'shish va ayirish":
+    "Сложение и вычитание дробей с одинаковыми знаменателями",
+  "Bo'lish va kasrlar": "Деление и дроби",
+  "Aralash sonlarni qo'shish va ayirish": "Сложение и вычитание смешанных чисел",
+  "Kasrlarga doir masalalar": "Задачи на дроби",
+  "Fazoviy shakllar. Ko'pyoqlar": "Пространственные фигуры. Многогранники",
+  "Parallelepiped va kub": "Параллелепипед и куб",
+  "Parallelepiped va kub hajmi": "Объём параллелепипеда и куба",
+  "O'nli kasrlarni taqqoslash": "Сравнение десятичных дробей",
+  "O'nli kasrlarni qo'shish va ayirish": "Сложение и вычитание десятичных дробей",
+  "Taqribiy qiymat va yaxlitlash": "Приближённое значение и округление",
+  "Natural songa ko'paytirish": "Умножение на натуральное число",
+  "Natural songa bo'lish": "Деление на натуральное число",
+  "O'nli kasrlarni ko'paytirish": "Умножение десятичных дробей",
+  "O'nli kasrni o'nli kasrga bo'lish": "Деление десятичной дроби на десятичную",
+  "Foiz tushunchasi": "Понятие процента",
+  "Sonning foizini topish": "Нахождение процента от числа",
+  "Necha foiz ekanini topish": "Нахождение процентного отношения",
+  "O'rta arifmetik": "Среднее арифметическое",
+  "Ma'lumotlar qatori va uning tahlili": "Ряд данных и его анализ",
+  "Natural sonlar bilan amallar": "Действия с натуральными числами",
+  "Foiz va o'rta arifmetik": "Проценты и среднее арифметическое",
+  "Sonning bo'luvchilari va karralilari": "Делители и кратные числа",
+  "10 ga, 5 ga va 2 ga bo'linish belgilari": "Признаки делимости на 10, 5 и 2",
+  "9 ga va 3 ga bo'linish belgilari": "Признаки делимости на 9 и 3",
+  "Tub va murakkab sonlar": "Простые и составные числа",
+  "Tub ko'paytuvchilarga ajratish": "Разложение на простые множители",
+  "Eng katta umumiy bo'luvchi": "Наибольший общий делитель",
+  "O'zaro tub sonlar": "Взаимно простые числа",
+  "Eng kichik umumiy karrali": "Наименьшее общее кратное",
+  "Kasrlarni qisqartirish": "Сокращение дробей",
+  "Kasrlarni umumiy maxrajga keltirish": "Приведение дробей к общему знаменателю",
+  "Har xil maxrajli kasrlarni taqqoslash": "Сравнение дробей с разными знаменателями",
+  "Har xil maxrajli kasrlarni qo'shish": "Сложение дробей с разными знаменателями",
+  "Har xil maxrajli kasrlarni ayirish": "Вычитание дробей с разными знаменателями",
+  "Aralash sonlarni qo'shish": "Сложение смешанных чисел",
+  "Aralash sonlarni ayirish": "Вычитание смешанных чисел",
+  "Aralash sonlarni ko'paytirish": "Умножение смешанных чисел",
+  "Sonning qismini topish": "Нахождение части числа",
+  "Ko'paytirishning taqsimot qonuni": "Распределительный закон умножения",
+  "O'zaro teskari sonlar": "Взаимно обратные числа",
+  "Qismiga ko'ra sonning o'zini topish": "Нахождение числа по его части",
+  "Nisbat tushunchasi": "Понятие отношения",
+  "Proporsiyaning asosiy xossasi": "Основное свойство пропорции",
+  "To'g'ri proporsional miqdorlar": "Прямо пропорциональные величины",
+  "Teskari proporsional miqdorlar": "Обратно пропорциональные величины",
+  "Masshtab": "Масштаб",
+  "Koordinata to'g'ri chizig'i": "Координатная прямая",
+  "Qarama-qarshi sonlar va modul": "Противоположные числа и модуль",
+  "Sonlarni taqqoslash": "Сравнение чисел",
+  "Bir xil ishorali sonlarni qo'shish": "Сложение чисел с одинаковыми знаками",
+  "Har xil ishorali sonlarni qo'shish": "Сложение чисел с разными знаками",
+  "Sonlarni ayirish": "Вычитание чисел",
+  "Sonlarni ko'paytirish": "Умножение чисел",
+  "Sonlarni bo'lish": "Деление чисел",
+  "Daraja va kvadrat ildiz": "Степень и квадратный корень",
+  "Qavslarni ochish qoidasi": "Правило раскрытия скобок",
+  "Koeffitsiyent": "Коэффициент",
+  "Chiziqli tenglamalarni yechish": "Решение линейных уравнений",
+  "Kasr koeffitsiyentli tenglamalar": "Уравнения с дробными коэффициентами",
+  "Jadvallar va diagrammalar": "Таблицы и диаграммы",
+  "Kombinatorika elementlari": "Элементы комбинаторики",
+  "Uchburchak va uning turlari": "Треугольник и его виды",
+  "Uchburchak perimetri va burchaklari": "Периметр и углы треугольника",
+  "Uchburchakning yuzi": "Площадь треугольника",
+  "Katakli qog'ozda yuzlarni hisoblash": "Вычисление площадей на клетчатой бумаге",
+  "Aylana uzunligi va doira yuzi": "Длина окружности и площадь круга",
+
+  /* =============== 5–6-sinf: bob kirishlari =============== */
+  "4-sinfni yodga olamiz": "Вспоминаем 4 класс",
+  "5-sinfni yodga olamiz": "Вспоминаем 5 класс",
+  "Natural sonlar olami": "Мир натуральных чисел",
+  "Katta sonlar bilan": "С большими числами",
+  "Ko'paytiramiz va bo'lamiz": "Умножаем и делим",
+  "Daraja bilan tanishamiz": "Знакомимся со степенью",
+  "Masala yechamiz": "Решаем задачи",
+  "Burchaklar olami": "Мир углов",
+  "Yuzani hisoblaymiz": "Вычисляем площадь",
+  "Kasrlar bilan tanishamiz": "Знакомимся с дробями",
+  "Butun va kasr birga": "Целое и дробь вместе",
+  "Uch o'lchovli olam": "Трёхмерный мир",
+  "Verguldan keyin": "После запятой",
+  "Vergulni to'g'ri qo'yamiz": "Ставим запятую верно",
+  "Yuzdan bir qism": "Сотая часть",
+  "Ma'lumot bilan ishlaymiz": "Работаем с данными",
+  "Qaysi songa bo'linadi?": "На какое число делится?",
+  "Umumiy bo'luvchi va karrali": "Общий делитель и кратное",
+  "Kasrni o'zgartiramiz": "Изменяем дробь",
+  "Umumiy maxrajga keltiramiz": "Приводим к общему знаменателю",
+  "Kasrni kasrga": "Дробь на дробь",
+  "Teskari songa ko'paytiramiz": "Умножаем на обратное число",
+  "Noldan pastga": "Ниже нуля",
+  "Ishoralar bilan ishlaymiz": "Работаем со знаками",
+  "Ishoralar qoidasi": "Правило знаков",
+  "x ni topamiz": "Находим x",
+  "Ma'lumotni o'qiymiz": "Читаем данные",
+  "Uchburchak va doira": "Треугольник и круг",
+  "EKUB": "НОД",
+  "EKUK": "НОК",
+
+  /* =============== 5–6-sinf: bob izohlari =============== */
+  "Ko'p xonali amallar, amallar tartibi, kasr va kattaliklarni takrorlaymiz.":
+    "Повторяем действия с многозначными числами, порядок действий, дроби и величины.",
+  "Natural sonlar qatori, shkalalar va sonlar nuri, taqqoslash va yaxlitlash.":
+    "Ряд натуральных чисел, шкалы и числовой луч, сравнение и округление.",
+  "Besh xonali sonlarni qo'shamiz va ayiramiz, harfli ifoda va tenglamalarni yechamiz.":
+    "Складываем и вычитаем пятизначные числа, решаем буквенные выражения и уравнения.",
+  "Uch xonalini ikki xonaliga ko'paytirish, bo'lish, qoldiqli bo'lish va qulay hisoblash.":
+    "Умножение трёхзначного на двузначное, деление, деление с остатком и удобные вычисления.",
+  "To'rt amalga doir hisoblash algoritmi, sonning kvadrati, kubi va darajasi.":
+    "Алгоритм вычислений на четыре действия, квадрат, куб и степень числа.",
+  "Qismlarga, geometriyaga, harakatga, savdoga va bajarilgan ishga doir masalalar.":
+    "Задачи на части, геометрию, движение, куплю-продажу и выполненную работу.",
+  "Burchak turlari, burchaklarni qo'shish, siniq chiziq va ko'pburchak perimetri.":
+    "Виды углов, сложение углов, ломаная и периметр многоугольника.",
+  "To'g'ri to'rtburchak yuzi, murakkab shakllar yuzi va yuz o'lchov birliklari.":
+    "Площадь прямоугольника, площадь составных фигур и единицы измерения площади.",
+  "Ulush va kasr, kasrlarni taqqoslash, to'g'ri va noto'g'ri kasrlar, qo'shish va ayirish.":
+    "Доли и дроби, сравнение дробей, правильные и неправильные дроби, сложение и вычитание.",
+  "Noto'g'ri kasrni aralash songa aylantiramiz, aralash sonlarni qo'shamiz va ayiramiz.":
+    "Переводим неправильную дробь в смешанное число, складываем и вычитаем смешанные числа.",
+  "Ko'pyoqlar, to'g'ri burchakli parallelepiped va kub, ularning hajmi.":
+    "Многогранники, прямоугольный параллелепипед и куб, их объём.",
+  "O'nli kasrni o'qish va yozish, taqqoslash, qo'shish-ayirish va yaxlitlash.":
+    "Чтение и запись десятичной дроби, сравнение, сложение-вычитание и округление.",
+  "O'nli kasrni natural songa va o'nli kasrga ko'paytirish hamda bo'lish.":
+    "Умножение и деление десятичной дроби на натуральное число и на десятичную дробь.",
+  "Foiz — sonning yuzdan bir qismi. Sonning foizini va necha foiz ekanini topamiz.":
+    "Процент — сотая часть числа. Находим процент от числа и процентное отношение.",
+  "Ma'lumotlar qatorining o'rta arifmetigi, eng katta va eng kichik qiymat.":
+    "Среднее арифметическое ряда данных, наибольшее и наименьшее значение.",
+  "Butun yil: natural sonlar, daraja, masalalar, kasr, o'nli kasr, foiz, hajm va yuza.":
+    "Весь год: натуральные числа, степень, задачи, дроби, десятичные дроби, проценты, объём и площадь.",
+  "Natural sonlar bilan amallar, oddiy va o'nli kasrlar, foiz va o'rta arifmetik.":
+    "Действия с натуральными числами, обыкновенные и десятичные дроби, проценты и среднее арифметическое.",
+  "Bo'luvchi va karrali, 2 ga, 3 ga, 5 ga, 9 ga va 10 ga bo'linish belgilari.":
+    "Делители и кратные, признаки делимости на 2, 3, 5, 9 и 10.",
+  "Eng katta umumiy bo'luvchi, o'zaro tub sonlar va eng kichik umumiy karrali.":
+    "Наибольший общий делитель, взаимно простые числа и наименьшее общее кратное.",
+  "Kasrning asosiy xossasi, qisqartirish, umumiy maxrajga keltirish va taqqoslash.":
+    "Основное свойство дроби, сокращение, приведение к общему знаменателю и сравнение.",
+  "Har xil maxrajli kasrlarni va aralash sonlarni qo'shamiz hamda ayiramiz.":
+    "Складываем и вычитаем дроби с разными знаменателями и смешанные числа.",
+  "Oddiy kasrlarni va aralash sonlarni ko'paytirish, sonning qismini topish.":
+    "Умножение обыкновенных дробей и смешанных чисел, нахождение части числа.",
+  "O'zaro teskari sonlar, kasrlarni bo'lish va qismiga ko'ra sonning o'zini topish.":
+    "Взаимно обратные числа, деление дробей и нахождение числа по его части.",
+  "Nisbat, proporsiyaning asosiy xossasi, to'g'ri va teskari proporsional miqdorlar, masshtab.":
+    "Отношение, основное свойство пропорции, прямо и обратно пропорциональные величины, масштаб.",
+  "Musbat va manfiy sonlar, koordinata to'g'ri chizig'i, qarama-qarshi sonlar va modul.":
+    "Положительные и отрицательные числа, координатная прямая, противоположные числа и модуль.",
+  "Bir xil va har xil ishorali sonlarni qo'shamiz, so'ng ayirishni o'rganamiz.":
+    "Складываем числа с одинаковыми и разными знаками, затем учимся вычитать.",
+  "Ishoralar bir xil bo'lsa — musbat, har xil bo'lsa — manfiy. Daraja va kvadrat ildiz.":
+    "Знаки одинаковые — плюс, разные — минус. Степень и квадратный корень.",
+  "Qavslarni ochish qoidasi, koeffitsiyent va bir noma'lumli chiziqli tenglamalar.":
+    "Правило раскрытия скобок, коэффициент и линейные уравнения с одним неизвестным.",
+  "Jadval va diagrammalar, ma'lumotlar tahlili hamda kombinatorikaning ko'paytirish qoidasi.":
+    "Таблицы и диаграммы, анализ данных и правило умножения в комбинаторике.",
+  "Uchburchak turlari, burchaklari va yuzi, katakli qog'ozda yuza, aylana va doira.":
+    "Виды треугольников, их углы и площадь, площадь на клетчатой бумаге, окружность и круг.",
+  "Butun yil: bo'linish belgilari, kasrlar, proporsiya, manfiy sonlar, tenglama va geometriya.":
+    "Весь год: признаки делимости, дроби, пропорция, отрицательные числа, уравнения и геометрия.",
+
   /* =============== kurs nomlari va izohlari =============== */
   "Maktabgacha": "Дошкольный курс",
   "1-sinf Matematika": "Математика 1 класс",
   "2-sinf Matematika": "Математика 2 класс",
   "3-sinf Matematika": "Математика 3 класс",
   "4-sinf Matematika": "Математика 4 класс",
+  "5-sinf Matematika": "Математика 5 класс",
+  "6-sinf Matematika": "Математика 6 класс",
   "4–6 yosh · ranglar, shakllar, naqsh, sanash, harflar":
     "4–6 лет · цвета, фигуры, узоры, счёт, буквы",
   "Ranglar, hayvonlar, sanash — o'qish shart emas":
@@ -435,6 +666,10 @@ const RU: Record<string, string> = {
     "Действия в пределах 1000, деление с остатком, доли",
   "Million gacha sonlar, kasrlar, tezlik-vaqt-masofa":
     "Числа до миллиона, дроби, скорость-время-расстояние",
+  "Daraja, oddiy va o'nli kasrlar, foiz, hajm":
+    "Степень, обыкновенные и десятичные дроби, проценты, объём",
+  "Bo'linish belgilari, proporsiya, manfiy sonlar, tenglama":
+    "Признаки делимости, пропорция, отрицательные числа, уравнения",
 
   /* =============== kirish belgilaridagi so'zlar =============== */
   "sm": "см",

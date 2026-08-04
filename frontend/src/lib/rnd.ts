@@ -38,6 +38,26 @@ export function pc(c: number, wrong: number[]): number[] {
   return shuffle([c, ...shuffle(s).slice(0, 3)]);
 }
 
+/**
+ * Aniq javob + chalg'ituvchilar, MANFIY sonlarga ham ruxsat.
+ *
+ * `pc` manfiylarni tashlab yuboradi va bu 1–5-sinf uchun to'g'ri: u
+ * yerda manfiy son o'tilmagan, "−3" variant sifatida chiqsa savolning
+ * o'zi noto'g'ri ko'rinardi. 6-sinfda esa manfiy son — mavzuning
+ * O'ZI, shuning uchun butun sonlar uchun alohida yordamchi kerak.
+ */
+export function pcZ(c: number, wrong: number[]): number[] {
+  const s: number[] = [];
+  wrong.forEach((x) => { if (x !== c && !s.includes(x)) s.push(x); });
+  let k = 1;
+  while (s.length < 3) {
+    const v = c + k * (k % 2 ? 1 : -1) * (1 + (k >> 1));
+    if (v !== c && !s.includes(v)) s.push(v);
+    if (++k > 40) break;
+  }
+  return shuffle([c, ...shuffle(s).slice(0, 3)]);
+}
+
 /** Aniq javob + chalg'ituvchilar (matn uchun, masalan "1/2"). */
 export function pcS(c: string, wrong: string[], extra: string[]): string[] {
   const s: string[] = [];

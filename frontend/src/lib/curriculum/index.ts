@@ -6,6 +6,8 @@ import { grade1 } from "./grade1";
 import { grade2 } from "./grade2";
 import { grade3 } from "./grade3";
 import { grade4 } from "./grade4";
+import { grade5 } from "./grade5";
+import { grade6 } from "./grade6";
 
 export interface Course {
   id: string;
@@ -43,6 +45,10 @@ export const COURSES: Course[] = [
     desc: "1000 ichida amallar, qoldiqli bo'lish, ulushlar", units: grade3 }),
   build({ id: "grade4", grade: 4, title: "4-sinf Matematika", ic: "car", color: "blue",
     desc: "Million gacha sonlar, kasrlar, tezlik-vaqt-masofa", units: grade4 }),
+  build({ id: "grade5", grade: 5, title: "5-sinf Matematika", ic: "percent", color: "red",
+    desc: "Daraja, oddiy va o'nli kasrlar, foiz, hajm", units: grade5 }),
+  build({ id: "grade6", grade: 6, title: "6-sinf Matematika", ic: "sign", color: "purple",
+    desc: "Bo'linish belgilari, proporsiya, manfiy sonlar, tenglama", units: grade6 }),
 ];
 
 export const courseById = (id: string) => COURSES.find((c) => c.id === id);

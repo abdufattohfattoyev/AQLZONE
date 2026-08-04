@@ -94,6 +94,47 @@ const PATHS = {
     </>
   ),
 
+  /* --- 5–6-sinf: daraja, foiz, fazoviy va tekis shakllar --- */
+  // Kvadrat va uning ustidagi kichik ikkilik — "daraja" belgisi.
+  power: (
+    <>
+      <rect x="3.5" y="9" width="10" height="10" rx="1.8" />
+      <path d="M16 8.4c0-1.5 1.2-2.4 2.5-2.4s2.4.9 2.4 2.1c0 1.9-3.4 2.6-4.6 4.9h4.8" />
+    </>
+  ),
+  // Ildiz belgisi — ustidagi chiziq bilan.
+  sqrt: <path d="M3.5 12.5h2.6l3 6.4L13.4 5H21" />,
+  percent: (
+    <>
+      <path d="M6 18L18 6" />
+      <circle cx="7.4" cy="7.4" r="2.6" />
+      <circle cx="16.6" cy="16.6" r="2.6" />
+    </>
+  ),
+  // Plyus-minus: musbat va manfiy sonlar bobining belgisi.
+  sign: (
+    <>
+      <path d="M7.6 4.5v7M4.1 8h7" />
+      <path d="M13 16h7" />
+      <path d="M4.1 19.5h7" />
+    </>
+  ),
+  angle: <path d="M4.5 19.5h15L4.5 6.5zM9.6 19.5a5.6 5.6 0 00-1.6-4" />,
+  triangle: <path d="M12 4.2L20.5 19.5h-17z" />,
+  circle: (
+    <>
+      <circle cx="12" cy="12" r="8.2" />
+      <path d="M12 12h8.2" />
+    </>
+  ),
+  // Uch o'lchovli quti — parallelepiped va kub.
+  cube: (
+    <>
+      <path d="M12 3.2l8 4v9.6l-8 4-8-4V7.2z" />
+      <path d="M4 7.2l8 4 8-4M12 11.2v9.6" />
+    </>
+  ),
+
   /* --- boshqalar --- */
   pencil: (
     <>

@@ -150,8 +150,8 @@ const S = {
     "Трудные вопросы возвращаются.",
   ],
   menyuKurslarIzoh: [
-    "Maktabgacha va 1–4-sinf kurslari.",
-    "Курсы: до школы и 1–4 класс.",
+    "Maktabgacha va 1–6-sinf kurslari.",
+    "Курсы: до школы и 1–6 класс.",
   ],
   menyuOyinlarIzoh: [
     "Rekord va tanga, uch daraja.",

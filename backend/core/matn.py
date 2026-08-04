@@ -44,13 +44,13 @@ XABAR: dict[str, dict[str, str]] = {
     "salom": {
         "uz": (
             "Assalomu alaykum{ism}! 👋\n\n"
-            "<b>Aql Zone</b> — 1–4-sinf matematikasi.\n"
+            "<b>Aql Zone</b> — 1–6-sinf matematikasi.\n"
             "Bola darslik boblari bo'ylab yuradi, yulduz yig'adi va "
             "har safar yangi savollar yechadi."
         ),
         "ru": (
             "Здравствуйте{ism}! 👋\n\n"
-            "<b>Aql Zone</b> — математика 1–4 классов.\n"
+            "<b>Aql Zone</b> — математика 1–6 классов.\n"
             "Ребёнок идёт по главам учебника, собирает звёзды и каждый раз "
             "решает новые задания."
         ),
