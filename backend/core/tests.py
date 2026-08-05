@@ -2845,9 +2845,17 @@ class BotKlaviaturaTest(TestCase):
         self.assertNotIn(M("tRaqamTugma", "uz"), matnlar)
         self.assertIn(M("tYordamTugma", "uz"), matnlar)
 
-    def test_klaviatura_doimiy_va_moslashuvchan(self):
+    def test_klaviatura_yopiladi_va_moslashuvchan(self):
+        """
+        `is_persistent` BO'LMASLIGI kerak.
+
+        U bilan Telegram kiritish maydonidagi klaviatura belgisini olib
+        tashlaydi: oltita tugma ekranning yarmini egallab qoladi va uni
+        yig'ib bo'lmaydi. Android'da "ortga" ham ishlamaydi — u avval
+        klaviaturani yopmoqchi bo'ladi, klaviatura esa darrov qaytadi.
+        """
         k = self.klaviatura()
-        self.assertTrue(k["is_persistent"])
+        self.assertNotIn("is_persistent", k)
         self.assertTrue(k["resize_keyboard"])
 
     def test_mini_app_yoq_bolsa_klaviatura_chizilmaydi(self):

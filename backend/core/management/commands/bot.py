@@ -216,8 +216,18 @@ def asosiy_klaviatura(til: str) -> dict | None:
     ILOVANI ochadi (`web_app`): ular xabar yubormaydi, bosilishi bilan
     kerakli bo'lim ochiladi. Faqat "Yordam" oddiy matn yuboradi.
 
-    `is_persistent` — klaviatura yopilib qolmasin: aks holda odam uni
-    bir marta yashirsa, boshqa hech qachon topolmaydi.
+    KLAVIATURA YOPILADI (`is_persistent` YO'Q). Ilgari u `True` edi —
+    "odam bir marta yashirsa, boshqa topolmaydi" degan qo'rquv bilan.
+    Amalda esa teskarisi chiqdi: Telegram bunda kiritish maydonidagi
+    klaviatura belgisini UMUMAN olib tashlaydi, ya'ni oltita rangli
+    tugma telefon ekranining yarmini egallab, hech qanday yo'l bilan
+    yig'ilmasdi. Android'da esa "ortga" bosilganda avval klaviatura
+    yopilishi kerak — u darrov qaytib chiqqani uchun ortga tugmasi
+    ishlamayotgandek tuyulardi va suhbatdan chiqib bo'lmasdi.
+
+    Yashirilgan klaviatura yo'qolmaydi: uning o'rnida kiritish maydonida
+    belgi turadi va bir bosishda qaytadi. Bundan tashqari har `/start` va
+    javobsiz qolgan har qanday xabar uni qaytadan yuboradi.
 
     `MINI_APP_URL` sozlanmagan bo'lsa (lokal ishlab chiqish) klaviatura
     UMUMAN chizilmaydi: yarim ishlaydigan tugmalar — yo'qidan yomonroq.
@@ -267,7 +277,6 @@ def asosiy_klaviatura(til: str) -> dict | None:
             [tugma_yasa(M("tYordamTugma", til), QIZIL)],
         ],
         "resize_keyboard": True,
-        "is_persistent": True,
     }
 
 
