@@ -162,10 +162,7 @@ function Albom({ m, onOyin }: { m: Mavzu; onOyin: () => void }) {
   };
 
   /** Faqat TOVUSHNI qaytaradi — nomni qayta aytmasdan. */
-  const tovushniQaytar = (e: React.MouseEvent) => {
-    // Sahna ham bosiladigan tugma: usiz bu bosish ikkalasini ham
-    // ishga tushirib, tovush o'z ustiga tushardi.
-    e.stopPropagation();
+  const tovushniQaytar = () => {
     tebrat("tanlov");
     if (k.tovush) { toxtat(); tovushniChal(k.tovush); }
     else void gapirKetma([kOvoz(k)]);
@@ -193,21 +190,43 @@ function Albom({ m, onOyin }: { m: Mavzu; onOyin: () => void }) {
 
           <span className="font-display text-[30px] leading-none text-ink">{kNom(k)}</span>
 
-          {/* TOVUSH TUGMASI — ikki xil gapiradi.
-              Mashinada u "tovushi" deydi va HAQIQIY signalni chaladi;
-              hayvonda esa tovushning O'ZINI yozib qo'yadi ("vov-vov"),
-              chunki bola aynan uni takrorlaydi. */}
-          {(k.tovush || tovushi) && (
-            <span role="button" tabIndex={0} onClick={tovushniQaytar}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") tovushniQaytar(e as unknown as React.MouseEvent); }}
-              className="clay-press inline-flex items-center gap-1.5 rounded-full bg-track px-3.5 py-1.5
-                         font-display text-[15px] leading-none text-ink-soft">
-              <Icon name="ovoz" size={15} className="text-brand-green-d" />
-              {k.tovush ? t("kichkintoyTovushi") : tovushi}
-            </span>
-          )}
         </span>
       </button>
+
+      {/* ---- eshitish tugmalari ----
+          KARTADAN TASHQARIDA turadi va bu ikki sababdan.
+
+          KO'RINISH. Ilgari tugma faqat tovushi bor kartada (mashina,
+          hayvon) chiqardi. Rang va raqam kartalarida esa ekranda
+          hech qanday tugma yo'q edi: bola sahnani bosish mumkinligini
+          BILMASDI va nomni qayta eshitolmasdi. Endi "Yana eshitish"
+          har doim turadi — bu yoshda eng ko'p kerak bo'ladigan
+          harakat aynan takror.
+
+          TUZILISH. Ilgari u sahna tugmasining ICHIDA edi, ya'ni
+          tugma ichida tugma — brauzer uchun ham, ekran o'quvchi uchun
+          ham noto'g'ri. */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        <button type="button" onClick={() => { tebrat("tanlov"); ayt(k); }}
+          className="clay-press inline-flex items-center gap-2 rounded-full bg-karta px-5 py-2.5
+                     font-display text-[15.5px] leading-none text-ink shadow-clay-sm">
+          <Icon name="ovoz" size={18} className="text-brand-green-d" />
+          {t("kichkintoyQayta")}
+        </button>
+
+        {/* TOVUSH TUGMASI — ikki xil gapiradi.
+            Mashinada u "tovushi" deydi va HAQIQIY signalni chaladi;
+            hayvonda esa tovushning O'ZINI yozib qo'yadi ("vov-vov"),
+            chunki bola aynan uni takrorlaydi. */}
+        {(k.tovush || tovushi) && (
+          <button type="button" onClick={tovushniQaytar}
+            className="clay-press inline-flex items-center gap-2 rounded-full bg-track px-4 py-2.5
+                       font-display text-[15.5px] leading-none text-ink-soft">
+            <Icon name="ovoz" size={16} className="text-brand-green-d" />
+            {k.tovush ? t("kichkintoyTovushi") : tovushi}
+          </button>
+        )}
+      </div>
 
       {/* ---- yurish ----
           Tugmalar KATTA va chetlarda: bu yoshdagi bola telefonni ikki
@@ -330,9 +349,20 @@ function Oyin({ m, onChiq }: { m: Mavzu; onChiq: () => void }) {
   const [xato, setXato] = useState("");
   const [portlash, setPortlash] = useState(0);
   const [togri, setTogri] = useState(false);
+  /**
+   * Shu savolda nechta xato qilindi.
+   *
+   * Ikkitadan keyin to'g'ri javob YONIB turadi (`ishora`). Bu yoshda
+   * "yana urin" degan gapning ma'nosi yo'q: bola bilmayotgan bo'lsa,
+   * u yuz marta ham topolmaydi va oxiri telefonni qo'yadi. Ishora esa
+   * unga javobni KO'RSATADI — va ko'rsatilgan javobni o'zi bosgani
+   * ham o'rganish bo'ladi.
+   */
+  const [xatoSoni, setXatoSoni] = useState(0);
 
   const s = savollar[n];
   const tugadi = n >= savollar.length;
+  const ishora = xatoSoni >= 2;
 
   // Savol o'zgarganda so'raladigan so'z aytiladi. Bu o'yindagi YAGONA
   // savol: ekranda hech qanday yozuv yo'q, chunki bola o'qiy olmaydi.
@@ -345,18 +375,32 @@ function Oyin({ m, onChiq }: { m: Mavzu; onChiq: () => void }) {
     // Yakka so'z savol bo'lib eshitilmaydi — bola nima qilish
     // kerakligini ovoz OHANGIDAN tushunadi, yozuvdan emas.
     void gapirKetma([savolMatni(m.id, s.javob)]);
+    // Yangi savol — xato sanoq ham noldan boshlanadi.
+    setXatoSoni(0);
   }, [n, s, tugadi, m]);
 
   const bosildi = (k: Karta) => {
     if (togri) return;                       // javob berilgan, keyingisini kutyapmiz
+
     if (k.id !== s.javob.id) {
-      // Xato — jazo yo'q. Karta silkinadi va savol qaytadan beriladi.
+      /* ─────────── XATO — JAZO EMAS, DARS ───────────
+       *
+       * Ilgari bu yerda faqat savol qaytarilardi: "Qaysi biri
+       * yashil?" Bola esa nimani bosganini BILMASDI — u shunchaki
+       * "bo'lmadi" degan javob olardi va yana taxmin qilardi.
+       *
+       * Endi ilova avval BOSILGAN narsani nomlaydi ("Bu ko'k"),
+       * keyin savolni qaytaradi. Shu ikki gap orasida bola aynan
+       * o'sha farqni eshitadi — ya'ni xato ham o'rgatadi.
+       */
       tebrat("xato");
       setXato(k.id);
+      setXatoSoni((x) => x + 1);
       setTimeout(() => setXato(""), 500);
-      void gapirKetma([savolMatni(m.id, s.javob)]);
+      void gapirKetma([aytiladigan(m.id, k), savolMatni(m.id, s.javob)]);
       return;
     }
+
     tebrat("togri");
     setTogri(true);
     setPortlash((x) => x + 1);
@@ -423,7 +467,9 @@ function Oyin({ m, onChiq }: { m: Mavzu; onChiq: () => void }) {
             className={`tugma-3d relative flex min-h-[104px] items-center justify-center rounded-clay
                         bg-karta p-3 shadow-clay
                         ${xato === k.id ? "az-silkin" : ""}
-                        ${togri && k.id === s.javob.id ? "az-sakra ring-4 ring-brand-green" : ""}`}>
+                        ${togri && k.id === s.javob.id ? "az-sakra ring-4 ring-brand-green" : ""}
+                        ${ishora && !togri && k.id === s.javob.id
+                          ? "az-pulse ring-4 ring-brand-orange" : ""}`}>
             <KichkintoyKarta k={k} olcham="kichik" />
             {togri && k.id === s.javob.id && <Konfetti key={portlash} />}
           </button>
