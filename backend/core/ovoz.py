@@ -120,8 +120,7 @@ def kalit(matn: str, til: str = "uz") -> str:
     # edi: `.env` da tezlikni o'zgartirsangiz, eski fayllar joyida
     # qolib, ilova eski tezlikda gapiraverardi — buni faqat quloq bilan
     # sezish mumkin, jurnalda hech narsa ko'rinmaydi.
-    tezlik = getattr(settings, "AISHA_TEZLIK", "") or "0.9"
-    xom = f"{til}|{ovoz}|{kayfiyat}|{tezlik}|{tozala(matn)}"
+    xom = f"{til}|{ovoz}|{kayfiyat}|{tezligi(matn)}|{tozala(matn)}"
     return hashlib.sha1(xom.encode("utf-8")).hexdigest()[:20]
 
 
@@ -287,6 +286,34 @@ def ruxsatmi(matn: str) -> bool:
     return tozala(matn) in ruxsat_royxati()
 
 
+#: Boshqalardan SEKINROQ aytiladigan matnlar.
+#:
+#: Hozircha faqat maqtov so'zi. Sabab TTS ning tabiatida: yakka undov
+#: qisqa bo'lgani uchun u shoshib o'qiladi va oxirgi bo'g'in yutilib
+#: ketadi — "Barakalla!" o'rniga "Barakall" eshitiladi. Aynan shu payt
+#: esa bolaning mukofoti: u to'g'ri javob bergan va maqtovni ANIQ
+#: eshitishi kerak.
+#:
+#: Ro'yxat ataylab QISQA va aniq. "Uzunligi shuncha bo'lsa sekinlash"
+#: degan umumiy qoida ham yozilishi mumkin edi, lekin unda "Bu it"
+#: kabi qisqa gaplar ham sekinlashib, albom cho'zilib ketardi.
+SEKIN = {"Barakalla!", "Молодец!"}
+
+
+def tezligi(matn: str) -> str:
+    """
+    Shu matn qaysi tezlikda aytiladi.
+
+    `kalit()` ham, `yasa()` ham SHU funksiyadan foydalanadi — aks holda
+    xesh bir tezlikda hisoblanib, fayl boshqasida yasalardi va kesh
+    hech qachon topilmasdi: har so'rovda qaytadan yasalib, har safar
+    pul ketardi.
+    """
+    if tozala(matn) in SEKIN:
+        return getattr(settings, "AISHA_TEZLIK_MAQTOV", "") or "0.8"
+    return getattr(settings, "AISHA_TEZLIK", "") or "0.9"
+
+
 def tili(matn: str) -> str:
     """
     Matn qaysi tilda — kirill harfi bormi degan savol bo'yicha.
@@ -341,7 +368,8 @@ def yasa(matn: str, til: str = "uz", *, budjet: bool = True) -> Path:
                 "model": getattr(settings, "AISHA_MODEL", "") or "Gulnoza",
                 "mood": getattr(settings, "AISHA_KAYFIYAT", "") or "Neutral",
                 # Bolalar uchun sekinroq. 1.0 — odatdagi tezlik.
-                "speed": str(getattr(settings, "AISHA_TEZLIK", "") or "0.9"),
+                # Maqtov so'zi undan ham sekin (`SEKIN` ro'yxati).
+                "speed": tezligi(matn),
             }
             if til == "uz" else {}
         ),

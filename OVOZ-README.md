@@ -82,12 +82,24 @@ AISHA_KEY=...
 Kalit: <https://space.aisha.group/api-keys>
 
 Ixtiyoriy: `AISHA_MODEL` (standart `Gulnoza`), `AISHA_KAYFIYAT`
-(`Cheerful`), `AISHA_TEZLIK` (`0.9` — bolalar uchun sekinroq),
+(`Neutral`), `AISHA_TEZLIK` (`0.9`), `AISHA_TEZLIK_MAQTOV` (`0.8`),
 `OVOZ_KESH`, `OVOZ_KUNLIK_BELGI`.
 
-Ovoz va kayfiyat **fayl xeshiga kiradi**: ularni almashtirsangiz eski
-fayllar o'z-o'zidan ishlatilmay qoladi va ilova ikki xil ovozda
-gapirib qolmaydi.
+**Kayfiyat `Neutral`, `Cheerful` emas.** Ikkalasi yonma-yon tinglab
+tanlandi. "Cheerful" quvnoq eshitiladi, lekin unda ohang ko'tarilib-
+tushib turadi va o'zbekcha talaffuzda bu **yot aksent** bo'lib
+sezilardi — go'yo so'zlovchi tilni yaxshi bilmaydi.
+
+**Maqtov so'zi sekinroq** (`SEKIN` ro'yxati, `core/ovoz.py`). Yakka
+undov ("Barakalla!") qisqa bo'lgani uchun TTS uni shoshib o'qiydi va
+oxirgi bo'g'in yutilib ketadi. Aynan shu payt esa bolaning mukofoti —
+u maqtovni aniq eshitishi kerak.
+
+Ovoz, kayfiyat **va tezlik** fayl xeshiga kiradi: ularni
+almashtirsangiz eski fayllar o'z-o'zidan ishlatilmay qoladi va ilova
+ikki xil ovozda gapirib qolmaydi. Tezlik ilgari xeshga kirmasdi va bu
+jimgina nosozlik edi — `.env` o'zgarsa ham ilova eski tezlikda
+gapiraverardi.
 
 ## Lug'atni tayyorlash
 

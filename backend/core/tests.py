@@ -3293,6 +3293,41 @@ class OvozTest(TestCase):
             r = self.client.get("/api/v1/ovoz", {"matn": "8 + 5 nechaga teng?"})
         self.assertEqual(r.status_code, 200)
 
+    def test_maqtov_sekinroq_aytiladi(self):
+        """
+        Yakka undov ("Barakalla!") TTS da shoshib o'qiladi va oxirgi
+        bo'g'in yutilib ketadi. Aynan shu payt bolaning mukofoti.
+        """
+        with self.settings(AISHA_TEZLIK="0.9", AISHA_TEZLIK_MAQTOV="0.8"):
+            self.assertEqual(self.O.tezligi("Barakalla!"), "0.8")
+            self.assertEqual(self.O.tezligi("Молодец!"), "0.8")
+            self.assertEqual(self.O.tezligi("Bu mashina"), "0.9")
+
+    def test_tezlik_xeshga_kiradi(self):
+        """
+        Busiz `.env` da tezlikni o'zgartirsangiz eski fayllar joyida
+        qolib, ilova eski tezlikda gapiraverardi.
+        """
+        with self.settings(AISHA_TEZLIK="0.9"):
+            a = self.O.kalit("olma")
+        with self.settings(AISHA_TEZLIK="1.0"):
+            b = self.O.kalit("olma")
+        self.assertNotEqual(a, b)
+
+    def test_maqtovning_kaliti_boshqa_tezlikda(self):
+        """
+        `kalit()` va `yasa()` BIR XIL tezlikni ko'rishi shart. Aks
+        holda xesh bir tezlikda hisoblanib, fayl boshqasida yasalardi
+        va kesh hech qachon topilmasdi — har so'rovda qaytadan yasalib,
+        har safar pul ketardi.
+        """
+        with self.settings(AISHA_TEZLIK="0.9", AISHA_TEZLIK_MAQTOV="0.8"):
+            maqtov = self.O.kalit("Barakalla!")
+            with self.settings(AISHA_TEZLIK="0.8", AISHA_TEZLIK_MAQTOV="0.8"):
+                # Oddiy tezlik 0.8 ga tushsa, maqtovning kaliti
+                # O'ZGARMAYDI — u allaqachon 0.8 da edi.
+                self.assertEqual(self.O.kalit("Barakalla!"), maqtov)
+
     def test_lugatdagi_hamma_soz_ruxsatda(self):
         self.assertTrue(self.O.ruxsatmi("mashina"))
         self.assertTrue(self.O.ruxsatmi("машина"))

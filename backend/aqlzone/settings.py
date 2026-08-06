@@ -222,6 +222,13 @@ AISHA_KAYFIYAT = env("AISHA_KAYFIYAT", "Neutral")
 # Bolalar uchun sekinroq. 1.0 — odatdagi tezlik.
 AISHA_TEZLIK = env("AISHA_TEZLIK", "0.9")
 
+# Maqtov so'zi ("Barakalla!") undan ham sekin aytiladi.
+#
+# Yakka undov qisqa bo'lgani uchun TTS uni shoshib o'qiydi va oxirgi
+# bo'g'in yutilib ketadi. Aynan shu payt esa bolaning mukofoti —
+# u maqtovni ANIQ eshitishi kerak. Ro'yxat `core/ovoz.py` da (`SEKIN`).
+AISHA_TEZLIK_MAQTOV = env("AISHA_TEZLIK_MAQTOV", "0.8")
+
 # Yasalgan fayllar qayerda yotadi. Docker'da bu volume (`/data`) —
 # konteyner qayta qurilganda kesh saqlanib qolishi kerak, aks holda
 # har joylashda butun lug'at qaytadan yasalib, qaytadan pul ketardi.
