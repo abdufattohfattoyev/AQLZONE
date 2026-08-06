@@ -115,8 +115,13 @@ def kalit(matn: str, til: str = "uz") -> str:
     ovozni "yo'q" deb topardi.
     """
     ovoz = getattr(settings, "AISHA_MODEL", "") or "Gulnoza"
-    kayfiyat = getattr(settings, "AISHA_KAYFIYAT", "") or "Cheerful"
-    xom = f"{til}|{ovoz}|{kayfiyat}|{tozala(matn)}"
+    kayfiyat = getattr(settings, "AISHA_KAYFIYAT", "") or "Neutral"
+    # TEZLIK ham xeshga kiradi. Ilgari kirmasdi va bu jimgina nosozlik
+    # edi: `.env` da tezlikni o'zgartirsangiz, eski fayllar joyida
+    # qolib, ilova eski tezlikda gapiraverardi — buni faqat quloq bilan
+    # sezish mumkin, jurnalda hech narsa ko'rinmaydi.
+    tezlik = getattr(settings, "AISHA_TEZLIK", "") or "0.9"
+    xom = f"{til}|{ovoz}|{kayfiyat}|{tezlik}|{tozala(matn)}"
     return hashlib.sha1(xom.encode("utf-8")).hexdigest()[:20]
 
 
@@ -334,7 +339,7 @@ def yasa(matn: str, til: str = "uz", *, budjet: bool = True) -> Path:
         **(
             {
                 "model": getattr(settings, "AISHA_MODEL", "") or "Gulnoza",
-                "mood": getattr(settings, "AISHA_KAYFIYAT", "") or "Cheerful",
+                "mood": getattr(settings, "AISHA_KAYFIYAT", "") or "Neutral",
                 # Bolalar uchun sekinroq. 1.0 — odatdagi tezlik.
                 "speed": str(getattr(settings, "AISHA_TEZLIK", "") or "0.9"),
             }

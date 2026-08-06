@@ -382,29 +382,55 @@ export const ChizmaSamolyot = (): JSX.Element => {
     <g>
       {/* Soya PASTDA va kichik: samolyot yerda emas, HAVODA. Aynan shu
           narsa uni qolgan hamma mashinadan ajratadi. */}
-      <Soya cy={108} rx={24} />
+      <Soya cy={110} rx={22} />
 
-      {/* Orqa qanot va dum */}
-      <path d="M20 36l18 20-18 7z" fill="#9fb4d1" />
-      <path d="M20 36l18 20-6 2z" fill="#8ea3c4" />
+      {/* UZOQDAGI QANOT — tanadan ORQADA, to'q va KICHIK. U ko'z
+          uchun chuqurlik ishorasi, xolos: kattaroq bo'lsa ikkita
+          parallel ko'k tasma bo'lib ko'rinardi va samolyot
+          qanotsiz "zebra" ga aylanardi. */}
+      <path d="M64 54 52 70h7l14-16z" fill="#2b6fc4" opacity="0.85" />
 
-      {/* Tana */}
-      <path d="M16 56c0-5.5 4.5-10 10-10h56c14.5 0 25 5.2 31.5 10-6.5 4.8-17 10-31.5 10H26c-5.5 0-10-4.5-10-10z"
+      {/* DUM — orqa (chap) tomonda, tepaga qaragan uchburchak.
+          Uchi ataylab orqaga OG'GAN: tik dum "bayroq" bo'lib
+          ko'rinardi, og'gani esa uchayotgan samolyotni eslatadi. */}
+      <path d="M26 47 32 18c.5-2.4 2.4-2.8 3.8-.8L54 45z" fill={g("kok")} />
+      <path d="M32 18c.5-2.4 2.4-2.8 3.8-.8L46 33l-11 4z" fill="#5aa0f5" />
+      {/* Gorizontal dum — kichik va orqada */}
+      <path d="M30 51 8 45c-2-.5-2.2 1-.8 2.2L20 57z" fill={g("kulrang")} />
+
+      {/* TANA — burni O'NGDA va uchli, dumi chapda ingichkalashadi.
+          Ilgari u ikki uchi ham teng "kapsula" edi va samolyot
+          qayoqqa uchayotgani bilinmasdi. */}
+      <path d="M113 57c-7-9-22-14-45-14H44c-13 0-22 2.4-28 6.6l-4 3
+               c-1.4 1-1.4 2.4 0 3.4l4 3C22 63.6 31 66 44 66h24c23 0 38-4 45-9z"
         fill={g("oq")} />
-      <path d="M16 56c0-5.5 4.5-10 10-10h56c14.5 0 25 5.2 31.5 10H16z" fill="#ffffff" />
+      {/* Tepadagi yorug'lik — tananing dumaloqligi shundan bilinadi */}
+      <path d="M113 57c-7-9-22-14-45-14H44c-13 0-22 2.4-28 6.6l-2.6 2H113z" fill="#ffffff" />
+      {/* Pastdagi soya */}
+      <path d="M12.6 59.6 16 62C22 65.6 31 68 44 68h24c22 0 36.6-4 44-8.6-8 7.6-23 11.6-44 11.6H44c-13 0-22-2.4-28-6.6z"
+        fill="#00000012" />
 
-      {/* Illyuminatorlar */}
-      {[36, 48, 60, 72].map((x) => (
-        <circle key={x} cx={x} cy="55" r="3.8" fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1" />
+      {/* Illyuminatorlar — qatorda, birdek oraliqda */}
+      {[46, 57, 68, 79].map((x) => (
+        <circle key={x} cx={x} cy="55" r="3.8" fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.1" />
       ))}
-      {/* Kabina oynasi */}
-      <path d="M96 49c6.4 2 11 4.6 14.4 6.4h-14.4z" fill={g("oyna")} />
+      {/* Kabina oynasi — burunga yaqin va qiyshaygan */}
+      <path d="M92 47c6.6 1.6 12 4 15.6 6.6l-17-1.4z" fill={g("oyna")}
+        stroke={OYNA_CHET} strokeWidth="1.1" strokeLinejoin="round" />
 
-      {/* Pastki qanot va dvigatel */}
-      <path d="M54 64l-9 26h13l17-26z" fill={g("kok")} />
-      <path d="M54 64l-4.5 13h11l8.5-13z" fill="#5aa0f5" />
-      <rect x="52" y="63" width="20" height="10" rx="5" fill={g("kulrang")} />
-      <circle cx="53" cy="68" r="3.4" fill="#6f7686" />
+      {/* OLDINGI QANOT — tananing OLDIDA, keng va yorug'roq.
+          Uchi yumaloq: o'tkir burchak bu yoshdagi bolaga "tig'"
+          bo'lib ko'rinadi. */}
+      <path d="M76 60 50 92c-1 1.4-.4 2.6 1.4 2.6H62c1.4 0 2.4-.6 3.2-1.8L88 60z"
+        fill={g("kok")} />
+      <path d="M76 60 60 80h11l15-20z" fill="#5aa0f5" />
+
+      {/* DVIGATEL OLIB TASHLANDI.
+          U qanotning o'rtasida, ko'ndalang yotgan kulrang quvur
+          bo'lib ko'rinardi va qanotni ikkiga kesardi — natijada
+          samolyot emas, "ustiga trubka qo'yilgan ko'k tasma"
+          chiqardi. Bolalar uchun ikonkada dvigatel shart emas:
+          samolyotni tana, qanot va dum taniqli qiladi. */}
     </g>
   );
 };

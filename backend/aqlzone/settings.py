@@ -210,7 +210,15 @@ AISHA_KEY = env("AISHA_KEY", "") or env("AISHA_API_KEY", "")
 # uchun almashtirilganda eski fayllar o'z-o'zidan ishlatilmay qoladi va
 # ilova ikki xil ovozda gapirib qolmaydi.
 AISHA_MODEL = env("AISHA_MODEL", "Gulnoza")
-AISHA_KAYFIYAT = env("AISHA_KAYFIYAT", "Cheerful")
+
+# Kayfiyat "Neutral", "Cheerful" EMAS.
+#
+# Ikkalasi yonma-yon tinglab tanlandi. "Cheerful" quvnoq eshitiladi,
+# lekin unda ohang ko'tarilib-tushib turadi va o'zbekcha talaffuzda bu
+# YOT AKSENT bo'lib sezilardi — go'yo so'zlovchi tilni yaxshi
+# bilmaydi. "Neutral" esa tinch va tabiiy: bola nomni aniq eshitadi.
+AISHA_KAYFIYAT = env("AISHA_KAYFIYAT", "Neutral")
+
 # Bolalar uchun sekinroq. 1.0 — odatdagi tezlik.
 AISHA_TEZLIK = env("AISHA_TEZLIK", "0.9")
 
