@@ -1,8 +1,30 @@
-# Ovoz — o'zbekcha talaffuz
+# Ovoz
 
-Ilova so'z va savollarni ovoz chiqarib o'qiydi. Kichkintoylar bo'limi
+Ilovada **ikki xil ovoz** bor va ular butunlay boshqa yo'ldan keladi.
+Ularni aralashtirmaslik muhim:
+
+| | **Nutq** (TTS) | **Tovush** (sintez) |
+|---|---|---|
+| Nima | "Bu mashina", "Qaysi biri it?" | signal, sirena, qo'ng'iroq |
+| Qayerdan | Aisha, serverda keshlanadi | brauzerning o'zida yasaladi |
+| Kod | `lib/ovoz.ts` + `/api/v1/ovoz` | `lib/tovush.ts` |
+| Fayl | `.wav`, `/data/ovoz/` | **yo'q** — real vaqtda yasaladi |
+
+Quyidagi hammasi **nutq** haqida; tovush uchun pastdagi bo'limga qarang.
+
+---
+
+## Nutq — o'zbekcha talaffuz
+
+Ilova so'z va gaplarni ovoz chiqarib o'qiydi. Kichkintoylar bo'limi
 (2–5 yosh) uchun bu bezak emas, **ishlash sharti**: 3 yoshli bola
 "mashina" degan yozuvni o'qiy olmaydi.
+
+**Gaplar to'liq.** Albom "mashina" emas, "Bu mashina" deydi; o'yin
+"Qaysi biri mashina?" deb so'raydi. Yakka so'z savol bo'lib
+eshitilmaydi va bola undan gap tuzishni o'rganmaydi. Gaplar qolip
+bilan yasaladi (`lib/kichkintoy.ts` → `aytiladigan`, `savolMatni`) —
+45 karta × 2 gap × 2 til qo'lda yozilsa, bittasi albatta xato bo'lardi.
 
 ## Qanday ishlaydi
 
@@ -85,9 +107,10 @@ python manage.py ovoz --sana          # nechtasi yetishmasligini aytadi
 python manage.py ovoz --fayl x.txt    # o'z ro'yxating
 ```
 
-Kichkintoylar lug'ati — 134 satr, jami ~860 belgi. Ya'ni butun bo'lim
-bir marta yasalganda Aisha hisobidan **bir kilobaytdan kam** matn
-ketadi.
+Kichkintoylar lug'ati — 296 satr, jami ~3 200 belgi (nomlar, "Bu …"
+gaplari, "Qaysi biri …?" savollari, ikki tilda). Ya'ni butun bo'lim
+bir marta yasalganda Aisha hisobidan **uch kilobaytcha** matn ketadi —
+oylik bepul chegaraning mingdan bir qismi.
 
 ## Yangi so'z qo'shish
 
@@ -106,4 +129,53 @@ kichkintoylar bo'limining o'zida, yuqori o'ng burchakda. Ikkinchisi
 shuning uchun kerakki, ovozni o'chirish payti har doim shoshilinch
 bo'ladi — avtobusda, uxlab yotgan chaqaloq yonida.
 
-Sozlama `localStorage` da (`azapp_ovoz`) va butun ilova bo'ylab bitta.
+Sozlama `localStorage` da (`azapp_ovoz`) va butun ilova bo'ylab bitta —
+nutqni ham, tovushni ham birga o'chiradi.
+
+---
+
+## Tovush — narsalarning haqiqiy ovozi
+
+`frontend/src/lib/tovush.ts`. Signal, sirena, qo'ng'iroq, hushtak,
+dvigatel — hammasi `AudioContext` da yasaladi va **hech qanday fayl
+yuklanmaydi**.
+
+### Nega TTS emas
+
+Ilgari mashina kartasi "bi-bip" degan **so'zni** aytardi — ya'ni odam
+ovozi mashinani taqlid qilardi. Bola esa mashinani ko'chada eshitgan
+va u yerda "bi-bip" degan so'z emas, **signal** yangraydi. Taqlid
+qilingan tovush kulgili, lekin bola uni haqiqiy mashina bilan bog'lay
+olmaydi.
+
+### Nega fayl emas
+
+* **og'irlik** — o'n ikkita tovush bir necha megabayt bo'lardi;
+* **litsenziya** — internetdagi "bepul" tovushlarning ko'pi shartli
+  bepul va startup uchun bu vaqt bombasi;
+* **moslashuv** — yasalgan tovushni sozlash mumkin (sirenani
+  sekinlashtirish, signalni yumshatish), faylni esa qayta yozish kerak.
+
+### Qanday qurilgan
+
+Har bir tovush — bir necha oddiy to'lqinning yig'indisi:
+
+| | Qanday yasaladi |
+|---|---|
+| **Signal** | ikkita kvinta oralig'idagi arra to'lqin + past uchinchi nota |
+| **Sirena** | chastotasi 660↔1180 Hz orasida silliq yuguradigan nota |
+| **Qo'ng'iroq** | FM sintez (nisbat 3.5 — metall jarangi shundan) |
+| **Hushtak** | uchta nota akkordi + tarmoqli shovqin (bug') |
+| **Dvigatel** | past arra to'lqin, sekundiga 9 marta uziladigan puls |
+| **Samolyot** | filtri pastdan yuqoriga suriladigan oq shovqin |
+
+Hammasi qisqa (0.4–1.6 s): bu tovush emas, **ishora**. Uzun tovush
+bolani zeriktiradi.
+
+### Hayvonlarda nega tovush yo'q
+
+Hayvon tovushi ataylab **so'z bo'lib qoladi** ("vov-vov", "miyov") va
+uni TTS aytadi. Haqiqiy it hurishini qo'ysak, u ta'sirli bo'lardi-yu,
+bola uni **qaytara olmasdi** — holbuki bu yoshda o'rganish aynan
+taqlid orqali boradi. Sintez qilingan hurish esa yaxshi chiqmaydi:
+signal va sirena oddiy to'lqinlardan iborat, hayvon ovozi esa emas.

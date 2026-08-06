@@ -16,11 +16,23 @@ bola javobni allaqachon bilishi kerak. Bu bo'lim o'sha bilimning O'ZINI
 beradi.
 
 **Albom.** Ekranda ayni paytda bitta karta turadi va u juda katta. Karta
-ochilishi bilan ilova nomini aytadi, keyin pauza qilib tovushini —
-"mashina… bi-bip", "it… vov-vov". Bola hech narsa bosmaydi: u hali
-"eshitish uchun tugmani bos" degan qoidani bilmaydi. Sahnani bosish nomni
-qayta aytadi, va bu yoshdagi eng ko'p qilinadigan harakat aynan shu —
-takror, takror, yana takror.
+ochilishi bilan ilova **to'liq gap** aytadi — "Bu mashina" — keyin pauza
+qilib tovushini chaladi. Bola hech narsa bosmaydi: u hali "eshitish uchun
+tugmani bos" degan qoidani bilmaydi. Sahnani bosish gapni qayta aytadi, va
+bu yoshdagi eng ko'p qilinadigan harakat aynan shu — takror, takror, yana
+takror.
+
+**Rasmlar qo'lda chizilgan** (`frontend/src/lib/chizma/`), emoji emas: 12
+mashina, 14 hayvon. Emoji har platformada boshqa rassom qo'lida chizilgan,
+ya'ni albom har telefonda boshqacha ko'rinardi. Hayvonlar **bosh**
+ko'rinishida — bola hayvonni yuzidan taniydi va ekrandagi ko'zga javob
+beradi.
+
+**Tovushlar haqiqiy.** Mashinada signal, sirena, qo'ng'iroq, hushtak
+yangraydi va ular brauzerning o'zida yasaladi (`lib/tovush.ts`) — hech
+qanday fayl yuklanmaydi. Hayvonlarda esa tovush **so'z** bo'lib qoladi
+("vov-vov"): bola uni o'zi takrorlaydi, haqiqiy hurishni esa qaytara
+olmasdi. Batafsil — `OVOZ-README.md`.
 
 **Nega o'n ikkitasi birga emas.** Setka qilib hammasini ko'rsatish kattalar
 uchun qulay. 3 yoshli bola esa o'n ikkita rasmda hech biriga qaramaydi —
@@ -31,19 +43,26 @@ mashinani ko'radi. Qulflangan katta unga "sen bunga arzimaysan" deb
 ko'rinadi, holbuki u hali "keyingi" degan so'zni ham bilmaydi.
 
 **O'yin — albomdan keyin.** To'rtta karta ko'rilgach "Topib ber" tugmasi
-paydo bo'ladi: ovoz nomni aytadi, ekranda uchta rasm. **Yutqazish yo'q** —
-xato javobda karta silkinadi, ovoz nomni qaytadan aytadi va o'yin o'sha
-savolda turaveradi. Ball ham, vaqt ham yo'q.
+paydo bo'ladi: ovoz **savol beradi** ("Qaysi biri mashina?"), ekranda
+uchta rasm. **Yutqazish yo'q** — xato javobda karta silkinadi, savol
+qaytadan beriladi va o'yin o'sha savolda turaveradi. Ball ham, vaqt ham
+yo'q.
 
 **Raqamlarda belgi va narsalar birga.** "5" degan chizma bilan beshta olma
 bir vaqtda ko'rinadi. Alohida ko'rsatgan ilova raqamni o'rgatadi, sonni
 emas: bola "besh" deb o'qishni biladi-yu, beshta olmani sanay olmaydi. Nol
 kartasi bo'sh — bo'sh joyning o'zi tushuntiradi.
 
-Kod: `frontend/src/lib/kichkintoy.ts` (lug'at, ikki tilda),
+Kod: `frontend/src/lib/kichkintoy.ts` (lug'at va gaplar, ikki tilda),
+`lib/chizma/` (26 ta rasm), `lib/tovush.ts` (signal, sirena, qo'ng'iroq),
 `screens/Kichkintoy.tsx` (mavzular), `screens/KichkintoyMavzu.tsx` (albom va
 o'yin), `components/KichkintoyKarta.tsx` (rasm, rang va raqam kartalari).
 Ovoz — `OVOZ-README.md`.
+
+**Yangi karta qo'shish** uch qadam: `kichkintoy.ts` ga yozuv,
+`lib/chizma/` ga rasm (+ `chizma/idlar.ts` ga id — busiz loyiha
+yig'ilmaydi), so'ng `npx jiti scripts/kichkintoy.ts --yoz` va serverda
+`manage.py ovoz`.
 
 ## Maktabgacha kurs
 
