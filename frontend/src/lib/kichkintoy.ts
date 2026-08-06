@@ -22,10 +22,20 @@
  *
  * ─────────── NEGA HAR NARSANING O'Z TOVUSHI BOR ───────────
  *
- * "Mashina" so'zini bilmagan bola ham "bi-bip" ni biladi. Tovush —
- * so'zga yetib boradigan ko'prik: bola avval tovushni takrorlaydi,
- * keyin nomni. Shuning uchun mashinalarda ham, hayvonlarda ham `ovoz`
- * bor va u nomdan KEYIN, alohida aytiladi.
+ * Tovush — so'zga yetib boradigan ko'prik: bola avval tovushni
+ * taniydi, keyin nomni. Lekin ikki xil tovush bor va ular ATAYLAB
+ * boshqacha beriladi:
+ *
+ *   MASHINALARDA — HAQIQIY tovush (`tovush`). Signal, sirena,
+ *   qo'ng'iroq brauzerning o'zida yasaladi (`lib/tovush.ts`). Ilgari
+ *   bu yerda ham "bi-bip" degan SO'Z aytilardi — ya'ni odam ovozi
+ *   mashinani taqlid qilardi. Bola esa mashinani ko'chada eshitgan va
+ *   o'sha yerda "bi-bip" degan so'z emas, SIGNAL yangraydi.
+ *
+ *   HAYVONLARDA — so'z bo'lib qoladi (`ovoz`). Va bu ham ataylab:
+ *   "vov-vov" bolaning O'ZI takrorlaydigan tovush. Haqiqiy it
+ *   hurishini qo'ysak, u ta'sirli bo'lardi-yu, bola uni qaytara
+ *   olmasdi — holbuki bu yoshda o'rganish aynan TAQLID orqali boradi.
  *
  * ─────────── MATN QAYERDA ───────────
  *
@@ -36,6 +46,7 @@
  * qolardi.
  */
 import { til } from "./til";
+import type { TovushNomi } from "./tovush";
 import type { UnitColor } from "./types";
 
 /** Albomdagi bitta karta. */
@@ -52,9 +63,20 @@ export interface Karta {
   belgi?: string;
   /** Raqam kartasida: nechta narsa chizilsin. */
   n?: number;
-  /** "Bi-bip", "miyov" — nomdan keyin aytiladigan tovush. */
+  /**
+   * HAYVON tovushi — nomdan keyin AYTILADIGAN so'z ("miyov").
+   *
+   * Bola uni takrorlaydi, shuning uchun u so'z bo'lib qoladi.
+   */
   ovoz?: string;
   ovozRu?: string;
+  /**
+   * MASHINA tovushi — brauzerda yasaladigan HAQIQIY ovoz.
+   *
+   * `lib/tovush.ts` dagi nomlardan biri. Bor bo'lsa, kartada so'z
+   * o'rniga "tovushi" tugmasi chiqadi.
+   */
+  tovush?: TovushNomi;
 }
 
 export interface Mavzu {
@@ -90,18 +112,18 @@ export const kOvoz = (k: Karta): string =>
  * bo'limni qiziqarli qiladi.
  */
 const MASHINA: Karta[] = [
-  { id: "mashina", e: "🚗", nom: "mashina", ru: "машина", ovoz: "bi-bip", ovozRu: "би-бип" },
-  { id: "avtobus", e: "🚌", nom: "avtobus", ru: "автобус", ovoz: "tu-tut", ovozRu: "ту-тут" },
-  { id: "taksi", e: "🚕", nom: "taksi", ru: "такси", ovoz: "bi-bip", ovozRu: "би-бип" },
-  { id: "yuk", e: "🚚", nom: "yuk mashinasi", ru: "грузовик", ovoz: "gur-gur", ovozRu: "гур-гур" },
-  { id: "otochir", e: "🚒", nom: "o't o'chirish mashinasi", ru: "пожарная машина", ovoz: "vi-u vi-u", ovozRu: "ви-у ви-у" },
-  { id: "tezyordam", e: "🚑", nom: "tez yordam", ru: "скорая помощь", ovoz: "vi-u vi-u", ovozRu: "ви-у ви-у" },
-  { id: "politsiya", e: "🚓", nom: "politsiya mashinasi", ru: "полицейская машина", ovoz: "vi-u vi-u", ovozRu: "ви-у ви-у" },
-  { id: "traktor", e: "🚜", nom: "traktor", ru: "трактор", ovoz: "tir-tir", ovozRu: "тыр-тыр" },
-  { id: "velosiped", e: "🚲", nom: "velosiped", ru: "велосипед", ovoz: "ding-ding", ovozRu: "динь-динь" },
-  { id: "poyezd", e: "🚂", nom: "poyezd", ru: "поезд", ovoz: "chuh-chuh", ovozRu: "чух-чух" },
-  { id: "samolyot", e: "✈️", nom: "samolyot", ru: "самолёт", ovoz: "vij-j-j", ovozRu: "вж-ж-ж" },
-  { id: "kema", e: "🚢", nom: "kema", ru: "корабль", ovoz: "u-u-u", ovozRu: "у-у-у" },
+  { id: "mashina", e: "🚗", nom: "mashina", ru: "машина", tovush: "signal" },
+  { id: "avtobus", e: "🚌", nom: "avtobus", ru: "автобус", tovush: "avtobus" },
+  { id: "taksi", e: "🚕", nom: "taksi", ru: "такси", tovush: "signal" },
+  { id: "yuk", e: "🚚", nom: "yuk mashinasi", ru: "грузовик", tovush: "yuk" },
+  { id: "otochir", e: "🚒", nom: "o't o'chirish mashinasi", ru: "пожарная машина", tovush: "sirena" },
+  { id: "tezyordam", e: "🚑", nom: "tez yordam", ru: "скорая помощь", tovush: "sirena" },
+  { id: "politsiya", e: "🚓", nom: "politsiya mashinasi", ru: "полицейская машина", tovush: "sirena" },
+  { id: "traktor", e: "🚜", nom: "traktor", ru: "трактор", tovush: "traktor" },
+  { id: "velosiped", e: "🚲", nom: "velosiped", ru: "велосипед", tovush: "qongiroq" },
+  { id: "poyezd", e: "🚂", nom: "poyezd", ru: "поезд", tovush: "poyezd" },
+  { id: "samolyot", e: "✈️", nom: "samolyot", ru: "самолёт", tovush: "samolyot" },
+  { id: "kema", e: "🚢", nom: "kema", ru: "корабль", tovush: "kema" },
 ];
 
 /* ─────────────────────────── hayvonlar ───────────────────────────
@@ -206,13 +228,73 @@ export const MAVZULAR: Mavzu[] = [
 export const mavzuById = (id: string): Mavzu | undefined =>
   MAVZULAR.find((m) => m.id === id);
 
-/**
- * Ovoz uchun aytiladigan matn.
+/* ─────────────────────────── gaplar ───────────────────────────
  *
- * Nom va tovush BITTA satrga qo'shilmaydi — ular ikki alohida chaqiruv
- * bo'ladi (`screens/Kichkintoy*`), orasida pauza bilan. Sabab: TTS
- * "mashina bi-bip" ni bitta gap qilib, shoshib o'qiydi va bola ikkita
- * so'zni ajrata olmaydi. Alohida aytilganda esa u avval nomni, keyin
- * tovushni eshitadi — va ikkinchisini takrorlaydi.
+ * NEGA YAKKA SO'Z EMAS. Ilgari albom shunchaki "mashina" derdi. Yakka
+ * so'z esa buyruqqa o'xshab eshitiladi va eng muhimi — bola undan
+ * GAP tuzishni o'rganmaydi. "Bu mashina" esa to'liq gap: bola uni
+ * eshitib, o'zi ham "bu mashina" deb takrorlaydi.
+ *
+ * O'yinda ham xuddi shunday: "mashina" degan yakka so'z SAVOL emas.
+ * "Qaysi biri mashina?" — savol, va bola nima qilish kerakligini
+ * ovozning ohangidan tushunadi.
+ *
+ * Gaplar QOLIP bilan yasaladi, qo'lda yozilmaydi. Qirq beshta karta ×
+ * ikkita gap × ikkita til = 180 satr bo'lardi va ulardan bittasi
+ * albatta xato yozilardi. Qolip esa bir joyda turadi va yangi karta
+ * qo'shilganda gaplari o'z-o'zidan paydo bo'ladi.
  */
-export const aytiladigan = (k: Karta): string => kNom(k);
+
+/** Albomdagi gap: "Bu mashina", "Bu qizil rang", "Bu raqam besh". */
+export function aytiladigan(mavzu: string, k: Karta): string {
+  const nom = kNom(k);
+  if (til() === "ru") {
+    if (mavzu === "rang") return `Это ${nom} цвет`;
+    if (mavzu === "raqam") return `Это цифра ${nom}`;
+    return `Это ${nom}`;
+  }
+  if (mavzu === "rang") return `Bu ${nom} rang`;
+  if (mavzu === "raqam") return `Bu raqam ${nom}`;
+  return `Bu ${nom}`;
+}
+
+/** O'yindagi savol: "Qaysi biri mashina?" */
+export function savolMatni(mavzu: string, k: Karta): string {
+  const nom = kNom(k);
+  if (til() === "ru") {
+    // "Где цифра пять?" — yakka "Где пять?" ruschada g'aliz eshitiladi.
+    return mavzu === "raqam" ? `Где цифра ${nom}?` : `Где ${nom}?`;
+  }
+  return `Qaysi biri ${nom}?`;
+}
+
+/**
+ * Ovozga chiqadigan HAMMA satr — lug'at fayli shundan yasaladi
+ * (`scripts/kichkintoy.ts`).
+ *
+ * Ikkala til ham kerak, chunki lug'at bitta va u ikkalasini ham
+ * qamraydi. `til()` ni vaqtincha almashtirish o'rniga qoliplar shu
+ * yerda ochiq takrorlanadi: skript brauzerda emas, Node'da ishlaydi
+ * va u yerda `localStorage` yo'q.
+ */
+export function barchaGaplar(): string[] {
+  const s = new Set<string>();
+  for (const m of MAVZULAR) {
+    for (const k of m.kartalar) {
+      // uz
+      s.add(m.id === "rang" ? `Bu ${k.nom} rang`
+        : m.id === "raqam" ? `Bu raqam ${k.nom}`
+        : `Bu ${k.nom}`);
+      s.add(`Qaysi biri ${k.nom}?`);
+      // ru
+      s.add(m.id === "rang" ? `Это ${k.ru} цвет`
+        : m.id === "raqam" ? `Это цифра ${k.ru}`
+        : `Это ${k.ru}`);
+      s.add(m.id === "raqam" ? `Где цифра ${k.ru}?` : `Где ${k.ru}?`);
+      // hayvon tovushlari — ular so'z bo'lib aytiladi
+      if (k.ovoz) s.add(k.ovoz);
+      if (k.ovozRu) s.add(k.ovozRu);
+    }
+  }
+  return [...s];
+}

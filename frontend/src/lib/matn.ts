@@ -76,6 +76,7 @@ const S = {
   kichkintoyKorildi: ["{n} / {jami}", "{n} / {jami}"],
   kichkintoyHammasi: ["hammasi ko'rildi", "всё просмотрено"],
   kichkintoyQayta: ["Yana eshitish", "Послушать ещё раз"],
+  kichkintoyTovushi: ["tovushi", "звук"],
   kichkintoyOldingi: ["Oldingisi", "Предыдущая"],
   kichkintoyKeyingi: ["Keyingisi", "Следующая"],
   kichkintoyOyin: ["Topib ber", "Найди-ка"],

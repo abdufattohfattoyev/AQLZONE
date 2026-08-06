@@ -211,7 +211,15 @@ export function oldindanYukla(matnlar: string[]): void {
     if (!m) continue;
     // `fetch` ishlatiladi, `new Audio()` emas: audio elementi ba'zi
     // brauzerlarda o'ynatishga urinib, avtomatik ijro taqiqiga tushadi.
-    void fetch(apiManzil(m), { method: "GET", cache: "force-cache" }).catch(() => {});
+    //
+    // `cache: "force-cache"` ATAYLAB YO'Q va bu topilgan nosozlik.
+    // U bilan brauzer keshdagi javobni SO'RAMASDAN oladi — shu
+    // jumladan XATO javobni ham. Server bir lahzaga yiqilgan payt
+    // prefetch 502 ni keshlab qo'ysa, o'sha so'z shu qurilmada
+    // abadiy jim qolardi. Oddiy kesh esa yetarli: javobda
+    // `immutable` turadi, ya'ni muvaffaqiyatli fayl baribir
+    // qayta so'ralmaydi.
+    void fetch(apiManzil(m)).catch(() => {});
   }
 }
 

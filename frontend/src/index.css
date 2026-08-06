@@ -697,6 +697,43 @@
 }
 .az-savol { animation: az-savol 0.42s cubic-bezier(0.2, 0.8, 0.3, 1); }
 
+/* ============================================================
+ * Kichkintoylar albomi — karta almashishi.
+ *
+ * Rasm shunchaki almashsa, bola o'zgarishni sezmaydi: uning ko'zi
+ * hali ekranni "o'qishni" bilmaydi va u faqat HARAKATGA javob
+ * beradi. Shuning uchun yangi karta pastdan biroz ko'tarilib,
+ * kattalashib chiqadi — xuddi qo'lga olib ko'rsatilgandek.
+ *
+ * `cubic-bezier` oxirida 1 dan oshadi: karta o'z o'lchamidan
+ * sal kattalashib, keyin joyiga tushadi. Aynan shu "ortiqcha"
+ * harakat narsani TIRIK qiladi; tekis animatsiya esa mexanik
+ * ko'rinadi.
+ * ============================================================ */
+@keyframes az-kadr {
+  from { opacity: 0; transform: translateY(16px) scale(0.86); }
+  to   { opacity: 1; transform: none; }
+}
+.az-kadr { animation: az-kadr 0.42s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/*
+ * Albomdagi rasm sekin "nafas oladi".
+ *
+ * Harakatsiz ekran bolaga "ilova to'xtab qoldi" bo'lib tuyuladi va u
+ * barmog'ini boshqa joyga olib boradi. Juda sekin (4 s) va juda
+ * kichik (1.5%) tebranish esa ongli sezilmaydi — lekin ko'z uni
+ * ilg'aydi va rasmda ushlanib turadi.
+ */
+@keyframes az-nafas {
+  50% { transform: scale(1.015) translateY(-2px); }
+}
+.az-nafas { animation: az-nafas 4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .az-nafas { animation: none; }
+  .az-kadr { animation-duration: 0.01ms; }
+}
+
 /* To'g'ri javob — sakrab kattalashadi. */
 @keyframes az-sakra {
   0%   { transform: scale(1); }

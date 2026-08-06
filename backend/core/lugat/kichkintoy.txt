@@ -6,12 +6,54 @@ ba-a
 baqa
 Barakalla!
 besh
-bi-bip
 binafsha
 bir
-ding-ding
+Bu arslon
+Bu asalari
+Bu avtobus
+Bu ayiq
+Bu baqa
+Bu binafsha rang
+Bu fil
+Bu it
+Bu jigarrang rang
+Bu kema
+Bu ko'k rang
+Bu mashina
+Bu mushuk
+Bu ot
+Bu politsiya mashinasi
+Bu poyezd
+Bu pushti rang
+Bu qizil rang
+Bu qora rang
+Bu quyon
+Bu qo'y
+Bu raqam besh
+Bu raqam bir
+Bu raqam ikki
+Bu raqam nol
+Bu raqam olti
+Bu raqam sakkiz
+Bu raqam to'qqiz
+Bu raqam to'rt
+Bu raqam uch
+Bu raqam yetti
+Bu samolyot
+Bu sariq rang
+Bu sigir
+Bu taksi
+Bu tez yordam
+Bu tovuq
+Bu traktor
+Bu to'q sariq rang
+Bu velosiped
+Bu xo'roz
+Bu yashil rang
+Bu yuk mashinasi
+Bu o'rdak
+Bu o't o'chirish mashinasi
 fil
-gur-gur
 ih-ih
 ikki
 it
@@ -28,6 +70,51 @@ ot
 politsiya mashinasi
 poyezd
 pushti
+Qaysi biri arslon?
+Qaysi biri asalari?
+Qaysi biri avtobus?
+Qaysi biri ayiq?
+Qaysi biri baqa?
+Qaysi biri besh?
+Qaysi biri binafsha?
+Qaysi biri bir?
+Qaysi biri fil?
+Qaysi biri ikki?
+Qaysi biri it?
+Qaysi biri jigarrang?
+Qaysi biri kema?
+Qaysi biri ko'k?
+Qaysi biri mashina?
+Qaysi biri mushuk?
+Qaysi biri nol?
+Qaysi biri olti?
+Qaysi biri ot?
+Qaysi biri politsiya mashinasi?
+Qaysi biri poyezd?
+Qaysi biri pushti?
+Qaysi biri qizil?
+Qaysi biri qora?
+Qaysi biri quyon?
+Qaysi biri qo'y?
+Qaysi biri sakkiz?
+Qaysi biri samolyot?
+Qaysi biri sariq?
+Qaysi biri sigir?
+Qaysi biri taksi?
+Qaysi biri tez yordam?
+Qaysi biri tovuq?
+Qaysi biri traktor?
+Qaysi biri to'q sariq?
+Qaysi biri to'qqiz?
+Qaysi biri to'rt?
+Qaysi biri uch?
+Qaysi biri velosiped?
+Qaysi biri xo'roz?
+Qaysi biri yashil?
+Qaysi biri yetti?
+Qaysi biri yuk mashinasi?
+Qaysi biri o'rdak?
+Qaysi biri o't o'chirish mashinasi?
 qizil
 qora
 qu-qa-ri-qu
@@ -42,19 +129,14 @@ sariq
 sigir
 taksi
 tez yordam
-tir-tir
 tovuq
 traktor
-tu-tut
 tu-u-u
 to'q sariq
 to'qqiz
 to'rt
-u-u-u
 uch
 velosiped
-vi-u vi-u
-vij-j-j
 vizz
 vov-vov
 xo'roz
@@ -64,20 +146,59 @@ yuk mashinasi
 o'rdak
 o't o'chirish mashinasi
 g'a-g'a
-chuh-chuh
 автобус
 бе-е
-би-бип
 велосипед
-вж-ж-ж
-ви-у ви-у
 восемь
 гав-гав
+Где автобус?
+Где велосипед?
+Где грузовик?
+Где жёлтый?
+Где заяц?
+Где зелёный?
+Где корабль?
+Где коричневый?
+Где корова?
+Где кот?
+Где красный?
+Где курица?
+Где лев?
+Где лошадь?
+Где лягушка?
+Где машина?
+Где медведь?
+Где овца?
+Где оранжевый?
+Где петух?
+Где поезд?
+Где пожарная машина?
+Где полицейская машина?
+Где пчела?
+Где розовый?
+Где самолёт?
+Где синий?
+Где скорая помощь?
+Где слон?
+Где собака?
+Где такси?
+Где трактор?
+Где утка?
+Где фиолетовый?
+Где цифра восемь?
+Где цифра два?
+Где цифра девять?
+Где цифра ноль?
+Где цифра один?
+Где цифра пять?
+Где цифра семь?
+Где цифра три?
+Где цифра четыре?
+Где цифра шесть?
+Где чёрный?
 грузовик
-гур-гур
 два
 девять
-динь-динь
 жёлтый
 жу-жу-жу
 заяц
@@ -122,13 +243,54 @@ chuh-chuh
 такси
 трактор
 три
-ту-тут
 ту-у-у
-тыр-тыр
-у-у-у
 утка
 фиолетовый
 чёрный
 четыре
-чух-чух
 шесть
+Это автобус
+Это велосипед
+Это грузовик
+Это жёлтый цвет
+Это заяц
+Это зелёный цвет
+Это корабль
+Это коричневый цвет
+Это корова
+Это кот
+Это красный цвет
+Это курица
+Это лев
+Это лошадь
+Это лягушка
+Это машина
+Это медведь
+Это овца
+Это оранжевый цвет
+Это петух
+Это поезд
+Это пожарная машина
+Это полицейская машина
+Это пчела
+Это розовый цвет
+Это самолёт
+Это синий цвет
+Это скорая помощь
+Это слон
+Это собака
+Это такси
+Это трактор
+Это утка
+Это фиолетовый цвет
+Это цифра восемь
+Это цифра два
+Это цифра девять
+Это цифра ноль
+Это цифра один
+Это цифра пять
+Это цифра семь
+Это цифра три
+Это цифра четыре
+Это цифра шесть
+Это чёрный цвет

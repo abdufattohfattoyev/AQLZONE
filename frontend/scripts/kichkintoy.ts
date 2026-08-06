@@ -26,7 +26,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { MAVZULAR } from "../src/lib/kichkintoy";
+// Diqqat: `chizma/idlar` dan olinadi, `chizma/index.tsx` dan EMAS.
+// Bu skript Node ostida ishlaydi va JSX li faylni o'qiy olmaydi.
+import { CHIZMA_IDLAR } from "../src/lib/chizma/idlar";
+import { MAVZULAR, barchaGaplar } from "../src/lib/kichkintoy";
 
 const ILDIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const LUGAT = resolve(ILDIZ, "backend", "core", "lugat", "kichkintoy.txt");
@@ -39,21 +42,44 @@ const LUGAT = resolve(ILDIZ, "backend", "core", "lugat", "kichkintoy.txt");
  * mukofot payti.
  */
 function kutilgan(): string[] {
-  const s = new Set<string>();
+  const s = new Set<string>(barchaGaplar());
+
+  // Yakka nomlar ham qoladi. Ular ekranda yozuv bo'lib turadi va
+  // kelajakda alohida aytilishi mumkin; ustiga ular allaqachon
+  // yasalgan, ya'ni ro'yxatdan chiqarish bekorga fayl o'chirish
+  // bo'lardi.
   for (const m of MAVZULAR) {
     for (const k of m.kartalar) {
       s.add(k.nom);
       s.add(k.ru);
-      if (k.ovoz) s.add(k.ovoz);
-      if (k.ovozRu) s.add(k.ovozRu);
     }
   }
+
   // `lib/matn.ts` dagi `kichkintoyBarakalla` — o'yin uni ovoz bilan
   // aytadi. Qo'lda yozilgan, chunki `matn.ts` ni bu skriptga import
   // qilish butun ilova zanjirini tortib kelardi.
   s.add("Barakalla!");
   s.add("Молодец!");
   return [...s].sort((a, b) => a.localeCompare(b, "uz"));
+}
+
+/**
+ * Har bir mashina va hayvon kartasining CHIZMASI bormi.
+ *
+ * Chizma id bo'yicha topiladi (`lib/chizma/index.tsx`). Id o'zgarib,
+ * rasm eski nomida qolsa, karta jimgina emoji ko'rinishiga tushib
+ * qolardi — ilova ishlayveradi va buni hech kim sezmasdi. Ranglar va
+ * raqamlar chizmasiz: ular doira va belgi bilan chiziladi.
+ */
+function chizmalarniTekshir(): string[] {
+  const yoq: string[] = [];
+  for (const m of MAVZULAR) {
+    if (m.id === "rang" || m.id === "raqam") continue;
+    for (const k of m.kartalar) {
+      if (!(CHIZMA_IDLAR as readonly string[]).includes(k.id)) yoq.push(`${m.id}/${k.id}`);
+    }
+  }
+  return yoq;
 }
 
 const kerak = kutilgan();
@@ -81,9 +107,16 @@ const kerakToplam = new Set(kerak);
 const yetishmaydi = kerak.filter((x) => !borToplam.has(x));
 const ortiqcha = bor.filter((x) => !kerakToplam.has(x));
 
-if (yetishmaydi.length === 0 && ortiqcha.length === 0) {
-  console.log(`✅ kichkintoy: lug'at joyida (${kerak.length} satr)`);
+const chizmasiz = chizmalarniTekshir();
+
+if (yetishmaydi.length === 0 && ortiqcha.length === 0 && chizmasiz.length === 0) {
+  console.log(`✅ kichkintoy: lug'at joyida (${kerak.length} satr), `
+    + `${CHIZMA_IDLAR.length} ta chizma`);
   process.exit(0);
+}
+
+if (chizmasiz.length) {
+  console.log(`❌ chizmasi YO'Q (emoji bo'lib qoladi): ${chizmasiz.join(", ")}`);
 }
 
 if (yetishmaydi.length) {

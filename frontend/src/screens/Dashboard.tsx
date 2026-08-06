@@ -6,9 +6,8 @@ import { Reveal } from "../components/Reveal";
 import { TilTugma } from "../components/TilTugma";
 import { getHisob, joriyProfil, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
-import { COURSES, courseBySlug, lessonCount } from "../lib/curriculum";
-import { UNIT_COLORS, keyingiDars } from "../lib/types";
-import { oxirgiKurs } from "../lib/oxirgi";
+import { COURSES, lessonCount } from "../lib/curriculum";
+import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import type { Course } from "../lib/curriculum";
@@ -19,8 +18,6 @@ interface Props {
   /** Do'st bilan bellashuv — o'yinlardan ALOHIDA turadi. */
   onDuel: () => void;
   onOpen: (c: Course) => void;
-  /** Oxirgi kursning keyingi darsiga TO'G'RIDAN-TO'G'RI o'tish. */
-  onDavom: (c: Course, ui: number, li: number) => void;
   /** Profil tanlash ekrani. Tugma faqat ikkinchi bola qo'shilganda chiqadi. */
   onProfillar: () => void;
   /** Hisob sozlamalari — ism, familiya, kirish usullari. */
@@ -50,7 +47,7 @@ function joriyBola(h: Hisob | null) {
 }
 
 export function Dashboard({
-  progressOf, onOpen, onDavom, onProfillar, onSozlama, onReyting, onOyinlar, onDuel, onKichkintoy,
+  progressOf, onOpen, onProfillar, onSozlama, onReyting, onOyinlar, onDuel, onKichkintoy,
 }: Props) {
   // Sinxron o'qiladi (localStorage) — tugma sakrab chiqmasligi uchun.
   const kopBola = profilSoni() > 1;
@@ -65,13 +62,6 @@ export function Dashboard({
   }, []);
 
   const bola = joriyBola(hisob);
-
-  // Oxirgi ochilgan kurs. `localStorage` dan sinxron o'qiladi — karta
-  // ekran chizilishi bilan o'z joyida turishi kerak, keyinroq sakrab
-  // chiqmasligi. Kurs o'chirilgan bo'lsa `courseBySlug` `undefined`
-  // qaytaradi va karta shunchaki ko'rsatilmaydi.
-  const oxirgi = courseBySlug(oxirgiKurs());
-  const davom = oxirgi ? keyingiDars(oxirgi.units, progressOf(oxirgi)) : null;
 
   const jamiDars = COURSES.reduce((n, c) => n + lessonCount(c), 0);
   const jamiYulduz = COURSES.reduce((n, c) => n + progressOf(c).stars, 0);
@@ -179,17 +169,15 @@ export function Dashboard({
         </div>
       </header>
 
-      {/* ---- davom etish ----
-          Ro'yxatdan OLDIN turadi va ro'yxat tartibini o'zgartirmaydi.
-          Kurslarni joyidan surib, "oxirgisi" ni tepaga chiqarish ham
-          mumkin edi, lekin unda ro'yxat har ochilganda boshqacha
-          ko'rinardi — sinflar tartibi esa ota-ona uchun eng oson
-          mo'ljal. Karta esa aniq bir savolga javob beradi: "kecha
-          qayerda to'xtagan edim?" */}
-      {oxirgi && davom && (
-        <Davom c={oxirgi} keyingi={davom}
-          onDavom={() => onDavom(oxirgi, davom.ui, davom.li)} />
-      )}
+      {/* "OXIRGI MARTA SHU YERDA EDINGIZ" KARTASI SHU YERDA EDI.
+          Olib tashlandi.
+
+          U bitta savolga javob berardi — "kecha qayerda to'xtagan
+          edim?" — lekin buni kursning o'zi ham aytadi: kurs sahifasi
+          har doim keyingi darsda ochiladi. Bosh sahifada esa u to'rtta
+          keng kartadan biri bo'lib, ekranning yuqori yarmini
+          egallardi: uni ochgan odam kurslar ro'yxatini ko'rish uchun
+          surishga majbur bo'lardi. */}
 
       {/* ---- o'yinlar ----
           Kurslardan OLDIN turadi va bu ataylab. Kurslar rejali ish:
@@ -277,55 +265,6 @@ export function Dashboard({
         {t("kurslarIzoh")}
       </p>
     </div>
-  );
-}
-
-/**
- * "Oxirgi marta shu yerda edingiz" kartasi.
- *
- * Bosilganda kurs sahifasiga emas, DARSNING O'ZIGA olib boradi. Butun
- * kartaning ma'nosi shu: ilova ochilgandan darsgacha bitta bosish qoladi.
- */
-function Davom({ c, keyingi, onDavom }: {
-  c: Course;
-  keyingi: { ui: number; li: number };
-  onDavom: () => void;
-}) {
-  const U = c.units[keyingi.ui];
-  // Dars nomining ikkinchi qismi — darslik betlari; kartada ortiqcha.
-  const nom = kursMatn(U.lessons[keyingi.li].n).split(" · ")[0];
-
-  return (
-    <Reveal kech={40}>
-      <div className="az-kirish mt-4 sm:mt-6" style={kech(40)}>
-        <h2 className="mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
-          {t("oxirgiMarta")}
-        </h2>
-        <button type="button" onClick={onDavom}
-          className="tugma-3d az-yaltir flex w-full items-center gap-3 rounded-clay bg-brand-green
-                     p-[clamp(11px,2vh,14px)] text-left text-white shadow-clay">
-          <span className="grid size-[clamp(40px,7vh,48px)] shrink-0 place-items-center
-                           rounded-[16px] bg-white/20">
-            <Icon name={U.lessons[keyingi.li].ic} size={26} />
-          </span>
-          {/* Ikki qator: HARAKAT tepada, MANZIL pastda.
-              Ilgari birinchi qatorda "Maktabgacha · Davom etish" turardi
-              va telefonda u ikkiga bo'linib ketardi — natijada kartada
-              uch qator matn bo'lib, "Davom etish" so'zi kurs nomining
-              davomidek ko'rinardi. Endi harakat doim yolg'iz turadi. */}
-          <span className="min-w-0 flex-1">
-            <span className="block font-display text-[16px] leading-tight">
-              {t("davomEtish")}
-            </span>
-            <span className="mt-0.5 block truncate text-[12.5px] text-white/85">
-              {kursMatn(c.title)} · {kursMatn(U.u)}
-            </span>
-            <span className="block truncate text-[12.5px] text-white/70">{nom}</span>
-          </span>
-          <Icon name="chevron" size={20} className="shrink-0 text-white/80" />
-        </button>
-      </div>
-    </Reveal>
   );
 }
 

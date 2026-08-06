@@ -18,19 +18,38 @@
  * biri albatta boshqasidan qolib ketardi — masalan raqam kartasi
  * o'yinda olmasiz chiqib, savol javobsiz bo'lib qolardi.
  */
-import type { CSSProperties } from "react";
+import { Chizma, ChizmaOlma, chizmaBormi } from "../lib/chizma";
 import type { Karta } from "../lib/kichkintoy";
 
 /** Rasmning o'lchami: albomdagi sahna yoki o'yindagi variant. */
 export type Olcham = "katta" | "kichik";
 
 const OLCHAM = {
-  katta: { emoji: "text-[104px]", doira: "size-[132px]", raqam: "text-[92px]", nuqta: "text-[19px]" },
-  kichik: { emoji: "text-[46px]", doira: "size-[62px]", raqam: "text-[42px]", nuqta: "text-[11px]" },
+  katta: {
+    chizma: "size-[168px]", emoji: "text-[104px]", doira: "size-[132px]",
+    raqam: "text-[92px]", nuqta: "size-[28px]",
+  },
+  kichik: {
+    chizma: "size-[86px]", emoji: "text-[46px]", doira: "size-[62px]",
+    raqam: "text-[42px]", nuqta: "size-[12px]",
+  },
 } as const;
 
 export function KichkintoyKarta({ k, olcham = "katta" }: { k: Karta; olcham?: Olcham }) {
   const o = OLCHAM[olcham];
+
+  /* ---- qo'lda chizilgan rasm ----
+     Emoji zaxira bo'lib qoladi: yangi karta qo'shilib, rasmi hali
+     yasalmagan bo'lsa, u emoji bilan ishlab turadi. Ilova buzilmaydi,
+     shunchaki bitta karta boshqacha ko'rinadi. */
+  if (k.e && chizmaBormi(k.id)) {
+    // "Nafas" faqat KATTA rasmda: o'yindagi uchta variant bir vaqtda
+    // tebranib tursa, ekran bezovta bo'lib ko'rinardi.
+    return (
+      <Chizma id={k.id}
+        className={`${o.chizma} block ${olcham === "katta" ? "az-nafas" : ""}`} />
+    );
+  }
 
   /* ---- rang ----
      Doira ichida hech qanday yozuv yo'q. Chegara (`ring`) esa SHART:
@@ -59,19 +78,16 @@ export function KichkintoyKarta({ k, olcham = "katta" }: { k: Karta; olcham?: Ol
             "hech narsa" degan gapni aytadi. Shuning uchun bu yerda
             "0 ta" degan yozuv ham yo'q. */}
         {(k.n ?? 0) > 0 && (
-          <span aria-hidden className={`${o.nuqta} flex max-w-[190px] flex-wrap justify-center gap-0.5 leading-none`}>
-            {Array.from({ length: k.n ?? 0 }, (_, i) => <span key={i}>{k.e}</span>)}
+          <span aria-hidden className="flex max-w-[176px] flex-wrap justify-center gap-1">
+            {Array.from({ length: k.n ?? 0 }, (_, i) => (
+              <ChizmaOlma key={i} className={o.nuqta} />
+            ))}
           </span>
         )}
       </span>
     );
   }
 
-  /* ---- oddiy rasm ---- */
-  return (
-    <span aria-hidden className={`${o.emoji} block leading-none`}
-      style={{ "--az-kech": "0ms" } as CSSProperties}>
-      {k.e}
-    </span>
-  );
+  /* ---- zaxira: emoji ---- */
+  return <span aria-hidden className={`${o.emoji} block leading-none`}>{k.e}</span>;
 }

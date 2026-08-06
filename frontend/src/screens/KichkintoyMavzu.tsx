@@ -37,10 +37,11 @@ import { Icon } from "../lib/icons";
 import { Konfetti } from "../components/Konfetti";
 import { KichkintoyKarta } from "../components/KichkintoyKarta";
 import { OvozTugma } from "../components/OvozTugma";
-import { kNom, kOvoz } from "../lib/kichkintoy";
+import { aytiladigan, kNom, kOvoz, savolMatni } from "../lib/kichkintoy";
 import type { Karta, Mavzu } from "../lib/kichkintoy";
 import { korildi, korilganSoni } from "../lib/kichkintoyHolat";
 import { gapirKetma, oldindanYukla, toxtat } from "../lib/ovoz";
+import { tovushniChal, tovushniToxtat } from "../lib/tovush";
 import { shuffle } from "../lib/rnd";
 import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
@@ -60,6 +61,7 @@ export function KichkintoyMavzu({ m, onBack }: { m: Mavzu; onBack: () => void })
   // bosilgan "ortga" bolani butun bo'limdan chiqarib yuborardi.
   const orqaga = useCallback(() => {
     toxtat();
+    tovushniToxtat();
     if (oyinda) setOyinda(false);
     else onBack();
   }, [oyinda, onBack]);
@@ -68,7 +70,7 @@ export function KichkintoyMavzu({ m, onBack }: { m: Mavzu; onBack: () => void })
 
   // Ekrandan chiqqanda ovoz to'xtasin: bola "ortga" bosgach, ilova
   // yana yarim soniya "mashina" deb turmasligi kerak.
-  useEffect(() => () => toxtat(), []);
+  useEffect(() => () => { toxtat(); tovushniToxtat(); }, []);
 
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-10 sm:max-w-[560px]">
@@ -113,25 +115,60 @@ function Albom({ m, onOyin }: { m: Mavzu; onOyin: () => void }) {
    * `gapirKetma` ATAYLAB kutilmaydi (`void`): u ovoz tugaguncha
    * yashaydi va effektni bog'lab qo'ysa, karta almashishi sekinlashardi.
    */
+  /**
+   * Kartani "aytadi": gap, keyin tovush.
+   *
+   * Ikki xil tovush ikki xil yo'l bilan ketadi va tartib ham boshqacha:
+   *
+   *   HAYVON  gap → pauza → so'z ("Bu it" … "vov-vov"). Ikkalasi ham
+   *           odam ovozi, ya'ni ular bitta oqim bo'lib eshitiladi va
+   *           bola ikkinchisini takrorlaydi.
+   *   MASHINA gap → pauza → HAQIQIY signal. Bu yerda ovoz kutilmaydi:
+   *           gap tugagach tovush chalinadi, chunki ular butunlay
+   *           boshqa manbadan keladi (biri server, biri brauzer).
+   */
+  const ayt = useCallback((x: Karta) => {
+    const gap = aytiladigan(m.id, x);
+    if (x.tovush) {
+      void gapirKetma([gap]).then(() => tovushniChal(x.tovush!));
+      return;
+    }
+    void gapirKetma([gap, kOvoz(x)]);
+  }, [m]);
+
   useEffect(() => {
     korildi(m.id, k.id);
     setKorilgan(korilganSoni(m.id));
-    void gapirKetma([kNom(k), kOvoz(k)]);
+    ayt(k);
 
     // Keyingi ikkitasi oldindan yuklanadi. Ikkitasi — chunki bola
-    // ko'pincha tez-tez bosadi va bittasi yetib ulgurmaydi.
+    // ko'pincha tez-tez bosadi va bittasi yetib ulgurmaydi. Mashina
+    // tovushi yuklanmaydi: u brauzerda yasaladi, tarmoq kerak emas.
     const keyin = [m.kartalar[i + 1], m.kartalar[i + 2]].filter(Boolean);
-    oldindanYukla(keyin.flatMap((x) => [kNom(x), kOvoz(x)]).filter(Boolean));
-  }, [m, k, i]);
+    oldindanYukla(
+      keyin.flatMap((x) => [aytiladigan(m.id, x), kOvoz(x)]).filter(Boolean),
+    );
+  }, [m, k, i, ayt]);
 
   const yur = (yon: 1 | -1) => {
     tebrat("tanlov");
+    tovushniToxtat();
     setI((x) => (x + yon + m.kartalar.length) % m.kartalar.length);
   };
 
   const qaytar = () => {
     tebrat("tanlov");
-    void gapirKetma([kNom(k), kOvoz(k)]);
+    ayt(k);
+  };
+
+  /** Faqat TOVUSHNI qaytaradi — nomni qayta aytmasdan. */
+  const tovushniQaytar = (e: React.MouseEvent) => {
+    // Sahna ham bosiladigan tugma: usiz bu bosish ikkalasini ham
+    // ishga tushirib, tovush o'z ustiga tushardi.
+    e.stopPropagation();
+    tebrat("tanlov");
+    if (k.tovush) { toxtat(); tovushniChal(k.tovush); }
+    else void gapirKetma([kOvoz(k)]);
   };
 
   const surish = useSurish(yur);
@@ -151,14 +188,22 @@ function Albom({ m, onOyin }: { m: Mavzu; onOyin: () => void }) {
                    gap-4 rounded-clay bg-karta px-4 py-7 shadow-clay">
         {/* `key` — karta almashganda animatsiya qaytadan boshlansin:
             usiz rasm jimgina almashib, bola o'zgarishni sezmasdi. */}
-        <span key={k.id} className="az-sakra flex flex-col items-center gap-4">
+        <span key={k.id} className="az-kadr flex flex-col items-center gap-3">
           <KichkintoyKarta k={k} olcham="katta" />
 
           <span className="font-display text-[30px] leading-none text-ink">{kNom(k)}</span>
 
-          {tovushi && (
-            <span className="rounded-full bg-track px-3.5 py-1 font-display text-[15px] leading-none text-ink-soft">
-              {tovushi}
+          {/* TOVUSH TUGMASI — ikki xil gapiradi.
+              Mashinada u "tovushi" deydi va HAQIQIY signalni chaladi;
+              hayvonda esa tovushning O'ZINI yozib qo'yadi ("vov-vov"),
+              chunki bola aynan uni takrorlaydi. */}
+          {(k.tovush || tovushi) && (
+            <span role="button" tabIndex={0} onClick={tovushniQaytar}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") tovushniQaytar(e as unknown as React.MouseEvent); }}
+              className="clay-press inline-flex items-center gap-1.5 rounded-full bg-track px-3.5 py-1.5
+                         font-display text-[15px] leading-none text-ink-soft">
+              <Icon name="ovoz" size={15} className="text-brand-green-d" />
+              {k.tovush ? t("kichkintoyTovushi") : tovushi}
             </span>
           )}
         </span>
@@ -296,23 +341,29 @@ function Oyin({ m, onChiq }: { m: Mavzu; onChiq: () => void }) {
       void gapirKetma([t("kichkintoyBarakalla")]);
       return;
     }
-    void gapirKetma([kNom(s.javob)]);
-  }, [n, s, tugadi]);
+    // TO'LIQ SAVOL aytiladi ("Qaysi biri mashina?"), yakka so'z emas.
+    // Yakka so'z savol bo'lib eshitilmaydi — bola nima qilish
+    // kerakligini ovoz OHANGIDAN tushunadi, yozuvdan emas.
+    void gapirKetma([savolMatni(m.id, s.javob)]);
+  }, [n, s, tugadi, m]);
 
   const bosildi = (k: Karta) => {
     if (togri) return;                       // javob berilgan, keyingisini kutyapmiz
     if (k.id !== s.javob.id) {
-      // Xato — jazo yo'q. Karta silkinadi va nom qaytadan aytiladi.
+      // Xato — jazo yo'q. Karta silkinadi va savol qaytadan beriladi.
       tebrat("xato");
       setXato(k.id);
       setTimeout(() => setXato(""), 500);
-      void gapirKetma([kNom(s.javob)]);
+      void gapirKetma([savolMatni(m.id, s.javob)]);
       return;
     }
     tebrat("togri");
     setTogri(true);
     setPortlash((x) => x + 1);
-    void gapirKetma([kNom(k), t("kichkintoyBarakalla")]);
+    // Topilgan narsaning gapi qaytariladi ("Bu mashina"), keyin
+    // maqtov — ya'ni bola javobni ESHITIB tasdiqlaydi.
+    void gapirKetma([aytiladigan(m.id, k), t("kichkintoyBarakalla")])
+      .then(() => { if (k.tovush) tovushniChal(k.tovush); });
     // Keyingi savolgacha pauza: konfetti tugasin va bola o'z
     // yutug'ini ko'rib ulgursin.
     setTimeout(() => { setTogri(false); setN((x) => x + 1); }, 1250);
@@ -351,7 +402,7 @@ function Oyin({ m, onChiq }: { m: Mavzu; onChiq: () => void }) {
           uchun bu yerda faqat qaytarish tugmasi turadi. Bola ovozni
           eshitmay qolsa (telefon jim, ota-ona gapirib turdi), uni bir
           bosishda qayta eshitadi. */}
-      <button type="button" onClick={() => void gapirKetma([kNom(s.javob)])}
+      <button type="button" onClick={() => void gapirKetma([savolMatni(m.id, s.javob)])}
         className="clay-press az-kirish mt-4 flex w-full items-center justify-center gap-2.5 rounded-clay
                    bg-karta px-4 py-3.5 shadow-clay-sm">
         <Icon name="ovoz" size={20} className="shrink-0 text-brand-green-d" />

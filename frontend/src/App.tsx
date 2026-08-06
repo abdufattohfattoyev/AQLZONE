@@ -115,7 +115,6 @@ function KurslarSahifasi() {
     <Dashboard
       progressOf={progressOf}
       onOpen={(c) => nav(yolKurs(c))}
-      onDavom={(c, ui, li) => nav(yolDars(c, ui, li))}
       onProfillar={() => nav("/profillar")}
       onSozlama={() => nav(yolSozlama())}
       onReyting={() => nav(yolReyting())}
