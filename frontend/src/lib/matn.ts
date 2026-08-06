@@ -54,6 +54,54 @@ const S = {
     "Каждый курс составлен по возрасту ребёнка",
   ],
 
+  /* ---------------- kichkintoylar bo'limi (2–5 yosh) ----------------
+     Bu yerdagi matnlarni BOLA O'QIMAYDI — u hali o'qishni bilmaydi.
+     Hammasi ota-onaga qaratilgan: u ekranni ochib beradi, nomini aytib
+     turadi va bolani oxirigacha olib boradi. Shuning uchun ular qisqa
+     va tushunarli, "o'quv" so'zlarisiz. */
+  kichkintoy: ["Kichkintoylar", "Малышам"],
+  kichkintoyQisqa: ["Kichkintoylar · 2–5 yosh", "Малышам · 2–5 лет"],
+  kichkintoyIzoh: [
+    "Mashinalar, hayvonlar, ranglar va raqamlar — ilova nomini o'zi aytib beradi",
+    "Машины, животные, цвета и цифры — приложение само называет их вслух",
+  ],
+  kichkintoyKartaIzoh: [
+    "Bosing — rasm kattalashadi va nomi eshitiladi",
+    "Нажмите — картинка станет большой и прозвучит название",
+  ],
+  kichkintoyTagi: [
+    "Bu yerda to'g'ri javob yo'q — bola shunchaki ko'radi va eshitadi",
+    "Здесь нет правильных ответов — ребёнок просто смотрит и слушает",
+  ],
+  kichkintoyKorildi: ["{n} / {jami}", "{n} / {jami}"],
+  kichkintoyHammasi: ["hammasi ko'rildi", "всё просмотрено"],
+  kichkintoyQayta: ["Yana eshitish", "Послушать ещё раз"],
+  kichkintoyOldingi: ["Oldingisi", "Предыдущая"],
+  kichkintoyKeyingi: ["Keyingisi", "Следующая"],
+  kichkintoyOyin: ["Topib ber", "Найди-ка"],
+  kichkintoyOyinIzoh: ["Ovoz aytadi — bola topadi", "Голос называет — ребёнок находит"],
+  kichkintoyQaniTop: ["Qani, topib ber", "Ну-ка, найди"],
+  kichkintoySanoq: ["{n} / {jami}", "{n} / {jami}"],
+  kichkintoyBarakalla: ["Barakalla!", "Молодец!"],
+  kichkintoyOyinTugadi: ["Hammasini topding", "Ты нашёл всё"],
+  kichkintoyYana: ["Yana o'ynash", "Играть ещё"],
+  kichkintoyAlbomga: ["Rasmlarga qaytish", "Вернуться к картинкам"],
+  kichkintoyTopilmadi: ["Bunday mavzu yo'q", "Такой темы нет"],
+
+  menyuKichkintoyIzoh: [
+    "2–5 yosh · rasm, nom va ovoz",
+    "2–5 лет · картинка, название и голос",
+  ],
+
+  /* ---------------- ovoz ---------------- */
+  ovozYoqish: ["Ovozni yoqish", "Включить звук"],
+  ovozOchirish: ["Ovozni o'chirish", "Выключить звук"],
+  ovozSarlavha: ["Ovoz", "Звук"],
+  ovozIzoh: [
+    "Ilova so'z va savollarni ovoz chiqarib o'qiydi. Kichkintoylar bo'limi shusiz ishlamaydi — bola hali o'qiy olmaydi.",
+    "Приложение произносит слова и вопросы вслух. Без этого раздел «Малышам» не работает — ребёнок ещё не умеет читать.",
+  ],
+
   /* ---------------- kurs sahifasi (Home) ---------------- */
   izohMaktabgacha: ["Maktabga tayyorgarlik", "Подготовка к школе"],
   izohToliqKurs: ["Darslik bo'yicha to'liq kurs", "Полный курс по учебнику"],

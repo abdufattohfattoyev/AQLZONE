@@ -16,6 +16,11 @@ __pycache__/
 *.sqlite3-wal
 *.sqlite3-shm
 
+# Yasalgan ovoz fayllari (TTS keshi). Ular kod emas, NATIJA: har
+# serverda o'zi to'ldiriladi (`manage.py ovoz`) va git'da o'nlab
+# megabayt joy egallardi.
+ovoz-kesh/
+
 # Arxivlar
 *.rar
 *.zip

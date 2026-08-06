@@ -24,6 +24,9 @@ import { Maydon } from "./screens/Maydon";
 import { Duel, DuelQabul } from "./screens/Duel";
 import { OyinDaraja } from "./screens/OyinDaraja";
 import { Oyin } from "./screens/Oyin";
+import { Kichkintoy } from "./screens/Kichkintoy";
+import { KichkintoyMavzu } from "./screens/KichkintoyMavzu";
+import { mavzuById } from "./lib/kichkintoy";
 import { oyinById } from "./lib/oyin";
 import { darajaniOqi } from "./lib/oyin/tur";
 import { ochiqmi } from "./lib/oyin/rekord";
@@ -37,7 +40,7 @@ import { oxirginiYoz } from "./lib/oxirgi";
 import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
-  indeksniOqi, yolDaftar, yolDars, yolKurs, yolKurslar,
+  indeksniOqi, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
   yolDuel, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "./lib/yollar";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -71,6 +74,10 @@ function Yollar() {
           havola kirish ekraniga tushib, cheksiz halqa bo'lib qolardi. */}
       <Route path="/kirish/:kod" element={<KodKirish />} />
       <Route path="/reyting" element={<ReytingSahifasi />} />
+      {/* Kichkintoylar — kursdan tashqarida: bu yerda dars ham,
+          tartib ham yo'q (`screens/Kichkintoy.tsx`). */}
+      <Route path="/kichkintoy" element={<KichkintoySahifasi />} />
+      <Route path="/kichkintoy/:mavzu" element={<KichkintoyMavzuSahifasi />} />
       {/* O'yinlar kursdan tashqarida: ular biror sinfga tegishli emas. */}
       <Route path="/oyinlar" element={<OyinlarSahifasi />} />
       {/* Maydon `:id` dan OLDIN: aks holda "maydon" o'yin id'si
@@ -114,6 +121,7 @@ function KurslarSahifasi() {
       onReyting={() => nav(yolReyting())}
       onDuel={() => nav(yolDuel())}
       onOyinlar={() => nav(yolOyinlar())}
+      onKichkintoy={() => nav(yolKichkintoy())}
     />
   );
 }
@@ -342,6 +350,45 @@ function SozlamaSahifasi() {
       onProfillar={() => nav("/profillar")}
     />
   );
+}
+
+/* ------------------------------------------------------------------ */
+/*                           kichkintoylar                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Tema "bolalar" — quyoshli, yumshoq, hamma narsa katta va yumaloq.
+ *
+ * "Bosh" temasi ATAYLAB emas: u brendning vitrinasi, ancha jiddiy va
+ * quyuqroq. Bu bo'limni esa 3 yoshli bola ochadi va u yerda birinchi
+ * taassurot "issiq va do'stona" bo'lishi kerak.
+ */
+function KichkintoySahifasi() {
+  const nav = useNavigate();
+  useTema("bolalar");
+  return (
+    <Kichkintoy
+      onBack={() => nav(yolKurslar())}
+      onMavzu={(id) => nav(yolKichkintoyMavzu(id))}
+    />
+  );
+}
+
+function KichkintoyMavzuSahifasi() {
+  const nav = useNavigate();
+  const { mavzu } = useParams();
+  useTema("bolalar");
+
+  const m = mavzuById(mavzu ?? "");
+  if (!m) {
+    return <NotFound nima={t("kichkintoyTopilmadi")}
+      qaytish={{ matn: t("kichkintoy"), yol: yolKichkintoy() }} />;
+  }
+
+  // `key` — mavzu almashganda ekran BUTUNLAY qaytadan yasalsin: aks
+  // holda albomdagi indeks eski mavzudan qolib, yangi mavzu o'rtasidan
+  // ochilardi.
+  return <KichkintoyMavzu key={m.id} m={m} onBack={() => nav(yolKichkintoy())} />;
 }
 
 /* ------------------------------------------------------------------ */

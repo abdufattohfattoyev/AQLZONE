@@ -1,47 +1,109 @@
-# Ovoz — o'zbekcha mp3
+# Ovoz — o'zbekcha talaffuz
 
-Ilova savol matnini o'qib berishi mumkin. Uch manba, shu tartibda
-(`frontend/src/lib/ovoz.ts`):
+Ilova so'z va savollarni ovoz chiqarib o'qiydi. Kichkintoylar bo'limi
+(2–5 yosh) uchun bu bezak emas, **ishlash sharti**: 3 yoshli bola
+"mashina" degan yozuvni o'qiy olmaydi.
 
-1. `AZ_TTS_API` — tashqi TTS xizmati (hozircha bo'sh, ulanmagan)
-2. `frontend/public/audio/` dagi tayyor mp3 — `/audio/<xesh>.mp3`
-3. Brauzerning o'z ovozi — yuqoridagilar topilmasa
+## Qanday ishlaydi
 
-**Hozircha ovoz O'CHIQ.** Brauzerning o'z ovozi o'zbekchani ruscha
-talaffuz bilan o'qiydi — bunday ovoz bolaga yordam bermaydi, chalg'itadi.
-Yoqish uchun `ovozYoniqmi()` dagi bitta shartni almashtirish kifoya.
+Uch manba, mijozda shu tartibda sinaladi (`frontend/src/lib/ovoz.ts`):
 
-## Tayyor fayllar
+1. **`/api/v1/ovoz`** — o'z serverimizdagi TTS. Aisha (aisha.group),
+   o'zbekcha "Gulnoza" ovozi.
+2. **`frontend/public/audio/`** dagi ~290 tayyor mp3 — eski savollar
+   uchun yasalgan to'plam. Server javob bermasa ham ishlaydi.
+3. **Brauzerning o'z ovozi** — faqat ruscha. O'zbekcha uchun ataylab
+   o'chirilgan: brauzerda `uz-UZ` ovozi deyarli yo'q va u "qo'y" ni
+   "ko-y" deb o'qiydi. Noto'g'ri talaffuz jim turgandan yomonroq.
 
-`frontend/public/audio/` da ~290 ta mp3 bor. Ular `public/` ichida
-turgani uchun Vite ham, Django ham ularni `/audio/...` manzilida o'zi
-beradi — qo'shimcha sozlash shart emas. `sw.js` birinchi so'rovdayoq
-keshlaydi, ya'ni internetsiz ham eshitiladi.
+Tartib chaqiruvchiga qarab teskari bo'ladi va bu tezlik masalasi:
+kichkintoy so'zlari serverda tayyor (mp3 da yo'q), dars matnlari esa
+aksincha. Ikkalasida ham topilmasa — jim qolinadi. **Ovoz hech qachon
+o'yin yo'liga to'siq bo'lmaydi.**
 
-## Yangi fayllar yasash
+## Nega server orqali
 
-Eski generator skripti (`tts-build.js`) eski HTML nusxalar bilan birga
-o'chirildi — u gaplarni `Aql-Zone-1-sinf.html` ichidan o'qir edi, endi
-bunday fayl yo'q. Yangisi kerak bo'lsa gaplar `frontend/src/lib/generators.ts`
-dan olinadi (`npm run tekshir` shu generatorlarni allaqachon ishga tushiradi).
+* **Kalit chiqmaydi.** Aisha kaliti pullik; mijozga chiqsa, uni
+  birinchi ochgan odam nusxalab oladi.
+* **Bir so'z — bir marta.** Server javobni abadiy keshlaydi
+  (`/data/ovoz/<xesh>.wav`). "Olma" ni ming bola so'rasa ham, xizmatga
+  bir marta to'lanadi.
+* **Internetsiz ishlaydi.** `sw.js` ovoz javoblarini keshlaydi — bu
+  `/api/` ichidagi yagona istisno (izohi o'sha faylda).
 
-Fayl nomi — matn xeshi, kengaytmasi `.mp3`.
+## Xarajat qanday cheklangan
 
-### Xizmatlar
+Uch qavat, va ularsiz hisob tez bo'shardi:
 
-| | Aisha (aisha.group) | Azure Speech |
-|---|---|---|
-| Hisob | o'zbek, karta shart emas | xorijiy, karta so'raydi |
-| Narx | ~73 300 so'm (bir marta) | bepul (oyiga 500k belgi) |
-| Ovoz | Gulnoza (4 kayfiyat) | `uz-UZ-MadinaNeural` / `uz-UZ-SardorNeural` |
-| Format | wav → mp3 ga siqish kerak | to'g'ridan-to'g'ri mp3 |
+| Qavat | Nima qiladi |
+|---|---|
+| **Oq ro'yxat** | Faqat `backend/core/lugat/*.txt` dagi matn yasaladi |
+| **Token** | Yangi ovoz yasash uchun kirgan hisob kerak |
+| **Kunlik chegara** | `OVOZ_KUNLIK_BELGI` (standart 20 000 belgi/kun) |
 
-- Aisha kaliti: https://space.aisha.group/api-keys
-- Azure kaliti: portal.azure.com → Speech → Free F0 → Keys and Endpoint
+Oq ro'yxat eng muhimi. Dars savollari tasodifiy sonlar bilan yasaladi
+("8 + 5 = ?", "8 + 6 = ?") — ya'ni **har savol yangi satr** va
+ro'yxatsiz har biri uchun alohida to'lanardi.
 
-### Matnni tozalash
+Keshda turgan ovoz esa **hammaga**, tokensiz beriladi: bu shunchaki
+fayl uzatish va bola ilovani birinchi ochganda hisobi bo'lmasligi
+mumkin.
 
-Yuborishdan oldin matn tozalanishi shart, aks holda talaffuz g'alati
-chiqadi: emoji olib tashlanadi, raqamlar o'zbekcha so'zga aylantiriladi
-(`6 ta` → `oltita`, `7 dan` → `yettidan`, `8 + 5 = ?` → `sakkiz qo'shuv
-besh nechaga teng?`). Bolalar uchun tezlik biroz sekinroq bo'lgani yaxshi.
+## Sozlash
+
+`.env` ga bitta qator yetadi:
+
+```
+AISHA_KEY=...
+```
+
+Kalit: <https://space.aisha.group/api-keys>
+
+Ixtiyoriy: `AISHA_MODEL` (standart `Gulnoza`), `AISHA_KAYFIYAT`
+(`Cheerful`), `AISHA_TEZLIK` (`0.9` — bolalar uchun sekinroq),
+`OVOZ_KESH`, `OVOZ_KUNLIK_BELGI`.
+
+Ovoz va kayfiyat **fayl xeshiga kiradi**: ularni almashtirsangiz eski
+fayllar o'z-o'zidan ishlatilmay qoladi va ilova ikki xil ovozda
+gapirib qolmaydi.
+
+## Lug'atni tayyorlash
+
+Ovoz so'ralganda o'zi ham yasaladi, lekin **birinchi marta** bu bir
+necha soniya oladi. Uch yoshli bola uchun o'sha jimlik "ilova buzuq"
+degani. Shuning uchun butun lug'at oldindan tayyorlanadi:
+
+```bash
+python manage.py ovoz
+```
+
+Buyruq xavfsiz takrorlanadi — keshdagi so'z qayta yasalmaydi va qayta
+pul ketmaydi. Har joylashdan keyin yurgizsa bo'ladi.
+
+```bash
+python manage.py ovoz --sana          # nechtasi yetishmasligini aytadi
+python manage.py ovoz --fayl x.txt    # o'z ro'yxating
+```
+
+Kichkintoylar lug'ati — 134 satr, jami ~860 belgi. Ya'ni butun bo'lim
+bir marta yasalganda Aisha hisobidan **bir kilobaytdan kam** matn
+ketadi.
+
+## Yangi so'z qo'shish
+
+1. `frontend/src/lib/kichkintoy.ts` ga qo'shing;
+2. `npx jiti scripts/kichkintoy.ts --yoz` — lug'at fayli yangilanadi;
+3. serverda `python manage.py ovoz`.
+
+Ikkinchi qadamni unutsangiz `npm run tekshir` yiqiladi va nima
+yetishmayotganini aytadi. Bu ataylab: ro'yxatlar jimgina ajralib
+ketsa, ekranda karta bo'lardi-yu, bosilganda ilova jim qolardi.
+
+## Ovozni o'chirish
+
+Ikki joyda: Sozlamalarda (ota-ona ataylab qidiradigan joy) va
+kichkintoylar bo'limining o'zida, yuqori o'ng burchakda. Ikkinchisi
+shuning uchun kerakki, ovozni o'chirish payti har doim shoshilinch
+bo'ladi — avtobusda, uxlab yotgan chaqaloq yonida.
+
+Sozlama `localStorage` da (`azapp_ovoz`) va butun ilova bo'ylab bitta.

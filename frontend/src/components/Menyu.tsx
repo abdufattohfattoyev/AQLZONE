@@ -59,7 +59,7 @@ import { nishonlar, olingan } from "../lib/nishon";
 import { sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import {
-  yolDaftar, yolDokon, yolDuel, yolKurs, yolKurslar, yolMaydon, yolNishon,
+  yolDaftar, yolDokon, yolDuel, yolKichkintoy, yolKurs, yolKurslar, yolMaydon, yolNishon,
   yolOtaOna, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "../lib/yollar";
 import { t } from "../lib/matn";
@@ -245,6 +245,12 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
                 ? t("daftarKutyapti", { n: daftarSoni })
                 : t("menyuDaftarIzoh")}
               on={daftarSoni > 0 ? yur(yolDaftar(kurs)) : undefined} />
+            {/* Kichkintoylar — "ta'lim" ichida, chunki bu o'yin emas:
+                bola bu yerda narsalarning NOMINI o'rganadi. Eng oxirida
+                turadi — u ilovadagi eng yosh bo'lim va uni izlaydigan
+                odam kamchilik. */}
+            <Satr ic="palette" rang="gold" nom={t("kichkintoy")}
+              izoh={t("menyuKichkintoyIzoh")} on={yur(yolKichkintoy())} />
           </Bolim>
 
           {/* ==================== o'yin va duel ====================

@@ -29,6 +29,8 @@ interface Props {
   onReyting: () => void;
   /** Matematik o'yinlar bo'limi — kurslardan mustaqil. */
   onOyinlar: () => void;
+  /** Kichkintoylar bo'limi — 2–5 yosh, gapiradigan rasmlar. */
+  onKichkintoy: () => void;
 }
 
 /** Ro'yxat navbat bilan chiqsin — ekran "jonli" ochilgandek ko'rinadi. */
@@ -48,7 +50,7 @@ function joriyBola(h: Hisob | null) {
 }
 
 export function Dashboard({
-  progressOf, onOpen, onDavom, onProfillar, onSozlama, onReyting, onOyinlar, onDuel,
+  progressOf, onOpen, onDavom, onProfillar, onSozlama, onReyting, onOyinlar, onDuel, onKichkintoy,
 }: Props) {
   // Sinxron o'qiladi (localStorage) — tugma sakrab chiqmasligi uchun.
   const kopBola = profilSoni() > 1;
@@ -226,6 +228,16 @@ export function Dashboard({
         <Icon name="chevron" size={18} className="shrink-0 text-white/80" />
       </button>
 
+      {/* ---- kichkintoylar ----
+          Maktabgacha kursdan OLDIN turadi va tartib yosh bo'yicha:
+          2–5 yosh, keyin 4–6, keyin sinflar. Ota-ona ro'yxatni yuqoridan
+          pastga o'qiydi va o'z farzandining yoshiga birinchi to'g'ri
+          kelgan joyda to'xtaydi.
+
+          Karta ATAYLAB kurs kartalariga o'xshamaydi: bu yerda foiz ham,
+          yulduz ham, "boshlash" ham yo'q — chunki bo'limda dars yo'q. */}
+      <KichkintoyKarta on={onKichkintoy} />
+
       {/* Maktabgacha kurs alohida sarlavha ostida turadi: u sinf emas va
           ota-ona "bolam hali maktabga bormaydi" deganda aynan shu yerni
           izlaydi. Bitta ro'yxatda turganda u "0-sinf" dek ko'rinardi. */}
@@ -358,6 +370,44 @@ function OyinlarKarta({ on }: { on: () => void }) {
             <span>⚡</span><span>🎲</span><span>🧠</span>
           </span>
           <Icon name="chevron" size={18} className="shrink-0 text-white/80" />
+        </button>
+      </div>
+    </Reveal>
+  );
+}
+
+/**
+ * "Kichkintoylar" kartasi.
+ *
+ * Iliq sariq — ro'yxatdagi yagona shu rangdagi karta. Sabab: uni
+ * IZLAYDIGAN odam boshqacha. Kurslarni ota-ona tanlaydi, bu bo'limni
+ * esa ko'pincha bolaning O'ZI topadi — telefonni olib, tanish rasmni
+ * qidiradi. Shuning uchun kartada uchta katta belgi turadi va ular
+ * yozuvdan ko'ra ko'proq narsa aytadi.
+ */
+function KichkintoyKarta({ on }: { on: () => void }) {
+  return (
+    <Reveal kech={55}>
+      <div className="az-kirish mt-4 sm:mt-6" style={kech(55)}>
+        <button type="button" onClick={on}
+          className="tugma-3d az-yaltir flex w-full items-center gap-3 rounded-clay bg-brand-gold
+                     p-[clamp(11px,2vh,14px)] text-left text-white shadow-clay">
+          <span className="grid size-[clamp(40px,7vh,48px)] shrink-0 place-items-center
+                           rounded-[16px] bg-white/25 text-[clamp(21px,3.8vh,26px)]">
+            🧸
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-[16px] leading-tight">
+              {t("kichkintoyQisqa")}
+            </span>
+            <span className="mt-0.5 line-clamp-1 text-[12.5px] leading-snug text-white/90">
+              {t("kichkintoyKartaIzoh")}
+            </span>
+          </span>
+          <span aria-hidden className="hidden shrink-0 gap-1 text-[19px] min-[420px]:flex">
+            <span>🚗</span><span>🐶</span><span>🎨</span>
+          </span>
+          <Icon name="chevron" size={18} className="shrink-0 text-white/85" />
         </button>
       </div>
     </Reveal>

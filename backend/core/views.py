@@ -17,16 +17,19 @@ kelajakdagi APK/iOS ilova ham AYNAN shu manzillarni chaqiradi.
     GET  /api/v1/leaderboard?davr=jami|hafta +Bearer → top + o'z o'rning
     GET  /api/v1/liga                       +Bearer → haftalik liga guruhi
     GET  /api/v1/kanal                      +Bearer → "kanalga qo'shiling" oynasi kerakmi
+    GET  /api/v1/ovoz?matn=olma             ?Bearer → audio/wav (keshdagisi tokensiz ham)
     GET  /api/health
 """
 from __future__ import annotations
 
 import json
+import logging
 from datetime import timedelta
 
 from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Count, Sum
+from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -37,6 +40,7 @@ from . import auth as A
 from . import duel as D
 from . import kanal as K
 from . import liga as L
+from . import ovoz as O
 from .models import (
     BIZNING_KALIT, MAX_QIYMAT, Duel, Identity, LessonResult, LigaAzo, Profile, Progress,
     Pupil, Session,
@@ -841,6 +845,80 @@ def kanal(request):
         "kanal": K.kanal_nomi(),
         "havola": K.havola(),
     })
+
+
+# ------------------------------------------------------------------ ovoz
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def ovoz(request):
+    """
+    Matnni o'zbekcha talaffuzda qaytaradi: `GET /api/v1/ovoz?matn=olma`.
+
+    Javob — audio faylning O'ZI (`audio/wav`), JSON emas. Shuning uchun
+    mijozda hech qanday maxsus kod kerak emas: `new Audio(manzil)` ni
+    brauzerning o'zi yuklaydi, keshlaydi va o'ynatadi.
+
+    ────────────── IKKI QAVATLI RUXSAT ──────────────
+
+    KESHDA BOR bo'lsa — hammaga beriladi. Bu shunchaki fayl uzatish:
+    hisobga ham, tokenga ham bog'liq emas. Bola ilovani birinchi marta
+    ochganda hali hisobi bo'lmasligi mumkin, ovoz esa o'sha ondayoq
+    kerak — aks holda birinchi taassurot jim ekran bo'lardi.
+
+    KESHDA YO'Q bo'lsa — TOKEN talab qilinadi va kunlik belgi chegarasi
+    tekshiriladi. Sababi pul: yasash Aisha hisobidan belgi yeydi va
+    himoyasiz endpoint birovning bepul TTS xizmatiga aylanardi.
+
+    Bola amalda hech qachon ikkinchi yo'lga tushmaydi: butun lug'at
+    oldindan tayyorlanadi (`manage.py ovoz`), ya'ni u har doim keshdan
+    o'qiydi.
+
+    ────────────── NEGA XATO 404 EMAS, 204 ──────────────
+
+    Ovoz topilmasa 204 (bo'sh javob) qaytadi. Farqi mijozda ko'rinadi:
+    404 brauzer konsolida qizil xato bo'lib chiqadi va har bir jim so'z
+    "nosozlik" bo'lib ko'rinardi. Ovoz esa hech qachon majburiy emas —
+    u yo'q bo'lsa ilova jimgina davom etishi kerak.
+    """
+    matn = O.tozala(request.query_params.get("matn", ""))
+    til = (request.query_params.get("til") or "uz").strip().lower()
+    if til not in {"uz", "ru", "en"}:
+        til = "uz"
+    if not matn:
+        return HttpResponse(status=204)
+
+    fayl = O.bormi(matn, til)
+
+    if fayl is None:
+        # Yasash kerak — bu yerda ikkita darvoza bor.
+        #
+        # Birinchisi — OQ RO'YXAT. Faqat oldindan tanlangan lug'at
+        # yasaladi (`core/lugat/`). Busiz har bir dars savoli yangi
+        # satr bo'lib, o'z narxi bilan kelardi: "8 + 5 = ?" va
+        # "8 + 6 = ?" — ikki xil fayl, ikki xil to'lov.
+        #
+        # Ikkinchisi — TOKEN. Ro'yxatdagi so'zni ham begona odam
+        # ming marta so'rab, hisobni bo'shatib qo'ymasligi kerak.
+        if request.user is None or not O.ruxsatmi(matn):
+            return HttpResponse(status=204)
+        try:
+            fayl = O.yasa(matn, til)
+        except O.BudjetTugadi:
+            return HttpResponse(status=204)
+        except O.OvozXato as e:
+            # Jurnalga yozamiz: kalit tugagani yoki xizmat yiqilgani
+            # SERVERNING muammosi, lekin foydalanuvchini to'xtatmaydi.
+            logging.getLogger(__name__).warning("ovoz yasalmadi (%s): %s", matn[:40], e)
+            return HttpResponse(status=204)
+
+    javob = FileResponse(fayl.open("rb"), content_type=O.MIME)
+    # Fayl mazmuni HECH QACHON o'zgarmaydi: manzildagi matn o'zgarsa,
+    # boshqa fayl bo'ladi. Shuning uchun kesh abadiy va `immutable` —
+    # brauzer uni qayta so'ramaydi ham.
+    javob["Cache-Control"] = "public, max-age=31536000, immutable"
+    return javob
 
 
 # ------------------------------------------------------------------ duel

@@ -18,11 +18,18 @@
  * API so'rovlari (/api/) ATAYLAB keshlanmaydi: eskirgan progressni
  * qaytarish — progressni yo'qotishdan ham yomonroq, chunki mijoz uni
  * to'g'ri deb qabul qilib, ustiga yozib yuboradi.
+ *
+ * BITTA ISTISNO — /api/v1/ovoz. U ma'lumot emas, FAYL beradi: berilgan
+ * matnning talaffuzi hech qachon o'zgarmaydi (manzildagi matn o'zgarsa,
+ * boshqa fayl bo'ladi). Ya'ni "eskirgan javob" degan xavf bu yerda
+ * umuman yo'q. Keshlash esa kichkintoylar bo'limi uchun hal qiluvchi:
+ * usiz har bosishda tarmoqqa chiqilardi va internetsiz telefonda butun
+ * bo'lim jim qolardi.
  */
 
-// v2: brend logosi yangilandi. Raqam oshmasa eski keshdagi favicon.svg
-// o'rnida qolib ketadi va foydalanuvchi eski belgini ko'raveradi.
-const VERSIYA = "az-v2";
+// v3: /api/v1/ovoz keshlanadigan bo'ldi. Raqam oshmasa eski kesh
+// qoidalari bilan ishlab, ovoz fayllari saqlanmasdi.
+const VERSIYA = "az-v3";
 const QOBIQ = `${VERSIYA}-qobiq`;
 
 /** Ilova ochilishi uchun eng zarur fayllar. */
@@ -69,7 +76,10 @@ self.addEventListener("fetch", (e) => {
 
   const url = new URL(s.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/")) return;
+  // Ovoz — yagona keshlanadigan API manzili (yuqoridagi izohga qarang).
+  // Qolgan hamma /api/ so'rovi tarmoqqa, to'g'ridan-to'g'ri ketadi.
+  const ovozmi = url.pathname === "/api/v1/ovoz";
+  if (url.pathname.startsWith("/api/") && !ovozmi) return;
 
   // --- Sahifa so'rovi: avval tarmoq ---
   if (s.mode === "navigate") {
@@ -106,9 +116,12 @@ self.addEventListener("fetch", (e) => {
       if (bor) return bor;
 
       const javob = await fetch(s);
-      // Faqat muvaffaqiyatli javoblarni saqlaymiz — 404 yoki 500 ni
-      // keshlash xatoni doimiy qilib qo'yardi.
-      if (javob.ok && javob.type === "basic") kesh.put(s, javob.clone());
+      // FAQAT 200. `javob.ok` 204 ni ham "muvaffaqiyat" deb biladi, ovoz
+      // endpointi esa aynan 204 bilan "bu so'zning ovozi yo'q" deydi
+      // (masalan server hali yasamagan). Uni keshlab qo'ysak, o'sha so'z
+      // shu qurilmada ABADIY jim qolardi — hatto ovoz keyin yasalganda
+      // ham. 404 va 500 ham xuddi shu sababdan saqlanmaydi.
+      if (javob.status === 200 && javob.type === "basic") kesh.put(s, javob.clone());
       return javob;
     })()
   );

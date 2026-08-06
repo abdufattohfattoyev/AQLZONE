@@ -77,6 +77,11 @@ const YOPIQ = [
   // "qayerdaman?" degan savolni faqat kuchaytirardi.
   /^\/oyinlar\/duel$/,
   /^\/duel\//,
+  // Kichkintoylar albomi — 2–5 yosh. Bo'lim ichida pastdagi besh
+  // tugma faqat chalg'itadi: bu yoshdagi bola ularni bexosdan bosadi
+  // va o'zi ochgan rasmlardan chiqib ketadi. Bo'limning KIRISH ekrani
+  // (`/kichkintoy`) esa oddiy sahifa — u yerda panel qoladi.
+  /^\/kichkintoy\/[^/]+$/,
   /^\/kirish\//,                 // botdagi havola
 ];
 

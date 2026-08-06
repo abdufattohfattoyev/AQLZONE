@@ -1,9 +1,49 @@
 # Aql Zone
 
-Maktabgacha yosh (4–6) va 1–6-sinf matematikasi. Bola boblar bo'ylab yo'l
-xaritasida yuradi, har bir darsda 6 ta savol yechadi va yulduz yig'adi.
-Savollar **har safar qaytadan yasaladi** — darsni ikkinchi marta ochsa
-sonlar boshqacha bo'ladi.
+Kichkintoylar (2–5), maktabgacha yosh (4–6) va 1–6-sinf matematikasi. Bola
+boblar bo'ylab yo'l xaritasida yuradi, har bir darsda 6 ta savol yechadi va
+yulduz yig'adi. Savollar **har safar qaytadan yasaladi** — darsni ikkinchi
+marta ochsa sonlar boshqacha bo'ladi.
+
+## Kichkintoylar — 2–5 yosh
+
+`/kichkintoy` — to'rtta mavzu: **mashinalar, hayvonlar, ranglar, raqamlar
+0–9**. Ilovadagi qolgan hamma narsadan tubdan farq qiladi va farqni bitta
+gap bilan aytish mumkin: **bu yerda savol yo'q.**
+
+Maktabgacha kurs "Qaysi biri qizil?" deb so'raydi. Savol berish uchun esa
+bola javobni allaqachon bilishi kerak. Bu bo'lim o'sha bilimning O'ZINI
+beradi.
+
+**Albom.** Ekranda ayni paytda bitta karta turadi va u juda katta. Karta
+ochilishi bilan ilova nomini aytadi, keyin pauza qilib tovushini —
+"mashina… bi-bip", "it… vov-vov". Bola hech narsa bosmaydi: u hali
+"eshitish uchun tugmani bos" degan qoidani bilmaydi. Sahnani bosish nomni
+qayta aytadi, va bu yoshdagi eng ko'p qilinadigan harakat aynan shu —
+takror, takror, yana takror.
+
+**Nega o'n ikkitasi birga emas.** Setka qilib hammasini ko'rsatish kattalar
+uchun qulay. 3 yoshli bola esa o'n ikkita rasmda hech biriga qaramaydi —
+faqat barmog'ini yugurtiradi. Bitta katta rasm savol tug'diradi: "bu nima?"
+
+**Qulf, yulduz, tanga, tartib yo'q.** Bola mashinani ko'rgisi kelsa,
+mashinani ko'radi. Qulflangan katta unga "sen bunga arzimaysan" deb
+ko'rinadi, holbuki u hali "keyingi" degan so'zni ham bilmaydi.
+
+**O'yin — albomdan keyin.** To'rtta karta ko'rilgach "Topib ber" tugmasi
+paydo bo'ladi: ovoz nomni aytadi, ekranda uchta rasm. **Yutqazish yo'q** —
+xato javobda karta silkinadi, ovoz nomni qaytadan aytadi va o'yin o'sha
+savolda turaveradi. Ball ham, vaqt ham yo'q.
+
+**Raqamlarda belgi va narsalar birga.** "5" degan chizma bilan beshta olma
+bir vaqtda ko'rinadi. Alohida ko'rsatgan ilova raqamni o'rgatadi, sonni
+emas: bola "besh" deb o'qishni biladi-yu, beshta olmani sanay olmaydi. Nol
+kartasi bo'sh — bo'sh joyning o'zi tushuntiradi.
+
+Kod: `frontend/src/lib/kichkintoy.ts` (lug'at, ikki tilda),
+`screens/Kichkintoy.tsx` (mavzular), `screens/KichkintoyMavzu.tsx` (albom va
+o'yin), `components/KichkintoyKarta.tsx` (rasm, rang va raqam kartalari).
+Ovoz — `OVOZ-README.md`.
 
 ## Maktabgacha kurs
 
@@ -431,6 +471,8 @@ ochiladi:
 /kurs/1-sinf/nishonlar       yutuq nishonlari
 /kurs/1-sinf/ota-ona         ota-ona paneli
 /reyting                     reyting — kursdan tashqarida, hammasi birga
+/kichkintoy                  kichkintoylar bo'limi — to'rtta mavzu
+/kichkintoy/mashina          albom va "topib ber" o'yini
 /oyinlar                     matematik o'yinlar ro'yxati
 /oyinlar/tezkor              o'yinning daraja tanlash ekrani
 /oyinlar/tezkor/2-daraja     o'yinning o'zi
@@ -1031,20 +1073,22 @@ u shunchaki lug'atga tushmaguncha bir tilda ko'rinadi.
 
 ## Ovoz
 
-**Hozircha o'chirilgan.** Yoqish uchun `frontend/src/lib/ovoz.ts` da bitta qator:
+**Yoniq.** O'zbekcha talaffuz serverdagi TTS orqali keladi (Aisha,
+"Gulnoza" ovozi): `GET /api/v1/ovoz?matn=olma` audio faylning o'zini
+qaytaradi va server uni abadiy keshlaydi. Kichkintoylar bo'limi busiz
+yarim ishlaydi — 3 yoshli bola yozuvni o'qiy olmaydi.
 
-```ts
-export const OVOZ_YONIQ = true;
-```
+Uch manba: server TTS → `frontend/public/audio/` dagi tayyor mp3 →
+brauzer ovozi. Oxirgisi **faqat ruscha**: brauzerda `uz-UZ` ovozi
+deyarli yo'q va u "qo'y" ni "ko-y" deb o'qiydi — noto'g'ri talaffuz jim
+turgandan yomonroq.
 
-Chaqiruv joylari (dars savoli, to'g'ri/xato javob) kodda allaqachon turibdi,
-tayyor mp3 fayllar `frontend/public/audio/` da turadi — `OVOZ-README.md` ga qarang.
+Xarajat uch qavat bilan cheklangan: oq ro'yxat (faqat
+`backend/core/lugat/*.txt` dagi matn yasaladi), token va kunlik belgi
+chegarasi. Ro'yxat eng muhimi — dars savollari tasodifiy sonlar bilan
+yasaladi, ya'ni ularsiz har savol yangi to'lov bo'lardi.
 
-Brauzer ovozining tili **savol matni bilan birga** almashadi: ruscha
-darsda `ru-RU`, o'zbekchada `uz-UZ`. Busiz ruscha savol o'zbekcha
-talaffuz qoidalari bilan o'qilib, tushunarsiz chiqardi. Ruschada bu
-zaxira ancha ishonchli: `ru-RU` ovozi deyarli har qurilmada bor, tayyor
-mp3 fayllar esa hozircha faqat o'zbekcha.
+Sozlash, lug'atni tayyorlash va yangi so'z qo'shish — `OVOZ-README.md`.
 
 ## Testlar
 

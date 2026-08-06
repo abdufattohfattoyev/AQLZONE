@@ -18,6 +18,10 @@ urlpatterns = [
     path("liga", views.liga, name="liga"),
     path("kanal", views.kanal, name="kanal"),
 
+    # Ovoz — matnni o'zbekcha talaffuzda qaytaradi (audio/wav).
+    # Keshda bori hammaga ochiq, yangisi tokenli so'rovdan o'tadi.
+    path("ovoz", views.ovoz, name="ovoz"),
+
     # Do'st bilan bellashuv. Tartib muhim: `duel/royxat` `duel/<kod>` dan
     # OLDIN turishi kerak, aks holda "royxat" kod deb qabul qilinardi.
     path("duel", views.duel_boshla, name="duel-boshla"),

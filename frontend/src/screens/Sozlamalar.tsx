@@ -24,6 +24,7 @@ import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { botHavolasi, botNomi, chiqish, getHisob, hisobniSaqla, miniAppda } from "../lib/api";
 import { turniUnut } from "../lib/tur";
+import { ovozYoniqmi, ovozniYoq } from "../lib/ovoz";
 import { tozala } from "../lib/nom";
 import type { Hisob } from "../lib/api";
 import { t } from "../lib/matn";
@@ -74,6 +75,9 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
   // Yo'lboshchi qayta yoqildimi — tugma bosilganini bildirish uchun.
   // Sayohatning o'zi kurs sahifasida boshlanadi, shu yerda emas.
   const [turQayta, setTurQayta] = useState(false);
+  // Sinxron o'qiladi: tugma ekran chizilishi bilan to'g'ri holatda
+  // turishi kerak, keyinroq almashib ketmasligi.
+  const [ovoz, setOvoz] = useState(ovozYoniqmi);
 
   // Nativ orqaga tugmasi RO'YXAT rejimida ulanmaydi: u yerda chiqish
   // yo'li ataylab yo'q — odam kirish jarayonining o'rtasida turadi va
@@ -370,6 +374,35 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
                            bg-track py-2.5 font-display text-[14px] text-ink-soft disabled:opacity-60">
                 <Icon name={turQayta ? "check" : "repeat"} size={17} />
                 {turQayta ? t("turBoshlanadi") : t("turQaytadan")}
+              </button>
+            </div>
+          )}
+
+          {/* ---- ovoz ----
+              Ilova savol va so'zlarni ovoz chiqarib o'qiydi. Kichkintoylar
+              bo'limida bu ishlash sharti — 3 yoshli bola o'qiy olmaydi —
+              lekin ovoz kerak bo'lmaydigan payt ham bor: avtobus,
+              kutubxona, uxlab yotgan chaqaloq.
+
+              Tugma o'sha bo'lim ichida ham bor (`components/OvozTugma`),
+              chunki o'chirish kerak bo'lgan payt har doim SHOSHILINCH.
+              Bu yerdagisi esa ota-ona ataylab qidiradigan joy: u
+              sozlamani bir marta qo'yib, unutadi. */}
+          {(
+            <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
+              style={{ "--az-kech": "95ms" } as React.CSSProperties}>
+              <div className="font-display text-[14px]">{t("ovozSarlavha")}</div>
+              <p className="mt-1 text-[12px] leading-snug text-ink-dim">
+                {t("ovozIzoh")}
+              </p>
+              <button type="button"
+                onClick={() => { const y = !ovoz; ovozniYoq(y); setOvoz(y); }}
+                aria-pressed={ovoz}
+                className="clay-press mt-3 flex w-full items-center justify-center gap-2 rounded-3xl
+                           bg-track py-2.5 font-display text-[14px] text-ink-soft">
+                <Icon name="ovoz" size={17}
+                  className={ovoz ? "text-brand-green-d" : "text-ink-dim"} />
+                {ovoz ? t("ovozOchirish") : t("ovozYoqish")}
               </button>
             </div>
           )}

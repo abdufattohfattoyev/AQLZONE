@@ -22,6 +22,17 @@ export const yolSozlama = () => "/sozlamalar";
 export const yolReyting = () => "/reyting";
 
 /**
+ * Kichkintoylar bo'limi — kursdan TASHQARIDA va bu ataylab.
+ *
+ * U sinf emas va kurs ham emas: bu yerda dars, tartib va yulduz yo'q.
+ * `/kurs/...` ostiga qo'yilsa, manzilda tasodifiy sinf raqami turib
+ * qolardi va ulashilgan havola "bu 1-sinf mavzusi ekan" degan yolg'onni
+ * aytardi.
+ */
+export const yolKichkintoy = () => "/kichkintoy";
+export const yolKichkintoyMavzu = (id: string) => `/kichkintoy/${id}`;
+
+/**
  * O'yinlar — kursdan TASHQARIDA.
  *
  * Manzil `/kurs/...` ostiga tushmasligi ataylab: o'yin biror sinfga

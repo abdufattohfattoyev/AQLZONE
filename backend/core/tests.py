@@ -3130,6 +3130,215 @@ class DuelChaqiruvHavolasiTest(TestCase):
         with self.settings(BOT_USERNAME="aqlzone_bot"):
             self.assertEqual(D.havola("ABC123"), "https://t.me/aqlzone_bot?start=duel_ABC123")
 
+
+class OvozTest(TestCase):
+    """
+    Ovoz — `/api/v1/ovoz` va uning keshi.
+
+    HECH BIR SINOV TARMOQQA CHIQMAYDI. Aisha'ga so'rov yuboradigan
+    yagona joy (`ovoz.yasa`) sinovlarda o'rniga boshqasi qo'yiladi yoki
+    umuman chaqirilmaydi: aks holda `manage.py test` har yurganda pul
+    yeb, internetsiz kompyuterda esa yiqilardi.
+
+    Eng muhim ikki qoida shu yerda tekshiriladi:
+
+      1. KESHDAGI ovoz TOKENSIZ ham beriladi — bola ilovani birinchi
+         marta ochganda hisobi bo'lmasligi mumkin, ovoz esa o'sha
+         ondayoq kerak.
+      2. YANGI ovoz tokensiz YASALMAYDI — aks holda endpoint
+         birovning bepul TTS xizmatiga aylanardi.
+    """
+
+    def setUp(self):
+        import tempfile
+
+        from core import ovoz as O
+
+        self.O = O
+        # Har sinov o'z papkasida ishlaydi: umumiy keshdan foydalansa,
+        # sinovlar bir-birining fayllarini ko'rib, tartibga bog'liq
+        # bo'lib qolardi.
+        self.papka = tempfile.mkdtemp(prefix="az-ovoz-sinov-")
+
+    def kesh(self):
+        return self.settings(OVOZ_KESH=self.papka, AISHA_KEY="sinov-kaliti")
+
+    def auth(self) -> dict:
+        """Qurilma orqali kiradi va `Authorization` sarlavhasini qaytaradi."""
+        r = self.client.post(
+            "/api/v1/auth/device",
+            {"deviceId": "dev-ovoz-0123456789ab", "platform": "web"},
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 200, r.content)
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def fayl_qoy(self, matn: str, til: str = "uz") -> None:
+        """Keshga tayyor fayl qo'yadi — go'yo u allaqachon yasalgan."""
+        p = self.O.yol(matn, til)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        # 512 baytdan katta: `yasa()` dagi tekshiruv bilan bir xil
+        # chegara, ya'ni sinov haqiqiy holatni takrorlaydi.
+        p.write_bytes(b"RIFF" + b"\0" * 2048)
+
+    # ---------------------------------------------------------- tozalash
+
+    def test_emoji_va_ortiqcha_boshliq_ketadi(self):
+        self.assertEqual(self.O.tozala("  Qizil  mashina 🚗🚗 "), "Qizil mashina")
+
+    def test_apostrof_qoladi(self):
+        """O'zbekchada apostrof harfning bir qismi — usiz so'z buziladi."""
+        self.assertEqual(self.O.tozala("o'rdak"), "o'rdak")
+        self.assertEqual(self.O.tozala("qo'y"), "qo'y")
+
+    def test_til_kirill_bilan_aniqlanadi(self):
+        self.assertEqual(self.O.tili("mashina"), "uz")
+        self.assertEqual(self.O.tili("машина"), "ru")
+
+    def test_ovoz_almashsa_fayl_ham_almashadi(self):
+        """
+        Ovoz nomi xeshga kiradi.
+
+        Busiz ovozni almashtirganimizda eski fayllar joyida qolib,
+        ilova ikki xil ovozda gapirardi.
+        """
+        with self.settings(AISHA_MODEL="Gulnoza"):
+            a = self.O.kalit("olma")
+        with self.settings(AISHA_MODEL="Boshqa"):
+            b = self.O.kalit("olma")
+        self.assertNotEqual(a, b)
+
+    # ------------------------------------------------------------ endpoint
+
+    def test_keshdagi_ovoz_tokensiz_beriladi(self):
+        with self.kesh():
+            self.fayl_qoy("olma")
+            r = self.client.get("/api/v1/ovoz", {"matn": "olma"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r["Content-Type"], "audio/wav")
+        self.assertIn("immutable", r["Cache-Control"])
+
+    def test_yangi_ovoz_tokensiz_yasalmaydi(self):
+        """Ochiq TTS proksisi — birovning hisobidan bepul ovoz yasash yo'li."""
+        with self.kesh():
+            def portlaydi(*a, **k):
+                raise AssertionError("tokensiz so'rov Aisha'ga chiqmasligi kerak")
+
+            with patch.object(self.O, "yasa", portlaydi):
+                r = self.client.get("/api/v1/ovoz", {"matn": "yangi so'z"})
+        self.assertEqual(r.status_code, 204)
+
+    def test_bosh_matn_204(self):
+        with self.kesh():
+            r = self.client.get("/api/v1/ovoz", {"matn": "   "})
+        self.assertEqual(r.status_code, 204)
+
+    def test_xizmat_yiqilsa_ilova_yiqilmaydi(self):
+        """
+        Ovoz hech qachon majburiy emas.
+
+        Aisha javob bermasa 500 emas, 204 qaytadi: mijozda 500 qizil
+        xato bo'lib chiqar edi va har bir jim so'z "nosozlik" bo'lib
+        ko'rinardi.
+        """
+        sarlavha = self.auth()
+        with self.kesh():
+            def yiqiladi(*a, **k):
+                raise self.O.OvozXato("xizmat javob bermadi")
+
+            with patch.object(self.O, "yasa", yiqiladi):
+                r = self.client.get("/api/v1/ovoz", {"matn": "yangi so'z"}, **sarlavha)
+        self.assertEqual(r.status_code, 204)
+
+    def test_token_bilan_royxatdagisi_yasaladi(self):
+        sarlavha = self.auth()
+        with self.kesh():
+            def soxta(matn, til="uz", **k):
+                self.fayl_qoy(matn, til)
+                return self.O.yol(matn, til)
+
+            # "mashina" — lug'atda bor.
+            with patch.object(self.O, "yasa", soxta):
+                r = self.client.get("/api/v1/ovoz", {"matn": "mashina"}, **sarlavha)
+        self.assertEqual(r.status_code, 200)
+
+    def test_royxatda_yoq_matn_yasalmaydi(self):
+        """
+        Oq ro'yxat — pulni himoya qiladigan asosiy to'siq.
+
+        Dars savollari tasodifiy sonlar bilan yasaladi ("8 + 5 = ?"),
+        ya'ni ularning har biri YANGI satr. Ro'yxatsiz har savol
+        Aisha'ga alohida so'rov va alohida to'lov bo'lardi.
+        """
+        sarlavha = self.auth()
+        with self.kesh():
+            def portlaydi(*a, **k):
+                raise AssertionError("ro'yxatda yo'q matn yasalmasligi kerak")
+
+            with patch.object(self.O, "yasa", portlaydi):
+                r = self.client.get("/api/v1/ovoz", {"matn": "8 + 5 nechaga teng?"},
+                                    **sarlavha)
+        self.assertEqual(r.status_code, 204)
+
+    def test_royxatda_yoq_matn_KESHDAN_beriladi(self):
+        """
+        Ro'yxat YASASHNI cheklaydi, BERISHNI emas.
+
+        Eski savollar uchun tayyor fayllar bor (`manage.py ovoz --fayl`
+        bilan yasalgan bo'lishi mumkin) va ular avvalgidek eshitilishi
+        kerak — ro'yxat ularni to'sib qo'ysa, ovoz sababsiz yo'qolardi.
+        """
+        with self.kesh():
+            self.fayl_qoy("8 + 5 nechaga teng?")
+            r = self.client.get("/api/v1/ovoz", {"matn": "8 + 5 nechaga teng?"})
+        self.assertEqual(r.status_code, 200)
+
+    def test_lugatdagi_hamma_soz_ruxsatda(self):
+        self.assertTrue(self.O.ruxsatmi("mashina"))
+        self.assertTrue(self.O.ruxsatmi("машина"))
+        self.assertTrue(self.O.ruxsatmi("Barakalla!"))
+        self.assertFalse(self.O.ruxsatmi("bunday so'z lug'atda yo'q"))
+
+    # ------------------------------------------------------------- budjet
+
+    def test_kunlik_chegara_yangi_ovozni_toxtatadi(self):
+        with self.settings(OVOZ_KESH=self.papka, OVOZ_KUNLIK_BELGI=10):
+            self.assertTrue(self.O.budjet_bormi("olma"))
+            self.O.kunlik_qosh(9)
+            # 9 + len("olma") = 13 > 10
+            self.assertFalse(self.O.budjet_bormi("olma"))
+
+    def test_chegara_nol_bolsa_cheklov_yoq(self):
+        with self.settings(OVOZ_KESH=self.papka, OVOZ_KUNLIK_BELGI=0):
+            self.O.kunlik_qosh(10_000)
+            self.assertTrue(self.O.budjet_bormi("olma"))
+
+    # -------------------------------------------------------------- lug'at
+
+    def test_lugat_fayli_bor_va_bosh_emas(self):
+        """
+        Lug'at frontenddagi ro'yxatdan yasaladi (`npm run tekshir`).
+
+        Fayl yo'qolsa `manage.py ovoz` ishlamaydi va butun bo'lim jim
+        qoladi — shuning uchun uning borligi shu yerda ham qo'riqlanadi.
+        """
+        from core.management.commands.ovoz import STANDART
+
+        self.assertTrue(STANDART.exists(), f"lug'at yo'q: {STANDART}")
+        satrlar = [x.strip() for x in STANDART.read_text(encoding="utf-8").splitlines()]
+        satrlar = [x for x in satrlar if x and not x.startswith("#")]
+        self.assertGreater(len(satrlar), 100)
+        # Ikkala til ham bo'lishi shart: ruscha ochgan bolaga o'zbekcha
+        # ovoz berilsa, u hech narsani tushunmaydi.
+        self.assertTrue(any(self.O.tili(x) == "ru" for x in satrlar))
+        self.assertTrue(any(self.O.tili(x) == "uz" for x in satrlar))
+
+    def test_lugat_buyrugi_tarmoqqa_chiqmasdan_sanaydi(self):
+        chiqish = StringIO()
+        with self.settings(OVOZ_KESH=self.papka):
+            call_command("ovoz", "--sana", stdout=chiqish)
+        self.assertIn("keshda yo'q", chiqish.getvalue())
+
     @patch("core.management.commands.bot.api")
     def test_bot_chaqiruvni_inline_tugma_bilan_ochadi(self, api):
         from core.management.commands import bot as B
@@ -3153,3 +3362,4 @@ class DuelChaqiruvHavolasiTest(TestCase):
                 "text": "/start duel_<script>",
             }})
         self.assertIn("/start", natija)
+

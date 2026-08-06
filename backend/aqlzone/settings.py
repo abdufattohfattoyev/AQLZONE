@@ -193,6 +193,41 @@ BOSHQARUV_YONIQ = bool(ADMIN_TG)
 # noto'g'ri sozlangan server odamlarni ilovadan chiqarib yubormaydi.
 RAQAM_MAJBURIY_DAN = env("RAQAM_MAJBURIY_DAN", "")
 
+# ----------------------------------------------------------------- ovoz
+#
+# Aisha (aisha.group) — o'zbekcha TTS. Kalit: space.aisha.group/api-keys
+#
+# Bo'sh bo'lsa ovoz YASALMAYDI, lekin allaqachon keshda turgan fayllar
+# avvalgidek beriladi. Ya'ni kalit tugasa yoki olib qo'yilsa, ilova
+# jimib qolmaydi — u faqat YANGI so'zni ayta olmaydi.
+#
+# `AISHA_API_KEY` — eski nom. U `.env` da allaqachon turgan bo'lishi
+# mumkin va ikki yarim sozlangan nom bitta sozlanganidan yomonroq:
+# kalit qo'yilgan-u, ovoz chiqmaydi degan holat tug'ilardi.
+AISHA_KEY = env("AISHA_KEY", "") or env("AISHA_API_KEY", "")
+
+# Ovoz va kayfiyat. Ular fayl xeshiga kiradi (`core/ovoz.py`), shuning
+# uchun almashtirilganda eski fayllar o'z-o'zidan ishlatilmay qoladi va
+# ilova ikki xil ovozda gapirib qolmaydi.
+AISHA_MODEL = env("AISHA_MODEL", "Gulnoza")
+AISHA_KAYFIYAT = env("AISHA_KAYFIYAT", "Cheerful")
+# Bolalar uchun sekinroq. 1.0 — odatdagi tezlik.
+AISHA_TEZLIK = env("AISHA_TEZLIK", "0.9")
+
+# Yasalgan fayllar qayerda yotadi. Docker'da bu volume (`/data`) —
+# konteyner qayta qurilganda kesh saqlanib qolishi kerak, aks holda
+# har joylashda butun lug'at qaytadan yasalib, qaytadan pul ketardi.
+OVOZ_KESH = env("OVOZ_KESH", str(Path("/data") / "ovoz") if Path("/data").exists()
+                else str(BASE_DIR / "ovoz-kesh"))
+
+# Bir kunda eng ko'pi shuncha BELGI yangidan yasalishi mumkin.
+#
+# Bu pulni himoya qiladi. Butun kichkintoylar lug'ati ~700 belgi, ya'ni
+# odatdagi kun bu chegaraga umuman yaqinlashmaydi: fayllar bir marta
+# yasaladi va keyin keshdan ketadi. Chegara faqat bitta holatda ishga
+# tushadi — kimdir endpointni bepul TTS deb ishlatmoqchi bo'lganda.
+OVOZ_KUNLIK_BELGI = int(env("OVOZ_KUNLIK_BELGI", "20000"))
+
 # Sinov ishlayaptimi (`manage.py test`).
 #
 # Faqat BIR narsa uchun kerak: yangi ro'yxatdan o'tganda adminga
