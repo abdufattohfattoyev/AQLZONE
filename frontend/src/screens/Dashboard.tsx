@@ -13,10 +13,15 @@ import { kursMatn } from "../lib/tarjima/kurs";
 import type { Course } from "../lib/curriculum";
 import type { Progress } from "../lib/types";
 
+/**
+ * `onOyinlar` va `onDuel` SHU YERDA EDI va olib tashlandi.
+ *
+ * O'yinlarga pastdagi panelning o'rtasidagi tugmadan kiriladi,
+ * bellashuv esa o'yinlar ekranining eng tepasida turadi. Bosh
+ * sahifadagi ikkita keng karta ularning takrori edi.
+ */
 interface Props {
   progressOf: (c: Course) => Progress;
-  /** Do'st bilan bellashuv — o'yinlardan ALOHIDA turadi. */
-  onDuel: () => void;
   onOpen: (c: Course) => void;
   /** Profil tanlash ekrani. Tugma faqat ikkinchi bola qo'shilganda chiqadi. */
   onProfillar: () => void;
@@ -24,8 +29,6 @@ interface Props {
   onSozlama: () => void;
   /** Reyting — barcha kurslar bo'yicha umumiy. */
   onReyting: () => void;
-  /** Matematik o'yinlar bo'limi — kurslardan mustaqil. */
-  onOyinlar: () => void;
   /** Kichkintoylar bo'limi — 2–5 yosh, gapiradigan rasmlar. */
   onKichkintoy: () => void;
 }
@@ -47,7 +50,7 @@ function joriyBola(h: Hisob | null) {
 }
 
 export function Dashboard({
-  progressOf, onOpen, onProfillar, onSozlama, onReyting, onOyinlar, onDuel, onKichkintoy,
+  progressOf, onOpen, onProfillar, onSozlama, onReyting, onKichkintoy,
 }: Props) {
   // Sinxron o'qiladi (localStorage) — tugma sakrab chiqmasligi uchun.
   const kopBola = profilSoni() > 1;
@@ -179,42 +182,22 @@ export function Dashboard({
           egallardi: uni ochgan odam kurslar ro'yxatini ko'rish uchun
           surishga majbur bo'lardi. */}
 
-      {/* ---- o'yinlar ----
-          Kurslardan OLDIN turadi va bu ataylab. Kurslar rejali ish:
-          ularga bola ota-onasi aytganda kiradi. O'yinga esa u O'ZI
-          keladi — va aynan shu narsa uni ertaga ham qaytaradi. Karta
-          pastda tursa, ro'yxatni oxirigacha surgan odamgina uni
-          ko'rardi, ya'ni deyarli hech kim.
+      {/* "MATEMATIK O'YINLAR" VA "DO'ST BILAN BELLASHUV" KARTALARI
+          SHU YERDA EDI. Ikkalasi ham olib tashlandi.
 
-          Kartaning o'zi bitta va keng: sakkizta o'yin bu yerda
-          ko'rsatilmaydi. Bosh sahifa TANLOV ekrani emas, u faqat
-          "qayerga borasan?" degan savolga javob beradi. */}
-      <OyinlarKarta on={onOyinlar} />
+          Ular bosh sahifada ikkita keng, rangli karta bo'lib turardi va
+          ekranning yarmini egallardi — holbuki ikkalasiga ham pastdagi
+          panelning O'RTASIDAGI tugmasidan (va menyudan) bir bosishda
+          kirish mumkin. Ya'ni ular navigatsiyaning TAKRORI edi, ustiga
+          eng ko'zga tashlanadigan joyda.
 
-      {/* ---- do'st bilan bellashuv ----
-          O'YINLAR ICHIDA EMAS va bu ataylab. Duel o'yin emas: unda
-          ikkinchi odam bor, xabar boradi va natija ikkalasiga tegishli
-          bo'ladi. Sakkizta o'yin qatoriga qo'yilganda u "to'qqizinchi
-          o'yin" bo'lib ko'rinardi va o'sha yerda yo'qolib ketardi.
+          Bosh sahifaning ishi bitta: "qaysi kurs?" degan savolga javob
+          berish. Endi kurslar ro'yxati birinchi ekranga sig'adi va uni
+          topish uchun surish kerak emas.
 
-          Bosh sahifada, kurslardan OLDIN turadi: ilovani ochgan bola
-          "do'stim meni chaqirganmi?" degan savolga birinchi ekranda
-          javob olsin. */}
-      <button type="button" onClick={onDuel}
-        className="az-kirish tugma-3d mt-[clamp(10px,2vh,18px)] flex w-full items-center gap-3.5
-                   rounded-clay bg-brand-orange p-[clamp(11px,2vh,14px)] text-left text-white
-                   shadow-clay"
-        style={kech(50)}>
-        <span className="grid size-[clamp(40px,7vh,48px)] shrink-0 place-items-center rounded-2xl
-                         bg-white/20 text-[clamp(20px,3.6vh,24px)]">
-          ⚔️
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-display text-[16.5px] leading-tight">{t("duel")}</span>
-          <span className="mt-0.5 block text-[12.5px] text-white/85">{t("duelIzoh")}</span>
-        </span>
-        <Icon name="chevron" size={18} className="shrink-0 text-white/80" />
-      </button>
+          Bellashuv o'yinlar ekraniga ko'chdi (`screens/Oyinlar.tsx`) —
+          u yerda "Bugungi maydon" bilan yonma-yon turadi va ikkalasi
+          ham bir xil narsa: bugun bo'ladigan, muddatli ish. */}
 
       {/* ---- kichkintoylar ----
           Maktabgacha kursdan OLDIN turadi va tartib yosh bo'yicha:
@@ -265,53 +248,6 @@ export function Dashboard({
         {t("kurslarIzoh")}
       </p>
     </div>
-  );
-}
-
-/**
- * "Matematik o'yinlar" kartasi.
- *
- * Kurs kartalaridan ATAYLAB boshqacha ko'rinadi: siyoh rangli fon,
- * yon tomonda uchta o'yin belgisi. Agar u ham oq karta bo'lganda,
- * ro'yxatda "yana bitta kurs" bo'lib yo'qolib ketardi — holbuki bu
- * butunlay boshqa narsa: bu yerda dars yo'q, faqat rekord bor.
- *
- * Belgilar YON TOMONDA turadi va bosilmaydi. Ular ro'yxat emas,
- * ishora: "ichkarida bir nechta o'yin bor" degan gapni yozuvsiz aytadi.
- */
-function OyinlarKarta({ on }: { on: () => void }) {
-  return (
-    <Reveal kech={50}>
-      <div className="az-kirish mt-4 sm:mt-6" style={kech(50)}>
-        <button type="button" onClick={on}
-          className="tugma-3d az-yaltir flex w-full items-center gap-3 rounded-clay bg-brand-purple
-                     p-[clamp(11px,2vh,14px)] text-left text-white shadow-clay">
-          <span className="grid size-[clamp(40px,7vh,48px)] shrink-0 place-items-center
-                           rounded-[16px] bg-white/20">
-            <Icon name="puzzle" size={26} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-display text-[16px] leading-tight">
-              {t("oyinlarBolim")}
-            </span>
-            {/* Izoh BIR QATOR. Ilgari u to'liq chiqardi va uchta qatorga
-                bo'linib ketardi: karta yonidagi ikkitasidan ikki barobar
-                baland bo'lib, uchtasi tekis qator bo'lish o'rniga
-                pog'onaga aylanardi. Qolgan gap o'yinlar ekranida
-                baribir turibdi. */}
-            <span className="mt-0.5 line-clamp-1 text-[12.5px] leading-snug text-white/85">
-              {t("oyinlarIzoh")}
-            </span>
-          </span>
-          {/* Belgilar faqat KENG ekranda. Tor telefonda ular yozuvdan
-              joy o'g'irlab, izohni yana ikki qatorga bo'lib yuborardi. */}
-          <span aria-hidden className="hidden shrink-0 gap-1 text-[19px] min-[420px]:flex">
-            <span>⚡</span><span>🎲</span><span>🧠</span>
-          </span>
-          <Icon name="chevron" size={18} className="shrink-0 text-white/80" />
-        </button>
-      </div>
-    </Reveal>
   );
 }
 

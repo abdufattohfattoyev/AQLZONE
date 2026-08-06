@@ -8,272 +8,326 @@
  * Natijada albom har telefonda boshqa ko'rinardi va uni "ilovaning
  * rasmlari" deb his qilib bo'lmasdi — ular QARZGA olingan rasm edi.
  *
- * Bu yerdagi hammasi bitta tilda chizilgan:
+ * ─────────── UMUMIY TIL ───────────
  *
  *   • 120×120 to'r, hamma narsa markazda
- *   • yumaloq burchaklar (bolalar uchun o'tkir burchak yo'q)
- *   • har rangda ikki qatlam: asosiy va pastdagi to'q soya — hajm
- *     shundan chiqadi
- *   • oyna doim ochiq havorang, g'ildirak doim to'q kulrang —
- *     ya'ni bola bir marta o'rgansa, hamma mashinada taniydi
- *   • pastda yumshoq soya: narsa "yerda turibdi"
+ *   • rang GRADIENT bilan (`chizma/ramka.tsx`): tepasi yorug',
+ *     pastki uchdan biri to'q — yorug'lik tepadan tushadi va ko'z
+ *     buni tug'ilganidan biladi
+ *   • kuzov ostida yupqa to'q CHIZIQ — shakl fonda "suzib" qolmasin
+ *   • oyna doim ochiq havorang, g'ildirak doim to'q kulrang: bola bir
+ *     marta o'rgansa, hamma mashinada taniydi
+ *   • pastda yumshoq, chetiga qarab so'nadigan soya
  *
- * ─────────── NEGA HAJM MUHIM ───────────
+ * ─────────── TAFSILOT QANCHA KERAK ───────────
  *
- * Tekis rangdagi shakl bolaga "chizma" bo'lib ko'rinadi; soyasi va
- * yorug'i bor shakl esa NARSA bo'lib ko'rinadi. Farq kichkintoy uchun
- * hal qiluvchi: u haqiqiy mashinani ko'chada ko'rgan va ekrandagisini
- * o'sha bilan bog'lashi kerak.
+ * Har mashinada uchtadan ortiq bo'lmagan "tanish belgi" bor: taksida
+ * tomdagi chiroq va shashka, o't o'chirishda narvon va g'altak,
+ * traktorda noteng g'ildirak. Undan ko'pi bolaning ko'zini chalg'itadi
+ * — u narsani emas, tafsilotni ko'radi.
  */
 import type { JSX } from "react";
 
-/** Umumiy ranglar — hamma mashina shu palitrada. */
-const OYNA = "#bfe4f7";
-const OYNA_SOYA = "#93cbe9";
-const GILDIRAK = "#33323a";
-const GILDIRAK_ICH = "#c8ccd6";
-const FAR = "#ffe08a";
+import { Soya, useBoyoq } from "./ramka";
 
-/** Pastdagi yumshoq soya — hamma rasmda bir xil. */
-const Soya = () => (
-  <ellipse cx="60" cy="103" rx="40" ry="5.5" fill="#000" opacity="0.13" />
-);
+const OYNA_CHET = "#7fb9d8";
+const GILDIRAK = "#2f2e36";
+const FAR = "#ffe08a";
+const FAR_ORQA = "#ff8a7d";
 
 /**
- * G'ildirak — qora shina, kulrang disk.
+ * G'ildirak — shina, disk va o'q.
  *
- * Alohida komponent, chunki u sakkizta rasmda takrorlanadi va
- * ularning hammasi bir xil ko'rinishi kerak: bola g'ildirakni
- * mashinaning belgisi sifatida taniydi.
+ * Uchta qatlam: qora shina, metall disk (gradient), markazdagi
+ * mayda o'q. Ikki qatlamda u yassi "nuqta" bo'lib ko'rinardi.
  */
-const Gildirak = ({ cx, cy, r = 10 }: { cx: number; cy: number; r?: number }) => (
-  <g>
-    <circle cx={cx} cy={cy} r={r} fill={GILDIRAK} />
-    <circle cx={cx} cy={cy} r={r * 0.45} fill={GILDIRAK_ICH} />
-    <circle cx={cx} cy={cy} r={r * 0.18} fill="#8d93a3" />
-  </g>
+function Gildirak({ cx, cy, r = 11 }: { cx: number; cy: number; r?: number }) {
+  const g = useBoyoq();
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={r} fill={GILDIRAK} />
+      <circle cx={cx} cy={cy} r={r * 0.92} fill="none" stroke="#4a4954" strokeWidth={r * 0.12} />
+      <circle cx={cx} cy={cy} r={r * 0.46} fill={g("metall")} />
+      <circle cx={cx} cy={cy} r={r * 0.16} fill="#6f7686" />
+    </g>
+  );
+}
+
+/** Kuzov ustidan o'tadigan yorug'lik chizig'i. */
+function Yaltir({ d }: { d: string }) {
+  const g = useBoyoq();
+  return <path d={d} fill={g("yaltir")} />;
+}
+
+/* ─────────────── yengil avtomobil (mashina · taksi · politsiya) ───────────────
+ *
+ * Uchalasi bitta siluetdan foydalanadi va bu ataylab: bola avval
+ * SHAKLNI o'rganadi ("bu mashina"), keyin ustidagi belgilar bo'yicha
+ * turini ajratadi. Har biriga alohida silüet chizilsa, uchtasi uch xil
+ * narsa bo'lib ko'rinardi.
+ */
+function Sedan({ rang, bezak }: { rang: string; bezak?: JSX.Element }) {
+  const g = useBoyoq();
+  return (
+    <g>
+      <Soya cy={100} rx={40} />
+
+      {/* Kuzov: pastki qismi — to'q asos, ustida asosiy shakl. */}
+      <path d="M12 76c0-4 3-7 7-7h82c4 0 7 3 7 7v7c0 3.4-2.4 6-6 6H18c-3.6 0-6-2.6-6-6z"
+        fill="#00000022" />
+      <path d="M14 72c0-9.6 4.4-14 11-16.2l6.4-14.6C33.2 37 36 35 40.4 35h39.2c4.4 0 7.2 2 8.8 6.2L95 55.8
+               C101.6 58 106 62.4 106 72v4c0 2.6-2 4.6-4.6 4.6H18.6C16 80.6 14 78.6 14 76z"
+        fill={g(rang)} />
+
+      {/* Tomdagi yorug'lik */}
+      <Yaltir d="M31.4 41.2C33.2 37 36 35 40.4 35h39.2c4.4 0 7.2 2 8.8 6.2l1.8 4.2H29.6z" />
+
+      {/* Oyna — ikkiga bo'lingan: o'rtadagi ustun mashinani
+          "quti" emas, KABINA qilib ko'rsatadi. */}
+      <path d="M36 43c1-2.2 2.4-3.2 4.8-3.2h38.4c2.4 0 3.8 1 4.8 3.2l3.8 9.4H32.2z"
+        fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M58.4 39.8h3.2v12.6h-3.2z" fill={OYNA_CHET} opacity="0.55" />
+
+      {/* Eshik chizig'i va tutqich — usiz kuzov bir bo'lak plastmassa
+          bo'lib ko'rinardi. */}
+      <path d="M60 55v20" stroke="#00000026" strokeWidth="1.6" strokeLinecap="round" />
+      <rect x="63" y="62" width="8" height="2.6" rx="1.3" fill="#ffffff55" />
+
+      {/* Farlar */}
+      <rect x="12" y="62" width="11" height="8" rx="4" fill={FAR} />
+      <rect x="97" y="62" width="11" height="8" rx="4" fill={FAR_ORQA} />
+
+      {bezak}
+
+      <Gildirak cx={34} cy={83} />
+      <Gildirak cx={86} cy={83} />
+    </g>
+  );
+}
+
+export const ChizmaMashina = (): JSX.Element => <Sedan rang="qizil" />;
+
+export const ChizmaTaksi = (): JSX.Element => (
+  <Sedan rang="sariq" bezak={
+    <g>
+      {/* Tomdagi chiroq — taksini boshqa mashinadan ajratadigan
+          yagona belgi. Usiz u shunchaki sariq avtomobil bo'lardi. */}
+      <rect x="48" y="23" width="24" height="11" rx="3.5" fill="#2f3d5c" />
+      <text x="60" y="31.4" textAnchor="middle" fill="#ffd84d"
+        style={{ font: "700 8.5px 'Fredoka', sans-serif", letterSpacing: "0.4px" }}>TAXI</text>
+      {/* Yon shashka */}
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <rect key={i} x={31 + i * 9.4} y="66" width="4.7" height="4.7"
+          fill={i % 2 ? "#2f3d5c" : "#fff"} />
+      ))}
+    </g>
+  } />
 );
 
-/** Kuzov ustidagi yorug'lik chizig'i — yaltiroq bo'yoq hissi. */
-const Yaltir = ({ d }: { d: string }) => (
-  <path d={d} fill="#fff" opacity="0.28" />
-);
-
-/* ──────────────────────────── yengil avtomobil ──────────────────────────── */
-
-export const ChizmaMashina = (): JSX.Element => (
-  <g>
-    <Soya />
-    {/* kuzovning pastki, to'q qismi — soya bo'lib ishlaydi */}
-    <path d="M14 78c0-4 3-7 7-7h78c4 0 7 3 7 7v6c0 3-2 5-5 5H19c-3 0-5-2-5-5z" fill="#c2352d" />
-    {/* asosiy kuzov */}
-    <path d="M16 74c0-9 4-13 10-15l6-14c1.6-3.6 4-5.4 8-5.4h32c4 0 6.4 1.8 8 5.4l6 14c6 2 10 6 10 15v3c0 2.4-1.8 4-4 4H20c-2.4 0-4-1.6-4-4z"
-      fill="#ee4a41" />
-    <Yaltir d="M32 45c1.6-3.6 4-5.4 8-5.4h32c4 0 6.4 1.8 8 5.4l1.6 3.8H30.4z" />
-    {/* oyna */}
-    <path d="M37 46.6c.9-2 2.2-3 4.4-3h37.2c2.2 0 3.5 1 4.4 3l3.4 8.4H33.6z" fill={OYNA} />
-    <path d="M58 43.6h4v11.4h-4z" fill={OYNA_SOYA} />
-    {/* farlar */}
-    <rect x="14" y="66" width="10" height="7" rx="3.5" fill={FAR} />
-    <rect x="96" y="66" width="10" height="7" rx="3.5" fill="#ff9c8f" />
-    <Gildirak cx={34} cy={86} />
-    <Gildirak cx={86} cy={86} />
-  </g>
+export const ChizmaPolitsiya = (): JSX.Element => (
+  <Sedan rang="siyoh" bezak={
+    <g>
+      {/* Oq eshik — haqiqiy patrul mashinalaridagidek */}
+      <path d="M38 55h44v20H38z" fill="#f0f3f8" opacity="0.92" />
+      <path d="M60 55v20" stroke="#00000022" strokeWidth="1.6" />
+      {/* Tomdagi chiroq */}
+      <rect x="46" y="25" width="28" height="9" rx="4.5" fill="#1f2b45" />
+      <rect x="48.5" y="27" width="11" height="5" rx="2.5" fill="#4fb8e0" />
+      <rect x="60.5" y="27" width="11" height="5" rx="2.5" fill="#ff5a4d" />
+    </g>
+  } />
 );
 
 /* ──────────────────────────────── avtobus ──────────────────────────────── */
 
-export const ChizmaAvtobus = (): JSX.Element => (
-  <g>
-    <Soya />
-    <rect x="12" y="80" width="96" height="10" rx="4" fill="#c78c17" />
-    <rect x="12" y="26" width="96" height="58" rx="12" fill="#f5b301" />
-    <Yaltir d="M12 38c0-6.6 5.4-12 12-12h72c6.6 0 12 5.4 12 12v4H12z" />
-    {/* oynalar qatori — bittadan emas, ro'yxat bo'lib: avtobusni
-        aynan shu uzun oyna qatori taniqli qiladi */}
-    {[19, 41, 63, 85].map((x) => (
-      <rect key={x} x={x} y="36" width="17" height="20" rx="4" fill={OYNA} />
-    ))}
-    <rect x="19" y="36" width="17" height="20" rx="4" fill={OYNA_SOYA} />
-    {/* eshik */}
-    <rect x="63" y="60" width="17" height="22" rx="3" fill={OYNA_SOYA} opacity="0.55" />
-    <rect x="14" y="70" width="9" height="7" rx="3" fill={FAR} />
-    <rect x="97" y="70" width="9" height="7" rx="3" fill={FAR} />
-    <Gildirak cx={33} cy={88} r={9} />
-    <Gildirak cx={87} cy={88} r={9} />
-  </g>
-);
+export const ChizmaAvtobus = (): JSX.Element => {
+  const g = useBoyoq();
+  return (
+    <g>
+      <Soya cy={100} rx={40} />
+      <rect x="11" y="24" width="98" height="62" rx="13" fill={g("oltin")} />
+      <Yaltir d="M11 37c0-7.2 5.8-13 13-13h72c7.2 0 13 5.8 13 13v5H11z" />
+      {/* Pastdagi to'q tasma — avtobusni "quti" emas, KUZOV qiladi */}
+      <path d="M11 74h98v-6H11z" fill="#00000022" />
 
-/* ───────────────────────────────── taksi ───────────────────────────────── */
+      {/* Oynalar qatori — avtobusni aynan shu taniqli qiladi */}
+      {[18, 40, 62].map((x) => (
+        <rect key={x} x={x} y="34" width="18" height="21" rx="4.5"
+          fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.2" />
+      ))}
+      {/* Eshik — ikki tavaqali */}
+      <rect x="84" y="34" width="18" height="40" rx="4" fill={g("oyna")}
+        stroke={OYNA_CHET} strokeWidth="1.2" />
+      <path d="M93 34v40" stroke={OYNA_CHET} strokeWidth="1.4" />
 
-export const ChizmaTaksi = (): JSX.Element => (
-  <g>
-    <Soya />
-    <path d="M14 78c0-4 3-7 7-7h78c4 0 7 3 7 7v6c0 3-2 5-5 5H19c-3 0-5-2-5-5z" fill="#d19b06" />
-    <path d="M16 74c0-9 4-13 10-15l6-14c1.6-3.6 4-5.4 8-5.4h32c4 0 6.4 1.8 8 5.4l6 14c6 2 10 6 10 15v3c0 2.4-1.8 4-4 4H20c-2.4 0-4-1.6-4-4z"
-      fill="#fcc419" />
-    <Yaltir d="M32 45c1.6-3.6 4-5.4 8-5.4h32c4 0 6.4 1.8 8 5.4l1.6 3.8H30.4z" />
-    <path d="M37 46.6c.9-2 2.2-3 4.4-3h37.2c2.2 0 3.5 1 4.4 3l3.4 8.4H33.6z" fill={OYNA} />
-    {/* tomdagi chiroq — taksini boshqa mashinadan ajratadigan
-        YAGONA belgi. Usiz u sariq avtomobil bo'lib qolardi. */}
-    <rect x="49" y="26" width="22" height="10" rx="3" fill="#2f3d5c" />
-    <text x="60" y="34.4" textAnchor="middle" fill="#ffd84d"
-      style={{ font: "700 8px 'Fredoka', sans-serif" }}>TAXI</text>
-    {/* yon tomondagi shashka chizig'i */}
-    {[0, 1, 2, 3, 4, 5].map((i) => (
-      <rect key={i} x={30 + i * 10} y="62" width="5" height="5"
-        fill={i % 2 ? "#2f3d5c" : "#fff"} />
-    ))}
-    <rect x="14" y="66" width="10" height="7" rx="3.5" fill={FAR} />
-    <rect x="96" y="66" width="10" height="7" rx="3.5" fill="#ff9c8f" />
-    <Gildirak cx={34} cy={86} />
-    <Gildirak cx={86} cy={86} />
-  </g>
-);
+      <rect x="13" y="64" width="10" height="8" rx="4" fill={FAR} />
+      <Gildirak cx={33} cy={86} r={10} />
+      <Gildirak cx={87} cy={86} r={10} />
+    </g>
+  );
+};
 
 /* ────────────────────────────── yuk mashinasi ────────────────────────────── */
 
-export const ChizmaYuk = (): JSX.Element => (
-  <g>
-    <Soya />
-    {/* yuk qismi ORQADA va katta — bolaning ko'zi birinchi shuni ko'radi */}
-    <rect x="10" y="34" width="58" height="48" rx="6" fill="#8ea3c4" />
-    <rect x="10" y="34" width="58" height="10" rx="5" fill="#a8bcda" />
-    <rect x="16" y="48" width="46" height="28" rx="3" fill="#7a90b3" opacity="0.6" />
-    {/* kabina */}
-    <path d="M68 48h20c4 0 6.4 1.6 8 5l6 12c4 1.4 6 4 6 9v6c0 2.4-1.8 4-4 4H68z" fill="#3d8ef2" />
-    <path d="M74 52h13c2 0 3.2.8 4 2.6l4.4 9.4H74z" fill={OYNA} />
-    <Yaltir d="M68 48h20c4 0 6.4 1.6 8 5l1 2H68z" />
-    <rect x="101" y="66" width="6" height="7" rx="3" fill={FAR} />
-    <Gildirak cx={28} cy={86} r={11} />
-    <Gildirak cx={56} cy={86} r={11} />
-    <Gildirak cx={92} cy={86} r={11} />
-  </g>
-);
+export const ChizmaYuk = (): JSX.Element => {
+  const g = useBoyoq();
+  return (
+    <g>
+      <Soya cy={100} rx={42} />
+      {/* Yuk qismi ORQADA va katta — ko'z birinchi shuni ko'radi */}
+      <rect x="8" y="32" width="60" height="48" rx="6" fill={g("kulrang")} />
+      <rect x="14" y="44" width="48" height="26" rx="3" fill="#00000018" />
+      <path d="M8 38c0-3.3 2.7-6 6-6h48c3.3 0 6 2.7 6 6v3H8z" fill="#ffffff33" />
+
+      {/* Kabina */}
+      <path d="M68 46h20c4.4 0 7 1.8 8.8 5.6L103 64c5 1.6 7 4.6 7 10v6c0 2.6-2 4.6-4.6 4.6H68z"
+        fill={g("kok")} />
+      <path d="M74 50h13.4c2.2 0 3.6.9 4.5 2.9l4.6 10H74z"
+        fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.2" strokeLinejoin="round" />
+      <Yaltir d="M68 46h20c4.4 0 7 1.8 8.8 5.6l1.2 2.4H68z" />
+      <rect x="101" y="64" width="8" height="8" rx="4" fill={FAR} />
+
+      <Gildirak cx={26} cy={84} r={11} />
+      <Gildirak cx={52} cy={84} r={11} />
+      <Gildirak cx={92} cy={84} r={11} />
+    </g>
+  );
+};
 
 /* ────────────────────────── o't o'chirish mashinasi ────────────────────────── */
 
-export const ChizmaOtOchir = (): JSX.Element => (
-  <g>
-    <Soya />
-    <rect x="8" y="40" width="62" height="42" rx="6" fill="#c2352d" />
-    <rect x="8" y="40" width="62" height="9" rx="4.5" fill="#e8564c" />
-    {/* narvon — o't o'chirish mashinasining eng taniqli belgisi */}
-    <g stroke="#e3e7ee" strokeWidth="3.4" strokeLinecap="round">
-      <path d="M14 36h52M14 30h52" />
-      {[18, 28, 38, 48, 58].map((x) => <path key={x} d={`M${x} 30v6`} />)}
+export const ChizmaOtOchir = (): JSX.Element => {
+  const g = useBoyoq();
+  return (
+    <g>
+      <Soya cy={100} rx={42} />
+      {/* Narvon — o't o'chirish mashinasining eng taniqli belgisi */}
+      <g stroke="#dfe5ee" strokeWidth="3.6" strokeLinecap="round">
+        <path d="M12 34h54M12 27h54" />
+        {[18, 29, 40, 51, 62].map((x) => <path key={x} d={`M${x} 27v7`} />)}
+      </g>
+
+      <rect x="8" y="38" width="62" height="42" rx="6" fill={g("qizil")} />
+      <path d="M8 76h62v-6H8z" fill="#00000022" />
+      {/* G'altak */}
+      <circle cx="30" cy="58" r="11" fill="#e8e2d4" />
+      <circle cx="30" cy="58" r="7" fill="#c9bfa9" />
+      <circle cx="30" cy="58" r="3" fill="#8f8878" />
+
+      <path d="M70 44h18c4.4 0 7 1.8 8.8 5.6L103 62c5 1.6 7 4.6 7 10v8c0 2.6-2 4.6-4.6 4.6H70z"
+        fill={g("qizil")} />
+      <path d="M76 48h12.4c2.2 0 3.6.9 4.5 2.9l4.4 9.6H76z"
+        fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.2" strokeLinejoin="round" />
+      {/* Ko'k-qizil chiroq */}
+      <rect x="73" y="36" width="24" height="8" rx="4" fill="#22304d" />
+      <circle cx="80" cy="40" r="2.8" fill="#4fb8e0" />
+      <circle cx="90" cy="40" r="2.8" fill="#ff5a4d" />
+      <rect x="102" y="64" width="7" height="8" rx="3.5" fill={FAR} />
+
+      <Gildirak cx={30} cy={84} r={10.5} />
+      <Gildirak cx={90} cy={84} r={10.5} />
     </g>
-    {/* g'altak */}
-    <circle cx="30" cy="62" r="10" fill="#e8e2d4" />
-    <circle cx="30" cy="62" r="5" fill="#b9b0a0" />
-    <path d="M70 48h18c4 0 6.4 1.6 8 5l6 12c4 1.4 6 4 6 9v6c0 2.4-1.8 4-4 4H70z" fill="#ee4a41" />
-    <path d="M76 52h12c2 0 3.2.8 4 2.6l4.4 9.4H76z" fill={OYNA} />
-    {/* ko'k-qizil chiroq */}
-    <rect x="74" y="41" width="20" height="7" rx="3.5" fill="#2f3d5c" />
-    <circle cx="80" cy="44.5" r="2.6" fill="#4fb8e0" />
-    <circle cx="88" cy="44.5" r="2.6" fill="#ff5a4d" />
-    <rect x="101" y="66" width="6" height="7" rx="3" fill={FAR} />
-    <Gildirak cx={30} cy={86} r={10} />
-    <Gildirak cx={90} cy={86} r={10} />
-  </g>
-);
+  );
+};
 
 /* ─────────────────────────────── tez yordam ─────────────────────────────── */
 
-export const ChizmaTezYordam = (): JSX.Element => (
-  <g>
-    <Soya />
-    <rect x="10" y="38" width="60" height="44" rx="7" fill="#e6ebf5" />
-    <rect x="10" y="38" width="60" height="9" rx="4.5" fill="#fbfdff" />
-    {/* qizil xoch — bola uni "shifokor mashinasi" deb taniydi */}
-    <g fill="#ee4a41">
-      <rect x="32" y="52" width="16" height="6" rx="2" />
-      <rect x="37" y="47" width="6" height="16" rx="2" />
+export const ChizmaTezYordam = (): JSX.Element => {
+  const g = useBoyoq();
+  return (
+    <g>
+      <Soya cy={100} rx={42} />
+      <rect x="9" y="36" width="60" height="44" rx="7" fill={g("oq")} />
+      <path d="M9 74h60v-5H9z" fill="#00000012" />
+      {/* Qizil xoch — bola uni "shifokor mashinasi" deb taniydi */}
+      <g fill="#ee4a41">
+        <rect x="29" y="51" width="19" height="7" rx="2.5" />
+        <rect x="35" y="45" width="7" height="19" rx="2.5" />
+      </g>
+      <rect x="15" y="68" width="48" height="4.4" rx="2.2" fill="#ff8a7d" />
+
+      <path d="M69 44h19c4.4 0 7 1.8 8.8 5.6L103 62c5 1.6 7 4.6 7 10v8c0 2.6-2 4.6-4.6 4.6H69z"
+        fill={g("oq")} />
+      <path d="M75 48h12.4c2.2 0 3.6.9 4.5 2.9l4.4 9.6H75z"
+        fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.2" strokeLinejoin="round" />
+      <rect x="73" y="36" width="24" height="8" rx="4" fill="#22304d" />
+      <circle cx="80" cy="40" r="2.8" fill="#4fb8e0" />
+      <circle cx="90" cy="40" r="2.8" fill="#ff5a4d" />
+      <rect x="102" y="64" width="7" height="8" rx="3.5" fill={FAR} />
+
+      <Gildirak cx={30} cy={84} r={10.5} />
+      <Gildirak cx={90} cy={84} r={10.5} />
     </g>
-    <rect x="18" y="70" width="44" height="4" rx="2" fill="#ff8a7d" />
-    <path d="M70 46h18c4 0 6.4 1.6 8 5l6 12c4 1.4 6 4 6 9v6c0 2.4-1.8 4-4 4H70z" fill="#f4f7fc" />
-    <path d="M76 50h12c2 0 3.2.8 4 2.6l4.4 9.4H76z" fill={OYNA} />
-    <rect x="74" y="39" width="20" height="7" rx="3.5" fill="#2f3d5c" />
-    <circle cx="80" cy="42.5" r="2.6" fill="#4fb8e0" />
-    <circle cx="88" cy="42.5" r="2.6" fill="#ff5a4d" />
-    <rect x="101" y="66" width="6" height="7" rx="3" fill={FAR} />
-    <Gildirak cx={30} cy={86} r={10} />
-    <Gildirak cx={90} cy={86} r={10} />
-  </g>
-);
-
-/* ──────────────────────────── politsiya mashinasi ──────────────────────────── */
-
-export const ChizmaPolitsiya = (): JSX.Element => (
-  <g>
-    <Soya />
-    <path d="M14 78c0-4 3-7 7-7h78c4 0 7 3 7 7v6c0 3-2 5-5 5H19c-3 0-5-2-5-5z" fill="#1f2b45" />
-    <path d="M16 74c0-9 4-13 10-15l6-14c1.6-3.6 4-5.4 8-5.4h32c4 0 6.4 1.8 8 5.4l6 14c6 2 10 6 10 15v3c0 2.4-1.8 4-4 4H20c-2.4 0-4-1.6-4-4z"
-      fill="#2f3d5c" />
-    {/* oq eshik — haqiqiy patrul mashinalaridagidek */}
-    <path d="M40 59h40v18H40z" fill="#f0f3f8" />
-    <Yaltir d="M32 45c1.6-3.6 4-5.4 8-5.4h32c4 0 6.4 1.8 8 5.4l1.6 3.8H30.4z" />
-    <path d="M37 46.6c.9-2 2.2-3 4.4-3h37.2c2.2 0 3.5 1 4.4 3l3.4 8.4H33.6z" fill={OYNA} />
-    {/* tomdagi chiroq */}
-    <rect x="47" y="27" width="26" height="8" rx="4" fill="#1f2b45" />
-    <rect x="49" y="29" width="10" height="4" rx="2" fill="#4fb8e0" />
-    <rect x="61" y="29" width="10" height="4" rx="2" fill="#ff5a4d" />
-    <rect x="14" y="66" width="10" height="7" rx="3.5" fill={FAR} />
-    <rect x="96" y="66" width="10" height="7" rx="3.5" fill="#ff9c8f" />
-    <Gildirak cx={34} cy={86} />
-    <Gildirak cx={86} cy={86} />
-  </g>
-);
+  );
+};
 
 /* ──────────────────────────────── traktor ──────────────────────────────── */
 
-export const ChizmaTraktor = (): JSX.Element => (
-  <g>
-    <Soya />
-    {/* Traktorning butun tanilishi NOTENG g'ildiraklarda: orqasi juda
-        katta, oldi kichik. Shu nisbat buzilsa, u oddiy mashina
-        bo'lib qoladi. */}
-    <rect x="52" y="52" width="42" height="26" rx="6" fill="#3fb865" />
-    <rect x="30" y="60" width="26" height="18" rx="5" fill="#34a058" />
-    {/* kabina */}
-    <path d="M56 26h26c3.4 0 6 2.6 6 6v20H50V32c0-3.4 2.6-6 6-6z" fill="#2f8f4d" />
-    <rect x="56" y="31" width="26" height="17" rx="3" fill={OYNA} />
-    {/* mo'ri */}
-    <rect x="40" y="34" width="7" height="22" rx="3" fill="#3d4a5c" />
-    <circle cx="43.5" cy="30" r="4" fill="#c9d2de" opacity="0.65" />
-    <circle cx="49" cy="23" r="3" fill="#c9d2de" opacity="0.45" />
-    <Gildirak cx={78} cy={80} r={19} />
-    <Gildirak cx={34} cy={86} r={12} />
-  </g>
-);
+export const ChizmaTraktor = (): JSX.Element => {
+  const g = useBoyoq();
+  return (
+    <g>
+      <Soya cy={102} rx={40} />
+      {/* Traktorning butun tanilishi NOTENG g'ildiraklarda: orqasi juda
+          katta, oldi kichik. Shu nisbat buzilsa, u oddiy mashina
+          bo'lib qoladi. */}
+      <rect x="50" y="50" width="44" height="28" rx="7" fill={g("yashil")} />
+      <rect x="28" y="58" width="26" height="20" rx="6" fill={g("yashil")} />
+      <path d="M28 72h66v-4H28z" fill="#00000022" />
+
+      {/* Kabina */}
+      <path d="M56 22h26c3.9 0 7 3.1 7 7v21H49V29c0-3.9 3.1-7 7-7z" fill={g("yashil")} />
+      <rect x="55" y="27" width="28" height="18" rx="3.5"
+        fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.2" />
+
+      {/* Mo'ri va tutun */}
+      <rect x="38" y="30" width="8" height="28" rx="4" fill="#3d4a5c" />
+      <rect x="36" y="27" width="12" height="5" rx="2.5" fill="#2b3547" />
+      <circle cx="42" cy="20" r="5" fill="#c9d2de" opacity="0.6" />
+      <circle cx="49" cy="12" r="3.6" fill="#c9d2de" opacity="0.4" />
+
+      <Gildirak cx={76} cy={78} r={20} />
+      <Gildirak cx={32} cy={86} r={12} />
+    </g>
+  );
+};
 
 /* ────────────────────────────── velosiped ────────────────────────────── */
 
 export const ChizmaVelosiped = (): JSX.Element => (
   <g>
-    <Soya />
+    <Soya cy={100} rx={38} />
     {/* Ramka ichi BO'SH: velosipedni aynan ochiq uchburchak ramka
         taniqli qiladi, to'la shakl esa motorollerga o'xshab ketardi. */}
-    <g fill="none" stroke="#3d8ef2" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M30 78 52 46h22" />
-      <path d="M52 46 66 78" />
-      <path d="M90 78 74 46" />
-      <path d="M66 78H90" />
+    <g fill="none" stroke="#3d8ef2" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M30 76 52 44h22" />
+      <path d="M52 44 66 76" />
+      <path d="M90 76 74 44" />
+      <path d="M66 76H90" />
     </g>
-    {/* egar va rul */}
-    <rect x="44" y="42" width="15" height="6" rx="3" fill="#3d4a5c" />
-    <path d="M74 40h14" stroke="#3d4a5c" strokeWidth="5" strokeLinecap="round" />
-    <path d="M80 40v8" stroke="#3d4a5c" strokeWidth="4" strokeLinecap="round" />
-    {/* qo'ng'iroq — bosilganda chaladigan tovushning ko'rinishi */}
-    <circle cx="88" cy="38" r="4.4" fill="#f5b301" />
-    {/* g'ildiraklar: ingichka shina, spitsalar */}
+    <g fill="none" stroke="#5aa0f5" strokeWidth="2" strokeLinecap="round">
+      <path d="M30 76 52 44h22" />
+    </g>
+
+    {/* Egar, rul, pedal */}
+    <rect x="43" y="39" width="17" height="6.5" rx="3.2" fill="#3d4a5c" />
+    <path d="M73 38h15" stroke="#3d4a5c" strokeWidth="5" strokeLinecap="round" />
+    <path d="M80 38v8" stroke="#3d4a5c" strokeWidth="4" strokeLinecap="round" />
+    <circle cx="66" cy="76" r="5" fill="#3d4a5c" />
+    <rect x="60" y="80" width="12" height="4" rx="2" fill="#2f3d5c" />
+    {/* Qo'ng'iroq — bosilganda chaladigan tovushning ko'rinishi */}
+    <circle cx="88" cy="36" r="5" fill="#f5b301" />
+    <circle cx="86.4" cy="34.4" r="1.6" fill="#fff" opacity="0.7" />
+
+    {/* G'ildiraklar: ingichka shina, spitsalar */}
     {[30, 90].map((cx) => (
       <g key={cx}>
-        <circle cx={cx} cy="78" r="19" fill="none" stroke={GILDIRAK} strokeWidth="4.5" />
-        <g stroke="#b9c0cc" strokeWidth="1.6">
-          <path d={`M${cx - 13} 65l26 26M${cx + 13} 65l-26 26M${cx} 59v38M${cx - 19} 78h38`} />
+        <circle cx={cx} cy="76" r="20" fill="none" stroke="#2f2e36" strokeWidth="5" />
+        <circle cx={cx} cy="76" r="20" fill="none" stroke="#4a4954" strokeWidth="1.6" />
+        <g stroke="#c3cbd8" strokeWidth="1.5">
+          <path d={`M${cx - 14} 62l28 28M${cx + 14} 62l-28 28M${cx} 56v40M${cx - 20} 76h40`} />
         </g>
-        <circle cx={cx} cy="78" r="3.4" fill="#8d93a3" />
+        <circle cx={cx} cy="76" r="3.6" fill="#8d97a8" />
       </g>
     ))}
   </g>
@@ -281,83 +335,115 @@ export const ChizmaVelosiped = (): JSX.Element => (
 
 /* ──────────────────────────────── poyezd ──────────────────────────────── */
 
-export const ChizmaPoyezd = (): JSX.Element => (
-  <g>
-    <Soya />
-    {/* relslar — poyezdni "yerdagi" narsadan ajratadi */}
-    <rect x="6" y="94" width="108" height="4" rx="2" fill="#9aa3b2" />
-    {[12, 32, 52, 72, 92].map((x) => (
-      <rect key={x} x={x} y="90" width="6" height="9" rx="2" fill="#b6803f" />
-    ))}
-    {/* vagon */}
-    <rect x="8" y="46" width="42" height="38" rx="6" fill="#4fb8e0" />
-    <rect x="14" y="53" width="13" height="14" rx="3" fill={OYNA} />
-    <rect x="31" y="53" width="13" height="14" rx="3" fill={OYNA} />
-    {/* lokomotiv */}
-    <path d="M54 40h34c5 0 9 4 9 9v35H54z" fill="#ee4a41" />
-    <rect x="60" y="48" width="30" height="18" rx="4" fill={OYNA} />
-    <path d="M54 40h34c5 0 9 4 9 9v2H54z" fill="#fff" opacity="0.25" />
-    {/* mo'ri va bug' */}
-    <rect x="97" y="52" width="11" height="32" rx="4" fill="#c2352d" />
-    <rect x="95" y="46" width="15" height="8" rx="4" fill="#3d4a5c" />
-    <circle cx="102" cy="36" r="6" fill="#dfe6f0" opacity="0.75" />
-    <circle cx="110" cy="26" r="4.4" fill="#dfe6f0" opacity="0.5" />
-    <Gildirak cx={20} cy={86} r={8} />
-    <Gildirak cx={42} cy={86} r={8} />
-    <Gildirak cx={66} cy={86} r={9} />
-    <Gildirak cx={90} cy={86} r={9} />
-  </g>
-);
+export const ChizmaPoyezd = (): JSX.Element => {
+  const g = useBoyoq();
+  return (
+    <g>
+      {/* Relslar — poyezdni "yerdagi" narsadan ajratadi */}
+      <rect x="4" y="93" width="112" height="4.5" rx="2.2" fill="#9aa3b2" />
+      {[10, 30, 50, 70, 90, 106].map((x) => (
+        <rect key={x} x={x} y="89" width="6" height="10" rx="2" fill="#a9763f" />
+      ))}
+
+      {/* Vagon */}
+      <rect x="6" y="44" width="42" height="38" rx="6" fill={g("kok")} />
+      <rect x="12" y="51" width="13" height="15" rx="3.5"
+        fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.1" />
+      <rect x="29" y="51" width="13" height="15" rx="3.5"
+        fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.1" />
+      <path d="M6 76h42v-5H6z" fill="#00000022" />
+
+      {/* Lokomotiv */}
+      <path d="M52 36h35c5.5 0 10 4.5 10 10v36H52z" fill={g("qizil")} />
+      <rect x="58" y="44" width="32" height="19" rx="4.5"
+        fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.2" />
+      <Yaltir d="M52 36h35c5.5 0 10 4.5 10 10v2H52z" />
+      <path d="M52 76h45v-5H52z" fill="#00000022" />
+
+      {/* Mo'ri va bug' */}
+      <rect x="97" y="50" width="12" height="32" rx="4" fill="#c2352d" />
+      <rect x="95" y="43" width="16" height="8" rx="4" fill="#3d4a5c" />
+      <circle cx="103" cy="33" r="6.5" fill="#e3e9f2" opacity="0.75" />
+      <circle cx="112" cy="23" r="4.6" fill="#e3e9f2" opacity="0.5" />
+
+      <Gildirak cx={18} cy={84} r={8.5} />
+      <Gildirak cx={40} cy={84} r={8.5} />
+      <Gildirak cx={64} cy={84} r={9.5} />
+      <Gildirak cx={88} cy={84} r={9.5} />
+    </g>
+  );
+};
 
 /* ─────────────────────────────── samolyot ─────────────────────────────── */
 
-export const ChizmaSamolyot = (): JSX.Element => (
-  <g>
-    {/* Soya PASTDA va kichik: samolyot yerda emas, HAVODA. Aynan shu
-        narsa uni qolgan hamma mashinadan ajratadi. */}
-    <ellipse cx="60" cy="106" rx="26" ry="4" fill="#000" opacity="0.1" />
-    {/* orqa qanot */}
-    <path d="M22 40l16 18-16 6z" fill="#c9d6e8" />
-    {/* tana */}
-    <path d="M18 56c0-5 4-9 9-9h56c14 0 24 5 30 9-6 4-16 9-30 9H27c-5 0-9-4-9-9z" fill="#f4f7fc" />
-    <path d="M18 56c0-5 4-9 9-9h56c14 0 24 5 30 9H18z" fill="#fff" />
-    {/* dumaloq illyuminatorlar — samolyotning taniqli belgisi */}
-    {[38, 50, 62, 74].map((x) => (
-      <circle key={x} cx={x} cy="55" r="3.6" fill={OYNA} />
-    ))}
-    {/* kabina oynasi */}
-    <path d="M96 50c6 2 10 4.4 13 6h-13z" fill={OYNA_SOYA} />
-    {/* pastki qanot */}
-    <path d="M56 62l-8 26h12l16-26z" fill="#3d8ef2" />
-    <path d="M56 62l-4 13h10l8-13z" fill="#5aa0f5" />
-    {/* dvigatel */}
-    <rect x="54" y="64" width="18" height="9" rx="4.5" fill="#8ea3c4" />
-  </g>
-);
+export const ChizmaSamolyot = (): JSX.Element => {
+  const g = useBoyoq();
+  return (
+    <g>
+      {/* Soya PASTDA va kichik: samolyot yerda emas, HAVODA. Aynan shu
+          narsa uni qolgan hamma mashinadan ajratadi. */}
+      <Soya cy={108} rx={24} />
+
+      {/* Orqa qanot va dum */}
+      <path d="M20 36l18 20-18 7z" fill="#9fb4d1" />
+      <path d="M20 36l18 20-6 2z" fill="#8ea3c4" />
+
+      {/* Tana */}
+      <path d="M16 56c0-5.5 4.5-10 10-10h56c14.5 0 25 5.2 31.5 10-6.5 4.8-17 10-31.5 10H26c-5.5 0-10-4.5-10-10z"
+        fill={g("oq")} />
+      <path d="M16 56c0-5.5 4.5-10 10-10h56c14.5 0 25 5.2 31.5 10H16z" fill="#ffffff" />
+
+      {/* Illyuminatorlar */}
+      {[36, 48, 60, 72].map((x) => (
+        <circle key={x} cx={x} cy="55" r="3.8" fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1" />
+      ))}
+      {/* Kabina oynasi */}
+      <path d="M96 49c6.4 2 11 4.6 14.4 6.4h-14.4z" fill={g("oyna")} />
+
+      {/* Pastki qanot va dvigatel */}
+      <path d="M54 64l-9 26h13l17-26z" fill={g("kok")} />
+      <path d="M54 64l-4.5 13h11l8.5-13z" fill="#5aa0f5" />
+      <rect x="52" y="63" width="20" height="10" rx="5" fill={g("kulrang")} />
+      <circle cx="53" cy="68" r="3.4" fill="#6f7686" />
+    </g>
+  );
+};
 
 /* ───────────────────────────────── kema ───────────────────────────────── */
 
-export const ChizmaKema = (): JSX.Element => (
-  <g>
-    {/* suv — kema yerda turmaydi, shuning uchun soya o'rniga to'lqin */}
-    <path d="M4 92c8 0 8-5 16-5s8 5 16 5 8-5 16-5 8 5 16 5 8-5 16-5 8 5 16 5v10H4z"
-      fill="#4fb8e0" opacity="0.55" />
-    <path d="M4 98c8 0 8-4 16-4s8 4 16 4 8-4 16-4 8 4 16 4 8-4 16-4 8 4 16 4v6H4z"
-      fill="#3792c9" opacity="0.45" />
-    {/* korpus */}
-    <path d="M16 68h88l-10 20c-1.4 2.8-3.6 4-7 4H33c-3.4 0-5.6-1.2-7-4z" fill="#c2352d" />
-    <path d="M16 68h88l-3 6H19z" fill="#ee4a41" />
-    {/* paluba */}
-    <rect x="34" y="46" width="46" height="22" rx="4" fill="#f4f7fc" />
-    {[38, 52, 66].map((x) => (
-      <rect key={x} x={x} y="52" width="11" height="10" rx="2.5" fill={OYNA} />
-    ))}
-    <rect x="46" y="30" width="24" height="16" rx="4" fill="#e6ebf5" />
-    <rect x="50" y="34" width="16" height="8" rx="2" fill={OYNA} />
-    {/* mo'ri */}
-    <rect x="80" y="38" width="12" height="30" rx="4" fill="#f5b301" />
-    <rect x="80" y="44" width="12" height="6" fill="#2f3d5c" />
-    <circle cx="86" cy="30" r="5" fill="#dfe6f0" opacity="0.7" />
-    <circle cx="94" cy="21" r="3.6" fill="#dfe6f0" opacity="0.45" />
-  </g>
-);
+export const ChizmaKema = (): JSX.Element => {
+  const g = useBoyoq();
+  return (
+    <g>
+      {/* Suv — kema yerda turmaydi, shuning uchun soya o'rniga to'lqin */}
+      <path d="M2 90c8 0 8-5 16-5s8 5 16 5 8-5 16-5 8 5 16 5 8-5 16-5 8 5 16 5 8-5 16-5v14H2z"
+        fill="#4fb8e0" opacity="0.5" />
+      <path d="M2 97c8 0 8-4 16-4s8 4 16 4 8-4 16-4 8 4 16 4 8-4 16-4 8 4 16 4 8-4 16-4v10H2z"
+        fill="#3792c9" opacity="0.45" />
+
+      {/* Korpus */}
+      <path d="M14 66h92l-11 21c-1.5 3-3.9 4.3-7.5 4.3H32.5c-3.6 0-6-1.3-7.5-4.3z" fill={g("qizil")} />
+      <path d="M14 66h92l-3.2 6.4H17.2z" fill="#ff7a6b" />
+      {/* Illyuminatorlar */}
+      {[38, 52, 66, 80].map((x) => (
+        <circle key={x} cx={x} cy="77" r="3" fill="#ffe08a" />
+      ))}
+
+      {/* Paluba */}
+      <rect x="32" y="44" width="48" height="22" rx="4" fill={g("oq")} />
+      {[36, 50, 64].map((x) => (
+        <rect key={x} x={x} y="50" width="11" height="10" rx="2.5"
+          fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1" />
+      ))}
+      <rect x="44" y="27" width="26" height="17" rx="4" fill={g("oq")} />
+      <rect x="48" y="31" width="18" height="9" rx="2.5"
+        fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1" />
+
+      {/* Mo'ri */}
+      <rect x="82" y="36" width="13" height="30" rx="4" fill={g("oltin")} />
+      <rect x="82" y="43" width="13" height="6.5" fill="#2f3d5c" />
+      <circle cx="88.5" cy="27" r="5.5" fill="#e3e9f2" opacity="0.7" />
+      <circle cx="97" cy="18" r="4" fill="#e3e9f2" opacity="0.45" />
+    </g>
+  );
+};

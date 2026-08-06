@@ -10,8 +10,10 @@
  * qo'shilganda ilova buzilmaydi — rasmi yasalgunicha u emoji bilan
  * ishlab turadi.
  */
+import { useId } from "react";
 import type { JSX } from "react";
 
+import { Boyoqlar } from "./ramka";
 import type { ChizmaId } from "./idlar";
 import {
   ChizmaAvtobus, ChizmaKema, ChizmaMashina, ChizmaOtOchir, ChizmaPolitsiya,
@@ -128,6 +130,9 @@ const KATTALIK: Partial<Record<ChizmaId, number>> = {
  * chiziladi — u vektor.
  */
 export function Chizma({ id, className = "" }: { id: string; className?: string }) {
+  // Hooklar shartdan OLDIN chaqiriladi — aks holda noma'lum id
+  // kelganda hooklar tartibi buzilardi.
+  const uid = useId().replace(/:/g, "");
   const C = CHIZMALAR[id as ChizmaId];
   if (!C) return null;
 
@@ -140,7 +145,9 @@ export function Chizma({ id, className = "" }: { id: string; className?: string 
   return (
     <svg viewBox="0 0 120 120" className={className} aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg">
-      {kadr ? <g transform={kadr}><C /></g> : <C />}
+      <Boyoqlar uid={uid}>
+        {kadr ? <g transform={kadr}><C /></g> : <C />}
+      </Boyoqlar>
     </svg>
   );
 }

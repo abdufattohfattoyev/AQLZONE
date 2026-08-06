@@ -27,6 +27,8 @@
  */
 import type { JSX } from "react";
 
+import { Soya as UmumiySoya } from "./ramka";
+
 /**
  * Boshning ostidagi yumshoq soya.
  *
@@ -35,9 +37,7 @@ import type { JSX } from "react";
  * faqat BOSH — u yerda turmaydi. Soyani pastga qo'ysak, bosh havoda
  * osilgandek ko'rinardi va rasm "yopishmagan" bo'lib tuyulardi.
  */
-const Soya = () => (
-  <ellipse cx="60" cy="98" rx="26" ry="4" fill="#000" opacity="0.1" />
-);
+const Soya = () => <UmumiySoya cy={98} rx={26} />;
 
 /**
  * Ko'z — butun to'plamda AYNAN bir xil.

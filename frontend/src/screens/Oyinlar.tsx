@@ -21,11 +21,18 @@
  * kichraydi. Ular endi TANLOV emas, MASHQ — ya'ni ular bilan
  * maydonga tayyorlaniladi.
  *
- * DUEL BU YERDA EMAS. U o'yin emas — bir odam ikkinchisini chaqiradi,
- * xabar boradi, natija ikkalasiga tegishli bo'ladi. Sakkizta o'yin
- * qatoriga qo'yilganda u "to'qqizinchi o'yin" bo'lib ko'rinardi va
- * ekran yana chalkashardi. Duelning o'z joyi bosh sahifada
- * (`screens/Dashboard.tsx`).
+ * ──────────── DUEL ENDI SHU YERDA ────────────
+ *
+ * Ilgari u bosh sahifada, alohida karta bo'lib turardi — "duel o'yin
+ * emas, unda ikkinchi odam bor" degan mulohaza bilan. Mulohaza to'g'ri
+ * edi, lekin xulosa noto'g'ri chiqdi: odam bellashuvni ATAYLAB
+ * qidirganda birinchi qaraydigan joyi — o'yinlar bo'limi. Bosh sahifada
+ * esa u kurslar ro'yxatini pastga surib yuborardi.
+ *
+ * Sakkizta o'yin qatoriga ham QO'SHILMADI. U yuqorida, "Bugungi
+ * maydon" bilan yonma-yon turadi va bu ikkisi bir turdagi narsa:
+ * ikkalasi ham BUGUN bo'ladi, ikkalasida ham qarshi tomon bor.
+ * Pastdagi sakkiztasi esa mashq — ular har doim joyida.
  *
  * KARTA IKKI XIL GAPIRADI. O'ynalmagan o'yinda izoh turadi ("Qaysi
  * belgi yashiringan?") — u savol bo'lib, qiziqish uyg'otadi.
@@ -44,10 +51,12 @@ import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import { useOrqaga } from "../lib/qobiq";
 
-export function Oyinlar({ onBack, onOyin, onMaydon }: {
+export function Oyinlar({ onBack, onOyin, onMaydon, onDuel }: {
   onBack: () => void;
   onOyin: (id: string) => void;
   onMaydon: () => void;
+  /** Do'st bilan bellashuv — maydon bilan yonma-yon turadi. */
+  onDuel: () => void;
 }) {
   const ozStrelka = useOrqaga(onBack);
   // Bugun o'ynalganmi — karta shunga qarab ikki xil gapiradi.
@@ -79,6 +88,26 @@ export function Oyinlar({ onBack, onOyin, onMaydon }: {
           qayta tizishning ma'nosi shu: odam ekranni ochganda sakkizta
           emas, BITTA qaror ko'rsin. */}
       <MaydonKarta bugun={bugun} onOch={onMaydon} />
+
+      {/* ---- do'st bilan bellashuv ----
+          Maydondan KEYIN va mashqdan OLDIN. Tartib tasodifiy emas:
+          maydonda odam yolg'iz o'ynaydi, bellashuvda do'stini kutadi,
+          mashqda esa hech kim kutmaydi. Ya'ni ro'yxat "eng tez
+          boshlanadigan"dan "eng ko'p tayyorgarlik talab qiladigan"ga
+          qarab emas, BOG'LIQLIK bo'yicha tizilgan. */}
+      <button type="button" onClick={onDuel}
+        className="az-kirish tugma-3d mt-3 flex w-full items-center gap-3.5 rounded-clay
+                   bg-brand-orange p-4 text-left text-white shadow-clay"
+        style={{ "--az-kech": "90ms" } as CSSProperties}>
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20 text-[24px]">
+          ⚔️
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-[17px] leading-tight">{t("duel")}</span>
+          <span className="mt-0.5 block text-[12.5px] text-white/85">{t("duelIzoh")}</span>
+        </span>
+        <Icon name="chevron" size={18} className="shrink-0 text-white/80" />
+      </button>
 
       <h2 className="az-kirish mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
         {t("maydonMashq")}
