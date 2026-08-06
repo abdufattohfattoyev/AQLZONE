@@ -202,6 +202,10 @@ ikkalasi ham ATAYLAB shunday:
 | | Qayerda |
 |---|---|
 | Yo'l xaritasi, 177 dars, har safar yangi savollar | `frontend/src/lib/curriculum/` |
+| **Kichkintoylar** — 2–5 yosh, gapiradigan rasmlar, savolsiz | `frontend/src/lib/kichkintoy.ts`, `screens/Kichkintoy*.tsx` |
+| **26 ta qo'lda chizilgan rasm** — mashina va hayvonlar, emoji emas | `frontend/src/lib/chizma/` |
+| **O'zbekcha ovoz** — serverdagi TTS, abadiy keshlanadi | `backend/core/ovoz.py`, `frontend/src/lib/ovoz.ts` |
+| **Haqiqiy tovushlar** — signal, sirena, qo'ng'iroq; brauzerda yasaladi | `frontend/src/lib/tovush.ts` |
 | **Ikki til** — o'zbekcha va ruscha, savollargacha to'liq | `frontend/src/lib/til.ts` |
 | **Xatolar daftari** — xato qilingan savol turi 1 / 3 / 7 kundan keyin qaytadi | `frontend/src/lib/daftar.ts` |
 | **Offline** — internetsiz to'liq ishlaydi | `frontend/public/sw.js` |
@@ -519,6 +523,22 @@ O'yinni kurs ichiga qo'yganda manzilda tasodifiy sinf raqami turib
 qolardi va ulashilgan havola "bu 2-sinf o'yini ekan" degan yolg'onni
 aytardi.
 
+**Ekranning tartibi uch qavat.** Tepada — bugun bo'ladigan ikkitasi:
+"Bugungi maydon" va "Do'st bilan bellashuv". Pastida — sakkizta mashq,
+kichikroq karta bilan. Tartib bog'liqlik bo'yicha: maydonda odam yolg'iz
+o'ynaydi, bellashuvda do'stini kutadi, mashqda esa hech kim kutmaydi.
+
+Bellashuv ilgari **bosh sahifada** turardi ("duel o'yin emas, unda
+ikkinchi odam bor" degan mulohaza bilan). Mulohaza to'g'ri edi, xulosa
+noto'g'ri: odam bellashuvni ataylab qidirganda birinchi qaraydigan joyi —
+o'yinlar bo'limi. Bosh sahifada esa u kurslar ro'yxatini pastga surib
+yuborardi.
+
+**Bosh sahifada endi o'yin kartalari yo'q.** Ikkalasiga ham pastdagi
+panelning o'rtasidagi tugmasidan bir bosishda kiriladi, ya'ni kartalar
+navigatsiyaning takrori edi — ustiga eng ko'zga tashlanadigan joyda.
+Bosh sahifa bitta savolga javob beradi: "qaysi kurs?"
+
 | O'yin | Nima so'raydi | 🟢 Oson | 🔵 O'rta | 🔴 Qiyin |
 |---|---|---|---|---|
 | ⚡ Tezkor hisob | to'g'rimi yoki xatomi | `6 + 5 = 11` | `84 ÷ 12 = 7` | `40% · 220 = 83` |
@@ -696,36 +716,45 @@ etiladi: `scripts/tekshir.ts` undan pastda uni xato deb ushlaydi.
 6-sinf — M. A. Mirzaxmedov va boshq., "Matematika 6" (O'qituvchi, 2017).
 Ikkalasida ham boblar darslikning o'z tartibida boradi.
 
-## Pastki panel — oltita tugma
+## Pastki panel — beshta tugma
 
 Panel HAMMA ekranda turadi va o'rni hech qachon o'zgarmaydi
-(`components/Panel.tsx`). Ichida oltita tugma bor:
+(`components/Panel.tsx`). Ichida beshta tugma bor:
 
 ```
-Bosh  ·  Darslar  ·  Nishonlar  ·  Do'kon  ·  Reyting  ·  Ota-ona
+Bosh  ·  Darslar  ·  O'yinlar  ·  Reyting  ·  Menyu
 ```
 
-**Ota-ona paneli eng o'ngda va bu ataylab.** U bolaga emas, kattaga
-mo'ljallangan; bola esa panelni chapdan o'ngga o'rganadi (darslar →
-nishonlar → do'kon), ya'ni oxirgi joy uning yo'lidan eng uzoq nuqta —
-bexosdan bosilishi kamayadi. Kurs sahifasidagi yuqoridagi kichik tugma
-o'z joyida qoldi: u yerda turgan ota-ona uni pastdan izlamaydi.
+**Ilgari oltita edi** (bosh, darslar, nishonlar, do'kon, reyting,
+ota-ona) va uchta muammosi bor edi: o'yinlar bo'limi panelda umuman
+ko'rinmasdi; 320px li telefonda bir tugmaga ~53px qolib, yozuvlar
+kesilardi; do'kon va ota-ona paneli har kuni bosiladigan joy emas edi,
+lekin "Darslar" bilan bir xil og'irlikda turardi.
+
+Endi panelda faqat HAR KUNI kerak bo'ladiganlar bor. Nishonlar, do'kon,
+ota-ona paneli, sozlamalar, kunlik sinov, xatolar daftari va
+kichkintoylar — hammasi menyuda, izohi bilan (`components/Menyu.tsx`).
+
+**O'yinlar eng o'rtada** — paneldagi eng oson yetiladigan joy. Bir eshik
+ortida uchtasi turadi: sakkizta o'yin, bugungi maydon va bellashuv.
+Aynan shuning uchun bosh sahifadagi o'yin kartalari olib tashlandi —
+ular shu tugmaning takrori edi.
+
+**Menyu eng o'ngda va u manzil EMAS**, shu sahifa ustida ochiladigan
+oyna. Shuning uchun siljiydigan yashil belgi joyida qoladi va tugma
+faqat yonadi: aks holda menyu ochilishi bilan panel "sahifa almashdi"
+deb yolg'on aytardi.
 
 Yozuvlar `min-w-0` va `truncate` bilan chegaralangan. Bu SHART: usiz
-uzun yozuv (ruscha "Родители") tugmani kengaytirib, qolgan beshtasini
-siqib qo'yardi va siljiydigan belgi joyidan chiqib ketardi. Oltita yozuv
-320px li telefonga ham sig'adi — ikki tilda ham tekshirilgan.
+uzun yozuv tugmani kengaytirib, qolganini siqib qo'yardi.
 
 **Panelsiz ekranlar** (`YOPIQ` ro'yxati): dars, xatolar daftari, kunlik
-sinov, o'yinning o'zi va kirish sahifasi. Hammasida bitta sabab —
-u yerda diqqat talab qilinadi va vaqt yuradi: pastdagi tugmani
-bexosdan bosgan odam yig'gan natijasini yo'qotardi. O'yinlar RO'YXATIDA
-esa panel turadi, chunki u oddiy sahifa.
-
-**Yettinchi tugma qo'shilmadi.** O'yinlar bo'limiga kirish bosh
-sahifadagi katta kartadan boradi: 320px li telefonda oltita tugmaga
-allaqachon ~53px dan qolgan va yettinchisi ikkala tilda ham qatorni
-buzardi.
+sinov, o'yinning o'zi, bugungi maydon, duel, kichkintoylar albomi va
+kirish sahifasi. Sabab ikki xil: birinchi guruhda vaqt yuradi va
+bexosdan bosilgan tugma yig'ilgan natijani yo'qotardi; kichkintoylar
+albomida esa 3 yoshli bola beshta tugmani bexosdan bosib, o'zi ochgan
+rasmlardan chiqib ketardi. O'yinlar RO'YXATIDA panel turadi, chunki u
+oddiy sahifa.
 
 ## Qobiq: veb, Telegram Mini App, APK
 
