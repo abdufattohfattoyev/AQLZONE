@@ -2,9 +2,19 @@
 {% block sarlavha %}Boshqaruv{% endblock %}
 
 {% comment %}
-Panelning tartibi ATAYLAB shunday: yuqorida "hozir nima bo'lyapti",
-pastida "nega shunday". Har kuni ochiladigan sahifada birinchi ekranda
-javob bo'lishi kerak — pastga aylantirish tahlil qilmoqchi bo'lganda.
+Sahifa yuqoridan pastga BIR SAVOLDAN boshqasiga o'tadi:
+
+    1. Hozir nima bo'lyapti          → bugungi tirik raqamlar
+    2. O'symoqdami                   → shu hafta / o'tgan hafta va grafik
+    3. Qolyaptimi                    → voronka, ushlab qolish, kohortlar
+    4. Kim ketyapti                  → xavf guruhlari
+    5. Nima o'ynayapti va qanchalik  → kurslar, boblar, darslar, sifat
+    6. Qachon o'ynaydi               → soat va hafta kuni
+    7. Kimga xabar yetadi            → Telegram, kanal, til, platforma
+    8. Kim                           → odamlar va so'nggi harakatlar
+
+Yuqoridagi to'rttasi QAROR uchun, pastdagilari TEKSHIRISH uchun. Shuning
+uchun birinchi ekranda faqat qaror talab qiladigan raqamlar turadi.
 
 Butun sahifa FAQAT ro'yxatdan o'tgan hisoblarni ko'rsatadi
 (`boshqaruv.ROYXAT`). Ro'yxatsizlar bitta joyda — voronkaning birinchi
@@ -28,12 +38,32 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
     <a class="tugma" href="/boshqaruv/reklama">E'lonlar</a>
     <a class="tugma" href="/boshqaruv/chiqish">Chiqish</a>
   </div>
+
+  {% comment %}
+  Bo'lim yo'lchisi. Sahifa uzun va har kuni ochiladi — kerakli joyga
+  aylantirib emas, bosib borish kerak. Havolalar oddiy langar: JS
+  ishlamasa ham ishlayveradi. Tepa panelning ichida, chunki ikkalasi
+  birga yopishib turishi kerak.
+  {% endcomment %}
+  <nav class="yolchi">
+    <div class="yolchi-ichi">
+      <a href="#hozir">Hozir</a>
+      <a href="#osish">O'sish</a>
+      <a href="#ushlash">Ushlab qolish</a>
+      <a href="#xavf">Xavf</a>
+      <a href="#sifat">O'quv sifati</a>
+      <a href="#kurslar">Kurslar</a>
+      <a href="#vaqt">Vaqt</a>
+      <a href="#kanal">Yetkazish</a>
+      <a href="#odamlar">Odamlar</a>
+    </div>
+  </nav>
 </header>
 
 <div class="ichki">
 
-  <!-- ============================================== hozir nima bo'lyapti -->
-  <div class="bolim">
+  <!-- ============================================== 1. hozir nima bo'lyapti -->
+  <div class="bolim" id="hozir">
     <h2>Hozir</h2>
     <p>oxirgi {{ onlayn_daqiqa }} daqiqa va bugungi kun</p>
   </div>
@@ -49,28 +79,51 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
     <div class="karta olchov urgu">
       <div class="bosh"><span class="belgicha">▶</span><span class="nom">Bugun mashq qilgan</span></div>
       <div class="son">{{ faollik.bugun }}</div>
-      <div class="qosh">dars tugatganlar</div>
+      <div class="qosh">{{ faollik.bugun_dars }} ta dars tugatildi</div>
+    </div>
+    <div class="karta olchov binafsha">
+      <div class="bosh"><span class="belgicha">+</span><span class="nom">Bugun qo'shilgan</span></div>
+      <div class="son">{{ faollik.bugun_yangi }}</div>
+      <div class="qosh">yangi ro'yxat</div>
+    </div>
+    <div class="karta olchov sariq">
+      <div class="bosh"><span class="belgicha">⚡</span><span class="nom">Zanjirdagilar</span></div>
+      <div class="son">{{ faollik.zanjirli }}</div>
+      <div class="qosh">3+ kun ketma-ket · eng uzuni {{ faollik.eng_zanjir }} kun</div>
+    </div>
+  </div>
+
+  <div class="setka k4" style="margin-top:14px">
+    <div class="karta olchov">
+      <div class="bosh"><span class="belgicha">1</span><span class="nom">Kunlik faol (DAU)</span></div>
+      <div class="son">{{ faollik.bugun }}</div>
+      <div class="qosh">bugun dars tugatganlar</div>
     </div>
     <div class="karta olchov">
-      <div class="bosh"><span class="belgicha">7</span><span class="nom">Haftalik faol</span></div>
+      <div class="bosh"><span class="belgicha">7</span><span class="nom">Haftalik faol (WAU)</span></div>
       <div class="son">{{ faollik.hafta }}</div>
       <div class="qosh">ro'yxatdagilarning {{ faollik.hafta_foiz }}%</div>
     </div>
     <div class="karta olchov">
-      <div class="bosh"><span class="belgicha">30</span><span class="nom">Oylik faol</span></div>
+      <div class="bosh"><span class="belgicha">30</span><span class="nom">Oylik faol (MAU)</span></div>
       <div class="son">{{ faollik.oy }}</div>
       <div class="qosh">30 kunda kamida 1 dars</div>
     </div>
+    <div class="karta olchov {% if faollik.yopishqoq >= 20 %}yashil{% elif faollik.yopishqoq >= 10 %}sariq{% else %}qizil-urgu{% endif %}">
+      <div class="bosh"><span class="belgicha">◎</span><span class="nom">Yopishqoqlik</span></div>
+      <div class="son">{{ faollik.yopishqoq }}%</div>
+      <div class="qosh">DAU / MAU — 20% dan yuqorisi kuchli odat</div>
+    </div>
   </div>
 
-  <!-- ========================================================= o'sish -->
-  <div class="bolim">
+  <!-- ========================================================= 2. o'sish -->
+  <div class="bolim" id="osish">
     <h2>Shu hafta</h2>
     <p>o'tgan hafta bilan solishtirilgan</p>
   </div>
-  <div class="setka k2">
+  <div class="setka k4">
     <div class="karta olchov binafsha">
-      <div class="bosh"><span class="belgicha">+</span><span class="nom">Yangi ro'yxatdan o'tgan</span></div>
+      <div class="bosh"><span class="belgicha">+</span><span class="nom">Yangi ro'yxat</span></div>
       <div class="son">
         {{ osish.yangi }}
         {% if osish.yangi_ozgarish is None %}
@@ -97,23 +150,54 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
       </div>
       <div class="qosh">so'nggi 7 kunda</div>
     </div>
+    <div class="karta olchov yashil">
+      <div class="bosh"><span class="belgicha">☺</span><span class="nom">Faol bolalar</span></div>
+      <div class="son">
+        {{ osish.faol }}
+        {% if osish.faol_ozgarish is None %}
+          <span class="ozgarish yoq">—</span>
+        {% elif osish.faol_ozgarish >= 0 %}
+          <span class="ozgarish osdi">▲ {{ osish.faol_ozgarish }}%</span>
+        {% else %}
+          <span class="ozgarish tushdi">▼ {{ osish.faol_ozgarish }}%</span>
+        {% endif %}
+      </div>
+      <div class="qosh">kamida 1 dars tugatgan</div>
+    </div>
+    <div class="karta olchov">
+      <div class="bosh"><span class="belgicha">◷</span><span class="nom">Mashq vaqti</span></div>
+      <div class="son">
+        {{ osish.soat }}
+        {% if osish.soat_ozgarish is None %}
+          <span class="ozgarish yoq">—</span>
+        {% elif osish.soat_ozgarish >= 0 %}
+          <span class="ozgarish osdi">▲ {{ osish.soat_ozgarish }}%</span>
+        {% else %}
+          <span class="ozgarish tushdi">▼ {{ osish.soat_ozgarish }}%</span>
+        {% endif %}
+      </div>
+      <div class="qosh">soat · aniqlik {{ osish.aniqlik }}%
+        {% if osish.aniqlik_farq > 0 %}<span class="ozgarish osdi">+{{ osish.aniqlik_farq }}</span>
+        {% elif osish.aniqlik_farq < 0 %}<span class="ozgarish tushdi">{{ osish.aniqlik_farq }}</span>{% endif %}
+      </div>
+    </div>
   </div>
 
   <!-- ======================================================== grafik -->
-  <div class="bolim">
-    <h2>Kunlik faollik</h2>
-    <p>so'nggi {{ kunlar }} kun</p>
-  </div>
-  <div class="karta">
+  <div class="karta" style="margin-top:14px">
     <div class="izohlar" style="margin-bottom:14px">
       <span><i style="background:var(--asos)"></i> Tugatilgan dars</span>
       <span><i style="background:var(--yashil)"></i> Faol bolalar</span>
-      <span class="juda-xira" style="margin-left:auto">eng yuqori kun: {{ grafik.eng_katta }} dars</span>
+      <span><i style="background:var(--binafsha)"></i> Yangi ro'yxat</span>
+      <span class="juda-xira" style="margin-left:auto">
+        so'nggi {{ kunlar }} kun · kuniga o'rtacha {{ grafik.kunlik_ortacha }} dars ·
+        eng yuqori kun {{ grafik.eng_katta }}
+      </span>
     </div>
     <div class="grafik">
       <div class="ustunlar">
         {% for q in grafik.qator %}
-          <div class="ustun {% if not q.darslar %}quruq{% endif %}"
+          <div class="ustun {% if not q.darslar %}quruq{% endif %} {% if q.dam %}dam{% endif %}"
                title="{{ q.kun }} — {{ q.darslar }} dars · {{ q.faol }} bola · {{ q.yangi }} yangi hisob">
             <i style="height:{% if q.balandlik %}{{ q.balandlik }}{% else %}2{% endif %}%"></i>
           </div>
@@ -121,13 +205,18 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
       </div>
       {% if grafik.chiziq %}
         {% comment %}
-          Faol bolalar chizig'i ustunlar USTIDAN o'tadi: ikkalasi bir
-          o'lchovda emas, shuning uchun alohida qatlam va alohida rang.
+          Ikkita chiziq ustunlar USTIDAN o'tadi. Uchalasi bir o'lchovda
+          emas — har biri O'Z eng yuqori nuqtasiga nisbatan chiziladi.
+          Shakl solishtiriladi, balandlik emas.
 
           DIQQAT: `{# ... #}` ishlatilmaydi — u FAQAT bir qatorlik bo'la
           oladi va ko'p qatorli yozilsa matn sahifaga chiqib ketadi.
         {% endcomment %}
         <svg class="qatlam" viewBox="0 0 1000 100" preserveAspectRatio="none">
+          <polyline points="{{ grafik.chiziq_yangi }}" fill="none"
+                    stroke="var(--binafsha)" stroke-width="1.2"
+                    stroke-dasharray="4 3" stroke-linejoin="round"
+                    vector-effect="non-scaling-stroke" opacity=".7"/>
           <polyline points="{{ grafik.chiziq }}" fill="none"
                     stroke="var(--yashil)" stroke-width="1.6"
                     stroke-linejoin="round" stroke-linecap="round"
@@ -138,138 +227,168 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
     <div class="oq-belgilar">
       {% for b in grafik.belgilar %}<span>{{ b }}</span>{% endfor %}
     </div>
-    <p class="izoh-matn">Ustun ustiga sichqonchani olib borsangiz o'sha kunning to'liq sonlari chiqadi.</p>
-  </div>
-
-  <!-- ======================================================= voronka -->
-  <div class="bolim">
-    <h2>Voronka</h2>
-    <p>odamlar qaysi qadamda to'xtayapti</p>
-  </div>
-  <div class="karta">
-    {% for q in voronka %}
-      <div class="bosqich">
-        <div class="qator">
-          <span class="yozuv">{{ q.nom }}</span>
-          {% if q.izoh %}<span class="izoh">{{ q.izoh }}</span>{% endif %}
-          <span class="son">{{ q.son }}</span>
-          <span class="foiz">{{ q.foiz }}%</span>
-        </div>
-        <div class="chiziq"><span style="width:{{ q.foiz }}%"></span></div>
-      </div>
-    {% endfor %}
     <p class="izoh-matn">
-      Har qadam oldingisining ichida, foiz esa birinchi qadamdan.
-      Eng katta pasayish qayerda bo'lsa, tuzatish ham o'sha yerdan boshlanadi.
-      Panelning qolgan hamma qismi faqat <b>ro'yxatdan o'tgan
-      {{ umumiy.royxatdan }} ta</b> hisobni sanaydi — {{ umumiy.royxatsiz }} ta
-      yarim qolgan hisob hech qayerda ko'rinmaydi.
+      Xira fonli ustunlar — dam olish kunlari. Ustun ustiga sichqonchani
+      olib borsangiz o'sha kunning to'liq sonlari chiqadi.
     </p>
   </div>
 
-  <!-- ======================================================= hisoblar -->
-  <div class="bolim">
-    <h2>Hisoblar</h2>
-    <p>faqat ro'yxatdan o'tganlar</p>
+  <!-- ================================================= 3. ushlab qolish -->
+  <div class="bolim" id="ushlash">
+    <h2>Ushlab qolish</h2>
+    <p>kelgan odam qoldimi</p>
   </div>
-  <div class="setka k5">
-    <div class="karta olchov urgu">
-      <div class="bosh"><span class="belgicha">◍</span><span class="nom">Ro'yxatdan o'tgan</span></div>
-      <div class="son">{{ umumiy.royxatdan }}</div>
-      <div class="qosh">ilova ochganlarning {{ umumiy.royxat_foiz }}%</div>
+  <div class="setka k4">
+    <div class="karta olchov {% if ushlash.d1.foiz >= 40 %}yashil{% elif ushlash.d1.foiz >= 20 %}sariq{% endif %}">
+      <div class="bosh"><span class="belgicha">D1</span><span class="nom">Ertasiga qaytgan</span></div>
+      <div class="son">{{ ushlash.d1.foiz }}%</div>
+      <div class="qosh">{{ ushlash.d1.son }} / {{ ushlash.d1.jami }} ta hisob</div>
     </div>
-    <div class="karta olchov moviy">
-      <div class="bosh"><span class="belgicha">✈</span><span class="nom">Telegram bog'langan</span></div>
-      <div class="son">{{ umumiy.telegramli }}</div>
-      <div class="qosh">xabar yuborish mumkin</div>
+    <div class="karta olchov {% if ushlash.d7.foiz >= 20 %}yashil{% elif ushlash.d7.foiz >= 10 %}sariq{% endif %}">
+      <div class="bosh"><span class="belgicha">D7</span><span class="nom">Bir haftadan keyin</span></div>
+      <div class="son">{{ ushlash.d7.foiz }}%</div>
+      <div class="qosh">{{ ushlash.d7.son }} / {{ ushlash.d7.jami }} ta hisob</div>
     </div>
-    <div class="karta olchov">
-      <div class="bosh"><span class="belgicha">☎</span><span class="nom">Telefon bergan</span></div>
-      <div class="son">{{ umumiy.telefonli }}</div>
-      <div class="qosh">botga raqam yuborganlar</div>
-    </div>
-    <div class="karta olchov yashil">
-      <div class="bosh"><span class="belgicha">☺</span><span class="nom">Bola profillari</span></div>
-      <div class="son">{{ umumiy.profillar }}</div>
-      <div class="qosh">bir hisobda bir nechta bo'lishi mumkin</div>
+    <div class="karta olchov {% if ushlash.d30.foiz >= 10 %}yashil{% elif ushlash.d30.foiz >= 5 %}sariq{% endif %}">
+      <div class="bosh"><span class="belgicha">D30</span><span class="nom">Bir oydan keyin</span></div>
+      <div class="son">{{ ushlash.d30.foiz }}%</div>
+      <div class="qosh">{{ ushlash.d30.son }} / {{ ushlash.d30.jami }} ta hisob</div>
     </div>
     <div class="karta olchov">
-      <div class="bosh"><span class="belgicha">≈</span><span class="nom">O'rtacha dars</span></div>
-      <div class="son">{{ umumiy.dars_ortacha }}</div>
-      <div class="qosh">bir hisobga</div>
+      <div class="bosh"><span class="belgicha">✕</span><span class="nom">Bir kunlik mehmon</span></div>
+      <div class="son">{{ ushlash.bir_kunlik }}</div>
+      <div class="qosh">o'ynaganlarning {{ ushlash.bir_kunlik_foiz }}% — boshqa qaytmagan</div>
     </div>
   </div>
 
-  <!-- ================================================ o'quv natijalari -->
-  <div class="bolim">
-    <h2>O'quv natijalari</h2>
+  <!-- ======================================================= voronka -->
+  <div class="setka k2" style="margin-top:14px">
+    <div class="karta">
+      <div class="karta-bosh">
+        <b>Voronka</b>
+        <span class="juda-xira">odamlar qaysi qadamda to'xtayapti</span>
+      </div>
+      {% for q in voronka %}
+        <div class="bosqich">
+          <div class="qator">
+            <span class="yozuv">{{ q.nom }}</span>
+            {% if q.izoh %}<span class="izoh">{{ q.izoh }}</span>{% endif %}
+            {% if q.tushdi %}<span class="tushish">−{{ q.tushdi }}</span>{% endif %}
+            <span class="son">{{ q.son }}</span>
+            <span class="foiz">{{ q.foiz }}%</span>
+          </div>
+          <div class="chiziq"><span style="width:{{ q.foiz }}%"></span></div>
+        </div>
+      {% endfor %}
+      <p class="izoh-matn">
+        Har qadam oldingisining ichida, foiz esa birinchi qadamdan.
+        Qizil son — aynan o'sha qadamda YO'QOLGANLAR. Eng katta pasayish
+        qayerda bo'lsa, tuzatish ham o'sha yerdan boshlanadi.
+      </p>
+    </div>
+
+    <div class="jadval-oram">
+      <div class="jadval-tepa">
+        <b style="font-size:14px">Haftalik kohortlar</b>
+        <span class="juda-xira" style="font-size:12px">qaysi hafta kelganlar yaxshiroq qoldi</span>
+      </div>
+      <div class="jadval-siljish">
+        <table>
+          <thead><tr>
+            <th>Kelgan hafta</th><th class="raqam">Odam</th>
+            <th class="raqam">D1</th><th class="raqam">D7</th><th class="raqam">D30</th>
+          </tr></thead>
+          <tbody>
+            {% for k in kohortlar %}
+              <tr>
+                <td><b>{{ k.nom }}</b></td>
+                <td class="raqam">{{ k.jami }}</td>
+                <td class="raqam">{% if k.d1 is None %}<span class="juda-xira">—</span>{% else %}<span class="issiq" data-f="{{ k.d1 }}">{{ k.d1 }}%</span>{% endif %}</td>
+                <td class="raqam">{% if k.d7 is None %}<span class="juda-xira">—</span>{% else %}<span class="issiq" data-f="{{ k.d7 }}">{{ k.d7 }}%</span>{% endif %}</td>
+                <td class="raqam">{% if k.d30 is None %}<span class="juda-xira">—</span>{% else %}<span class="issiq" data-f="{{ k.d30 }}">{{ k.d30 }}%</span>{% endif %}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="bosh-holat">Hali kohort yig'ilmagan</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="izoh-matn" style="padding:0 14px 12px">
+        «—» — hafta hali yetilmagan, ya'ni bu savolni berish erta.
+        Pastdan yuqoriga o'qing: yangi qatorlar eskisidan baland bo'lsa,
+        ilova yaxshilanyapti.
+      </p>
+    </div>
+  </div>
+
+  <!-- ==================================================== 4. xavf -->
+  <div class="bolim" id="xavf">
+    <h2>Kim yo'qolyapti</h2>
+    <p>oxirgi mashqdan beri o'tgan vaqt bo'yicha</p>
+  </div>
+  <div class="karta">
+    <div class="xavf-tasma">
+      {% for x in xavf %}
+        {% if x.son %}
+          <div class="bolak {{ x.rang }}" style="flex:{{ x.son }}"
+               title="{{ x.nom }} — {{ x.son }} ta ({{ x.foiz }}%)"></div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="setka k5" style="margin-top:16px">
+      {% for x in xavf %}
+        <div class="xavf-karta">
+          <div class="nuqtacha {{ x.rang }}"></div>
+          <div>
+            <div class="nom">{{ x.nom }}</div>
+            <div class="katta">{{ x.son }} <span class="juda-xira" style="font-size:12px">{{ x.foiz }}%</span></div>
+            <div class="juda-xira" style="font-size:11.5px">{{ x.izoh }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <p class="izoh-matn">
+      «Sekinlashgan» va «Xavf ostida» — eslatma yuborishga ARZIYDIGAN
+      guruh. «Ketgan» ga xabar deyarli ta'sir qilmaydi; u yerdagi son
+      o'sib borsa, muammo eslatmada emas, o'yinning o'zida.
+    </p>
+  </div>
+
+  <!-- ================================================= 5. o'quv sifati -->
+  <div class="bolim" id="sifat">
+    <h2>O'quv sifati</h2>
     <p>butun davr bo'yicha</p>
   </div>
   <div class="setka k5">
     <div class="karta olchov">
       <div class="bosh"><span class="belgicha">▤</span><span class="nom">Tugatilgan dars</span></div>
       <div class="son">{{ umumiy.darslar }}</div>
+      <div class="qosh">bir hisobga {{ umumiy.dars_ortacha }} ta</div>
     </div>
     <div class="karta olchov">
       <div class="bosh"><span class="belgicha">?</span><span class="nom">Yechilgan savol</span></div>
       <div class="son">{{ umumiy.savollar }}</div>
+      <div class="qosh">darsiga {{ umumiy.dars_savol }} ta</div>
     </div>
     <div class="karta olchov {% if umumiy.aniqlik >= 80 %}yashil{% elif umumiy.aniqlik >= 60 %}sariq{% endif %}">
       <div class="bosh"><span class="belgicha">%</span><span class="nom">To'g'ri javob</span></div>
       <div class="son">{{ umumiy.aniqlik }}%</div>
       <div class="qosh">hamma savollardan</div>
     </div>
+    <div class="karta olchov binafsha">
+      <div class="bosh"><span class="belgicha">◷</span><span class="nom">Bir dars</span></div>
+      <div class="son">{{ umumiy.dars_daqiqa }}</div>
+      <div class="qosh">daqiqa · jami {{ umumiy.soat }} soat</div>
+    </div>
     <div class="karta olchov sariq">
       <div class="bosh"><span class="belgicha">★</span><span class="nom">Berilgan yulduz</span></div>
       <div class="son">{{ umumiy.yulduz }}</div>
-    </div>
-    <div class="karta olchov binafsha">
-      <div class="bosh"><span class="belgicha">◷</span><span class="nom">Jami mashq</span></div>
-      <div class="son">{{ umumiy.soat }}</div>
-      <div class="qosh">soat</div>
+      <div class="qosh">bir o'tirishda {{ umumiy.kun_dars }} dars</div>
     </div>
   </div>
 
-  <!-- ============================================ soatlar va sinflar -->
-  <div class="setka k2" style="margin-top:14px">
-    <div class="karta">
-      <div class="bosh" style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
-        <b style="font-size:14px">Kun davomida</b>
-        <span class="juda-xira" style="font-size:12px">qaysi soatda ko'p o'ynaydi</span>
-      </div>
-      <div class="soatlar">
-        {% for s in soatlar %}
-          <div class="s {% if s.balandlik >= 70 %}tepa{% endif %}" title="{{ s.soat }}:00 — {{ s.son }} dars">
-            <i style="height:{% if s.balandlik %}{{ s.balandlik }}{% else %}2{% endif %}%"></i>
-          </div>
-        {% endfor %}
-      </div>
-      <div class="oq-belgilar"><span>00:00</span><span>12:00</span><span>23:00</span></div>
-      <p class="izoh-matn">Eslatma yuborish vaqtini shu jadval hal qiladi: o'ynalmaydigan soatda kelgan xabar o'qilmaydi.</p>
-    </div>
-
-    <div class="karta">
-      <div class="bosh" style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
-        <b style="font-size:14px">Platformalar</b>
-        <span class="juda-xira" style="font-size:12px">sessiyalar bo'yicha</span>
-      </div>
-      {% for p in platformalar %}
-        <div style="margin-bottom:12px">
-          <div style="display:flex;align-items:baseline;gap:8px;font-size:13px">
-            <span>{{ p.nom }}</span>
-            <span class="son" style="margin-left:auto;font-weight:700">{{ p.n }}</span>
-            <span class="juda-xira" style="font-size:12px;width:38px;text-align:right">{{ p.foiz }}%</span>
-          </div>
-          <div class="ust-chiziq" style="margin-top:6px"><span style="width:{{ p.foiz }}%"></span></div>
-        </div>
-      {% empty %}
-        <div class="bosh-holat">Sessiya yo'q</div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- ======================================================== sinflar -->
-  <div class="bolim">
+  <!-- ================================================= 6. kurslar -->
+  <div class="bolim" id="kurslar">
     <h2>Kurslar bo'yicha</h2>
     <p>qaysi kurs qanchalik ishlatilyapti</p>
   </div>
@@ -279,6 +398,7 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
         <thead><tr>
           <th>Kurs</th><th class="keng">Ulush</th>
           <th class="raqam">Bolalar</th><th class="raqam">Darslar</th>
+          <th class="raqam">Bir bolaga</th>
           <th class="raqam">Savollar</th><th class="raqam">Aniqlik</th><th class="raqam">Yulduz</th>
         </tr></thead>
         <tbody>
@@ -290,6 +410,7 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
               </td>
               <td class="raqam">{{ s.bolalar }}</td>
               <td class="raqam">{{ s.darslar }}</td>
+              <td class="raqam">{{ s.bir_bolaga }}</td>
               <td class="raqam">{{ s.savollar|default:0 }}</td>
               <td class="raqam">
                 <span class="belgi {% if s.aniqlik >= 80 %}yashil{% elif s.aniqlik >= 60 %}sariq{% else %}qizil{% endif %}">{{ s.aniqlik }}%</span>
@@ -297,17 +418,41 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
               <td class="raqam">{{ s.yulduz|default:0 }}</td>
             </tr>
           {% empty %}
-            <tr><td colspan="7" class="bosh-holat">Hali birorta dars tugatilmagan</td></tr>
+            <tr><td colspan="8" class="bosh-holat">Hali birorta dars tugatilmagan</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- ================================================ darslar: 2 jadval -->
-  <div class="setka k2" style="margin-top:14px">
+  {% if boblar %}
+    <div class="karta" style="margin-top:14px">
+      <div class="karta-bosh">
+        <b>Boblar voronkasi — {{ bob_sinf }}</b>
+        <span class="juda-xira">bola qaysi bobda to'xtaydi</span>
+      </div>
+      {% for b in boblar %}
+        <div class="bosqich">
+          <div class="qator">
+            <span class="yozuv">{{ b.nom }}</span>
+            <span class="izoh">{{ b.darslar }} dars · aniqlik {{ b.aniqlik }}%</span>
+            <span class="son">{{ b.bolalar }}</span>
+            <span class="foiz">{{ b.ulush }}%</span>
+          </div>
+          <div class="chiziq"><span style="width:{{ b.ulush }}%"></span></div>
+        </div>
+      {% endfor %}
+      <p class="izoh-matn">
+        Son — shu bobni ochgan bolalar. Birinchi bobdan keyingi keskin
+        tushish darslar ketma-ketligi juda tez qiyinlashayotganini bildiradi.
+      </p>
+    </div>
+  {% endif %}
+
+  <!-- ================================================ darslar: 3 jadval -->
+  <div class="setka k3" style="margin-top:14px">
     <div class="jadval-oram">
-      <div class="jadval-tepa"><b style="font-size:14px">Eng ko'p o'ynalgan darslar</b></div>
+      <div class="jadval-tepa"><b style="font-size:14px">Eng ko'p o'ynalgan</b></div>
       <div class="jadval-siljish">
         <table>
           <thead><tr><th class="keng">Dars</th><th class="raqam">Urinish</th><th class="raqam">Aniqlik</th></tr></thead>
@@ -331,8 +476,8 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
 
     <div class="jadval-oram">
       <div class="jadval-tepa">
-        <b style="font-size:14px">Eng qiyin darslar</b>
-        <span class="juda-xira" style="font-size:12px">kamida 5 savol yechilgan</span>
+        <b style="font-size:14px">Eng qiyin</b>
+        <span class="juda-xira" style="font-size:12px">5+ savol</span>
       </div>
       <div class="jadval-siljish">
         <table>
@@ -354,11 +499,218 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
         </table>
       </div>
     </div>
+
+    <div class="jadval-oram">
+      <div class="jadval-tepa">
+        <b style="font-size:14px">Eng ko'p qaytarilgan</b>
+        <span class="juda-xira" style="font-size:12px">3+ bola</span>
+      </div>
+      <div class="jadval-siljish">
+        <table>
+          <thead><tr><th class="keng">Dars</th><th class="raqam">Takror</th><th class="raqam">Aniqlik</th></tr></thead>
+          <tbody>
+            {% for d in takroriy %}
+              <tr>
+                <td class="keng">
+                  {{ d.lesson_name|default:"—" }}
+                  <div class="juda-xira" style="font-size:11.5px">{{ d.joy }}</div>
+                </td>
+                <td class="raqam">{{ d.takror }}×</td>
+                <td class="raqam">
+                  <span class="belgi {% if d.aniqlik >= 80 %}yashil{% else %}sariq{% endif %}">{{ d.aniqlik }}%</span>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="bosh-holat">Ma'lumot yo'q</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <p class="izoh-matn">
+    «Takror» — bir bola shu darsni o'rtacha necha marta olgan. Yuqori
+    takror + yuqori aniqlik = yoqqan dars; yuqori takror + past aniqlik =
+    tushunilmagan dars.
+  </p>
+
+  <!-- ================================================= 7. vaqt -->
+  <div class="bolim" id="vaqt">
+    <h2>Qachon o'ynaydi</h2>
+    <p>eslatma vaqtini shu ikki jadval hal qiladi</p>
+  </div>
+  <div class="setka k2">
+    <div class="karta">
+      <div class="karta-bosh">
+        <b>Kun davomida</b>
+        <span class="juda-xira">cho'qqi — {{ eng_soat }}:00</span>
+      </div>
+      <div class="soatlar">
+        {% for s in soatlar %}
+          <div class="s {% if s.cho_qqi %}tepa{% endif %}" title="{{ s.soat }}:00 — {{ s.son }} dars">
+            <i style="height:{% if s.balandlik %}{{ s.balandlik }}{% else %}2{% endif %}%"></i>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="oq-belgilar"><span>00:00</span><span>12:00</span><span>23:00</span></div>
+      <p class="izoh-matn">O'ynalmaydigan soatda kelgan xabar o'qilmay yopiladi.</p>
+    </div>
+
+    <div class="karta">
+      <div class="karta-bosh">
+        <b>Hafta kunlari</b>
+        <span class="juda-xira">dam olish kunlari ajratilgan</span>
+      </div>
+      <div class="kunlar-ustun">
+        {% for k in kunlar_qatori %}
+          <div class="k {% if k.dam %}dam{% endif %}" title="{{ k.nom }} — {{ k.son }} dars">
+            <i style="height:{% if k.balandlik %}{{ k.balandlik }}{% else %}2{% endif %}%"></i>
+            <span>{{ k.nom }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="izoh-matn">
+        Dam olish kunlari ish kunlaridan past bo'lsa, ilova maktab
+        odatiga bog'langan — ta'til boshlanishi bilan tushish kutiladi.
+      </p>
+    </div>
   </div>
 
-  <!-- ================================================== eng faollari -->
+  <!-- ================================================= liga va duel -->
+  <div class="setka k2" style="margin-top:14px">
+    <div class="karta">
+      <div class="karta-bosh">
+        <b>Liga — shu hafta</b>
+        <span class="juda-xira">{{ liga_jami }} ta bola qatnashyapti</span>
+      </div>
+      {% for d in liga %}
+        <div style="margin-bottom:11px">
+          <div style="display:flex;align-items:baseline;gap:8px;font-size:13px">
+            <span>{{ d.emoji }} {{ d.nom }}</span>
+            <span class="son" style="margin-left:auto;font-weight:700">{{ d.son }}</span>
+            <span class="juda-xira" style="font-size:12px;width:38px;text-align:right">{{ d.foiz }}%</span>
+          </div>
+          <div class="ust-chiziq" style="margin-top:6px"><span style="width:{{ d.foiz }}%"></span></div>
+        </div>
+      {% endfor %}
+      {% if not liga_jami %}<div class="bosh-holat">Bu hafta hali hech kim ligaga kirmagan</div>{% endif %}
+    </div>
+
+    <div class="karta">
+      <div class="karta-bosh">
+        <b>Duellar</b>
+        <a href="/boshqaruv/duel" style="margin-left:auto;font-size:12.5px">to'liq hisobot →</a>
+      </div>
+      <div class="setka k2" style="gap:10px">
+        <div class="ichki-olchov">
+          <div class="nom">Yasalgan</div>
+          <div class="katta">{{ duel.jami }}</div>
+          <div class="juda-xira" style="font-size:11.5px">so'nggi {{ kunlar }} kunda</div>
+        </div>
+        <div class="ichki-olchov">
+          <div class="nom">Tugagan</div>
+          <div class="katta">{{ duel.tugagan }}</div>
+          <div class="juda-xira" style="font-size:11.5px">ikkalasi ham o'ynagan</div>
+        </div>
+        <div class="ichki-olchov">
+          <div class="nom">Qabul foizi</div>
+          <div class="katta">{{ duel.qabul_foiz }}%</div>
+          <div class="juda-xira" style="font-size:11.5px">tayyor chaqiruvlardan</div>
+        </div>
+        <div class="ichki-olchov">
+          <div class="nom">Jonli</div>
+          <div class="katta">{{ duel.jonli }}</div>
+          <div class="juda-xira" style="font-size:11.5px">bir vaqtda o'ynalgan</div>
+        </div>
+      </div>
+      <p class="izoh-matn">
+        Javobsiz qolgan chaqiruv o'yin emas — asosiy raqam duel soni emas,
+        qabul foizi.
+      </p>
+    </div>
+  </div>
+
+  <!-- ================================================= 8. yetkazish -->
+  <div class="bolim" id="kanal">
+    <h2>Kimga xabar yetadi</h2>
+    <p>e'lon va eslatmaning haqiqiy auditoriyasi</p>
+  </div>
+  <div class="setka k5">
+    <div class="karta olchov moviy">
+      <div class="bosh"><span class="belgicha">✈</span><span class="nom">Telegram bog'langan</span></div>
+      <div class="son">{{ yetkazish.telegramli }}</div>
+      <div class="qosh">ro'yxatdagilardan</div>
+    </div>
+    <div class="karta olchov yashil">
+      <div class="bosh"><span class="belgicha">✓</span><span class="nom">Xabar yetadi</span></div>
+      <div class="son">{{ yetkazish.yetadi }}</div>
+      <div class="qosh">bloklamagan va yopmaganlar</div>
+    </div>
+    <div class="karta olchov">
+      <div class="bosh"><span class="belgicha">◉</span><span class="nom">Kanal a'zosi</span></div>
+      <div class="son">{{ yetkazish.kanal_azo }}</div>
+      <div class="qosh">ro'yxatdagilarning {{ yetkazish.kanal_foiz }}%</div>
+    </div>
+    <div class="karta olchov {% if yetkazish.bloklagan_foiz >= 10 %}qizil-urgu{% endif %}">
+      <div class="bosh"><span class="belgicha">⊘</span><span class="nom">Botni bloklagan</span></div>
+      <div class="son">{{ yetkazish.bloklagan }}</div>
+      <div class="qosh">Telegramlilarning {{ yetkazish.bloklagan_foiz }}%</div>
+    </div>
+    <div class="karta olchov">
+      <div class="bosh"><span class="belgicha">☎</span><span class="nom">Telefon bergan</span></div>
+      <div class="son">{{ umumiy.telefonli }}</div>
+      <div class="qosh">«boshqa yozmang» — {{ yetkazish.yopiq }} ta</div>
+    </div>
+  </div>
+
+  <div class="setka k2" style="margin-top:14px">
+    <div class="karta">
+      <div class="karta-bosh">
+        <b>Platformalar</b>
+        <span class="juda-xira">sessiyalar bo'yicha</span>
+      </div>
+      {% for p in platformalar %}
+        <div style="margin-bottom:11px">
+          <div style="display:flex;align-items:baseline;gap:8px;font-size:13px">
+            <span>{{ p.nom }}</span>
+            <span class="son" style="margin-left:auto;font-weight:700">{{ p.n }}</span>
+            <span class="juda-xira" style="font-size:12px;width:38px;text-align:right">{{ p.foiz }}%</span>
+          </div>
+          <div class="ust-chiziq" style="margin-top:6px"><span style="width:{{ p.foiz }}%"></span></div>
+        </div>
+      {% empty %}
+        <div class="bosh-holat">Sessiya yo'q</div>
+      {% endfor %}
+    </div>
+
+    <div class="karta">
+      <div class="karta-bosh">
+        <b>Til</b>
+        <span class="juda-xira">server yozadigan xabarlar shu tilda ketadi</span>
+      </div>
+      {% for t in tillar %}
+        <div style="margin-bottom:11px">
+          <div style="display:flex;align-items:baseline;gap:8px;font-size:13px">
+            <span>{{ t.nom }}</span>
+            <span class="son" style="margin-left:auto;font-weight:700">{{ t.n }}</span>
+            <span class="juda-xira" style="font-size:12px;width:38px;text-align:right">{{ t.foiz }}%</span>
+          </div>
+          <div class="ust-chiziq" style="margin-top:6px"><span style="width:{{ t.foiz }}%"></span></div>
+        </div>
+      {% empty %}
+        <div class="bosh-holat">Ma'lumot yo'q</div>
+      {% endfor %}
+      <div class="ichki-olchov" style="margin-top:14px">
+        <div class="nom">Bola profillari</div>
+        <div class="katta">{{ umumiy.profillar }}</div>
+        <div class="juda-xira" style="font-size:11.5px">bir hisobda bir nechta bo'lishi mumkin</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================== 9. odamlar -->
   {% if faollar %}
-    <div class="bolim">
+    <div class="bolim" id="odamlar">
       <h2>Eng ko'p mashq qilganlar</h2>
       <p>tugatilgan dars soni bo'yicha</p>
     </div>
@@ -367,7 +719,9 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
         <table>
           <thead><tr>
             <th style="width:36px"></th><th class="keng">Kim</th><th class="keng">Ulush</th>
-            <th class="raqam">Darslar</th><th class="raqam">Yulduz</th><th>Kurs</th>
+            <th class="raqam">Darslar</th><th class="raqam">Kunlar</th>
+            <th class="raqam">Zanjir</th><th class="raqam">Aniqlik</th>
+            <th class="raqam">Yulduz</th><th>Kurs</th>
           </tr></thead>
           <tbody>
             {% for f in faollar %}
@@ -381,6 +735,9 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
                   <div class="ust-chiziq"><span style="width:{{ f.ulush }}%"></span></div>
                 </td>
                 <td class="raqam"><b>{{ f.darslar }}</b></td>
+                <td class="raqam">{{ f.kunlar }}</td>
+                <td class="raqam">{% if f.zanjir %}<span class="belgi sariq">{{ f.zanjir }}</span>{% else %}<span class="juda-xira">—</span>{% endif %}</td>
+                <td class="raqam">{{ f.aniqlik }}%</td>
                 <td class="raqam">{{ f.yulduz }}</td>
                 <td>{{ f.sinf }}</td>
               </tr>
@@ -403,12 +760,19 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
       <span class="juda-xira" id="topildi" style="font-size:12.5px"></span>
     </div>
     <div class="jadval-siljish">
-      <table>
+      <table id="jadval">
         <thead><tr>
           <th style="width:36px"></th>
           <th class="keng">Ism</th><th>Kirish</th><th>Telefon</th>
-          <th class="raqam">Bolalar</th><th class="raqam">Darslar</th><th class="raqam">Yulduz</th>
-          <th>Kurs</th><th>Ro'yxatdan o'tgan</th><th>Oxirgi faollik</th>
+          <th class="raqam saralash" data-tur="son">Bolalar</th>
+          <th class="raqam saralash" data-tur="son">Darslar</th>
+          <th class="raqam saralash" data-tur="son">Kunlar</th>
+          <th class="raqam saralash" data-tur="son">Zanjir</th>
+          <th class="raqam saralash" data-tur="son">Aniqlik</th>
+          <th class="raqam saralash" data-tur="son">Yulduz</th>
+          <th>Kurs</th>
+          <th class="saralash" data-tur="son">Jimlik</th>
+          <th>Ro'yxatdan o'tgan</th><th>Oxirgi faollik</th>
         </tr></thead>
         <tbody id="tana">
           {% for f in foydalanuvchilar %}
@@ -427,15 +791,27 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
                 {% empty %}<span class="juda-xira">—</span>{% endfor %}
               </td>
               <td>{{ f.telefon|default:"—" }}</td>
-              <td class="raqam">{{ f.profillar }}</td>
-              <td class="raqam">{{ f.darslar }}</td>
-              <td class="raqam">{{ f.yulduz }}</td>
+              <td class="raqam" data-q="{{ f.profillar }}">{{ f.profillar }}</td>
+              <td class="raqam" data-q="{{ f.darslar }}">{{ f.darslar }}</td>
+              <td class="raqam" data-q="{{ f.kunlar }}">{{ f.kunlar }}</td>
+              <td class="raqam" data-q="{{ f.zanjir }}">
+                {% if f.zanjir %}<span class="belgi sariq">{{ f.zanjir }}</span>{% else %}<span class="juda-xira">—</span>{% endif %}
+              </td>
+              <td class="raqam" data-q="{{ f.aniqlik }}">{% if f.darslar %}{{ f.aniqlik }}%{% else %}<span class="juda-xira">—</span>{% endif %}</td>
+              <td class="raqam" data-q="{{ f.yulduz }}">{{ f.yulduz }}</td>
               <td>{{ f.sinf }}</td>
+              <td data-q="{{ f.jimlik|default:9999 }}">
+                {% if f.jimlik is None %}<span class="juda-xira">hech qachon</span>
+                {% elif f.jimlik == 0 %}<span class="belgi yashil">bugun</span>
+                {% elif f.jimlik <= 7 %}<span class="belgi moviy">{{ f.jimlik }} kun</span>
+                {% elif f.jimlik <= 14 %}<span class="belgi sariq">{{ f.jimlik }} kun</span>
+                {% else %}<span class="belgi qizil">{{ f.jimlik }} kun</span>{% endif %}
+              </td>
               <td class="juda-xira">{{ f.qoshilgan|date:"d.m.y" }}</td>
               <td>{% if f.oxirgi %}{{ f.oxirgi|date:"d.m.y H:i" }}{% else %}<span class="juda-xira">—</span>{% endif %}</td>
             </tr>
           {% empty %}
-            <tr><td colspan="10" class="bosh-holat">Hali hech kim ro'yxatdan o'tmagan</td></tr>
+            <tr><td colspan="14" class="bosh-holat">Hali hech kim ro'yxatdan o'tmagan</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -477,7 +853,20 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
 </div>
 
 <script>
-  // --- foydalanuvchilar jadvali bo'yicha qidiruv ---
+  // --- kohort jadvalidagi issiqlik ---
+  //
+  // Foiz raqam bo'lib turganda qatorlar solishtirilmaydi — ko'z rangni
+  // raqamdan tez o'qiydi. Fon shaffofligi foizga bog'lanadi, ya'ni
+  // yaxshi hafta darrov ko'zga tashlanadi.
+  (function () {
+    [].forEach.call(document.querySelectorAll(".issiq"), function (x) {
+      var f = parseInt(x.getAttribute("data-f"), 10) || 0;
+      x.style.background = "rgba(52,211,153," + Math.min(f / 60, 1) * 0.28 + ")";
+      if (f >= 25) x.style.color = "var(--yashil)";
+    });
+  })();
+
+  // --- foydalanuvchilar jadvali: qidiruv va saralash ---
   //
   // Serverga so'rov ketmaydi: qatorlar allaqachon sahifada va ular
   // ko'pi bilan bir necha yuzta. Har harfda so'rov yuborish bu yerda
@@ -501,6 +890,26 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
       son.textContent = s ? topildi + " ta topildi" : "";
     }
     maydon.addEventListener("input", izla);
+
+    // Saralash. Birinchi bosishda KAMAYISH tartibida: "eng ko'p kim"
+    // degan savol "eng kam kim" dan ko'ra ko'proq beriladi.
+    var boshlar = [].slice.call(document.querySelectorAll("#jadval th.saralash"));
+    boshlar.forEach(function (th) {
+      var indeks = [].indexOf.call(th.parentNode.children, th);
+      // `true` dan boshlanadi, chunki qiymat bosishda AVVAL teskarilanadi:
+      // ya'ni birinchi bosish kamayish tartibini beradi.
+      var teskari = true;
+      th.addEventListener("click", function () {
+        teskari = !teskari;
+        boshlar.forEach(function (b) { b.classList.remove("osdi", "tushdi"); });
+        th.classList.add(teskari ? "osdi" : "tushdi");
+        qatorlar.slice().sort(function (a, b) {
+          var x = +a.children[indeks].getAttribute("data-q") || 0;
+          var y = +b.children[indeks].getAttribute("data-q") || 0;
+          return teskari ? x - y : y - x;
+        }).forEach(function (q) { tana.appendChild(q); });
+      });
+    });
   })();
 
   // --- sahifa o'zi yangilanib turadi ---

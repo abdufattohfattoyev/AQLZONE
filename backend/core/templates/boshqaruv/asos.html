@@ -108,6 +108,38 @@ sababdan ochilmay qolmasligi kerak.
   }
   .tugma:hover { color: var(--matn); border-color: var(--chegara-yorqin); }
 
+  /* Bo'lim yo'lchisi — tepa panelning ICHIDA, ikkinchi qator bo'lib
+     turadi.
+     Alohida yopishqoq element qilib ham bo'lardi, lekin unda `top`
+     tepaning balandligiga qo'lda moslanardi — tepa esa tor ekranda
+     ikki qatorga bo'linadi va o'sha payt ikkalasi orasida teshik
+     ochilib, ostidan kontent ko'rinib qolardi. Bitta blok ichida bunday
+     holat umuman bo'lmaydi. */
+  nav.yolchi {
+    flex: 1 0 100%;
+    margin: 4px -18px -12px;
+    border-top: 1px solid var(--chegara);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  nav.yolchi::-webkit-scrollbar { display: none; }
+  .yolchi-ichi {
+    padding: 7px 18px; display: flex; gap: 4px; white-space: nowrap;
+  }
+  .yolchi-ichi a {
+    padding: 5px 11px; border-radius: 999px;
+    color: var(--xira); font-size: 12.5px; font-weight: 600;
+  }
+  .yolchi-ichi a:hover { color: var(--matn); background: var(--karta); }
+
+  /* Langarga o'tganda sarlavha yopishqoq paneller ostida qolib
+     ketmasin — brauzerga to'xtash joyini oldindan aytamiz. */
+  /* Tepa ikki qatorga bo'linganda ham sarlavha uning ostida qolmasin —
+     shuning uchun eng baland holatiga qarab olingan. */
+  [id] { scroll-margin-top: 126px; }
+  /* Tor ekranda tepadagi tugmalar yana bir qatorga tushadi. */
+  @media (max-width: 900px) { [id] { scroll-margin-top: 180px; } }
+
   /* ------------------------------------------------------- sarlavhalar */
 
   .bolim { margin: 34px 0 14px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -121,6 +153,7 @@ sababdan ochilmay qolmasligi kerak.
   .setka { display: grid; gap: 14px; }
   .setka.k5 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
   .setka.k4 { grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); }
+  .setka.k3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
   .setka.k2 { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
 
   .karta {
@@ -148,6 +181,27 @@ sababdan ochilmay qolmasligi kerak.
   .olchov.yashil .belgicha { background: rgba(52,211,153,.14); color: var(--yashil); }
   .olchov.sariq .belgicha { background: rgba(251,191,36,.14); color: var(--sariq); }
   .olchov.binafsha .belgicha { background: rgba(167,139,250,.16); color: var(--binafsha); }
+  .olchov.moviy .belgicha { background: rgba(56,189,248,.14); color: var(--moviy); }
+  /* Qizil FAQAT e'tibor talab qiladigan holatda: yopishqoqlik pasayib
+     ketgani yoki bloklash ulushi oshgani. Oddiy son hech qachon qizil
+     bo'lmaydi — bo'lsa, rang ma'nosini yo'qotadi. */
+  .olchov.qizil-urgu { border-color: rgba(251,113,133,.35); }
+  .olchov.qizil-urgu .belgicha { background: rgba(251,113,133,.14); color: var(--qizil); }
+
+  /* Karta ichidagi sarlavha qatori — hamma joyda bir xil bo'lishi uchun. */
+  .karta-bosh {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .karta-bosh b { font-size: 14px; }
+  .karta-bosh .juda-xira { font-size: 12px; }
+
+  /* Karta ICHIDAGI kichik o'lchov — to'liq karta ortiqcha bo'lganda. */
+  .ichki-olchov {
+    background: var(--fon-2); border-radius: var(--r-kichik); padding: 11px 13px;
+  }
+  .ichki-olchov .nom { color: var(--xira); font-size: 12px; font-weight: 600; }
+  .ichki-olchov .katta { font-size: 22px; font-weight: 750; letter-spacing: -.02em; margin-top: 2px; }
 
   /* O'sish ko'rsatkichi. Rang ATAYLAB shartli emas: dars soni tushishi
      yomon, lekin bu "xato" degani emas — shuning uchun qizil emas, sariq. */
@@ -264,6 +318,68 @@ sababdan ochilmay qolmasligi kerak.
   .izohlar { display: flex; gap: 14px; flex-wrap: wrap; color: var(--xira); font-size: 12px; }
   .izohlar span { display: inline-flex; align-items: center; gap: 6px; }
   .izohlar i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* Dam olish kunlari xira fonda — ish kunlari bilan solishtirish
+     uchun ular ko'zga tashlanib turishi kerak. */
+  .ustunlar .ustun.dam { background: rgba(167,139,250,.05); border-radius: 4px; }
+
+  /* ------------------------------------------------------------- xavf */
+
+  /* Bitta tasma — hamma guruh bir qatorda. Nisbatni raqamdan ko'ra
+     tezroq ko'rsatadi: "yarmi ketgan" bir qarashda ko'rinadi. */
+  .xavf-tasma {
+    display: flex; gap: 2px; height: 14px;
+    border-radius: 999px; overflow: hidden; background: var(--fon-2);
+  }
+  .xavf-tasma .bolak { min-width: 3px; transition: filter .12s; }
+  .xavf-tasma .bolak:hover { filter: brightness(1.3); }
+  .xavf-tasma .yashil { background: var(--yashil); }
+  .xavf-tasma .moviy  { background: var(--moviy); }
+  .xavf-tasma .sariq  { background: var(--sariq); }
+  .xavf-tasma .qizil  { background: var(--qizil); }
+  .xavf-tasma .xira   { background: #3a4667; }
+
+  .xavf-karta {
+    display: flex; gap: 9px; align-items: flex-start;
+    background: var(--fon-2); border-radius: var(--r-kichik); padding: 11px 12px;
+  }
+  .xavf-karta .nom { color: var(--xira); font-size: 12px; font-weight: 600; }
+  .xavf-karta .katta { font-size: 20px; font-weight: 750; letter-spacing: -.02em; }
+  .nuqtacha { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex: none; }
+  .nuqtacha.yashil { background: var(--yashil); }
+  .nuqtacha.moviy  { background: var(--moviy); }
+  .nuqtacha.sariq  { background: var(--sariq); }
+  .nuqtacha.qizil  { background: var(--qizil); }
+  .nuqtacha.xira   { background: #3a4667; }
+
+  /* ------------------------------------------------- hafta kunlari */
+
+  .kunlar-ustun { display: flex; align-items: flex-end; gap: 8px; height: 110px; }
+  .kunlar-ustun .k {
+    flex: 1; height: 100%;
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+  }
+  .kunlar-ustun .k i {
+    display: block; width: 100%; min-height: 2px; border-radius: 5px 5px 3px 3px;
+    background: linear-gradient(180deg, var(--asos), rgba(108,140,255,.3));
+  }
+  .kunlar-ustun .k.dam i { background: linear-gradient(180deg, var(--binafsha), rgba(167,139,250,.3)); }
+  .kunlar-ustun .k span {
+    text-align: center; color: var(--juda-xira); font-size: 11.5px; flex: none;
+  }
+
+  /* ------------------------------------------------------- saralash */
+
+  th.saralash { cursor: pointer; user-select: none; }
+  th.saralash:hover { color: var(--xira); }
+  th.saralash.tushdi::after { content: " ▼"; color: var(--asos); }
+  th.saralash.osdi::after { content: " ▲"; color: var(--asos); }
+
+  /* Kohort katakchasi — foni JS'da foizga qarab to'ldiriladi. */
+  .issiq {
+    display: inline-block; min-width: 44px; padding: 2px 7px;
+    border-radius: 7px; font-weight: 600; font-variant-numeric: tabular-nums;
+  }
 
   /* Soatlar — 24 ta ingichka ustun. */
   .soatlar { display: flex; align-items: flex-end; gap: 3px; height: 92px; }
