@@ -1,0 +1,142 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Kichkintoylar — afisha</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #fff; }
+  body { width: 1080px; height: 1350px; overflow: hidden;
+    font-family: "Segoe UI", system-ui, sans-serif; }
+
+  .afisha {
+    width: 1080px; height: 1350px; position: relative;
+    background: #FFF6EC;
+    padding: 52px 64px 0;
+    display: flex; flex-direction: column;
+  }
+  /* yumshoq fon dog'lari */
+  .afisha::before, .afisha::after {
+    content: ""; position: absolute; border-radius: 50%; filter: blur(2px);
+  }
+  .afisha::before { width: 520px; height: 520px; top: -180px; right: -160px;
+    background: radial-gradient(circle, rgba(247,140,37,.16), rgba(247,140,37,0) 70%); }
+  .afisha::after { width: 620px; height: 620px; bottom: 40px; left: -220px;
+    background: radial-gradient(circle, rgba(61,142,242,.14), rgba(61,142,242,0) 70%); }
+
+  .ichi { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; }
+
+  .yorliq {
+    align-self: flex-start; background: #F78C25; color: #fff;
+    font-size: 26px; font-weight: 800; letter-spacing: .16em;
+    padding: 14px 26px; border-radius: 999px; text-transform: uppercase;
+    box-shadow: 0 10px 24px rgba(247,140,37,.34);
+  }
+
+  h1 { margin-top: 26px; font-size: 76px; line-height: 1.02;
+    font-weight: 900; color: #2F2B28; letter-spacing: -.02em; }
+  h1 span { color: #F78C25; }
+
+  .yosh { margin-top: 20px; font-size: 32px; font-weight: 600; color: #6B625A; }
+  .yosh b { color: #2F2B28; font-weight: 800; }
+
+  /* ── kartalar ── */
+  .setka { margin-top: 30px; display: grid; gap: 22px;
+    grid-template-columns: repeat(3, 1fr); }
+  .karta {
+    background: #fff; border-radius: 36px; padding: 20px 16px 18px;
+    display: flex; flex-direction: column; align-items: center;
+    box-shadow: 0 14px 30px rgba(47,43,40,.09);
+  }
+  .karta img { width: 168px; height: 118px; object-fit: contain; }
+  .doira { width: 118px; height: 118px; border-radius: 50%; margin: 0 auto;
+    box-shadow: inset 0 -14px 26px rgba(0,0,0,.14), 0 8px 18px rgba(0,0,0,.12); }
+  .raqam { height: 118px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px; }
+  .raqam .b { font-size: 68px; font-weight: 900; color: #2F2B28; line-height: 1; }
+  .raqam .olma { display: flex; gap: 6px; font-size: 26px; }
+  .nom { margin-top: 12px; font-size: 30px; font-weight: 800; color: #2F2B28; }
+  .tovush { margin-top: 6px; font-size: 25px; font-weight: 700; color: #F78C25; }
+  .tovush.kok { color: #3D8EF2; }
+
+  /* ── mavzular qatori ── */
+  .mavzular { margin-top: 28px; display: flex; gap: 14px; flex-wrap: nowrap; }
+  .chip { background: #fff; border-radius: 999px; padding: 13px 20px;
+    font-size: 25px; white-space: nowrap; font-weight: 700; color: #2F2B28;
+    box-shadow: 0 8px 18px rgba(47,43,40,.08); }
+  .chip i { font-style: normal; color: #9A9089; font-weight: 800; margin-left: 8px; }
+
+  /* ── zarba gapi ── */
+  .zarba { margin-top: 32px; background: #2F2B28; color: #fff;
+    border-radius: 36px; padding: 34px 42px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .zarba p { font-size: 42px; font-weight: 900; line-height: 1.18; }
+  .zarba p em { font-style: normal; color: #F7C325; }
+  .zarba .yoq { text-align: right; font-size: 23px; font-weight: 700;
+    color: #C9C0B8; line-height: 1.55; white-space: nowrap; }
+
+  /* ── pastki qator ── */
+  .past { margin-top: auto; padding: 26px 0 52px;
+    display: flex; align-items: center; justify-content: space-between; }
+  .past .dom { font-size: 46px; font-weight: 900; color: #2F2B28; letter-spacing: -.01em; }
+  .past .bot { margin-top: 6px; font-size: 27px; font-weight: 600; color: #6B625A; }
+  .past .shior { font-size: 30px; font-weight: 800; color: #F78C25; text-align: right; line-height: 1.35; }
+</style>
+
+<div class="afisha"><div class="ichi">
+
+  <div class="yorliq">Yangi bo'lim</div>
+
+  <h1>Farzandingizga<br><span>o'zi o'rgatadi.</span></h1>
+
+  <div class="yosh"><b>2–5 yosh</b> · 4 mavzu · <b>45 karta</b> · o'zbekcha va ruscha</div>
+
+  <div class="setka">
+    <div class="karta">
+      <img src="avtobus.webp" alt="">
+      <div class="nom">avtobus</div><div class="tovush">🔊 signal</div>
+    </div>
+    <div class="karta">
+      <img src="otochir.webp" alt="">
+      <div class="nom">o't o'chirish</div><div class="tovush">🔊 sirena</div>
+    </div>
+    <div class="karta">
+      <img src="mushuk.webp" alt="">
+      <div class="nom">mushuk</div><div class="tovush kok">«miyov»</div>
+    </div>
+    <div class="karta">
+      <img src="it.webp" alt="">
+      <div class="nom">it</div><div class="tovush kok">«vov-vov»</div>
+    </div>
+    <div class="karta">
+      <div class="doira" style="background:#f2453d"></div>
+      <div class="nom">qizil</div><div class="tovush">rasmsiz rang</div>
+    </div>
+    <div class="karta">
+      <div class="raqam">
+        <div class="b">5</div>
+        <div class="olma">🍎🍎🍎🍎🍎</div>
+      </div>
+      <div class="nom">besh</div><div class="tovush">belgi + narsa</div>
+    </div>
+  </div>
+
+  <div class="mavzular">
+    <div class="chip">🚗 Mashinalar <i>12</i></div>
+    <div class="chip">🐶 Hayvonlar <i>14</i></div>
+    <div class="chip">🎨 Ranglar <i>9</i></div>
+    <div class="chip">🔢 Raqamlar <i>10</i></div>
+  </div>
+
+  <div class="zarba">
+    <p>Siz charchaysiz.<br><em>Ilova charchamaydi.</em></p>
+    <div class="yoq">savol yo'q · ball yo'q<br>yutqazish yo'q · reklama yo'q<br>internetsiz ham ishlaydi</div>
+  </div>
+
+  <div class="past">
+    <div>
+      <div class="dom">aql-zone.uz</div>
+      <div class="bot">@Aqlzone_bot</div>
+    </div>
+    <div class="shior">Bosadi — ovoz<br>nomini aytadi.</div>
+  </div>
+
+</div></div>

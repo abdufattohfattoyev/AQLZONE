@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Ilovaning mavzusi.
+
+        Tizimning O'Z mavzusidan meros oladi (`Theme.Material.Light`) —
+        AndroidX'ning `Theme.AppCompat` i emas. Sabab: butun ko'rinish
+        WebView ichida chiziladi va bu yerda tugma ham, ro'yxat ham
+        yo'q. Faqat uchta narsa kerak: sarlavha panelisiz oyna, brend
+        rangidagi fon va holat panelining rangi.
+    -->
+    <style name="AqlZoneTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- Sayt yuklanguncha ko'rinadigan ekran. -->
+        <item name="android:windowBackground">@drawable/splash</item>
+
+        <!-- Tepadagi soat-batareya qatori sayt foni bilan qo'shilib
+             ketadi: ilova ichida "chegara" ko'rinmasin. -->
+        <item name="android:statusBarColor">@color/brend_fon</item>
+        <item name="android:navigationBarColor">@color/brend_fon</item>
+
+        <!-- Klaviatura chiqqanda sahifa siqiladi. -->
+        <item name="android:windowSoftInputMode">adjustResize</item>
+    </style>
+</resources>

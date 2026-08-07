@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aql Zone</title>
+<!--
+  Internet yo'q bo'lganda ko'rsatiladigan sahifa.
+
+  Butunlay MUSTAQIL: rasm ham, shrift ham, skript ham tashqaridan
+  yuklanmaydi. Sabab oddiy — bu sahifa aynan tarmoq ishlamayotganda
+  ochiladi va tashqi faylga murojaat qilsa, o'zi ham yuklanmasdi.
+
+  Ranglar saytdagi bilan bir xil (`#8ed6ff` — brend fon rangi), shunda
+  bola ilovadan chiqib ketgandek his qilmaydi.
+-->
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: linear-gradient(180deg, #8ed6ff 0%, #d9f0ff 100%);
+    color: #16295e;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .qut { width: 100%; max-width: 340px; }
+  .belgi {
+    width: 84px; height: 84px; margin: 0 auto 18px;
+    display: grid; place-items: center;
+    font-size: 40px; border-radius: 26px;
+    background: #fff; box-shadow: 0 6px 0 rgba(22,41,94,.12);
+  }
+  h1 { margin: 0 0 8px; font-size: 21px; line-height: 1.25; }
+  p  { margin: 0; font-size: 14.5px; line-height: 1.45; color: #35508f; }
+  a.tugma {
+    display: block; margin-top: 26px; padding: 15px 20px;
+    border-radius: 24px; background: #22bd6d; color: #fff;
+    font-size: 17px; font-weight: 700; text-decoration: none;
+    box-shadow: 0 5px 0 #199a57;
+  }
+  a.tugma:active { transform: translateY(3px); box-shadow: 0 2px 0 #199a57; }
+</style>
+</head>
+<body>
+  <div class="qut">
+    <div class="belgi" id="belgi">📡</div>
+    <h1 id="sarlavha">Internet yo'q</h1>
+    <p id="izoh">Wi-Fi yoki mobil internetni yoqing va qaytadan urinib ko'ring.</p>
+    <!-- Havola aynan saytga: qobiq uni o'zida ochadi va hammasi
+         boshidan yuklanadi. Alohida skript kerak emas. -->
+    <a class="tugma" href="https://aql-zone.uz">Qaytadan urinish</a>
+  </div>
+
+<script>
+  // Sabab qobiqdan keladi: `?sabab=internet` yoki `?sabab=server`.
+  // Farqi muhim — birinchisini bola o'zi tuzatadi, ikkinchisini yo'q.
+  if (location.search.indexOf("sabab=server") !== -1) {
+    document.getElementById("belgi").textContent = "🛠";
+    document.getElementById("sarlavha").textContent = "Sayt javob bermadi";
+    document.getElementById("izoh").textContent =
+      "Internet bor, lekin sayt hozir ochilmadi. Bir ozdan keyin qaytadan urinib ko'ring.";
+  }
+</script>
+</body>
+</html>

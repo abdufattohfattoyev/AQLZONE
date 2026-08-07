@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'uz.aqlzone.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "uz.aqlzone.app"
+
+        // minSdk 24 — Android 7.0 (2016).
+        //
+        // Pastroqqa tushishning ma'nosi yo'q: eski WebView'larda ilova
+        // ishlatadigan zamonaviy JavaScript qo'llab-quvvatlanmaydi.
+        // 24 esa hali ham ishlatilayotgan arzon telefonlarni qamrab
+        // oladi — bu maktab bolalari uchun muhim.
+        minSdk 24
+        targetSdk 35
+
+        // Har chiqarishda `versionCode` BITTAGA oshadi va u hech qachon
+        // kamaymaydi — Play Store shu songa qarab yangilanishni
+        // aniqlaydi. `versionName` esa odam o'qiydigan yozuv.
+        versionCode 2
+        versionName "1.1"
+    }
+
+    buildTypes {
+        debug {
+            // Sinov uchun APK. Nomi ham, ikonkasi ham alohida bo'ladi:
+            // shunda telefonda ikkalasi yonma-yon tursa ham qaysi biri
+            // sinov ekani ko'rinib turadi.
+            applicationIdSuffix ".sinov"
+            versionNameSuffix "-sinov"
+        }
+        release {
+            // Kod qisqartirish O'CHIQ.
+            //
+            // Butun ilova WebView ichida ishlaydi va bu yerdagi Java
+            // kodi 200 qatordan kam. Qisqartirishdan yutuq bir necha
+            // kilobayt, xavf esa haqiqiy: ProGuard qoidasi noto'g'ri
+            // yozilsa, ilova faqat RELEASE qurilishida yiqiladi va buni
+            // sinov paytida ko'rmaysiz.
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// Bog'liqlik YO'Q — `gradle.properties` dagi izohga qarang.
+dependencies {
+}

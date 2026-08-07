@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Android 12 dan boshlab splash ekranini TIZIM chizadi va uni
+        o'chirib bo'lmaydi. Sozlamasiz qoldirilsa, u yerda ilova
+        ikonkasi oq fonda paydo bo'lardi — ya'ni ochilishda oq, keyin
+        birdan ko'k ekran.
+
+        `windowBackground` shu sababdan baribir qoladi: tizim splash
+        yopilgach, sayt yuklanguncha o'sha fon ko'rinadi.
+    -->
+    <style name="AqlZoneTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash</item>
+        <item name="android:statusBarColor">@color/brend_fon</item>
+        <item name="android:navigationBarColor">@color/brend_fon</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+
+        <item name="android:windowSplashScreenBackground">@color/brend_fon</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/logo</item>
+    </style>
+</resources>

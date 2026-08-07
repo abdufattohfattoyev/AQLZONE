@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ilova ochilayotgandagi ekran.
+
+    Bu alohida Activity emas, shunchaki oynaning FON rasmi. Sabab: sayt
+    yuklanguncha ekran bo'sh turadi va oq bo'lsa, telefon "ilova qotib
+    qoldi" degan taassurot beradi. Brend rangi va belgi esa kutishni
+    tabiiy qiladi.
+
+    Belgi `@drawable/logo` dan olinadi — `@mipmap/ic_launcher` emas:
+    Android 8+ da u moslashuvchan ikonka (XML) bo'lib qoladi va uni
+    rasm sifatida joylashtirib bo'lmaydi.
+
+    Android 12+ da tizimning o'z splash ekrani bor (`values-v31`).
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/brend_fon" />
+    <item
+        android:width="132dp"
+        android:height="132dp"
+        android:drawable="@drawable/logo"
+        android:gravity="center" />
+</layer-list>

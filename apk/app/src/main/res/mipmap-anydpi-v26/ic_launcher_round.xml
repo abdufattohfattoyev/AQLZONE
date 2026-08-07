@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Doira ikonka. Moslashuvchan ikonkada farq yo'q: kesish shaklini
+     baribir tizim tanlaydi. Fayl shu sabab bir xil turadi — lekin
+     manifestdagi `roundIcon` uni talab qiladi. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ikonka_fon" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
+</adaptive-icon>

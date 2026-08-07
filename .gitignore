@@ -28,3 +28,8 @@ ovoz-kesh/
 # Muharrir
 .DS_Store
 *.swp
+
+# Rolik ustaxonasi — ekran suratlari, ovoz, yasalgan video.
+# Kod emas, NATIJA: kerak bo`lsa `.rolik/` ichidagi skriptlar bilan
+# qaytadan yasaladi va git`da o`nlab megabayt joy egallardi.
+.rolik/

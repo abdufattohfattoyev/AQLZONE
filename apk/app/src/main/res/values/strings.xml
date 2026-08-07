@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Telefon ekranida ikonka tagida turadigan nom. Qisqa bo'lishi
+         shart: uzun nom uch nuqta bilan kesiladi. -->
+    <string name="app_name">Aql Zone</string>
+</resources>

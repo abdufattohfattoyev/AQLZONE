@@ -1,0 +1,25 @@
+// Aql Zone — Android qobiq.
+//
+// Bitta modul: `app`. Kutubxona modullari yo'q va bo'lishi ham kerak
+// emas — bu loyihada bitta ekran va bitta WebView bor, xolos.
+
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    // Modul ichida `repositories { }` yozib bo'lmaydi — hammasi shu
+    // yerda. Shunda kutubxona qayerdan kelgani bitta joydan ko'rinadi.
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "AqlZone"
+include ":app"

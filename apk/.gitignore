@@ -1,0 +1,25 @@
+# Qurish natijalari — ular har safar qaytadan yasaladi.
+chiqdi/
+build/
+app/build/
+.gradle/
+
+# Mashinaga bog'liq: bu yerda Android SDK qayerdaligi yozilgan va u
+# har kompyuterda boshqacha.
+local.properties
+
+# IMZO KALITLARI HECH QACHON REPOZITORIYGA TUSHMAYDI.
+#
+# Play Store'dagi ilovani faqat SHU kalit bilan yangilash mumkin. U
+# oshkor bo'lsa, boshqa odam sizning ilovangiz nomidan yangilanish
+# chiqara oladi; yo'qolsa esa ilovani butunlay boshqatdan chiqarishga
+# to'g'ri keladi.
+*.jks
+*.keystore
+kalit.properties
+
+# Android Studio
+.idea/
+*.iml
+.cxx/
+captures/

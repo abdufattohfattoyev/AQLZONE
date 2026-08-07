@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Android 6 dan boshlab holat panelining YOZUVLARINI qoraytirish
+        mumkin. Bu shart: brend foni (`#8ed6ff`) ochiq rang va unda oq
+        soat bilan batareya belgisi deyarli ko'rinmasdi.
+    -->
+    <style name="AqlZoneTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash</item>
+        <item name="android:statusBarColor">@color/brend_fon</item>
+        <item name="android:navigationBarColor">@color/brend_fon</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

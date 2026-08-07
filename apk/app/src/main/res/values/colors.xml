@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brend ranglari — saytdagi `manifest.webmanifest` bilan bir xil.
+         Biri o'zgarsa, ikkalasi birga o'zgarishi kerak. -->
+    <color name="brend_fon">#8ed6ff</color>
+    <color name="brend_kok">#1636c4</color>
+    <color name="brend_kok_ochiq">#2f8ee6</color>
+    <color name="brend_yashil">#22bd6d</color>
+    <color name="brend_tund">#16295e</color>
+    <color name="ikonka_fon">#f2f8ff</color>
+</resources>

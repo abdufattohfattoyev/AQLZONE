@@ -1,0 +1,8 @@
+// Ildiz build fayli — bu yerda faqat plaginlar e'lon qilinadi.
+//
+// `apply false`: plagin shu yerda YUKLANADI, lekin qo'llanmaydi. Uni
+// `app/build.gradle` qo'llaydi. Shunda versiya bitta joyda turadi.
+
+plugins {
+    id 'com.android.application' version '8.10.1' apply false
+}

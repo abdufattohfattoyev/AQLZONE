@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Internet SHART: ilova saytdan yuklanadi. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Aloqa bor-yo'qligini bilish uchun — xato ekranida "internet
+         yo'q" bilan "sayt javob bermadi" ni ajratish kerak. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:theme="@style/AqlZoneTheme"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        android:usesCleartextTraffic="false">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density|uiMode|locale|layoutDirection|fontScale">
+
+            <!--
+                `configChanges` — eng muhim qator.
+
+                Busiz ekran burilganda yoki klaviatura chiqqanda Android
+                Activity'ni O'CHIRIB QAYTA yasaydi. WebView esa u bilan
+                birga ketadi: bola o'yin o'rtasida sahifani boshidan
+                yuklab olardi va yechilgan savollar yo'qolardi.
+
+                `adjustResize` — klaviatura chiqqanda sahifa siqiladi.
+                Busiz kirish maydonchasi klaviatura ostida qolardi.
+
+                `portrait` — o'yinlar tik ekranga chizilgan; yotiq holatda
+                savol katakchalari cho'zilib ketardi.
+            -->
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
