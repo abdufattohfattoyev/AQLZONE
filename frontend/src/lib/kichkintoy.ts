@@ -83,9 +83,23 @@ export interface Mavzu {
   id: string;
   nom: string;
   ru: string;
-  /** Mavzu kartasidagi katta belgi. */
+  /**
+   * Mavzu kartasidagi katta belgi — EMOJI, faqat zaxira uchun.
+   *
+   * Kirish ekrani endi emoji emas, bo'limning O'Z rasmini ko'rsatadi
+   * (`screens/Kichkintoy.tsx`). Emoji shu yerda qoldirildi: yangi
+   * mavzu qo'shilib, unga hali rasm yasalmagan bo'lsa, karta bo'sh
+   * chiqmasin.
+   */
   e: string;
-  /** Yonidagi kichik belgilar — "ichkarida nima bor" degan ishora. */
+  /**
+   * Yonidagi uchta kichik belgi — "ichkarida nima bor" degan ishora.
+   *
+   * KARTA ID lari (`kartalar[].id`), emoji EMAS. Ilgari bu yerda
+   * emoji turardi va kirish ekrani bilan albom ikki xil rasm
+   * ko'rsatardi: kartada "🚌", ichkarida esa butunlay boshqacha
+   * chizilgan avtobus. Bola uchun bu ikki xil narsa edi.
+   */
   ishora: string[];
   rang: UnitColor;
   kartalar: Karta[];
@@ -209,15 +223,15 @@ const RAQAM: Karta[] = [
 export const MAVZULAR: Mavzu[] = [
   {
     id: "mashina", nom: "Mashinalar", ru: "Машины", e: "🚗",
-    ishora: ["🚌", "🚒", "✈️"], rang: "blue", kartalar: MASHINA,
+    ishora: ["avtobus", "otochir", "samolyot"], rang: "blue", kartalar: MASHINA,
   },
   {
     id: "hayvon", nom: "Hayvonlar", ru: "Животные", e: "🐶",
-    ishora: ["🐱", "🦁", "🐘"], rang: "green", kartalar: HAYVON,
+    ishora: ["mushuk", "arslon", "fil"], rang: "green", kartalar: HAYVON,
   },
   {
     id: "rang", nom: "Ranglar", ru: "Цвета", e: "🎨",
-    ishora: ["🔴", "🟡", "🔵"], rang: "purple", kartalar: RANG,
+    ishora: ["qizil", "sariq", "kok"], rang: "purple", kartalar: RANG,
   },
   {
     id: "raqam", nom: "Raqamlar", ru: "Цифры", e: "🔢",
@@ -227,6 +241,10 @@ export const MAVZULAR: Mavzu[] = [
 
 export const mavzuById = (id: string): Mavzu | undefined =>
   MAVZULAR.find((m) => m.id === id);
+
+/** Mavzu ichidagi bitta karta — `ishora` id larini rasmga aylantirish uchun. */
+export const kartaById = (m: Mavzu, id: string): Karta | undefined =>
+  m.kartalar.find((k) => k.id === id);
 
 /* ─────────────────────────── gaplar ───────────────────────────
  *

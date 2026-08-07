@@ -41,9 +41,9 @@
  * Busiz bosh sahifada turgan bola "Do'kon" ni bosganda hech narsa
  * bo'lmasdi: qaysi kursning do'koni ochilishi noma'lum edi.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
-import { Icon } from "../lib/icons";
+import { PanelBelgi, panelRang, type PanelBelgiNom } from "../lib/chizma/panelBelgi";
 import { Menyu } from "./Menyu";
 import { COURSES, courseBySlug } from "../lib/curriculum";
 import { oxirgiKurs } from "../lib/oxirgi";
@@ -135,14 +135,18 @@ export function Panel() {
     else nav(yol);
   };
 
+  // Belgilar `lib/icons.tsx` dan EMAS, `lib/chizma/panelBelgi.tsx` dan
+  // keladi: panelda ular chiziqli emas, hajmli va rangli. Sababi o'sha
+  // faylda yozilgan — bu yerda beshta belgi bir-biridan AJRALIB
+  // turishi kerak, ro'yxatdagidek bir xil bo'lishi emas.
   const tablar = [
-    { ic: "home", nom: t("tabBosh"), faol: bosh, on: yur(yolKurslar(), bosh) },
-    { ic: "map", nom: t("tabDarslar"), faol: darslar, on: yur(yolKurs(kurs), darslar) },
+    { ic: "uy", nom: t("tabBosh"), faol: bosh, on: yur(yolKurslar(), bosh) },
+    { ic: "xarita", nom: t("tabDarslar"), faol: darslar, on: yur(yolKurs(kurs), darslar) },
     // O'yinlar ENG O'RTADA — paneldagi eng oson yetiladigan joy. Bu
     // yerda o'yin, bugungi maydon va duel bir eshik ortida turadi.
-    { ic: "puzzle", nom: t("tabOyinlar"), faol: oyinlar, on: yur(yolOyinlar(), oyinlar) },
+    { ic: "vazifa", nom: t("tabOyinlar"), faol: oyinlar, on: yur(yolOyinlar(), oyinlar) },
     {
-      ic: "order", nom: t("tabReyting"), faol: pathname === yolReyting(),
+      ic: "reyting", nom: t("tabReyting"), faol: pathname === yolReyting(),
       on: yur(yolReyting(), pathname === yolReyting()),
     },
     // Menyu ENG O'NGDA: u manzil emas, ochiladigan ro'yxat. Qizil nuqta
@@ -159,7 +163,7 @@ export function Panel() {
     // Menyu esa manzil emas — u shu sahifa USTIDA ochiladigan oyna.
     // Shuning uchun belgi joyida qoladi, tugma faqat yonadi.
     {
-      ic: "menu", nom: t("tabMenyu"), faol: false, yoniq: menyu,
+      ic: "menyu", nom: t("tabMenyu"), faol: false, yoniq: menyu,
       nuqta: yangiNishon,
       on: () => { tebrat("tanlov"); setMenyu(true); },
     },
@@ -215,7 +219,7 @@ export function Panel() {
  * joyida ochiladi: panelda hech narsa hech qayerga ketmaydi.
  */
 function Tab({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
-  ic: "home" | "map" | "puzzle" | "order" | "menu";
+  ic: PanelBelgiNom;
   nom: string;
   on: () => void;
   faol?: boolean;
@@ -230,27 +234,31 @@ function Tab({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
     // `relative` — yostiq shu tugma ICHIDA joylashadi.
     <button type="button" onClick={on} title={nom}
       aria-current={faol ? "page" : undefined}
+      /* Tugmaning rangi bir joyda beriladi va yostiq ham, yozuv ham
+         shundan oladi — belgi binafsha bo'lib, yostig'i yashil qolgan
+         holat shu bilan mumkin emas. */
+      style={{ "--az-tab-rang": panelRang(ic) } as CSSProperties}
       /* `min-w-0` SHART: usiz flex elementi o'z mazmunidan kichrayolmaydi
          va uzun yozuv ("Родителям") tugmani kengaytirib, qolgan beshtasini
          siqib qo'yadi. U bilan esa yozuv `truncate` ga bo'ysunadi. */
       className={`clay-press relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2
                   transition-colors duration-200
-                  ${belgili ? "text-brand-green-d" : "text-ink-soft"}`}>
+                  ${belgili ? "az-tab-yoniq" : "text-ink-soft"}`}>
       {/* Yostiq — tugmaning O'Z chegarasi.
           `inset-x-1` yon bo'shliq qoldiradi: yostiqlar bir-biriga
           tegib ketsa, beshta tugma bitta uzun tasmaga aylanardi.
           O'lcham `scale` bilan o'zgaradi — `width` sahifani qayta
-          o'lchashga majbur qiladi va past telefonda sakrab ketardi. */}
+          o'lchashga majbur qiladi va past telefonda sakrab ketardi.
+          Rangi `--az-tab-rang` dan — ya'ni belgi bilan bir xil. */}
       <span aria-hidden
         className={`az-tab-yostiq absolute inset-x-1 inset-y-1 rounded-2xl
-                    bg-brand-green/12 ring-1 ring-brand-green/15
                     ${belgili ? "scale-100 opacity-100" : "scale-90 opacity-0"}`} />
 
       {/* Belgi va yozuv yostiq USTIDA turishi kerak: joylashgansiz
           element joylashganning ostida chiziladi. */}
       <span className="relative">
         <span className={`az-tab-belgi block ${belgili ? "scale-110" : "scale-100"}`}>
-          <Icon name={ic} size={22} />
+          <PanelBelgi nom={ic} faol={belgili} size={26} />
         </span>
         {nuqta && (
           <span className="az-nuqta absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />

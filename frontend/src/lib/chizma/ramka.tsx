@@ -60,6 +60,10 @@ export function Boyoqlar({ uid, children }: { uid: string; children: ReactNode }
         <Tik uid={uid} nom="siyoh" tepa="#42536f" ort="#2f3d5c" past="#1f2b45" />
         <Tik uid={uid} nom="jigar" tepa="#c99a6b" ort="#b8804f" past="#8a5a34" />
         <Tik uid={uid} nom="oltin" tepa="#ffcf5c" ort="#f5b301" past="#c2761a" />
+        {/* Moviy — O'zbekiston bayrog'idagi ochiq ko'k. `kok` dan
+            ancha yorug': ikkalasi yonma-yon turganda farqi darrov
+            bilinsin (samolyotda ikkalasi ham ishlatiladi). */}
+        <Tik uid={uid} nom="moviy" tepa="#7fd8f0" ort="#4cc3e8" past="#2b9dc4" />
 
         {/* Oyna — pastdan yuqoriga, ya'ni kuzovga TESKARI. Haqiqiy
             oynada ham shunday: u osmonni aks ettiradi, kuzov esa

@@ -50,7 +50,7 @@ export type TovushNomi =
   | "sirena"      // o't o'chirish, tez yordam, politsiya
   | "traktor"     // sekin "tir-tir" dvigatel
   | "qongiroq"    // velosiped qo'ng'irog'i
-  | "poyezd"      // poyezd hushtagi
+  | "poyezd"      // "chuh-chuh" ritmi va uning ustidan hushtak
   | "samolyot"    // reaktiv dvigatel shovqini
   | "kema";       // kemaning past gudogi
 
@@ -215,27 +215,61 @@ function qongiroqOvozi(c: AudioContext, out: GainNode, t: number): void {
   }
 }
 
-/** Poyezd hushtagi — uchta nota birga, ozgina shovqin bilan. */
-function poyezdOvozi(c: AudioContext, out: GainNode, t: number): void {
-  // Uch nota — haqiqiy hushtak akkordi. Bittasi ataylab "falsh"
-  // (466 Hz): shundan o'sha tanish g'amgin ohang chiqadi.
-  for (const [hz, kuch] of [[392, 0.34], [466, 0.26], [587, 0.2]] as const) {
-    nota(c, out, "sine", hz, t, 1.15, kuch);
-    nota(c, out, "triangle", hz, t + 0.02, 1.1, kuch * 0.4);
-  }
-  // Bug' shovqini — hushtakni "tirik" qiladi.
+/**
+ * Bitta "chuh" — bug'ning bir marta chiqishi.
+ *
+ * Ikki qatlam: shovqin (bug'ning o'zi) va juda past qisqa nota
+ * (porshenning zarbi). Yolg'iz shovqin "pshsh" bo'lib eshitiladi va
+ * bolaga poyezdni emas, suv sepgichni eslatadi — vaznni aynan past
+ * nota beradi.
+ */
+function chuh(c: AudioContext, out: GainNode, t: number, kuch: number): void {
   const s = c.createBufferSource();
   const g = c.createGain();
   const f = c.createBiquadFilter();
-  s.buffer = shovqin(c, 1.2);
-  f.type = "bandpass";
-  f.frequency.value = 1800;
-  f.Q.value = 0.8;
+  s.buffer = shovqin(c, 0.22);
+  // Filtr yuqoridan pastga tushadi: bug' chiqib, tarqab ketadi.
+  f.type = "lowpass";
+  f.frequency.setValueAtTime(1600, t);
+  f.frequency.exponentialRampToValueAtTime(320, t + 0.18);
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.05, t + 0.08);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 1.15);
+  g.gain.exponentialRampToValueAtTime(kuch, t + 0.014);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
   s.connect(f).connect(g).connect(out);
-  s.start(t); s.stop(t + 1.2);
+  s.start(t); s.stop(t + 0.22);
+
+  nota(c, out, "sine", 68, t, 0.11, kuch * 0.5);
+}
+
+/**
+ * Poyezd — "chuh-chuh" ustiga hushtak.
+ *
+ * ILGARI BU YERDA FAQAT HUSHTAK BOR EDI. Hushtak esa yakka holda
+ * poyezdni bildirmaydi: uchta uzun nota kemaning gudogiga ham,
+ * organga ham o'xshab ketadi. Poyezdni taniqli qiladigan narsa
+ * OHANG emas, RITM — g'ildirakning bir tekis "chuh-chuh" i. Bola uni
+ * o'zi ham takrorlaydi.
+ *
+ * Shuning uchun tovush ikki qatlam: pastda oltita "chuh", ularning
+ * ustida — yarim yo'lda kirib keladigan hushtak. Aynan shu tartib
+ * haqiqiy poyezddagidek: u avval qo'zg'aladi, keyin hushtak chaladi.
+ */
+function poyezdOvozi(c: AudioContext, out: GainNode, t: number): void {
+  // Oraliq sekin QISQARADI (0.3 → 0.22): poyezd tezlashadi. Bir tekis
+  // ritm mexanik bo'lib eshitilardi, tezlashuvi esa harakatni beradi.
+  let x = 0;
+  for (let i = 0; i < 6; i++) {
+    chuh(c, out, t + x, i === 0 ? 0.42 : 0.34);
+    x += 0.3 - i * 0.016;
+  }
+
+  // Hushtak — chuhlar boshlangach kiradi. Uch nota, bittasi ataylab
+  // "falsh" (466 Hz): shundan o'sha tanish g'amgin ohang chiqadi.
+  const h = t + 0.62;
+  for (const [hz, kuch] of [[392, 0.3], [466, 0.23], [587, 0.17]] as const) {
+    nota(c, out, "sine", hz, h, 0.95, kuch);
+    nota(c, out, "triangle", hz, h + 0.02, 0.9, kuch * 0.4);
+  }
 }
 
 /** Traktor — sekin "tir-tir": past arra to'lqin, pulsli kuchaytirgich. */

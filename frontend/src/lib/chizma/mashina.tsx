@@ -380,57 +380,113 @@ export const ChizmaSamolyot = (): JSX.Element => {
   const g = useBoyoq();
   return (
     <g>
+      {/* BULUTLAR — kemadagi to'lqinning aynan o'zi vazifasini
+          bajaradi: ular samolyot QAYERDA ekanini aytadi. Usiz kichik
+          soya tushunarsiz dog' bo'lib qolardi, samolyot esa yerda
+          turgandek ko'rinardi. Rangi ochiq ko'k, oq emas: karta oq va
+          oq bulut umuman ko'rinmasdi. */}
+      <g fill="#d3e8f8">
+        <g opacity="0.9">
+          <circle cx="24" cy="26" r="9" />
+          <circle cx="35" cy="24" r="11.5" />
+          <circle cx="47" cy="27" r="8" />
+          <rect x="22" y="26" width="27" height="9" rx="4.5" />
+        </g>
+        <g opacity="0.65">
+          <circle cx="86" cy="94" r="7" />
+          <circle cx="96" cy="92" r="9" />
+          <rect x="84" y="93" width="21" height="7" rx="3.5" />
+        </g>
+      </g>
+
       {/* Soya PASTDA va kichik: samolyot yerda emas, HAVODA. Aynan shu
           narsa uni qolgan hamma mashinadan ajratadi. */}
-      <Soya cy={110} rx={22} />
+      <Soya cy={110} rx={20} />
 
-      {/* UZOQDAGI QANOT — tanadan ORQADA, to'q va KICHIK. U ko'z
-          uchun chuqurlik ishorasi, xolos: kattaroq bo'lsa ikkita
-          parallel ko'k tasma bo'lib ko'rinardi va samolyot
-          qanotsiz "zebra" ga aylanardi. */}
-      <path d="M64 54 52 70h7l14-16z" fill="#2b6fc4" opacity="0.85" />
+      {/* HAMMASI 12° BURILGAN — burun tepaga qaragan.
+          Gorizontal turgan samolyot havoda MUALLAQ osilgandek
+          ko'rinardi. Haqiqiy suratda esa u doim ko'tarilib boradi va
+          bola aeroportda ham aynan shuni ko'radi: burun tepada. */}
+      <g transform="rotate(-12 60 58)">
 
-      {/* DUM — orqa (chap) tomonda, tepaga qaragan uchburchak.
-          Uchi ataylab orqaga OG'GAN: tik dum "bayroq" bo'lib
-          ko'rinardi, og'gani esa uchayotgan samolyotni eslatadi. */}
-      <path d="M26 47 32 18c.5-2.4 2.4-2.8 3.8-.8L54 45z" fill={g("kok")} />
-      <path d="M32 18c.5-2.4 2.4-2.8 3.8-.8L46 33l-11 4z" fill="#5aa0f5" />
-      {/* Gorizontal dum — kichik va orqada */}
-      <path d="M30 51 8 45c-2-.5-2.2 1-.8 2.2L20 57z" fill={g("kulrang")} />
+      {/* ─── DUM ───
+          Ikki qism: tepaga qaragan kil va uning ostidagi kichik
+          gorizontal qanotcha. Kil uchi ORQAGA og'gan — tik turgani
+          bayroqqa o'xshab ketardi.
 
-      {/* TANA — burni O'NGDA va uchli, dumi chapda ingichkalashadi.
-          Ilgari u ikki uchi ham teng "kapsula" edi va samolyot
+          Kilda OY va YULDUZ bor — O'zbekiston bayrog'idan. Aynan shu
+          narsa samolyotni bolaga "biznikimi?" degan savol
+          tug'diradi, va bu yoshda tanish narsa notanishidan kuchli.
+          Aviakompaniyaning nomi YOZILMADI: yozuv 168px kartada
+          baribir o'qilmaydi, o'qilganda esa u chizma emas, birovning
+          belgisi bo'lib qolardi. */}
+      <path d="M23 51C27 38 31 27 35.2 20.4c1.6-2.5 4.2-1.9 4.6 1L45 49z" fill={g("moviy")} />
+      <path d="M35.2 20.4c1.6-2.5 4.2-1.9 4.6 1L42.4 35l-9.6 1z" fill="#9fe3f5" />
+      <path d="M35.8 31.8a5.4 5.4 0 1 0 2.8 9.7 4.4 4.4 0 1 1-2.8-9.7z" fill="#fff" />
+      <circle cx="40.6" cy="37.6" r="1.3" fill="#fff" />
+      <path d="M28 62 12.6 71.4c-1.7 1-1.2 3 .8 2.6L31 69.4z" fill="#2b9dc4" />
+
+      {/* ─── TANA ───
+          Burni O'NGDA va DUMALOQ, dumi chapda ingichka uchga
+          keladi. Ilgari tananing ikki uchi ham teng edi va samolyot
           qayoqqa uchayotgani bilinmasdi. */}
-      <path d="M113 57c-7-9-22-14-45-14H44c-13 0-22 2.4-28 6.6l-4 3
-               c-1.4 1-1.4 2.4 0 3.4l4 3C22 63.6 31 66 44 66h24c23 0 38-4 45-9z"
+      <path d="M13 56c0-4.6 10-9.4 29-11.4L82 43c14.6 0 26 5.8 26 13s-11.4 13-26 13l-40-1.6
+               C23 65.4 13 60.6 13 56z"
         fill={g("oq")} />
-      {/* Tepadagi yorug'lik — tananing dumaloqligi shundan bilinadi */}
-      <path d="M113 57c-7-9-22-14-45-14H44c-13 0-22 2.4-28 6.6l-2.6 2H113z" fill="#ffffff" />
-      {/* Pastdagi soya */}
-      <path d="M12.6 59.6 16 62C22 65.6 31 68 44 68h24c22 0 36.6-4 44-8.6-8 7.6-23 11.6-44 11.6H44c-13 0-22-2.4-28-6.6z"
-        fill="#00000012" />
+      {/* Belbog' — pastki tomonda, dum tomon ingichkalashadi. U tanani
+          "oq kapsula" emas, AVIALAYNER qilib ko'rsatadi.
+
+          IKKI RANG: moviy, ostida ingichka yashil. Bayroqdagi
+          tartib ham shunday (moviy · oq · yashil) va tananing o'zi
+          oq bo'lgani uchun uchalasi ham joyida turadi. */}
+      <path d="M13 56c0 4.6 10 9.4 29 11.4L82 69c14.6 0 26-5.8 26-13
+               c-3.4 5-13.6 8.6-26 8.6l-40-1.9C27 61.2 16.6 58.8 13 56z"
+        fill={g("moviy")} />
+      <path d="M13 56c0 4.6 10 9.4 29 11.4L82 69c14.6 0 26-5.8 26-13
+               c-2 4.2-12.4 7.6-26 7.6l-40-1.7C25.4 62.4 15.4 58.6 13 56z"
+        fill={g("yashil")} />
 
       {/* Illyuminatorlar — qatorda, birdek oraliqda */}
-      {[46, 57, 68, 79].map((x) => (
-        <circle key={x} cx={x} cy="55" r="3.8" fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.1" />
+      {[45, 56, 67, 78].map((x) => (
+        <circle key={x} cx={x} cy="54" r="3.7" fill={g("oyna")} stroke={OYNA_CHET} strokeWidth="1.1" />
       ))}
-      {/* Kabina oynasi — burunga yaqin va qiyshaygan */}
-      <path d="M92 47c6.6 1.6 12 4 15.6 6.6l-17-1.4z" fill={g("oyna")}
+      {/* Kabina oynasi — burunga yaqin va uning egriligiga ergashadi */}
+      <path d="M89 46.6c6.8 1 12.6 3.2 16 6.2l-17.6-.6z" fill={g("oyna")}
         stroke={OYNA_CHET} strokeWidth="1.1" strokeLinejoin="round" />
 
-      {/* OLDINGI QANOT — tananing OLDIDA, keng va yorug'roq.
-          Uchi yumaloq: o'tkir burchak bu yoshdagi bolaga "tig'"
-          bo'lib ko'rinadi. */}
-      <path d="M76 60 50 92c-1 1.4-.4 2.6 1.4 2.6H62c1.4 0 2.4-.6 3.2-1.8L88 60z"
-        fill={g("kok")} />
-      <path d="M76 60 60 80h11l15-20z" fill="#5aa0f5" />
+      {/* ─── QANOT ───
+          BITTA qanot. Ilgari ikkitasi bor edi: uzoqdagisi tananing
+          ustidan chiqib turardi va ikkita ko'k tasma bo'lib
+          ko'rinardi — samolyot "7" raqamiga o'xshab qolgandi.
+          Yon tomondan qaraganda esa bir qanot ikkinchisini to'sadi,
+          ya'ni bittasi HAQIQATGA ham yaqinroq.
 
-      {/* DVIGATEL OLIB TASHLANDI.
-          U qanotning o'rtasida, ko'ndalang yotgan kulrang quvur
-          bo'lib ko'rinardi va qanotni ikkiga kesardi — natijada
-          samolyot emas, "ustiga trubka qo'yilgan ko'k tasma"
-          chiqardi. Bolalar uchun ikonkada dvigatel shart emas:
-          samolyotni tana, qanot va dum taniqli qiladi. */}
+          Ildizi KENG (tanada 28px), uchi tor va YUMALOQ: o'tkir
+          burchak bu yoshdagi bolaga "tig'" bo'lib ko'rinadi. */}
+      <path d="M62 63 44.6 85.6c-1.6 2-.4 4.6 2.2 4.6h14.4c1.8 0 3.2-.8 4.2-2.2L90 64z"
+        fill={g("moviy")} />
+      <path d="M62 63 51 77.4l10.6 1.6L76 63.6z" fill="#8adcf2" />
+
+      {/* ─── DVIGATEL ───
+          Qanotning OSTIDA va undan OLDINGA chiqib turadi — haqiqiy
+          samolyotda ham shunday osilgan. Ilgari u qanotning
+          O'RTASIGA chizilgandi va uni ikkiga kesib, "ko'k tasma
+          ustidagi quvur" bo'lib ko'rinardi; oldinga chiqarilgani esa
+          uni alohida narsa qilib ajratadi.
+
+          Oldida to'q havo olgich halqasi bor: aynan o'sha halqa
+          dvigatelni quvurdan ajratib turadi.
+
+          Pilon (dvigatelni qanotga bog'laydigan tayanch) chizilmadi:
+          nacellaning tepasi qanotga TEGIB turadi va pilon uning
+          ostida butunlay ko'rinmasdi — chizilgani esa qanot ustidagi
+          to'q ko'k "yamoq" bo'lib ko'rinardi. */}
+      <rect x="60.5" y="74.4" width="19.5" height="8.4" rx="4.2" fill={g("kulrang")} />
+      <path d="M65 74.7h14v2.6H64z" fill="#ffffff55" />
+      <ellipse cx="79.4" cy="78.6" rx="2.4" ry="4.2" fill="#3d4a5c" />
+      <ellipse cx="80" cy="78.6" rx="1.3" ry="2.7" fill="#22304d" />
+
+      </g>
     </g>
   );
 };

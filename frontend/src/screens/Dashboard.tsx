@@ -7,6 +7,7 @@ import { TilTugma } from "../components/TilTugma";
 import { getHisob, joriyProfil, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
 import { COURSES, lessonCount } from "../lib/curriculum";
+import { kursBelgi } from "../lib/chizma/kursBelgi";
 import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
@@ -305,6 +306,56 @@ function Sarlavha({ children, kech }: { children: React.ReactNode; kech: CSSProp
  * uchun ikkita ro'yxat bo'lganda ikkinchisi birinchisining davomi sifatida
  * sanaladi: kartalar yuqoridan pastga navbat bilan chiqadi.
  */
+/**
+ * Kurs belgisi — sinf kartasining chap tomonidagi plitka.
+ *
+ * ─────────── IKKI KO'RINISH ───────────
+ *
+ * 3D RASM. `src/rasm/kurs/<ic>.webp` bor bo'lsa, plitkaning o'zi
+ * shu rasm bo'ladi: kvadrat ham, belgi ham, yorug'lik ham unda
+ * chizilgan. Kartaning o'z rangli kvadrati bu holda CHIZILMAYDI —
+ * aks holda plitka plitka ustida turardi.
+ *
+ * ESKI KO'RINISH. Rasmi yo'q kurs (hozir — "Maktabgacha") avvalgidek
+ * ishlaydi: rangli kvadrat, ustida oq chiziqli belgi va tepadan
+ * tushgan yorug'lik. Ya'ni yangi rasm qo'shilmaguncha ham hech narsa
+ * buzilmaydi.
+ *
+ * "Tugadi" belgisi ikkalasida ham bir xil joyda — plitkaning o'ng
+ * pastki burchagida, chetidan chiqib turadi.
+ */
+function KursBelgi({ c, foiz, olcham }: {
+  c: Course; foiz: number; olcham: "katta" | "kichik";
+}) {
+  const rasm = kursBelgi(c.ic);
+  const color = UNIT_COLORS[c.color];
+  const olchov = olcham === "katta"
+    ? "size-12 rounded-[16px] sm:size-14 sm:rounded-[18px]"
+    : "size-11 rounded-[15px] sm:size-12";
+
+  return (
+    <span className={`relative grid shrink-0 place-items-center overflow-visible ${olchov}
+                      ${rasm ? "" : `text-white ${color.bg}`}`}>
+      {rasm ? (
+        <img src={rasm} alt="" className="size-full object-contain" />
+      ) : (
+        <>
+          <Icon name={c.ic} size={olcham === "katta" ? 27 : 25} />
+          {/* Ichki yorug'lik — tekis rangni hajmli qiladi */}
+          <span className="pointer-events-none absolute inset-0 rounded-[inherit]
+                           bg-gradient-to-b from-white/35 to-transparent" />
+        </>
+      )}
+      {foiz === 100 && (
+        <span className="absolute -right-1.5 -bottom-1.5 grid size-6 place-items-center rounded-full
+                         bg-brand-green text-white ring-3 ring-karta">
+          <Icon name="check" size={14} />
+        </span>
+      )}
+    </span>
+  );
+}
+
 function KursKarta({ c, i, progressOf, onOpen }: {
   c: Course; i: number;
   progressOf: (c: Course) => Progress;
@@ -314,7 +365,6 @@ function KursKarta({ c, i, progressOf, onOpen }: {
   const total = lessonCount(c);
   const done = Object.keys(p.done).length;
   const foiz = Math.round((done / total) * 100);
-  const color = UNIT_COLORS[c.color];
 
   return (
     /* `h-full` ikkalasida ham: yonma-yon turgan kartalarning matni turli
@@ -327,17 +377,7 @@ function KursKarta({ c, i, progressOf, onOpen }: {
         className="tugma-3d flex h-full w-full items-center gap-3 rounded-clay bg-karta/95 p-3
                    text-left shadow-clay backdrop-blur-sm sm:gap-3.5 sm:p-3.5"
         style={kech(110 + i * 70)}>
-        <span className={`relative grid size-12 shrink-0 place-items-center overflow-visible rounded-[16px] text-white sm:size-14 sm:rounded-[18px] ${color.bg}`}>
-          <Icon name={c.ic} size={27} />
-          {/* Ichki yorug'lik — tekis rangni hajmli qiladi */}
-          <span className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/35 to-transparent" />
-          {foiz === 100 && (
-            <span className="absolute -right-1.5 -bottom-1.5 grid size-6 place-items-center rounded-full
-                             bg-brand-green text-white ring-3 ring-karta">
-              <Icon name="check" size={14} />
-            </span>
-          )}
-        </span>
+        <KursBelgi c={c} foiz={foiz} olcham="katta" />
 
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline gap-2">
@@ -407,7 +447,6 @@ function SinfKarta({ c, i, progressOf, onOpen }: {
   const total = lessonCount(c);
   const done = Object.keys(p.done).length;
   const foiz = Math.round((done / total) * 100);
-  const color = UNIT_COLORS[c.color];
 
   return (
     <Reveal kech={i * 90} className="h-full">
@@ -416,18 +455,7 @@ function SinfKarta({ c, i, progressOf, onOpen }: {
                    shadow-clay backdrop-blur-sm sm:p-3.5"
         style={kech(110 + i * 70)}>
         <span className="flex w-full items-start gap-2">
-          <span className={`relative grid size-11 shrink-0 place-items-center overflow-visible
-                            rounded-[15px] text-white sm:size-12 ${color.bg}`}>
-            <Icon name={c.ic} size={25} />
-            <span className="pointer-events-none absolute inset-0 rounded-[inherit]
-                             bg-gradient-to-b from-white/35 to-transparent" />
-            {foiz === 100 && (
-              <span className="absolute -right-1.5 -bottom-1.5 grid size-6 place-items-center rounded-full
-                               bg-brand-green text-white ring-3 ring-karta">
-                <Icon name="check" size={14} />
-              </span>
-            )}
-          </span>
+          <KursBelgi c={c} foiz={foiz} olcham="kichik" />
           {done > 0 && (
             <span className="ml-auto font-display text-[12px] text-ink-dim">{foiz}%</span>
           )}
