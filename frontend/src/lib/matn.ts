@@ -110,6 +110,10 @@ const S = {
   darsTugallandi: ["{done} / {jami} dars tugallandi", "Уроков пройдено: {done} / {jami}"],
   bobDars: ["{n} dars", "уроков: {n}"],
   bobTugadi: [" · {n} tugadi", " · пройдено: {n}"],
+  // Dars yo'lidagi kartaning ikkinchi qatori. Tugallangan darsda uning
+  // o'rnida yulduzlar turadi — natija so'zdan kuchliroq gapiradi.
+  yolBoshlang: ["O'rganishni boshlang", "Начните обучение"],
+  yolOldinda: ["Hali oldinda", "Ещё впереди"],
   xatolarDaftari: ["Xatolar daftari", "Тетрадь ошибок"],
   takrorlash: ["Takrorlash", "Повторение"],
   daftarIzoh: [

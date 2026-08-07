@@ -522,9 +522,46 @@
   position: absolute;
   inset: -10px;
   border-radius: 9999px;
-  border: 3px solid var(--color-brand-orange);
+  /* Halqa rangi element bergan bo'lsa — o'shanikini oladi. Dars
+     yo'lida tugun bobning rangida bo'ladi va qat'iy to'q sariq halqa
+     uning ustida begona ko'rinardi. Bermasa — eski to'q sariq. */
+  border: 3px solid var(--az-pulse-rang, var(--color-brand-orange));
   animation: az-pulse 1.9s ease-out infinite;
   pointer-events: none;
+}
+
+/* ---- dars yo'li (components/RoadMap.tsx) ----
+
+   NUQTALAR OQIMI. Faqat keyingi qadamga ketayotgan bo'lakda ishlaydi:
+   butun yo'l bo'ylab oqsa, karta doimiy harakatga to'ladi va ko'z
+   darsni emas, oqimni kuzatadi. Bitta bo'lakda esa u savolga javob
+   beradi — "endi qayerga?".
+
+   `stroke-dashoffset` manfiy tomonga yuradi, ya'ni nuqtalar OLDINGA
+   (keyingi darsga) qarab siljiydi. Qadam 14 — `stroke-dasharray`
+   dagi bilan bir xil, shuning uchun halqa uzilmaydi. */
+@keyframes az-yol-oqim { to { stroke-dashoffset: -14; } }
+.az-yol-oqim { animation: az-yol-oqim 900ms linear infinite; }
+
+/* Tugun va kartalar birin-ketin paydo bo'ladi (kechikish `RoadMap.tsx`
+   da, tartib raqamiga ko'ra). Bob ochilganda hammasi birdaniga
+   chiqsa, ko'z qayerdan boshlashini bilmasdi; navbat bilan
+   kelganda esa nigoh birinchi darsdan oxirgisiga tomon o'zi yuradi —
+   ya'ni yo'lning yo'nalishi harakatning o'zida aytiladi.
+
+   Siljish `transform` EMAS, ALOHIDA `translate`/`scale` xossalari
+   bilan beriladi. Sabab qattiq: yo'ldagi hamma narsa absolyut
+   joylashgan va o'z o'rnini `transform` bilan topadi
+   (`-translate-x-1/2`, chapdagi kartada `translateX(-100%)`).
+   Animatsiya ham `transform` yozsa, u joylashuvni O'CHIRIB yuboradi va
+   tugunlar animatsiya davomida markazdan sakrab ketardi. Alohida
+   xossalar esa `transform` ga QO'SHILADI. */
+@keyframes az-yol-kir {
+  from { opacity: 0; translate: 0 10px; scale: 0.94; }
+  to   { opacity: 1; translate: 0 0;    scale: 1; }
+}
+.az-yol-kir {
+  animation: az-yol-kir 380ms cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
 }
 
 /* Diqqat: bu animatsiya faqat ICHKI elementga qo'yiladi va faqat Y bo'yicha
@@ -1072,6 +1109,8 @@
      Faqat suzib o'tish yo'qoladi: u sakrab paydo bo'ladi. */
   .az-tur-dog { transition: none; }
   .az-tur-gap { animation: none; }
+  .az-yol-oqim { animation: none; }
+  .az-yol-kir { animation: none; opacity: 1; translate: none; scale: none; }
   .az-pulse::after, .az-bob, .az-yaltir::before, .az-konfetti,
   .az-nur, .az-halqa, .az-naqsh, .az-yur { animation: none; }
   /* Yorug'lik yo'li harakatsiz holda "A" ustida oq dog' bo'lib qolmasin */

@@ -1,53 +1,57 @@
 /**
  * Aql Zone — dars yo'li (road map).
  *
- * ─────────── NEGA QAYTA YASALDI ───────────
+ * ─────────── NEGA YANA QAYTA YASALDI ───────────
  *
- * Avvalgi ko'rinishda uchta nuqson bor edi va uchalasi ham bitta
- * sababdan kelib chiqardi: yo'l MANZARALI FON ustida to'g'ridan-to'g'ri
- * chizilardi.
+ * Oldingi ko'rinish yo'lni OQ TASMA qilib chizardi: qalin lenta, ustida
+ * ingichka punktir, tugunlar esa bir xil bob rangida. U ishlardi, lekin
+ * ikkita narsani yo'qotardi.
  *
- *   YUVILIB KETGAN. Yo'l rangi `--color-yol` — deyarli shaffof kulrang.
- *   Ostidagi matematik belgilar naqshi undan o'tib ko'rinardi va yo'l
- *   "chizilmagan" bo'lib tuyulardi.
+ *   YO'L HAMMA NARSANI YEB QO'YARDI. 22px enli oq tasma kartaning eng
+ *   katta elementi edi va ko'z avval o'sha lentani, keyin darslarni
+ *   ko'rardi. Aslida esa asosiy narsa — DARSLAR, yo'l ular orasidagi
+ *   bog'lanish xolos.
  *
- *   O'LIK TUGUNLAR. Ochilmagan darslar tekis bej doira edi. Fon ham
- *   iliq rangda bo'lgani uchun ular fondan deyarli ajralmasdi —
- *   natijada yo'lning yarmi "bo'sh joy" bo'lib ko'rinardi.
+ *   BIR XIL TUGUNLAR. Hamma tugun bobning bitta rangida edi. Beshta
+ *   bir xil doira ustma-ust turganda ko'z ularni sanay olmasdi: qaysi
+ *   biri qayerda ekani faqat o'qib bilinardi.
  *
- *   OSILGAN YOZUVLAR. Dars nomlari hech qanday tayanchsiz, to'g'ridan-
- *   to'g'ri naqsh ustida turardi. Gah o'ngda, gah chapda — ko'z ularni
- *   ro'yxat sifatida o'qiy olmasdi.
- *
- * Endi yo'l O'Z YUZASIDA turadi: bobning rangiga bo'yalgan yumshoq
- * panel. Fon shu panel ostida qoladi va yo'l ham, tugun ham, yozuv ham
- * o'sha yuzada aniq ko'rinadi.
+ * Endi yo'l — NUQTALAR IZI, tugunlar esa har biri o'z rangida, hajmli
+ * (gradient + yumshoq nur) va oq halqa bilan yuzadan ko'tarilgan.
+ * Yozuvlar sarlavha va izohli kartaga aylandi, ya'ni bir qarashda
+ * "nima" va "qaysi holatda" degan ikkala savolga javob beradi.
  *
  * ─────────── O'ZGARMAGAN QARORLAR ───────────
  *
  *  1. Yo'l O'NG tomondan boshlanib chapga buriladi — bola qayerdan qadam
  *     tashlashini birinchi qarashda ko'radi.
- *  2. QULFLAR DEVORI yo'q. Ochilmagan darslar kichik va xira bo'ladi, lekin
- *     ustida qulf belgisi turmaydi. Qulflar qatori bolani "bu yerga hali
- *     yo'l yo'q" degan tuyg'u bilan to'xtatadi; xira tugun esa "hali oldinda"
- *     deb ko'rsatadi — bir xil ma'lumot, boshqa kayfiyat.
+ *  2. QULFLAR DEVORI yo'q. Ochilmagan darslarda qulf belgisi turmaydi:
+ *     ular kichikroq va och rangda bo'ladi. Qulflar qatori bolani "bu
+ *     yerga yo'l yo'q" degan tuyg'u bilan to'xtatadi; och tugun esa
+ *     "hali oldinda" deb ko'rsatadi — bir xil ma'lumot, boshqa kayfiyat.
  *  3. Yo'lning o'tilgan qismi bo'yalgan turadi, shunda mehnat ko'rinadi.
+ *  4. "Boshlash" pufagi tugun OSTIDA. Yon tomonda unga 320px enli
+ *     telefonda joy yo'q edi — chetdagi tugunda pufakning yarmi
+ *     kartadan tashqarida qolardi.
+ *  5. Yo'l o'z yuzasida (yumshoq panel) turadi — ostidagi matematik
+ *     naqsh nuqtalar orasidan o'tib, ularni yuvib yubormasligi kerak.
  */
+import type { CSSProperties } from "react";
 import { Icon } from "../lib/icons";
 import { UNIT_COLORS, lessonId, nodeState } from "../lib/types";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import type { Progress, Unit } from "../lib/types";
 
-const NODE = 70;         // tugallangan va joriy tugun o'lchami
-const NODE_SM = 52;      // ochilmagan tugun — kichikroq, bosim kamayadi
-const STEP = 98;         // tugunlar orasidagi vertikal masofa
+const NODE = 72;         // tugallangan va joriy tugun o'lchami
+const NODE_SM = 56;      // ochilmagan tugun — kichikroq, bosim kamayadi
+const STEP = 104;        // tugunlar orasidagi vertikal masofa
 const SVG_W = 252;       // yo'l chizig'i tuvali (markazga nisbatan ±126)
 
 /**
  * Ilon izi — o'ngdan boshlanadi.
  *
- * Chetki qiymat 58 (ilgari 72 edi). Sabab o'lchovda ko'rindi: yozuv
+ * Chetki qiymat 58 (ilgari 72 edi). Sabab o'lchovda ko'rindi: karta
  * tugunning bo'sh tomonida turadi va chetki tugunda unga atigi
  * `50% − 58 − gap` qoladi. 320px li telefonda bu ~60px edi — dars nomi
  * to'rt qatorga bo'linib ketardi.
@@ -61,7 +65,35 @@ const OFF = [58, 42, 0, -42, -58, -42, 0, 42];
  * darsning kengayuvchi halqasi (`az-pulse`) kesilib qolardi — ya'ni
  * "shu yerdasan" degan eng muhim ishora yarim ko'rinardi.
  */
-const PAD = 16;
+const PAD = 18;
+
+/**
+ * Tugun ranglari — dars tartibi bo'yicha aylanadi.
+ *
+ * NEGA HAR BIRI BOSHQA RANGDA. Bir xil rangdagi beshta doira ustma-ust
+ * turganda ular bitta uzun narsaga qo'shilib ketadi va bola "uchinchi
+ * dars" ni ko'z bilan topa olmaydi. Har birining o'z rangi bo'lsa,
+ * qatordagi o'rin RANG BILAN eslab qolinadi ("binafsha darsdan keyin
+ * ko'ki").
+ *
+ * YASHIL RO'YXATDA YO'Q va bu ataylab: yashil faqat TUGALLANGAN
+ * darsniki. U ro'yxatda ham qatnashsa, tugagan dars tugamaganidan
+ * farq qilmay qolardi.
+ */
+const TUGUN = ["#8b5cf6", "#3b82f6", "#ff9f43", "#ff7a6b", "#22b8cf", "#f5b301"];
+const TUGAGAN = "#3fbf6f";
+
+/** Rangning to'q juftligi — gradientning pastki chekkasi. */
+const quyuq = (r: string) => `color-mix(in srgb, ${r} 76%, #101a33)`;
+/**
+ * Ochilmagan tugun uchun — o'sha rang, lekin sutga qo'shilgan.
+ *
+ * 26% dan 38% ga ko'tarildi: ekranda o'lchanganda och qatordagi
+ * tugunlar deyarli oq bo'lib chiqdi va ichidagi belgi ham ko'rinmay
+ * ketdi — ya'ni "hali oldinda" o'rniga "bu yerda hech narsa yo'q"
+ * degan ma'no berardi.
+ */
+const och = (r: string) => `color-mix(in srgb, ${r} 38%, #fff)`;
 
 const offAt = (i: number) => OFF[i % OFF.length];
 const cx = (i: number) => SVG_W / 2 + offAt(i);
@@ -90,7 +122,7 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
   const n = U.lessons.length;
   // Oxirgi tugun ostida "Boshlash" pufagi uchun joy qoldiriladi — aks
   // holda oxirgi dars joriy bo'lganda pufak kartadan pastga chiqib ketardi.
-  const height = (n - 1) * STEP + NODE + 40;
+  const height = (n - 1) * STEP + NODE + 44;
   const color = UNIT_COLORS[U.color];
 
   // yo'lning bo'yalgan qismi — boshidan uzluksiz tugagan darslar
@@ -120,11 +152,27 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
           kabi yig'ilgan satr hech qachon CSS'ga tushmasdi. */}
       <div aria-hidden className="absolute inset-0 rounded-clay"
         style={{
-          backgroundColor: `${color.road}16`,
-          boxShadow: `inset 0 1px 0 rgb(255 255 255 / 0.55), inset 0 0 0 1px ${color.road}24`,
+          backgroundColor: `${color.road}12`,
+          boxShadow: `inset 0 1px 0 rgb(255 255 255 / 0.55), inset 0 0 0 1px ${color.road}20`,
         }} />
 
-      {/* yo'l chizig'i */}
+      {/* ---- yo'l: NUQTALAR IZI ----
+
+          Qalin oq tasma o'rniga mayda nuqtalar. Uch sababdan:
+
+            1. Tasma kartadagi eng katta shakl edi va tugunlarni
+               o'ziga tortib olardi. Nuqta esa o'zi ko'rinmaydi —
+               faqat YO'NALISH ko'rsatadi.
+            2. Nuqtalar orasidan panel yuzasi ko'rinib turadi, ya'ni
+               yo'l yuzaga chizilgan bo'lib qoladi, ustiga
+               yopishtirilgan lenta bo'lib emas.
+            3. Nuqta oqadi. Keyingi darsga ketayotgan bo'lak sekin
+               harakatlanadi va "shu tomonga" deb ko'rsatadi —
+               tasmada bunday ishorani berib bo'lmasdi.
+
+          `stroke-dasharray="0 14"` + yumaloq uchi — aynan shu juftlik
+          nuqta beradi: uzunligi nol bo'lgan chiziqcha yumaloq uch
+          bilan doiraga aylanadi. */}
       <svg
         className="pointer-events-none absolute left-1/2 -translate-x-1/2"
         style={{ top: PAD }}
@@ -134,36 +182,24 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
         aria-hidden="true"
       >
         {base && (
-          <>
-            {/* Yo'lning soyasi — bir piksel pastda, to'qroq. Usiz yo'l
-                yuzaga chizilgan tasma emas, unga YOPISHTIRILGAN
-                lenta bo'lib ko'rinardi. */}
-            <path d={base} fill="none" stroke="rgb(0 0 0 / 0.06)" strokeWidth={23}
-              strokeLinecap="round" transform="translate(0 2)" />
-            {/* CHEGARA — bob rangida, juda past to'yinganlikda.
-                Usiz yo'l ham, yozuv pufakchalari ham oq bo'lib, ular
-                bir-biriga qo'shilib ketardi: ko'z yo'lning qayerda
-                tugab, yozuv qayerdan boshlanganini ajrata olmasdi. */}
-            <path d={base} fill="none" stroke={`${color.road}3a`} strokeWidth={22}
-              strokeLinecap="round" />
-            <path d={base} fill="none" stroke="var(--color-karta)" strokeWidth={18}
-              strokeLinecap="round" />
-            {/* O'rtadagi punktir — yo'l ekanini aytadigan yagona belgi */}
-            <path d={base} fill="none" stroke={`${color.road}66`} strokeWidth={3}
-              strokeLinecap="round" strokeDasharray="1 11" />
-          </>
+          <path d={base} fill="none" stroke={`${color.road}8c`} strokeWidth={6.5}
+            strokeLinecap="round" strokeDasharray="0 14" />
         )}
         {paved > 0 && (
-          <>
-            {/* O'TILGAN QISM to'liq bo'yalgan, yarim shaffof emas.
-                Ilgari u `opacity 0.5` bilan chizilardi va tugagan yo'l
-                tugamaganidan deyarli farq qilmasdi — ya'ni bola
-                qilgan mehnati ko'rinmasdi. */}
-            <path d={road(0, paved)} fill="none" stroke={color.road} strokeWidth={22}
-              strokeLinecap="round" />
-            <path d={road(0, paved)} fill="none" stroke="rgb(255 255 255 / 0.5)"
-              strokeWidth={4} strokeLinecap="round" strokeDasharray="1 11" />
-          </>
+          /* O'TILGAN QISM to'liq rangda, yarim shaffof emas. Ilgari u
+             `opacity 0.5` bilan chizilardi va tugagan yo'l tugamaganidan
+             deyarli farq qilmasdi — ya'ni bola qilgan mehnati
+             ko'rinmasdi. */
+          <path d={road(0, paved)} fill="none" stroke={TUGAGAN} strokeWidth={6}
+            strokeLinecap="round" strokeDasharray="0 14" />
+        )}
+        {/* Keyingi qadam — oqadigan nuqtalar. Faqat BITTA bo'lakda:
+            butun yo'l bo'ylab oqsa, u doimiy harakatga aylanadi va
+            ko'z darsni emas, oqimni kuzatadi. */}
+        {paved >= 0 && paved < n - 1 && (
+          <path className="az-yol-oqim" d={road(paved, paved + 1)} fill="none"
+            stroke={color.road} strokeWidth={6} strokeLinecap="round"
+            strokeDasharray="0 14" />
         )}
       </svg>
 
@@ -175,9 +211,22 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
         const off = offAt(li);
         const top = PAD + li * STEP + (NODE - size) / 2;  // markazi bir chizig'da qolsin
 
-        // yozuv tugunning bo'sh tomonida turadi
+        // Tugunning rangi: tugagani — yashil, joriysi — bobniki (bola
+        // qaysi bobda turganini shu rangdan biladi), qolgani —
+        // ro'yxatdan navbat bilan.
+        const rang = st === "done" ? TUGAGAN
+          : st === "current" ? color.road
+            : TUGUN[li % TUGUN.length];
+
+        // karta tugunning bo'sh tomonida turadi
         const onRight = off <= 0;
-        const gap = size / 2 + 10;
+        const gap = size / 2 + 12;
+
+        // Paydo bo'lish kechikishi — tugun, pufak va karta BIRGA
+        // kelishi kerak. O'ram elementiga qo'yib bo'lmaydi: `transform`
+        // li o'ram absolyut bolalar uchun yangi tayanch yasaydi va
+        // ular animatsiya davomida uning burchagiga yopishib qolardi.
+        const kir = { animationDelay: `${li * 70}ms` };
 
         return (
           <div key={li}>
@@ -187,41 +236,47 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
               onClick={() => onStart(unitIndex, li)}
               title={kursMatn(L.n).split(" · ")[0]}
               style={{
+                ...kir,
                 top, left: `calc(50% + ${off}px)`, width: size, height: size,
-                ...(locked ? {} : { backgroundColor: color.road }),
+                /* HAJM UCH QATLAMDAN. Gradient (tepasi yorug', pasti
+                   quyuq) shaklni yassilikdan chiqaradi; oq halqa uni
+                   yuzadan ajratadi; rangli nur esa ko'tarib turadi.
+                   Nur SOYA EMAS, o'sha tugunning rangida — shuning
+                   uchun u "qorong'i dog'" bo'lib ko'rinmaydi. */
+                background: locked
+                  ? `linear-gradient(180deg, color-mix(in srgb, ${rang} 16%, #fff), ${och(rang)})`
+                  : `linear-gradient(180deg, ${rang}, ${quyuq(rang)})`,
+                boxShadow: locked
+                  ? `0 4px 10px -4px ${rang}88, inset 0 0 0 1px ${rang}44`
+                  : `0 8px 18px -6px ${rang}, 0 2px 4px rgb(0 0 0 / 0.12)`,
+                // Ochilmagan tugunda BELGI to'q qoladi — xiralik yuzada
+                // bo'lsin, mazmunda emas: shakl tanilib turishi kerak.
+                color: locked ? `color-mix(in srgb, ${rang} 72%, #2b3556)` : "#fff",
+                // Kengayuvchi halqa ("shu yerdasan") tugun rangida.
+                ...(st === "current" ? { "--az-pulse-rang": rang } as CSSProperties : {}),
               }}
               className={[
-                "absolute -translate-x-1/2 rounded-full grid place-items-center",
-                "transition-[transform,box-shadow] duration-100",
-                locked
-                  /* OCHILMAGAN tugun endi bej emas, OQ karta: yuzadan
-                     ajralib turadi va "bo'sh joy" bo'lib ko'rinmaydi.
-                     Xiraligi rangda emas, ICHIDAGI belgining
-                     to'qligida — shakl aniq, mazmuni esa hali kutmoqda. */
-                  ? "bg-karta/70 text-ink-dim shadow-[0_2px_0_rgb(0_0_0/0.08)] cursor-default"
-                  : "text-white border-4 border-karta shadow-node active:translate-y-1 cursor-pointer",
+                "az-yol-kir absolute -translate-x-1/2 rounded-full grid place-items-center",
+                "border-4 border-karta transition-transform duration-100",
+                locked ? "cursor-default" : "active:translate-y-1 cursor-pointer",
                 st === "current" ? "az-pulse" : "",
               ].join(" ")}
             >
-              {st === "done" ? (
-                <Icon name="check" size={30} />
-              ) : (
-                <Icon name={L.ic} size={locked ? 22 : 28} />
+              {/* Yuqori chetdagi yorug'lik — yuza silliq ekanining
+                  ishorasi. Belgidan OLDIN chiziladi, ya'ni uning
+                  ostida qoladi. */}
+              {!locked && (
+                <span aria-hidden className="absolute inset-x-1.5 top-1 h-1/2 rounded-full
+                                             bg-gradient-to-b from-white/40 to-transparent" />
               )}
-
-              {/* YULDUZLAR TUGUN USTIDA, yozuvda emas.
-                  Ilgari ular dars nomining ostida turardi va uzun nomli
-                  darsda yozuv uch qatorga cho'zilib ketardi. Tugunning
-                  o'zida esa ular natijaning BELGISI bo'lib turadi —
-                  o'yinlardagi kabi. */}
-              {stars > 0 && (
-                <span className="absolute -bottom-2 flex rounded-full bg-karta px-1 py-px
-                                 shadow-[0_2px_4px_rgb(0_0_0/0.15)]">
-                  {Array.from({ length: stars }, (_, i) => (
-                    <Icon key={i} name="star" size={11} className="text-brand-gold" />
-                  ))}
-                </span>
-              )}
+              {/* Belgi chizig'i bu yerda QALINROQ (2.8): rangli gradient
+                  ustida 2.4 lik oq chiziq ingichka bo'lib, uzoqdan
+                  yo'qolib ketardi. */}
+              <span className="relative">
+                {st === "done"
+                  ? <Icon name="check" size={30} strokeWidth={3} />
+                  : <Icon name={L.ic} size={locked ? 24 : 30} strokeWidth={2.8} />}
+              </span>
             </button>
 
             {/* "Boshlash" pufagi tugun OSTIDA, markazi bilan tekislangan.
@@ -233,19 +288,27 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
                 markazi tugun markazi bilan bir xil. */}
             {st === "current" && (
               <div
-                style={{ top: PAD + li * STEP + NODE + 8, left: `calc(50% + ${off}px)` }}
-                className="absolute z-10 -translate-x-1/2"
+                style={{ ...kir, top: PAD + li * STEP + NODE + 10, left: `calc(50% + ${off}px)` }}
+                className="az-yol-kir absolute z-10 -translate-x-1/2"
               >
-                <span className="az-bob block rounded-full bg-brand-orange px-3.5 py-1
-                                 font-display text-[12.5px] whitespace-nowrap text-white
-                                 shadow-[0_3px_0_var(--color-brand-orange-d)]">
-                  {t("boshlash")}
+                <span
+                  style={{ background: `linear-gradient(180deg, ${color.road}, ${quyuq(color.road)})` }}
+                  className="az-bob relative block rounded-full px-4 py-1.5 font-display
+                             text-[12.5px] whitespace-nowrap text-white
+                             shadow-[0_6px_14px_-4px_rgb(0_0_0/0.35)]"
+                >
+                  {/* Dumcha — pufak aynan SHU tugunga tegishli ekanini
+                      aytadi. Usiz u ikki tugun orasida osilgan mustaqil
+                      tugmaga o'xshab ketardi. */}
+                  <span aria-hidden style={{ background: color.road }}
+                    className="absolute -top-1 left-1/2 size-2.5 -translate-x-1/2 rotate-45 rounded-[2px]" />
+                  <span className="relative">{t("boshlash")}</span>
                 </span>
               </div>
             )}
 
-            <Yozuv nom={kursMatn(L.n)} li={li} off={off} gap={gap}
-              onRight={onRight} locked={locked} pad={PAD} />
+            <Karta nom={kursMatn(L.n)} li={li} off={off} gap={gap} onRight={onRight}
+              locked={locked} joriy={st === "current"} stars={stars} pad={PAD} kir={kir} />
           </div>
         );
       })}
@@ -254,19 +317,27 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
 }
 
 /**
- * Dars nomi — endi PUFAKCHA ichida.
+ * Dars kartasi — sarlavha va uning ostida ikkinchi qator.
  *
- * Ilgari u yalang'och matn edi va manzarali fon ustida o'qish qiyin
- * bo'lardi: naqshning chizig'i harflar orasidan o'tardi. Pufakcha esa
- * matnga o'z yuzasini beradi va butun ro'yxatni bir xil qiladi — ko'z
- * endi ularni QATOR sifatida o'qiydi, tarqoq yozuvlar sifatida emas.
+ * Ilgari bu yerda faqat dars nomi turardi. Bitta qator bilan karta
+ * "shunchaki yorliq" edi va bola undan HOLATNI o'qiy olmasdi: tugagan
+ * dars ham, hali ochilmagani ham bir xil oq to'rtburchak bo'lib
+ * turardi. Farq faqat tugunning rangida edi — ya'ni yozuvni o'qiyotgan
+ * ko'z uchun hech qayerda.
  *
- * Ochilmagan darsda pufakcha SHAFFOFROQ: u bor, lekin o'ziga
- * chaqirmaydi.
+ * Endi ikkinchi qator holatni aytadi va u har holatda BOSHQA narsa:
+ *
+ *   tugagan     yulduzlar — natija so'zdan kuchliroq gapiradi
+ *   joriy       "O'rganishni boshlang"
+ *   ochilmagan  "Hali oldinda" — qulf emas, kutish
+ *
+ * Ochilmagan kartada yuza shaffofroq: u bor, lekin o'ziga chaqirmaydi.
  */
-function Yozuv({ nom, li, off, gap, onRight, locked, pad }: {
+function Karta({ nom, li, off, gap, onRight, locked, joriy, stars, pad, kir }: {
   nom: string; li: number; off: number; gap: number;
-  onRight: boolean; locked: boolean; pad: number;
+  onRight: boolean; locked: boolean; joriy: boolean; stars: number; pad: number;
+  /** Paydo bo'lish kechikishi — tugun bilan bir vaqtda kelishi uchun. */
+  kir: CSSProperties;
 }) {
   // Dars nomining ikkinchi qismi — darslik betlari ("· 12–14-bet").
   // Yo'lda u ortiqcha: bola betlarni izlamaydi, ota-ona esa ularni
@@ -276,24 +347,43 @@ function Yozuv({ nom, li, off, gap, onRight, locked, pad }: {
   return (
     <div
       style={{
+        ...kir,
         top: pad + li * STEP,
         height: NODE,
-        width: `min(122px, calc(50% - ${gap + 14}px))`,
+        width: `min(140px, calc(50% - ${gap + 12}px))`,
         ...(onRight
           ? { left: `calc(50% + ${off + gap}px)` }
           : { left: `calc(50% + ${off - gap}px)`, transform: "translateX(-100%)" }),
       }}
-      className="absolute flex items-center"
+      className="az-yol-kir absolute flex items-center"
     >
-      <span
-        className={`rounded-xl px-2.5 py-1.5 text-[12.5px] leading-tight
+      <div
+        className={`rounded-2xl px-3 py-2 leading-tight
                     ${onRight ? "text-left" : "ml-auto text-right"}
                     ${locked
-                      ? "bg-karta/45 text-ink-dim"
-                      : "bg-karta text-ink shadow-[0_2px_5px_rgb(0_0_0/0.08)]"}`}
+                      ? "bg-karta/55 shadow-[0_2px_6px_-2px_rgb(0_0_0/0.08)]"
+                      : "bg-karta shadow-[0_6px_16px_-6px_rgb(0_0_0/0.28)]"}`}
       >
-        {asosiy}
-      </span>
+        <div className={`font-display text-[12.5px] ${locked ? "text-ink-dim" : "text-ink"}`}>
+          {asosiy}
+        </div>
+
+        {/* Yulduzlar KARTADA, tugunda emas. Tugun ostida ular o'zining
+            oq yostig'i bilan turardi va qo'shni dars nomiga tegib
+            ketardi; kartada esa ular o'z qatorida yotadi va tugun toza
+            qoladi. */}
+        {stars > 0 ? (
+          <div className={`mt-0.5 flex gap-px ${onRight ? "" : "justify-end"}`}>
+            {Array.from({ length: stars }, (_, i) => (
+              <Icon key={i} name="star" size={12} className="text-brand-gold" />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-0.5 text-[10px] text-ink-dim">
+            {joriy ? t("yolBoshlang") : t("yolOldinda")}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
