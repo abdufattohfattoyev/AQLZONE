@@ -233,6 +233,22 @@ const PATHS = {
       <path d="M10.6 18.4h2.8" />
     </>
   ),
+  // Yorug'lik tanlagichi uchun. Nega `star`/`starOff` emas: yulduz bu
+  // ilovada ALLAQACHON band — u darsning o'lchovi va yuqorida hisob
+  // blokida turadi. O'sha belgi tema tugmasida ham chiqsa, ikkisi bir
+  // qatorda yonma-yon ko'rinardi va tugma "yulduz beradi" degan
+  // ma'noni olardi.
+  quyosh: (
+    <>
+      <circle cx="12" cy="12" r="4.2" />
+      <path d="M12 2.6v2.4M12 19v2.4M2.6 12h2.4M19 12h2.4
+               M5.4 5.4l1.7 1.7M16.9 16.9l1.7 1.7M18.6 5.4l-1.7 1.7M7.1 16.9l-1.7 1.7" />
+    </>
+  ),
+  // Yarim oy — to'liq doiradan ikkinchisi "kesib" olingandek. Ataylab
+  // ingichka emas: kichik o'lchamda juda nozik yarim oy chiziqqa
+  // aylanib qolardi.
+  oy: <path d="M20.2 14.8A8.6 8.6 0 019.2 3.8a8.6 8.6 0 1011 11z" />,
   // Telegram uchun — qog'oz samolyot
   send: <path d="M20.5 3.5L2.8 10.4l6.1 2.3 2.3 6.1z M8.9 12.7l11.6-9.2" />,
   // Karnay: savolni qayta eshitish. To'lqinlar ataylab ikkita — bittasi

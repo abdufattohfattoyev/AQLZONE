@@ -249,6 +249,12 @@ const S = {
     "Язык приложения и бота.",
   ],
 
+  /* Yorug'lik satri ham qisqa — sababi til satri bilan bir xil. */
+  menyuYoruglikIzoh: [
+    "Oq, qora yoki telefondagidek.",
+    "Светлое, тёмное или как в телефоне.",
+  ],
+
   /* ---------------- menyu: ball qanday yig'iladi ----------------
      Eng ko'p so'raladigan savol. Ilgari javob hech qayerda yozilmagan
      edi: yulduz darsdan, tanga o'yindan kelardi va farqni faqat uzoq

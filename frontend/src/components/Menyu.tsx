@@ -51,6 +51,7 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { TilTugma } from "./TilTugma";
+import { YoruglikTugma } from "./YoruglikTugma";
 import { UNIT_COLORS } from "../lib/types";
 import type { Course } from "../lib/curriculum";
 import { profilSoni } from "../lib/api";
@@ -307,6 +308,26 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
                 </span>
               </span>
               <TilTugma className="shrink-0" />
+            </div>
+
+            {/* Yorug'lik — til bilan bir xil qoidada: satr o'zi ish
+                bajaradi, ekran almashmaydi.
+
+                Menyuda ham turishi kerak, garchi bosh sahifaning
+                tepasida allaqachon bo'lsa ham: darsning o'rtasida qora
+                rejimga o'tmoqchi bo'lgan odam bosh sahifaga qaytishi
+                shart emas, menyu esa har ekranning pastidan ochiladi. */}
+            <div className="flex items-center gap-2.5 px-3 py-2">
+              <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-track text-ink-soft">
+                <Icon name="oy" size={17} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[13px] leading-tight">{t("yoruglikSarlavha")}</span>
+                <span className="mt-px block truncate text-[11px] leading-snug text-ink-soft">
+                  {t("menyuYoruglikIzoh")}
+                </span>
+              </span>
+              <YoruglikTugma className="shrink-0" />
             </div>
           </Bolim>
 

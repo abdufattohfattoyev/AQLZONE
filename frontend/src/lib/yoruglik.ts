@@ -78,6 +78,27 @@ export function yoruglikniQoy(y: Yoruglik): void {
     localStorage.setItem(YORUGLIK_KEY, y);
   } catch { /* xotira bloklangan — bu safar ishlaydi, esda qolmaydi */ }
   qolla(y);
+  for (const fn of tinglovchilar) fn();
+}
+
+/* ------------------------------------------------------ obunachilar */
+
+/**
+ * Tanlov o'zgarganini eshitadiganlar.
+ *
+ * RANGLAR uchun bu kerak emas: ular CSS o'zgaruvchisidan keladi va
+ * atribut almashishi bilan o'zi yangilanadi. Kerak bo'ladigan narsa —
+ * TUGMANING O'ZI: ekranda bir vaqtda ikkita tanlagich turishi mumkin
+ * (menyu tepasidagisi va Sozlamalar ichidagisi). Obuna bo'lmasa,
+ * birida bosilgan tanlov ikkinchisida eski holicha qolib ketardi va
+ * odam ilova uni eslab qolmadi deb o'ylardi.
+ */
+const tinglovchilar = new Set<() => void>();
+
+/** Obuna. Qaytariladigan funksiya obunani bekor qiladi. */
+export function obuna(fn: () => void): () => void {
+  tinglovchilar.add(fn);
+  return () => { tinglovchilar.delete(fn); };
 }
 
 /** Hujjatga atributni qo'yadi. */

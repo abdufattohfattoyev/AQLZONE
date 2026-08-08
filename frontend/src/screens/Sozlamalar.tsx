@@ -30,8 +30,8 @@ import type { Hisob } from "../lib/api";
 import { t } from "../lib/matn";
 import { TILLAR, til, tilniAlmashtir } from "../lib/til";
 import { tebrat, useOrqaga } from "../lib/qobiq";
-import { yoruglikniOqi, yoruglikniQoy } from "../lib/yoruglik";
-import type { Yoruglik } from "../lib/yoruglik";
+import { yoruglikniQoy } from "../lib/yoruglik";
+import { useYoruglik } from "../components/YoruglikTugma";
 
 interface Props {
   onBack: () => void;
@@ -68,9 +68,11 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
   const [ism, setIsm] = useState(() => tozala(boshlangich?.ism ?? ""));
   const [familiya, setFamiliya] = useState(() => tozala(boshlangich?.familiya ?? ""));
   const [band, setBand] = useState(false);
-  // Yorug'lik hujjat atributida turadi; bu holat faqat qaysi tugma
-  // tanlangan ko'rinishi uchun — saqlash `yoruglikniQoy` da.
-  const [yoruglik, setYoruglik] = useState<Yoruglik>(yoruglikniOqi);
+  // Yorug'lik hujjat atributida turadi; bu faqat qaysi tugma tanlangan
+  // ko'rinishi uchun — saqlash `yoruglikniQoy` da. `useState` emas,
+  // chunki xuddi shu tanlov menyu ichida ham bor: u yerda bosilganda
+  // bu ekrandagi tugma eski holicha qolib ketardi.
+  const yoruglik = useYoruglik();
   const [holat, setHolat] = useState<"" | "saqlandi">("");
   const [xato, setXato] = useState("");
   const [bot, setBot] = useState("");
@@ -255,13 +257,13 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
         <div className="mt-3 flex gap-2">
           {([
             { kod: "avto", nom: t("yoruglikAvto"), ikon: "phone" },
-            { kod: "oq", nom: t("yoruglikOq"), ikon: "star" },
-            { kod: "qora", nom: t("yoruglikQora"), ikon: "starOff" },
+            { kod: "oq", nom: t("yoruglikOq"), ikon: "quyosh" },
+            { kod: "qora", nom: t("yoruglikQora"), ikon: "oy" },
           ] as const).map((x) => {
             const shu = x.kod === yoruglik;
             return (
               <button key={x.kod} type="button"
-                onClick={() => { yoruglikniQoy(x.kod); setYoruglik(x.kod); tebrat("tanlov"); }}
+                onClick={() => { yoruglikniQoy(x.kod); tebrat("tanlov"); }}
                 aria-current={shu ? "true" : undefined}
                 className={`clay-press flex flex-1 flex-col items-center justify-center gap-1
                   rounded-3xl py-2.5 font-display text-[13px] ${

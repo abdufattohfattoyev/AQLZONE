@@ -4,6 +4,7 @@ import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { Reveal } from "../components/Reveal";
 import { TilTugma } from "../components/TilTugma";
+import { YoruglikTugma } from "../components/YoruglikTugma";
 import { getHisob, joriyProfil, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
 import { COURSES, lessonCount } from "../lib/curriculum";
@@ -81,15 +82,20 @@ export function Dashboard({
        ekrandan chiqib ketardi. */
     <div className="mx-auto w-full max-w-[430px] px-3.5 pt-[clamp(6px,1.5vh,14px)]
                     pb-10 sm:max-w-[700px] sm:px-6 lg:max-w-[1020px]">
-      {/* ---- til ----
+      {/* ---- ko'rinish: yorug'lik va til ----
           Eng tepada, o'ng chetda. Bosh sahifa brendning kirish eshigi va
           til shu yerda tanlanadi: noto'g'ri tilda ochilgan ilovada odam
           qolgan hech narsani o'qiy olmaydi.
 
+          Yorug'lik CHAPDA turadi: til tanlovi bir marta qilinadi va
+          unutiladi, qora rejim esa kunda ikki marta bosilishi mumkin —
+          ya'ni u ekran chetiga emas, barmoqqa yaqinroq joyga loyiq.
+
           Sarlavhadan TASHQARIDA turadi va bu ataylab: `header` markazga
           tekislangan, tugma esa chetga suriladi — ikkisini bitta oqimga
           qo'ysak, logo markazdan siljib ketardi. */}
-      <div className="az-kirish flex justify-end">
+      <div className="az-kirish flex items-center justify-end gap-2">
+        <YoruglikTugma />
         <TilTugma />
       </div>
 
