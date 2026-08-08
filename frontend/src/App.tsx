@@ -5,27 +5,45 @@
  * noto'g'ri bo'lsa — masalan bola havolani qo'lda o'zgartirsa yoki kurs
  * o'chirilgan bo'lsa — bo'sh ekran o'rniga tushunarli sahifa ko'rsatiladi.
  */
-import { useEffect, useMemo } from "react";
+import { Suspense, lazy, useEffect, useMemo } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Panel, TepagaQayt, panelKerakmi } from "./components/Panel";
-import { Dashboard } from "./screens/Dashboard";
-import { Home } from "./screens/Home";
-import { Lesson } from "./screens/Lesson";
-import { Dokon } from "./screens/Dokon";
-import { Nishonlar } from "./screens/Nishonlar";
-import { OtaOna } from "./screens/OtaOna";
-import { Profillar } from "./screens/Profillar";
-import { Reyting } from "./screens/Reyting";
-import { Sozlamalar } from "./screens/Sozlamalar";
-import { KodKirish } from "./screens/KodKirish";
+import { Kutish } from "./components/Kutish";
 import { NotFound } from "./screens/NotFound";
-import { Oyinlar } from "./screens/Oyinlar";
-import { Maydon } from "./screens/Maydon";
-import { Duel, DuelQabul } from "./screens/Duel";
-import { OyinDaraja } from "./screens/OyinDaraja";
-import { Oyin } from "./screens/Oyin";
-import { Kichkintoy } from "./screens/Kichkintoy";
-import { KichkintoyMavzu } from "./screens/KichkintoyMavzu";
+
+/* ---------------------------------------------------------------- ekranlar
+ *
+ * Uchtasi DARHOL yuklanadi — ilova ochilishi bilan shular kerak bo'ladi:
+ * kurslar ro'yxati, kurs yo'li va dars. Bola ilovani aynan shu uchtasi
+ * uchun ochadi.
+ *
+ * Qolganlari ALOHIDA fayl bo'lib ajratiladi va faqat o'sha ekran
+ * ochilganda yuklanadi. Sabab o'lchangan: hammasi bitta faylda turganda
+ * yig'ilgan JS 797 KB edi va telefon uni har ochilishda TO'LIQ o'qib
+ * chiqardi — duel, kichkintoylar bo'limi va sozlamalar bilan birga,
+ * ularni o'sha kirishda umuman ochmasa ham.
+ *
+ * Ajratish faqat birinchi ochilishga ta'sir qiladi: keyin har bir bo'lak
+ * Service Worker keshida qoladi.
+ */
+const Dashboard = lazy(() => import("./screens/Dashboard").then((m) => ({ default: m.Dashboard })));
+const Home = lazy(() => import("./screens/Home").then((m) => ({ default: m.Home })));
+const Lesson = lazy(() => import("./screens/Lesson").then((m) => ({ default: m.Lesson })));
+const Dokon = lazy(() => import("./screens/Dokon").then((m) => ({ default: m.Dokon })));
+const Nishonlar = lazy(() => import("./screens/Nishonlar").then((m) => ({ default: m.Nishonlar })));
+const OtaOna = lazy(() => import("./screens/OtaOna").then((m) => ({ default: m.OtaOna })));
+const Profillar = lazy(() => import("./screens/Profillar").then((m) => ({ default: m.Profillar })));
+const Reyting = lazy(() => import("./screens/Reyting").then((m) => ({ default: m.Reyting })));
+const Sozlamalar = lazy(() => import("./screens/Sozlamalar").then((m) => ({ default: m.Sozlamalar })));
+const KodKirish = lazy(() => import("./screens/KodKirish").then((m) => ({ default: m.KodKirish })));
+const Oyinlar = lazy(() => import("./screens/Oyinlar").then((m) => ({ default: m.Oyinlar })));
+const Maydon = lazy(() => import("./screens/Maydon").then((m) => ({ default: m.Maydon })));
+const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel })));
+const DuelQabul = lazy(() => import("./screens/Duel").then((m) => ({ default: m.DuelQabul })));
+const OyinDaraja = lazy(() => import("./screens/OyinDaraja").then((m) => ({ default: m.OyinDaraja })));
+const Oyin = lazy(() => import("./screens/Oyin").then((m) => ({ default: m.Oyin })));
+const Kichkintoy = lazy(() => import("./screens/Kichkintoy").then((m) => ({ default: m.Kichkintoy })));
+const KichkintoyMavzu = lazy(() => import("./screens/KichkintoyMavzu").then((m) => ({ default: m.KichkintoyMavzu })));
 import { mavzuById } from "./lib/kichkintoy";
 import { oyinById } from "./lib/oyin";
 import { darajaniOqi } from "./lib/oyin/tur";
@@ -64,7 +82,11 @@ export default function App() {
 }
 
 function Yollar() {
+  // Ekran alohida fayldan kelayotgan bir necha yuz millisekundda nima
+  // ko'rinadi: `Kutish` — ilovaning o'z yuklanish belgisi. Bo'sh ekran
+  // qoldirilsa, sekin internetda ilova "o'chib qolgandek" tuyulardi.
   return (
+    <Suspense fallback={<Kutish />}>
     <Routes>
       <Route path="/" element={<KurslarSahifasi />} />
       <Route path="/profillar" element={<ProfilSahifasi />} />
@@ -103,6 +125,7 @@ function Yollar() {
       <Route path="/index.html" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
   );
 }
 

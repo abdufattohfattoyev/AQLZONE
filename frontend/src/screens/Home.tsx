@@ -250,7 +250,7 @@ export function Home({
           const isOpen = open === ui;
           return (
             <Reveal key={ui} kech={Math.min(ui, 4) * 60}>
-            <section className="az-shisha overflow-hidden rounded-clay"
+            <section className="az-shisha az-bob overflow-hidden rounded-clay"
               style={{ "--az-kech": `${80 + ui * 45}ms` } as CSSProperties}>
               {/* Yo'lboshchi bobning faqat SARLAVHASINI yoritadi, butun
                   bo'limni emas: ochilgan bob ichida dars yo'li bor va u

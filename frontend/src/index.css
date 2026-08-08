@@ -361,6 +361,36 @@
   to { -webkit-mask-position: 1360px -1020px; mask-position: 1360px -1020px; }
 }
 
+/* ============================================================
+   NAQSH TELEFONDA QIMIRLAMAYDI — va bu ataylab.
+
+   `mask-position` ni GPU jonlantira olmaydi: har kadrda brauzer
+   qatlamni QAYTADAN BO'YAYDI. Qatlam esa ekrandan 1,5 barobar katta va
+   ular uchta — ya'ni har kadrda taxminan olti ekranlik yuza qayta
+   chiziladi. Hech kim ekranga tegmasa ham, doimiy.
+
+   O'lchandi: shu uchta animatsiya yoniq turganda telefonda aylantirish
+   uchun kadr byudjetidan deyarli hech narsa qolmaydi va sahifa "qotib"
+   qoladi.
+
+   Nima yo'qoladi: 90–240 soniyada bir marta aylanadigan sekin siljish.
+   Uni deyarli hech kim sezmaydi. Naqshning O'ZI, uch qavatliligi,
+   chuqurlik hissi va aylantirishdagi parallaks (u `translate` orqali,
+   ya'ni GPU'da) — hammasi joyida qoladi.
+
+   Sichqonchali katta ekranda animatsiya qoladi: u yerda qayta bo'yash
+   narxi sezilmaydi va effekt o'rinli. */
+@media (hover: none), (max-width: 900px), (prefers-reduced-motion: reduce) {
+  .az-naqsh-1,
+  .az-naqsh-2,
+  .az-naqsh-3 {
+    animation: none;
+    /* `will-change` ham olib tashlanadi: animatsiya yo'q joyda u faqat
+       qo'shimcha qatlam va xotira — foydasi yo'q. */
+    will-change: auto;
+  }
+}
+
 /* Chetlarni so'ndiruvchi qatlam. Naqsh markazda kuchli, chekkalarda
    yo'qoladi: shunda u matnga raqobat qilmaydi va ekran chetida kesilgan
    belgilar ko'zga tashlanmaydi. */
@@ -444,10 +474,44 @@
                   har doim tepadan tushadi, ko'z hajmni aynan shundan
                   o'qiydi — soyaning o'zi yetarli emas.
    ============================================================ */
+/* Shisha effekti BIR NECHTA bo'lganda `backdrop-filter` ishlatilmaydi.
+   Sabab o'lchangan: yo'l xaritasida bob kartalari 22 tagacha bo'ladi va
+   har biri alohida `backdrop-filter` qatlami — brauzer aylantirishning
+   HAR KADRIDA o'sha yigirma ikkita joyning ostidagi fonni qaytadan
+   xiralashtiradi. Telefonda bu kadr byudjetini (16,7 ms) bir necha
+   barobar oshirib yuboradi va sahifa "qotib" qoladi.
+
+   O'rniga yuza QUYUQROQ qilinadi: 45% o'rniga 88%. Matn ostidagi tog'
+   baribir ko'rinmaydi — maqsad shu edi — lekin GPU hech narsa
+   hisoblamaydi. Chekkalarda manzara sal sezilib turadi, ya'ni karta
+   hamon "yopishtirilgan qog'oz" emas.
+
+   Xiralashtirish FAQAT bittalab turadigan yuzalarda qoladi (modal
+   ortidagi parda, yuqoridagi yopishqoq panel) — u yerda qatlam bitta
+   va narxi sezilmaydi. */
 .az-shisha {
+  background: color-mix(in srgb, var(--color-karta) 88%, transparent);
+}
+
+/* Bitta qatlam bo'lgan joylar uchun — haqiqiy shisha. */
+.az-shisha-blur {
   background: color-mix(in srgb, var(--color-karta) 45%, transparent);
   backdrop-filter: blur(10px) saturate(1.15);
   -webkit-backdrop-filter: blur(10px) saturate(1.15);
+}
+
+/* Ekrandan tashqaridagi bob RENDER QILINMAYDI.
+   `content-visibility: auto` brauzerga "bu bo'lak ko'rinmaguncha uning
+   ichini chizma" deydi. 22 bobli kursda bir vaqtda ekranda ikki-uchtasi
+   turadi, qolgan o'n to'qqiztasining ichki tugunlari (yo'l, tugunlar,
+   yozuvlar) umuman hisoblanmaydi.
+
+   `contain-intrinsic-size` SHART: usiz brauzer chizilmagan bo'lakning
+   balandligini nol deb oladi va aylantirish paytida sahifa uzunligi
+   sakrab turadi. 96px — yopiq bobning taxminiy balandligi. */
+.az-bob {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
 }
 
 .az-qavariq {
