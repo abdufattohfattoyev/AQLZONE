@@ -345,10 +345,32 @@ def _kun_kaliti(dt):
 
 
 def sinf_nomi(grade) -> str:
-    """0 — sinf emas, maktabgacha kurs. "0-sinf" degan narsa yo'q."""
+    """
+    Kurs kodining nomi.
+
+    Kod mijozda belgilanadi (`frontend/src/lib/curriculum/index.ts`) va
+    server uni `LessonResult.grade` da o'zgartirmasdan saqlaydi:
+
+        0        maktabgacha
+        1–6      matematika
+        7–10     algebra
+        11       matematika
+        107–110  geometriya (100 + sinf)
+
+    Geometriya nega alohida kod bilan: 7-sinfda algebra ham, geometriya
+    ham bor. Ikkalasi bir xil `grade` bilan kelsa, panel ularni bitta
+    qatorga qo'shib yuborardi — "eng qiyin dars" jadvalida ikki xil
+    fanning natijasi aralashib ketardi.
+    """
     if grade is None:
         return "—"
-    return "Maktabgacha" if grade == 0 else f"{grade}-sinf"
+    if grade == 0:
+        return "Maktabgacha"
+    if grade >= 100:
+        return f"{grade - 100}-sinf geometriya"
+    if 7 <= grade <= 10:
+        return f"{grade}-sinf algebra"
+    return f"{grade}-sinf"
 
 
 def _foiz(qism: int, butun: int) -> int:

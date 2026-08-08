@@ -700,8 +700,21 @@ export function kursMatn(s: string): string {
   return RU[s] ?? s;
 }
 
-/** Sinf nomi: 0 → "Maktabgacha" / "Дошкольный курс". */
-export const sinfMatn = (grade: number): string =>
-  grade === 0
-    ? (til() === "ru" ? "Дошкольный курс" : "Maktabgacha")
-    : (til() === "ru" ? `${grade} класс` : `${grade}-sinf`);
+/**
+ * Kurs kodining odam o'qiy oladigan nomi.
+ *
+ * Kod tuzilishi `curriculum/index.ts` dagi `Course.grade` izohida
+ * tushuntirilgan: 100 dan katta kod — geometriya. Ochish SHU YERDA,
+ * bitta joyda: server ham, ota-ona hisoboti ham, boshqaruv paneli ham
+ * kursni faqat shu son bilan biladi.
+ */
+export const sinfMatn = (grade: number): string => {
+  const ru = til() === "ru";
+  if (grade === 0) return ru ? "Дошкольный курс" : "Maktabgacha";
+  if (grade >= 100) {
+    const sinf = grade - 100;
+    return ru ? `${sinf} класс, геометрия` : `${sinf}-sinf geometriya`;
+  }
+  if (grade >= 7 && grade <= 10) return ru ? `${grade} класс, алгебра` : `${grade}-sinf algebra`;
+  return ru ? `${grade} класс` : `${grade}-sinf`;
+};

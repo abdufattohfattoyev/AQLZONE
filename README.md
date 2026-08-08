@@ -1,6 +1,6 @@
 # Aql Zone
 
-Kichkintoylar (2–5), maktabgacha yosh (4–6) va 1–6-sinf matematikasi. Bola
+Kichkintoylar (2–5), maktabgacha yosh (4–6) va 1–11-sinf matematikasi (7-sinfdan algebra va geometriya alohida). Bola
 boblar bo'ylab yo'l xaritasida yuradi, har bir darsda 6 ta savol yechadi va
 yulduz yig'adi. Savollar **har safar qaytadan yasaladi** — darsni ikkinchi
 marta ochsa sonlar boshqacha bo'ladi.
@@ -201,7 +201,7 @@ ikkalasi ham ATAYLAB shunday:
 
 | | Qayerda |
 |---|---|
-| Yo'l xaritasi, 177 dars, har safar yangi savollar | `frontend/src/lib/curriculum/` |
+| Yo'l xaritasi, 637 dars, har safar yangi savollar | `frontend/src/lib/curriculum/` |
 | **Kichkintoylar** — 2–5 yosh, gapiradigan rasmlar, savolsiz | `frontend/src/lib/kichkintoy.ts`, `screens/Kichkintoy*.tsx` |
 | **26 ta qo'lda chizilgan rasm** — mashina va hayvonlar, emoji emas | `frontend/src/lib/chizma/` |
 | **O'zbekcha ovoz** — serverdagi TTS, abadiy keshlanadi | `backend/core/ovoz.py`, `frontend/src/lib/ovoz.ts` |
