@@ -20,6 +20,19 @@
             !m ? "bosh" : (+m[1] <= 1 ? "bolalar" : "katta");
         } catch (e) { /* manzil g'alati — standart tema qoladi */ }
 
+        // YORUG'LIK ham shu yerda. Bu SHART: agar u React ishga
+        // tushgandan keyin qo'yilsa, qora rejimni tanlagan odam har
+        // ochilishda bir lahza oq ekranni ko'radi — kechqurun bu
+        // ko'zni qamashtiradi va aynan o'sha odam qora rejimni shuning
+        // uchun tanlagan edi.
+        try {
+          var y = localStorage.getItem("azapp_yoruglik_v1");
+          if (y !== "oq" && y !== "qora") {
+            y = window.matchMedia("(prefers-color-scheme: dark)").matches ? "qora" : "oq";
+          }
+          document.documentElement.dataset.yoruglik = y;
+        } catch (e) { /* xotira bloklangan — CSS standarti qoladi */ }
+
         // Til ham SHU YERDA qo'yiladi, React'dan oldin. `lang` atributi
         // brauzerning tinish belgilari, chiziqcha qo'yishi va ekran
         // o'quvchining talaffuziga ta'sir qiladi — u sahifa chizilgandan

@@ -428,6 +428,131 @@
 }
 :root[data-tema="katta"] .az-naqsh { background: #7ea6d8; }
 
+/* ============================================================
+   YORUG'LIK: OQ va QORA — foydalanuvchining o'z tanlovi
+
+   `data-tema` ekranning XARAKTERINI belgilaydi (bosh sahifa,
+   kichkintoylar, katta sinflar) va u KURSDAN kelib chiqadi. Yorug'lik
+   esa butunlay boshqa savol: "menga oq yoqadimi yoki qora?" — va u
+   bola qaysi sinfni ochganiga umuman bog'liq emas.
+
+   Shuning uchun ikkinchi atribut: `data-yoruglik`. U temani bekor
+   qilmaydi, faqat RANGLARNI almashtiradi — naqsh, uch qavatlilik,
+   kartaning shakli va radiusi o'z joyida qoladi.
+
+   BU BLOKLAR TEMA BLOKLARIDAN KEYIN TURISHI SHART. Ikkalasining
+   xoslik og'irligi bir xil (`:root[atribut]`), ya'ni qaysi biri
+   pastda tursa o'sha yutadi. Yuqoriga ko'chirilsa, tema ularni bosib
+   ketadi va tanlov ishlamay qoladi.
+   ============================================================ */
+
+/* ---------- OQ ---------- */
+
+:root[data-tema][data-yoruglik="oq"] {
+  --az-body: #eef4ff;
+
+  --color-karta: #ffffff;
+  --color-sahna: #ffffff;
+  --color-track: rgb(26 40 90 / 0.1);
+  --color-yol: rgb(26 40 90 / 0.12);
+  --color-yol-chiziq: rgb(255 255 255 / 0.65);
+
+  --color-ink: #1a2450;
+  --color-ink-soft: #4d5a86;
+  /* Xira matn ham O'QILADIGAN bo'lishi shart: kurs tavsifi shu rangda
+     va o'lchami 12,5px. #5f6d8e oq kartada 5.17 kontrast beradi. */
+  --color-ink-dim: #5f6d8e;
+  --color-clay: #c4d2f0;
+  --color-locked: #b6c1de;
+
+  --az-soya: 0 5px 0 var(--color-clay), 0 14px 28px -10px rgb(26 40 90 / 0.28);
+  --az-soya-sm: 0 3px 0 var(--color-clay), 0 9px 18px -8px rgb(26 40 90 / 0.22);
+  --az-soya-node: 0 6px 0 rgb(26 40 90 / 0.18), 0 12px 22px rgb(26 40 90 / 0.18);
+
+  --az-maqsad-1: #dfe8ff;
+  --az-maqsad-2: #eef2ff;
+}
+:root[data-tema][data-yoruglik="oq"] .az-fon {
+  background:
+    radial-gradient(70% 44% at 50% -8%, #ffffff 0%, transparent 62%),
+    linear-gradient(180deg, #e8f0ff 0%, #eef4ff 46%, #e6eeff 100%);
+  --az-vinyet-rang: rgb(200 216 245 / 0.55);
+}
+:root[data-tema][data-yoruglik="oq"] .az-naqsh { background: #4d7fc4; }
+
+/* Qavariq chekka va panel soyasi — oq yuzada yumshoqroq bo'lishi kerak.
+   Quyuq temadagi qiymatlar bu yerda dog' bo'lib ko'rinardi. */
+:root[data-tema][data-yoruglik="oq"] .az-qavariq::after {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 -1px 0 rgb(26 40 90 / 0.08),
+    inset 0 -14px 22px -18px rgb(26 40 90 / 0.22);
+}
+:root[data-tema][data-yoruglik="oq"] .az-panel {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 -12px 30px -14px rgb(26 40 90 / 0.28);
+}
+:root[data-tema][data-yoruglik="oq"] .az-pb-faol { filter: saturate(1) opacity(1); }
+:root[data-tema][data-yoruglik="oq"] .az-logo { --az-logo-nur-korin: 0; }
+
+/* ---------- QORA ---------- */
+
+:root[data-tema][data-yoruglik="qora"] {
+  --az-body: #0d1230;
+
+  --color-karta: #232c52;
+  --color-sahna: #1a2247;
+  --color-track: rgb(255 255 255 / 0.13);
+  --color-yol: rgb(255 255 255 / 0.1);
+  --color-yol-chiziq: rgb(255 255 255 / 0.35);
+
+  --color-ink: #eef2ff;
+  --color-ink-soft: #b7c2e6;
+  --color-ink-dim: #8b97c2;
+  /* Quyuq fonda "loy" soyasi ham quyuq — shundagina karta ko'tarilgandek. */
+  --color-clay: #10152e;
+  --color-locked: #46508a;
+
+  --az-soya: 0 5px 0 var(--color-clay), 0 16px 32px -8px rgb(0 0 0 / 0.55);
+  --az-soya-sm: 0 3px 0 var(--color-clay), 0 10px 20px -6px rgb(0 0 0 / 0.45);
+  --az-soya-node: 0 6px 0 rgb(0 0 0 / 0.4), 0 14px 26px rgb(0 0 0 / 0.4);
+
+  --az-maqsad-1: #3a2f66;
+  --az-maqsad-2: #2a2350;
+}
+:root[data-tema][data-yoruglik="qora"] .az-fon {
+  background:
+    radial-gradient(70% 44% at 50% -8%, #2a3a63 0%, transparent 64%),
+    linear-gradient(180deg, #1b2740 0%, #222f4c 46%, #1a2440 100%);
+  --az-vinyet-rang: rgb(8 12 26 / 0.72);
+}
+:root[data-tema][data-yoruglik="qora"] .az-naqsh { background: #7ea6d8; }
+:root[data-tema][data-yoruglik="qora"] .az-qavariq::after {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    inset 0 -1px 0 rgb(0 0 0 / 0.3),
+    inset 0 -14px 22px -18px rgb(0 0 0 / 0.7);
+}
+:root[data-tema][data-yoruglik="qora"] .az-panel {
+  box-shadow:
+    inset 0 1px 0 var(--color-track),
+    0 -12px 30px -12px rgb(0 0 0 / 0.75);
+}
+:root[data-tema][data-yoruglik="qora"] .az-pb-faol {
+  filter: saturate(1.05) opacity(1) drop-shadow(0 0 6px rgb(255 255 255 / 0.14));
+}
+:root[data-tema][data-yoruglik="qora"] .az-logo       { --az-logo-nur-korin: 1; }
+:root[data-tema][data-yoruglik="qora"] .az-l-tund     { fill: #5a7fe0; }
+:root[data-tema][data-yoruglik="qora"] .az-l-tund-s   { stroke: #6f92ee; }
+:root[data-tema][data-yoruglik="qora"] .az-l-shapka-a { stop-color: #7ea3f5; }
+:root[data-tema][data-yoruglik="qora"] .az-l-shapka-b { stop-color: #3f63c8; }
+:root[data-tema][data-yoruglik="qora"] .az-l-kitob-a  { stop-color: #5b86e8; }
+:root[data-tema][data-yoruglik="qora"] .az-l-kitob-b  { stop-color: #4a72cf; }
+:root[data-tema][data-yoruglik="qora"] .az-l-yozuv    { fill: #dfe8ff; }
+:root[data-tema][data-yoruglik="qora"] .az-l-shior    { fill: #9fb8f0; }
+:root[data-tema][data-yoruglik="qora"] .az-l-shior-s  { stroke: #9fb8f0; }
+
 /* Bosh sahifadagi aylanuvchi nur va halqalar — naqsh ustida qoladi,
    ular brendning kirish eshigini kurs ekranlaridan ajratib turadi. */
 .az-nur {

@@ -593,6 +593,16 @@ const S = {
   /* ---------------- til tanlash ---------------- */
   tilSarlavha: ["Til", "Язык"],
   tilIzoh: ["Ilova va darslar tili", "Язык приложения и уроков"],
+
+  /* ---------------- yorug'lik: oq va qora ---------------- */
+  yoruglikSarlavha: ["Ko'rinish", "Оформление"],
+  yoruglikIzoh: [
+    "Oq yoki qora. «Avtomatik» telefon sozlamasiga ergashadi.",
+    "Светлое или тёмное. «Авто» следует настройке телефона.",
+  ],
+  yoruglikAvto: ["Avtomatik", "Авто"],
+  yoruglikOq: ["Oq", "Светлое"],
+  yoruglikQora: ["Qora", "Тёмное"],
   tilTanla: ["Tilni tanlang", "Выберите язык"],
   tilTanlaIzoh: [
     "Ilova, darslar va savollar shu tilda bo'ladi. Keyin sozlamalardan almashtirish mumkin.",

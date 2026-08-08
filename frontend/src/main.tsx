@@ -13,6 +13,7 @@ import { ProgressProvider } from "./lib/progress";
 import { t } from "./lib/matn";
 import { tilniUlash } from "./lib/til";
 import { qobiqniUlash } from "./lib/qobiq";
+import { qolla as yoruglikniQolla, tizimniKuzat } from "./lib/yoruglik";
 
 /**
  * Sahifa sarlavhasi va `lang` atributi.
@@ -24,6 +25,20 @@ import { qobiqniUlash } from "./lib/qobiq";
  */
 tilniUlash();
 document.title = t("shior");
+
+/**
+ * Yorug'lik: oq yoki qora.
+ *
+ * Atributni `index.html` dagi skript ALLAQACHON qo'ygan — bu yerdagi
+ * chaqiruv uni faqat tasdiqlaydi (xotira bloklangan bo'lsa yoki eski
+ * qiymat qolgan bo'lsa to'g'rilaydi).
+ *
+ * `tizimniKuzat` esa "avto" holati uchun: telefon quyoshbotarda tunga
+ * o'tsa, ilova ham o'tadi va foydalanuvchi uni qo'lda almashtirib
+ * o'tirmaydi.
+ */
+yoruglikniQolla();
+tizimniKuzat();
 
 /**
  * Qobiq — qaysi sirtda ishlayotganimizga qarab RAMKA sozlanadi:

@@ -29,7 +29,9 @@ import { tozala } from "../lib/nom";
 import type { Hisob } from "../lib/api";
 import { t } from "../lib/matn";
 import { TILLAR, til, tilniAlmashtir } from "../lib/til";
-import { useOrqaga } from "../lib/qobiq";
+import { tebrat, useOrqaga } from "../lib/qobiq";
+import { yoruglikniOqi, yoruglikniQoy } from "../lib/yoruglik";
+import type { Yoruglik } from "../lib/yoruglik";
 
 interface Props {
   onBack: () => void;
@@ -66,6 +68,9 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
   const [ism, setIsm] = useState(() => tozala(boshlangich?.ism ?? ""));
   const [familiya, setFamiliya] = useState(() => tozala(boshlangich?.familiya ?? ""));
   const [band, setBand] = useState(false);
+  // Yorug'lik hujjat atributida turadi; bu holat faqat qaysi tugma
+  // tanlangan ko'rinishi uchun — saqlash `yoruglikniQoy` da.
+  const [yoruglik, setYoruglik] = useState<Yoruglik>(yoruglikniOqi);
   const [holat, setHolat] = useState<"" | "saqlandi">("");
   const [xato, setXato] = useState("");
   const [bot, setBot] = useState("");
@@ -235,6 +240,40 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
           </p>
         </div>
       )}
+
+      {/* ---- yorug'lik ----
+          Hisob blokidan TASHQARIDA va bu ataylab: bu qurilma sozlamasi,
+          serverdagi ma'lumot emas. Ichkarida qolsa, aloqa yo'q paytda
+          umuman ko'rinmasdi — ya'ni aynan kechqurun, internet uzilganda
+          odam qora rejimga o'ta olmasdi. */}
+      <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
+        style={{ "--az-kech": "60ms" } as React.CSSProperties}>
+        <div className="font-display text-[14px]">{t("yoruglikSarlavha")}</div>
+        <p className="mt-1 text-[12px] leading-snug text-ink-dim">
+          {t("yoruglikIzoh")}
+        </p>
+        <div className="mt-3 flex gap-2">
+          {([
+            { kod: "avto", nom: t("yoruglikAvto"), ikon: "phone" },
+            { kod: "oq", nom: t("yoruglikOq"), ikon: "star" },
+            { kod: "qora", nom: t("yoruglikQora"), ikon: "starOff" },
+          ] as const).map((x) => {
+            const shu = x.kod === yoruglik;
+            return (
+              <button key={x.kod} type="button"
+                onClick={() => { yoruglikniQoy(x.kod); setYoruglik(x.kod); tebrat("tanlov"); }}
+                aria-current={shu ? "true" : undefined}
+                className={`clay-press flex flex-1 flex-col items-center justify-center gap-1
+                  rounded-3xl py-2.5 font-display text-[13px] ${
+                  shu ? "bg-brand-green/20 ring-2 ring-brand-green text-ink" : "bg-track text-ink-soft"
+                }`}>
+                <Icon name={x.ikon} size={18} />
+                {x.nom}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {hisob && (
         <>
