@@ -286,6 +286,15 @@ const S = {
   /* ---------------- dars (Lesson) ---------------- */
   togriJavob: ["To'g'ri! 👏", "Верно! 👏"],
   deyarli: ["Deyarli! Yana urinib ko'r", "Почти! Попробуй ещё"],
+
+  /* ---------------- yechim ----------------
+     Faqat yuqori sinflarda ko'rinadi: quyi sinf generatorlari `yechim`
+     bermaydi va tugma umuman chizilmaydi. */
+  yechimSarlavha: ["Qanday yechiladi", "Как решается"],
+  yechimniKor: ["Yechimni ko'rish", "Посмотреть решение"],
+  yechimJavob: ["To'g'ri javob", "Верный ответ"],
+  yechimTushundim: ["Tushundim", "Понятно"],
+  yop: ["Yopish", "Закрыть"],
   zorIsh: ["Zo'r ish!", "Отличная работа!"],
   natijaSavol: ["SAVOL", "ВОПРОСЫ"],
   natijaTogri: ["TO'G'RI", "ВЕРНО"],

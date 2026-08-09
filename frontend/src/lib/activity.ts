@@ -6,8 +6,27 @@
  * savol matni va variantlar ko'rsatiladi, faqat rasm qismi keyin qo'shiladi.
  */
 import { til } from "./til";
+import type { YechimKalit } from "./tarjima/yechim";
 
 export type Answer = number | string;
+
+/**
+ * YECHIMNING BITTA QADAMI.
+ *
+ * Ikki qismdan iborat va bu bo'linish ataylab:
+ *
+ *   `q`   nima qilinyapti — SO'Z, ya'ni tarjima qilinadi
+ *         (`tarjima/yechim.ts` dagi lug'atdan).
+ *   `if`  o'sha qadamning natijasi — IFODA, tilga bog'liq emas.
+ *         "x² − 5x + 6 = 0" ikkala tilda ham shunday yoziladi.
+ *
+ * Ifoda ixtiyoriy: ba'zi qadam faqat qoidani eslatadi ("Qavs oldida
+ * minus — hamma had ishorasi almashadi") va uning o'z natijasi yo'q.
+ */
+export interface Qadam {
+  q: YechimKalit;
+  if?: string;
+}
 
 /**
  * Javob tugmalari qanday chiziladi.
@@ -35,6 +54,25 @@ interface Base {
    * birining javobi o'z yozuviga qaytishi kerak (`lib/daftar.ts`).
    */
   joy?: { kurs: string; ui: number; li: number };
+  /**
+   * QADAM-BAQADAM YECHIM — xato qilinganda ochiladi.
+   *
+   * ─────────────── NEGA FAQAT YUQORI SINFLARDA ───────────────
+   *
+   * 1-sinfda bu maydon bo'sh qoladi va bu kamchilik emas. U yerda
+   * variant to'rtta va bola sanab topadi: xato javobdan keyin ikkinchi
+   * urinish O'ZI o'rgatadi, chunki qolgan uchtasidan to'g'risini
+   * ajratish uchun yana bir marta SANASH kerak bo'ladi.
+   *
+   * 10-sinfda bu ishlamaydi. Kvadrat tenglamani taxmin bilan yechib
+   * bo'lmaydi: o'quvchi xato qiladi, sababini bilmaydi, ikkinchi marta
+   * yana taxmin qiladi va ilovani yopadi. Unga KERAK bo'lgan narsa
+   * javob emas — qaysi qadamda adashgani.
+   *
+   * Shuning uchun maydon ixtiyoriy: generator bera olsa beradi, bermasa
+   * dars avvalgidek ishlaydi.
+   */
+  yechim?: Qadam[];
 }
 
 /** Oddiy ifoda: "345 + 278 = ?" */

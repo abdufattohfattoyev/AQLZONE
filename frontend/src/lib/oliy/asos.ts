@@ -14,6 +14,22 @@
  * degan gap yo'q.
  */
 import { pick, pcS, rnd, shuffle } from "../rnd";
+import type { Qadam } from "../activity";
+import type { YechimKalit } from "../tarjima/yechim";
+
+/* ------------------------------------------------------------- yechim */
+
+/**
+ * Yechimning bitta qadami.
+ *
+ * Ataylab juda qisqa nom: u har bir generatorda uch-to'rt marta
+ * takrorlanadi va uzun nom yechimni kodda savolning o'zidan kattaroq
+ * ko'rsatib qo'yardi.
+ *
+ *   Y("formula", "S = a·b")   izoh + ifoda
+ *   Y("qavsMinus")            faqat qoida, natijasi yo'q
+ */
+export const Y = (q: YechimKalit, ifoda?: string): Qadam => ({ q, if: ifoda });
 
 /* ------------------------------------------------------------ belgilar */
 

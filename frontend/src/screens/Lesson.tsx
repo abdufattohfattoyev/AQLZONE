@@ -5,6 +5,7 @@ import { Ogit } from "../components/Ogit";
 import { Rasm } from "../components/Rasm";
 import { Konfetti } from "../components/Konfetti";
 import { Chiqish } from "../components/Chiqish";
+import { Yechim } from "../components/Yechim";
 import type { Activity, Answer } from "../lib/activity";
 import type { Lesson as LessonT, Unit } from "../lib/types";
 import type { LessonResult } from "../lib/progress";
@@ -99,6 +100,16 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
   const [birinchidanTogri, setBirinchidanTogri] = useState(0);
   /** Shu savolda allaqachon xato qilinganmi — birinchi urinish hisobi uchun. */
   const xatoQilgan = useRef(false);
+
+  /**
+   * Shu savolda nechta xato qilindi — yechim qachon o'zi ochilishini
+   * shu hal qiladi. `xato` (butun dars bo'yicha) ni ishlatib bo'lmaydi:
+   * u oldingi savollardagi xatolarni ham sanaydi va o'shanda yangi
+   * savolning BIRINCHI xatosida yechim ochilib ketardi.
+   */
+  const [shuXato, setShuXato] = useState(0);
+  /** Yechim varag'i ochiqmi. */
+  const [yechimda, setYechimda] = useState(false);
   const [tugadi, setTugadi] = useState(false);
   /** Har to'g'ri javobda oshadi va konfetti portlashini boshlaydi. */
   const [portlash, setPortlash] = useState(0);
@@ -138,6 +149,10 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
   useEffect(() => {
     xatoQilgan.current = false;
     setTanlangan(null);
+    // Yangi savol — yechim hisobi noldan. Varaq ham yopiladi: ochiq
+    // qolsa, keyingi savolning ustida oldingisining yechimi turardi.
+    setShuXato(0);
+    setYechimda(false);
     // Tushuntirish ko'rsatilayotganda savol o'qilmasin — ikki ovoz
     // ustma-ust tushib, ikkalasi ham tushunarsiz bo'lib qolardi.
     if (!ogitda) gapir(A.prompt);
@@ -151,6 +166,8 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
     setXato(0);
     setBirinchidanTogri(0);
     setTanlangan(null);
+    setShuXato(0);
+    setYechimda(false);
     setTugadi(false);
   }
 
@@ -174,6 +191,15 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
     if (!togri) {
       xatoQilgan.current = true;
       setXato((x) => x + 1);
+      // IKKINCHI xatodan keyin yechim o'zi ochiladi. Birinchisida
+      // ochilmaydi: o'quvchiga o'ylab ko'rish uchun yana bir imkon
+      // qoladi, aks holda u javobni o'qib oladi va bu o'rganish emas,
+      // ko'chirish bo'ladi. Ikkinchi xatoda esa u allaqachon qotib
+      // qolgan va uchinchi taxmin hech narsa o'rgatmaydi.
+      setShuXato((n) => {
+        if (n + 1 >= 2 && A.yechim) setYechimda(true);
+        return n + 1;
+      });
       tovush("xato");
       // Tebranish OVOZGA bog'lanmagan: telefoni ovozsiz rejimda turgan
       // bola ham javobi to'g'rimi-yo'qmi darhol biladi. Xato tebranishi
@@ -374,16 +400,36 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
           tugmalar pastga siljib ketsa, bola endigina bosgan tugmasi
           joyidan qochib ketardi. */}
       <div className="sticky bottom-2 z-20 mt-3 flex h-11 items-center justify-center">
-        {tanlangan !== null && (
+        {tanlangan !== null ? (
           <span className={`az-xabar rounded-full px-4 py-2 font-display text-[15px] leading-none
                             text-white shadow-clay-sm
                             ${togriJavob ? "bg-brand-green" : "bg-brand-red"}`}>
             {togriJavob ? t("togriJavob") : t("deyarli")}
           </span>
+        ) : (
+          /* Xato qilingan, javob esa hali berilmagan — aynan shu paytda
+             yechim tugmasi turadi. Xabarning O'RNIDA chiqadi, ostida
+             emas: ikkalasi bir vaqtda ko'rinsa qator ikki barobar
+             bo'lib, javob tugmalari yuqoriga siljib ketardi.
+
+             Faqat `yechim` bergan savollarda — quyi sinflarda bu tugma
+             umuman chizilmaydi. */
+          shuXato > 0 && A.yechim && (
+            <button type="button" onClick={() => { setYechimda(true); tebrat("tanlov"); }}
+              className="az-xabar clay-press flex items-center gap-1.5 rounded-full bg-karta px-4 py-2
+                         font-display text-[14px] leading-none text-ink-soft shadow-clay-sm">
+              <Icon name="puzzle" size={16} className="text-brand-blue" />
+              {t("yechimniKor")}
+            </button>
+          )
         )}
       </div>
 
       <div className="mt-1 text-center text-[12px] text-ink-dim">{kursMatn(unit.u)}</div>
+
+      {yechimda && A.yechim && (
+        <Yechim qadamlar={A.yechim} javob={String(A.answer)} onYop={() => setYechimda(false)} />
+      )}
 
       {oyna}
     </div>

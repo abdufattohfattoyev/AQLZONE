@@ -1328,6 +1328,17 @@
 .az-kanal-fon { animation: az-kanal-fon 0.25s ease-out both; }
 .az-kanal { animation: az-kanal 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
 
+/* PASTDAGI VARAQ — yechim va formulalar shu ko'rinishda chiqadi.
+   `az-kanal` dan farqi: u markazda paydo bo'ladi, bu esa ekran
+   PASTIDAN sirg'alib chiqadi. Sabab shakl emas, mazmun: varaq uzun
+   ro'yxatni ko'taradi va yuqoridan tushgan uzun oyna telefonda
+   sarlavhani ekrandan chiqarib yuborardi. */
+@keyframes az-varaq {
+  from { transform: translateY(100%); }
+  to   { transform: none; }
+}
+.az-varaq { animation: az-varaq 0.34s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
 @media (prefers-reduced-motion: reduce) {
-  .az-kanal-fon, .az-kanal { animation-duration: 0.01ms; }
+  .az-kanal-fon, .az-kanal, .az-varaq { animation-duration: 0.01ms; }
 }
