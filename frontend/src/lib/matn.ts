@@ -290,6 +290,80 @@ const S = {
   /* ---------------- yechim ----------------
      Faqat yuqori sinflarda ko'rinadi: quyi sinf generatorlari `yechim`
      bermaydi va tugma umuman chizilmaydi. */
+  /* ---------------- blok test ----------------
+     Faqat 7–11-sinfda ko'rinadi. Matnlar ataylab "imtihon" ohangida:
+     bu yerda yulduz ham, tanga ham yo'q — ball bor. */
+  blokSarlavha: ["Blok test", "Блок-тест"],
+  blokTayyormi: ["{n}-sinf · imtihon sur'atida", "{n} класс · в темпе экзамена"],
+  blokIzoh: [
+    "Savollar aralash keladi va qaysi mavzudan ekani aytilmaydi — formulani o'zingiz tanlaysiz. Vaqt tugasa test to'xtaydi.",
+    "Вопросы идут вперемешку, тема не называется — формулу выбираете сами. Когда время выйдет, тест остановится.",
+  ],
+  blokToliq: ["To'liq blok", "Полный блок"],
+  blokQisqa: ["Qisqa blok", "Короткий блок"],
+  blokOlcham: ["{s} savol · {d} daqiqa", "{s} вопросов · {d} минут"],
+  blokBosh: [
+    "Test o'zingiz tugatgan darslardan yig'iladi. Hozircha tugatilgan dars yo'q — bir nechtasini o'ting, keyin test ochiladi.",
+    "Тест собирается из пройденных вами уроков. Пока пройденных нет — пройдите несколько, и тест откроется.",
+  ],
+  blokDarslarga: ["Darslarga", "К урокам"],
+  blokXato: ["Xato", "Ошибка"],
+  blokNatija: ["{b} savoldan {a} tasi to'g'ri", "{a} из {b} верно"],
+  blokUlgurmadi: ["ULGURMADI", "НЕ УСПЕЛ"],
+  blokUlgurmadiN: ["{n} ta ulgurilmadi", "не успел: {n}"],
+  blokTahlil: ["Mavzular bo'yicha", "По темам"],
+  blokMavzuHolat: ["{a}/{b} to'g'ri", "{a}/{b} верно"],
+  blokTakrorlash: ["Takrorlash", "Повторить"],
+  blokXatolar: ["Xato qilingan savollar", "Вопросы с ошибками"],
+  blokYana: ["Yana topshirish", "Пройти ещё раз"],
+  blokChiqish: ["Chiqish", "Выйти"],
+  /* Kurs ekranidagi kirish tugmasi. */
+  blokTugma: ["Blok test", "Блок-тест"],
+  blokTugmaIzoh: ["Vaqtli, aralash mavzu, ball bilan", "На время, темы вперемешку, с баллом"],
+
+  /* ---------------- formulalar varaqasi ---------------- */
+  formulaSarlavha: ["Formulalar", "Формулы"],
+  formulaIzoh: [
+    "Esdan chiqqanda shu yerga qarang — qidiruvga chiqib ketish shart emas.",
+    "Забыли формулу — посмотрите здесь, выходить в поиск не нужно.",
+  ],
+  formulaQidiruv: ["Qidirish: sinus, yuza, hosila…", "Поиск: синус, площадь, производная…"],
+  formulaTopilmadi: ["Bunday formula topilmadi", "Такая формула не найдена"],
+  formulaSinf: ["{n}-sinf", "{n} класс"],
+  formulaTugma: ["Formulalar", "Формулы"],
+  formulaTugmaIzoh: ["Qisqa ko'paytirish, trigonometriya, hajm", "Умножение, тригонометрия, объём"],
+
+  /* ---------------- o'z hisoboti ----------------
+     Ota-ona panelidan farqli: bu yerda uchinchi shaxs yo'q. Matnlar
+     o'quvchining O'ZIGA qaratilgan va maqtov emas, o'lchov beradi. */
+  hisobotSarlavha: ["Mening natijam", "Мой результат"],
+  hisobotOrtacha: ["O'RTACHA", "СРЕДНИЙ"],
+  hisobotEng: ["ENG YAXSHI", "ЛУЧШИЙ"],
+  hisobotTest: ["TEST", "ТЕСТОВ"],
+  hisobotOsdi: ["Ball {n}% ga o'sdi", "Балл вырос на {n}%"],
+  hisobotTushdi: ["Ball {n}% ga tushdi", "Балл упал на {n}%"],
+  hisobotTekis: ["Ball o'zgarmadi", "Балл не изменился"],
+  hisobotOsishIzoh: [
+    "Oxirgi 5 ta test avvalgi 5 tasi bilan taqqoslandi.",
+    "Последние 5 тестов сравнены с предыдущими 5.",
+  ],
+  hisobotGrafik: ["Ball qanday o'zgardi", "Как менялся балл"],
+  hisobotOxirgi: ["Oxirgi {n} ta test", "Последние {n} тестов"],
+  hisobotTarix: ["Topshirilgan testlar", "Пройденные тесты"],
+  hisobotQator: ["{b} savoldan {a} tasi", "{a} из {b}"],
+  hisobotJamiVaqt: ["Testlarga jami {v} sarflandi", "На тесты потрачено {v}"],
+  hisobotDaqiqa: ["{n} daqiqa", "{n} мин"],
+  hisobotSekund: ["{n} soniya", "{n} сек"],
+  hisobotYangiTest: ["Yangi test topshirish", "Пройти новый тест"],
+  /* Nomi `hisobotBosh` EMAS: shu nomli kalit allaqachon ota-ona
+     panelida bor va u boshqa gapni aytadi. */
+  natijamBosh: [
+    "Hali bitta ham blok test topshirilmagan. Birinchisidan keyin shu yerda ball, o'sish grafigi va butun tarix paydo bo'ladi.",
+    "Пока не пройдено ни одного блок-теста. После первого здесь появятся балл, график роста и вся история.",
+  ],
+  hisobotTugma: ["Mening natijam", "Мой результат"],
+  hisobotTugmaIzoh: ["Ball, o'sish grafigi, testlar tarixi", "Балл, график роста, история тестов"],
+
   yechimSarlavha: ["Qanday yechiladi", "Как решается"],
   yechimniKor: ["Yechimni ko'rish", "Посмотреть решение"],
   yechimJavob: ["To'g'ri javob", "Верный ответ"],
@@ -552,6 +626,15 @@ const S = {
   haftaKunlari: [
     "Ya,Du,Se,Ch,Pa,Ju,Sh",
     "Вс,Пн,Вт,Ср,Чт,Пт,Сб",
+  ],
+
+  /* Oylarning qisqa nomi.
+     Nega `Intl` ishlatilmaydi: `uz-UZ` lokali brauzerlarda to'liq
+     emas va `{ month: "short" }` o'zbekcha nom o'rniga "M08" degan
+     kodni qaytaradi. Ro'yxat kichik, tarjimasi esa aniq. */
+  oyQisqa: [
+    "yan,fev,mar,apr,may,iyn,iyl,avg,sen,okt,noy,dek",
+    "янв,фев,мар,апр,май,июн,июл,авг,сен,окт,ноя,дек",
   ],
 
   /* ---------------- hisob / sozlamalar ---------------- */

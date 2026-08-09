@@ -216,7 +216,8 @@ export const a7DarajaXossa = (): Activity => {
   const j = `${L}${ust(n * k)}`;
   return {
     type: "eqn", text: `(${L}${ust(n)})${ust(k)} = ?`, prompt: po("darajaXossa"),
-    ...sPick(j, [`${L}${ust(n + k)}`, `${L}${ust(n ** k)}`, `${n * k}${L}`]),
+    ...sPick(j, [`${L}${ust(n + k)}`, `${L}${ust(n ** k)}`, `${n * k}${L}`],
+      [`${L}${ust(n * k + 1)}`, `${L}${ust(Math.max(1, n * k - 1))}`]),
     yechim: [Y("darajaKopaytir", `${n} · ${k} = ${n * k}`), Y("javob", j)],
   };
 };
@@ -227,7 +228,8 @@ export const a7Birhad = (): Activity => {
   const j = had(a * b, "x", n + k);
   return {
     type: "eqn", text: `${had(a, "x", n)} · ${had(b, "x", k)} = ?`, prompt: po("birhadKopaytir"),
-    ...sPick(j, [had(a * b, "x", n * k), had(a + b, "x", n + k), had(a * b, "x", Math.max(n, k))]),
+    ...sPick(j, [had(a * b, "x", n * k), had(a + b, "x", n + k), had(a * b, "x", Math.max(n, k))],
+      [had(a * b, "x", n + k + 1), had(a * b + 1, "x", n + k)]),
     yechim: [
       Y("hisobla", `${a} · ${b} = ${a * b}`),
       Y("darajaQosh", `${n} + ${k} = ${n + k}`),
@@ -264,7 +266,10 @@ export const a7KophadQosh = (): Activity => {
     const j = kophad([a + c, b + d]);
     return {
       type: "eqn", text: `(${kophad([a, b])}) + (${kophad([c, d])}) = ?`, prompt: po("kophadQosh"),
-      ...sPick(j, [kophad([a + c, b - d]), kophad([a * c, b + d]), kophad([a + c + b + d, 0])]),
+      // b = −d bo'lganda ozod hadlar yo'qoladi va uchala chalg'ituvchi
+      // bir-biriga tushib qoladi — o'shanda zaxira ishlaydi.
+      ...sPick(j, [kophad([a + c, b - d]), kophad([a * c, b + d]), kophad([a + c + b + d, 0])],
+        [kophad([a + c, b + d + 1]), kophad([a + c + 1, b + d])]),
       yechim: [
         Y("oxshash", `${a}x + ${c}x = ${a + c}x`),
         Y("oxshash", `${iz(b)} ${qosh(d)} = ${iz(b + d)}`),
@@ -313,7 +318,8 @@ export const a7KophadKophad = (): Activity => {
   return {
     type: "eqn", text: `(x ${qosh(a)})(x ${qosh(b)}) = ?`, prompt: po("kophadKopaytir"),
     // Xato: o'rta hadni tushirib qoldirish yoki ko'paytma o'rniga yig'indi.
-    ...sPick(j, [kophad([1, 0, a * b]), kophad([1, a * b, a + b]), kophad([1, a + b, a + b])]),
+    ...sPick(j, [kophad([1, 0, a * b]), kophad([1, a * b, a + b]), kophad([1, a + b, a + b])],
+      [kophad([1, a + b, a * b + 1]), kophad([1, a + b + 1, a * b])]),
     yechim: [
       Y("qavsOch", `x · x ${qosh(b)}·x ${qosh(a)}·x ${qosh(a * b)}`),
       Y("oxshash", `${iz(a)} ${qosh(b)} = ${iz(a + b)}`),
@@ -431,7 +437,8 @@ export const a7KasrQosh = (): Activity => {
   const j = `${a + b}/${m}`;
   return {
     type: "eqn", text: `${a}/${m} + ${b}/${m} = ?`, prompt: po("kasrAmal"),
-    ...sPick(j, [`${a + b}/${m * 2}`, `${a * b}/${m}`, `${a + b}/${m + m}`]),
+    ...sPick(j, [`${a + b}/${m * 2}`, `${a * b}/${m}`, `${a + b}/${m + m}`],
+      [`${a + b}/${m + 1}`, `${a}/${m}`]),
     yechim: [
       // Maxraj bir xil — u O'ZGARMAYDI. Aynan shu yerda o'quvchi
       // maxrajlarni ham qo'shib yuboradi.
@@ -447,7 +454,8 @@ export const a7KasrKopaytir = (): Activity => {
   const j = fr(a * c, b * d);
   return {
     type: "eqn", text: `${a}/${b} · ${c}/${d} = ?`, prompt: po("kasrAmal"),
-    ...sPick(j, [fr(a * d, b * c), fr(a + c, b + d), `${a * c}/${b + d}`]),
+    ...sPick(j, [fr(a * d, b * c), fr(a + c, b + d), `${a * c}/${b + d}`],
+      [fr(a * c + 1, b * d), fr(a * c, b * d + 1)]),
     yechim: [
       Y("hisobla", `(${a} · ${c}) / (${b} · ${d}) = ${a * c}/${b * d}`),
       Y("qisqartir", `${a * c}/${b * d}`),
@@ -681,7 +689,8 @@ export const a8Yaxlit = (): Activity => {
   return {
     type: "eqn", text: `${dc(son)} ≈ ?   (0,1 gacha)`, prompt: po("yaxlitla"),
     // Xato: yaxlitlash o'rniga shunchaki kesib tashlash (10,17 → 10,1).
-    ...sPick(dc(s), [dc(Math.floor(son * 10) / 10), dc(Math.round(son)), dc(son)]),
+    ...sPick(dc(s), [dc(Math.floor(son * 10) / 10), dc(Math.round(son)), dc(son)],
+      [dc(s + 0.1), dc(s - 0.1)]),
     yechim: [
       // Yaxlitlash KESISH emas: hal qiluvchi raqam keyingi xonada
       // turadi va u 5 dan katta bo'lsa oldingisi bittaga oshadi.

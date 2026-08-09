@@ -286,7 +286,8 @@ export const x10Ehtimollik = (): Activity => {
   const jami = 2 ** n;
   return {
     type: "eqn", text: po("txtTanga", { n, k: n }), prompt: po("hodisaEhtimoli"),
-    ...sPick(fr(1, jami), [fr(1, n), fr(n, jami), fr(1, n * 2)]),
+    ...sPick(fr(1, jami), [fr(1, n), fr(n, jami), fr(1, n * 2)],
+      [fr(1, jami * 2), fr(3, jami)]),
     yechim: [
       // Har bir tanga 2 xil tushadi va ular MUSTAQIL — shuning uchun
       // jami hollar 2^n, 2n emas.

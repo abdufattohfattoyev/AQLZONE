@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon } from "../lib/icons";
+import type { IconName } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { Reveal } from "../components/Reveal";
 import { RoadMap } from "../components/RoadMap";
@@ -37,6 +38,14 @@ interface Props {
   /** Kunlik sinovni ochadi — faqat bugun. */
   onSinov: () => void;
   onOtaOna: () => void;
+  /**
+   * 7–11-sinf uchun uchta qo'shimcha ekran. Quyi sinflarda ular
+   * BERILMAYDI (`undefined`) va butun blok umuman chizilmaydi —
+   * 2-sinf bolasiga "blok test" ham, "formulalar" ham begona.
+   */
+  onBlok?: () => void;
+  onHisobot?: () => void;
+  onFormulalar?: () => void;
 }
 
 function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -72,7 +81,7 @@ function Ring({ done, total, color }: { done: number; total: number; color: stri
 
 export function Home({
   slug, title, izoh, units, progress, kunlik, maqsad,
-  onStart, onDaftar, onSinov, onOtaOna,
+  onStart, onDaftar, onSinov, onOtaOna, onBlok, onHisobot, onFormulalar,
 }: Props) {
   // Zanjir tiklash va jami tanga kontekstdan keladi: ular BUTUN hisobga
   // tegishli, bitta kursga emas.
@@ -242,6 +251,25 @@ export function Home({
         </button>
       )}
 
+      {/* ---- imtihonga tayyorgarlik ----
+          Faqat 7–11-sinfda. Xatolar daftaridan KEYIN turadi: daftar
+          bugungi ish, bu esa uzoq muddatli tayyorgarlik.
+
+          Uchtasi bitta blokda va bu ataylab — ular bitta savolga
+          xizmat qiladi: "imtihonga qanday tayyorlanaman?". Alohida
+          tarqatib yuborilsa, har biri tasodifiy tugmaga o'xshab
+          qolardi. */}
+      {onBlok && onHisobot && onFormulalar && (
+        <div className="mt-4 space-y-2">
+          <TayyorgarlikTugma ic="clock" rang="bg-brand-purple" nom={t("blokTugma")}
+            izoh={t("blokTugmaIzoh")} on={onBlok} />
+          <TayyorgarlikTugma ic="chart" rang="bg-brand-blue" nom={t("hisobotTugma")}
+            izoh={t("hisobotTugmaIzoh")} on={onHisobot} />
+          <TayyorgarlikTugma ic="sqrt" rang="bg-brand-orange" nom={t("formulaTugma")}
+            izoh={t("formulaTugmaIzoh")} on={onFormulalar} />
+        </div>
+      )}
+
       {/* ---- boblar va yo'l ---- */}
       <div className="mt-4 space-y-2.5">
         {units.map((U, ui) => {
@@ -303,6 +331,31 @@ export function Home({
  * yopiladi va ertaga boshqasi bo'ladi. Muddatsiz taklif "keyinroq"
  * degan javobni oladi, muddatli esa bugun bosiladi.
  */
+/**
+ * Tayyorgarlik bloki tugmasi — uchalasi bir xil qolipda.
+ *
+ * Kunlik sinov tugmasidan PASTROQ va xiraroq: u bugungi ish va
+ * har kuni bosiladi, bular esa haftada bir-ikki marta. Bir xil
+ * balandlikda tursa, kunlik odat shovqinda yo'qolardi.
+ */
+function TayyorgarlikTugma({ ic, rang, nom, izoh, on }: {
+  ic: IconName; rang: string; nom: string; izoh: string; on: () => void;
+}) {
+  return (
+    <button type="button" onClick={on}
+      className="tugma-3d flex w-full items-center gap-3 rounded-clay bg-karta p-3 text-left shadow-clay-sm">
+      <span className={`grid size-9 shrink-0 place-items-center rounded-2xl text-white ${rang}`}>
+        <Icon name={ic} size={17} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[14px] leading-tight">{nom}</span>
+        <span className="mt-0.5 block truncate text-[11.5px] text-ink-soft">{izoh}</span>
+      </span>
+      <Icon name="chevron" size={16} className="shrink-0 text-ink-dim" />
+    </button>
+  );
+}
+
 function Sinov({ bajarildi, onSinov }: { bajarildi: boolean; onSinov: () => void }) {
   if (bajarildi) {
     return (

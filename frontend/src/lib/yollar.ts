@@ -68,6 +68,23 @@ export const yolNishon = (c: Course) => `/kurs/${c.slug}/nishonlar`;
 /** Ota-ona paneli. */
 export const yolOtaOna = (c: Course) => `/kurs/${c.slug}/ota-ona`;
 
+/**
+ * Blok test — vaqtli imtihon mashqi. Faqat 7–11-sinfda.
+ *
+ * Manzil KURS ostida turadi, garchi test ikkala fandan (algebra va
+ * geometriya) aralash yig'ilsa ham. Sabab: odam u yerga aynan kurs
+ * ekranidan kiradi va "9-sinf testi" degan tushuncha uning uchun
+ * kursning bir qismi. Alohida `/blok/9` manzili esa hech qayerdan
+ * ko'rinmaydigan yetim sahifa bo'lardi.
+ */
+export const yolBlok = (c: Course) => `/kurs/${c.slug}/blok`;
+
+/** O'quvchining o'z hisoboti — testlar tarixi va o'sish. */
+export const yolHisobot = (c: Course) => `/kurs/${c.slug}/hisobot`;
+
+/** Formulalar varaqasi. */
+export const yolFormulalar = (c: Course) => `/kurs/${c.slug}/formulalar`;
+
 export const yolDars = (c: Course, ui: number, li: number) =>
   `/kurs/${c.slug}/${ui + 1}-bob/${li + 1}-dars`;
 

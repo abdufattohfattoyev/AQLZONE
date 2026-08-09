@@ -23,7 +23,7 @@
 import type { Activity } from "../activity";
 import { po } from "../tarjima/oliy";
 import {
-  PIFAGOR, Y, dc, dPick, fr, iz, pick, qosh, rnd, sPick, shuffle, zPick,
+  PIFAGOR, Y, dc, dPick, fr, iz, nz, pick, qosh, rnd, sPick, shuffle, zPick,
 } from "./asos";
 
 const PI = 3.14;
@@ -488,7 +488,10 @@ export const g8OrtaNuqta = (): Activity => {
   return {
     type: "eqn", text: po("txtNuqtalar", { x1: iz(x1), y1: iz(y1), x2: iz(x2), y2: iz(y2) }),
     prompt: po("ortaNuqta"),
-    ...sPick(j, [`(${iz(x1 + x2)}; ${iz(y1 + y2)})`, `(${iz((x2 - x1) / 2)}; ${iz((y2 - y1) / 2)})`, `(${iz(x1)}; ${iz(y2)})`]),
+    // Nuqtalar bir xil o'qda yotib, koordinatalardan biri nol bo'lsa
+    // chalg'ituvchilar bir-biriga tushadi — zaxira o'shanda ishlaydi.
+    ...sPick(j, [`(${iz(x1 + x2)}; ${iz(y1 + y2)})`, `(${iz((x2 - x1) / 2)}; ${iz((y2 - y1) / 2)})`, `(${iz(x1)}; ${iz(y2)})`],
+      [`(${iz((x1 + x2) / 2 + 1)}; ${iz((y1 + y2) / 2)})`, `(${iz((x1 + x2) / 2)}; ${iz((y1 + y2) / 2 + 1)})`]),
     yechim: [
       Y("ortasi"),
       Y("qoy", `x = (${iz(x1)} ${qosh(x2)}) / 2,   y = (${iz(y1)} ${qosh(y2)}) / 2`),
@@ -533,7 +536,10 @@ export const g8VektorUzunlik = (): Activity => {
 
 /** 40-§. Koordinatalari bilan berilgan vektorlarni qo'shish. */
 export const g8VektorQosh = (): Activity => {
-  const x1 = rnd(-9, 9), y1 = rnd(-9, 9), x2 = rnd(-9, 9), y2 = rnd(-9, 9);
+  // Koordinatalar NOL bo'lmasin: nol vektor qo'shilsa javob ikkinchi
+  // vektorning o'ziga teng bo'lib qoladi va savol yechishni talab
+  // qilmaydi — chalg'ituvchilar ham o'sha songa aylanadi.
+  const x1 = nz(-9, 9), y1 = nz(-9, 9), x2 = nz(-9, 9), y2 = nz(-9, 9);
   const j = `(${iz(x1 + x2)}; ${iz(y1 + y2)})`;
   return {
     type: "eqn", text: `${po("txtVektorlar", { x1: iz(x1), y1: iz(y1), x2: iz(x2), y2: iz(y2) })}.   a⃗ + b⃗ = ?`,
@@ -684,7 +690,8 @@ export const g9YuzaSinus = (): Activity => {
   const S = 0.5 * a * b * sinus;
   return {
     type: "eqn", text: `a = ${a},  b = ${b},  ∠C = ${burchak}°`, prompt: po("uchburchakYuzaSin"),
-    ...sPick(dc(S), [dc(a * b * sinus), dc(0.5 * a * b), dc(a + b)]),
+    ...sPick(dc(S), [dc(a * b * sinus), dc(0.5 * a * b), dc(a + b)],
+      [dc(S / 2), dc(S + a)]),
     yechim: [
       Y("yuzaFormula", "S = ½ · a · b · sin C"),
       Y("jadvalQiymat", `sin ${burchak}° = ${burchak === 90 ? "1" : "1/2"}`),
@@ -736,7 +743,8 @@ export const g9Muntazam = (): Activity => {
   const b = ((n - 2) * 180) / n;
   return {
     type: "eqn", text: `Muntazam ${n}-burchak`, prompt: po("muntazamKopburchak"),
-    ...sPick(dc(b), [dc(360 / n), dc((n - 2) * 180), dc(180 - b)]),
+    ...sPick(dc(b), [dc(360 / n), dc((n - 2) * 180), dc(180 - b)],
+      [dc(b / 2), "180"]),
     yechim: [
       Y("formula", "∠ = (n − 2) · 180° / n"),
       Y("qoy", `(${n} − 2) · 180° / ${n} = ${(n - 2) * 180}° / ${n}`),

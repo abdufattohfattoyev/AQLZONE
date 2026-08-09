@@ -42,6 +42,9 @@ const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel 
 const DuelQabul = lazy(() => import("./screens/Duel").then((m) => ({ default: m.DuelQabul })));
 const OyinDaraja = lazy(() => import("./screens/OyinDaraja").then((m) => ({ default: m.OyinDaraja })));
 const Oyin = lazy(() => import("./screens/Oyin").then((m) => ({ default: m.Oyin })));
+const Blok = lazy(() => import("./screens/Blok").then((m) => ({ default: m.Blok })));
+const Hisobot = lazy(() => import("./screens/Hisobot").then((m) => ({ default: m.Hisobot })));
+const Formulalar = lazy(() => import("./screens/Formulalar").then((m) => ({ default: m.Formulalar })));
 const Kichkintoy = lazy(() => import("./screens/Kichkintoy").then((m) => ({ default: m.Kichkintoy })));
 const KichkintoyMavzu = lazy(() => import("./screens/KichkintoyMavzu").then((m) => ({ default: m.KichkintoyMavzu })));
 import { mavzuById } from "./lib/kichkintoy";
@@ -58,9 +61,10 @@ import { oxirginiYoz } from "./lib/oxirgi";
 import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
-  indeksniOqi, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
+  indeksniOqi, yolBlok, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
   yolDuel, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "./lib/yollar";
+import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
 import { kursMatn } from "./lib/tarjima/kurs";
@@ -120,6 +124,11 @@ function Yollar() {
       <Route path="/kurs/:slug/dokon" element={<DokonSahifasi />} />
       <Route path="/kurs/:slug/nishonlar" element={<NishonSahifasi />} />
       <Route path="/kurs/:slug/ota-ona" element={<OtaOnaSahifasi />} />
+      {/* Blok test, hisobot va formulalar ham `/:bob/:dars` dan OLDIN
+          turishi shart — aks holda marshrut ularni bob nomi deb o'qirdi. */}
+      <Route path="/kurs/:slug/blok" element={<BlokSahifasi />} />
+      <Route path="/kurs/:slug/hisobot" element={<HisobotSahifasi />} />
+      <Route path="/kurs/:slug/formulalar" element={<FormulalarSahifasi />} />
       <Route path="/kurs/:slug/:bob/:dars" element={<DarsSahifasi />} />
       {/* Eski havola ishlashda davom etsin */}
       <Route path="/index.html" element={<Navigate to="/" replace />} />
@@ -177,6 +186,11 @@ function KursSahifasi() {
       onDaftar={() => nav(yolDaftar(c))}
       onSinov={() => nav(yolSinov(c))}
       onOtaOna={() => nav(yolOtaOna(c))}
+      {...(blokBormi(sinfOf(c.grade)) ? {
+        onBlok: () => nav(yolBlok(c)),
+        onHisobot: () => nav(yolHisobot(c)),
+        onFormulalar: () => nav(yolFormulalar(c)),
+      } : {})}
     />
   );
 }
@@ -353,6 +367,40 @@ function OtaOnaSahifasi() {
 
   if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
   return <OtaOna onBack={() => nav(yolKurs(c))} />;
+}
+
+/**
+ * Blok test, hisobot va formulalar — uchalasi ham SINF bo'yicha
+ * ishlaydi, kurs bo'yicha emas: algebra va geometriya bitta sinfning
+ * ikki fani va imtihonda ular birga keladi. Kurs kodi 100 dan katta
+ * bo'lsa (geometriya), haqiqiy sinf `sinfOf` orqali olinadi.
+ */
+function BlokSahifasi() {
+  const nav = useNavigate();
+  const { c, slug } = useKurs();
+
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
+  // Quyi sinflarda blok test yo'q — havolani qo'lda yozgan odam
+  // kursga qaytariladi.
+  if (!blokBormi(sinfOf(c.grade))) return <Navigate to={yolKurs(c)} replace />;
+  return <Blok sinf={sinfOf(c.grade)} onExit={() => nav(yolKurs(c))} />;
+}
+
+function HisobotSahifasi() {
+  const nav = useNavigate();
+  const { c, slug } = useKurs();
+
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
+  if (!blokBormi(sinfOf(c.grade))) return <Navigate to={yolKurs(c)} replace />;
+  return <Hisobot sinf={sinfOf(c.grade)} onBack={() => nav(yolKurs(c))} onBlok={() => nav(yolBlok(c))} />;
+}
+
+function FormulalarSahifasi() {
+  const nav = useNavigate();
+  const { c, slug } = useKurs();
+
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
+  return <Formulalar sinf={sinfOf(c.grade)} onBack={() => nav(yolKurs(c))} />;
 }
 
 function ProfilSahifasi() {

@@ -119,10 +119,24 @@ export function kophad(k: number[], harf = "x"): string {
 
 /* -------------------------------------------------- javob variantlari */
 
-/** Matn javob + chalg'ituvchilar. Takrorlanganlari o'zi tashlanadi. */
-export const sPick = (c: string, xato: string[]) => ({
+/**
+ * Matn javob + chalg'ituvchilar. Takrorlanganlari o'zi tashlanadi.
+ *
+ * `zaxira` — chalg'ituvchilar YETMAY QOLGANDA ishlatiladi.
+ *
+ * Nega kerak: asosiy chalg'ituvchilar o'quvchi qiladigan aniq
+ * xatolardan yasaladi va ba'zi qiymatlarda ularning hammasi bir-biriga
+ * (yoki to'g'ri javobga) ustma-ust tushadi. Muntazam TO'RTburchakda
+ * ichki burchak 90°, tashqi burchagi ham 360/4 = 90°, to'ldiruvchisi
+ * ham 180 − 90 = 90° — uchalasi bitta son. O'shanda savolda ikkita
+ * tugma qoladi va javob hisoblanmasdan, taxmin bilan topiladi.
+ *
+ * Zaxira variantlar shu holat uchun: ular mantiqiy xatoni bildirmaydi,
+ * lekin savolni to'rt tugmali holida saqlaydi.
+ */
+export const sPick = (c: string, xato: string[], zaxira: string[] = []) => ({
   answer: c,
-  choices: pcS(c, xato.filter((x) => x !== c), []),
+  choices: pcS(c, xato.filter((x) => x !== c), zaxira),
 });
 
 /**
