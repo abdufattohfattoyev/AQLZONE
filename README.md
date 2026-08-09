@@ -228,6 +228,10 @@ ikkalasi ham ATAYLAB shunday:
 | **Botdagi doimiy tugmalar** — darslar, o'yinlar, raqam, yordam | `backend/core/management/commands/bot.py` (`asosiy_klaviatura`) |
 | **Rangli tugmalar** — yashil / ko'k / qizil, ma'nosiga qarab | `backend/core/xabar.py` (`YASHIL`, `KOK`, `QIZIL`) |
 | **Matematik o'yinlar** — 8 ta o'yin, har birida 3 daraja | `frontend/src/lib/oyin/` |
+| **Yechim** — xato javobdan keyin qadam-baqadam yechim (7–11-sinf) | `frontend/src/components/Yechim.tsx`, `lib/tarjima/yechim.ts` |
+| **Blok test** — 30 savol / 30 daqiqa, aralash mavzu, mavzular bo'yicha tahlil | `frontend/src/lib/blok.ts`, `screens/Blok.tsx` |
+| **Formulalar varaqasi** — 70 ta formula, qidiruv bilan | `frontend/src/lib/formulalar.ts`, `screens/Formulalar.tsx` |
+| **O'z hisoboti** — ball, o'sish grafigi, testlar tarixi | `frontend/src/screens/Hisobot.tsx` |
 
 ## Qaytishni ta'minlaydigan uch mexanizm
 
