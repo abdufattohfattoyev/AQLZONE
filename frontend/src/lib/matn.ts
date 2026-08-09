@@ -303,8 +303,8 @@ const S = {
   blokQisqa: ["Qisqa blok", "Короткий блок"],
   blokOlcham: ["{s} savol · {d} daqiqa", "{s} вопросов · {d} минут"],
   blokBosh: [
-    "Test o'zingiz tugatgan darslardan yig'iladi. Hozircha tugatilgan dars yo'q — bir nechtasini o'ting, keyin test ochiladi.",
-    "Тест собирается из пройденных вами уроков. Пока пройденных нет — пройдите несколько, и тест откроется.",
+    "Bu bo'lim uchun savol topilmadi.",
+    "Для этого раздела вопросы не найдены.",
   ],
   blokDarslarga: ["Darslarga", "К урокам"],
   blokXato: ["Xato", "Ошибка"],
@@ -317,6 +317,24 @@ const S = {
   blokXatolar: ["Xato qilingan savollar", "Вопросы с ошибками"],
   blokYana: ["Yana topshirish", "Пройти ещё раз"],
   blokChiqish: ["Chiqish", "Выйти"],
+  /* ---------------- testlar bazasi ----------------
+     Darslardan ALOHIDA bo'lim: u yerda amaliy misol, bu yerda
+     o'lchov. Shuning uchun matnlarda ham "o'rganish" emas,
+     "tekshirish" ohangi. */
+  testlarSarlavha: ["Testlar", "Тесты"],
+  testlarIzoh: [
+    "Istalgan bobning testini istalgan paytda topshirish mumkin — dars tugatilmagan bo'lsa ham.",
+    "Тест любой главы можно пройти в любой момент — даже если урок не завершён.",
+  ],
+  testlarAralash: ["Butun sinf bo'yicha", "По всему классу"],
+  testlarBoblar: ["Bob bo'yicha · {n} ta", "По главам · {n}"],
+  testlarBobIzoh: ["{d} dars · {s} savol", "{d} уроков · {s} вопросов"],
+  testlarTugma: ["Testlar", "Тесты"],
+  testlarTugmaIzoh: ["Bob-bob yoki butun sinf bo'yicha", "По главам или по всему классу"],
+
+  /* Darslar ro'yxatining sarlavhasi — testlardan ajratib turadi. */
+  amaliyMisollar: ["Amaliy misollar", "Практические задания"],
+
   /* Kurs ekranidagi kirish tugmasi. */
   blokTugma: ["Blok test", "Блок-тест"],
   blokTugmaIzoh: ["Vaqtli, aralash mavzu, ball bilan", "На время, темы вперемешку, с баллом"],
@@ -334,7 +352,10 @@ const S = {
   formulaTopilmadi: ["Bunday formula topilmadi", "Такая формула не найдена"],
   formulaSinf: ["{n}-sinf", "{n} класс"],
   formulaTugma: ["Formulalar", "Формулы"],
-  formulaTugmaIzoh: ["Qisqa ko'paytirish, trigonometriya, hajm", "Умножение, тригонометрия, объём"],
+  /* Izoh ATAYLAB umumiy: ro'yxat 5-sinfdagi perimetrdan
+     11-sinfdagi integralgacha yetadi va aniq misol keltirilsa,
+     u sinflarning yarmiga to'g'ri kelmasdi. */
+  formulaTugmaIzoh: ["Kerakli formulalar bir joyda", "Нужные формулы в одном месте"],
 
   /* ---------------- o'z hisoboti ----------------
      Ota-ona panelidan farqli: bu yerda uchinchi shaxs yo'q. Matnlar

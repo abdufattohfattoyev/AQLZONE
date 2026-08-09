@@ -261,8 +261,8 @@ export function Home({
           qolardi. */}
       {onBlok && onHisobot && onFormulalar && (
         <div className="mt-4 space-y-2">
-          <TayyorgarlikTugma ic="clock" rang="bg-brand-purple" nom={t("blokTugma")}
-            izoh={t("blokTugmaIzoh")} on={onBlok} />
+          <TayyorgarlikTugma ic="order" rang="bg-brand-purple" nom={t("testlarTugma")}
+            izoh={t("testlarTugmaIzoh")} on={onBlok} />
           <TayyorgarlikTugma ic="chart" rang="bg-brand-blue" nom={t("hisobotTugma")}
             izoh={t("hisobotTugmaIzoh")} on={onHisobot} />
           <TayyorgarlikTugma ic="sqrt" rang="bg-brand-orange" nom={t("formulaTugma")}
@@ -270,7 +270,16 @@ export function Home({
         </div>
       )}
 
-      {/* ---- boblar va yo'l ---- */}
+      {/* ---- boblar va yo'l ----
+          Sarlavha faqat testlar bo'limi BOR sinflarda chiqadi. Quyi
+          sinflarda ekranda bitta ro'yxat turadi va uni nomlash
+          keraksiz: nomlanadigan narsa faqat ikkitasi bo'lganda
+          ma'noli bo'ladi. */}
+      {onBlok && (
+        <h2 className="mt-5 mb-1 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
+          {t("amaliyMisollar")}
+        </h2>
+      )}
       <div className="mt-4 space-y-2.5">
         {units.map((U, ui) => {
           const done = U.lessons.filter((_, li) => progress.done[lessonId(ui, li)]).length;

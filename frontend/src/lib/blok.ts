@@ -1,63 +1,74 @@
 /**
- * BLOK TEST — vaqtli, aralash mavzuli, ballik sinov.
+ * TESTLAR — darslardan ALOHIDA bo'lim.
  *
- * ─────────────────────── NEGA KERAK ───────────────────────
+ * ─────────────── NEGA ALOHIDA, DARS ICHIDA EMAS ───────────────
  *
- * Ilovada allaqachon uchta qisqa rejim bor: kunlik sinov (6 savol),
- * bugungi maydon (3 bosqich) va duel. Ularning hammasi bitta narsani
- * qiladi — bugungi mashqni yopadi.
+ * Darslar yo'l xaritasi — AMALIY MISOL: bola bobma-bob yuradi, har
+ * darsda olti savol yechadi, yulduz yig'adi va keyingisi ochiladi. U
+ * yerda maqsad o'rganish, tartib esa qat'iy.
  *
- * 9–11-sinf o'quvchisiga esa boshqa narsa kerak. U imtihonga
- * tayyorlanadi va imtihon uch jihatdan darsdan farq qiladi:
+ * Test boshqa ish qiladi. U hech narsa o'rgatmaydi va hech narsani
+ * ochmaydi — u O'LCHAYDI. Shuning uchun:
  *
- *   MAVZU ARALASH   Darsda "bugun progressiya" deb yozilgan. Imtihonda
- *                   savol nimadan ekani AYTILMAYDI va qaysi formulani
- *                   olishni o'zi tanlaydi. Aynan shu tanlov yiqitadi.
- *   VAQT BOR        Bilish yetarli emas — ulgurish kerak.
- *   BALL BOR        Oxirida raqam chiqadi va u haqiqiy tayyorgarlikni
- *                   ko'rsatadi.
+ *   TARTIB YO'Q         Istalgan bobning testini istalgan paytda
+ *                       ochish mumkin.
+ *   QULF YO'Q           Dars tugatilmagan bo'lsa ham test ochiladi.
+ *   YULDUZ YO'Q         Natija ball bo'lib yoziladi, yo'l xaritasiga
+ *                       tegmaydi.
  *
- * ─────────────── FAQAT OCHILGAN BOBLARDAN ───────────────
+ * ─────────────── NEGA QULF OLIB TASHLANDI ───────────────
  *
- * Savollar o'quvchi TUGATGAN darslardan olinadi. Butun kurs bo'ylab
- * olsak, birinchi kuni 30 tadan 3 ball chiqardi — va bunday natija
- * ko'rgan odam testni boshqa ochmaydi. Ball o'sib borishi kerak:
- * o'quvchi darslarni bosgani sayin testning qamrovi ham kengayadi.
+ * Avvalgi ko'rinishida test faqat TUGATILGAN darslardan yig'ilardi.
+ * Mantig'i bor edi: birinchi kuni 30 tadan 3 ball chiqmasin.
  *
- * ALGEBRA VA GEOMETRIYA BIRGA. Maktabda ular ikki fan, imtihonda esa
- * bitta varaq. Shuning uchun test SINF bo'yicha yig'iladi: 9-sinf
- * bloki algebra9 va geometriya9 dan aralash keladi.
+ * Lekin u haqiqiy foydalanuvchini hisobga olmasdi. Maktabda mavzu
+ * ALLAQACHON o'tilgan bo'ladi — bola ilovaga bilimini tekshirish
+ * uchun kiradi, o'rganish uchun emas. Uni "avval shu yerda ham
+ * o'tib chiq" deb qaytarish — mavjud bilimini inkor qilish.
  *
- * ───────────────── NEGA 30 VA NEGA 10 ─────────────────
+ * Ball tushib ketish xavfi esa boshqa yo'l bilan hal qilindi:
+ * QAMROVNI O'ZI TANLAYDI. Butun sinf bo'yicha aralash test ham bor,
+ * bitta bobning testi ham. Maktabda progressiyani o'tayotgan bola
+ * aynan o'sha bobni oladi va ball uning haqiqiy holatini ko'rsatadi.
  *
- * To'liq blok — 30 savol, 30 daqiqa: bitta savolga bir daqiqa, haqiqiy
- * imtihon sur'ati. Lekin har kuni yarim soat ajratadigan odam kam,
- * shuning uchun 10 savollik qisqa variant ham bor. Qisqasi "bugun
- * vaqtim yo'q" degan kunni butunlay bo'sh qoldirmaydi.
+ * ─────────────── NEGA 5-SINFDAN ───────────────
  *
- * ───────────────── VAQT TUGAGANDA ─────────────────
- *
- * Test TO'XTAYDI, lekin javob berilmagan savollar shunchaki "xato"
- * bo'lib yozilmaydi — ular natijada ALOHIDA ko'rsatiladi ("ulgurmadi").
- * Ikkalasini qo'shib yuborish yolg'on xulosa berardi: mavzuni bilmagan
- * odam bilan sekin ishlagan odam butunlay boshqa ikki holat va ularga
- * beriladigan maslahat ham boshqacha.
+ * 5-sinfda maktabda ham nazorat ishi shu ko'rinishda bo'ladi: bir
+ * necha mavzu aralash, vaqt cheklangan, ball qo'yiladi. 4-sinfgacha
+ * esa bola hali "test" degan janrni bilmaydi va unga vaqt bosimi
+ * foyda emas, zarar beradi.
  */
 import type { Activity, Gen } from "./activity";
 import type { Course } from "./curriculum";
 import { COURSES } from "./curriculum";
-import type { Progress, Unit } from "./types";
-import { lessonId } from "./types";
+import type { Unit } from "./types";
 
 /* ------------------------------------------------------------ o'lcham */
 
-export type Uzunlik = "qisqa" | "toliq";
+export type Uzunlik = "qisqa" | "toliq" | "bob";
 
 /** Har bir uzunlikda nechta savol va necha daqiqa. */
 export const OLCHAM: Record<Uzunlik, { savol: number; daqiqa: number }> = {
-  qisqa: { savol: 10, daqiqa: 10 },
+  /* To'liq blok — imtihon sur'ati: bitta savolga bir daqiqa. */
   toliq: { savol: 30, daqiqa: 30 },
+  /* Har kuni yarim soat ajratadigan odam kam. Qisqasi "bugun vaqtim
+     yo'q" degan kunni butunlay bo'sh qoldirmaydi. */
+  qisqa: { savol: 10, daqiqa: 10 },
+  /* Bitta bob — mavzu yangi o'tilgan paytdagi tekshiruv. Vaqti
+     kengroq (savoliga 1,2 daqiqa): bu tezlik mashqi emas, mavzuni
+     bilish-bilmaslik savoli. */
+  bob: { savol: 10, daqiqa: 12 },
 };
+
+/* ------------------------------------------------------------- qamrov */
+
+/**
+ * Test nimani o'lchaydi.
+ *
+ *   "hammasi"  butun sinf — algebra va geometriya aralash
+ *   bob        bitta bob (kurs id + bobning tartib raqami)
+ */
+export type Qamrov = { tur: "hammasi" } | { tur: "bob"; kursId: string; ui: number };
 
 /* ------------------------------------------------------------- savol */
 
@@ -91,14 +102,15 @@ export interface Blok {
  * Shu sinfning barcha kurslari: algebra + geometriya.
  *
  * Geometriya kodi 100 + sinf (`curriculum/index.ts`), shuning uchun
- * ikkalasi bitta sinfga shu yerda qaytadan bog'lanadi. 11-sinfda
- * darslik bitta va ro'yxatda bitta kurs qoladi — bu kamchilik emas.
+ * ikkalasi bitta sinfga shu yerda qaytadan bog'lanadi. 5, 6 va
+ * 11-sinfda darslik bitta va ro'yxatda bitta kurs qoladi — bu
+ * kamchilik emas.
  */
 export const sinfKurslari = (sinf: number): Course[] =>
   COURSES.filter((c) => c.grade === sinf || c.grade === 100 + sinf);
 
-/** Blok test shu sinfda ochiqmi. Faqat 7-sinfdan yuqorisi. */
-export const blokBormi = (sinf: number): boolean => sinf >= 7 && sinf <= 11;
+/** Test shu sinfda bormi. 5-sinfdan 11-gacha. */
+export const blokBormi = (sinf: number): boolean => sinf >= 5 && sinf <= 11;
 
 /**
  * Kurs kodidan haqiqiy sinfni beradi: 109 → 9.
@@ -107,6 +119,37 @@ export const blokBormi = (sinf: number): boolean => sinf >= 7 && sinf <= 11;
  * 9-sinf geometriyasidan ochilgan test "109-sinf" deb yozilardi.
  */
 export const sinfOf = (grade: number): number => (grade >= 100 ? grade - 100 : grade);
+
+/* -------------------------------------------------------- boblar ro'yxati */
+
+/** Test bazasidagi bitta yozuv — bobning testi. */
+export interface Bob {
+  kursId: string;
+  /** Kurs nomi — bir sinfda ikki fan bo'lsa qaysi biri ekani ko'rinsin. */
+  kursNomi: string;
+  ui: number;
+  nom: string;
+  /** Nechta dars bor — testning qanchalik boy ekanini ko'rsatadi. */
+  dars: number;
+}
+
+/**
+ * Sinfning barcha boblari — testlar bazasining ro'yxati.
+ *
+ * Takrorlash darslari CHIQARIB TASHLANADI: ular o'z savolini
+ * yasamaydi, boshqa darslardan yig'adi va testda o'sha savollar
+ * ikkinchi marta chiqib qolardi.
+ */
+export function sinfBoblari(sinf: number): Bob[] {
+  const r: Bob[] = [];
+  for (const c of sinfKurslari(sinf)) {
+    c.units.forEach((U, ui) => {
+      const dars = U.lessons.filter((L) => !L.review).length;
+      if (dars > 0) r.push({ kursId: c.id, kursNomi: c.title, ui, nom: U.u, dars });
+    });
+  }
+  return r;
+}
 
 /* ------------------------------------------------------------ yig'ish */
 
@@ -130,15 +173,12 @@ interface Manba {
   mavzu: string;
 }
 
-/** Kursning TUGATILGAN darslaridagi barcha generatorlar. */
-function otilganlar(c: Course, units: Unit[], p: Progress): Manba[] {
+/** Kursning bir yoki barcha boblaridagi generatorlar. */
+function manbalar(c: Course, units: Unit[], faqatUi?: number): Manba[] {
   const m: Manba[] = [];
   units.forEach((U, ui) => {
+    if (faqatUi !== undefined && ui !== faqatUi) return;
     U.lessons.forEach((L, li) => {
-      if (!p.done[lessonId(ui, li)]) return;
-      // Takrorlash darslari o'tkazib yuboriladi: ular o'z savolini
-      // yasamaydi, boshqa darslardan yig'adi — testda o'sha savollar
-      // ikkinchi marta chiqib qolardi.
       if (L.review) return;
       L.gens.forEach((gen) => m.push({ gen, kurs: c.key, kursId: c.id, ui, li, mavzu: U.u }));
     });
@@ -147,7 +187,7 @@ function otilganlar(c: Course, units: Unit[], p: Progress): Manba[] {
 }
 
 /**
- * Test yasaydi. Yetarli material bo'lmasa `null`.
+ * Test yasaydi. Material bo'lmasa `null`.
  *
  * ─────────────── MAVZULAR BO'YICHA TEKIS TARQATISH ───────────────
  *
@@ -157,45 +197,61 @@ function otilganlar(c: Course, units: Unit[], p: Progress): Manba[] {
  * bo'lardi — kichik bob umuman ko'rinmasdi.
  *
  * Shuning uchun avval har bir BOB dan navbat bilan bittadan olinadi,
- * so'ng aylana qaytadan boshlanadi. Shunda 30 savol boblar orasida
- * imkon qadar teng bo'linadi.
+ * so'ng aylana qaytadan boshlanadi.
+ *
+ * Bitta bobning testida bu qoida DARS darajasida ishlaydi: har
+ * darsdan bittadan, so'ng ikkinchi aylana. Aks holda olti generatorli
+ * dars butun testni egallab olardi.
  */
-export function blokYasa(
-  sinf: number,
-  progressOf: (c: Course) => Progress,
-  uzunlik: Uzunlik,
-): Blok | null {
+export function blokYasa(sinf: number, uzunlik: Uzunlik, qamrov: Qamrov): Blok | null {
   const kurslar = sinfKurslari(sinf);
   if (!kurslar.length) return null;
 
   const hammasi: Manba[] = [];
-  for (const c of kurslar) hammasi.push(...otilganlar(c, c.units, progressOf(c)));
+  if (qamrov.tur === "bob") {
+    const c = kurslar.find((x) => x.id === qamrov.kursId);
+    if (!c) return null;
+    hammasi.push(...manbalar(c, c.units, qamrov.ui));
+  } else {
+    for (const c of kurslar) hammasi.push(...manbalar(c, c.units));
+  }
   if (!hammasi.length) return null;
 
-  // Bob bo'yicha guruhlaymiz. Kalitda kurs ham bor: 9-sinf algebra va
-  // geometriyasida bir xil nomli bob uchrasa, ular qo'shilib ketmasin.
-  const boblar = new Map<string, Manba[]>();
+  // Guruh kaliti qamrovga qarab o'zgaradi: butun sinf testida BOB,
+  // bitta bobning testida esa DARS. Ikkala holatda ham maqsad bir —
+  // savollar bitta joydan to'planib qolmasin.
+  const guruh = new Map<string, Manba[]>();
   for (const m of hammasi) {
-    const kalit = `${m.kurs}|${m.ui}`;
-    const bor = boblar.get(kalit);
+    const kalit = qamrov.tur === "bob" ? `${m.kurs}|${m.ui}|${m.li}` : `${m.kurs}|${m.ui}`;
+    const bor = guruh.get(kalit);
     if (bor) bor.push(m);
-    else boblar.set(kalit, [m]);
+    else guruh.set(kalit, [m]);
   }
 
-  const navbat = aralash([...boblar.values()]).map((x) => aralash(x));
+  const navbat = aralash([...guruh.values()]).map((x) => aralash(x));
   const kerak = OLCHAM[uzunlik].savol;
   const tanlangan: Manba[] = [];
   for (let aylana = 0; tanlangan.length < kerak; aylana++) {
     let qoshildi = false;
-    for (const bob of navbat) {
+    for (const g of navbat) {
       if (tanlangan.length >= kerak) break;
-      if (aylana < bob.length) {
-        tanlangan.push(bob[aylana]);
+      if (aylana < g.length) {
+        tanlangan.push(g[aylana]);
         qoshildi = true;
       }
     }
-    // Hamma manba tugadi — bor narsadan ko'pini yasab bo'lmaydi.
-    if (!qoshildi) break;
+    // Hamma manba tugadi. Bitta bobda generator kam bo'lishi mumkin —
+    // o'shanda aylanani qaytadan boshlaymiz: bir generator ikki xil
+    // savol yasaydi va takror bo'lmaydi.
+    if (!qoshildi) {
+      if (!navbat.length) break;
+      const bor = tanlangan.length;
+      for (const g of navbat) {
+        if (tanlangan.length >= kerak) break;
+        tanlangan.push(g[tanlangan.length % g.length]);
+      }
+      if (tanlangan.length === bor) break;
+    }
   }
 
   // Savollar yasaladi. Bir xil savol ikki marta tushmasin: generator
@@ -205,7 +261,8 @@ export function blokYasa(
   const savollar: BlokSavol[] = [];
   for (const m of aralash(tanlangan)) {
     let a = m.gen();
-    for (let k = 0; k < 20 && chiqqan.has(`${a.prompt}|${a.answer}`); k++) a = m.gen();
+    for (let k = 0; k < 25 && chiqqan.has(`${a.prompt}|${a.answer}`); k++) a = m.gen();
+    if (chiqqan.has(`${a.prompt}|${a.answer}`)) continue;
     chiqqan.add(`${a.prompt}|${a.answer}`);
     savollar.push({ a, kurs: m.kurs, kursId: m.kursId, ui: m.ui, li: m.li, mavzu: m.mavzu });
   }
@@ -235,6 +292,8 @@ export interface BlokNatija {
   vaqt: string;
   sinf: number;
   uzunlik: Uzunlik;
+  /** Bob testi bo'lsa bobning nomi — hisobotda qaysi mavzu ekani ko'rinsin. */
+  bob?: string;
   jami: number;
   togri: number;
   xato: number;
@@ -278,3 +337,17 @@ export function natijaSaqla(n: BlokNatija): void {
 /** Foizda ball. Savol bo'lmasa 0. */
 export const foiz = (n: Pick<BlokNatija, "jami" | "togri">): number =>
   n.jami ? Math.round((n.togri / n.jami) * 100) : 0;
+
+/**
+ * Bobning eng yaxshi natijasi — testlar bazasida ko'rsatiladi.
+ *
+ * Nega eng yaxshisi, oxirgisi emas: ro'yxatdagi son "men bu mavzuni
+ * qanchalik bilaman" degan savolga javob beradi. Shoshib topshirilgan
+ * bitta test o'sha javobni butunlay o'chirib yuborishi noto'g'ri
+ * bo'lardi.
+ */
+export function bobBali(sinf: number, bob: string): number | null {
+  const oz = natijalar().filter((n) => n.sinf === sinf && n.bob === bob);
+  if (!oz.length) return null;
+  return Math.max(...oz.map(foiz));
+}

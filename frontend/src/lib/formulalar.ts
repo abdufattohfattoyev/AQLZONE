@@ -1,5 +1,5 @@
 /**
- * FORMULALAR VARAQASI — 7–11-sinf uchun ma'lumotnoma.
+ * FORMULALAR VARAQASI — 5–11-sinf uchun ma'lumotnoma.
  *
  * ─────────────────────── NEGA KERAK ───────────────────────
  *
@@ -24,8 +24,8 @@
  *
  * Bo'limlar `sinf` bilan belgilangan va ekran avval O'QUVCHINING
  * sinfiga tegishlisini ochadi. Qolganlari ham ko'rinadi, lekin
- * yopiq: 9-sinf o'quvchisiga integral kerak emas, ammo 7-sinfdagi
- * qisqa ko'paytirish formulasi undan har kuni so'raladi.
+ * yopiq: 9-sinf o'quvchisiga integral kerak emas, ammo 5-sinfdagi
+ * perimetr formulasi undan 11-sinfgacha so'raladi.
  */
 
 import type { IconName } from "./icons";
@@ -47,6 +47,38 @@ export interface Bolim {
 }
 
 export const FORMULALAR: Bolim[] = [
+  {
+    nom: "O'lchov va amallar", ru: "Измерения и действия", sinf: 5, ikon: "ruler",
+    lar: [
+      { nom: "To'g'ri to'rtburchak perimetri", ru: "Периметр прямоугольника", f: "P = 2(a + b)" },
+      { nom: "To'g'ri to'rtburchak yuzi", ru: "Площадь прямоугольника", f: "S = a · b" },
+      { nom: "Kvadrat perimetri va yuzi", ru: "Периметр и площадь квадрата", f: "P = 4a,   S = a²" },
+      { nom: "To'g'ri burchakli parallelepiped hajmi", ru: "Объём параллелепипеда", f: "V = a · b · c" },
+      { nom: "Kub hajmi", ru: "Объём куба", f: "V = a³" },
+      { nom: "Tezlik, vaqt, masofa", ru: "Скорость, время, расстояние", f: "S = v · t,   v = S/t,   t = S/v" },
+      { nom: "Daraja — n marta ko'paytma", ru: "Степень — произведение n раз", f: "aⁿ = a · a · … · a" },
+      { nom: "Amallar tartibi", ru: "Порядок действий", f: "( )  →  aⁿ  →  · :  →  + −" },
+      { nom: "O'rta arifmetik", ru: "Среднее арифметическое", f: "(a + b + …) / n" },
+    ],
+  },
+  {
+    nom: "Bo'linish, nisbat, foiz", ru: "Делимость, отношение, проценты", sinf: 6, ikon: "percent",
+    lar: [
+      { nom: "2 ga bo'linish — oxirgi raqam bo'yicha", ru: "Делимость на 2 — по последней цифре", f: "…0,  …2,  …4,  …6,  …8" },
+      { nom: "3 va 9 ga bo'linish — raqamlar yig'indisi bo'yicha", ru: "Делимость на 3 и 9 — по сумме цифр", f: "1+2+3 = 6  ⋮ 3" },
+      { nom: "5 va 10 ga bo'linish — oxirgi raqam bo'yicha", ru: "Делимость на 5 и 10 — по последней цифре", f: "5:  …0,  …5        10:  …0" },
+      { nom: "Kasrni qisqartirish — EKUB ga", ru: "Сокращение дроби — на НОД", f: "a/b = (a : d) / (b : d)" },
+      { nom: "Kasrlarni qo'shish", ru: "Сложение дробей", f: "a/b + c/d = (ad + cb) / bd" },
+      { nom: "Kasrlarni ko'paytirish", ru: "Умножение дробей", f: "a/b · c/d = ac / bd" },
+      { nom: "Kasrlarni bo'lish", ru: "Деление дробей", f: "a/b : c/d = a/b · d/c" },
+      { nom: "Proporsiya", ru: "Пропорция", f: "a/b = c/d  ⇒  a · d = b · c" },
+      { nom: "Sonning foizini topish", ru: "Процент от числа", f: "a · p / 100" },
+      { nom: "Sonni foizi bo'yicha topish", ru: "Число по его проценту", f: "a = (b · 100) / p" },
+      { nom: "Aylana uzunligi", ru: "Длина окружности", f: "C = 2πr = πd" },
+      { nom: "Doira yuzi", ru: "Площадь круга", f: "S = πr²" },
+      { nom: "Qarama-qarshi son va modul", ru: "Противоположное число и модуль", f: "−(−a) = a,   |−a| = a" },
+    ],
+  },
   {
     nom: "Qisqa ko'paytirish", ru: "Сокращённое умножение", sinf: 7, ikon: "times",
     lar: [

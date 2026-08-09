@@ -60,7 +60,7 @@ import { nishonlar, olingan } from "../lib/nishon";
 import { sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import {
-  yolBlok, yolDaftar, yolDokon, yolDuel, yolFormulalar, yolHisobot, yolKichkintoy, yolKurs,
+  yolTestlar, yolDaftar, yolDokon, yolDuel, yolFormulalar, yolHisobot, yolKichkintoy, yolKurs,
   yolKurslar, yolMaydon, yolNishon, yolOtaOna, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "../lib/yollar";
 import { t } from "../lib/matn";
@@ -275,10 +275,10 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
               lekin bo'lim izohi bilan turadi va kerak bo'lmaganda
               umuman chizilmaydi. */}
           {blokBormi(sinfOf(kurs.grade)) && (
-            <Bolim id="imtihon" ic="clock" nom={t("menyuImtihon")}
+            <Bolim id="imtihon" ic="order" nom={t("menyuImtihon")}
               ochiq={ochiqBolim} onOchiq={setOchiqBolim}>
-              <Satr ic="clock" rang="purple" nom={t("blokTugma")}
-                izoh={t("blokTugmaIzoh")} on={yur(yolBlok(kurs))} />
+              <Satr ic="order" rang="purple" nom={t("testlarTugma")}
+                izoh={t("testlarTugmaIzoh")} on={yur(yolTestlar(kurs))} />
               <Satr ic="chart" rang="blue" nom={t("hisobotTugma")}
                 izoh={t("hisobotTugmaIzoh")} on={yur(yolHisobot(kurs))} />
               <Satr ic="sqrt" rang="orange" nom={t("formulaTugma")}

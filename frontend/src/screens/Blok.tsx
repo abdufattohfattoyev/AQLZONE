@@ -32,6 +32,14 @@
  * ro'yxati: qaysi bobda nechta xato va yonida o'sha bobga o'tadigan
  * tugma. Ball o'zi hech narsa o'rgatmaydi, u faqat holatni aytadi.
  * Keyingi qadamni ko'rsatadigan narsa — shu ro'yxat.
+ *
+ * ─────────────── TANLAGICH BU YERDA EMAS ───────────────
+ *
+ * Qaysi testni topshirish `screens/Testlar.tsx` da hal qilinadi va bu
+ * komponentga tayyor qamrov bilan kiriladi. Sabab: testlar bazasi
+ * o'sib boradi (butun sinf, har bir bob, kelajakda mavzu bo'yicha
+ * to'plamlar) va tanlash ro'yxati testni YURGIZADIGAN komponent
+ * ichida yashasa, u har yangi tur qo'shilganda kattalashaverardi.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -41,12 +49,10 @@ import { Chiqish } from "../components/Chiqish";
 import { Yechim } from "../components/Yechim";
 import { Konfetti } from "../components/Konfetti";
 import type { Answer } from "../lib/activity";
-import type { Blok, BlokSavol, Uzunlik } from "../lib/blok";
-import { OLCHAM, blokYasa, foiz, natijaSaqla, sinfKurslari } from "../lib/blok";
+import type { Blok, BlokSavol, Qamrov, Uzunlik } from "../lib/blok";
+import { blokYasa, foiz, natijaSaqla } from "../lib/blok";
 import { xatoQoshildi } from "../lib/daftar";
 import { courseById } from "../lib/curriculum";
-import type { Course } from "../lib/curriculum";
-import { useProgress } from "../lib/progress";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
@@ -59,105 +65,63 @@ interface Javob {
   togri: boolean;
 }
 
-export function Blok({ sinf, onExit }: { sinf: number; onExit: () => void }) {
-  const { progressOf } = useProgress();
-  const [uzunlik, setUzunlik] = useState<Uzunlik | null>(null);
-  const [blok, setBlok] = useState<Blok | null>(null);
+export function Blok({ sinf, uzunlik, qamrov, bobNomi, onExit }: {
+  sinf: number;
+  uzunlik: Uzunlik;
+  qamrov: Qamrov;
+  /** Bob testi bo'lsa bobning nomi — natijaga yoziladi. */
+  bobNomi?: string;
+  onExit: () => void;
+}) {
+  /**
+   * Test BIR MARTA yig'iladi.
+   *
+   * `urinish` — "yana topshirish" da oshadi va savollar qaytadan
+   * yasaladi: sonlar boshqacha bo'ladi, ya'ni testni yodlab olib
+   * bo'lmaydi.
+   */
+  const [urinish, setUrinish] = useState(0);
+  const blok = useMemo(
+    () => blokYasa(sinf, uzunlik, qamrov),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sinf, uzunlik, qamrov, urinish],
+  );
 
-  const boshla = (u: Uzunlik) => {
-    const b = blokYasa(sinf, progressOf, u);
-    setUzunlik(u);
-    setBlok(b);
-    tebrat("tanlov");
-  };
+  // Material topilmadi. Amalda bu deyarli bo'lmaydi (test qulfsiz va
+  // butun kurs ochiq), lekin bo'sh ekran ko'rsatishdan ko'ra
+  // tushunarli gap yaxshi.
+  if (!blok) return <Bosh onExit={onExit} />;
 
-  if (!blok || !uzunlik) {
-    return <Boshlash sinf={sinf} onBoshla={boshla} onExit={onExit} bosh={blok === null && uzunlik !== null} />;
-  }
-
-  // `key` — "yana topshirish" da butun holat noldan boshlanishi uchun.
-  return <Oyna key={`${uzunlik}-${blok.savollar.length}`}
-    blok={blok} sinf={sinf} uzunlik={uzunlik}
-    onQayta={() => { setBlok(null); setUzunlik(null); }}
+  return <Oyna key={`${uzunlik}-${urinish}`}
+    blok={blok} sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi}
+    onQayta={() => { setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
 }
 
-/* ==================== boshlash ekrani ==================== */
+/* ==================== material topilmadi ==================== */
 
-function Boshlash({ sinf, onBoshla, onExit, bosh }: {
-  sinf: number;
-  onBoshla: (u: Uzunlik) => void;
-  onExit: () => void;
-  /** Test yasalmadi — o'tilgan dars yo'q. */
-  bosh: boolean;
-}) {
-  const ozStrelka = useOrqaga(onExit);
-
+function Bosh({ onExit }: { onExit: () => void }) {
   return (
-    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-4 pt-4 pb-8">
-      <div className="flex items-center gap-3">
-        {ozStrelka && (
-          <button type="button" onClick={onExit} title={t("ortga")}
-            className="clay-press grid size-11 place-items-center rounded-2xl bg-karta text-ink-soft shadow-clay-sm">
-            <Icon name="chevron" size={20} className="rotate-180" />
-          </button>
-        )}
-        <h1 className="font-display text-[18px]">{t("blokSarlavha")}</h1>
+    <div className="mx-auto grid min-h-ekran w-full max-w-[430px] place-items-center px-6">
+      <div className="rounded-clay bg-karta p-6 text-center shadow-clay-sm">
+        <p className="text-[13.5px] leading-snug text-ink-dim">{t("blokBosh")}</p>
+        <button type="button" onClick={onExit}
+          className="clay-press mt-4 h-12 w-full rounded-3xl bg-brand-green font-display text-[15px]
+                     text-white shadow-[0_5px_0_var(--color-brand-green-d)]">
+          {t("ortga")}
+        </button>
       </div>
-
-      <div className="az-kirish mt-5 rounded-clay bg-karta p-5 shadow-clay-sm">
-        <span className="grid size-14 place-items-center rounded-3xl bg-brand-purple text-white
-                         shadow-[0_6px_0_var(--color-brand-purple-d)]">
-          <Icon name="clock" size={26} />
-        </span>
-        <h2 className="mt-4 font-display text-[17px] leading-tight">{t("blokTayyormi", { n: sinf })}</h2>
-        <p className="mt-1.5 text-[13px] leading-snug text-ink-dim">{t("blokIzoh")}</p>
-      </div>
-
-      {bosh ? (
-        /* O'tilgan dars yo'q — test yasashga material yetmaydi. Bu
-           xato emas, shuning uchun qizil ogohlantirish emas: shunchaki
-           nima qilish kerakligi aytiladi. */
-        <div className="az-kirish mt-4 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
-          <p className="text-[13.5px] leading-snug text-ink-dim">{t("blokBosh")}</p>
-          <button type="button" onClick={onExit}
-            className="clay-press mt-4 h-12 w-full rounded-3xl bg-brand-green font-display text-[15px]
-                       text-white shadow-[0_5px_0_var(--color-brand-green-d)]">
-            {t("blokDarslarga")}
-          </button>
-        </div>
-      ) : (
-        <div className="az-kirish mt-4 space-y-3" style={{ "--az-kech": "60ms" } as React.CSSProperties}>
-          {(["toliq", "qisqa"] as const).map((u) => (
-            <button key={u} type="button" onClick={() => onBoshla(u)}
-              className="clay-press flex w-full items-center gap-3 rounded-clay bg-karta p-4 text-left shadow-clay-sm">
-              <span className={`grid size-11 shrink-0 place-items-center rounded-2xl text-white
-                ${u === "toliq" ? "bg-brand-orange" : "bg-brand-blue"}`}>
-                <Icon name={u === "toliq" ? "trophy" : "flame"} size={20} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-display text-[15px] leading-tight">
-                  {t(u === "toliq" ? "blokToliq" : "blokQisqa")}
-                </span>
-                <span className="mt-0.5 block text-[12px] text-ink-dim">
-                  {t("blokOlcham", { s: OLCHAM[u].savol, d: OLCHAM[u].daqiqa })}
-                </span>
-              </span>
-              <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, sinf, uzunlik, onQayta, onExit }: {
+function Oyna({ blok, sinf, uzunlik, bobNomi, onQayta, onExit }: {
   blok: Blok;
   sinf: number;
   uzunlik: Uzunlik;
+  bobNomi?: string;
   onQayta: () => void;
   onExit: () => void;
 }) {
@@ -188,13 +152,14 @@ function Oyna({ blok, sinf, uzunlik, onQayta, onExit }: {
       vaqt: new Date().toISOString(),
       sinf,
       uzunlik,
+      bob: bobNomi,
       jami: toliq.length,
       togri: toliq.filter((x) => x.togri).length,
       xato: toliq.filter((x) => !x.togri && x.tanlangan !== null).length,
       ulgurmadi: toliq.filter((x) => x.tanlangan === null).length,
       sekund: Math.round((performance.now() - boshlandi.current) / 1000),
     });
-  }, [blok.savollar.length, sinf, uzunlik]);
+  }, [blok.savollar.length, sinf, uzunlik, bobNomi]);
 
   /* Soat. Har sekundda bir marta yuradi va nolga yetganda testni
      o'zi yakunlaydi — bu imtihonning asosiy qoidasi. */
@@ -536,9 +501,3 @@ function soat(s: number): string {
   const q = s % 60;
   return `${d}:${String(q).padStart(2, "0")}`;
 }
-
-/** Kurs ro'yxati bo'sh bo'lmasligini tekshirish uchun — App shuni chaqiradi. */
-export const blokKurslariBormi = (sinf: number): boolean => sinfKurslari(sinf).length > 0;
-
-/** Test ochilganda kurs kerak bo'lsa — birinchi kursning o'zi. */
-export const blokAsosiyKurs = (sinf: number): Course | undefined => sinfKurslari(sinf)[0];
