@@ -27,7 +27,7 @@
  */
 import type { Activity } from "../activity";
 import { po } from "../tarjima/oliy";
-import { dPick, iz, pick, rnd, sPick, shuffle, zPick } from "./asos";
+import { Y, dc, dPick, iz, pick, rnd, sPick, shuffle, zPick } from "./asos";
 
 const PI = 3.14;
 
@@ -47,6 +47,13 @@ export const s10Joylashuv = (): Activity => {
   return {
     type: "eqn", text: shart, prompt: po("fazoJoylashuv"),
     answer: j, choices: shuffle([po("jParallel"), po("jKesishuvchi"), po("jAyqash"), po("jUstMaUst")]),
+    yechim: [
+      // Fazoda tekislikdan farqli TO'RTINCHI holat bor: ayqash
+      // chiziqlar. Ular kesishmaydi va parallel ham emas — chunki
+      // umuman bitta tekislikda yotmaydi.
+      Y("tekshir", shart),
+      Y("javob", j),
+    ],
   };
 };
 
@@ -67,6 +74,12 @@ export const s10Kopyoq = (): Activity => {
   return {
     type: "eqn", text: `${jism.nom} — ${soz} soni = ?`, prompt: po("kopyoqElement"),
     ...zPick(s, [jism.u, jism.q, jism.y].filter((x) => x !== s)),
+    yechim: [
+      Y("tekshir", `U = ${jism.u},   Q = ${jism.q},   Y = ${jism.y}`),
+      // Eyler formulasi tekshiruv sifatida: U − Q + Y doim 2 chiqadi.
+      Y("formula", `${jism.u} − ${jism.q} + ${jism.y} = 2`),
+      Y("javob", iz(s)),
+    ],
   };
 };
 
@@ -82,6 +95,11 @@ export const s10Eyler = (): Activity => {
   return {
     type: "eqn", text: berilgan, prompt: po("eylerFormula"),
     ...zPick(s, [s + 2, s - 2, u + q + y]),
+    yechim: [
+      Y("formula", "U − Q + Y = 2"),
+      Y("qoy", `${u} − ${q} + ${y} = 2`),
+      Y("javob", iz(s)),
+    ],
   };
 };
 
@@ -94,6 +112,13 @@ export const s10Diagonal = (): Activity => {
   return {
     type: "eqn", text: po("txtOlchamlar", { a, b, c }) + ".   d = ?", prompt: po("diagonalFazo"),
     ...zPick(d, [a + b + c, d + 1, a * b * c]),
+    yechim: [
+      // Tekislikdagi Pifagorning fazodagi ko'rinishi: uchta o'lcham
+      // ham kvadratga ko'tarilib qo'shiladi.
+      Y("pifagor", "d² = a² + b² + c²"),
+      Y("qoy", `d = √(${a * a} + ${b * b} + ${c * c}) = √${a * a + b * b + c * c}`),
+      Y("javob", iz(d)),
+    ],
   };
 };
 
@@ -107,6 +132,11 @@ export const s10Masofa = (): Activity => {
     type: "eqn",
     text: `A(${iz(x1)}; ${iz(y1)}; ${iz(z1)}),  B(${iz(x1 + dx)}; ${iz(y1 + dy)}; ${iz(z1 + dz)})`,
     prompt: po("fazoMasofa"), ...zPick(d, [dx + dy + dz, d + 1, dx * dy * dz]),
+    yechim: [
+      Y("masofa", "d = √((x₂−x₁)² + (y₂−y₁)² + (z₂−z₁)²)"),
+      Y("hisobla", `√(${dx}² + ${dy}² + ${dz}²) = √${dx * dx + dy * dy + dz * dz}`),
+      Y("javob", iz(d)),
+    ],
   };
 };
 
@@ -119,6 +149,11 @@ export const s10Vektor = (): Activity => {
   return {
     type: "eqn", text: `a⃗(${iz(sx)}; ${y}; ${z})`, prompt: po("fazoVektor"),
     ...zPick(d, [Math.abs(sx) + y + z, d + 1, x * y * z]),
+    yechim: [
+      Y("vektorUzunlik", "|a| = √(x² + y² + z²)"),
+      Y("hisobla", `√(${x * x} + ${y * y} + ${z * z}) = √${x * x + y * y + z * z}`),
+      Y("javob", iz(d)),
+    ],
   };
 };
 
@@ -132,6 +167,11 @@ export const s11PrizmaHajm = (): Activity => {
   return {
     type: "eqn", text: `S(asos) = ${S},  h = ${h}`, prompt: po("prizmaHajm"),
     ...zPick(S * h, [S + h, (S * h) / 3, 2 * S * h]),
+    yechim: [
+      Y("hajmFormula", "V = S · h"),
+      Y("qoy", `V = ${S} · ${h}`),
+      Y("javob", iz(S * h)),
+    ],
   };
 };
 
@@ -142,12 +182,24 @@ export const s11Parallelepiped = (): Activity => {
     return {
       type: "eqn", text: po("txtOlchamlar", { a, b, c }) + ".   V = ?", prompt: po("prizmaHajm"),
       ...zPick(a * b * c, [a + b + c, 2 * (a * b + b * c + a * c), (a * b * c) / 3]),
+      yechim: [
+        Y("hajmFormula", "V = a · b · c"),
+        Y("qoy", `V = ${a} · ${b} · ${c}`),
+        Y("javob", iz(a * b * c)),
+      ],
     };
   }
   const S = 2 * (a * b + b * c + a * c);
   return {
     type: "eqn", text: po("txtOlchamlar", { a, b, c }) + ".   S = ?", prompt: po("prizmaSirt"),
     ...zPick(S, [a * b * c, S / 2, a + b + c]),
+    yechim: [
+      // Olti yoq — uch juft teng to'rtburchak, shuning uchun
+      // yig'indi ikkilanadi.
+      Y("yuzaFormula", "S = 2(ab + bc + ac)"),
+      Y("qoy", `S = 2(${a * b} + ${b * c} + ${a * c})`),
+      Y("javob", iz(S)),
+    ],
   };
 };
 
@@ -157,6 +209,11 @@ export const s11SilindrHajm = (): Activity => {
   return {
     type: "eqn", text: po("txtRadiusBalandlik", { r, h }), prompt: po("silindrHajm"),
     ...dPick(PI * r * r * h, [PI * r * h, (PI * r * r * h) / 3, r * r * h]),
+    yechim: [
+      Y("hajmFormula", "V = π · r² · h"),
+      Y("qoy", `V = ${dc(PI)} · ${r * r} · ${h}`),
+      Y("javob", dc(PI * r * r * h)),
+    ],
   };
 };
 
@@ -166,6 +223,13 @@ export const s11SilindrSirt = (): Activity => {
   return {
     type: "eqn", text: po("txtRadiusBalandlik", { r, h }) + ".   S(yon) = ?", prompt: po("silindrSirt"),
     ...dPick(2 * PI * r * h, [PI * r * h, 2 * PI * r * r, PI * r * r * h]),
+    yechim: [
+      // Yon sirt yoyib yuborilsa TO'G'RI TO'RTBURCHAK bo'ladi:
+      // eni — aylana uzunligi, bo'yi — balandlik.
+      Y("yonYuza", "S = 2πr · h"),
+      Y("qoy", `S = 2 · ${dc(PI)} · ${r} · ${h}`),
+      Y("javob", dc(2 * PI * r * h)),
+    ],
   };
 };
 
@@ -176,6 +240,13 @@ export const s11PiramidaHajm = (): Activity => {
     type: "eqn", text: `S(asos) = ${S},  h = ${h}`, prompt: po("piramidaHajm"),
     // Klassik xato: uchdan birini unutish (prizma formulasini qo'llash).
     ...zPick((S * h) / 3, [S * h, (S * h) / 2, S + h]),
+    yechim: [
+      Y("hajmFormula", "V = S · h / 3"),
+      // Piramida shu asos va balandlikdagi prizmaning UCHDAN BIRI.
+      // Bo'lishni unutish — bu mavzudagi asosiy xato.
+      Y("qoy", `V = ${S} · ${h} / 3 = ${S * h} / 3`),
+      Y("javob", iz((S * h) / 3)),
+    ],
   };
 };
 
@@ -185,6 +256,11 @@ export const s11KonusHajm = (): Activity => {
   return {
     type: "eqn", text: po("txtRadiusBalandlik", { r, h }), prompt: po("konusHajm"),
     ...dPick((PI * r * r * h) / 3, [PI * r * r * h, (PI * r * h) / 3, (r * r * h) / 3]),
+    yechim: [
+      Y("hajmFormula", "V = π · r² · h / 3"),
+      Y("qoy", `V = ${dc(PI)} · ${r * r} · ${h} / 3`),
+      Y("javob", dc((PI * r * r * h) / 3)),
+    ],
   };
 };
 
@@ -195,6 +271,13 @@ export const s11KonusSirt = (): Activity => {
   return {
     type: "eqn", text: `r = ${r},  h = ${h}  (l = ${l})`, prompt: po("konusSirt"),
     ...dPick(PI * r * l, [PI * r * h, PI * r * r, 2 * PI * r * l]),
+    yechim: [
+      // Yon sirtda BALANDLIK emas, YASOVCHI qatnashadi. Ikkisini
+      // almashtirib yuborish — eng ko'p uchraydigan xato.
+      Y("yonYuza", "S = π · r · l"),
+      Y("qoy", `S = ${dc(PI)} · ${r} · ${l}`),
+      Y("javob", dc(PI * r * l)),
+    ],
   };
 };
 
@@ -204,6 +287,12 @@ export const s11SharHajm = (): Activity => {
   return {
     type: "eqn", text: po("txtRadiusR", { r }), prompt: po("sharHajm"),
     ...dPick((4 / 3) * PI * r ** 3, [4 * PI * r * r, (PI * r ** 3) / 3, (4 / 3) * PI * r * r]),
+    yechim: [
+      // Hajmda radius UCHINCHI darajada, sirtda esa ikkinchi.
+      Y("hajmFormula", "V = 4/3 · π · r³"),
+      Y("qoy", `V = 4/3 · ${dc(PI)} · ${r ** 3}`),
+      Y("javob", dc((4 / 3) * PI * r ** 3)),
+    ],
   };
 };
 
@@ -213,6 +302,11 @@ export const s11SferaYuza = (): Activity => {
   return {
     type: "eqn", text: po("txtRadiusR", { r }), prompt: po("sferaYuza"),
     ...dPick(4 * PI * r * r, [2 * PI * r, (4 / 3) * PI * r ** 3, PI * r * r]),
+    yechim: [
+      Y("yuzaFormula", "S = 4 · π · r²"),
+      Y("qoy", `S = 4 · ${dc(PI)} · ${r * r}`),
+      Y("javob", dc(4 * PI * r * r)),
+    ],
   };
 };
 
@@ -230,5 +324,13 @@ export const s11Formula = (): Activity => {
   return {
     type: "eqn", text: `${nom}:  V = ?`, prompt: po("prizmaHajm"),
     ...sPick(j, shuffle(boshqa).slice(0, 3)),
+    yechim: [
+      // Uchligi bir juft: konus — silindrning, piramida — prizmaning
+      // uchdan biri. Shu bog'liqlikni bilgan odam beshalasini
+      // ikkitadan chiqarib oladi.
+      Y("hajmFormula", "Silindr πr²h  →  Konus ⅓πr²h"),
+      Y("hajmFormula", "Prizma S·h  →  Piramida ⅓S·h"),
+      Y("javob", j),
+    ],
   };
 };

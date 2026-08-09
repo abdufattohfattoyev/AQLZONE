@@ -100,6 +100,12 @@ const Y = {
   ikkilangan: ["Ikkilangan burchak formulasi", "Формула двойного угла"],
   radian: ["Radian: 180° = π", "Радианы: 180° = π"],
   jadvalQiymat: ["Jadval qiymati", "Табличное значение"],
+  /* Uchtasi doim aralashib ketadi, shuning uchun uchalasi bir qatorda
+     turadi — o'quvchi keraklisini o'zi tanlaydi. */
+  trigNisbatQoida: [
+    "sin = qarshidagi/gipotenuza,  cos = yondagi/gipotenuza,  tg = qarshidagi/yondagi",
+    "sin = противолежащий/гипотенуза,  cos = прилежащий/гипотенуза,  tg = противолежащий/прилежащий",
+  ],
 
   /* ---------------- progressiya ---------------- */
   arifHad: ["Arifmetik progressiya: aₙ = a₁ + (n−1)d", "Арифметическая прогрессия: aₙ = a₁ + (n−1)d"],
@@ -175,3 +181,12 @@ export type YechimKalit = keyof typeof Y;
 
 /** Qadam izohi — joriy tilda. */
 export const yo = (k: YechimKalit): string => Y[k][til() === "ru" ? 1 : 0];
+
+/**
+ * Lug'atning o'zi — TEKSHIRUV uchun.
+ *
+ * `scripts/yechim.ts` uni ikkala tilda ham bo'sh yozuv yo'qligini
+ * tekshirishda o'qiydi. Ilovaning ichida ishlatilmaydi: u yerda doim
+ * `yo()` chaqiriladi, chunki til ish paytida almashishi mumkin.
+ */
+export const YECHIM_LUGAT: Readonly<Record<string, readonly [string, string]>> = Y;

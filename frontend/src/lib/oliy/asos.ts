@@ -31,6 +31,16 @@ import type { YechimKalit } from "../tarjima/yechim";
  */
 export const Y = (q: YechimKalit, ifoda?: string): Qadam => ({ q, if: ifoda });
 
+/**
+ * Manfiy sonni QAVSGA oladi: −6 → "(−6)", 6 → "6".
+ *
+ * Yechim qadamlarida shart. Qavssiz `−6²` yozuvi −(6²) = −36 deb
+ * o'qiladi, holbuki ko'zda tutilgani (−6)² = 36. Xuddi shunday
+ * `13 · −1` ham matematik yozuvda uchramaydi va o'quvchi uni xato deb
+ * o'ylaydi. Musbat sonda qavs qo'yilmaydi — u faqat shovqin bo'lardi.
+ */
+export const qav = (n: number): string => (n < 0 ? `(${iz(n)})` : String(n));
+
 /* ------------------------------------------------------------ belgilar */
 
 /** Ustki indekslar: 2 → "²". Daraja matnda shunday yoziladi. */

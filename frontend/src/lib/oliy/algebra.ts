@@ -25,7 +25,7 @@
 import type { Activity } from "../activity";
 import { po } from "../tarjima/oliy";
 import {
-  Y, dc, ekub, fr, had, ikkiIldiz, iz, kophad, nz, past, pick, qosh, rnd,
+  Y, dc, ekub, fr, had, ikkiIldiz, iz, kophad, nz, past, pick, qav, qosh, rnd,
   sPick, shuffle, ust, zPick,
 } from "./asos";
 
@@ -299,7 +299,7 @@ export const a7KophadBirhad = (): Activity => {
     yechim: [
       // Birhad IKKALA hadga ko'paytiriladi — bu yerdagi asosiy xato
       // faqat birinchisiga ko'paytirib qo'yish.
-      Y("qavsOch", `${had(k, "x")} · ${had(a, "x")} + ${had(k, "x")} · ${iz(b)}`),
+      Y("qavsOch", `${had(k, "x")} · ${had(a, "x")} + ${had(k, "x")} · ${qav(b)}`),
       Y("darajaQosh", `x · x = x²`),
       Y("javob", j),
     ],
@@ -371,7 +371,7 @@ export const a7Kvadrat = (): Activity => {
     ...sPick(j, [kophad([1, 0, a * a]), kophad([1, b, a * a]), kophad([1, 2 * b, 2 * a])]),
     yechim: [
       Y("qisqaFormula", manfiy ? "(a − b)² = a² − 2ab + b²" : "(a + b)² = a² + 2ab + b²"),
-      Y("ortaHad", `2 · x · ${iz(b)} = ${iz(2 * b)}x`),
+      Y("ortaHad", `2 · x · ${qav(b)} = ${iz(2 * b)}x`),
       Y("hisobla", `${a}² = ${a * a}`),
       Y("javob", j),
     ],
@@ -732,7 +732,7 @@ export const a8Diskriminant = (): Activity => {
     ...zPick(D, [b * b + 4 * c, b * b - c, -D]),
     yechim: [
       Y("diskriminant", `a = 1,  b = ${iz(b)},  c = ${iz(c)}`),
-      Y("qoy", `D = ${iz(b)}² − 4 · 1 · ${iz(c)}`),
+      Y("qoy", `D = ${qav(b)}² − 4 · 1 · ${qav(c)}`),
       Y("hisobla", `D = ${b * b} ${qosh(-4 * c)}`),
       Y("javob", iz(D)),
     ],
@@ -754,7 +754,7 @@ export const a8NechtaIldiz = (): Activity => {
     type: "eqn", text: `${kophad([1, b, c])} = 0`, prompt: po("nechtaIldiz"),
     answer: javob, choices: shuffle([po("jIkkita"), po("jBitta"), po("jYoq")]),
     yechim: [
-      Y("diskriminant", `D = ${iz(b)}² − 4 · ${iz(c)} = ${iz(D)}`),
+      Y("diskriminant", `D = ${qav(b)}² − 4 · ${qav(c)} = ${iz(D)}`),
       Y(D > 0 ? "ildizFormula" : D === 0 ? "ildizFormula" : "dManfiy",
         D > 0 ? "D > 0" : D === 0 ? "D = 0" : undefined),
       Y("javob", javob),
@@ -771,7 +771,7 @@ export const a8Kvadrat = (): Activity => {
     // Xato: ildizlarni ishorasi bilan olish (Viyetdagi eng ko'p uchraydigan xato).
     ...sPick(ikkiIldiz(x1, x2), [ikkiIldiz(-x1, -x2), ikkiIldiz(x1, -x2), ikkiIldiz(b, c)]),
     yechim: [
-      Y("diskriminant", `D = ${iz(b)}² − 4 · ${iz(c)} = ${b * b - 4 * c}`),
+      Y("diskriminant", `D = ${qav(b)}² − 4 · ${qav(c)} = ${b * b - 4 * c}`),
       Y("ildizFormula", `x = (${iz(-b)} ± ${dc(Math.sqrt(b * b - 4 * c))}) / 2`),
       Y("javob", ikkiIldiz(x1, x2)),
     ],
@@ -932,7 +932,7 @@ export const a9Ucha = (): Activity => {
     ...zPick(x0, [-x0, b, -b]),
     yechim: [
       Y("parabolaUchi", `a = ${iz(a)},  b = ${iz(b)}`),
-      Y("qoy", `x₀ = ${iz(-b)} / (2 · ${iz(a)})`),
+      Y("qoy", `x₀ = ${iz(-b)} / (2 · ${qav(a)})`),
       Y("javob", iz(x0)),
     ],
   };
@@ -946,7 +946,7 @@ export const a9FunksiyaQiymat = (): Activity => {
     type: "eqn", text: `y = ${kophad([a, b, c])},   x = ${iz(x)}`, prompt: po("funksiyaQiymat"),
     ...zPick(y, [a * x + b * x + c, y - c, -y]),
     yechim: [
-      Y("qoy", `y = ${iz(a)} · (${iz(x)})² ${qosh(b)} · (${iz(x)}) ${qosh(c)}`),
+      Y("qoy", `y = ${qav(a)} · (${iz(x)})² ${qosh(b)} · (${iz(x)}) ${qosh(c)}`),
       Y("hisobla", `y = ${iz(a * x * x)} ${qosh(b * x)} ${qosh(c)}`),
       Y("javob", iz(y)),
     ],
@@ -1259,8 +1259,8 @@ export const a9ArifHad = (): Activity => {
       Y("arifHad"),
       // (n−1) ni ataylab yozib ko'rsatamiz: `n` ni olib qo'yish shu
       // mavzudagi eng ko'p uchraydigan xato.
-      Y("qoy", `a${past(n)} = ${iz(a1)} + (${n} − 1) · ${iz(d)}`),
-      Y("hisobla", `${iz(a1)} + ${n - 1} · ${iz(d)} = ${iz(a1)} ${qosh((n - 1) * d)}`),
+      Y("qoy", `a${past(n)} = ${iz(a1)} + (${n} − 1) · ${qav(d)}`),
+      Y("hisobla", `${iz(a1)} + ${n - 1} · ${qav(d)} = ${iz(a1)} ${qosh((n - 1) * d)}`),
       Y("javob", iz(s)),
     ],
   };
@@ -1294,7 +1294,7 @@ export const a9GeoHad = (): Activity => {
     yechim: [
       Y("geoHad"),
       Y("qoy", `b${past(n)} = ${b1} · (${iz(q)})${ust(n - 1)}`),
-      Y("hisobla", `${b1} · ${iz(q ** (n - 1))}`),
+      Y("hisobla", `${b1} · ${qav(q ** (n - 1))}`),
       Y("javob", iz(s)),
     ],
   };

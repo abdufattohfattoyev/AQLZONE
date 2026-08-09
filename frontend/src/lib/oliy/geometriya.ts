@@ -23,7 +23,7 @@
 import type { Activity } from "../activity";
 import { po } from "../tarjima/oliy";
 import {
-  PIFAGOR, dc, dPick, fr, iz, pick, rnd, sPick, shuffle, zPick,
+  PIFAGOR, Y, dc, dPick, fr, iz, pick, qosh, rnd, sPick, shuffle, zPick,
 } from "./asos";
 
 const PI = 3.14;
@@ -41,12 +41,22 @@ export const g7Kesma = (): Activity => {
     return {
       type: "eqn", text: `AB = ${a},  BC = ${b}.   AC = ?`, prompt: po("kesmaUzunlik"),
       ...zPick(a + b, [Math.abs(a - b), a * b, a]),
+      yechim: [
+        Y("formula", "AC = AB + BC"),
+        Y("qoy", `AC = ${a} + ${b}`),
+        Y("javob", iz(a + b)),
+      ],
     };
   }
   const c = a + b;
   return {
     type: "eqn", text: `AC = ${c},  AB = ${a}.   BC = ?`, prompt: po("kesmaUzunlik"),
     ...zPick(b, [c + a, c, a]),
+    yechim: [
+      Y("formula", "BC = AC − AB"),
+      Y("qoy", `BC = ${c} − ${a}`),
+      Y("javob", iz(b)),
+    ],
   };
 };
 
@@ -54,10 +64,18 @@ export const g7Kesma = (): Activity => {
 export const g7Aylana = (): Activity => {
   const r = rnd(2, 30);
   if (Math.random() < 0.5) {
-    return { type: "eqn", text: `r = ${r}.   d = ?`, prompt: po("kesmaUzunlik"), ...zPick(2 * r, [r / 2, r, r * r]) };
+    return {
+      type: "eqn", text: `r = ${r}.   d = ?`, prompt: po("kesmaUzunlik"),
+      ...zPick(2 * r, [r / 2, r, r * r]),
+      yechim: [Y("formula", "d = 2r"), Y("qoy", `d = 2 · ${r}`), Y("javob", iz(2 * r))],
+    };
   }
   const d = 2 * r;
-  return { type: "eqn", text: `d = ${d}.   r = ?`, prompt: po("kesmaUzunlik"), ...zPick(r, [d * 2, d, d + 2]) };
+  return {
+    type: "eqn", text: `d = ${d}.   r = ?`, prompt: po("kesmaUzunlik"),
+    ...zPick(r, [d * 2, d, d + 2]),
+    yechim: [Y("formula", "r = d / 2"), Y("qoy", `r = ${d} / 2`), Y("javob", iz(r))],
+  };
 };
 
 /* ---------- II bob. Burchak ---------- */
@@ -70,6 +88,10 @@ export const g7BurchakTuri = (): Activity => {
   return {
     type: "eqn", text: `∠A = ${b}°`, prompt: po("burchakTuri"),
     answer: j, choices: shuffle([po("jOtkir"), po("jTogri90"), po("jOtmas"), po("jYoyiq")]),
+    yechim: [
+      Y("tekshir", "< 90° | = 90° | 90°…180° | = 180°"),
+      Y("javob", j),
+    ],
   };
 };
 
@@ -79,6 +101,11 @@ export const g7Bissektrisa = (): Activity => {
   return {
     type: "eqn", text: `∠AOB = ${b}°,  OM — bissektrisa.   ∠AOM = ?`, prompt: po("burchakHisobla"),
     ...zPick(yarim, [b, 180 - b, 90 - yarim]),
+    yechim: [
+      Y("formula", "∠AOM = ∠AOB / 2"),
+      Y("qoy", `${b}° / 2`),
+      Y("javob", `${yarim}°`),
+    ],
   };
 };
 
@@ -89,6 +116,12 @@ export const g7Qoshni = (): Activity => {
     type: "eqn", text: `∠1 = ${a}°.   ∠2 = ?`, prompt: po("qoshniBurchak"),
     // Xato: 90° gacha to'ldirish (to'ldiruvchi burchak bilan chalkashtirish).
     ...zPick(180 - a, [90 - a > 0 ? 90 - a : a, a, 360 - a]),
+    yechim: [
+      // Qo'shni — 180°, to'ldiruvchi — 90°. Ikkisi doim chalkashadi.
+      Y("formula", "∠1 + ∠2 = 180°"),
+      Y("kochir", `∠2 = 180° − ${a}°`),
+      Y("javob", `${180 - a}°`),
+    ],
   };
 };
 
@@ -100,6 +133,12 @@ export const g7Vertikal = (): Activity => {
     // ("nima to'g'ri?") bu yerga to'g'ri kelmaydi — u nazariy savolniki.
     type: "eqn", text: `∠1 = ${a}°,  ∠3 — unga vertikal.   ∠3 = ?`, prompt: po("burchakHisobla"),
     ...zPick(a, [180 - a, 90 - a > 0 ? 90 - a : 2 * a, 360 - a]),
+    yechim: [
+      // Vertikal burchaklar TENG. Ularni qo'shni burchak bilan
+      // chalkashtirib 180° dan ayirish — shu mavzuning asosiy xatosi.
+      Y("formula", "∠1 = ∠3"),
+      Y("javob", `${a}°`),
+    ],
   };
 };
 
@@ -114,6 +153,10 @@ export const g7UchburchakTuri = (): Activity => {
     type: "eqn", text: po("txtTomonlar", { a: tomon[0], b: tomon[1], c: tomon[2] }),
     prompt: po("uchburchakTuri2"),
     answer: nomlar[k], choices: shuffle([...nomlar]),
+    yechim: [
+      Y("tekshir", `${tomon[0]},  ${tomon[1]},  ${tomon[2]}`),
+      Y("javob", nomlar[k]),
+    ],
   };
 };
 
@@ -127,6 +170,12 @@ export const g7Alomat = (): Activity => {
   return {
     type: "eqn", text: holat.berilgan, prompt: po("tenglikAlomati"),
     answer: holat.j, choices: shuffle([po("jTBT"), po("jBTB"), po("jTTT")]),
+    yechim: [
+      // Alomat berilganlarning TARTIBIDAN o'qiladi: tomon-burchak-tomon
+      // da burchak ikki tomon ORASIDA turadi.
+      Y("tekshir", holat.berilgan),
+      Y("javob", holat.j),
+    ],
   };
 };
 
@@ -138,12 +187,24 @@ export const g7TengYonli = (): Activity => {
     return {
       type: "eqn", text: `Teng yonli:  ∠A = ${uch}° (uchidagi).   Asosidagi burchak = ?`,
       prompt: po("burchakHisobla"), ...zPick(asos, [180 - uch, uch, 90 - uch > 0 ? 90 - uch : asos + 10]),
+      yechim: [
+        Y("burchakYigindi"),
+        Y("hisobla", `180° − ${uch}° = ${180 - uch}°`),
+        // Qolgan ikki burchak TENG — shuning uchun yarmi olinadi.
+        Y("hisobla", `${180 - uch}° / 2`),
+        Y("javob", `${asos}°`),
+      ],
     };
   }
   const asos = rnd(20, 80), uch = 180 - 2 * asos;
   return {
     type: "eqn", text: `Teng yonli:  asosidagi burchak = ${asos}°.   Uchidagi burchak = ?`,
     prompt: po("burchakHisobla"), ...zPick(uch, [asos, 180 - asos, 2 * asos]),
+    yechim: [
+      Y("burchakYigindi"),
+      Y("hisobla", `180° − 2 · ${asos}°`),
+      Y("javob", `${uch}°`),
+    ],
   };
 };
 
@@ -160,6 +221,13 @@ export const g7Parallel = (): Activity => {
   return {
     type: "eqn", text: `a ∥ b,  ∠1 = ${a}°.  ∠2 — ${nom}.   ∠2 = ?`,
     prompt: po("parallelBurchak"), ...zPick(j, [tur === 0 ? 180 - a : a, 90, 360 - a]),
+    yechim: [
+      // Ikkalasi bir-biriga eng ko'p chalkashtiriladi: almashinuvchi —
+      // TENG, bir tomonli — 180° ga to'ldiradi.
+      Y("formula", tur === 0 ? "∠1 = ∠2" : "∠1 + ∠2 = 180°"),
+      Y("hisobla", tur === 0 ? `∠2 = ${a}°` : `∠2 = 180° − ${a}°`),
+      Y("javob", `${j}°`),
+    ],
   };
 };
 
@@ -172,6 +240,11 @@ export const g7UchinchiBurchak = (): Activity => {
   return {
     type: "eqn", text: po("txtUchburchakABC", { a, b }), prompt: po("uchburchakBurchak3"),
     ...zPick(c, [180 - a, a + b, 90 - a > 0 ? 90 - a : c + 15]),
+    yechim: [
+      Y("burchakYigindi"),
+      Y("kochir", `∠C = 180° − ${a}° − ${b}°`),
+      Y("javob", `${c}°`),
+    ],
   };
 };
 
@@ -181,6 +254,14 @@ export const g7Tashqi = (): Activity => {
   return {
     type: "eqn", text: `∠A = ${a}°,  ∠B = ${b}°.   C uchidagi tashqi burchak = ?`,
     prompt: po("tashqiBurchak"), ...zPick(a + b, [180 - a - b, 180 - a, a]),
+    yechim: [
+      // Tashqi burchak QO'SHNI BO'LMAGAN ikki burchakning yig'indisi.
+      // Uni ichki burchakdan 180° ayirib topish ham to'g'ri, lekin
+      // uzunroq — va aynan o'sha yerda adashiladi.
+      Y("formula", "tashqi ∠C = ∠A + ∠B"),
+      Y("qoy", `${a}° + ${b}°`),
+      Y("javob", `${a + b}°`),
+    ],
   };
 };
 
@@ -190,6 +271,11 @@ export const g7TogriBurchakli = (): Activity => {
   return {
     type: "eqn", text: `∠C = 90°,  ∠A = ${a}°.   ∠B = ?`, prompt: po("burchakHisobla"),
     ...zPick(b, [180 - a, a, 90 + a]),
+    yechim: [
+      Y("burchakYigindi", "∠A + ∠B = 180° − 90° = 90°"),
+      Y("kochir", `∠B = 90° − ${a}°`),
+      Y("javob", `${b}°`),
+    ],
   };
 };
 
@@ -206,6 +292,12 @@ export const g7Tengsizlik = (): Activity => {
     type: "eqn", text: po("txtTomonlar", { a, b, c }), prompt: po("uchburchakTengsizlik"),
     answer: bor ? po("jMumkin") : po("jMumkinEmas"),
     choices: shuffle([po("jMumkin"), po("jMumkinEmas")]),
+    yechim: [
+      // Uchburchak tengsizligi: ENG UZUN tomon qolgan ikkitasining
+      // yig'indisidan kichik bo'lishi shart.
+      Y("tekshir", `${Math.min(a, b, c)} + ${a + b + c - Math.max(a, b, c) - Math.min(a, b, c)} ${bor ? ">" : "≤"} ${Math.max(a, b, c)}`),
+      Y("javob", bor ? po("jMumkin") : po("jMumkinEmas")),
+    ],
   };
 };
 
@@ -215,6 +307,12 @@ export const g7Kopburchak = (): Activity => {
   return {
     type: "eqn", text: `n = ${n}`, prompt: po("kopburchakBurchak"),
     ...zPick(s, [n * 180, (n - 1) * 180, 360]),
+    yechim: [
+      Y("formula", "S = (n − 2) · 180°"),
+      Y("qoy", `S = (${n} − 2) · 180°`),
+      Y("hisobla", `${n - 2} · 180°`),
+      Y("javob", `${s}°`),
+    ],
   };
 };
 
@@ -231,11 +329,22 @@ export const g8Parallelogramm = (): Activity => {
     return {
       type: "eqn", text: `Parallelogramm,  ∠A = ${a}°.   ∠C = ?`, prompt: po("parallelogrammBurchak"),
       ...zPick(a, [180 - a, 90, 360 - a]),
+      yechim: [
+        // ∠A va ∠C — QARAMA-QARSHI, ya'ni teng. ∠B esa qo'shni va
+        // u 180° ga to'ldiradi. Ikkisi doim almashtirib yuboriladi.
+        Y("formula", "∠A = ∠C"),
+        Y("javob", `${a}°`),
+      ],
     };
   }
   return {
     type: "eqn", text: `Parallelogramm,  ∠A = ${a}°.   ∠B = ?`, prompt: po("parallelogrammBurchak"),
     ...zPick(180 - a, [a, 90, 360 - a]),
+    yechim: [
+      Y("formula", "∠A + ∠B = 180°"),
+      Y("kochir", `∠B = 180° − ${a}°`),
+      Y("javob", `${180 - a}°`),
+    ],
   };
 };
 
@@ -245,6 +354,11 @@ export const g8ParallelogrammP = (): Activity => {
   return {
     type: "eqn", text: `a = ${a},  b = ${b}`, prompt: po("parallelogrammPerim"),
     ...zPick(2 * (a + b), [a + b, a * b, 4 * a]),
+    yechim: [
+      Y("perimetrFormula", "P = 2(a + b)"),
+      Y("qoy", `P = 2(${a} + ${b}) = 2 · ${a + b}`),
+      Y("javob", iz(2 * (a + b))),
+    ],
   };
 };
 
@@ -255,6 +369,12 @@ export const g8Romb = (): Activity => {
   return {
     type: "eqn", text: `d₁ = ${d1},  d₂ = ${d2}`, prompt: po("rombYuza"),
     ...zPick(S, [d1 * d2, d1 + d2, S / 2]),
+    yechim: [
+      Y("yuzaFormula", "S = d₁ · d₂ / 2"),
+      Y("qoy", `S = ${d1} · ${d2} / 2`),
+      Y("hisobla", `${d1 * d2} / 2`),
+      Y("javob", iz(S)),
+    ],
   };
 };
 
@@ -267,6 +387,12 @@ export const g8Trapetsiya = (): Activity => {
   return {
     type: "eqn", text: `a = ${asoslar[0]},  b = ${asoslar[1]},  h = ${h}`, prompt: po("trapetsiyaYuza"),
     ...zPick(S, [(asoslar[0] + asoslar[1]) * h, asoslar[0] * h, S + h]),
+    yechim: [
+      Y("yuzaFormula", "S = (a + b) · h / 2"),
+      Y("qoy", `S = (${asoslar[0]} + ${asoslar[1]}) · ${h} / 2`),
+      Y("hisobla", `${asoslar[0] + asoslar[1]} · ${h} / 2`),
+      Y("javob", iz(S)),
+    ],
   };
 };
 
@@ -277,6 +403,11 @@ export const g8OrtaChiziq = (): Activity => {
   return {
     type: "eqn", text: `a = ${a},  b = ${b}`, prompt: po("ortaChiziq"),
     ...zPick(m, [a + b, Math.abs(a - b), m * 2]),
+    yechim: [
+      Y("formula", "m = (a + b) / 2"),
+      Y("qoy", `m = (${a} + ${b}) / 2`),
+      Y("javob", iz(m)),
+    ],
   };
 };
 
@@ -290,11 +421,25 @@ export const g8Pifagor = (): Activity => {
       type: "eqn", text: po("txtKatetlar", { a, b }), prompt: po("pifagor"),
       // Xato: kvadratsiz qo'shish — eng ko'p uchraydigani.
       ...zPick(c, [a + b, c + 1, Math.abs(a - b)]),
+      yechim: [
+        Y("pifagor"),
+        // Kvadratlar YIG'INDISI olinadi, tomonlarniki emas: `a + b`
+        // deb yozib qo'yish shu mavzudagi asosiy xato.
+        Y("qoy", `c² = ${a}² + ${b}² = ${a * a} + ${b * b}`),
+        Y("hisobla", `c = √${c * c}`),
+        Y("javob", iz(c)),
+      ],
     };
   }
   return {
     type: "eqn", text: po("txtGipotenuza", { c, a }), prompt: po("pifagor"),
     ...zPick(b, [c - a, c + a, b + 1]),
+    yechim: [
+      Y("pifagor"),
+      Y("kochir", `b² = c² − a² = ${c * c} − ${a * a}`),
+      Y("hisobla", `b = √${b * b}`),
+      Y("javob", iz(b)),
+    ],
   };
 };
 
@@ -307,6 +452,11 @@ export const g8TrigNisbat = (): Activity => {
   return {
     type: "eqn", text: `Katetlar ${a} va ${b},  gipotenuza ${c}.   ${f} α = ?   (α — ${a} katet qarshisidagi)`,
     prompt: po("trigNisbat"), ...sPick(j, boshqa),
+    yechim: [
+      Y("trigNisbatQoida"),
+      Y("qoy", `${f} α = ${j}`),
+      Y("javob", j),
+    ],
   };
 };
 
@@ -318,7 +468,14 @@ export const g8TrigJadval = (): Activity => {
   ];
   const [ifoda, j] = pick(jadval);
   const boshqa = shuffle([...new Set(jadval.map((x) => x[1]))]).filter((x) => x !== j).slice(0, 3);
-  return { type: "eqn", text: `${ifoda} = ?`, prompt: po("trigQiymat"), ...sPick(j, boshqa) };
+  return {
+    type: "eqn", text: `${ifoda} = ?`, prompt: po("trigQiymat"), ...sPick(j, boshqa),
+    yechim: [
+      Y("jadvalQiymat", "sin 30° = 1/2,  sin 45° = √2/2,  sin 60° = √3/2"),
+      Y("jadvalQiymat", "cos 30° = √3/2,  cos 45° = √2/2,  cos 60° = 1/2"),
+      Y("javob", j),
+    ],
+  };
 };
 
 /* ---------- III bob. Koordinatalar usuli. Vektorlar ---------- */
@@ -332,6 +489,11 @@ export const g8OrtaNuqta = (): Activity => {
     type: "eqn", text: po("txtNuqtalar", { x1: iz(x1), y1: iz(y1), x2: iz(x2), y2: iz(y2) }),
     prompt: po("ortaNuqta"),
     ...sPick(j, [`(${iz(x1 + x2)}; ${iz(y1 + y2)})`, `(${iz((x2 - x1) / 2)}; ${iz((y2 - y1) / 2)})`, `(${iz(x1)}; ${iz(y2)})`]),
+    yechim: [
+      Y("ortasi"),
+      Y("qoy", `x = (${iz(x1)} ${qosh(x2)}) / 2,   y = (${iz(y1)} ${qosh(y2)}) / 2`),
+      Y("javob", j),
+    ],
   };
 };
 
@@ -343,6 +505,12 @@ export const g8Masofa = (): Activity => {
   return {
     type: "eqn", text: po("txtNuqtalar", { x1: iz(x1), y1: iz(y1), x2: iz(x2), y2: iz(y2) }),
     prompt: po("masofa2"), ...zPick(d, [dx + dy, d + 1, Math.abs(dx - dy)]),
+    yechim: [
+      Y("masofa"),
+      Y("qoy", `√(${dx}² + ${dy}²) = √(${dx * dx} + ${dy * dy})`),
+      Y("hisobla", `√${d * d}`),
+      Y("javob", iz(d)),
+    ],
   };
 };
 
@@ -353,6 +521,13 @@ export const g8VektorUzunlik = (): Activity => {
   return {
     type: "eqn", text: `a⃗(${iz(sx)}; ${y})`, prompt: po("vektorUzunlik"),
     ...zPick(d, [Math.abs(sx) + y, d + 1, Math.abs(Math.abs(sx) - y)]),
+    yechim: [
+      Y("vektorUzunlik"),
+      // Kvadrat ostida ishora yo'qoladi — manfiy koordinata natijaga
+      // ta'sir qilmaydi.
+      Y("qoy", `√((${iz(sx)})² + ${y}²) = √(${sx * sx} + ${y * y})`),
+      Y("javob", iz(d)),
+    ],
   };
 };
 
@@ -364,6 +539,11 @@ export const g8VektorQosh = (): Activity => {
     type: "eqn", text: `${po("txtVektorlar", { x1: iz(x1), y1: iz(y1), x2: iz(x2), y2: iz(y2) })}.   a⃗ + b⃗ = ?`,
     prompt: po("vektorAmal"),
     ...sPick(j, [`(${iz(x1 - x2)}; ${iz(y1 - y2)})`, `(${iz(x1 * x2)}; ${iz(y1 * y2)})`, `(${iz(x1 + y1)}; ${iz(x2 + y2)})`]),
+    yechim: [
+      Y("vektorAmal"),
+      Y("hisobla", `x: ${iz(x1)} ${qosh(x2)} = ${iz(x1 + x2)},   y: ${iz(y1)} ${qosh(y2)} = ${iz(y1 + y2)}`),
+      Y("javob", j),
+    ],
   };
 };
 
@@ -374,6 +554,13 @@ export const g8Skalyar = (): Activity => {
   return {
     type: "eqn", text: `${po("txtVektorlar", { x1: iz(x1), y1: iz(y1), x2: iz(x2), y2: iz(y2) })}.   a⃗ · b⃗ = ?`,
     prompt: po("skalyar"), ...zPick(s, [x1 * x2 - y1 * y2, x1 + x2 + y1 + y2, (x1 + x2) * (y1 + y2)]),
+    yechim: [
+      Y("skalyar"),
+      // Natija VEKTOR emas, SON — bu yerda eng ko'p adashiladigan joy.
+      Y("qoy", `(${iz(x1)}) · (${iz(x2)}) + (${iz(y1)}) · (${iz(y2)})`),
+      Y("hisobla", `${iz(x1 * x2)} ${qosh(y1 * y2)}`),
+      Y("javob", iz(s)),
+    ],
   };
 };
 
@@ -382,10 +569,28 @@ export const g8Skalyar = (): Activity => {
 /** 46–48-§. To'g'ri to'rtburchak, parallelogramm va uchburchak yuzi. */
 export const g8Yuza = (): Activity => {
   const t = rnd(0, 2), a = rnd(3, 20), h = rnd(2, 18);
-  if (t === 0) return { type: "eqn", text: `To'g'ri to'rtburchak:  a = ${a},  b = ${h}`, prompt: po("yuzaHisobla"), ...zPick(a * h, [2 * (a + h), a + h, (a * h) / 2]) };
-  if (t === 1) return { type: "eqn", text: `Parallelogramm:  a = ${a},  h = ${h}`, prompt: po("yuzaHisobla"), ...zPick(a * h, [2 * (a + h), (a * h) / 2, a + h]) };
+  if (t === 0) return {
+    type: "eqn", text: `To'g'ri to'rtburchak:  a = ${a},  b = ${h}`, prompt: po("yuzaHisobla"),
+    ...zPick(a * h, [2 * (a + h), a + h, (a * h) / 2]),
+    yechim: [Y("yuzaFormula", "S = a · b"), Y("qoy", `S = ${a} · ${h}`), Y("javob", iz(a * h))],
+  };
+  if (t === 1) return {
+    type: "eqn", text: `Parallelogramm:  a = ${a},  h = ${h}`, prompt: po("yuzaHisobla"),
+    ...zPick(a * h, [2 * (a + h), (a * h) / 2, a + h]),
+    yechim: [Y("yuzaFormula", "S = a · h"), Y("qoy", `S = ${a} · ${h}`), Y("javob", iz(a * h))],
+  };
   const asos = a % 2 === 0 || h % 2 === 0 ? a : a + 1;
-  return { type: "eqn", text: `Uchburchak:  a = ${asos},  h = ${h}`, prompt: po("yuzaHisobla"), ...zPick((asos * h) / 2, [asos * h, asos + h, asos * h * 2]) };
+  return {
+    type: "eqn", text: `Uchburchak:  a = ${asos},  h = ${h}`, prompt: po("yuzaHisobla"),
+    ...zPick((asos * h) / 2, [asos * h, asos + h, asos * h * 2]),
+    // Uchburchakda YARMI olinadi — parallelogrammdan farqi faqat shu
+    // va aynan shu bo'linish unutiladi.
+    yechim: [
+      Y("yuzaFormula", "S = a · h / 2"),
+      Y("qoy", `S = ${asos} · ${h} / 2`),
+      Y("javob", iz((asos * h) / 2)),
+    ],
+  };
 };
 
 /* ---------- V bob. Aylana ---------- */
@@ -396,6 +601,11 @@ export const g8IchkiBurchak = (): Activity => {
   return {
     type: "eqn", text: `Yoyning gradus o'lchovi ${yoy}°.   Ichki chizilgan burchak = ?`,
     prompt: po("aylanaBurchak"), ...zPick(yoy / 2, [yoy, 180 - yoy, yoy * 2]),
+    yechim: [
+      Y("markaziyBurchak"),
+      Y("qoy", `${yoy}° / 2`),
+      Y("javob", `${yoy / 2}°`),
+    ],
   };
 };
 
@@ -405,6 +615,12 @@ export const g8DiametrBurchak = (): Activity => {
   return {
     type: "eqn", text: `AB — diametr,  C — aylanada,  ∠A = ${a}°.   ∠C = ?`,
     prompt: po("aylanaBurchak"), ...zPick(90, [180 - a, a, 90 - a]),
+    yechim: [
+      // Diametr — 180° lik yoy. Unga tiralgan ichki burchak esa
+      // yarmi, ya'ni ∠A qanday bo'lishidan qat'i nazar 90°.
+      Y("markaziyBurchak", "180° / 2 = 90°"),
+      Y("javob", "90°"),
+    ],
   };
 };
 
@@ -420,6 +636,11 @@ export const g9OxshashlikKoef = (): Activity => {
   return {
     type: "eqn", text: `AB = ${a},  A₁B₁ = ${a * k}`, prompt: po("oxshashlikKoef"),
     ...zPick(k, [a * k, a + k, k * k]),
+    yechim: [
+      Y("oxshashlik", "k = A₁B₁ / AB"),
+      Y("qoy", `k = ${a * k} / ${a}`),
+      Y("javob", iz(k)),
+    ],
   };
 };
 
@@ -429,6 +650,13 @@ export const g9OxshashTomon = (): Activity => {
   return {
     type: "eqn", text: `AB = ${a},  BC = ${b},  A₁B₁ = ${a * k}.   B₁C₁ = ?`,
     prompt: po("oxshashTomon"), ...zPick(b * k, [b + k, b, a * k]),
+    yechim: [
+      Y("oxshashlik", `k = ${a * k} / ${a} = ${k}`),
+      // Tomonlar KO'PAYTIRILADI, koeffitsiyent qo'shilmaydi — aynan
+      // shu yerda `b + k` deb yozib yuboriladi.
+      Y("qoy", `B₁C₁ = ${b} · ${k}`),
+      Y("javob", iz(b * k)),
+    ],
   };
 };
 
@@ -438,6 +666,11 @@ export const g9OxshashYuza = (): Activity => {
   return {
     type: "eqn", text: `O'xshashlik koeffitsiyenti k = ${k}.   S₁ : S₂ = ?`,
     prompt: po("oxshashYuza"), ...sPick(`${k * k} : 1`, [`${k} : 1`, `1 : ${k * k}`, `${k ** 3} : 1`]),
+    yechim: [
+      Y("oxshashYuza"),
+      Y("qoy", `${k}² : 1 = ${k * k} : 1`),
+      Y("javob", `${k * k} : 1`),
+    ],
   };
 };
 
@@ -452,6 +685,12 @@ export const g9YuzaSinus = (): Activity => {
   return {
     type: "eqn", text: `a = ${a},  b = ${b},  ∠C = ${burchak}°`, prompt: po("uchburchakYuzaSin"),
     ...sPick(dc(S), [dc(a * b * sinus), dc(0.5 * a * b), dc(a + b)]),
+    yechim: [
+      Y("yuzaFormula", "S = ½ · a · b · sin C"),
+      Y("jadvalQiymat", `sin ${burchak}° = ${burchak === 90 ? "1" : "1/2"}`),
+      Y("qoy", `S = 0,5 · ${a} · ${b} · ${burchak === 90 ? "1" : "0,5"}`),
+      Y("javob", dc(S)),
+    ],
   };
 };
 
@@ -462,6 +701,12 @@ export const g9Sinuslar = (): Activity => {
   return {
     type: "eqn", text: `a = ${a},  ∠A = 30°,  ∠B = 90°.   b = ?`, prompt: po("sinuslarTeorema"),
     ...zPick(a * 2, [a / 2, a, a * 3]),
+    yechim: [
+      Y("sinuslar"),
+      Y("jadvalQiymat", "sin 30° = 1/2,   sin 90° = 1"),
+      Y("qoy", `b = ${a} · 1 / 0,5`),
+      Y("javob", iz(a * 2)),
+    ],
   };
 };
 
@@ -474,6 +719,12 @@ export const g9Kosinuslar = (): Activity => {
   return {
     type: "eqn", text: `a = ${a},  b = ${b},  ∠C = ${burchak}°.   c² = ?`, prompt: po("kosinuslarTeorema"),
     ...zPick(c2, [a * a + b * b, a * a + b * b + 2 * a * b * cos, (a + b) ** 2]),
+    yechim: [
+      Y("kosinuslar"),
+      Y("jadvalQiymat", `cos ${burchak}° = ${burchak === 60 ? "1/2" : burchak === 90 ? "0" : "−1/2"}`),
+      Y("qoy", `c² = ${a * a} + ${b * b} − 2 · ${a} · ${b} · ${dc(cos)}`),
+      Y("javob", iz(c2)),
+    ],
   };
 };
 
@@ -486,6 +737,11 @@ export const g9Muntazam = (): Activity => {
   return {
     type: "eqn", text: `Muntazam ${n}-burchak`, prompt: po("muntazamKopburchak"),
     ...sPick(dc(b), [dc(360 / n), dc((n - 2) * 180), dc(180 - b)]),
+    yechim: [
+      Y("formula", "∠ = (n − 2) · 180° / n"),
+      Y("qoy", `(${n} − 2) · 180° / ${n} = ${(n - 2) * 180}° / ${n}`),
+      Y("javob", `${dc(b)}°`),
+    ],
   };
 };
 
@@ -495,6 +751,13 @@ export const g9AylanaUzunlik = (): Activity => {
   return {
     type: "eqn", text: po("txtRadiusR", { r }), prompt: po("aylanaUzunlik2"),
     ...dPick(2 * PI * r, [PI * r, PI * r * r, r]),
+    yechim: [
+      Y("aylanaUzunlik"),
+      // Uzunlikda radius BIRINCHI darajada: kvadratga ko'tarish —
+      // doira yuzi bilan chalkashtirishning belgisi.
+      Y("qoy", `C = 2 · ${dc(PI)} · ${r}`),
+      Y("javob", dc(2 * PI * r)),
+    ],
   };
 };
 
@@ -505,6 +768,11 @@ export const g9Yoy = (): Activity => {
   return {
     type: "eqn", text: `r = ${r},  n = ${n}°`, prompt: po("yoyUzunlik"),
     ...dPick(l, [PI * r, (2 * PI * r * n) / 180, r * n]),
+    yechim: [
+      Y("formula", "l = π · r · n / 180"),
+      Y("qoy", `l = ${dc(PI)} · ${r} · ${n} / 180`),
+      Y("javob", dc(l)),
+    ],
   };
 };
 
@@ -515,6 +783,11 @@ export const g9Sektor = (): Activity => {
   return {
     type: "eqn", text: `r = ${r},  n = ${n}°`, prompt: po("sektorYuza"),
     ...dPick(S, [PI * r * r, (PI * r * n) / 360, r * r]),
+    yechim: [
+      Y("doiraYuza", "S = π · r² · n / 360"),
+      Y("qoy", `S = ${dc(PI)} · ${r * r} · ${n} / 360`),
+      Y("javob", dc(S)),
+    ],
   };
 };
 
@@ -529,5 +802,12 @@ export const g9Proporsional = (): Activity => {
   return {
     type: "eqn", text: `Gipotenuzadagi proyeksiyalar: ${p1} va ${p2}.   Balandlik h = ?`,
     prompt: po("proporsionalKesma"), ...zPick(h, [(p1 + p2) / 2, p1 + p2, p1 * p2]),
+    yechim: [
+      // Balandlik — proyeksiyalarning O'RTA GEOMETRIGI, o'rta
+      // arifmetigi emas: aynan shu yerda yarmi olinadi.
+      Y("formula", "h² = a꜀ · b꜀"),
+      Y("qoy", `h = √(${p1} · ${p2}) = √${p1 * p2}`),
+      Y("javob", iz(h)),
+    ],
   };
 };
