@@ -321,6 +321,9 @@ const S = {
   blokTugma: ["Blok test", "Блок-тест"],
   blokTugmaIzoh: ["Vaqtli, aralash mavzu, ball bilan", "На время, темы вперемешку, с баллом"],
 
+  /* Menyudagi bo'lim nomi. Faqat 7–11-sinfda ko'rinadi. */
+  menyuImtihon: ["Imtihonga tayyorgarlik", "Подготовка к экзамену"],
+
   /* ---------------- formulalar varaqasi ---------------- */
   formulaSarlavha: ["Formulalar", "Формулы"],
   formulaIzoh: [

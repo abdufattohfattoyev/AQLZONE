@@ -60,11 +60,12 @@ import { nishonlar, olingan } from "../lib/nishon";
 import { sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import {
-  yolDaftar, yolDokon, yolDuel, yolKichkintoy, yolKurs, yolKurslar, yolMaydon, yolNishon,
-  yolOtaOna, yolOyinlar, yolReyting, yolSinov, yolSozlama,
+  yolBlok, yolDaftar, yolDokon, yolDuel, yolFormulalar, yolHisobot, yolKichkintoy, yolKurs,
+  yolKurslar, yolMaydon, yolNishon, yolOtaOna, yolOyinlar, yolReyting, yolSinov, yolSozlama,
 } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
+import { blokBormi, sinfOf } from "../lib/blok";
 import { tebrat } from "../lib/qobiq";
 
 interface Props {
@@ -254,6 +255,37 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
               izoh={t("menyuKichkintoyIzoh")} on={yur(yolKichkintoy())} />
           </Bolim>
 
+          {/* ================ imtihonga tayyorgarlik ================
+
+              ALOHIDA BO'LIM va faqat 7–11-sinfda ko'rinadi. Ikkala
+              qaror ham bir sababdan: 2-sinf bolasiga "blok test" ham,
+              "formulalar" ham begona so'z va ular menyuni uzaytirib,
+              u qidiradigan narsalarni pastga surib yuborardi.
+
+              NEGA PASTKI PANELGA QO'YILMADI. Panelda beshta tugma bor
+              va u yaqinda oltitadan beshtaga TUSHIRILGAN edi: 320px li
+              telefonda oltita yozuv sig'masdi va kam bosiladigan
+              tugmalar "Darslar" bilan bir xil og'irlikda turardi
+              (`components/Panel.tsx` dagi izoh). Oltinchi tugma
+              qo'shish o'sha ikkala muammoni qaytarardi — ustiga
+              foydalanuvchilarning ko'pchiligi uchun u bo'sh turardi.
+
+              Menyu esa panelning o'z tugmasi orqali HAR EKRANDAN
+              ochiladi, ya'ni yo'l uzunligi bitta bosish farq qiladi,
+              lekin bo'lim izohi bilan turadi va kerak bo'lmaganda
+              umuman chizilmaydi. */}
+          {blokBormi(sinfOf(kurs.grade)) && (
+            <Bolim id="imtihon" ic="clock" nom={t("menyuImtihon")}
+              ochiq={ochiqBolim} onOchiq={setOchiqBolim}>
+              <Satr ic="clock" rang="purple" nom={t("blokTugma")}
+                izoh={t("blokTugmaIzoh")} on={yur(yolBlok(kurs))} />
+              <Satr ic="chart" rang="blue" nom={t("hisobotTugma")}
+                izoh={t("hisobotTugmaIzoh")} on={yur(yolHisobot(kurs))} />
+              <Satr ic="sqrt" rang="orange" nom={t("formulaTugma")}
+                izoh={t("formulaTugmaIzoh")} on={yur(yolFormulalar(kurs))} />
+            </Bolim>
+          )}
+
           {/* ==================== o'yin va duel ====================
               Sakkizta o'yin chipi SHU YERDA edi va olib tashlandi:
               "Matematik o'yinlar" satri allaqachon o'sha ekranga olib
@@ -365,7 +397,7 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
 /* ------------------------------------------------------------------ */
 
 /** Kategoriyalar. Ro'yxatdagi tartib ham shu. */
-type BolimId = "talim" | "oyin" | "yutuq" | "hisob";
+type BolimId = "talim" | "imtihon" | "oyin" | "yutuq" | "hisob";
 
 /**
  * Yopiladigan kategoriya.
