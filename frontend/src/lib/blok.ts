@@ -302,6 +302,22 @@ export interface BlokNatija {
   sekund: number;
 }
 
+/**
+ * Blok test serverda qaysi "bob/dars" bo'lib yoziladi.
+ *
+ * Kunlik sinov 99 ni oladi (`lib/progress.tsx`), blok test 98 ni.
+ * Ikkalasi ham haqiqiy darslardan uzoq son: hisobotda ular o'z nomi
+ * bilan turadi va biror darsning statistikasini buzmaydi.
+ *
+ * NEGA UMUMAN SERVERGA. Natijalar faqat qurilmada turgan paytda
+ * `/boshqaruv` bu bo'lim haqida hech narsa ko'rsatolmasdi: nechta test
+ * yechildi, o'rtacha ball qancha, qaysi mavzu hammani yiqityapti —
+ * javob yo'q edi. O'lchamasdan esa qaysi mavzu qayta yozilishi
+ * kerakligini bilib bo'lmaydi.
+ */
+export const BLOK_JOY = 98;
+export const BLOK_NOM = "Blok test";
+
 const KALIT = "azapp_blok_v1";
 
 /** Nechta natija saqlanadi. */
@@ -337,6 +353,97 @@ export function natijaSaqla(n: BlokNatija): void {
 /** Foizda ball. Savol bo'lmasa 0. */
 export const foiz = (n: Pick<BlokNatija, "jami" | "togri">): number =>
   n.jami ? Math.round((n.togri / n.jami) * 100) : 0;
+
+/* ------------------------------------------------- yarim qolgan test */
+
+/**
+ * YARIM QOLGAN TEST.
+ *
+ * ─────────────── NEGA KERAK ───────────────
+ *
+ * Test holati React xotirasida turardi: savollar, javoblar, nechanchi
+ * savolda ekani. Telefon qo'ng'iroq qilsa, brauzer yorliqni xotiradan
+ * siqib chiqarsa yoki bola tasodifan sahifani yangilasa — o'ttiz
+ * daqiqalik ish izsiz yo'qolardi.
+ *
+ * Bu shunchaki noqulaylik emas. Bir marta shunday bo'lgan o'quvchi
+ * ikkinchi marta 30 savollik testni BOSHLAMAYDI: uzun ishga kirishish
+ * uchun uning saqlanishiga ishonch kerak.
+ *
+ * ─────────────── NEGA SAVOLLAR HAM SAQLANADI ───────────────
+ *
+ * Savollar tasodifiy yasaladi. Faqat javoblar saqlansa, qaytgandan
+ * keyin BOSHQA savollar chiqardi va berilgan javoblar begona
+ * savollarga yopishib qolardi. Shuning uchun to'plamning o'zi ham
+ * yoziladi — `Activity` sof ma'lumot, JSON'ga tushadi
+ * (`scripts/blok.ts` shuni tekshiradi).
+ */
+export interface Joriy {
+  /** Qaysi test ekani — qaytganda o'sha ekranga tushish uchun. */
+  sinf: number;
+  uzunlik: Uzunlik;
+  bobNomi?: string;
+  savollar: BlokSavol[];
+  daqiqa: number;
+  /** Berilgan javoblar. `tanlangan: null` — ulgurilmagan. */
+  javoblar: { tanlangan: number | string | null; togri: boolean }[];
+  /** Nechanchi savolda to'xtagan. */
+  idx: number;
+  /** Tugash payti (`Date.now()` bilan solishtiriladi). */
+  tugash: number;
+  /** Boshlangan payti — sarflangan vaqt shundan hisoblanadi. */
+  boshlandi: number;
+}
+
+const JORIY_KALIT = "azapp_blok_joriy_v1";
+
+/**
+ * Yarim qolgan test qancha vaqt kutadi.
+ *
+ * Vaqti tugagan test ham saqlanib turadi — qaytgan odam hech bo'lmasa
+ * bergan javoblarining natijasini ko'rsin. Lekin bir kundan keyin u
+ * endi "yarim qolgan ish" emas, unutilgan narsa: o'shanda uni
+ * ko'rsatish yordam emas, chalkashlik bo'ladi.
+ */
+const JORIY_UMR = 24 * 60 * 60 * 1000;
+
+export function joriyniOqi(): Joriy | null {
+  try {
+    const raw = localStorage.getItem(JORIY_KALIT);
+    if (!raw) return null;
+    const j = JSON.parse(raw) as Partial<Joriy>;
+    // Eng zarur maydonlar joyidami. Buzuq yozuv butun ekranni
+    // yiqitishdan ko'ra, yo'q deb hisoblangani yaxshi.
+    if (!Array.isArray(j.savollar) || !j.savollar.length) return null;
+    if (!Array.isArray(j.javoblar)) return null;
+    if (typeof j.tugash !== "number" || typeof j.boshlandi !== "number") return null;
+    if (Date.now() - j.boshlandi > JORIY_UMR) return null;
+    return j as Joriy;
+  } catch {
+    return null;
+  }
+}
+
+export function joriyniSaqla(j: Joriy): void {
+  try {
+    localStorage.setItem(JORIY_KALIT, JSON.stringify(j));
+  } catch {
+    /* xotira to'lgan — test ishlayveradi, faqat tiklanmaydi */
+  }
+}
+
+export function joriyniOchir(): void {
+  try {
+    localStorage.removeItem(JORIY_KALIT);
+  } catch { /* o'chira olmadik — umri baribir bir kun */ }
+}
+
+/** Yarim qolgan testning vaqti tugab bo'lganmi. */
+export const vaqtiTugagan = (j: Joriy): boolean => j.tugash <= Date.now();
+
+/** Qolgan vaqt, sekund. Tugagan bo'lsa 0. */
+export const qolganVaqt = (j: Joriy): number =>
+  Math.max(0, Math.round((j.tugash - Date.now()) / 1000));
 
 /**
  * Bobning eng yaxshi natijasi — testlar bazasida ko'rsatiladi.

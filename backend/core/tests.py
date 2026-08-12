@@ -2562,6 +2562,92 @@ class DuelYanaTest(TestCase):
         self.assertEqual(hisob, {"men": 0, "raqib": 1, "durang": 0, "jami": 1})
 
 
+class JoyNomiTest(TestCase):
+    """
+    Hisobotdagi "joy" ustuni — dars, kunlik sinov va blok test.
+
+    NEGA SINOV KERAK. Kunlik sinov va blok test darslar xaritasida
+    TURMAYDI: ular `unit`/`lesson` sifatida 99 va 98 ni oladi. Ilgari
+    bu hisobga olinmasdi va hisobotda "9-sinf · 100-bob · 100-dars"
+    degan qator chiqardi — raqami ham, o'zi ham ma'nosiz.
+
+    Xato jimgina o'tadigan turdan: panel ochiladi, hech narsa
+    yiqilmaydi, faqat qator tushunarsiz bo'ladi va uni hech kim
+    xato deb o'ylamaydi.
+    """
+
+    def test_oddiy_dars_bob_va_dars_raqami_bilan(self):
+        self.assertEqual(
+            boshqaruv.joy_nomi(9, 2, 1, "Kvadrat tenglama"),
+            "9-sinf algebra · 3-bob · 2-dars",
+        )
+
+    def test_kunlik_sinov_oz_nomi_bilan(self):
+        self.assertEqual(
+            boshqaruv.joy_nomi(9, 99, 99, "Kunlik sinov"),
+            "9-sinf algebra · Kunlik sinov",
+        )
+
+    def test_blok_test_oz_nomi_bilan(self):
+        self.assertEqual(
+            boshqaruv.joy_nomi(5, 98, 98, "Blok test"),
+            "5-sinf · Blok test",
+        )
+
+    def test_bob_testida_bobning_nomi_ham_korinadi(self):
+        """Qaysi mavzu ekani hisobotdan bilinishi kerak."""
+        self.assertEqual(
+            boshqaruv.joy_nomi(109, 98, 98, "Blok test · Aylana"),
+            "9-sinf geometriya · Blok test · Aylana",
+        )
+
+    def test_nomsiz_maxsus_yozuv_yiqilmaydi(self):
+        """Eski yozuvda `lesson_name` bo'sh bo'lishi mumkin."""
+        self.assertEqual(boshqaruv.joy_nomi(5, 98, 98, ""), "5-sinf · Mashq")
+        self.assertEqual(boshqaruv.joy_nomi(5, 98, 98, None), "5-sinf · Mashq")
+
+
+class BoshqaruvBlokTest(TestCase):
+    """
+    Blok test natijasi panelga tushadimi va bob grafigini buzmaydimi.
+
+    Ikkinchisi muhimroq: bob grafigi darslar xaritasi bo'yicha va
+    unga 98 kodli yozuv tushsa, u "99-bob" bo'lib grafikning o'ng
+    chekkasini egallab olardi.
+    """
+
+    def setUp(self):
+        # `registered_at` SHART: panel ro'yxatdan o'tmagan hisoblarni
+        # butunlay chetlab o'tadi (`boshqaruv.ROYXAT`). Usiz jadval
+        # bo'sh chiqadi va sinov o'zi yasagan ma'lumotni ko'rmaydi.
+        self.pupil = Pupil.objects.create(first_name="Sardor", registered_at=timezone.now())
+        self.profil = Profile.objects.create(pupil=self.pupil, name="Sardor")
+
+    def natija(self, unit, lesson, nom, asked=10, correct=7):
+        LessonResult.objects.create(
+            profile=self.profil,
+            grade=9, unit=unit, lesson=lesson, lesson_name=nom,
+            asked=asked, correct=correct, mistakes=asked - correct,
+            stars=0, duration_ms=60000,
+        )
+
+    def test_blok_test_darslar_royxatida_koinadi(self):
+        self.natija(0, 0, "Ratsional sonlar")
+        self.natija(98, 98, "Blok test")
+        d = boshqaruv.statistika(30)
+        joylar = [x["joy"] for x in d["mashhur"]]
+        self.assertIn("9-sinf algebra · Blok test", joylar)
+
+    def test_blok_test_bob_grafigiga_tushmaydi(self):
+        self.natija(0, 0, "Ratsional sonlar")
+        self.natija(1, 0, "Tengsizliklar")
+        self.natija(98, 98, "Blok test")
+        d = boshqaruv.statistika(30)
+        nomlar = [b["nom"] for b in d["boblar"]]
+        self.assertEqual(nomlar, ["1-bob", "2-bob"])
+        self.assertNotIn("99-bob", nomlar)
+
+
 class BoshqaruvDuelTest(TestCase):
     """Boshqaruv panelidagi duel hisoboti."""
 

@@ -37,7 +37,9 @@ import { useMemo, useState } from "react";
 import { Icon } from "../lib/icons";
 import { Blok } from "./Blok";
 import type { Qamrov, Uzunlik } from "../lib/blok";
-import { OLCHAM, bobBali, sinfBoblari, sinfKurslari } from "../lib/blok";
+import {
+  OLCHAM, bobBali, joriyniOqi, qolganVaqt, sinfBoblari, sinfKurslari, vaqtiTugagan,
+} from "../lib/blok";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
@@ -47,6 +49,8 @@ interface Tanlov {
   uzunlik: Uzunlik;
   qamrov: Qamrov;
   bobNomi?: string;
+  /** Tugallanmagan testni so'ramasdan davom ettirish. */
+  davomEt?: boolean;
 }
 
 export function Testlar({ sinf, onBack, onHisobot }: {
@@ -55,7 +59,27 @@ export function Testlar({ sinf, onBack, onHisobot }: {
   onHisobot: () => void;
 }) {
   const [tanlov, setTanlov] = useState<Tanlov | null>(null);
+  /** Tasdiq kutayotgan tanlov — faqat uzun test uchun. */
+  const [sorov, setSorov] = useState<Tanlov | null>(null);
   const ozStrelka = useOrqaga(onBack);
+
+  /**
+   * Tugallanmagan test — RO'YXAT TEPASIDA ko'rsatiladi.
+   *
+   * Nega aynan bu yerda: yarim qolgan test xotirada saqlanadi, lekin
+   * uni ochadigan ekran `Blok` va u faqat yangi test tanlanganda
+   * ochiladi. Ya'ni sahifa yangilangandan keyin — aynan o'sha holatda
+   * saqlash kerak bo'lgan paytda — odam bu ekranga tushadi va
+   * ishidan darak topmaydi.
+   *
+   * `tanlov` ga bog'langan: testdan qaytilganda qayta o'qiladi va
+   * tugallangan test kartasi ekranda qolib ketmaydi.
+   */
+  const yarim = useMemo(
+    joriyniOqi,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tanlov],
+  );
 
   const boblar = useMemo(() => sinfBoblari(sinf), [sinf]);
   // Bir sinfda ikki fan bo'lsa (algebra + geometriya) bob nomi yonida
@@ -80,12 +104,29 @@ export function Testlar({ sinf, onBack, onHisobot }: {
         uzunlik={tanlov.uzunlik}
         qamrov={tanlov.qamrov}
         bobNomi={tanlov.bobNomi}
+        davomEt={tanlov.davomEt}
         onExit={() => setTanlov(null)}
       />
     );
   }
 
-  const boshla = (x: Tanlov) => { tebrat("tanlov"); setTanlov(x); };
+  /**
+   * Testni boshlash.
+   *
+   * TO'LIQ BLOK tasdiq so'raydi, qolganlari yo'q. Sabab o'lchovda:
+   * to'liq blok — 30 savol va yarim soat, ya'ni bir o'tirishda
+   * qilinadigan eng katta ish. Uni tasodifan bosib qo'yib, ikkinchi
+   * savolda tashlab ketish eng ko'p uchraydigan yo'qotish.
+   *
+   * Qisqa va bob testlari o'n daqiqalik — ular uchun tasdiq foydadan
+   * ko'ra to'siq bo'lardi. Har bosishda savol beriladigan ilova
+   * o'zining hamma tugmasini og'irlashtiradi.
+   */
+  const boshla = (x: Tanlov) => {
+    tebrat("tanlov");
+    if (x.uzunlik === "toliq") setSorov(x);
+    else setTanlov(x);
+  };
 
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-10">
@@ -107,6 +148,45 @@ export function Testlar({ sinf, onBack, onHisobot }: {
       </div>
 
       <p className="mt-3 text-[12.5px] leading-snug text-ink-dim">{t("testlarIzoh")}</p>
+
+      {/* ---- tugallanmagan test ----
+          Ro'yxatdan OLDIN turadi: yarim qolgan ish har qanday yangi
+          taklifdan muhimroq. Vaqti tugab qolgan bo'lsa ham
+          ko'rsatiladi — bosilganda natija ochiladi va bergan
+          javoblari bekorga ketmaydi. */}
+      {yarim && (
+        <button type="button"
+          onClick={() => {
+            tebrat("tanlov");
+            setTanlov({
+              uzunlik: yarim.uzunlik,
+              qamrov: { tur: "hammasi" },
+              bobNomi: yarim.bobNomi,
+              davomEt: true,
+            });
+          }}
+          className="tugma-3d az-kirish mt-3 flex w-full items-center gap-3 rounded-clay bg-karta p-3.5
+                     text-left shadow-clay-sm ring-2 ring-brand-orange/45">
+          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand-orange/15
+                           text-brand-orange-d">
+            <Icon name="clock" size={19} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-[14.5px] leading-tight">
+              {t("blokDavomSarlavha")}
+            </span>
+            <span className="mt-0.5 block text-[12px] leading-snug text-ink-dim">
+              {t("blokDavomIzoh", {
+                a: yarim.javoblar.filter((x) => x.tanlangan !== null).length,
+                b: yarim.savollar.length,
+              })}
+              {!vaqtiTugagan(yarim)
+                && ` · ${t("blokDavomVaqt", { n: Math.ceil(qolganVaqt(yarim) / 60) })}`}
+            </span>
+          </span>
+          <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+        </button>
+      )}
 
       {/* ---- butun sinf bo'yicha ----
           Yuqorida turadi, chunki bu asosiy mashq: imtihonda savollar
@@ -174,6 +254,75 @@ export function Testlar({ sinf, onBack, onHisobot }: {
             </button>
           );
         })}
+      </div>
+
+      {sorov && (
+        <Tasdiq
+          uzunlik={sorov.uzunlik}
+          onBoshla={() => { setTanlov(sorov); setSorov(null); }}
+          onBekor={() => setSorov(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ==================== uzun testdan oldin ==================== */
+
+/**
+ * "Yarim soat vaqting bormi?" — to'liq blokdan oldingi savol.
+ *
+ * Bu ogohlantirish emas, KELISHUV. Imtihonning butun ma'nosi uzluksiz
+ * yarim soatda: o'rtasida to'xtatilgan test na ball beradi, na
+ * mashq bo'ladi. Shu sabab matnda ikkita fakt aniq turadi — nechta
+ * savol va necha daqiqa.
+ *
+ * "Boshlash" birinchi va katta, "Keyinroq" esa quyida va xira. Bu
+ * `Chiqish` oynasidagi tartibning teskarisi va shunday bo'lishi
+ * kerak: u yerda xavfsiz javob "qolish" edi, bu yerda esa odam
+ * allaqachon boshlashni tanlab bosgan.
+ */
+function Tasdiq({ uzunlik, onBoshla, onBekor }: {
+  uzunlik: Uzunlik;
+  onBoshla: () => void;
+  onBekor: () => void;
+}) {
+  const o = OLCHAM[uzunlik];
+  return (
+    <div
+      className="az-kanal-fon fixed inset-0 z-[80] grid place-items-center bg-black/45 p-4 backdrop-blur-[2px]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="az-tasdiq-sarlavha"
+      /* Fonga bosilsa BEKOR bo'ladi: e'tiborsiz bosish yarim soatlik
+         majburiyatni boshlab yubormasligi kerak. */
+      onClick={onBekor}
+    >
+      <div
+        className="az-kanal w-full max-w-[340px] rounded-clay bg-karta p-6 text-center shadow-clay"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span className="mx-auto grid size-14 place-items-center rounded-3xl bg-brand-blue text-white
+                         shadow-[0_6px_0_var(--color-brand-blue-d)]">
+          <Icon name="clock" size={26} />
+        </span>
+
+        <h2 id="az-tasdiq-sarlavha" className="mt-4 font-display text-[19px] leading-tight">
+          {t("tasdiqSarlavha", { d: o.daqiqa })}
+        </h2>
+        <p className="mt-2 text-[13px] leading-snug text-ink-soft">
+          {t("tasdiqIzoh", { s: o.savol, d: o.daqiqa })}
+        </p>
+
+        <button type="button" onClick={() => { tebrat("tanlov"); onBoshla(); }}
+          className="clay-press mt-5 h-12 w-full rounded-3xl bg-brand-green font-display text-[15px]
+                     text-white shadow-[0_5px_0_var(--color-brand-green-d)]">
+          {t("tasdiqBoshla")}
+        </button>
+        <button type="button" onClick={onBekor}
+          className="clay-press mt-2 h-11 w-full rounded-3xl bg-track font-display text-[14px] text-ink-soft">
+          {t("tasdiqKeyinroq")}
+        </button>
       </div>
     </div>
   );

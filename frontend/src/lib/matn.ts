@@ -306,6 +306,30 @@ const S = {
     "Bu bo'lim uchun savol topilmadi.",
     "Для этого раздела вопросы не найдены.",
   ],
+  /* ---------------- uzun testdan oldingi tasdiq ---------------- */
+  tasdiqSarlavha: ["{d} daqiqa vaqting bormi?", "Есть {d} минут?"],
+  tasdiqIzoh: [
+    "{s} savol, {d} daqiqa. Vaqt to'xtamaydi — imtihondagidek.",
+    "{s} вопросов, {d} минут. Время не останавливается — как на экзамене.",
+  ],
+  tasdiqBoshla: ["Boshlash", "Начать"],
+  tasdiqKeyinroq: ["Keyinroq", "Позже"],
+
+  /* ---------------- yarim qolgan test ---------------- */
+  blokDavomSarlavha: ["Tugallanmagan test bor", "Есть незавершённый тест"],
+  blokDavomIzoh: [
+    "{b} savoldan {a} tasiga javob bergansan",
+    "Отвечено {a} из {b} вопросов",
+  ],
+  blokDavomVaqt: ["{n} daqiqa qoldi", "осталось {n} мин"],
+  blokDavomTugagan: [
+    "Vaqti tugab qolibdi — javoblaring saqlangan.",
+    "Время вышло — ответы сохранены.",
+  ],
+  blokDavomTugma: ["Davom etish", "Продолжить"],
+  blokDavomNatija: ["Natijani ko'rish", "Посмотреть результат"],
+  blokDavomYangi: ["Yangidan boshlash", "Начать заново"],
+
   blokDarslarga: ["Darslarga", "К урокам"],
   blokXato: ["Xato", "Ошибка"],
   blokNatija: ["{b} savoldan {a} tasi to'g'ri", "{a} из {b} верно"],

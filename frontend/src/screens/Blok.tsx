@@ -49,8 +49,12 @@ import { Chiqish } from "../components/Chiqish";
 import { Yechim } from "../components/Yechim";
 import { Konfetti } from "../components/Konfetti";
 import type { Answer } from "../lib/activity";
-import type { Blok, BlokSavol, Qamrov, Uzunlik } from "../lib/blok";
-import { blokYasa, foiz, natijaSaqla } from "../lib/blok";
+import type { Blok, BlokSavol, Joriy, Qamrov, Uzunlik } from "../lib/blok";
+import {
+  BLOK_JOY, BLOK_NOM, blokYasa, foiz, joriyniOchir, joriyniOqi,
+  joriyniSaqla, natijaSaqla, qolganVaqt, vaqtiTugagan,
+} from "../lib/blok";
+import * as api from "../lib/api";
 import { xatoQoshildi } from "../lib/daftar";
 import { courseById } from "../lib/curriculum";
 import { t } from "../lib/matn";
@@ -65,12 +69,21 @@ interface Javob {
   togri: boolean;
 }
 
-export function Blok({ sinf, uzunlik, qamrov, bobNomi, onExit }: {
+export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, onExit }: {
   sinf: number;
   uzunlik: Uzunlik;
   qamrov: Qamrov;
   /** Bob testi bo'lsa bobning nomi — natijaga yoziladi. */
   bobNomi?: string;
+  /**
+   * Tugallanmagan testni SO'RAMASDAN davom ettirish.
+   *
+   * Testlar ro'yxatining tepasidagi "davom etish" kartasidan kelinganda
+   * shunday bo'ladi: odam tanlovni allaqachon qilgan va ikkinchi marta
+   * so'rash uni ikkilantiradi. So'rov faqat YANGI test boshlanayotganda
+   * kerak — o'shanda yo'qoladigan mehnat bor.
+   */
+  davomEt?: boolean;
   onExit: () => void;
 }) {
   /**
@@ -81,6 +94,21 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, onExit }: {
    * bo'lmaydi.
    */
   const [urinish, setUrinish] = useState(0);
+
+  /**
+   * Yarim qolgan test — BIR MARTA o'qiladi.
+   *
+   * Ekran ochilishida qaraladi: xotirada tugallanmagan test bo'lsa,
+   * yangisini yasashdan oldin "davom etasizmi?" so'raladi. Javob
+   * berilgach bu qiymat ahamiyatsiz bo'lib qoladi (`tanlov`).
+   */
+  const [yarim] = useState(joriyniOqi);
+  const [tanlov, setTanlov] = useState<"sora" | "davom" | "yangi">(() => {
+    const bor = joriyniOqi() !== null;
+    if (!bor) return "yangi";
+    return davomEt ? "davom" : "sora";
+  });
+
   const blok = useMemo(
     () => blokYasa(sinf, uzunlik, qamrov),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,10 +120,77 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, onExit }: {
   // tushunarli gap yaxshi.
   if (!blok) return <Bosh onExit={onExit} />;
 
-  return <Oyna key={`${uzunlik}-${urinish}`}
-    blok={blok} sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi}
-    onQayta={() => { setUrinish((u) => u + 1); tebrat("tanlov"); }}
+  if (tanlov === "sora" && yarim) {
+    return (
+      <Davom
+        yarim={yarim}
+        onDavom={() => setTanlov("davom")}
+        onYangi={() => { joriyniOchir(); setTanlov("yangi"); }}
+      />
+    );
+  }
+
+  // Davom etilsa SAQLANGAN to'plam ishlatiladi, yangisi yasalmaydi:
+  // savollar tasodifiy va qaytadan yasalsa, berilgan javoblar begona
+  // savollarga yopishib qolardi.
+  const davom = tanlov === "davom" ? yarim : null;
+
+  return <Oyna key={`${uzunlik}-${urinish}-${davom ? "d" : "y"}`}
+    blok={davom ? { savollar: davom.savollar, daqiqa: davom.daqiqa } : blok}
+    davom={davom}
+    sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi}
+    onQayta={() => { joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
+}
+
+/* ==================== yarim qolgan test ==================== */
+
+/**
+ * "Davom etasizmi?" — tugallanmagan test topilganda.
+ *
+ * Vaqti tugab qolgan bo'lsa ham taklif qilinadi: o'shanda "davom
+ * etish" darhol natijani ochadi. Bergan javoblari bekorga ketmasin.
+ */
+function Davom({ yarim, onDavom, onYangi }: {
+  yarim: Joriy;
+  onDavom: () => void;
+  onYangi: () => void;
+}) {
+  const berilgan = yarim.javoblar.filter((x) => x.tanlangan !== null).length;
+  const tugagan = vaqtiTugagan(yarim);
+  const qoldi = Math.ceil(qolganVaqt(yarim) / 60);
+
+  return (
+    <div className="mx-auto grid min-h-ekran w-full max-w-[430px] place-items-center px-6">
+      <div className="az-kirish w-full rounded-clay bg-karta p-5 text-center shadow-clay">
+        <span className="mx-auto grid size-14 place-items-center rounded-3xl bg-brand-orange/15
+                         text-brand-orange-d">
+          <Icon name="clock" size={26} />
+        </span>
+
+        <h1 className="mt-3 font-display text-[17px]">{t("blokDavomSarlavha")}</h1>
+        <p className="mt-1.5 text-[13px] leading-snug text-ink-soft">
+          {t("blokDavomIzoh", { a: berilgan, b: yarim.savollar.length })}
+          {!tugagan && ` · ${t("blokDavomVaqt", { n: qoldi })}`}
+        </p>
+        {tugagan && (
+          <p className="mt-1 text-[12.5px] leading-snug text-brand-orange-d">
+            {t("blokDavomTugagan")}
+          </p>
+        )}
+
+        <button type="button" onClick={() => { tebrat("tanlov"); onDavom(); }}
+          className="clay-press mt-4 h-12 w-full rounded-3xl bg-brand-green font-display text-[15px]
+                     text-white shadow-[0_5px_0_var(--color-brand-green-d)]">
+          {tugagan ? t("blokDavomNatija") : t("blokDavomTugma")}
+        </button>
+        <button type="button" onClick={() => { tebrat("tanlov"); onYangi(); }}
+          className="clay-press mt-2 h-11 w-full rounded-3xl bg-track font-display text-[14px] text-ink-soft">
+          {t("blokDavomYangi")}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 /* ==================== material topilmadi ==================== */
@@ -117,23 +212,42 @@ function Bosh({ onExit }: { onExit: () => void }) {
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, sinf, uzunlik, bobNomi, onQayta, onExit }: {
+function Oyna({ blok, davom, sinf, uzunlik, bobNomi, onQayta, onExit }: {
   blok: Blok;
+  /** Yarim qolgan testdan davom etilyaptimi. Yo'q bo'lsa — yangi test. */
+  davom: Joriy | null;
   sinf: number;
   uzunlik: Uzunlik;
   bobNomi?: string;
   onQayta: () => void;
   onExit: () => void;
 }) {
-  const [idx, setIdx] = useState(0);
-  const [javoblar, setJavoblar] = useState<Javob[]>([]);
+  const [idx, setIdx] = useState(() => davom?.idx ?? 0);
+  const [javoblar, setJavoblar] = useState<Javob[]>(() => davom?.javoblar ?? []);
   const [tanlangan, setTanlangan] = useState<Answer | null>(null);
   const [tugadi, setTugadi] = useState(false);
   const [chiqishSorovi, setChiqishSorovi] = useState(false);
 
+  /**
+   * Test qachon tugaydi — SOAT bo'yicha, sanoq bo'yicha emas.
+   *
+   * Ilgari bu oddiy hisob edi va `setInterval` uni har sekundda bittaga
+   * kamaytirardi. Brauzer esa fondagi yorliqning taymerini sekinlashtiradi
+   * yoki butunlay to'xtatadi: o'quvchi ilovani fonga tashlab, o'n
+   * daqiqadan keyin qaytsa, soatda bir necha soniya o'tgan bo'lardi.
+   * Vaqt cheklovi shu bilan yo'q bo'lardi — imtihonning esa butun ma'nosi
+   * o'sha cheklovda.
+   *
+   * Endi eslab qolinadigan narsa — TUGASH PAYTI. Qolgan vaqt har safar
+   * `Date.now()` dan hisoblanadi, ya'ni ilova fonda turgan vaqt ham
+   * sanaladi.
+   */
+  const tugash = useRef(davom?.tugash ?? Date.now() + blok.daqiqa * 60_000);
+  const boshlandi = useRef(davom?.boshlandi ?? Date.now());
+
   /** Qolgan vaqt, sekund. */
-  const [qolgan, setQolgan] = useState(blok.daqiqa * 60);
-  const boshlandi = useRef(performance.now());
+  const [qolgan, setQolgan] = useState(() =>
+    Math.max(0, Math.round((tugash.current - Date.now()) / 1000)));
 
   const S = blok.savollar[idx];
 
@@ -157,24 +271,83 @@ function Oyna({ blok, sinf, uzunlik, bobNomi, onQayta, onExit }: {
       togri: toliq.filter((x) => x.togri).length,
       xato: toliq.filter((x) => !x.togri && x.tanlangan !== null).length,
       ulgurmadi: toliq.filter((x) => x.tanlangan === null).length,
-      sekund: Math.round((performance.now() - boshlandi.current) / 1000),
+      sekund: Math.round((Date.now() - boshlandi.current) / 1000),
     });
+
+    /*
+     * Serverga ham boradi — `/boshqaruv` bu bo'limni ko'rsin.
+     *
+     * YULDUZ YO'Q (`stars: 0`) va bu ataylab: test hech narsa
+     * ochmaydi va reytingga qo'shilmaydi, u faqat O'LCHAYDI. Yulduz
+     * berilsa, o'ttiz savollik test bir kechada jadval boshiga
+     * chiqarib qo'yardi.
+     *
+     * `unit`/`lesson` — 98, haqiqiy darslardan uzoq son. Bob testida
+     * bobning nomi ham yoziladi: hisobotda qaysi mavzu ekani
+     * ko'rinsin.
+     */
+    api.postResult({
+      grade: sinf,
+      unit: BLOK_JOY,
+      lesson: BLOK_JOY,
+      lessonName: bobNomi ? `${BLOK_NOM} · ${bobNomi}` : BLOK_NOM,
+      asked: toliq.length,
+      correct: toliq.filter((x) => x.togri).length,
+      mistakes: toliq.filter((x) => !x.togri && x.tanlangan !== null).length,
+      stars: 0,
+      durationMs: Date.now() - boshlandi.current,
+    });
+
+    // Test tugadi — yarim qolgan nusxa endi keraksiz. Qoldirilsa,
+    // keyingi safar tugallangan test "davom etasizmi?" bo'lib
+    // qaytib chiqardi.
+    joriyniOchir();
   }, [blok.savollar.length, sinf, uzunlik, bobNomi]);
 
-  /* Soat. Har sekundda bir marta yuradi va nolga yetganda testni
-     o'zi yakunlaydi — bu imtihonning asosiy qoidasi. */
+  /*
+   * Har o'zgarishda yarim qolgan test yoziladi.
+   *
+   * Nega har javobda, chiqishda emas: ilova "chiqish" hodisasini
+   * ko'rmasligi mumkin — brauzer yorliqni ogohlantirmasdan xotiradan
+   * chiqaradi, telefonda esa qo'ng'iroq kelsa ilova to'xtatiladi.
+   * Yagona ishonchli payt — javob berilgan zahoti.
+   */
   useEffect(() => {
     if (tugadi) return;
-    const id = setInterval(() => {
-      setQolgan((q) => {
-        if (q <= 1) {
-          clearInterval(id);
-          return 0;
-        }
-        return q - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
+    joriyniSaqla({
+      sinf, uzunlik, bobNomi,
+      savollar: blok.savollar,
+      daqiqa: blok.daqiqa,
+      javoblar,
+      idx,
+      tugash: tugash.current,
+      boshlandi: boshlandi.current,
+    });
+  }, [idx, javoblar, tugadi, blok.savollar, blok.daqiqa, sinf, uzunlik, bobNomi]);
+
+  /*
+   * Soat.
+   *
+   * Interval har sekundda ishlaydi, lekin u hech narsani KAMAYTIRMAYDI —
+   * faqat soatga qarab qolgan vaqtni qaytadan hisoblaydi. Shuning uchun
+   * brauzer intervalni sekinlashtirsa ham (fondagi yorliqda shunday
+   * bo'ladi) natija to'g'ri qoladi: ekranga qaytilganda raqam o'zi
+   * joyiga tushadi.
+   *
+   * `visibilitychange` ham shuning uchun: ilova fondan qaytgan zahoti
+   * raqam yangilanadi, keyingi tikni kutib turmaydi.
+   */
+  useEffect(() => {
+    if (tugadi) return;
+    const hisobla = () =>
+      setQolgan(Math.max(0, Math.round((tugash.current - Date.now()) / 1000)));
+    hisobla();
+    const id = setInterval(hisobla, 1000);
+    document.addEventListener("visibilitychange", hisobla);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", hisobla);
+    };
   }, [tugadi]);
 
   // Vaqt tugadi — javoblar qanday bo'lsa shundayligicha yakunlanadi.

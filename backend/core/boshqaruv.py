@@ -373,6 +373,30 @@ def sinf_nomi(grade) -> str:
     return f"{grade}-sinf"
 
 
+# Darslar xaritasidan TASHQARIDAGI mashqlar shu kodlar bilan keladi.
+# Ular haqiqiy bob raqamlaridan uzoq ataylab tanlangan: shunda bitta
+# ustunda ham dars, ham mashq turaveradi va biror darsning statistikasi
+# buzilmaydi (`frontend/src/lib/blok.ts`, `lib/progress.tsx`).
+MAXSUS_JOY = 90
+
+
+def joy_nomi(grade, unit, lesson, lesson_name) -> str:
+    """
+    Hisobotdagi "joy" ustuni.
+
+    Oddiy dars uchun bu "9-sinf · 3-bob · 2-dars". Kunlik sinov va blok
+    test uchun esa bob raqami yo'q — ular darslar xaritasida turmaydi.
+    Ilgari bu hisobga olinmasdi va sinov "9-sinf · 100-bob · 100-dars"
+    bo'lib chiqardi: raqam ma'nosiz, o'zi esa nima ekani tushunarsiz.
+
+    Shuning uchun maxsus kodlarda mijoz yuborgan NOM ishlatiladi —
+    "Kunlik sinov" yoki "Blok test · Kvadrat tenglama".
+    """
+    if unit is not None and unit >= MAXSUS_JOY:
+        return f"{sinf_nomi(grade)} · {lesson_name or 'Mashq'}"
+    return f"{sinf_nomi(grade)} · {unit + 1}-bob · {lesson + 1}-dars"
+
+
 def _foiz(qism: int, butun: int) -> int:
     return round(qism * 100 / butun) if butun else 0
 
@@ -778,8 +802,12 @@ def statistika(kunlar: int = 30) -> dict:
     if sinflar:
         eng_sinf = max(sinflar, key=lambda s: s["darslar"])["grade"]
         bob_sinf = sinf_nomi(eng_sinf)
+        # Kunlik sinov va blok test bu grafikda TURMAYDI: u darslar
+        # xaritasi bo'yicha, ular esa xaritadan tashqarida. Filtrsiz
+        # ular "99-bob" va "100-bob" bo'lib chiqib, grafikning
+        # o'ng chekkasini egallab olardi.
         xom_bob = list(
-            darslar_qs.filter(grade=eng_sinf).values("unit")
+            darslar_qs.filter(grade=eng_sinf, unit__lt=MAXSUS_JOY).values("unit")
             .annotate(
                 bolalar=Count("profile", distinct=True),
                 darslar=Count("id"),
@@ -809,7 +837,7 @@ def statistika(kunlar: int = 30) -> dict:
     )
     for d in darslar:
         d["aniqlik"] = _foiz(d["togri"] or 0, d["savollar"] or 0)
-        d["joy"] = f"{sinf_nomi(d['grade'])} · {d['unit'] + 1}-bob · {d['lesson'] + 1}-dars"
+        d["joy"] = joy_nomi(d["grade"], d["unit"], d["lesson"], d["lesson_name"])
         # Qayta o'ynash — bir bola shu darsni o'rtacha necha marta olgan.
         # 1,5 dan yuqorisi qiziqarli darsni ham, tushunilmagan darsni ham
         # bildiradi: aniqlik ustuni ikkalasini ajratadi.
