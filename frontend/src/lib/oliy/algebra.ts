@@ -584,9 +584,30 @@ export const a8IldizXossa = (): Activity => {
 
 /** 9-§. Ratsional ko'rsatkichli daraja: a^(1/n) va a^(m/n). */
 export const a8RatsionalDaraja = (): Activity => {
-  const a = pick([4, 8, 9, 16, 25, 27, 32, 64, 81]);
-  const n = a === 8 || a === 27 || a === 32 || a === 64 ? 3 : 2;
-  const asos = Math.round(a ** (1 / n));
+  /*
+   * Har uchlik ANIQ: [son, ildiz darajasi, natija].
+   *
+   * Ilgari son ro'yxatdan olinib, darajasi shart bilan aniqlanar va
+   * natija `Math.round(a ** (1 / n))` bilan hisoblanardi. Ro'yxatda
+   * esa 32 turardi va u kub deb belgilangan edi — holbuki 32 = 2⁵,
+   * ∛32 = 3,17. Yaxlitlash uni 3 ga aylantirar, savol
+   * "32^(1/3) = 3" bo'lib chiqar, yechimda esa "32 = 3³" deb
+   * yozilardi (3³ = 27).
+   *
+   * Xato jimgina o'tgan edi: `tekshir.ts` javob bor-yo'qligini va
+   * variantlar ichida turganini biladi, lekin uning TO'G'RILIGINI
+   * bilmaydi — generator savolni ham, javobni ham o'zi yasaydi.
+   * Uni `scripts/togri.ts` topdi: u savol matnini mustaqil hisoblab
+   * ko'radi.
+   *
+   * Endi qiymat hisoblanmaydi, JADVALDA turadi — noto'g'ri uchlik
+   * yozib qo'yish uchun uni ataylab yozish kerak bo'ladi.
+   */
+  const [a, n, asos] = pick<readonly [number, number, number]>([
+    [4, 2, 2], [9, 2, 3], [16, 2, 4], [25, 2, 5],
+    [36, 2, 6], [49, 2, 7], [81, 2, 9],
+    [8, 3, 2], [27, 3, 3], [64, 3, 4], [125, 3, 5],
+  ]);
   // Ko'rsatkich oddiy kasr bo'lib yoziladi: `4^(1/2)`. Ustki indeksda
   // kasr chizig'i uchun to'g'ri belgi yo'q va uning o'rniga qo'yiladigan
   // har qanday belgi ekranda begona ko'rinadi.
