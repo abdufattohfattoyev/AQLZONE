@@ -195,6 +195,116 @@ function hisobla(ifoda: string): number | null {
 /** Ikki son amalda tengmi (o'nli kasrlarda yaxlitlash farqi bo'ladi). */
 const teng = (a: number, b: number) => Math.abs(a - b) < 1e-6;
 
+/**
+ * Javob YAXLITLANGAN bo'lishi mumkin bo'lgan joylarda ishlatiladi.
+ *
+ * Geometriyada natija ko'pincha butun emas: aylana uzunligi, sinuslar
+ * teoremasi, ildiz. Generator uni bir-ikki xonagacha yaxlitlaydi
+ * ("31,4"), tekshiruvchi esa to'liq aniqlikda hisoblaydi. Qattiq
+ * solishtirish har bunday savolni "xato" deb ko'rsatardi.
+ *
+ * Shuning uchun kutilgan qiymat JAVOBDAGI aniqlikka keltiriladi va
+ * shundan keyin solishtiriladi.
+ */
+function tengYaxlit(kutilgan: number, javob: number): boolean {
+  if (teng(kutilgan, javob)) return true;
+  const nuqta = String(javob).split(".")[1]?.length ?? 0;
+  const k = Number(kutilgan.toFixed(nuqta));
+  // π ni 3,14 deb olgan javoblar uchun kichik yon beriladi.
+  return k === javob || Math.abs(kutilgan - javob) < 0.05;
+}
+
+/* ==================== ko'phad ====================
+ *
+ * Hosila savollarida javob SON emas, IFODA bo'ladi: "24x²", "4x + 3".
+ * Ularni satr sifatida solishtirish mo'rt — bo'shliq, belgi tartibi va
+ * ustki indeks yozuvi har xil bo'lishi mumkin va har farq yolg'on
+ * ogohlantirish berardi.
+ *
+ * Shuning uchun ikkala tomon ham SONGA aylantiriladi: ko'phad
+ * "daraja → koeffitsiyent" jadvali bo'lib yoziladi va jadvallar
+ * solishtiriladi. "4x + 3" va "3 + 4x" bir xil jadval beradi.
+ */
+
+/** Daraja → koeffitsiyent. */
+type Kophad = Map<number, number>;
+
+/**
+ * "2x^2 + 3x - 4" ko'rinishidagi ifodani jadvalga aylantiradi.
+ *
+ * Tanimasa `null` — o'shanda savol tekshirilmaydi.
+ */
+function kophadOqi(xom: string): Kophad | null {
+  let s = tozala(xom).replace(/\s+/g, "");
+  if (!s || !/^[-+]?[\dx^.]/.test(s)) return null;
+  // Faqat son, `x`, daraja va ishoralar bo'lsin.
+  if (!/^[-+\dx^.]+$/.test(s)) return null;
+
+  const m: Kophad = new Map();
+  // Birinchi had ishorasiz bo'lishi mumkin.
+  if (!/^[-+]/.test(s)) s = `+${s}`;
+
+  const hadlar = s.match(/[-+][^-+]+/g);
+  if (!hadlar) return null;
+
+  for (const h of hadlar) {
+    const ishora = h[0] === "-" ? -1 : 1;
+    const tana = h.slice(1);
+    if (!tana) return null;
+
+    if (!tana.includes("x")) {
+      const k = Number(tana);
+      if (!Number.isFinite(k)) return null;
+      m.set(0, (m.get(0) ?? 0) + ishora * k);
+      continue;
+    }
+
+    const [oldi, keyin] = tana.split("x");
+    // "x" yolg'iz kelsa koeffitsiyent 1, "2x" da 2.
+    const koef = oldi === "" ? 1 : Number(oldi);
+    if (!Number.isFinite(koef)) return null;
+    // Daraja: "" → 1, "^3" → 3.
+    let daraja = 1;
+    if (keyin) {
+      if (!keyin.startsWith("^")) return null;
+      daraja = Number(keyin.slice(1));
+      if (!Number.isFinite(daraja)) return null;
+    }
+    m.set(daraja, (m.get(daraja) ?? 0) + ishora * koef);
+  }
+
+  // Nol koeffitsiyentli hadlar olib tashlanadi — "0x²" hech narsa emas.
+  for (const [d, k] of m) if (k === 0) m.delete(d);
+  return m;
+}
+
+/** Hosila: har hadning darajasi bittaga kamayadi, koeffitsiyent ko'payadi. */
+function hosila(p: Kophad): Kophad {
+  const h: Kophad = new Map();
+  for (const [d, k] of p) {
+    if (d === 0) continue;                     // o'zgarmas sonning hosilasi 0
+    h.set(d - 1, (h.get(d - 1) ?? 0) + k * d);
+  }
+  for (const [d, k] of h) if (k === 0) h.delete(d);
+  return h;
+}
+
+/** Ko'phadning berilgan nuqtadagi qiymati. */
+function qiymat(p: Kophad, x: number): number {
+  let s = 0;
+  for (const [d, k] of p) s += k * x ** d;
+  return s;
+}
+
+const kophadTeng = (a: Kophad, b: Kophad): boolean => {
+  if (a.size !== b.size) return false;
+  for (const [d, k] of a) {
+    const v = b.get(d);
+    if (v === undefined || !teng(k, v)) return false;
+  }
+  return true;
+};
+
 /* ==================== savolni tekshirish ==================== */
 
 type Natija =
@@ -288,7 +398,268 @@ function savolniTekshir(matn: string, javob: unknown): Natija {
     return { holat: "tekshirildi", togri: teng(v, j), kutilgan: v };
   }
 
+  // ── 4. Hosila nuqtada: "y = POLY,  y′(N) = ?" ─────────────
+  const hosilaNuqta = s.match(/^y\s*=\s*(.+?),\s*y['′]\s*\(\s*(-?[\d.]+)\s*\)\s*=\s*\?$/);
+  if (hosilaNuqta) {
+    const p = kophadOqi(hosilaNuqta[1]);
+    if (!p) return { holat: "otkazildi" };
+    const x = Number(hosilaNuqta[2]);
+    const kutilgan = qiymat(hosila(p), x);
+    return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+
+  // ── 5. Progressiyalar ─────────────────────────────────────
+  //
+  // Pastki indekslar oddiy raqamga aylantiriladi: "a₇" → "a7".
+  const past = s.replace(/[₀₁₂₃₄₅₆₇₈₉]/g, (c) => String("₀₁₂₃₄₅₆₇₈₉".indexOf(c)));
+
+  // Arifmetik: n-had.  aₙ = a₁ + (n−1)d
+  const ar = past.match(/^a1\s*=\s*(-?[\d.]+)\s*,\s*d\s*=\s*(-?[\d.]+)\s*\.\s*a(\d+)\s*=\s*\?$/);
+  if (ar) {
+    const [, a1, d, n] = ar.map(Number);
+    const kutilgan = a1 + (n - 1) * d;
+    return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+
+  // Geometrik: n-had.  bₙ = b₁ · q^(n−1)
+  const geo = past.match(/^b1\s*=\s*(-?[\d.]+)\s*,\s*q\s*=\s*(-?[\d.]+)\s*\.\s*b(\d+)\s*=\s*\?$/);
+  if (geo) {
+    const [, b1, q, n] = geo.map(Number);
+    const kutilgan = b1 * q ** (n - 1);
+    return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+
+  // Arifmetik yig'indi.  Sₙ = n/2 · (2a₁ + (n−1)d)
+  const arS = past.match(
+    /^a1\s*=\s*(-?[\d.]+)\s*,\s*d\s*=\s*(-?[\d.]+)\s*,\s*n\s*=\s*(\d+)\s*\.\s*S\d+\s*=\s*\?$/,
+  );
+  if (arS) {
+    const [, a1, d, n] = arS.map(Number);
+    const kutilgan = (n / 2) * (2 * a1 + (n - 1) * d);
+    return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+
+  // Geometrik yig'indi.  Sₙ = b₁(qⁿ − 1)/(q − 1)
+  const geoS = past.match(
+    /^b1\s*=\s*(-?[\d.]+)\s*,\s*q\s*=\s*(-?[\d.]+)\s*,\s*n\s*=\s*(\d+)\s*\.\s*S\d+\s*=\s*\?$/,
+  );
+  if (geoS) {
+    const [, b1, q, n] = geoS.map(Number);
+    if (q === 1) return { holat: "otkazildi" };
+    const kutilgan = (b1 * (q ** n - 1)) / (q - 1);
+    return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+
+  // ── 6. Ko'rsatkichli tenglama: "2ˣ = 32" ──────────────────
+  // Javob — darajaning o'zi, ya'ni asosni javob darajasiga
+  // ko'targanda o'ng tomon chiqishi kerak.
+  const kors = s.replace(/ˣ/g, "^x").match(/^(-?[\d.]+)\s*\^x\s*=\s*(-?[\d.]+)$/);
+  if (kors) {
+    const [, asos, ong] = kors.map(Number);
+    if (asos <= 0 || asos === 1) return { holat: "otkazildi" };
+    return { holat: "tekshirildi", togri: teng(asos ** j, ong), kutilgan: ong };
+  }
+
+  // ── 7. Uchburchakning uchinchi burchagi ───────────────────
+  // "∠A = 81°, ∠B = 44°" → 180 − 81 − 44
+  const uchB = s.match(/∠[a-zа-я]\s*=\s*(\d+)°.*?∠[a-zа-я]\s*=\s*(\d+)°/i);
+  if (uchB && /uchburchak|треугольник/i.test(s)) {
+    const [, A, B] = uchB.map(Number);
+    const kutilgan = 180 - A - B;
+    return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+
+  // ── 8. Vektor: uzunlik yoki skalyar ko'paytma ─────────────
+  //
+  // Ikkalasi bitta joyda, chunki ularni AJRATISH kerak: ilgari
+  // uzunlik shoxi matndagi birinchi qavsni olib, skalyar ko'paytma
+  // savolini ham o'ziga tortardi va "a⃗(2; −1), b⃗(6; 5)" da
+  // faqat birinchi vektorning uzunligini hisoblardi.
+  const vektorlar = [...s.matchAll(/⃗\s*\(\s*(-?[\d.]+(?:\s*;\s*-?[\d.]+)+)\s*\)/g)]
+    .map((m) => m[1].split(";").map((x) => Number(x.trim())));
+
+  if (vektorlar.length && vektorlar.every((v) => v.every(Number.isFinite))) {
+    // Skalyar ko'paytma: ikkita vektor va ko'paytma belgisi.
+    if (vektorlar.length === 2 && /[*·]/.test(s.replace(/[×∙⋅]/g, "*"))) {
+      const [a, b] = vektorlar;
+      if (a.length === b.length) {
+        const kutilgan = a.reduce((sum, x, i) => sum + x * b[i], 0);
+        return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+      }
+    }
+    // Uzunlik: BITTA vektor va boshqa hech narsa. Shart qat'iy —
+    // matnda yana biror amal bo'lsa, nima so'ralayotgani noaniq.
+    if (vektorlar.length === 1 && /^[a-z]?⃗\s*\([-\d.;\s]+\)$/i.test(s)) {
+      const kutilgan = Math.sqrt(vektorlar[0].reduce((a, b) => a + b * b, 0));
+      return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+    }
+    return { holat: "otkazildi" };
+  }
+
+  // ── 9. To'g'ri burchakli parallelepiped diagonali ─────────
+  // "a = 2, b = 3, c = 6.  d = ?" → √(a² + b² + c²)
+  const diag = s.match(
+    /^a\s*=\s*([\d.]+)\s*,\s*b\s*=\s*([\d.]+)\s*,\s*c\s*=\s*([\d.]+)\s*\.\s*d\s*=\s*\?$/i,
+  );
+  if (diag) {
+    const [, a, b, c] = diag.map(Number);
+    const kutilgan = Math.sqrt(a * a + b * b + c * c);
+    return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+
+  // ── 10. Pifagor — tomonlar NOMI bilan atalganda ───────────
+  //
+  // Faqat nom aytilgan holat olinadi. "AB = 10, BC = 21" kabi
+  // yozuvlar ataylab tashqarida qoldiriladi: ulardan uchburchak
+  // to'g'ri burchaklimi yoki nuqtalar bir to'g'ri chiziqdami —
+  // matndan bilib bo'lmaydi.
+  const katetlar = s.match(/(?:katetlar|катеты)\D{0,4}([\d.]+)\D{1,6}([\d.]+)/i);
+  if (katetlar) {
+    const [, a, b] = katetlar.map(Number);
+    const kutilgan = Math.sqrt(a * a + b * b);
+    return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+  const gipKatet = s.match(/(?:gipotenuza|гипотенуза)\s*([\d.]+)\D{1,10}?(?:katet|катет)\D{0,4}([\d.]+)/i);
+  if (gipKatet) {
+    const [, c, a] = gipKatet.map(Number);
+    if (c <= a) return { holat: "otkazildi" };
+    const kutilgan = Math.sqrt(c * c - a * a);
+    return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+
+  // ── 11. Kosinuslar teoremasi: "a = 7, b = 10, ∠C = 120°.  c² = ?"
+  const kosin = s.match(
+    /^a\s*=\s*([\d.]+)\s*,\s*b\s*=\s*([\d.]+)\s*,\s*∠C\s*=\s*([\d.]+)°\s*\.\s*c\^2\s*=\s*\?$/i,
+  );
+  if (kosin) {
+    const [, a, b, C] = kosin.map(Number);
+    const kutilgan = a * a + b * b - 2 * a * b * Math.cos((C * Math.PI) / 180);
+    return { holat: "tekshirildi", togri: tengYaxlit(kutilgan, j), kutilgan };
+  }
+
+  // ── 12. Sinuslar teoremasi: "a = 4, ∠A = 30°, ∠B = 90°.  b = ?"
+  const sinus = s.match(
+    /^a\s*=\s*([\d.]+)\s*,\s*∠A\s*=\s*([\d.]+)°\s*,\s*∠B\s*=\s*([\d.]+)°\s*\.\s*b\s*=\s*\?$/i,
+  );
+  if (sinus) {
+    const [, a, A, B] = sinus.map(Number);
+    const sA = Math.sin((A * Math.PI) / 180);
+    if (Math.abs(sA) < 1e-9) return { holat: "otkazildi" };
+    const kutilgan = (a * Math.sin((B * Math.PI) / 180)) / sA;
+    return { holat: "tekshirildi", togri: tengYaxlit(kutilgan, j), kutilgan };
+  }
+
+  // ── 13. O'xshashlik: "AB = 12, BC = 10, A₁B₁ = 36.  B₁C₁ = ?"
+  //
+  // Mos tomonlar nisbati teng: B₁C₁ = BC · (A₁B₁ / AB).
+  const oxsh = past.match(
+    /^AB\s*=\s*([\d.]+)\s*,\s*BC\s*=\s*([\d.]+)\s*,\s*A1B1\s*=\s*([\d.]+)\s*\.\s*B1C1\s*=\s*\?$/i,
+  );
+  if (oxsh) {
+    const [, AB, BC, A1B1] = oxsh.map(Number);
+    if (AB === 0) return { holat: "otkazildi" };
+    const kutilgan = (BC * A1B1) / AB;
+    return { holat: "tekshirildi", togri: tengYaxlit(kutilgan, j), kutilgan };
+  }
+
+  // ── 14. Gipotenuzadagi proyeksiyalar → balandlik: h = √(p·q)
+  const proy = s.match(/(?:proyeksiya|проекци)\D{0,12}([\d.]+)\s*(?:va|и)\s*([\d.]+)/i);
+  if (proy && /balandlik|высот/i.test(s)) {
+    const [, p, q] = proy.map(Number);
+    const kutilgan = Math.sqrt(p * q);
+    return { holat: "tekshirildi", togri: tengYaxlit(kutilgan, j), kutilgan };
+  }
+
+  // ── 15. Bissektrisa burchakni TENG IKKIGA bo'ladi ─────────
+  // "∠AOB = 118°,  OM — bissektrisa.   ∠AOM = ?" → 59
+  const biss = s.match(/∠\w+\s*=\s*([\d.]+)°.*?(?:bissektrisa|биссектриса)/i);
+  if (biss && /∠\w+\s*=\s*\?/.test(s)) {
+    const kutilgan = Number(biss[1]) / 2;
+    return { holat: "tekshirildi", togri: tengYaxlit(kutilgan, j), kutilgan };
+  }
+
+  // ── 16. Diametr va radius ─────────────────────────────────
+  const dr = s.match(/^d\s*=\s*([\d.]+)\s*\.\s*r\s*=\s*\?$/i);
+  if (dr) {
+    const kutilgan = Number(dr[1]) / 2;
+    return { holat: "tekshirildi", togri: tengYaxlit(kutilgan, j), kutilgan };
+  }
+  const rd = s.match(/^r\s*=\s*([\d.]+)\s*\.\s*d\s*=\s*\?$/i);
+  if (rd) {
+    const kutilgan = Number(rd[1]) * 2;
+    return { holat: "tekshirildi", togri: tengYaxlit(kutilgan, j), kutilgan };
+  }
+
+  // ── 17. `x` li tenglama — javobni qo'yib tekshirish ───────
+  //
+  // "25 / (x + 6) = 5" → x o'rniga javob qo'yiladi va ikki tomon
+  // solishtiriladi. Bu 2-shoxning kengaytmasi: u yerda faqat sof
+  // sonli ifoda olinardi, bu yerda bitta noma'lum ham bo'ladi.
+  //
+  // "= 0" ko'rinishidagi tenglamalar ATAYLAB tashqarida. Ular uch xil
+  // savolga tegishli bo'lishi mumkin — ildizini top, diskriminantini
+  // top, nechta ildizi bor — va matndan qaysi biri ekanini bilib
+  // bo'lmaydi. Tekshiruvchi "x² − 9x + 12 = 0" ni "x ni top" deb
+  // o'qib, diskriminant javobini (33) xato deb ko'rsatgan edi.
+  const teng2 = s.split("=");
+  if (
+    teng2.length === 2
+    && !s.includes("?")
+    && /x/i.test(s)
+    && teng2[1].trim() !== "0"
+  ) {
+    let [chap, ong] = teng2;
+    // Boshqa harf bo'lsa — bu boshqa janr (sin, log, y = ...).
+    const harfsiz = (v: string) => !/[a-wyzа-я]/i.test(v.replace(/x/gi, ""));
+    if (harfsiz(chap) && harfsiz(ong)) {
+      const qoy = (v: string) => v
+        .replace(/(\d)\s*x/gi, "$1*x")
+        .replace(/\)\s*x/gi, ")*x")
+        .replace(/x\s*\(/gi, "x*(")
+        .replace(/x/gi, `(${j})`);
+      chap = qoy(chap); ong = qoy(ong);
+      if (sof(chap) && sof(ong)) {
+        const c = hisobla(chap);
+        const o = hisobla(ong);
+        if (c !== null && o !== null) {
+          return { holat: "tekshirildi", togri: teng(c, o) };
+        }
+      }
+    }
+  }
+
   return { holat: "otkazildi" };
+}
+
+/**
+ * Javobi IFODA bo'lgan savol — hozircha faqat hosila.
+ *
+ * Alohida funksiya, chunki `savolniTekshir` javobni son deb boshlaydi
+ * va bu yerda u ko'phad ("24x²", "4x + 3").
+ *
+ * FARQLASH BELGISI — javobning o'zi. "y = 2x² − 8x − 3" degan matn
+ * uch xil savolga tegishli bo'lishi mumkin (uchi qayerda, tarmoqlari
+ * qayoqqa, hosilasi nima) va matndan qaysi biri ekanini bilib
+ * bo'lmaydi. Lekin javob ko'phad bo'lsa — bu HOSILA: uchining
+ * koordinatasi son, tarmoq yo'nalishi esa so'z.
+ */
+function ifodaliTekshir(matn: string, javob: unknown): Natija {
+  const s = tozala(matn);
+  const j = String(javob);
+  // Javobda `x` bo'lmasa — bu ko'phad emas, boshqa shox bilan ishlanadi.
+  if (!/x/i.test(j)) return { holat: "otkazildi" };
+
+  const jp = kophadOqi(j);
+  if (!jp || jp.size === 0) return { holat: "otkazildi" };
+
+  // "y = POLY" yoki "y = POLY,  y′ = ?"
+  const m = s.match(/^y\s*=\s*([^,]+?)\s*(?:,\s*y['′]\s*=\s*\?)?$/);
+  if (!m) return { holat: "otkazildi" };
+
+  const p = kophadOqi(m[1]);
+  if (!p || p.size === 0) return { holat: "otkazildi" };
+
+  return { holat: "tekshirildi", togri: kophadTeng(hosila(p), jp) };
 }
 
 /* ==================== tekshiruvchining o'z sinovi ====================
@@ -320,6 +691,93 @@ const OZSINOV: [string, number, boolean][] = [
   ["lim (−4x + 1),   x → 4", -15, true],
   ["32^(1/3) = ?", 3, false],           // ∛32 = 3,17 — butun emas
   ["4^(1/2) = ?", 2, true],
+  // hosila nuqtada
+  ["y = x² + 7x,   y′(4) = ?", 15, true],
+  ["y = 5x² − 7x,   y′(−1) = ?", -17, true],
+  ["y = 4x² + 5x,   y′(−3) = ?", -19, true],
+  ["y = x² + 7x,   y′(4) = ?", 14, false],
+  // progressiyalar
+  ["a₁ = −3, d = 8. a₇ = ?", 45, true],
+  ["b₁ = 3, q = 2. b₄ = ?", 24, true],
+  ["a₁ = 3,  d = 4,  n = 10.   S₁₀ = ?", 210, true],
+  ["b₁ = 4,  q = 3,  n = 4.   S₄ = ?", 160, true],
+  ["a₁ = −3, d = 8. a₇ = ?", 44, false],
+  // ko'rsatkichli tenglama
+  ["2ˣ = 32", 5, true],
+  ["3ˣ = 81", 4, true],
+  ["2ˣ = 32", 4, false],
+  // uchburchakning uchinchi burchagi
+  ["В треугольнике ABC ∠A = 81°, ∠B = 44°", 55, true],
+  ["В треугольнике ABC ∠A = 81°, ∠B = 44°", 54, false],
+  // vektor uzunligi
+  ["a⃗(12; 16)", 20, true],
+  ["a⃗(−4; 4; 7)", 9, true],
+  ["a⃗(3; 4)", 5, true],
+  ["a⃗(3; 4)", 7, false],
+  // parallelepiped diagonali
+  ["a = 2, b = 3, c = 6.   d = ?", 7, true],
+  ["a = 2, b = 3, c = 6.   d = ?", 11, false],
+  // Pifagor — nomi bilan
+  ["Катеты: 3 и 4. Гипотенуза = ?", 5, true],
+  ["Гипотенуза 13, катет 5. Второй катет = ?", 12, true],
+  ["Катеты: 3 и 4. Гипотенуза = ?", 7, false],
+  // x li tenglama
+  ["25 / (x + 6) = 5", -1, true],
+  ["25 / (x + 6) = 5", 1, false],
+  // skalyar ko'paytma
+  ["a⃗(2; −1),  b⃗(6; 5).   a⃗ · b⃗ = ?", 7, true],
+  ["a⃗(2; 2),  b⃗(0; 1).   a⃗ · b⃗ = ?", 2, true],
+  ["a⃗(2; −1),  b⃗(6; 5).   a⃗ · b⃗ = ?", 17, false],
+  // kosinuslar teoremasi
+  ["a = 7,  b = 10,  ∠C = 120°.   c² = ?", 219, true],
+  ["a = 9,  b = 12,  ∠C = 90°.   c² = ?", 225, true],
+  ["a = 7,  b = 10,  ∠C = 120°.   c² = ?", 149, false],
+  // sinuslar teoremasi
+  ["a = 4,  ∠A = 30°,  ∠B = 90°.   b = ?", 8, true],
+  ["a = 17,  ∠A = 30°,  ∠B = 90°.   b = ?", 34, true],
+  ["a = 4,  ∠A = 30°,  ∠B = 90°.   b = ?", 2, false],
+  // o'xshashlik
+  ["AB = 12,  BC = 10,  A₁B₁ = 36.   B₁C₁ = ?", 30, true],
+  ["AB = 12,  BC = 10,  A₁B₁ = 36.   B₁C₁ = ?", 20, false],
+  // gipotenuzadagi proyeksiyalar
+  ["Gipotenuzadagi proyeksiyalar: 4 va 25.   Balandlik = ?", 10, true],
+  ["Gipotenuzadagi proyeksiyalar: 4 va 25.   Balandlik = ?", 14, false],
+  // bissektrisa
+  ["∠AOB = 118°,  OM — bissektrisa.   ∠AOM = ?", 59, true],
+  ["∠AOB = 46°,  OM — bissektrisa.   ∠AOM = ?", 23, true],
+  ["∠AOB = 118°,  OM — bissektrisa.   ∠AOM = ?", 118, false],
+  // diametr va radius
+  ["d = 42.   r = ?", 21, true],
+  ["r = 10.   d = ?", 20, true],
+  ["d = 42.   r = ?", 42, false],
+];
+
+/**
+ * Tekshiruvdan CHETDA qolishi kerak bo'lgan savollar.
+ *
+ * Bu ro'yxat ham sinovning bir qismi: qaysi savolni tekshirib
+ * BO'LMASLIGINI bilish, tekshirilganini bilish bilan barobar. Har biri
+ * bir vaqtlar yolg'on ogohlantirish bergan.
+ */
+const OZSINOV_CHETDA: [string, unknown][] = [
+  // Diskriminant — savol "x ni top" emas.
+  ["x² − 9x + 12 = 0", 33],
+  ["x² + 9x + 9 = 0", 45],
+  // Matnli masala — matndan yechilmaydi.
+  ["4 рубашек, 3 брюк, 3 шляп", 36],
+  // So'z bilan javob.
+  ["y = −3x²", "вниз"],
+];
+
+/** Javobi IFODA bo'lgan holatlar — alohida ro'yxat. */
+const OZSINOV_IFODA: [string, string, boolean][] = [
+  ["y = 8x³", "24x²", true],
+  ["y = 5x⁶", "30x⁵", true],
+  ["y = 2x²", "4x", true],
+  ["y = 2x² + 3x + 2", "4x + 3", true],
+  ["y = 6x² + 3x − 4", "12x + 3", true],
+  ["y = 8x³", "24x³", false],       // daraja kamaymagan
+  ["y = 8x³", "8x²", false],        // koeffitsiyent ko'paymagan
 ];
 
 let ozXato = 0;
@@ -336,6 +794,32 @@ for (const [matn, javob, kutilgan] of OZSINOV) {
     );
   }
 }
+for (const [matn, javob, kutilgan] of OZSINOV_IFODA) {
+  const r = ifodaliTekshir(matn, javob);
+  if (r.holat !== "tekshirildi") {
+    ozXato++;
+    console.log(`❌ o'z sinovi (ifoda): "${matn}" → ${javob} tekshirilmadi`);
+  } else if (r.togri !== kutilgan) {
+    ozXato++;
+    console.log(
+      `❌ o'z sinovi (ifoda): "${matn}" → ${javob} — `
+      + `kutilgan ${kutilgan ? "to'g'ri" : "xato"}, chiqdi ${r.togri ? "to'g'ri" : "xato"}`,
+    );
+  }
+}
+
+for (const [matn, javob] of OZSINOV_CHETDA) {
+  const a = savolniTekshir(matn, javob);
+  const b = a.holat === "otkazildi" ? ifodaliTekshir(matn, javob) : a;
+  if (b.holat !== "otkazildi") {
+    ozXato++;
+    console.log(
+      `❌ o'z sinovi (chetda): "${matn}" tekshirilmasligi kerak edi, `
+      + `lekin "${b.togri ? "to'g'ri" : "XATO"}" deb baholandi`,
+    );
+  }
+}
+
 if (ozXato) {
   console.log(`\n❌ hisoblagichning o'zi ishonchsiz (${ozXato} ta) — natijaga ishonib bo'lmaydi\n`);
   process.exit(1);
@@ -364,7 +848,10 @@ for (const c of COURSES) {
           const matn = (a as { text?: string }).text ?? a.prompt ?? "";
           if (!matn) { otkazildi++; continue; }
 
-          const r = savolniTekshir(matn, a.answer);
+          let r = savolniTekshir(matn, a.answer);
+          // Sonli shox o'tkazib yuborgan bo'lsa — javob ifoda
+          // bo'lishi mumkin (hosila). Ikkinchi urinish shu yerda.
+          if (r.holat === "otkazildi") r = ifodaliTekshir(matn, a.answer);
           const q = sinfQamrov.get(c.grade) ?? { t: 0, o: 0 };
           if (r.holat === "otkazildi") {
             otkazildi++;
