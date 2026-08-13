@@ -38,7 +38,8 @@ import { Icon } from "../lib/icons";
 import { Blok } from "./Blok";
 import type { Qamrov, Uzunlik } from "../lib/blok";
 import {
-  OLCHAM, bobBali, joriyniOqi, qolganVaqt, sinfBoblari, sinfKurslari, vaqtiTugagan,
+  OLCHAM, bobBali, dtmBormi, joriyniOqi, qolganVaqt, sinfBoblari,
+  sinfKurslari, vaqtiTugagan,
 } from "../lib/blok";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
@@ -113,9 +114,9 @@ export function Testlar({ sinf, onBack, onHisobot }: {
   /**
    * Testni boshlash.
    *
-   * TO'LIQ BLOK tasdiq so'raydi, qolganlari yo'q. Sabab o'lchovda:
-   * to'liq blok — 30 savol va yarim soat, ya'ni bir o'tirishda
-   * qilinadigan eng katta ish. Uni tasodifan bosib qo'yib, ikkinchi
+   * UZUN TESTLAR tasdiq so'raydi (to'liq blok va DTM), qolganlari
+   * yo'q. Sabab o'lchovda: yarim soatdan bir soatgacha — bir
+   * o'tirishda qilinadigan eng katta ish. Uni tasodifan bosib qo'yib, ikkinchi
    * savolda tashlab ketish eng ko'p uchraydigan yo'qotish.
    *
    * Qisqa va bob testlari o'n daqiqalik — ular uchun tasdiq foydadan
@@ -124,7 +125,7 @@ export function Testlar({ sinf, onBack, onHisobot }: {
    */
   const boshla = (x: Tanlov) => {
     tebrat("tanlov");
-    if (x.uzunlik === "toliq") setSorov(x);
+    if (x.uzunlik === "toliq" || x.uzunlik === "dtm") setSorov(x);
     else setTanlov(x);
   };
 
@@ -194,26 +195,37 @@ export function Testlar({ sinf, onBack, onHisobot }: {
       <h2 className="az-kirish mt-5 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
         {t("testlarAralash")}
       </h2>
+      {/* DTM eng tepada va faqat bitiruv sinfida: 11-sinf o'quvchisi
+          ilovaga aynan shuning uchun keladi, qolgan mashqlar esa
+          unga tayyorgarlik. */}
       <div className="az-kirish space-y-2">
-        {(["toliq", "qisqa"] as const).map((u) => (
-          <button key={u} type="button"
-            onClick={() => boshla({ uzunlik: u, qamrov: { tur: "hammasi" } })}
-            className="tugma-3d flex w-full items-center gap-3 rounded-clay bg-karta p-3.5 text-left shadow-clay-sm">
-            <span className={`grid size-10 shrink-0 place-items-center rounded-2xl text-white
-              ${u === "toliq" ? "bg-brand-purple" : "bg-brand-blue"}`}>
-              <Icon name={u === "toliq" ? "trophy" : "flame"} size={19} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block font-display text-[15px] leading-tight">
-                {t(u === "toliq" ? "blokToliq" : "blokQisqa")}
-              </span>
-              <span className="mt-0.5 block text-[12px] text-ink-dim">
-                {t("blokOlcham", { s: OLCHAM[u].savol, d: OLCHAM[u].daqiqa })}
-              </span>
-            </span>
-            <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
-          </button>
-        ))}
+        {(dtmBormi(sinf) ? (["dtm", "toliq", "qisqa"] as const) : (["toliq", "qisqa"] as const))
+          .map((u) => {
+            const bezak = {
+              dtm: { rang: "bg-brand-orange", ikon: "clock", nom: "blokDtm", izoh: "blokDtmIzoh" },
+              toliq: { rang: "bg-brand-purple", ikon: "trophy", nom: "blokToliq", izoh: "" },
+              qisqa: { rang: "bg-brand-blue", ikon: "flame", nom: "blokQisqa", izoh: "" },
+            }[u];
+            return (
+              <button key={u} type="button"
+                onClick={() => boshla({ uzunlik: u, qamrov: { tur: "hammasi" } })}
+                className="tugma-3d flex w-full items-center gap-3 rounded-clay bg-karta p-3.5 text-left shadow-clay-sm">
+                <span className={`grid size-10 shrink-0 place-items-center rounded-2xl text-white ${bezak.rang}`}>
+                  <Icon name={bezak.ikon as "clock"} size={19} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-[15px] leading-tight">
+                    {t(bezak.nom as "blokToliq")}
+                  </span>
+                  <span className="mt-0.5 block text-[12px] text-ink-dim">
+                    {t("blokOlcham", { s: OLCHAM[u].savol, d: OLCHAM[u].daqiqa })}
+                    {bezak.izoh && ` · ${t(bezak.izoh as "blokDtmIzoh")}`}
+                  </span>
+                </span>
+                <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+              </button>
+            );
+          })}
       </div>
 
       {/* ---- bob-bob ---- */}

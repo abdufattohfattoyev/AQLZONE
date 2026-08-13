@@ -299,6 +299,8 @@ const S = {
     "Savollar aralash keladi va qaysi mavzudan ekani aytilmaydi — formulani o'zingiz tanlaysiz. Vaqt tugasa test to'xtaydi.",
     "Вопросы идут вперемешку, тема не называется — формулу выбираете сами. Когда время выйдет, тест остановится.",
   ],
+  blokDtm: ["DTM sur'atida", "В темпе ДТМ"],
+  blokDtmIzoh: ["savoliga 2 daqiqa", "по 2 минуты на вопрос"],
   blokToliq: ["To'liq blok", "Полный блок"],
   blokQisqa: ["Qisqa blok", "Короткий блок"],
   blokOlcham: ["{s} savol · {d} daqiqa", "{s} вопросов · {d} минут"],

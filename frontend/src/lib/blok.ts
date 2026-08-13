@@ -45,11 +45,16 @@ import type { Unit } from "./types";
 
 /* ------------------------------------------------------------ o'lcham */
 
-export type Uzunlik = "qisqa" | "toliq" | "bob";
+export type Uzunlik = "qisqa" | "toliq" | "bob" | "dtm";
 
 /** Har bir uzunlikda nechta savol va necha daqiqa. */
 export const OLCHAM: Record<Uzunlik, { savol: number; daqiqa: number }> = {
-  /* To'liq blok — imtihon sur'ati: bitta savolga bir daqiqa. */
+  /* DTM — HAQIQIY imtihon sur'ati: bitta savolga ikki daqiqa.
+     Faqat bitiruv sinfida ko'rinadi (`dtmBormi`). */
+  dtm: { savol: 30, daqiqa: 60 },
+  /* To'liq blok — TEZLIK mashqi: bitta savolga bir daqiqa, ya'ni
+     imtihondagidan ikki barobar tig'iz. Bu ataylab: shu sur'atga
+     o'rgangan odam imtihonda o'zini keng his qiladi. */
   toliq: { savol: 30, daqiqa: 30 },
   /* Har kuni yarim soat ajratadigan odam kam. Qisqasi "bugun vaqtim
      yo'q" degan kunni butunlay bo'sh qoldirmaydi. */
@@ -59,6 +64,15 @@ export const OLCHAM: Record<Uzunlik, { savol: number; daqiqa: number }> = {
      bilish-bilmaslik savoli. */
   bob: { savol: 10, daqiqa: 12 },
 };
+
+/**
+ * DTM rejimi qaysi sinfda ko'rinadi.
+ *
+ * Faqat 11-sinf: imtihon aynan o'sha yili topshiriladi va bir soatlik
+ * mashqni boshqa sinflarga taklif qilish ularni cho'chitardi. Kerak
+ * bo'lsa chegarani pasaytirish shu yerda — bitta son.
+ */
+export const dtmBormi = (sinf: number): boolean => sinf === 11;
 
 /* ------------------------------------------------------------- qamrov */
 

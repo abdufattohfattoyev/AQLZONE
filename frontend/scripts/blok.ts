@@ -14,8 +14,8 @@
  * `npm run tekshir` bilan birga ishlaydi.
  */
 import {
-  OLCHAM, blokBormi, blokYasa, foiz, joriyniOchir, joriyniOqi,
-  joriyniSaqla, qolganVaqt, sinfBoblari, sinfOf, vaqtiTugagan,
+  OLCHAM, blokBormi, blokYasa, dtmBormi, foiz, joriyniOchir,
+  joriyniOqi, joriyniSaqla, qolganVaqt, sinfBoblari, sinfOf, vaqtiTugagan,
 } from "../src/lib/blok";
 import type { Joriy } from "../src/lib/blok";
 
@@ -69,6 +69,15 @@ tekshir("to'liq blok — 30 savol", 30, OLCHAM.toliq.savol);
 tekshir("qisqa blok — 10 savol", 10, OLCHAM.qisqa.savol);
 // Bob testining vaqti savoliga 1,2 daqiqa: bu tezlik mashqi emas.
 tekshir("bob testi kengroq vaqt beradi", true, OLCHAM.bob.daqiqa > OLCHAM.bob.savol);
+
+// DTM — haqiqiy imtihon sur'ati: savoliga ikki daqiqa. To'liq blok
+// esa ataylab tig'izroq (savoliga bir daqiqa) — tezlik mashqi.
+tekshir("DTM — 30 savol", 30, OLCHAM.dtm.savol);
+tekshir("DTM — 60 daqiqa", 60, OLCHAM.dtm.daqiqa);
+tekshir("DTM to'liq blokdan keng", true, OLCHAM.dtm.daqiqa > OLCHAM.toliq.daqiqa);
+tekshir("DTM faqat 11-sinfda", true, dtmBormi(11));
+tekshir("10-sinfda DTM yo'q", false, dtmBormi(10));
+tekshir("9-sinfda DTM yo'q", false, dtmBormi(9));
 
 tekshir("4-sinfda test yo'q", false, blokBormi(4));
 tekshir("5-sinfda test bor", true, blokBormi(5));
