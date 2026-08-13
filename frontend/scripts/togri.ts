@@ -50,6 +50,8 @@
  * chiqaradi va odam ko'rib chiqadi.
  */
 import { COURSES } from "../src/lib/curriculum";
+import { SHAPES } from "../src/lib/activity";
+import type { Activity } from "../src/lib/activity";
 
 /** Har generatordan nechta namuna olinadi. */
 const TAKROR = 12;
@@ -105,6 +107,13 @@ function hisobla(ifoda: string): number | null {
       if (kor() !== ")") return null;
       i++;
       return v;
+    }
+    // Kvadrat ildiz: "√256". Manfiy ostidagi ildiz — yechilmaydi.
+    if (kor() === "√") {
+      i++;
+      const v = atom();
+      if (v === null || v < 0) return null;
+      return Math.sqrt(v);
     }
     const boshi = i;
     while (i < s.length && /[\d.]/.test(s[i])) i++;
@@ -214,6 +223,25 @@ function tengYaxlit(kutilgan: number, javob: number): boolean {
   return k === javob || Math.abs(kutilgan - javob) < 0.05;
 }
 
+/**
+ * Javobni songa aylantiradi. Bo'lmasa `null`.
+ *
+ * JAVOB HAR DOIM HAM SODDA SON EMAS. 5–8-sinfda u ko'pincha kasr
+ * bo'ladi: "21/20", "12/7", "√3/2". Ilgari bunday javob `Number()` da
+ * `NaN` berardi va savol butunlay tekshiruvdan chiqib ketardi —
+ * kasrlar esa o'sha sinflarning asosiy mavzusi.
+ *
+ * Endi javob ham xuddi savol kabi hisoblagichdan o'tkaziladi.
+ */
+function javobSoni(javob: unknown): number | null {
+  const t = tozala(String(javob));
+  const tez = Number(t);
+  if (Number.isFinite(tez)) return tez;
+  // Faqat son, ildiz va amal belgilari bo'lsin — so'z bo'lsa emas.
+  if (!/^[\d\s+\-*/|^().√]+$/.test(t)) return null;
+  return hisobla(t);
+}
+
 /* ==================== ko'phad ====================
  *
  * Hosila savollarida javob SON emas, IFODA bo'ladi: "24x²", "4x + 3".
@@ -317,14 +345,14 @@ type Natija =
  * Uchta shakl taniladi; qolganlari o'tkazib yuboriladi.
  */
 function savolniTekshir(matn: string, javob: unknown): Natija {
-  const j = Number(tozala(String(javob)));
-  if (!Number.isFinite(j)) return { holat: "otkazildi" };
+  const j = javobSoni(javob);
+  if (j === null) return { holat: "otkazildi" };
 
   const s = tozala(matn);
 
   // Faqat raqam va amal belgilaridan iborat bo'lsin. Harf bo'lsa
   // (x, y, lim, sin) — bu boshqa janr, matndan yechib bo'lmaydi.
-  const sof = (x: string) => /^[\d\s+\-*/|^().?]+$/.test(x);
+  const sof = (x: string) => /^[\d\s+\-*/|^().?√]+$/.test(x);
 
   // ── 1. "A ÷ B = Q qoldiq R" ──────────────────────────────
   // Alohida, chunki bu tenglik emas: A = B×Q + R deb tekshiriladi.
@@ -513,11 +541,42 @@ function savolniTekshir(matn: string, javob: unknown): Natija {
   // yozuvlar ataylab tashqarida qoldiriladi: ulardan uchburchak
   // to'g'ri burchaklimi yoki nuqtalar bir to'g'ri chiziqdami —
   // matndan bilib bo'lmaydi.
+  //
+  // TOMONLARNI SANASH YETARLI EMAS — nima so'ralayotgani ham kerak.
+  // Ilgari bu shox "katetlar" so'zini ko'rishi bilan ishga tushardi va
+  // "Katetlar 10 va 24, gipotenuza 26.  tg α = ?" degan savolni ham
+  // o'ziga tortib, gipotenuzani hisoblab, tangens javobini (5/12)
+  // xato deb ko'rsatardi.
   const katetlar = s.match(/(?:katetlar|катеты)\D{0,4}([\d.]+)\D{1,6}([\d.]+)/i);
-  if (katetlar) {
+  if (katetlar && /(?:gipotenuza|гипотенуза)\s*=\s*\?/i.test(s)) {
     const [, a, b] = katetlar.map(Number);
     const kutilgan = Math.sqrt(a * a + b * b);
     return { holat: "tekshirildi", togri: teng(kutilgan, j), kutilgan };
+  }
+
+  // ── To'g'ri burchakli uchburchakda sin, cos, tg ────────────
+  //
+  // "Katetlar 15 va 20,  gipotenuza 25.   sin α = ?
+  //  (α — 15 katet qarshisidagi)"
+  //
+  // Qavs ichidagi izoh QAYSI katet qarshisida ekanini aytadi — bu
+  // yerdagi butun ma'no shunda. Usiz sin va cos ni ajratib bo'lmasdi.
+  const trig = s.match(
+    /(?:katetlar|катеты)\D{0,4}([\d.]+)\D{1,6}([\d.]+)\D{1,14}?(?:gipotenuza|гипотенуза)\D{0,4}([\d.]+).*?\b(sin|cos|tg)\s*α\s*=\s*\?.*?([\d.]+)\s*katet/i,
+  );
+  if (trig) {
+    const k1 = Number(trig[1]);
+    const k2 = Number(trig[2]);
+    const gip = Number(trig[3]);
+    const nima = trig[4].toLowerCase();
+    const qarshi = Number(trig[5]);
+    // Qarshidagi katet qaysi biri — ikkinchisi yondoshi bo'ladi.
+    const yondosh = teng(qarshi, k1) ? k2 : teng(qarshi, k2) ? k1 : null;
+    if (yondosh === null || gip === 0 || yondosh === 0) return { holat: "otkazildi" };
+    const kutilgan = nima === "sin" ? qarshi / gip
+      : nima === "cos" ? yondosh / gip
+        : qarshi / yondosh;
+    return { holat: "tekshirildi", togri: tengYaxlit(kutilgan, j), kutilgan };
   }
   const gipKatet = s.match(/(?:gipotenuza|гипотенуза)\s*([\d.]+)\D{1,10}?(?:katet|катет)\D{0,4}([\d.]+)/i);
   if (gipKatet) {
@@ -629,6 +688,117 @@ function savolniTekshir(matn: string, javob: unknown): Natija {
   }
 
   return { holat: "otkazildi" };
+}
+
+/* ==================== ma'lumotdan tekshirish ====================
+ *
+ * Kichik sinflarda savol MATNI hech narsa aytmaydi: "Nechta?",
+ * "Qaysi biri ortiqcha?", "Soat nechi?". Yechim rasmda, matnda emas —
+ * shuning uchun yuqoridagi hisoblagich ularni umuman ololmaydi va
+ * maktabgacha guruh 9% da qolgan edi.
+ *
+ * Lekin savol o'zi bilan MA'LUMOT olib yuradi: nechta narsa
+ * chizilishi, qaysi amal bajarilishi, to'rtburchakning tomonlari.
+ * Ekran aynan shu ma'lumotni chizadi. Demak javobni o'sha
+ * ma'lumotdan qayta hisoblash mumkin.
+ *
+ * BU HAM MUSTAQIL TEKSHIRUV. Generator `answer` ni o'z formulasi
+ * bilan hisoblaydi; bu yerda esa u EKRANGA CHIQARADIGAN sonlardan
+ * qayta hisoblanadi. Formulada xato bo'lsa — masalan `op: "+"` yozib,
+ * `answer: a - b` bergan bo'lsa — ikkisi bir-biriga to'g'ri kelmaydi.
+ *
+ * NIMA OLINMAYDI. Javobning o'zi ma'lumot maydonining nusxasi bo'lgan
+ * turlar (`rasm`, `belgi`, `rang`) ATAYLAB tashqarida: ularda
+ * "answer === emoji" degan tekshiruv har doim to'g'ri chiqadi va hech
+ * narsani isbotlamaydi. Qamrov foizini bunday tekshiruv bilan
+ * ko'tarish — o'zini aldash.
+ */
+
+/** Ikki tomonli nomni solishtiradi (o'zbekcha yoki ruscha bo'lishi mumkin). */
+const nomTeng = (javob: string, uz: string, ru: string) => {
+  const n = (x: string) => x.trim().toLowerCase();
+  return n(javob) === n(uz) || n(javob) === n(ru);
+};
+
+function malumotTekshir(a: Activity): Natija {
+  const j = a.answer;
+  const son = Number(j);
+  const sonTeng = (kutilgan: number): Natija =>
+    ({ holat: "tekshirildi", togri: Number.isFinite(son) && teng(kutilgan, son), kutilgan });
+
+  switch (a.type) {
+    // Nechta narsa chizilsa, javob ham shuncha bo'lishi kerak.
+    case "count": return sonTeng(a.n);
+
+    // Ustunda yozilgan AMAL bajarilishi kerak. Bu yerda haqiqiy xavf
+    // bor: `op` va `answer` ikki xil joyda yoziladi.
+    case "column": return sonTeng(a.op === "+" ? a.a + a.b : a.a - a.b);
+
+    case "perim": return sonTeng(2 * (a.w + a.h));
+    case "area": return sonTeng(a.w * a.h);
+    case "tens": return sonTeng(a.tens * 10 + a.units);
+
+    /*
+     * Taqqoslash — UCH XIL savol, bitta ma'lumot.
+     *
+     * `plus` bayrog'i yig'indini bildiradi, lekin qolgan ikkitasi
+     * ("qayerda ko'p?" va "qayerda kam?") ma'lumotda farqlanmaydi:
+     * ikkalasida ham `a` va `b` turadi. Farq faqat SAVOLDA.
+     *
+     * Shuning uchun bu yerda savol matni o'qiladi. Bu hamon mustaqil
+     * tekshiruv: savol nimani so'rayotgani matndan, javob esa
+     * ma'lumotdan olinadi — generatorning hisobi ikkalasiga ham
+     * aralashmaydi.
+     *
+     * Ilgari bu yerda doim kattasi olinardi va "Где меньше?" degan
+     * savollar xato deb ko'rsatilardi.
+     */
+    case "cmpvis": {
+      if (a.plus) return sonTeng(a.a + a.b);
+      const savol = String(a.prompt ?? "");
+      if (/kam|меньше/i.test(savol)) return sonTeng(Math.min(a.a, a.b));
+      if (/ko'p|kop|больше/i.test(savol)) return sonTeng(Math.max(a.a, a.b));
+      // Savol tanish emas — taxmin qilmaymiz.
+      return { holat: "otkazildi" };
+    }
+    case "ayirvis": return sonTeng(a.n - a.k);
+    case "mulvis": return sonTeng(a.g * a.k);
+
+    // Yashirilgan katakdagi son.
+    case "numray":
+      if (a.hide < 0 || a.hide >= a.arr.length) return { holat: "otkazildi" };
+      return sonTeng(a.arr[a.hide]);
+
+    // Burchaklar soni — jadvaldan, generatorning hisobidan emas.
+    case "corners": return sonTeng(SHAPES[a.shape].corners);
+
+    case "shapeName": {
+      const s = SHAPES[a.shape];
+      return { holat: "tekshirildi", togri: nomTeng(String(j), s.name, s.nameRu) };
+    }
+
+    // Ortiqchasi — belgilangan o'rindagi narsa.
+    case "odd":
+      if (a.odd < 0 || a.odd >= a.items.length) return { holat: "otkazildi" };
+      return { holat: "tekshirildi", togri: String(j) === a.items[a.odd] };
+
+    case "clock": {
+      const kutilgan = `${a.h}:${String(a.m).padStart(2, "0")}`;
+      return { holat: "tekshirildi", togri: String(j).trim() === kutilgan };
+    }
+
+    /*
+     * Qolganlari ataylab tashqarida:
+     *
+     *   rasm, belgi, rang   javob ma'lumot maydonining nusxasi —
+     *                       tekshiruv hech narsa isbotlamaydi
+     *   divvis              `g` va `k` ning ma'nosi matnga bog'liq;
+     *                       taxmin qilib qoida yozish xato bo'lardi
+     *   coord, pos, data,   savol matniga qarab har xil narsa
+     *   naqsh, frac         so'raladi
+     */
+    default: return { holat: "otkazildi" };
+  }
 }
 
 /**
@@ -750,6 +920,15 @@ const OZSINOV: [string, number, boolean][] = [
   ["d = 42.   r = ?", 21, true],
   ["r = 10.   d = ?", 20, true],
   ["d = 42.   r = ?", 42, false],
+  // kasr javob — "21/20" kabi
+  ["2/8 + 4/5 = ?", 1.05, true],
+  ["√256 = ?", 16, true],
+  ["√256 = ?", 15, false],
+  // to'g'ri burchakli uchburchakda trigonometriya
+  ["Katetlar 15 va 20,  gipotenuza 25.   sin α = ?   (α — 15 katet qarshisidagi)", 0.6, true],
+  ["Katetlar 15 va 20,  gipotenuza 25.   cos α = ?   (α — 15 katet qarshisidagi)", 0.8, true],
+  ["Katetlar 10 va 24,  gipotenuza 26.   tg α = ?   (α — 10 katet qarshisidagi)", 10 / 24, true],
+  ["Katetlar 15 va 20,  gipotenuza 25.   sin α = ?   (α — 15 katet qarshisidagi)", 0.8, false],
 ];
 
 /**
@@ -767,6 +946,56 @@ const OZSINOV_CHETDA: [string, unknown][] = [
   ["4 рубашек, 3 брюк, 3 шляп", 36],
   // So'z bilan javob.
   ["y = −3x²", "вниз"],
+];
+
+/**
+ * Ma'lumotdan tekshiriladigan holatlar.
+ *
+ * Turlari `Activity` bo'lgani uchun alohida ro'yxat. Har biri bir
+ * vaqtlar xato bergan yoki berishi mumkin bo'lgan joy.
+ */
+const OZSINOV_MALUMOT: [Partial<Activity> & { type: string }, boolean][] = [
+  // Ustundagi amal — `op` va `answer` ikki xil joyda yoziladi.
+  [{ type: "column", op: "+", a: 54, b: 23, answer: 77 }, true],
+  [{ type: "column", op: "−", a: 54, b: 23, answer: 31 }, true],
+  [{ type: "column", op: "+", a: 54, b: 23, answer: 31 }, false],
+  [{ type: "column", op: "−", a: 54, b: 23, answer: 77 }, false],
+
+  [{ type: "count", emoji: "🍎", n: 3, answer: 3 }, true],
+  [{ type: "count", emoji: "🍎", n: 3, answer: 4 }, false],
+
+  [{ type: "perim", w: 9, h: 7, answer: 32 }, true],
+  [{ type: "perim", w: 9, h: 7, answer: 63 }, false],   // yuza bilan almashib ketgan
+  [{ type: "area", w: 5, h: 2, answer: 10 }, true],
+  [{ type: "area", w: 5, h: 2, answer: 14 }, false],    // perimetr bilan almashib ketgan
+
+  [{ type: "tens", tens: 1, units: 6, answer: 16 }, true],
+  [{ type: "tens", tens: 1, units: 6, answer: 7 }, false],
+
+  // Taqqoslash — savolga qarab kattasi yoki kichigi.
+  [{ type: "cmpvis", a: 1, b: 3, emoji: "🚗", answer: 3, prompt: "Где больше? Сколько?" }, true],
+  [{ type: "cmpvis", a: 1, b: 3, emoji: "🚗", answer: 1, prompt: "Где меньше? Сколько?" }, true],
+  [{ type: "cmpvis", a: 1, b: 3, emoji: "🚗", answer: 3, prompt: "Где меньше? Сколько?" }, false],
+  [{ type: "cmpvis", a: 1, b: 3, emoji: "🚗", answer: 4, prompt: "Nechta?", plus: true }, true],
+
+  [{ type: "ayirvis", n: 3, k: 1, emoji: "🐝", answer: 2 }, true],
+  [{ type: "ayirvis", n: 3, k: 1, emoji: "🐝", answer: 4 }, false],
+  [{ type: "mulvis", g: 2, k: 3, emoji: "🍎", answer: 6 }, true],
+  [{ type: "mulvis", g: 2, k: 3, emoji: "🍎", answer: 5 }, false],
+
+  [{ type: "numray", arr: [1, 2, 3, 4, 5], hide: 1, answer: 2 }, true],
+  [{ type: "numray", arr: [1, 2, 3, 4, 5], hide: 1, answer: 3 }, false],
+
+  [{ type: "corners", shape: "pentagon", answer: 5 }, true],
+  [{ type: "corners", shape: "circle", answer: 0 }, true],
+  [{ type: "corners", shape: "pentagon", answer: 4 }, false],
+
+  [{ type: "odd", items: ["👕", "🌷", "🌹", "🌼"], odd: 0, answer: "👕" }, true],
+  [{ type: "odd", items: ["👕", "🌷", "🌹", "🌼"], odd: 0, answer: "🌷" }, false],
+
+  [{ type: "clock", h: 1, m: 15, answer: "1:15" }, true],
+  [{ type: "clock", h: 12, m: 5, answer: "12:05" }, true],
+  [{ type: "clock", h: 1, m: 15, answer: "1:51" }, false],
 ];
 
 /** Javobi IFODA bo'lgan holatlar — alohida ro'yxat. */
@@ -803,6 +1032,22 @@ for (const [matn, javob, kutilgan] of OZSINOV_IFODA) {
     ozXato++;
     console.log(
       `❌ o'z sinovi (ifoda): "${matn}" → ${javob} — `
+      + `kutilgan ${kutilgan ? "to'g'ri" : "xato"}, chiqdi ${r.togri ? "to'g'ri" : "xato"}`,
+    );
+  }
+}
+
+for (const [xom, kutilgan] of OZSINOV_MALUMOT) {
+  const a = xom as Activity;
+  const r = malumotTekshir(a);
+  const nom = `${a.type} ${JSON.stringify(a.answer)}`;
+  if (r.holat !== "tekshirildi") {
+    ozXato++;
+    console.log(`❌ o'z sinovi (ma'lumot): ${nom} tekshirilmadi`);
+  } else if (r.togri !== kutilgan) {
+    ozXato++;
+    console.log(
+      `❌ o'z sinovi (ma'lumot): ${nom} — `
       + `kutilgan ${kutilgan ? "to'g'ri" : "xato"}, chiqdi ${r.togri ? "to'g'ri" : "xato"}`,
     );
   }
@@ -852,6 +1097,9 @@ for (const c of COURSES) {
           // Sonli shox o'tkazib yuborgan bo'lsa — javob ifoda
           // bo'lishi mumkin (hosila). Ikkinchi urinish shu yerda.
           if (r.holat === "otkazildi") r = ifodaliTekshir(matn, a.answer);
+          // Matndan yechilmasa — savolning O'Z MA'LUMOTIDAN.
+          // Kichik sinflarda yechim rasmda, matnda emas.
+          if (r.holat === "otkazildi") r = malumotTekshir(a);
           const q = sinfQamrov.get(c.grade) ?? { t: 0, o: 0 };
           if (r.holat === "otkazildi") {
             otkazildi++;
