@@ -296,10 +296,50 @@ export async function getProgress(): Promise<RemoteState | null> {
   } catch { return null; }
 }
 
+/** Ayni damda ketayotgan saqlash. Bo'lmasa `null`. */
+let saqlashJarayoni: Promise<void> | null = null;
+/** Jarayon tugashini kutayotgan ENG OXIRGI holat. */
+let kutayotganHolat: Record<string, string> | null = null;
+
+/**
+ * Progressni serverga yozadi — bir vaqtda FAQAT BITTA so'rov bilan.
+ *
+ * Ilova ochilganda bu funksiya bir necha marta chaqiriladi: kirishdan
+ * keyin bir marta, keyin har o'zgarishda. Ular parallel ketsa, serverda
+ * bir nechta yozuv to'qnashadi — SQLite'da bir vaqtda bitta yozuvchi
+ * bo'ladi va ortiqcha so'rovlar faqat navbat yasaydi.
+ *
+ * Shuning uchun navbat SHU YERDA tugaydi: bittasi ketayotganda kelgan
+ * chaqiruvlar navbatga turmaydi, ular BIR-BIRINI ALMASHTIRADI. Progress
+ * to'liq holat bo'lib boradi (qismli o'zgarish emas), ya'ni oxirgisi
+ * oldingilarining hammasini o'z ichiga oladi — o'rtadagilarni yuborish
+ * shunchaki behuda so'rov bo'lardi.
+ */
 export async function putProgress(state: Record<string, string>): Promise<void> {
   if (!token) return;
-  try { await post("/api/v1/progress", bilanProfil({ state })); }
-  catch (e) { console.warn("[api] saqlanmadi:", (e as Error).message); }
+
+  if (saqlashJarayoni) {
+    kutayotganHolat = state;
+    return saqlashJarayoni;
+  }
+
+  const ish = (async () => {
+    let joriy: Record<string, string> | null = state;
+    while (joriy) {
+      try { await post("/api/v1/progress", bilanProfil({ state: joriy })); }
+      catch (e) { console.warn("[api] saqlanmadi:", (e as Error).message); }
+      joriy = kutayotganHolat;
+      kutayotganHolat = null;
+    }
+    // Bayroq SINXRON tushiriladi, `finally` da emas: aks holda sikl
+    // tugashi bilan bayroq tushishi orasida bo'shliq qolardi va o'sha
+    // lahzada kelgan chaqiruv "jarayon bor" deb kutib, yuborilmay
+    // qolardi — ya'ni oxirgi progress yo'qolardi.
+    saqlashJarayoni = null;
+  })();
+
+  saqlashJarayoni = ish;
+  return ish;
 }
 
 export interface ResultPayload {

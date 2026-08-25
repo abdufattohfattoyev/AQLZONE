@@ -132,6 +132,12 @@ def _progress_json(profile: Profile) -> dict:
 @transaction.atomic
 def _progress_yoz(profile: Profile, kelgan: dict[str, str]) -> dict:
     """Kalit darajasida birlashtiradi: 4-sinfni saqlash 1-sinfni o'chirmaydi."""
+    # Diqqat: `select_for_update` SQLite'da HECH NARSA qilmaydi — Django
+    # bu baza uchun `FOR UPDATE` yozmaydi, chunki SQLite'da bunday qulf
+    # yo'q. Bir vaqtda kelgan saqlashlarni bir-biridan `settings.py`
+    # dagi `transaction_mode="IMMEDIATE"` ajratadi: yozuv qulfi
+    # tranzaksiya boshidayoq olinadi. Chaqiruv shu yerda qoldirilgan,
+    # chunki Postgres'ga o'tilsa aynan u kerak bo'ladi.
     row, _ = Progress.objects.select_for_update().get_or_create(profile=profile)
     yangi = dict(row.state or {})
     qabul = 0

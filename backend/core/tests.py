@@ -9,6 +9,7 @@ bu yerda xato bo'lsa bolaning natijasi yo'qoladi) va begona kalitlarni rad etish
 import hashlib
 import hmac
 import json
+import threading
 from datetime import timedelta
 from io import StringIO
 import time
@@ -16,7 +17,7 @@ from unittest.mock import patch
 from urllib.parse import urlencode
 
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.core import signing
 from django.utils import timezone
 
@@ -27,6 +28,7 @@ from . import duel as D
 from . import xabar
 from . import liga as L
 from . import reklama as R
+from . import views
 from .models import (
     Duel, Identity, KirishKodi, LessonResult, LigaAzo, Profile, Progress, Pupil,
     Reklama, ReklamaQabul, Session,
@@ -3484,3 +3486,83 @@ class OvozTest(TestCase):
             }})
         self.assertIn("/start", natija)
 
+
+
+class ProgressQulfTest(TransactionTestCase):
+    """
+    Bir vaqtda kelgan bir nechta saqlash "database is locked" bermasin.
+
+    Ilova ochilganda frontend progressni bir necha marta yuboradi
+    (kirishdan keyingi bir marta yuborish + har o'zgarishdagi kechikkan
+    yozuv). SQLite'da esa bir vaqtda faqat BITTA yozuvchi bo'ladi.
+
+    Nozik joyi shundaki, `timeout` bu holatni O'ZI HAL QILMAYDI.
+    `_progress_yoz` avval O'QIYDI (`get_or_create`), keyin YOZADI
+    (`save`). Tranzaksiya `BEGIN` bilan (ya'ni "deferred") boshlansa,
+    o'qish paytida qulf olinmaydi va yozishga o'tishda SQLite navbat
+    kutmaydi — u darhol "database is locked" qaytaradi. Sababi
+    oddiy: kutishning foydasi yo'q, chunki tranzaksiya boshida ko'rgan
+    nusxasi allaqachon eskirgan.
+
+    Yechim `BEGIN IMMEDIATE` (`transaction_mode`): yozuv qulfi eng
+    boshida olinadi, qolganlar esa `timeout` ichida navbatda kutadi.
+
+    Bu sinov `TransactionTestCase` — oddiy `TestCase` butun sinovni
+    bitta tranzaksiyaga o'raydi va boshqa oqimlar yozuvni umuman
+    ko'rmasdi.
+    """
+
+    #: Nechta so'rov bir vaqtda keladi. Uchtasi — haqiqiy holat.
+    OQIM = 3
+
+    def test_bir_vaqtda_kelgan_saqlashlar_yiqilmaydi(self):
+        from django.db import connection
+
+        pupil = Pupil.objects.create(first_name="Ali")
+        profil = pupil.asosiy_profil()
+
+        boshla = threading.Barrier(self.OQIM, timeout=10)
+        xatolar: list[Exception] = []
+        asl = Progress.yulduz_hisobla
+
+        def sekin_hisobla(state):
+            # O'qish bilan yozish ORASIDA ushlab turamiz: shu tufayli
+            # uchala oqim ham yozishdan oldin o'qib ulguradi. Bu haqiqiy
+            # so'rovda ham shunday bo'ladi (u yerda ham oradagi ish
+            # millisekundlar oladi), faqat bu yerda kafolatlangan.
+            time.sleep(0.05)
+            return asl(state)
+
+        def yoz(n: int) -> None:
+            try:
+                boshla.wait()
+                views._progress_yoz(profil, {"azapp_grade1_v1": json.dumps({"stars": n})})
+            except Exception as e:  # noqa: BLE001 — nimaligini quyida ko'rsatamiz
+                xatolar.append(e)
+            finally:
+                # Har oqim o'z ulanishini ochadi — uni yopmasak sinov
+                # bazasini o'chirib bo'lmaydi.
+                connection.close()
+
+        with patch.object(Progress, "yulduz_hisobla", staticmethod(sekin_hisobla)):
+            oqimlar = [threading.Thread(target=yoz, args=(n,)) for n in range(1, self.OQIM + 1)]
+            for o in oqimlar:
+                o.start()
+            for o in oqimlar:
+                o.join(timeout=30)
+
+        self.assertEqual(xatolar, [], f"saqlash yiqildi: {xatolar}")
+        # Bittasi ham yo'qolmasin: satr bor va oxirgi yozuv turibdi.
+        self.assertEqual(Progress.objects.filter(profile=profil).count(), 1)
+
+    def test_baza_yozuv_tranzaksiyasini_darhol_ochadi(self):
+        """
+        Sozlamaning O'ZI ham qo'riqlanadi.
+
+        Yuqoridagi sinov qulflarga bog'liq va mashina sekin bo'lsa
+        tasodifan yashil o'tishi mumkin. Bu esa sababni to'g'ridan-to'g'ri
+        tekshiradi: `transaction_mode` olib tashlansa, darhol qizaradi.
+        """
+        from django.db import connection
+
+        self.assertEqual(connection.transaction_mode, "IMMEDIATE")

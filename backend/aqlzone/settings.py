@@ -92,6 +92,28 @@ DATABASES = {
             # 500 xato. Kutish esa bu holatni butunlay yo'q qiladi: yozuvlar
             # qisqa (bir necha millisekund), navbat ko'rinmaydi.
             "timeout": 15,
+            # ...lekin kutish O'ZI YETMAYDI, va sabab nozik.
+            #
+            # Progressni saqlash avval O'QIYDI (satr bormi), keyin YOZADI.
+            # Tranzaksiya oddiy `BEGIN` bilan boshlansa, o'qish paytida
+            # hech qanday qulf olinmaydi; yozishga o'tishda esa SQLite
+            # NAVBAT KUTMAYDI — darhol "database is locked" qaytaradi.
+            # Kutishning foydasi yo'q, chunki bu tranzaksiya boshida
+            # ko'rgan nusxasi allaqachon eskirgan bo'lardi.
+            #
+            # `IMMEDIATE` yozuv qulfini eng boshida oladi. Shunda
+            # qolganlar yuqoridagi `timeout` ichida tinchgina navbatda
+            # turadi va hech biri yiqilmaydi. Bahosi: har bir yozuv
+            # tranzaksiyasi bir-birini kutadi — bizda ular bir necha
+            # millisekund, ya'ni sezilmaydi.
+            "transaction_mode": "IMMEDIATE",
+        },
+        "TEST": {
+            # Sinov bazasi ham FAYLDA turadi. Django standart holda SQLite
+            # sinovini xotirada bajaradi, xotiradagi baza esa qulflarni
+            # boshqacha tutadi — "database is locked" u yerda umuman
+            # takrorlanmasdi va sozlamadagi xato sezilmay qolardi.
+            "NAME": str(BASE_DIR / "az-test.sqlite3"),
         },
     }
 }
