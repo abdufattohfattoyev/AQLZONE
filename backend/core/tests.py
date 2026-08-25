@@ -479,10 +479,19 @@ class EslatmaTest(TestCase):
         """
         `MINI_APP_URL` sozlanmagan bo'lsa tugma bot havolasiga tushadi —
         va `t.me/...` ni Mini App qilib ochib bo'lmaydi.
+
+        `BOT_USERNAME` SHU YERDA beriladi. U sozlamada muhit
+        o'zgaruvchisidan olinadi va bo'sh bo'lsa `bot_havolasi()` bo'sh
+        satr qaytaradi — tugma umuman yasalmaydi va sinov `reply_markup`
+        yo'qligidan yiqiladi. Ya'ni sinov mashinada `BOT_USERNAME` bor
+        yoki yo'qligiga qarab yashil/qizil bo'lardi.
         """
         _, profil = self.hisob("1515", "Havolali")
         self.natija(profil, 2)
-        with self.settings(BOT_TOKEN="sinov:token", MINI_APP_URL="", SAYT_URL=""):
+        with self.settings(
+            BOT_TOKEN="sinov:token", BOT_USERNAME="aqlzone_bot",
+            MINI_APP_URL="", SAYT_URL="",
+        ):
             call_command("eslatma", stdout=StringIO())
         tugma = sorov.call_args[0][1]["reply_markup"]["inline_keyboard"][0][0]
         self.assertNotIn("web_app", tugma)
