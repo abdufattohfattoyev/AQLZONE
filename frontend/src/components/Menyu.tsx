@@ -61,7 +61,8 @@ import { sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import {
   yolTestlar, yolDaftar, yolDokon, yolDuel, yolFormulalar, yolHisobot, yolKichkintoy, yolKurs,
-  yolKurslar, yolMaydon, yolNishon, yolOtaOna, yolOyinlar, yolReyting, yolSinov, yolSozlama,
+  yolKurslar, yolMaydon, yolNishon, yolOtaOna, yolOyinlar, yolQidiruv, yolReyting, yolSinov,
+  yolSozlama,
 } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
@@ -221,6 +222,18 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
             "Yopish" tugmasini yo'qotmasin. */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4
                         pb-[calc(1rem+var(--az-past))]">
+          {/* ---- qidiruv ----
+              Kategoriyalardan TASHQARIDA va eng tepada. Menyu
+              to'rtta yopiq yig'maga bo'lingan, ya'ni ichidagi
+              satrni topish uchun avval to'g'ri yig'mani ochish
+              kerak — aynan shu ish qiyin bo'lgan odam esa
+              qidiruvga muhtoj. Uni yig'ma ichiga qo'yish
+              "topolmagan odam avval topsin" degan bo'lardi. */}
+          <div className="mb-2">
+            <Satr ic="search" rang="blue" nom={t("qidiruvSarlavha")}
+              izoh={t("qidiruvJoy")} on={yur(yolQidiruv())} />
+          </div>
+
           {/* ======================= ta'lim ======================= */}
           <Bolim id="talim" ic="map" nom={t("menyuTalim")}
             ochiq={ochiqBolim} onOchiq={setOchiqBolim}

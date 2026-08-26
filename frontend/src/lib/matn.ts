@@ -368,6 +368,39 @@ const S = {
   /* Menyudagi bo'lim nomi. Faqat 7–11-sinfda ko'rinadi. */
   menyuImtihon: ["Imtihonga tayyorgarlik", "Подготовка к экзамену"],
 
+  /* ---------------- umumiy qidiruv ---------------- */
+  qidiruvSarlavha: ["Qidiruv", "Поиск"],
+  qidiruvTugma: ["Qidirish", "Поиск"],
+  qidiruvJoy: ["Dars, formula, o'yin…", "Урок, формула, игра…"],
+  /* Izohda ATAYLAB SONLAR turibdi. "Nimani qidirsam bo'ladi?" degan
+     savolga "hamma narsani" deb javob berish hech narsa demaydi;
+     "637 dars" esa ilovaning hajmini bir qarashda ko'rsatadi va
+     odam qidirishga jur'at qiladi. Son qo'lda yozilmaydi —
+     `Qidiruv.tsx` uni indeksdan oladi. */
+  qidiruvIzoh: [
+    "{n} ta joy bo'ylab: darslar, boblar, formulalar, o'yinlar.",
+    "По {n} записям: уроки, главы, формулы, игры.",
+  ],
+  qidiruvNatija: ["{n} ta natija", "Найдено: {n}"],
+  qidiruvTopilmadi: [
+    "«{nima}» bo'yicha hech narsa topilmadi",
+    "По запросу «{nima}» ничего не найдено",
+  ],
+  /* Qulflangan dars bosilganda kurs xaritasi ochiladi. Yorliq shuni
+     OLDINDAN aytadi — aks holda ekran sakragandek tuyulardi.
+
+     QISQA bo'lishi shart: u har qatorda takrorlanadi va yangi
+     hisobda deyarli HAMMA dars qulflangan bo'ladi. Uzun jumla
+     bo'lganda ro'yxat bir xil gapning yigirma nusxasiga aylanardi. */
+  qidiruvQulf: ["qulf", "закрыт"],
+  qidiruvDars: ["dars", "урок"],
+  qidiruvBob: ["bob", "глава"],
+  qidiruvKurs: ["kurs", "курс"],
+  qidiruvFormula: ["formula", "формула"],
+  qidiruvOyin: ["o'yin", "игра"],
+  qidiruvKichkintoy: ["kichkintoy", "малышам"],
+  qidiruvBolim: ["bo'lim", "раздел"],
+
   /* ---------------- formulalar varaqasi ---------------- */
   formulaSarlavha: ["Formulalar", "Формулы"],
   formulaIzoh: [

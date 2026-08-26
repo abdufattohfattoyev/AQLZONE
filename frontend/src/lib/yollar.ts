@@ -18,6 +18,16 @@ export const yolKurslar = () => "/";
 /** Hisob sozlamalari: ism, familiya, kirish usullari. */
 export const yolSozlama = () => "/sozlamalar";
 
+/**
+ * Umumiy qidiruv — kursdan TASHQARIDA.
+ *
+ * U butun ilova bo'ylab qidiradi: 1-sinf darsi ham, 11-sinf
+ * formulasi ham, o'yin ham bitta ro'yxatda chiqadi. `/kurs/...`
+ * ostiga qo'yilsa, manzilda tasodifiy sinf raqami turib qolardi va
+ * "9-sinf qidiruvi" degan yolg'on ma'no paydo bo'lardi.
+ */
+export const yolQidiruv = () => "/qidiruv";
+
 /** Reyting — kim qancha yulduz yig'gan. Kursdan tashqarida: hammasi birga. */
 export const yolReyting = () => "/reyting";
 

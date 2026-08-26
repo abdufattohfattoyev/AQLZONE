@@ -29,6 +29,8 @@ interface Props {
   onProfillar: () => void;
   /** Hisob sozlamalari — ism, familiya, kirish usullari. */
   onSozlama: () => void;
+  /** Umumiy qidiruv — butun ilova bo'ylab. */
+  onQidiruv: () => void;
   /** Reyting — barcha kurslar bo'yicha umumiy. */
   onReyting: () => void;
   /** Kichkintoylar bo'limi — 2–5 yosh, gapiradigan rasmlar. */
@@ -52,7 +54,7 @@ function joriyBola(h: Hisob | null) {
 }
 
 export function Dashboard({
-  progressOf, onOpen, onProfillar, onSozlama, onReyting, onKichkintoy,
+  progressOf, onOpen, onProfillar, onSozlama, onQidiruv, onReyting, onKichkintoy,
 }: Props) {
   // Sinxron o'qiladi (localStorage) — tugma sakrab chiqmasligi uchun.
   const kopBola = profilSoni() > 1;
@@ -215,6 +217,30 @@ export function Dashboard({
 
           Karta ATAYLAB kurs kartalariga o'xshamaydi: bu yerda foiz ham,
           yulduz ham, "boshlash" ham yo'q — chunki bo'limda dars yo'q. */}
+      {/* ---- qidiruv ----
+          Kurslar ro'yxatidan OLDIN turadi va bu ataylab. Ro'yxat
+          "qaysi sinf?" degan savolga javob beradi, qidiruv esa
+          BOSHQA savolga: "menga falon mavzu kerak edi, u qayerda?".
+          Ikkinchi savolli odam sinflarni birma-bir ochib chiqmasin.
+
+          Ko'rinishi maydonga o'xshaydi, lekin bu TUGMA: bosilganda
+          alohida ekran ochiladi. Bu yerda haqiqiy maydon turganda,
+          klaviatura ochilishi bilan kurslar ro'yxati ekrandan
+          chiqib ketardi va odam natijani ham, ro'yxatni ham
+          ko'rmay qolardi. */}
+      <Reveal kech={40}>
+        <div className="az-kirish mt-3.5" style={kech(40)}>
+          <button type="button" onClick={onQidiruv}
+            className="clay-press flex w-full items-center gap-2.5 rounded-clay bg-karta
+                       px-3.5 py-3 text-left shadow-clay-sm">
+            <Icon name="search" size={17} className="shrink-0 text-ink-dim" />
+            <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink-dim">
+              {t("qidiruvJoy")}
+            </span>
+          </button>
+        </div>
+      </Reveal>
+
       <KichkintoyKarta on={onKichkintoy} />
 
       {/* Maktabgacha kurs alohida sarlavha ostida turadi: u sinf emas va

@@ -45,6 +45,7 @@ const Oyin = lazy(() => import("./screens/Oyin").then((m) => ({ default: m.Oyin 
 const Testlar = lazy(() => import("./screens/Testlar").then((m) => ({ default: m.Testlar })));
 const Hisobot = lazy(() => import("./screens/Hisobot").then((m) => ({ default: m.Hisobot })));
 const Formulalar = lazy(() => import("./screens/Formulalar").then((m) => ({ default: m.Formulalar })));
+const Qidiruv = lazy(() => import("./screens/Qidiruv").then((m) => ({ default: m.Qidiruv })));
 const Kichkintoy = lazy(() => import("./screens/Kichkintoy").then((m) => ({ default: m.Kichkintoy })));
 const KichkintoyMavzu = lazy(() => import("./screens/KichkintoyMavzu").then((m) => ({ default: m.KichkintoyMavzu })));
 import { mavzuById } from "./lib/kichkintoy";
@@ -62,7 +63,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolReyting, yolSinov, yolSozlama,
+  yolDuel, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -100,6 +101,7 @@ function Yollar() {
           havola kirish ekraniga tushib, cheksiz halqa bo'lib qolardi. */}
       <Route path="/kirish/:kod" element={<KodKirish />} />
       <Route path="/reyting" element={<ReytingSahifasi />} />
+      <Route path="/qidiruv" element={<QidiruvSahifasi />} />
       {/* Kichkintoylar — kursdan tashqarida: bu yerda dars ham,
           tartib ham yo'q (`screens/Kichkintoy.tsx`). */}
       <Route path="/kichkintoy" element={<KichkintoySahifasi />} />
@@ -152,6 +154,7 @@ function KurslarSahifasi() {
       onOpen={(c) => nav(yolKurs(c))}
       onProfillar={() => nav("/profillar")}
       onSozlama={() => nav(yolSozlama())}
+      onQidiruv={() => nav(yolQidiruv())}
       onReyting={() => nav(yolReyting())}
       onKichkintoy={() => nav(yolKichkintoy())}
     />
@@ -589,4 +592,24 @@ function ReytingSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
   return <Reyting onBack={() => nav(yolKurslar())} />;
+}
+
+/**
+ * Umumiy qidiruv — ilovaning hamma bo'limi bo'ylab.
+ *
+ * Progress SHU YERDAN beriladi: qidiruv qulflangan darsni ochib
+ * yubormasligi kerak va buni bilish uchun unga bolaning progressi
+ * kerak bo'ladi (`screens/Qidiruv.tsx`).
+ */
+function QidiruvSahifasi() {
+  const { progressOf } = useProgress();
+  const nav = useNavigate();
+  useTema("bosh");
+  return (
+    <Qidiruv
+      progressOf={progressOf}
+      onOch={(yol) => nav(yol)}
+      onBack={() => nav(yolKurslar())}
+    />
+  );
 }
