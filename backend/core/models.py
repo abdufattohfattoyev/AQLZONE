@@ -884,6 +884,14 @@ class Masala(models.Model):
     like_soni = models.IntegerField(default=0)
     dislike_soni = models.IntegerField(default=0)
 
+    #: Shu masala muallifga YECHUVCHILARDAN qancha tanga keltirgani.
+    #:
+    #: Chegarani (`MasalaMukofot.YECHILDI_CHEGARA`) tekshirish uchun
+    #: kerak. Yechganlar sonidan hisoblab olsa ham bo'lardi, lekin
+    #: unda chegara yoki narx o'zgargan kuni ESKI masalalar ham
+    #: qaytadan hisoblanib, muallifga tekin tanga chiqib ketardi.
+    muallif_tanga = models.IntegerField(default=0)
+
     class Meta:
         db_table = "masala"
         ordering = ["-created_at"]
@@ -1031,12 +1039,49 @@ class MasalaMukofot(models.Model):
     berilmaydi.
     """
 
-    #: Masala tasdiqlanganda muallif oladigan tanga.
-    TASDIQ_TANGA = 50
+    # ───────────────────── TANGA QANDAY TAQSIMLANADI ─────────────────────
+    #
+    # Uchta son va ularning nisbati ATAYLAB shunday.
+    #
+    # Avval tasdiqlash 50, yechilgani 5 edi va bu TESKARI ishlardi:
+    # kuniga beshta shoshma-shosharlik masala yozgan odam 250 tanga
+    # olardi — hech kim yechmasa ham — bitta yaxshi masala esa 14
+    # kishi yechganda atigi 120 berardi. Ya'ni ilova ko'p yozishni
+    # yaxshi yozishdan ikki barobar ko'proq mukofotlardi. Narxini esa
+    # ADMIN to'lardi: har bir bo'sh masala uning tasdiqlash navbatiga
+    # tushardi.
+    #
+    # Endi og'irlik YECHILGANIGA ko'chdi. Tasdiqlash uchun kichik son
+    # qoldi va uning ishi bitta: tasdiq bilan birinchi yechuvchi
+    # orasidagi bo'shliqni to'ldirish — o'sha oraliqda muallif uchun
+    # boshqa hech narsa yo'q.
+
+    #: Masala tasdiqlanganda muallif oladigan tanga — "qabul qilindi".
+    TASDIQ_TANGA = 15
     #: Kimdir masalani TO'G'RI yechganda muallif oladigan tanga.
-    YECHILDI_TANGA = 5
+    YECHILDI_TANGA = 10
     #: Masalani to'g'ri yechgan odam oladigan tanga.
+    #:
+    #: Dars bilan solishtirganda katta ko'rinadi (bitta dars ≈ 12
+    #: tanga), lekin buni "yig'ib olib" bo'lmaydi: har masalada faqat
+    #: BIRINCHI urinish hisoblanadi, ya'ni bitta odam bitta masaladan
+    #: bir marta oladi. Jami miqdor mavjud masalalar soni bilan
+    #: chegaralangan.
     YECHGAN_TANGA = 10
+
+    #: Bitta masala muallifga YECHUVCHILARDAN eng ko'pi bilan shuncha
+    #: keltiradi (tasdiqlash tangasi bundan tashqarida).
+    #:
+    #: Chegara kerak, chunki tanga sarflanadigan joy OZ: do'kondagi
+    #: barcha buyum jami 575, zanjir tiklash esa oyiga ko'pi bilan
+    #: 350. Yuz kishi yechgan masala chegarasiz 1000 tanga berardi va
+    #: o'shanda tanganing o'zi ma'nosini yo'qotardi — sotib oladigan
+    #: narsa qolmaydi.
+    #:
+    #: 150 — do'kondagi eng qimmat buyumning narxi. Qoida shu sabab
+    #: bir jumlada aytiladi: "bitta zo'r masala bitta raketaga
+    #: yetadi".
+    YECHILDI_CHEGARA = 150
 
     profile = models.OneToOneField(
         Profile, on_delete=models.CASCADE, related_name="masala_mukofoti"

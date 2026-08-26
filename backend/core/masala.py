@@ -77,9 +77,14 @@ def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> d
     if ochiq:
         d["yechim"] = masala.yechim
         d["javob"] = masala.javob
-    # Rad etilgan masalaning sababini FAQAT muallifning o'zi ko'radi.
-    if oz and masala.holat == Masala.RAD:
-        d["radSababi"] = masala.rad_sababi
+    if oz:
+        # Rad etilganining sababini FAQAT muallifning o'zi ko'radi.
+        if masala.holat == Masala.RAD:
+            d["radSababi"] = masala.rad_sababi
+        # "Shu masala menga qancha keltirdi" — faqat o'ziga. Boshqaga
+        # ko'rsatish odamlarni ko'p tanga keltiradigan mavzuni
+        # nusxalashga undardi, masala o'ylab topishga emas.
+        d["muallifTanga"] = masala.muallif_tanga
     return d
 
 
@@ -154,7 +159,7 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
             # Muallif o'z masalasini yechsa tanga OLMAYDI: aks holda
             # bu tekin tanga chiqaradigan tugma bo'lardi.
             if masala.muallif_id != profile.pk:
-                mukofot_qosh(masala.muallif, MasalaMukofot.YECHILDI_TANGA)
+                muallifga_ber(masala)
 
     return {
         "togri": togri,
@@ -228,6 +233,33 @@ def ovozlarim(profile: Profile, idlar: list[int]) -> dict[int, str]:
 
 
 # ---------------------------------------------------------------------- tanga
+
+
+def muallifga_ber(masala: Masala) -> int:
+    """
+    Masala yechilgani uchun muallifga tanga yozadi — CHEGARA bilan.
+
+    Bitta masala yechuvchilardan ko'pi bilan `YECHILDI_CHEGARA`
+    keltiradi. Chegara kerak, chunki tanga sarflanadigan joy oz
+    (`models.py` dagi izohga qarang): yuz kishi yechgan masala
+    chegarasiz ming tanga berardi va o'shanda tanganing o'zi ma'nosini
+    yo'qotardi.
+
+    Qancha berilgani `masala.muallif_tanga` da yig'ilib boradi va
+    yechganlar sonidan QAYTA hisoblanmaydi — aks holda narx yoki
+    chegara o'zgargan kuni eski masalalar ham qaytadan sanalib,
+    muallifga tekin tanga chiqib ketardi.
+    """
+    qolgan = MasalaMukofot.YECHILDI_CHEGARA - masala.muallif_tanga
+    beriladi = min(MasalaMukofot.YECHILDI_TANGA, max(0, qolgan))
+    if not beriladi:
+        return 0
+    Masala.objects.filter(pk=masala.pk).update(
+        muallif_tanga=F("muallif_tanga") + beriladi
+    )
+    masala.refresh_from_db(fields=["muallif_tanga"])
+    mukofot_qosh(masala.muallif, beriladi)
+    return beriladi
 
 
 def mukofot_qosh(profile: Profile, tanga: int) -> None:

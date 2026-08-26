@@ -139,6 +139,15 @@ export function Masalalarim({ onOch, onYangi, onBack }: Props) {
                       {m.radSababi}
                     </p>
                   )}
+                  {/* Qaysi masala qancha keltirgani — muallifga eng
+                      foydali son. U "qaysi masalam yoqdi" degan
+                      savolga like'dan aniqroq javob beradi: tanga
+                      faqat YECHILGANDA keladi. */}
+                  {(m.muallifTanga ?? 0) > 0 && (
+                    <p className="mt-1 ml-1 text-[11px] text-brand-gold">
+                      {t("masalaKeltirdi", { n: m.muallifTanga ?? 0 })}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

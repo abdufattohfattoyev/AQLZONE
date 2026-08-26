@@ -48,6 +48,14 @@ export interface Masala {
   javob?: string;
   /** Faqat muallifning o'ziga va faqat rad etilganda keladi. */
   radSababi?: string;
+  /**
+   * Shu masala muallifga qancha tanga keltirgani.
+   *
+   * FAQAT muallifning o'ziga keladi. Begonaga ko'rsatilsa, odamlar
+   * ko'p tanga keltirgan mavzuni nusxalardi — masala o'ylab
+   * topishga emas.
+   */
+  muallifTanga?: number;
   /** Shu odam bergan ovoz. */
   ovozim?: Ovoz;
   /** Urinib ko'rilganmi — ro'yxatda "yechilgan" belgisi uchun. */

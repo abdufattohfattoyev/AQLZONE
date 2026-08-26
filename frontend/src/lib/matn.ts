@@ -469,6 +469,7 @@ const S = {
   ],
   masalaBugungi: ["Bugun: {n}/{jami}", "Сегодня: {n}/{jami}"],
   masalaMukofot: ["{n} tanga sizni kutmoqda", "Вас ждут {n} монет"],
+  masalaKeltirdi: ["Shu masala {n} tanga keltirdi", "Эта задача принесла {n} монет"],
   masalaMukofotIzoh: [
     "Masalangiz tasdiqlangani va yechilgani uchun — olish uchun bosing",
     "За одобрение и решения ваших задач — нажмите, чтобы забрать",

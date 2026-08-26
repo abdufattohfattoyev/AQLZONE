@@ -3781,6 +3781,63 @@ class MasalaTest(TestCase):
         # Aks holda bu tekin tanga chiqaradigan tugma bo'lardi.
         self.assertEqual(MS.kutayotgan_tanga(self.muallif), 0)
 
+    def test_yaxshi_masala_kop_masaladan_foydaliroq(self):
+        """
+        TANGA NISBATI — bo'limning eng nozik qarori.
+
+        Avval tasdiqlash 50, yechilgani 5 edi va bu TESKARI ishlardi:
+        kunlik chegaradagi beshta bo'sh masala 250 tanga berardi (hech
+        kim yechmasa ham), bitta yaxshi masala esa 14 kishi yechganda
+        atigi 120. Ya'ni ilova ko'p yozishni yaxshi yozishdan ikki
+        barobar ko'proq mukofotlardi — narxini esa admin o'z vaqti
+        bilan to'lardi.
+
+        Sinov shu nisbatni qo'riqlaydi: sonlar o'zgartirilsa va
+        muvozanat yana teskari bo'lsa, u darhol qizaradi.
+        """
+        kop = Masala.KUNLIK_CHEGARA * MasalaMukofot.TASDIQ_TANGA
+        yaxshi = MasalaMukofot.TASDIQ_TANGA + 14 * MasalaMukofot.YECHILDI_TANGA
+        self.assertGreater(
+            yaxshi, kop,
+            f"bitta yaxshi masala ({yaxshi}) kunlik bo'sh masalalardan "
+            f"({kop}) ko'proq berishi kerak",
+        )
+
+    def test_bitta_masaladan_keladigan_tanga_chegaralangan(self):
+        """
+        Tanga sarflanadigan joy oz — cheksiz oqim uni qadrsiz qiladi.
+
+        Chegara `muallif_tanga` da yig'ilgan songa qaraydi, yechganlar
+        sonidan qayta hisoblanmaydi.
+        """
+        m = self.masala_yasa()
+        chegara = MasalaMukofot.YECHILDI_CHEGARA
+        birlik = MasalaMukofot.YECHILDI_TANGA
+
+        # Chegaraga yetguncha har yechuvchi to'liq beradi.
+        for i in range(chegara // birlik):
+            MS.muallifga_ber(m)
+            self.assertEqual(m.muallif_tanga, (i + 1) * birlik)
+
+        # Chegaradan keyin — hech narsa.
+        self.assertEqual(MS.muallifga_ber(m), 0)
+        self.assertEqual(m.muallif_tanga, chegara)
+        self.assertEqual(MS.kutayotgan_tanga(self.muallif), chegara)
+
+    def test_muallif_tanga_faqat_ozida_korinadi(self):
+        m = self.masala_yasa()
+        MS.muallifga_ber(m)
+
+        oz = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.muallif_token))
+        self.assertEqual(oz.json()["muallifTanga"], MasalaMukofot.YECHILDI_TANGA)
+
+        # Begona odam bu sonni ko'rmaydi: u ko'rinsa, odamlar ko'p
+        # tanga keltirgan mavzuni nusxalardi.
+        begona = self.client.get(
+            f"/api/v1/masalalar/{m.pk}", **self.auth(self.yechuvchi_token)
+        )
+        self.assertNotIn("muallifTanga", begona.json())
+
     def test_tasdiqlash_muallifga_tanga_yozadi_va_takrorlanmaydi(self):
         m = self.masala_yasa(holat=Masala.KUTMOQDA)
         MS.tasdiqla(m)
