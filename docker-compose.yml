@@ -12,6 +12,9 @@ services:
     build: .
     container_name: aqlzone
     env_file: .env
+    # Migratsiyani FAQAT shu konteyner qiladi (`deploy/entrypoint.sh`).
+    environment:
+      AZ_ROL: web
     volumes:
       - data:/data
     networks:
@@ -25,11 +28,18 @@ services:
     container_name: aqlzone_bot
     command: ["python", "manage.py", "bot"]
     env_file: .env
+    # Bot migratsiya QILMAYDI — `web` tugatishini kutadi. Ikkalasi
+    # ham qilganda ular bir vaqtda bir jadvalni yasashga urinib,
+    # biri "table already exists" bilan yiqilardi.
+    environment:
+      AZ_ROL: bot
     volumes:
       - data:/data
     networks:
       - web-tarmoq
     restart: unless-stopped
+    # DIQQAT: `depends_on` faqat konteyner boshlanishini kutadi,
+    # migratsiya tugashini emas. Haqiqiy kutish entrypoint ichida.
     depends_on:
       - web
 
