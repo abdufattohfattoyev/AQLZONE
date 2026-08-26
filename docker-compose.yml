@@ -8,7 +8,19 @@
 # talashib, ISHLAYOTGAN saytlar o'chib qolardi.
 
 services:
-  web:
+  # XIZMAT NOMI `aqlzone` BO'LISHI SHART, `web` emas.
+  #
+  # Compose xizmat nomini tarmoqda DNS nomi qilib ro'yxatga oladi va
+  # oldindagi nginx aynan shu nom bilan murojaat qiladi
+  # (`proxy_pass http://aqlzone:8000`). `container_name` ham shu nomni
+  # beradi, lekin ikkalasi bir xil bo'lgani xavfsizroq: nom faqat
+  # bitta joyda yozilgan bo'lsa, ikkinchisi bir kun kelib o'zgarib,
+  # sayt 502 bilan yiqilardi.
+  #
+  # Bu ilgari serverda QO'LDA tuzatilgan edi va shu sabab `git pull`
+  # har safar "local changes would be overwritten" bilan to'xtardi —
+  # ya'ni joylash jimgina eski kodda qolib ketardi.
+  aqlzone:
     build: .
     container_name: aqlzone
     env_file: .env
@@ -41,7 +53,7 @@ services:
     # DIQQAT: `depends_on` faqat konteyner boshlanishini kutadi,
     # migratsiya tugashini emas. Haqiqiy kutish entrypoint ichida.
     depends_on:
-      - web
+      - aqlzone
 
 volumes:
   # SQLite fayli. Konteyner qayta qurilganda ham qoladi — ichida
