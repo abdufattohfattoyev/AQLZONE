@@ -61,8 +61,8 @@ import { sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import {
   yolTestlar, yolDaftar, yolDokon, yolDuel, yolFormulalar, yolHisobot, yolKichkintoy, yolKurs,
-  yolKurslar, yolMaydon, yolNishon, yolOtaOna, yolOyinlar, yolQidiruv, yolReyting, yolSinov,
-  yolSozlama,
+  yolKurslar, yolMasalalar, yolMaydon, yolNishon, yolOtaOna, yolOyinlar, yolQidiruv,
+  yolReyting, yolSinov, yolSozlama,
 } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
@@ -244,6 +244,11 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
               izoh={t("menyuDarslarIzoh")} on={yur(yolKurs(kurs))} />
             <Satr ic="home" rang="blue" nom={t("tabBosh")}
               izoh={t("menyuKurslarIzoh")} on={yur(yolKurslar())} />
+            {/* Masalalar TA'LIM ichida turadi, o'yin bo'limida emas.
+                U o'yin emas: bu yerda vaqt ham, rekord ham yo'q,
+                odam masalani o'ylab yechadi. */}
+            <Satr ic="pencil" rang="purple" nom={t("masalalar")}
+              izoh={t("masalalarIzoh")} on={yur(yolMasalalar())} />
             {/* Kunlik sinov BUGUN bajarilgan bo'lsa satr ham shuni
                 aytadi va bosilmaydi: "6 ta savol" deb turgan, lekin
                 bosilganda kurs sahifasiga qaytarib yuboradigan satr

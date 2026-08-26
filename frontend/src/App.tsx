@@ -46,6 +46,11 @@ const Testlar = lazy(() => import("./screens/Testlar").then((m) => ({ default: m
 const Hisobot = lazy(() => import("./screens/Hisobot").then((m) => ({ default: m.Hisobot })));
 const Formulalar = lazy(() => import("./screens/Formulalar").then((m) => ({ default: m.Formulalar })));
 const Qidiruv = lazy(() => import("./screens/Qidiruv").then((m) => ({ default: m.Qidiruv })));
+const Masalalar = lazy(() => import("./screens/Masalalar").then((m) => ({ default: m.Masalalar })));
+const Masala = lazy(() => import("./screens/Masala").then((m) => ({ default: m.Masala })));
+const MasalaYangi = lazy(() => import("./screens/MasalaYangi").then((m) => ({ default: m.MasalaYangi })));
+const MasalaMuallif = lazy(() => import("./screens/MasalaMuallif").then((m) => ({ default: m.MasalaMuallif })));
+const Masalalarim = lazy(() => import("./screens/Masalalarim").then((m) => ({ default: m.Masalalarim })));
 const Kichkintoy = lazy(() => import("./screens/Kichkintoy").then((m) => ({ default: m.Kichkintoy })));
 const KichkintoyMavzu = lazy(() => import("./screens/KichkintoyMavzu").then((m) => ({ default: m.KichkintoyMavzu })));
 import { mavzuById } from "./lib/kichkintoy";
@@ -64,6 +69,7 @@ import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
   yolDuel, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
+  yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -102,6 +108,14 @@ function Yollar() {
       <Route path="/kirish/:kod" element={<KodKirish />} />
       <Route path="/reyting" element={<ReytingSahifasi />} />
       <Route path="/qidiruv" element={<QidiruvSahifasi />} />
+      {/* Masalalar. Harfli manzillar `<id>` dan OLDIN turishi SHART:
+          aks holda "yangi" va "menikilar" masala raqami deb o'qilib,
+          "topilmadi" sahifasi chiqardi. */}
+      <Route path="/masalalar" element={<MasalalarSahifasi />} />
+      <Route path="/masalalar/yangi" element={<MasalaYangiSahifasi />} />
+      <Route path="/masalalar/menikilar" element={<MasalalarimSahifasi />} />
+      <Route path="/masalalar/muallif/:pid" element={<MasalaMuallifSahifasi />} />
+      <Route path="/masalalar/:id" element={<MasalaSahifasi />} />
       {/* Kichkintoylar — kursdan tashqarida: bu yerda dars ham,
           tartib ham yo'q (`screens/Kichkintoy.tsx`). */}
       <Route path="/kichkintoy" element={<KichkintoySahifasi />} />
@@ -592,6 +606,89 @@ function ReytingSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
   return <Reyting onBack={() => nav(yolKurslar())} />;
+}
+
+/* ------------------------------------------------------------ masalalar
+ *
+ * Beshta ekran, bitta bo'lim. Ular ATAYLAB kursdan tashqarida turadi:
+ * bir ro'yxatda 1-sinf masalasi ham, 11-sinfniki ham bo'ladi
+ * (`lib/yollar.ts` dagi izohga qarang).
+ */
+
+function MasalalarSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return (
+    <Masalalar
+      onOch={(id) => nav(yolMasala(id))}
+      onYangi={() => nav(yolMasalaYangi())}
+      onMenikilar={() => nav(yolMasalalarim())}
+      onBack={() => nav(yolKurslar())}
+    />
+  );
+}
+
+function MasalaSahifasi() {
+  const { id } = useParams();
+  const nav = useNavigate();
+  useTema("bosh");
+  const raqam = Number(id);
+  // Manzildagi qism raqam bo'lmasa — ro'yxatga qaytaramiz. Bo'sh
+  // ekran o'rniga odam boradigan joyga tushsin.
+  if (!Number.isInteger(raqam) || raqam <= 0) {
+    return <Navigate to={yolMasalalar()} replace />;
+  }
+  return (
+    <Masala
+      id={raqam}
+      onMuallif={(pid) => nav(yolMasalaMuallif(pid))}
+      onBack={() => nav(yolMasalalar())}
+    />
+  );
+}
+
+function MasalaYangiSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  // Yuborilgandan keyin "mening masalalarim" ga o'tadi, ro'yxatga
+  // emas: yangi masala u yerda hali YO'Q (navbatda turibdi) va odam
+  // uni qidirib, "yuborilmadi" degan xulosaga kelardi.
+  return (
+    <MasalaYangi
+      onYuborildi={() => nav(yolMasalalarim())}
+      onBack={() => nav(yolMasalalar())}
+    />
+  );
+}
+
+function MasalaMuallifSahifasi() {
+  const { pid } = useParams();
+  const nav = useNavigate();
+  useTema("bosh");
+  const raqam = Number(pid);
+  if (!Number.isInteger(raqam) || raqam <= 0) {
+    return <Navigate to={yolMasalalar()} replace />;
+  }
+  return (
+    <MasalaMuallif
+      profilId={raqam}
+      onOch={(id) => nav(yolMasala(id))}
+      onMenikilar={() => nav(yolMasalalarim())}
+      onBack={() => nav(yolMasalalar())}
+    />
+  );
+}
+
+function MasalalarimSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return (
+    <Masalalarim
+      onOch={(id) => nav(yolMasala(id))}
+      onYangi={() => nav(yolMasalaYangi())}
+      onBack={() => nav(yolMasalalar())}
+    />
+  );
 }
 
 /**

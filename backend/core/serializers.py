@@ -8,7 +8,7 @@ natijasi umuman saqlanmay qolardi.
 """
 from rest_framework import serializers
 
-from .models import LessonResult, Profile
+from .models import LessonResult, Masala, MasalaOvoz, Profile
 from .nom import harfli, tozala
 
 
@@ -150,3 +150,43 @@ class ProfileSerializer(serializers.ModelSerializer):
         # Avatar — mijoz o'ylab topgan kalit (masalan "tulki-shlyapa").
         # Server uni talqin qilmaydi, faqat uzunligini cheklaydi.
         return (v or "")[:40]
+
+
+class MasalaSerializer(serializers.Serializer):
+    """
+    Yangi masala — foydalanuvchi yozgan matn.
+
+    Tekshiruv QATTIQ va bu ataylab: bo'sh yoki bir so'zlik masala
+    tasdiqlash navbatini to'ldiradi, admin esa ularni birma-bir ochib
+    yopishga majbur bo'ladi. Eng arzon filtr — shu yerdagi eng kichik
+    uzunlik.
+
+    Matn KESILMAYDI, uzun bo'lsa xato qaytadi. Boshqa joyda chegaradan
+    chiqqan qiymat jimgina kesiladi (`ResultSerializer`), chunki u
+    yerda gap bolaning natijasi haqida va uni yo'qotgandan ko'ra
+    kesgan yaxshi. Bu yerda esa odam MATN yozgan: uning oxirini jim
+    kesib tashlash masalani buzadi va u buni faqat tasdiqdan keyin
+    ko'radi.
+    """
+
+    #: Masala bir-ikki jumladan qisqa bo'lmaydi.
+    MIN_MATN = 20
+    #: Yechim ham izohlanishi kerak — faqat javobni qayta yozish emas.
+    MIN_YECHIM = 10
+
+    sinf = serializers.IntegerField(min_value=0, max_value=110)
+    matn = serializers.CharField(min_length=MIN_MATN, max_length=Masala.MAX_MATN)
+    javob = serializers.CharField(min_length=1, max_length=Masala.MAX_JAVOB)
+    yechim = serializers.CharField(min_length=MIN_YECHIM, max_length=Masala.MAX_YECHIM)
+
+    def validate_sinf(self, v: int) -> int:
+        # Kod kurslarnikiga mos bo'lishi kerak: 0–11 yoki 107–110.
+        # Oraliqdagi son (masalan 55) hech qaysi kursga tushmaydi va
+        # bunday masala ro'yxatda hech qachon ko'rinmasdi.
+        if 0 <= v <= 11 or 107 <= v <= 110:
+            return v
+        raise serializers.ValidationError("sinf kodi noto'g'ri")
+
+
+class MasalaOvozSerializer(serializers.Serializer):
+    tur = serializers.ChoiceField(choices=[MasalaOvoz.LIKE, MasalaOvoz.DISLIKE])

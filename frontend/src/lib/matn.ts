@@ -368,6 +368,112 @@ const S = {
   /* Menyudagi bo'lim nomi. Faqat 7–11-sinfda ko'rinadi. */
   menyuImtihon: ["Imtihonga tayyorgarlik", "Подготовка к экзамену"],
 
+  /* ---------------- masalalar (foydalanuvchi yozgan) ---------------- */
+  masalalar: ["Masalalar", "Задачи"],
+  masalalarIzoh: [
+    "Foydalanuvchilar yozgan masalalar — yeching va o'zingiznikini qo'shing",
+    "Задачи от пользователей — решайте и добавляйте свои",
+  ],
+  masalaBitta: ["Masala", "Задача"],
+  masalaYangilar: ["Yangi", "Новые"],
+  masalaQiyinlar: ["Eng qiyin", "Самые сложные"],
+  masalaZorlar: ["Eng zo'r", "Лучшие"],
+  masalaKoplar: ["Ko'p yechilgan", "Часто решают"],
+  masalaHammaSinf: ["Hammasi", "Все"],
+  masalaYana: ["Yana ko'rsatish", "Показать ещё"],
+  masalaBosh: [
+    "Bu yerda hali masala yo'q. Birinchi bo'lib siz yozing!",
+    "Здесь пока нет задач. Напишите первую!",
+  ],
+  masalaYechdi: ["{n}/{jami} yechdi", "решили {n}/{jami}"],
+  masalaYechgansiz: ["Yechgansiz", "Решено"],
+  masalaQaytaUrinish: ["Yecholmagansiz", "Не решено"],
+  masalaKutmoqda: ["Navbatda", "На проверке"],
+  masalaRad: ["Rad etilgan", "Отклонена"],
+  /* Muallif uchun: nega masalasi hali ko'rinmayapti. */
+  masalaKutmoqdaIzoh: [
+    "Masala tekshiruvda. Tasdiqlangach ro'yxatda paydo bo'ladi.",
+    "Задача на проверке. После одобрения появится в списке.",
+  ],
+  masalaTopilmadi: ["Bunday masala topilmadi", "Такая задача не найдена"],
+
+  /* --- yechish --- */
+  masalaJavobJoy: ["Javobingiz", "Ваш ответ"],
+  masalaTekshir: ["Tekshirish", "Проверить"],
+  masalaTogri: ["To'g'ri! 🎉", "Верно! 🎉"],
+  masalaXato: ["Bu safar bo'lmadi", "В этот раз не вышло"],
+  masalaTogriJavob: ["To'g'ri javob: {javob}", "Правильный ответ: {javob}"],
+  masalaTanga: ["+{n} tanga", "+{n} монет"],
+  masalaYechim: ["Yechim", "Решение"],
+  /* Yechim yopiqligining SABABI aytiladi. "Yopiq" degan quruq
+     yozuv odamni faqat jahlini chiqarardi — u nega yopiqligini va
+     qanday ochilishini bilmasdi. */
+  masalaYechimYopiq: [
+    "Yechim javob berganingizdan keyin ochiladi — xato bo'lsa ham.",
+    "Решение откроется после ответа — даже если он неверный.",
+  ],
+  masalaOzOvoz: ["O'z masalangizga ovoz bera olmaysiz", "Нельзя голосовать за свою задачу"],
+
+  /* --- muallif --- */
+  masalaMuallif: ["Muallif", "Автор"],
+  masalaMuallifKor: ["Muallifning boshqa masalalari", "Другие задачи автора"],
+  masalaSoni: ["masala", "задач"],
+  masalaYechilgan: ["yechildi", "решили"],
+  masalaMuallifBosh: ["Hali tasdiqlangan masalasi yo'q", "Пока нет одобренных задач"],
+
+  /* --- yozish --- */
+  masalaYoz: ["Masala qo'shish", "Добавить задачу"],
+  masalaYozIzoh: [
+    "O'zingiz o'ylagan masalani yozing — hamma yechadi",
+    "Напишите свою задачу — её будут решать все",
+  ],
+  masalaYozTepa: [
+    "Tekshiruvdan o'tgach hammaga ko'rinadi",
+    "После проверки её увидят все",
+  ],
+  masalaQaysiSinf: ["Qaysi sinf uchun", "Для какого класса"],
+  masalaMatni: ["Masala", "Задача"],
+  masalaMatniIzoh: [
+    "Masala shartini to'liq yozing…",
+    "Напишите условие задачи полностью…",
+  ],
+  masalaJavobi: ["Javob", "Ответ"],
+  masalaJavobiJoy: ["Masalan: 12 yoki 3.5", "Например: 12 или 3.5"],
+  /* Javob qanday solishtirilishi AYTILADI: muallif "12 ta olma"
+     deb yozib qo'ysa, "12" deb javob bergan bola xato oladi. */
+  masalaJavobiIzoh: [
+    "Qisqa yozing. Bo'sh joy va harf katta-kichikligi ahamiyatsiz.",
+    "Пишите кратко. Пробелы и регистр не важны.",
+  ],
+  masalaYechimi: ["Yechim", "Решение"],
+  masalaYechimiIzoh: [
+    "Qadam-baqadam tushuntiring — bu majburiy…",
+    "Объясните по шагам — это обязательно…",
+  ],
+  masalaYanaBelgi: ["Yana {n} ta belgi kerak", "Нужно ещё {n} символов"],
+  masalaNavbatIzoh: [
+    "Masala darhol ko'rinmaydi: avval tekshiriladi. Tasdiqlangach tanga olasiz va hamma uni yecha boshlaydi.",
+    "Задача появится не сразу: сначала проверка. После одобрения вы получите монеты, и её начнут решать.",
+  ],
+  masalaYubor: ["Yuborish", "Отправить"],
+  masalaKunlikChegara: [
+    "Bugunga yetarli — ertaga yana yozishingiz mumkin.",
+    "На сегодня достаточно — завтра можно снова.",
+  ],
+
+  /* --- o'z masalalarim --- */
+  masalaMenikilar: ["Mening masalalarim", "Мои задачи"],
+  masalaMenikilarBosh: [
+    "Hali masala yozmagansiz. Birinchisini qo'shib ko'ring!",
+    "Вы ещё не писали задач. Попробуйте добавить первую!",
+  ],
+  masalaBugungi: ["Bugun: {n}/{jami}", "Сегодня: {n}/{jami}"],
+  masalaMukofot: ["{n} tanga sizni kutmoqda", "Вас ждут {n} монет"],
+  masalaMukofotIzoh: [
+    "Masalangiz tasdiqlangani va yechilgani uchun — olish uchun bosing",
+    "За одобрение и решения ваших задач — нажмите, чтобы забрать",
+  ],
+
   /* ---------------- umumiy qidiruv ---------------- */
   qidiruvSarlavha: ["Qidiruv", "Поиск"],
   qidiruvTugma: ["Qidirish", "Поиск"],

@@ -39,11 +39,13 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import timezone
 
+from . import masala as MS
 from . import reklama as R
 from .liga import DARAJALAR
 from .models import (
     Duel,
-    Identity, LessonResult, LigaAzo, Profile, Progress, Pupil, Reklama, Session,
+    Identity, LessonResult, LigaAzo, Masala, Profile, Progress, Pupil, Reklama,
+    Session,
 )
 
 #: Kirish belgisi shu nom bilan cookie'da saqlanadi.
@@ -1189,3 +1191,108 @@ def duellar(request):
         return kirish(request)
     kun = max(7, min(120, int(request.GET.get("kun") or 30)))
     return render(request, "boshqaruv/duel.html", duel_statistika(kun))
+
+
+# ------------------------------------------------------------- masalalar
+
+
+#: Ro'yxatda bir sahifada nechta masala ko'rsatiladi.
+MASALA_ROYXAT = 40
+
+
+def masalalar(request):
+    """
+    Foydalanuvchi masalalarini tasdiqlash navbati.
+
+    ─────────────────── NEGA BIR EKRANDA ───────────────────
+
+    Sahifa masalalarni MATNI, JAVOBI VA YECHIMI bilan birga
+    ko'rsatadi — ochib-yopish yo'q. Sabab oddiy: tasdiqlashda ish
+    o'qish emas, TEKSHIRISH. Admin masalaning matematikasi
+    to'g'riligini bilishi kerak va buning uchun uchalasi ham bir
+    vaqtda ko'z oldida turishi shart. Har biri uchun alohida sahifa
+    ochilsa, o'ntasini ko'rish o'ttizta bosishga aylanardi va navbat
+    hech qachon bo'shamasdi.
+
+    ─────────────── NEGA RAD ETISHDA SABAB MAJBURIY ───────────────
+
+    Sababsiz rad etilgan odam nimani tuzatishni bilmaydi va ikkinchi
+    marta yozmaydi. Bo'lim esa aynan qayta yozadigan odamlar ustiga
+    quriladi — bir marta yozib ketganlar bilan u to'lmaydi.
+
+    Hamma amal POST va oxirida QAYTA YO'NALTIRISH bilan tugaydi (PRG),
+    xuddi e'lonlar sahifasidagidek: sahifani yangilagan admin oxirgi
+    amalni ikkinchi marta bajarib yubormasin.
+    """
+    if not _yoniq():
+        raise Http404
+    if not kirganmi(request):
+        return kirish(request)
+
+    if request.method == "POST":
+        return _masala_amal(request)
+
+    holat = request.GET.get("holat") or Masala.KUTMOQDA
+    if holat not in {h for h, _ in Masala.HOLATLAR}:
+        holat = Masala.KUTMOQDA
+
+    qs = (
+        Masala.objects
+        .filter(holat=holat)
+        .select_related("muallif__pupil")
+        # Navbatda ENG ESKISI birinchi: kutib turgan odam
+        # unutilmasin. Boshqa ro'yxatlarda esa yangisi tepada.
+        .order_by("created_at" if holat == Masala.KUTMOQDA else "-created_at")
+    )
+
+    sanoq = dict(
+        Masala.objects.values_list("holat").annotate(n=Count("id"))
+    )
+    return render(request, "boshqaruv/masala.html", {
+        "royxat": qs[:MASALA_ROYXAT],
+        "holat": holat,
+        "sanoq": {
+            "kutmoqda": sanoq.get(Masala.KUTMOQDA, 0),
+            "tasdiq": sanoq.get(Masala.TASDIQ, 0),
+            "rad": sanoq.get(Masala.RAD, 0),
+        },
+        "xabar": request.GET.get("xabar", "")[:200],
+        "yangilangan": timezone.now(),
+    })
+
+
+def _masala_amal(request):
+    """POST amallari: tasdiqlash va rad etish."""
+    amal = request.POST.get("amal", "")
+    holat = request.POST.get("holat") or Masala.KUTMOQDA
+    m = Masala.objects.filter(pk=_son(request.POST.get("id"))).first()
+    if m is None:
+        return _masala_javob("Masala topilmadi", holat)
+
+    if amal == "tasdiq":
+        MS.tasdiqla(m)
+        return _masala_javob(f"#{m.pk} tasdiqlandi", holat)
+
+    if amal == "rad":
+        sabab = (request.POST.get("sabab") or "").strip()
+        if not sabab:
+            # Sababsiz rad etish odamni ikkinchi marta yozishdan
+            # butunlay qaytaradi — shuning uchun u majburiy.
+            return _masala_javob(f"#{m.pk}: sabab yozilmadi", holat)
+        MS.rad_et(m, sabab)
+        return _masala_javob(f"#{m.pk} rad etildi", holat)
+
+    return _masala_javob("Noma'lum amal", holat)
+
+
+def _son(v) -> int:
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _masala_javob(xabar: str, holat: str):
+    return HttpResponseRedirect(
+        f"/boshqaruv/masalalar?holat={quote(holat)}&xabar={quote(xabar)}"
+    )

@@ -30,6 +30,7 @@ urlpatterns = [
     path("boshqaruv/chiqish", boshqaruv.chiqish, name="boshqaruv-chiqish"),
     path("boshqaruv/reklama", boshqaruv.reklama, name="boshqaruv-reklama"),
     path("boshqaruv/duel", boshqaruv.duellar, name="boshqaruv-duel"),
+    path("boshqaruv/masalalar", boshqaruv.masalalar, name="boshqaruv-masalalar"),
     # Botdagi havola: /boshqaruv/havola/<imzolangan kod>
     path("boshqaruv/havola/<str:kod>", boshqaruv.havola, name="boshqaruv-havola"),
     *spa_urlpatterns(),

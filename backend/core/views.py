@@ -40,15 +40,18 @@ from . import auth as A
 from . import duel as D
 from . import kanal as K
 from . import liga as L
+from . import masala as M
 from . import ovoz as O
 from .models import (
-    BIZNING_KALIT, MAX_QIYMAT, Duel, Identity, LessonResult, LigaAzo, Profile, Progress,
-    Pupil, Session,
+    BIZNING_KALIT, MAX_QIYMAT, Duel, Identity, LessonResult, LigaAzo, Masala,
+    MasalaUrinish, Profile, Progress, Pupil, Session,
 )
 from .serializers import (
     DeviceAuthSerializer,
     HisobSerializer,
     KodSerializer,
+    MasalaOvozSerializer,
+    MasalaSerializer,
     ProfileSerializer,
     ProgressSerializer,
     ResultSerializer,
@@ -1290,3 +1293,243 @@ def duel_yana(request, kod: str):
 
     d = D.yana_soradi(d, chaqirganmi)
     return Response(D.yana_holati(d, chaqirganmi))
+
+
+# ----------------------------------------------------------------- masalalar
+
+
+#: Ro'yxatda bir sahifada nechta masala.
+MASALA_SAHIFA = 20
+
+#: Saralash usullari. Kalit — mijozdan keladigan qiymat.
+#:
+#: "qiyin" ATAYLAB `Masala.qiyinlik` bo'yicha emas: u Python xossasi
+#: va bazada ustun sifatida yo'q. Uning o'rniga eng kam yechilgani
+#: yuqorida turadi — natija amalda bir xil, lekin saralash bazada
+#: bo'ladi va butun jadvalni xotiraga olish kerak emas.
+MASALA_TARTIB = {
+    "yangi": ["-created_at"],
+    "zor": ["-like_soni", "-created_at"],
+    "qiyin": ["yechgan_soni", "-urinish_soni", "-created_at"],
+    "koplik": ["-urinish_soni", "-created_at"],
+}
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def masalalar(request):
+    """
+    Tasdiqlangan masalalar ro'yxati va yangi masala yuborish.
+
+        GET  ?sinf=7&tartib=yangi|zor|qiyin|koplik&sahifa=0
+        POST {sinf, matn, javob, yechim}
+
+    Ro'yxatda YECHIM YO'Q — hatto urinib ko'rgan odam uchun ham.
+    Yigirmata masalaning yechimini bir so'rovda yuborish javobni
+    o'nlab kilobaytga chiqarardi va bu telefonda seziladi. Yechim
+    bitta masala ochilganda keladi.
+    """
+    profil = _profil_tanla(request)
+
+    if request.method == "POST":
+        if M.bugungi_soni(profil) >= Masala.KUNLIK_CHEGARA:
+            return Response(
+                {"error": "kunlik", "chegara": Masala.KUNLIK_CHEGARA},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        s = MasalaSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        m = M.yubor(profil, **s.validated_data)
+        return Response(
+            {"ok": True, "masala": M.masala_json(m, profil)},
+            status=status.HTTP_201_CREATED,
+        )
+
+    qs = Masala.objects.filter(holat=Masala.TASDIQ).select_related("muallif__pupil")
+
+    sinf = request.query_params.get("sinf")
+    if sinf not in (None, "", "hammasi"):
+        qs = qs.filter(sinf=_butun(sinf, -1))
+
+    tartib = MASALA_TARTIB.get(request.query_params.get("tartib") or "yangi")
+    qs = qs.order_by(*tartib)
+
+    sahifa = max(0, _butun(request.query_params.get("sahifa"), 0))
+    boshi = sahifa * MASALA_SAHIFA
+    # Bittasini ORTIQCHA olamiz: "yana bormi" degan savolga alohida
+    # `count()` so'rovisiz javob beradi.
+    qator = list(qs[boshi:boshi + MASALA_SAHIFA + 1])
+    yana = len(qator) > MASALA_SAHIFA
+    qator = qator[:MASALA_SAHIFA]
+
+    idlar = [m.pk for m in qator]
+    ovozlar = M.ovozlarim(profil, idlar)
+    uringan = set(
+        MasalaUrinish.objects
+        .filter(profile=profil, masala_id__in=idlar)
+        .values_list("masala_id", flat=True)
+    )
+
+    return Response({
+        "masalalar": [
+            {
+                **M.masala_json(m, profil, ochiq=False),
+                "ovozim": ovozlar.get(m.pk, ""),
+                # "Siz buni yechgansiz" belgisi — odam bir masalani
+                # ikki marta ochib o'tirmasin.
+                "uringan": m.pk in uringan,
+            }
+            for m in qator
+        ],
+        "yana": yana,
+        "sahifa": sahifa,
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def masala_korish(request, pk: int):
+    """
+    Bitta masala.
+
+    Tasdiqlanmaganini FAQAT muallifning o'zi ocha oladi — u
+    "kutmoqda" yoki "rad etildi" degan javobni ko'rishi kerak.
+    Begona odam uchun esa u YO'Q (404), "ruxsat yo'q" emas: 403
+    javobning o'zi "bunday masala bor" degan ma'lumotni berardi.
+    """
+    profil = _profil_tanla(request)
+    m = Masala.objects.select_related("muallif__pupil").filter(pk=pk).first()
+    if m is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    if m.holat != Masala.TASDIQ and m.muallif_id != profil.pk:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    urinish = M.uringanmi(m, profil)
+    ochiq = urinish is not None or m.muallif_id == profil.pk
+    return Response({
+        **M.masala_json(m, profil, ochiq=ochiq),
+        "ovozim": M.ovozlarim(profil, [m.pk]).get(m.pk, ""),
+        "uringan": urinish is not None,
+        "birinchiTogri": urinish.togri if urinish else None,
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def masala_javob(request, pk: int):
+    """Javobni tekshiradi va yechimni ochadi."""
+    profil = _profil_tanla(request)
+    m = Masala.objects.select_related("muallif").filter(pk=pk).first()
+    if m is None or (m.holat != Masala.TASDIQ and m.muallif_id != profil.pk):
+        return Response({"detail": "topilmadi"}, status=404)
+
+    xom = request.data.get("javob") if hasattr(request.data, "get") else ""
+    if not isinstance(xom, str) or not xom.strip():
+        return Response({"error": "javob bosh"}, status=400)
+
+    return Response(M.javob_ber(m, profil, xom[:Masala.MAX_JAVOB]))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def masala_ovoz(request, pk: int):
+    """
+    Like yoki dislike. O'sha turni qayta yuborish ovozni QAYTARIB OLADI.
+
+    O'z masalasiga ovoz berib bo'lmaydi: aks holda har bir masala
+    kamida bitta like bilan tug'ilardi va son ma'nosini yo'qotardi.
+    """
+    profil = _profil_tanla(request)
+    m = Masala.objects.filter(pk=pk, holat=Masala.TASDIQ).first()
+    if m is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    if m.muallif_id == profil.pk:
+        return Response({"error": "oz"}, status=403)
+
+    s = MasalaOvozSerializer(data=request.data)
+    s.is_valid(raise_exception=True)
+    return Response(M.ovoz_ber(m, profil, s.validated_data["tur"]))
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def masala_muallif(request, pk: int):
+    """
+    Muallif sahifasi — kim yozgani va uning boshqa masalalari.
+
+    Masalani o'qigan odamning keyingi savoli deyarli har doim bitta:
+    "buni kim yozdi va yana nimalar yozgan?". Busiz har masala yakka
+    qolardi; bu sahifa bilan esa yaxshi masala yozgan odam O'QUVCHI
+    to'playdi — va aynan shu narsa uni yana yozishga undaydi.
+
+    Faqat TASDIQLANGAN masalalar ko'rinadi: begona odam boshqa
+    birovning navbatdagi yoki rad etilgan ishini ko'rmasligi kerak.
+    """
+    men = _profil_tanla(request)
+    pr = Profile.objects.select_related("pupil").filter(pk=pk).first()
+    if pr is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    qator = list(
+        Masala.objects
+        .filter(muallif=pr, holat=Masala.TASDIQ)
+        .select_related("muallif__pupil")
+        .order_by("-created_at")[:MASALA_SAHIFA]
+    )
+    ovozlar = M.ovozlarim(men, [m.pk for m in qator])
+
+    jami = Masala.objects.filter(muallif=pr, holat=Masala.TASDIQ).aggregate(
+        soni=Count("id"), yechilgan=Sum("yechgan_soni"), like=Sum("like_soni"),
+    )
+    return Response({
+        "muallif": M.muallif_json(pr),
+        "meniki": pr.pk == men.pk,
+        "jami": {
+            "masalalar": jami["soni"] or 0,
+            "yechilgan": jami["yechilgan"] or 0,
+            "like": jami["like"] or 0,
+        },
+        "masalalar": [
+            {**M.masala_json(m, men, ochiq=False), "ovozim": ovozlar.get(m.pk, "")}
+            for m in qator
+        ],
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def masalalarim(request):
+    """
+    O'z masalalarim — HAMMA holatda, kutayotgan tanga bilan birga.
+
+    Rad etilganining sababi ham shu yerda ko'rinadi: odam nimani
+    tuzatishni bilmasa, ikkinchi marta yozmaydi.
+    """
+    profil = _profil_tanla(request)
+    qs = (
+        Masala.objects
+        .filter(muallif=profil)
+        .select_related("muallif__pupil")
+        .order_by("-created_at")[:100]
+    )
+    return Response({
+        "masalalar": [M.masala_json(m, profil, ochiq=True) for m in qs],
+        "kutayotganTanga": M.kutayotgan_tanga(profil),
+        "bugun": M.bugungi_soni(profil),
+        "kunlikChegara": Masala.KUNLIK_CHEGARA,
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def masala_mukofot(request):
+    """
+    Kutayotgan tangani beradi va hisobni nolga tushiradi.
+
+    Mijoz qaytgan sonni O'Z progressiga qo'shadi — tanga serverda
+    emas, progress blobining ichida turadi (`masala.py` ga qarang).
+    Shuning uchun javob faqat BIR MARTA keladi: takroriy so'rov 0
+    qaytaradi va bu ataylab.
+    """
+    profil = _profil_tanla(request)
+    return Response({"tanga": M.mukofotni_ol(profil)})

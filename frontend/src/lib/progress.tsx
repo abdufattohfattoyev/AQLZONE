@@ -248,6 +248,16 @@ interface Ctx {
    * har kuni ilovani ochsin.
    */
   oyinTugadi: (tanga: number, savollar: number) => void;
+  /**
+   * Masalalar bo'limidan kelgan tanga.
+   *
+   * O'yin bilan bir xil qoidaga bo'ysunadi (yulduz yo'q, tanga va
+   * zanjir bor), lekin ALOHIDA nom bilan turadi: `oyinTugadi` ni
+   * masala uchun chaqirish kodni o'qigan odamni chalg'itardi va
+   * ertaga o'yin qoidasi o'zgarganda masala ham u bilan birga
+   * o'zgarib ketardi.
+   */
+  masalaTugadi: (tanga: number, savollar: number) => void;
 }
 
 const ProgressCtx = createContext<Ctx | null>(null);
@@ -527,11 +537,30 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     if (savollar > 0) setKunlik((k) => kunlikYangila(k, savollar));
   }, []);
 
+  /**
+   * Masaladan kelgan tanga va savol.
+   *
+   * Hisob-kitobi o'yin bilan bir xil — yulduz yo'q, tanga bor,
+   * zanjirga qo'shiladi — shuning uchun `oyinTugadi` ga yuboriladi.
+   * Nomi esa alohida: chaqiruv joyida "bu masala" deb turishi kerak,
+   * aks holda ertaga o'yin qoidasi o'zgarganda masala ham u bilan
+   * birga bilinmay o'zgarib ketardi.
+   *
+   * Yulduz nega yo'q: yulduz DARSNING o'lchovi va reyting aynan
+   * shuni sanaydi. Masaladan yulduz berilsa, kechda o'ttizta masala
+   * yechgan bola jadval boshiga chiqib, darslarni oylab o'tgan
+   * bolaning mehnatini ma'nosiz qilardi.
+   */
+  const masalaTugadi = useCallback(
+    (tanga: number, savollar: number) => oyinTugadi(tanga, savollar),
+    [oyinTugadi],
+  );
+
   return (
     <ProgressCtx.Provider
       value={{
         progressOf, darsTugadi, kunlik: kunlikKorinishi(kunlik), sotibOl, kiy,
-        jamiTanga, tiklash, zanjirniTikla, sinovTugadi, oyinTugadi,
+        jamiTanga, tiklash, zanjirniTikla, sinovTugadi, oyinTugadi, masalaTugadi,
       }}
     >
       {children}

@@ -56,7 +56,7 @@ import { til } from "./til";
 import type { UnitColor } from "./types";
 import {
   yolDars, yolDuel, yolFormulalar, yolKichkintoy, yolKichkintoyMavzu, yolKurs,
-  yolMaydon, yolOyin, yolOyinlar, yolReyting,
+  yolMasalalar, yolMaydon, yolOyin, yolOyinlar, yolReyting,
 } from "./yollar";
 
 /** Natija turi — ro'yxatda rangli yorliq bo'lib ko'rinadi. */
@@ -275,6 +275,8 @@ export function indeks(): Natija[] {
      ATAYLAB yo'q: ular `/kurs/<sinf>/...` ostida turadi va qaysi
      sinfniki ekanini qidiruv bilolmaydi. Ularni birdan o'n olti
      marta ko'rsatish esa ro'yxatni buzardi. */
+  r.push(yozuv("bolim:masalalar", "bolim", t("masalalar"), t("masalalarIzoh"),
+    "pencil", "purple", yolMasalalar()));
   r.push(yozuv("bolim:reyting", "bolim", t("reyting"), t("menyuReytingIzoh"),
     "order", "gold", yolReyting()));
   r.push(yozuv("bolim:oyinlar", "bolim", t("oyinlar"), t("menyuOyinlarIzoh"),

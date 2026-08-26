@@ -77,10 +77,20 @@ function profilSoniniYoz(n: number): void {
  * birinchi profilini ishlatadi — shu sabab profil haqida bilmaydigan
  * eski o'rnatmalar ham buzilmaydi.
  */
-const bilanProfil = <T extends Record<string, unknown>>(b: T): T =>
+export const bilanProfil = <T extends Record<string, unknown>>(b: T): T =>
   (profilId ? { ...b, profileId: profilId } : b);
 
-const profilQuery = (): string => (profilId ? `?profileId=${encodeURIComponent(profilId)}` : "");
+/**
+ * Manzilga profil qismini qo'shadi.
+ *
+ * `belgi` — manzilda allaqachon `?` bo'lsa "&" berish uchun.
+ * Chaqiruvchi buni o'zi yozganda albatta bir joyda ikkinchi "?"
+ * paydo bo'lardi va o'sha so'rov jimgina profilsiz ketardi.
+ */
+const profilQuery = (belgi: "?" | "&" = "?"): string =>
+  (profilId ? `${belgi}profileId=${encodeURIComponent(profilId)}` : "");
+
+export { profilQuery };
 
 async function post<T>(url: string, body: unknown, auth = true): Promise<T> {
   const r = await fetch(url, {
@@ -94,6 +104,43 @@ async function post<T>(url: string, body: unknown, auth = true): Promise<T> {
   if (!r.ok) throw new Error(`${url} → HTTP ${r.status}`);
   return r.json() as Promise<T>;
 }
+
+/**
+ * Token bilan so'rov — ALOHIDA bo'limlar uchun.
+ *
+ * `tana` berilsa POST, berilmasa GET. Ikkitasini bitta funksiya
+ * qilib berishning sababi bor: bo'lim fayllari (`lib/masala.ts`)
+ * tokenni, sarlavhalarni va xato tekshiruvini o'zi takrorlamasin —
+ * takrorlangan joyda albatta biri unutiladi va o'sha so'rov jimgina
+ * tokensiz ketadi.
+ *
+ * XATOSI TASHLANADI (yutilmaydi): bu yerdagi so'rovlar ekranga
+ * to'g'ridan-to'g'ri ta'sir qiladi va ular jim yiqilsa, foydalanuvchi
+ * bo'sh ekranga qarab qoladi. Chaqiruvchi xatoni ushlab, nima
+ * bo'lganini yozadi.
+ */
+export async function sorov<T>(url: string, tana?: unknown): Promise<T> {
+  const r = await fetch(url, {
+    method: tana === undefined ? "GET" : "POST",
+    headers: {
+      ...(tana === undefined ? {} : { "Content-Type": "application/json" }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    ...(tana === undefined ? {} : { body: JSON.stringify(tana) }),
+  });
+  if (!r.ok) {
+    // Kodi xabarga qo'shiladi: chaqiruvchi 429 (kunlik chegara) va
+    // 404 (o'chirilgan masala) ni bir-biridan ajratishi kerak.
+    const e = new Error(`${url} → HTTP ${r.status}`);
+    (e as Error & { kod?: number }).kod = r.status;
+    throw e;
+  }
+  return r.json() as Promise<T>;
+}
+
+/** So'rov xatosining HTTP kodi. Noma'lum bo'lsa 0. */
+export const xatoKodi = (e: unknown): number =>
+  (e as { kod?: number } | null)?.kod ?? 0;
 
 /**
  * Ayni paytda ketayotgan kirish.

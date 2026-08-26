@@ -27,11 +27,13 @@ from .matn import M
 from . import duel as D
 from . import xabar
 from . import liga as L
+from . import masala as MS
 from . import reklama as R
 from . import views
 from .models import (
-    Duel, Identity, KirishKodi, LessonResult, LigaAzo, Profile, Progress, Pupil,
-    Reklama, ReklamaQabul, Session,
+    Duel, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaMukofot,
+    MasalaOvoz, MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul,
+    Session,
 )
 
 BOT = "123456:TEST_TOKEN_FAQAT_SINOV_UCHUN"
@@ -3575,3 +3577,367 @@ class ProgressQulfTest(TransactionTestCase):
         from django.db import connection
 
         self.assertEqual(connection.transaction_mode, "IMMEDIATE")
+
+
+class MasalaTest(TestCase):
+    """
+    Foydalanuvchi masalalari.
+
+    Diqqat qaratilgan joy — YECHIMNING OCHILISHI. Bu bo'limning butun
+    ma'nosi shunda: yechim urinib ko'rmagan odamga ko'rinmasligi
+    kerak va buni SERVER qo'riqlaydi. Faqat mijozda yashirilsa, uni
+    har kim tarmoq oynasidan o'qib olardi va bo'lim javoblar
+    ro'yxatiga aylanardi.
+    """
+
+    def kir(self, device: str) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def setUp(self):
+        self.muallif_token = self.kir("dev-masala-muallif-0001")
+        self.yechuvchi_token = self.kir("dev-masala-yechuvchi-002")
+        self.muallif = Pupil.objects.get(
+            identities__external_id="dev-masala-muallif-0001"
+        ).asosiy_profil()
+        self.yechuvchi = Pupil.objects.get(
+            identities__external_id="dev-masala-yechuvchi-002"
+        ).asosiy_profil()
+
+    def masala_yasa(self, *, holat=Masala.TASDIQ, javob="12", muallif=None) -> Masala:
+        return Masala.objects.create(
+            muallif=muallif or self.muallif, sinf=5,
+            matn="Bir savatda 20 ta olma bor edi, 8 tasini yedik. Nechta qoldi?",
+            javob=javob, yechim="20 − 8 = 12. Javob: 12 ta olma.",
+            holat=holat,
+        )
+
+    def yubor(self, token: str, **ozgarish) -> object:
+        tana = {
+            "sinf": 5,
+            "matn": "Bir savatda 20 ta olma bor edi, 8 tasini yedik. Nechta qoldi?",
+            "javob": "12",
+            "yechim": "20 − 8 = 12",
+            **ozgarish,
+        }
+        return self.client.post(
+            "/api/v1/masalalar", tana,
+            content_type="application/json", **self.auth(token),
+        )
+
+    # ------------------------------------------------------------ yuborish
+
+    def test_yangi_masala_navbatga_tushadi_va_royxatda_korinmaydi(self):
+        r = self.yubor(self.muallif_token)
+        self.assertEqual(r.status_code, 201, r.content)
+        self.assertEqual(r.json()["masala"]["holat"], Masala.KUTMOQDA)
+
+        # Boshqa odam uchun u YO'Q — tasdiqlanmagan masala ro'yxatga
+        # chiqmaydi. Bo'limning butun himoyasi shu qatorda.
+        r = self.client.get("/api/v1/masalalar", **self.auth(self.yechuvchi_token))
+        self.assertEqual(r.json()["masalalar"], [])
+
+    def test_qisqa_masala_rad_etiladi(self):
+        r = self.yubor(self.muallif_token, matn="2+2?")
+        self.assertEqual(r.status_code, 400)
+
+    def test_yechimsiz_masala_rad_etiladi(self):
+        r = self.yubor(self.muallif_token, yechim="4")
+        self.assertEqual(r.status_code, 400)
+
+    def test_notogri_sinf_kodi_rad_etiladi(self):
+        # 55 hech qaysi kursga tushmaydi (0–11 va 107–110 dan tashqari).
+        self.assertEqual(self.yubor(self.muallif_token, sinf=55).status_code, 400)
+        self.assertEqual(self.yubor(self.muallif_token, sinf=108).status_code, 201)
+
+    def test_kunlik_chegara(self):
+        for _ in range(Masala.KUNLIK_CHEGARA):
+            self.assertEqual(self.yubor(self.muallif_token).status_code, 201)
+        r = self.yubor(self.muallif_token)
+        self.assertEqual(r.status_code, 429)
+        self.assertEqual(r.json()["error"], "kunlik")
+
+    # -------------------------------------------------------------- yechim
+
+    def test_yechim_urinmagan_odamga_yuborilmaydi(self):
+        m = self.masala_yasa()
+        r = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.yechuvchi_token))
+        d = r.json()
+        self.assertFalse(d["yechimOchiq"])
+        # Maydonning O'ZI bo'lmasligi shart: bo'sh satr bo'lib kelsa
+        # ham, keyingi o'zgarishda kimdir uni to'ldirib qo'yardi.
+        self.assertNotIn("yechim", d)
+        self.assertNotIn("javob", d)
+
+    def test_royxatda_ham_yechim_yoq(self):
+        m = self.masala_yasa()
+        MasalaUrinish.objects.create(masala=m, profile=self.yechuvchi, togri=True)
+        r = self.client.get("/api/v1/masalalar", **self.auth(self.yechuvchi_token))
+        qator = r.json()["masalalar"][0]
+        # Urinib ko'rgan bo'lsa ham RO'YXATDA yechim kelmaydi: yigirmata
+        # yechim javobni bekorga kattalashtirardi.
+        self.assertNotIn("yechim", qator)
+        self.assertTrue(qator["uringan"])
+
+    def test_javob_bergandan_keyin_yechim_ochiladi(self):
+        m = self.masala_yasa()
+        r = self.client.post(
+            f"/api/v1/masalalar/{m.pk}/javob", {"javob": "xato"},
+            content_type="application/json", **self.auth(self.yechuvchi_token),
+        )
+        d = r.json()
+        self.assertFalse(d["togri"])
+        # Xato javob bergan odamga yechim AYNIQSA kerak — u aynan
+        # shuning uchun keldi.
+        self.assertIn("20 − 8", d["yechim"])
+
+        r = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.yechuvchi_token))
+        self.assertTrue(r.json()["yechimOchiq"])
+
+    def test_muallif_oz_yechimini_koradi(self):
+        m = self.masala_yasa(holat=Masala.KUTMOQDA)
+        r = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.muallif_token))
+        self.assertTrue(r.json()["yechimOchiq"])
+
+    def test_begona_odam_tasdiqlanmaganini_ocholmaydi(self):
+        m = self.masala_yasa(holat=Masala.KUTMOQDA)
+        r = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.yechuvchi_token))
+        self.assertEqual(r.status_code, 404)
+
+    # -------------------------------------------------------------- javob
+
+    def test_javob_boshqacha_yozilsa_ham_qabul_qilinadi(self):
+        m = self.masala_yasa(javob="12 sm")
+        for xom in ["12 sm", "12sm", "  12 SM  ", "12 sm"]:
+            MasalaUrinish.objects.all().delete()
+            r = self.client.post(
+                f"/api/v1/masalalar/{m.pk}/javob", {"javob": xom},
+                content_type="application/json", **self.auth(self.yechuvchi_token),
+            )
+            self.assertTrue(r.json()["togri"], f"{xom!r} rad etildi")
+
+    def test_vergul_va_nuqta_bir_xil(self):
+        m = self.masala_yasa(javob="3.5")
+        r = self.client.post(
+            f"/api/v1/masalalar/{m.pk}/javob", {"javob": "3,5"},
+            content_type="application/json", **self.auth(self.yechuvchi_token),
+        )
+        self.assertTrue(r.json()["togri"])
+
+    def test_faqat_birinchi_urinish_sanaladi(self):
+        m = self.masala_yasa()
+        yol = f"/api/v1/masalalar/{m.pk}/javob"
+        # Birinchi — xato.
+        self.client.post(yol, {"javob": "99"}, content_type="application/json",
+                         **self.auth(self.yechuvchi_token))
+        # Ikkinchi — to'g'ri, lekin statistikaga tegmaydi.
+        r = self.client.post(yol, {"javob": "12"}, content_type="application/json",
+                             **self.auth(self.yechuvchi_token))
+        d = r.json()
+        self.assertTrue(d["togri"])
+        self.assertFalse(d["birinchi"])
+        self.assertFalse(d["birinchiTogri"])
+        self.assertEqual(d["tanga"], 0)
+
+        m.refresh_from_db()
+        self.assertEqual(m.urinish_soni, 1)
+        self.assertEqual(m.yechgan_soni, 0)
+
+    def test_qiyinlik_foizi(self):
+        m = self.masala_yasa()
+        # Hech kim urinmagan masala "eng qiyin" ro'yxatining boshiga
+        # chiqib olmasligi kerak.
+        self.assertEqual(m.qiyinlik, 100)
+        m.urinish_soni, m.yechgan_soni = 4, 1
+        self.assertEqual(m.qiyinlik, 25)
+
+    # --------------------------------------------------------------- tanga
+
+    def test_togri_yechganda_tanga_ikki_tomonga_ketadi(self):
+        m = self.masala_yasa()
+        r = self.client.post(
+            f"/api/v1/masalalar/{m.pk}/javob", {"javob": "12"},
+            content_type="application/json", **self.auth(self.yechuvchi_token),
+        )
+        # Yechgan odam DARHOL oladi — u ekran oldida turibdi.
+        self.assertEqual(r.json()["tanga"], MasalaMukofot.YECHGAN_TANGA)
+        # Muallif esa hozir ilovada emas: uniki to'planib turadi.
+        self.assertEqual(
+            MS.kutayotgan_tanga(self.muallif), MasalaMukofot.YECHILDI_TANGA
+        )
+
+    def test_oz_masalasini_yechish_muallifga_tanga_bermaydi(self):
+        m = self.masala_yasa()
+        self.client.post(
+            f"/api/v1/masalalar/{m.pk}/javob", {"javob": "12"},
+            content_type="application/json", **self.auth(self.muallif_token),
+        )
+        # Aks holda bu tekin tanga chiqaradigan tugma bo'lardi.
+        self.assertEqual(MS.kutayotgan_tanga(self.muallif), 0)
+
+    def test_tasdiqlash_muallifga_tanga_yozadi_va_takrorlanmaydi(self):
+        m = self.masala_yasa(holat=Masala.KUTMOQDA)
+        MS.tasdiqla(m)
+        self.assertEqual(MS.kutayotgan_tanga(self.muallif), MasalaMukofot.TASDIQ_TANGA)
+        # Admin bir tugmani ikki marta bosishi odatiy hol.
+        MS.tasdiqla(m)
+        self.assertEqual(MS.kutayotgan_tanga(self.muallif), MasalaMukofot.TASDIQ_TANGA)
+
+    def test_mukofot_faqat_bir_marta_beriladi(self):
+        MS.mukofot_qosh(self.muallif, 30)
+        r = self.client.post("/api/v1/masalalar/mukofot", **self.auth(self.muallif_token))
+        self.assertEqual(r.json()["tanga"], 30)
+        # Ikkinchi so'rov nol qaytaradi — mijoz ikki marta yozib
+        # yuborsa ham tanga ikkilanmaydi.
+        r = self.client.post("/api/v1/masalalar/mukofot", **self.auth(self.muallif_token))
+        self.assertEqual(r.json()["tanga"], 0)
+
+    # -------------------------------------------------------------- ovozlar
+
+    def test_like_va_dislike(self):
+        m = self.masala_yasa()
+        yol = f"/api/v1/masalalar/{m.pk}/ovoz"
+        A = self.auth(self.yechuvchi_token)
+
+        r = self.client.post(yol, {"tur": "like"}, content_type="application/json", **A)
+        self.assertEqual((r.json()["like"], r.json()["dislike"]), (1, 0))
+
+        # Almashtirish: like ketadi, dislike keladi.
+        r = self.client.post(yol, {"tur": "dislike"}, content_type="application/json", **A)
+        self.assertEqual((r.json()["like"], r.json()["dislike"]), (0, 1))
+
+        # O'sha tugmani qayta bosish — ovozni QAYTARIB OLADI. Busiz
+        # bexosdan bosilgan dislike'ni qaytarib bo'lmasdi.
+        r = self.client.post(yol, {"tur": "dislike"}, content_type="application/json", **A)
+        self.assertEqual((r.json()["like"], r.json()["dislike"]), (0, 0))
+        self.assertEqual(r.json()["ovozim"], "")
+        self.assertEqual(MasalaOvoz.objects.count(), 0)
+
+    def test_oz_masalasiga_ovoz_berib_bolmaydi(self):
+        m = self.masala_yasa()
+        r = self.client.post(
+            f"/api/v1/masalalar/{m.pk}/ovoz", {"tur": "like"},
+            content_type="application/json", **self.auth(self.muallif_token),
+        )
+        self.assertEqual(r.status_code, 403)
+
+    # ------------------------------------------------------------- ro'yxat
+
+    def test_sinf_boyicha_filtr_va_saralash(self):
+        a = self.masala_yasa()
+        b = self.masala_yasa()
+        Masala.objects.filter(pk=b.pk).update(sinf=7, like_soni=9)
+
+        r = self.client.get("/api/v1/masalalar?sinf=7", **self.auth(self.yechuvchi_token))
+        self.assertEqual([x["id"] for x in r.json()["masalalar"]], [b.pk])
+
+        r = self.client.get("/api/v1/masalalar?tartib=zor", **self.auth(self.yechuvchi_token))
+        self.assertEqual(r.json()["masalalar"][0]["id"], b.pk)
+
+        # Eng kam yechilgani "qiyin" ro'yxatining boshida.
+        Masala.objects.filter(pk=a.pk).update(urinish_soni=10, yechgan_soni=1)
+        Masala.objects.filter(pk=b.pk).update(urinish_soni=10, yechgan_soni=9)
+        r = self.client.get("/api/v1/masalalar?tartib=qiyin", **self.auth(self.yechuvchi_token))
+        self.assertEqual(r.json()["masalalar"][0]["id"], a.pk)
+
+    def test_muallif_sahifasi(self):
+        m = self.masala_yasa()
+        Masala.objects.filter(pk=m.pk).update(yechgan_soni=3, like_soni=2)
+        # Tasdiqlanmagani begona odamga ko'rinmasligi kerak.
+        self.masala_yasa(holat=Masala.KUTMOQDA)
+
+        r = self.client.get(
+            f"/api/v1/masalalar/muallif/{self.muallif.pk}",
+            **self.auth(self.yechuvchi_token),
+        )
+        d = r.json()
+        self.assertEqual(d["jami"], {"masalalar": 1, "yechilgan": 3, "like": 2})
+        self.assertEqual([x["id"] for x in d["masalalar"]], [m.pk])
+        self.assertFalse(d["meniki"])
+
+    def test_menikilar_rad_sababini_korsatadi(self):
+        m = self.masala_yasa(holat=Masala.KUTMOQDA)
+        MS.rad_et(m, "Javobi noto'g'ri: 20 − 8 = 12, siz 13 deb yozgansiz.")
+
+        r = self.client.get("/api/v1/masalalar/menikilar", **self.auth(self.muallif_token))
+        qator = r.json()["masalalar"][0]
+        self.assertEqual(qator["holat"], Masala.RAD)
+        self.assertIn("noto'g'ri", qator["radSababi"])
+
+        # Begona odam esa sababni ko'rmaydi — u masalani umuman ko'rmaydi.
+        r = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.yechuvchi_token))
+        self.assertEqual(r.status_code, 404)
+
+    def test_tokensiz_kirish_taqiqlanadi(self):
+        self.assertEqual(self.client.get("/api/v1/masalalar").status_code, 401)
+
+
+@override_settings(BOSHQARUV_YONIQ=True, ADMIN_TG=[ADMIN_ID])
+class MasalaBoshqaruvTest(TestCase):
+    """
+    Tasdiqlash navbati — /boshqaruv/masalalar.
+
+    Eng muhim tekshiruv — SABABSIZ RAD ETIB BO'LMASLIGI. Sababsiz rad
+    etilgan odam nimani tuzatishni bilmaydi va ikkinchi marta yozmaydi;
+    bo'lim esa aynan qayta yozadigan odamlar ustiga quriladi.
+    """
+
+    def setUp(self):
+        pupil = Pupil.objects.create(first_name="Olim", last_name="Salimov")
+        self.profil = pupil.asosiy_profil()
+        self.m = Masala.objects.create(
+            muallif=self.profil, sinf=5,
+            matn="Bir savatda 20 ta olma bor edi, 8 tasini yedik. Nechta qoldi?",
+            javob="12", yechim="20 − 8 = 12",
+        )
+        from .boshqaruv import havola_yasa
+        kod = havola_yasa(ADMIN_ID).rsplit("/", 1)[-1]
+        self.client.get(f"/boshqaruv/havola/{kod}")
+
+    def test_navbat_masalani_toliq_korsatadi(self):
+        r = self.client.get("/boshqaruv/masalalar")
+        self.assertEqual(r.status_code, 200)
+        # Uchalasi ham bir ekranda: tasdiqlashda ish o'qish emas,
+        # matematikani TEKSHIRISH.
+        self.assertContains(r, "20 ta olma")
+        self.assertContains(r, "20 − 8 = 12")
+        self.assertContains(r, "Olim Salimov")
+
+    def test_tasdiqlash(self):
+        r = self.client.post("/boshqaruv/masalalar", {
+            "amal": "tasdiq", "id": self.m.pk, "holat": "kutmoqda",
+        })
+        self.assertEqual(r.status_code, 302)
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.holat, Masala.TASDIQ)
+        self.assertEqual(MasalaMukofot.objects.get(profile=self.profil).tanga,
+                         MasalaMukofot.TASDIQ_TANGA)
+
+    def test_sababsiz_rad_etib_bolmaydi(self):
+        r = self.client.post("/boshqaruv/masalalar", {
+            "amal": "rad", "id": self.m.pk, "holat": "kutmoqda", "sabab": "   ",
+        })
+        self.assertIn("sabab", r["Location"])
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.holat, Masala.KUTMOQDA)
+
+    def test_sabab_bilan_rad_etiladi(self):
+        self.client.post("/boshqaruv/masalalar", {
+            "amal": "rad", "id": self.m.pk, "holat": "kutmoqda",
+            "sabab": "Javobi noto'g'ri.",
+        })
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.holat, Masala.RAD)
+        self.assertEqual(self.m.rad_sababi, "Javobi noto'g'ri.")
+
+    def test_kirmagan_odam_ocholmaydi(self):
+        self.client.get("/boshqaruv/chiqish")
+        r = self.client.get("/boshqaruv/masalalar")
+        # Kirish sahifasi chiqadi, masala matni EMAS.
+        self.assertNotContains(r, "20 ta olma")

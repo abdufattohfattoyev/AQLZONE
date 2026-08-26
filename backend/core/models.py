@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 
 from django.db import models
 from django.utils import timezone
@@ -776,3 +777,275 @@ class Duel(models.Model):
         if self.chaqirgan_xato != self.qabul_xato:
             return "chaqirgan" if self.chaqirgan_xato < self.qabul_xato else "qabul"
         return "durang"
+
+
+# =================================================================== masalalar
+
+
+class Masala(models.Model):
+    """
+    FOYDALANUVCHI YOZGAN MASALA.
+
+    ─────────────────────── NEGA KERAK ───────────────────────
+
+    Darslardagi savollar GENERATOR bilan yasaladi: sonlar o'zgaradi,
+    lekin savolning TURI o'zgarmaydi. Mashq uchun bu ideal va aynan
+    shuning uchun chegarali — generator hiylali, o'ylantiradigan,
+    "buni qanday qilib yechish mumkin?" dedirtiradigan masalani hech
+    qachon yozib bermaydi. Uni faqat odam yozadi.
+
+    Shu sabab jadval kurs dasturidan BUTUNLAY alohida turadi: unda
+    bob ham, tartib ham, qulf ham yo'q.
+
+    ─────────────────── TASDIQDAN OLDIN KO'RINMAYDI ───────────────────
+
+    Yangi masala `KUTMOQDA` holatida tug'iladi va faqat admin
+    tasdiqlagandan keyin ro'yxatga chiqadi. Bu qat'iy shart, ikki
+    sababdan:
+
+      1. Bu bolalar ilovasi, matnni esa istalgan odam yozadi.
+      2. XATO masala yo'q masaladan yomonroq. Yechimi noto'g'ri
+         masalani yechgan bola o'zini aybdor his qiladi — u javobni
+         topa olmaydi va sababini bilmaydi.
+
+    Rad etilganda SABABI yoziladi va muallifga ko'rsatiladi. Sababsiz
+    rad etish odamni ikkinchi marta yozishdan butunlay qaytaradi.
+
+    ─────────────────── YECHIM QACHON OCHILADI ───────────────────
+
+    Tasdiqlangandan keyin ham yechim hammaga ko'rinmaydi: u faqat
+    URINIB KO'RGAN odamga ochiladi. Qoida darsdagi bilan bir xil
+    (`components/Yechim.tsx`) — javobni oldindan o'qish o'rganish
+    emas, ko'chirish.
+
+    Buni SERVER qo'riqlaydi: `yechim` maydoni urinmagan odamga umuman
+    yuborilmaydi. Faqat mijozda yashirilganda uni har kim tarmoq
+    oynasidan o'qib olardi.
+    """
+
+    KUTMOQDA = "kutmoqda"
+    TASDIQ = "tasdiq"
+    RAD = "rad"
+    HOLATLAR = [
+        (KUTMOQDA, "Kutmoqda"),
+        (TASDIQ, "Tasdiqlangan"),
+        (RAD, "Rad etilgan"),
+    ]
+
+    #: Matn uzunligi chegarasi. Masala — bir-ikki abzats; undan uzuni
+    #: amalda ko'chirilgan matn yoki reklama bo'lib chiqadi.
+    MAX_MATN = 2000
+    MAX_YECHIM = 4000
+    MAX_JAVOB = 100
+
+    #: Bir odam kuniga nechta masala yubora oladi.
+    #:
+    #: Chegara admin uchun: navbatga bir kechada yuzta masala tushsa,
+    #: u umuman ko'rilmay qoladi va butun bo'lim to'xtaydi.
+    KUNLIK_CHEGARA = 5
+
+    muallif = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="masalalar"
+    )
+
+    #: Qaysi sinf uchun. Kod kurslarnikiga MOS (`Course.grade`), ya'ni
+    #: 107 = 7-sinf geometriya. Alohida ro'yxat yasalmadi: ikkita
+    #: ro'yxat bir kun kelib albatta bir-biridan qolib ketadi.
+    sinf = models.SmallIntegerField(default=0)
+
+    matn = models.TextField(max_length=MAX_MATN)
+
+    #: Javob MATN bo'lib solishtiriladi, son bo'lib emas.
+    #:
+    #: Matematik javob har doim ham son emas: "x = 3 yoki x = −3",
+    #: "12 sm²", "8/15". Solishtirishdan oldin ikkala tomon ham
+    #: normallashtiriladi (`javob_normal`).
+    javob = models.CharField(max_length=MAX_JAVOB)
+
+    yechim = models.TextField(max_length=MAX_YECHIM)
+
+    holat = models.CharField(max_length=10, choices=HOLATLAR, default=KUTMOQDA)
+
+    #: Rad etilgan bo'lsa — sababi. Muallif shuni o'qib tuzatadi.
+    rad_sababi = models.CharField(max_length=300, default="", blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    #: Admin ko'rgan payt. Navbatda qancha turgani shundan bilinadi.
+    korilgan_at = models.DateTimeField(null=True, blank=True)
+
+    #: Sanoqlar ATAYLAB shu yerda turadi, `urinishlar` dan sanalmaydi.
+    #:
+    #: Ro'yxat ekrani har masalada "nechta odam yechdi" ni ko'rsatadi.
+    #: Har safar sanasak, ellikta masalali sahifa ellikta guruh
+    #: so'rovini keltirib chiqarardi. Bu yerda esa u bitta son.
+    urinish_soni = models.IntegerField(default=0)
+    yechgan_soni = models.IntegerField(default=0)
+    #: Ovozlar ham shu sababdan shu yerda (`MasalaOvoz` ga qarang).
+    like_soni = models.IntegerField(default=0)
+    dislike_soni = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "masala"
+        ordering = ["-created_at"]
+        indexes = [
+            # Ro'yxat har doim shu ikkisi bo'yicha so'raladi.
+            models.Index(fields=["holat", "-created_at"]),
+            models.Index(fields=["holat", "sinf"]),
+            # Muallif sahifasi: "shu odamning masalalari".
+            models.Index(fields=["muallif", "holat"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"#{self.pk} {self.matn[:40]}"
+
+    @property
+    def qiyinlik(self) -> int:
+        """
+        Birinchi urinishda to'g'ri yechganlar foizi (0–100).
+
+        Urinish bo'lmasa 100 qaytadi — ya'ni "hali hech kim urinmagan"
+        masala "eng qiyin" ro'yxatining boshiga chiqib olmaydi.
+
+        "Eng qiyin masala" jadvali shu songa quriladi va u "eng ko'p
+        yoqqan" dan halolroq: yoqtirish masalaning qiyinligi haqida
+        hech narsa demaydi.
+        """
+        if not self.urinish_soni:
+            return 100
+        return round(self.yechgan_soni * 100 / self.urinish_soni)
+
+    @property
+    def ovoz(self) -> int:
+        """Yakuniy ovoz: like minus dislike. Saralashda ishlatiladi."""
+        return self.like_soni - self.dislike_soni
+
+
+def javob_normal(v: str) -> str:
+    """
+    Javobni solishtirishga tayyorlaydi.
+
+    Bola javobni xohlagan ko'rinishda yozadi: "12 sm", "12sm", "12 SM".
+    Uchalasi bir xil javob va uchalasi qabul qilinishi kerak — aks
+    holda to'g'ri yechgan bola "xato" degan javob oladi. Bu ilovadagi
+    eng jahl chiqaradigan holat bo'lardi: u to'g'ri bilardi, ilova
+    esa yo'q dedi.
+
+    Vergul NUQTAGA aylanadi: kasr ajratgichi klaviaturaga qarab ikki
+    xil chiqadi va "3,5" bilan "3.5" bir xil son. Minus belgisining
+    uch ko'rinishi ham bittaga keltiriladi (−, –, -).
+    """
+    v = unicodedata.normalize("NFKC", v or "").strip().lower()
+    v = v.replace(",", ".").replace("−", "-").replace("–", "-")
+    return re.sub(r"\s+", "", v)
+
+
+class MasalaUrinish(models.Model):
+    """
+    Kim qaysi masalani yechdi.
+
+    BIR ODAM — BIR QATOR. Takroriy urinish yangi qator yasamaydi va
+    sanoqni oshirmaydi: aks holda bitta odam bir masalani yigirma
+    marta ochib, "eng ko'p yechilgan" jadvalini o'ziga yozib olardi.
+
+    Qator BIRINCHI urinishning natijasini saqlaydi va keyin
+    o'zgarmaydi. Sabab: statistika "birinchi urinishda nechta odam
+    yecha oldi" degan savolga javob berishi kerak. Ikkinchi urinishda
+    hamma to'g'ri topadi — yechim allaqachon ochilgan bo'ladi.
+    """
+
+    masala = models.ForeignKey(
+        Masala, on_delete=models.CASCADE, related_name="urinishlar"
+    )
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="masala_urinishlari"
+    )
+    togri = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "masala_urinish"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["masala", "profile"], name="masala_bir_odam_bir_urinish"
+            )
+        ]
+
+
+class MasalaOvoz(models.Model):
+    """
+    Masalaga berilgan ovoz — like yoki dislike.
+
+    BIR ODAM — BIR OVOZ, lekin uni ALMASHTIRSA bo'ladi va QAYTARIB
+    OLSA ham bo'ladi (o'sha tugmani ikkinchi marta bosish). Avval
+    "tushunmadim" degan bola yechib bo'lgach fikrini o'zgartirishi
+    tabiiy va uni birinchi bosgan tugmasiga bog'lab qo'yish ma'nosiz.
+
+    Sanoqlar `Masala` da alohida ustunda turadi va shu yerdagi har
+    o'zgarish bilan birga yangilanadi (`masala.ovoz_ber`). Ikkita
+    haqiqat manbai xavfli ko'rinadi, lekin muqobili yomonroq:
+    ro'yxatdagi har masala uchun ikkita `COUNT` so'rovi.
+    """
+
+    LIKE = "like"
+    DISLIKE = "dislike"
+    TURLAR = [(LIKE, "Like"), (DISLIKE, "Dislike")]
+
+    masala = models.ForeignKey(
+        Masala, on_delete=models.CASCADE, related_name="ovozlar"
+    )
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="masala_ovozlari"
+    )
+    tur = models.CharField(max_length=8, choices=TURLAR)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "masala_ovoz"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["masala", "profile"], name="masala_bir_odam_bir_ovoz"
+            )
+        ]
+
+
+class MasalaMukofot(models.Model):
+    """
+    MUALLIFNI KUTAYOTGAN TANGA.
+
+    ─────────────────── NEGA ALOHIDA JADVAL ───────────────────
+
+    Tanga bu ilovada SERVERDA turmaydi: u mijozning progress
+    blobining ichida, kurs bo'yicha ajratilgan holda yotadi
+    (`Progress.state`). Ya'ni serverning "falonchiga 20 tanga qo'sh"
+    deydigan joyi yo'q.
+
+    Muallifga esa aynan shunday qilish kerak: uning masalasi
+    tasdiqlanganda va kimdir uni yechganda tanga beriladi — o'sha
+    paytda muallif ilovada bo'lmaydi.
+
+    Shuning uchun tanga shu yerda TO'PLANIB turadi va mijoz keyingi
+    kirishida uni bir marta olib ketadi. Olish ATOMAR: server
+    hisobni nolga tushiradi va o'sha songa nima berilganini
+    qaytaradi, mijoz esa shu sonni o'z hisobiga qo'shadi. Shu sabab
+    ikki qurilmadan bir vaqtda kirilsa ham tanga ikki marta
+    berilmaydi.
+    """
+
+    #: Masala tasdiqlanganda muallif oladigan tanga.
+    TASDIQ_TANGA = 50
+    #: Kimdir masalani TO'G'RI yechganda muallif oladigan tanga.
+    YECHILDI_TANGA = 5
+    #: Masalani to'g'ri yechgan odam oladigan tanga.
+    YECHGAN_TANGA = 10
+
+    profile = models.OneToOneField(
+        Profile, on_delete=models.CASCADE, related_name="masala_mukofoti"
+    )
+    #: Hali olinmagan tanga.
+    tanga = models.IntegerField(default=0)
+    #: Jami qancha yig'ilgani — ko'rsatish uchun, kamaymaydi.
+    jami = models.IntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "masala_mukofot"

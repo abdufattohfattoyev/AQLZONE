@@ -28,6 +28,23 @@ export const yolSozlama = () => "/sozlamalar";
  */
 export const yolQidiruv = () => "/qidiruv";
 
+/**
+ * Foydalanuvchi masalalari — kursdan TASHQARIDA.
+ *
+ * Masala sinf kodi bilan belgilanadi, lekin bo'lim biror kursga
+ * TEGISHLI emas: bir ekranda 1-sinf masalasi ham, 11-sinfniki ham
+ * turadi va odam ular orasida filtr bilan yuradi. `/kurs/...`
+ * ostiga qo'yilsa, manzilda tasodifiy sinf raqami qolib, ulashilgan
+ * havola "bu 9-sinf masalasi ekan" degan yolg'onni aytardi.
+ */
+export const yolMasalalar = () => "/masalalar";
+/** Yangi masala yozish. `<id>` dan OLDIN kelishi shart (App.tsx). */
+export const yolMasalaYangi = () => "/masalalar/yangi";
+/** O'z masalalarim — hamma holatda, rad sababi bilan. */
+export const yolMasalalarim = () => "/masalalar/menikilar";
+export const yolMasala = (id: number) => `/masalalar/${id}`;
+export const yolMasalaMuallif = (profilId: number) => `/masalalar/muallif/${profilId}`;
+
 /** Reyting — kim qancha yulduz yig'gan. Kursdan tashqarida: hammasi birga. */
 export const yolReyting = () => "/reyting";
 
