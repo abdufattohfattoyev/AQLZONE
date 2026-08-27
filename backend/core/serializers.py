@@ -174,7 +174,7 @@ class MasalaSerializer(serializers.Serializer):
     #: Yechim ham izohlanishi kerak — faqat javobni qayta yozish emas.
     MIN_YECHIM = 10
 
-    sinf = serializers.IntegerField(min_value=0, max_value=110)
+    sinf = serializers.IntegerField(min_value=0, max_value=201)
     matn = serializers.CharField(min_length=MIN_MATN, max_length=Masala.MAX_MATN)
     javob = serializers.CharField(min_length=1, max_length=Masala.MAX_JAVOB)
     yechim = serializers.CharField(min_length=MIN_YECHIM, max_length=Masala.MAX_YECHIM)
@@ -183,7 +183,10 @@ class MasalaSerializer(serializers.Serializer):
         # Kod kurslarnikiga mos bo'lishi kerak: 0–11 yoki 107–110.
         # Oraliqdagi son (masalan 55) hech qaysi kursga tushmaydi va
         # bunday masala ro'yxatda hech qachon ko'rinmasdi.
-        if 0 <= v <= 11 or 107 <= v <= 110:
+        #
+        # 200 va 201 — kurs dasturidan TASHQARIDAGI toifalar
+        # (`Masala.KATTALAR`, `Masala.OLIMPIADA`).
+        if 0 <= v <= 11 or 107 <= v <= 110 or v in Masala.KURSDAN_TASHQARI:
             return v
         raise serializers.ValidationError("sinf kodi noto'g'ri")
 

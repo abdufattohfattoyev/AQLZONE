@@ -33,7 +33,6 @@ import { sinfNomi } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import type { JavobNatija, Masala as MasalaTur, Ovoz } from "../lib/masala";
 import { kelasiOvoz, sanoqniHisobla } from "../lib/masalaOvoz";
-import { useProgress } from "../lib/progress";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 
 interface Props {
@@ -44,7 +43,6 @@ interface Props {
 
 export function Masala({ id, onMuallif, onBack }: Props) {
   const ozStrelka = useOrqaga(onBack);
-  const { masalaTugadi } = useProgress();
 
   const [m, setM] = useState<MasalaTur | null>(null);
   const [xato, setXato] = useState(false);
@@ -79,9 +77,6 @@ export function Masala({ id, onMuallif, onBack }: Props) {
       const d = await MS.javobBer(m.id, javob.trim());
       setNatija(d);
       tebrat(d.togri ? "togri" : "xato");
-      // Tanga faqat BIRINCHI urinishda va faqat to'g'ri javobda
-      // keladi — buni server hal qiladi, biz shunchaki qo'shamiz.
-      if (d.tanga > 0) masalaTugadi(d.tanga, 1);
     } catch {
       setXato(true);
     } finally {
@@ -148,9 +143,17 @@ export function Masala({ id, onMuallif, onBack }: Props) {
         <Icon name="chevron" size={16} className="shrink-0 text-ink-dim" />
       </button>
 
-      {/* ---- masala matni ---- */}
+      {/* ---- masala matni va chizmasi ---- */}
       <div className="mt-2.5 rounded-clay bg-karta p-4 shadow-clay-sm">
         <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{m.matn}</p>
+        {/* Rasm matn bilan BIR kartada: u masalaning bir qismi,
+            alohida ilova emas. Geometriya masalasini chizmasiz
+            o'qib bo'lmaydi — "ABC uchburchakda..." degan matn
+            chizmasiz yarim masala. */}
+        {m.rasm && (
+          <img src={m.rasm} alt="" loading="lazy"
+            className="mt-3 max-h-[60vh] w-full rounded-2xl bg-track object-contain" />
+        )}
       </div>
 
       {/* ---- holat (faqat o'z masalasi) ---- */}
@@ -196,11 +199,6 @@ export function Masala({ id, onMuallif, onBack }: Props) {
           {!natija.togri && (
             <p className="mt-1 text-[13px] text-ink-soft">
               {t("masalaTogriJavob", { javob: togriJavob })}
-            </p>
-          )}
-          {natija.tanga > 0 && (
-            <p className="mt-1 text-[13px] text-brand-gold">
-              {t("masalaTanga", { n: natija.tanga })}
             </p>
           )}
         </div>

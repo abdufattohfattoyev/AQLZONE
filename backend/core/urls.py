@@ -34,13 +34,11 @@ urlpatterns = [
     path("duel/<str:kod>/natija", views.duel_natija, name="duel-natija"),
     path("duel/<str:kod>/yana", views.duel_yana, name="duel-yana"),
 
-    # Foydalanuvchi masalalari. Tartib muhim: harfli manzillar
-    # (`menikilar`, `mukofot`) `<int:pk>` dan oldin turishi shart emas
-    # — `int` ular bilan to'qnashmaydi — lekin o'qishga qulay bo'lsin
-    # deb baribir yuqorida turadi.
+    # Foydalanuvchi masalalari. Harfli manzillar (`menikilar`)
+    # `<int:pk>` dan oldin turishi shart emas — `int` ular bilan
+    # to'qnashmaydi — lekin o'qishga qulay bo'lsin deb yuqorida turadi.
     path("masalalar", views.masalalar, name="masalalar"),
     path("masalalar/menikilar", views.masalalarim, name="masalalarim"),
-    path("masalalar/mukofot", views.masala_mukofot, name="masala-mukofot"),
     path("masalalar/muallif/<int:pk>", views.masala_muallif, name="masala-muallif"),
     path("masalalar/<int:pk>", views.masala_korish, name="masala-korish"),
     path("masalalar/<int:pk>/javob", views.masala_javob, name="masala-javob"),

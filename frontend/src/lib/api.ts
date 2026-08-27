@@ -120,13 +120,18 @@ async function post<T>(url: string, body: unknown, auth = true): Promise<T> {
  * bo'lganini yozadi.
  */
 export async function sorov<T>(url: string, tana?: unknown): Promise<T> {
+  // `FormData` — fayl bilan yuborilgan so'rov. Unga `Content-Type`
+  // QO'YILMAYDI: brauzer uni o'zi yozadi va ichiga chegara belgisini
+  // (`boundary`) qo'shadi. Qo'lda "multipart/form-data" deb yozsak,
+  // chegara tushib qoladi va server so'rovni umuman o'qiy olmaydi.
+  const fayl = typeof FormData !== "undefined" && tana instanceof FormData;
   const r = await fetch(url, {
     method: tana === undefined ? "GET" : "POST",
     headers: {
-      ...(tana === undefined ? {} : { "Content-Type": "application/json" }),
+      ...(tana === undefined || fayl ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    ...(tana === undefined ? {} : { body: JSON.stringify(tana) }),
+    ...(tana === undefined ? {} : { body: fayl ? (tana as FormData) : JSON.stringify(tana) }),
   });
   if (!r.ok) {
     // Kodi xabarga qo'shiladi: chaqiruvchi 429 (kunlik chegara) va

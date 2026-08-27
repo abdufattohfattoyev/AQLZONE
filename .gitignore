@@ -21,6 +21,10 @@ __pycache__/
 # megabayt joy egallardi.
 ovoz-kesh/
 
+# Foydalanuvchi yuborgan rasmlar. Kod emas va git'ga tushmasligi
+# kerak: serverda ular volume ichida yotadi.
+media/
+
 # Arxivlar
 *.rar
 *.zip

@@ -32,7 +32,8 @@ from django.db.models import Count, Sum
 from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, parser_classes, permission_classes
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
@@ -42,6 +43,7 @@ from . import kanal as K
 from . import liga as L
 from . import masala as M
 from . import ovoz as O
+from . import rasm as R
 from .models import (
     BIZNING_KALIT, MAX_QIYMAT, Duel, Identity, LessonResult, LigaAzo, Masala,
     MasalaUrinish, Profile, Progress, Pupil, Session,
@@ -1317,6 +1319,9 @@ MASALA_TARTIB = {
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
+# Rasm bilan birga kelgan so'rov `multipart/form-data` bo'ladi.
+# JSON parser ham qoladi: rasmsiz yuborish avvalgidek ishlaydi.
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def masalalar(request):
     """
     Tasdiqlangan masalalar ro'yxati va yangi masala yuborish.
@@ -1339,7 +1344,23 @@ def masalalar(request):
             )
         s = MasalaSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        m = M.yubor(profil, **s.validated_data)
+
+        # RASM IXTIYORIY va u serializerdan TASHQARIDA ishlanadi.
+        #
+        # Sabab: `core/rasm.py` faylni ochib, qayta kodlaydi va shu
+        # yerda "bu fayl rasm emas" degan xato chiqishi mumkin. Uni
+        # serializer ichiga qo'ysak, xato matni DRF ning umumiy
+        # "invalid" javobiga aylanib, foydalanuvchi nima
+        # noto'g'riligini bilmasdi.
+        tayyor = None
+        xom = request.FILES.get("rasm") if hasattr(request, "FILES") else None
+        if xom:
+            try:
+                tayyor = R.tayyorla(xom)
+            except R.RasmXato as e:
+                return Response({"error": "rasm", "izoh": str(e)}, status=400)
+
+        m = M.yubor(profil, rasm=tayyor, **s.validated_data)
         return Response(
             {"ok": True, "masala": M.masala_json(m, profil)},
             status=status.HTTP_201_CREATED,
@@ -1500,7 +1521,7 @@ def masala_muallif(request, pk: int):
 @permission_classes([IsAuthenticated])
 def masalalarim(request):
     """
-    O'z masalalarim — HAMMA holatda, kutayotgan tanga bilan birga.
+    O'z masalalarim — HAMMA holatda.
 
     Rad etilganining sababi ham shu yerda ko'rinadi: odam nimani
     tuzatishni bilmasa, ikkinchi marta yozmaydi.
@@ -1514,22 +1535,7 @@ def masalalarim(request):
     )
     return Response({
         "masalalar": [M.masala_json(m, profil, ochiq=True) for m in qs],
-        "kutayotganTanga": M.kutayotgan_tanga(profil),
         "bugun": M.bugungi_soni(profil),
         "kunlikChegara": Masala.KUNLIK_CHEGARA,
     })
 
-
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def masala_mukofot(request):
-    """
-    Kutayotgan tangani beradi va hisobni nolga tushiradi.
-
-    Mijoz qaytgan sonni O'Z progressiga qo'shadi — tanga serverda
-    emas, progress blobining ichida turadi (`masala.py` ga qarang).
-    Shuning uchun javob faqat BIR MARTA keladi: takroriy so'rov 0
-    qaytaradi va bu ataylab.
-    """
-    profil = _profil_tanla(request)
-    return Response({"tanga": M.mukofotni_ol(profil)})

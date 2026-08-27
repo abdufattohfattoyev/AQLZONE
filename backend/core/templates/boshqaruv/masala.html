@@ -87,6 +87,16 @@ admin sababsiz rad etish yo'lini qidiradi.
           <div class="qism">
             <div class="qism-nom">Masala</div>
             <div class="qism-matn">{{ m.matn|linebreaksbr }}</div>
+            {# Rasm matn bilan BIR USTUNDA turadi: u masalaning bir
+               qismi, alohida ilova emas. Tasdiqlashda admin matn va
+               chizmani birga o'qishi kerak — chizmasiz "ABC
+               uchburchakda..." degan matn tekshirib bo'lmaydigan
+               yarim masala. #}
+            {% if m.rasm %}
+              <a href="{{ m.rasm.url }}" target="_blank" rel="noopener">
+                <img class="masala-rasm" src="{{ m.rasm.url }}" alt="Masala rasmi">
+              </a>
+            {% endif %}
           </div>
           <div class="qism">
             <div class="qism-nom">Javob</div>
@@ -153,6 +163,15 @@ admin sababsiz rad etish yo'lini qidiradi.
   }
   .qism-matn { font-size: 13.5px; line-height: 1.6; white-space: normal; word-break: break-word; }
   .qism-matn.javob { font-size: 17px; font-weight: 700; color: var(--sariq); }
+
+  /* Rasm CHEGARALANGAN balandlikda: to'liq o'lchamda ko'rsatilsa,
+     bitta masala butun ekranni egallab, navbatdagi qolganlarini
+     surib yuborardi. To'liq ko'rish uchun bosiladi. */
+  .masala-rasm {
+    display: block; margin-top: 10px; max-width: 100%; max-height: 260px;
+    border-radius: var(--r-kichik); border: 1px solid var(--chegara);
+    object-fit: contain; background: var(--fon);
+  }
 
   .sabab {
     background: rgba(251,113,133,.10); color: var(--qizil);

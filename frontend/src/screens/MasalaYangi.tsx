@@ -27,7 +27,7 @@
 import { useState } from "react";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { SINFLAR } from "../lib/masalaSinf";
+import { TOIFALAR } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import { xatoKodi } from "../lib/api";
 import { tebrat, useOrqaga } from "../lib/qobiq";
@@ -37,6 +37,8 @@ const MIN_MATN = 20;
 const MIN_YECHIM = 10;
 const MAX_MATN = 2000;
 const MAX_YECHIM = 4000;
+/** Rasm hajmi chegarasi — server bilan bir xil (`MASALA_RASM_MAX`). */
+const MAX_RASM = 6 * 1024 * 1024;
 
 interface Props {
   onYuborildi: () => void;
@@ -45,7 +47,15 @@ interface Props {
 
 export function MasalaYangi({ onYuborildi, onBack }: Props) {
   const ozStrelka = useOrqaga(onBack);
-  const [sinf, setSinf] = useState<number>(SINFLAR[0]?.kod ?? 1);
+  // Standart tanlov — BIRINCHI SINF, "Kattalar uchun" emas.
+  // Kursdan tashqari toifalar ro'yxatning boshida turadi (ular u
+  // yerda ko'rinishi kerak), lekin masalalarning ko'pi maktab
+  // dasturiga tegishli va standart tanlov shuni aks ettirsin.
+  const [sinf, setSinf] = useState<number>(
+    TOIFALAR.find((x) => x.kursdan && x.kod > 0)?.kod ?? 1,
+  );
+  const [rasm, setRasm] = useState<File | null>(null);
+  const [rasmKor, setRasmKor] = useState("");
   const [matn, setMatn] = useState("");
   const [javob, setJavob] = useState("");
   const [yechim, setYechim] = useState("");
@@ -62,7 +72,7 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
     setXato("");
     try {
       await MS.yubor({
-        sinf, matn: matn.trim(), javob: javob.trim(), yechim: yechim.trim(),
+        sinf, matn: matn.trim(), javob: javob.trim(), yechim: yechim.trim(), rasm,
       });
       tebrat("yutuq");
       onYuborildi();
@@ -74,6 +84,31 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
     } finally {
       setKetmoqda(false);
     }
+  };
+
+  /**
+   * Rasm tanlandi.
+   *
+   * Hajm SHU YERDA ham tekshiriladi, garchi server ham tekshirsa
+   * ham: 8 MB li suratni yuborib, keyin "juda katta" degan javobni
+   * olish sekin internetda bir daqiqa vaqt oladi.
+   */
+  const rasmniTanla = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setXato("");
+    if (f.size > MAX_RASM) { setXato(t("masalaRasmKatta")); return; }
+    if (!f.type.startsWith("image/")) { setXato(t("masalaRasmXato")); return; }
+    setRasm(f);
+    // Ko'rinish uchun vaqtinchalik manzil. Eskisi bo'sh joyni
+    // egallab qolmasin — u qo'lda bo'shatiladi.
+    setRasmKor((eski) => { if (eski) URL.revokeObjectURL(eski); return URL.createObjectURL(f); });
+  };
+
+  const rasmniOchir = () => {
+    if (rasmKor) URL.revokeObjectURL(rasmKor);
+    setRasm(null);
+    setRasmKor("");
   };
 
   return (
@@ -96,17 +131,13 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
       <p className="mt-4 mb-1.5 ml-1 text-[11px] tracking-widest text-ink-soft uppercase">
         {t("masalaQaysiSinf")}
       </p>
-      <div className="flex gap-1.5 overflow-x-auto pb-1
-                      [-ms-overflow-style:none] [scrollbar-width:none]
-                      [&::-webkit-scrollbar]:hidden">
-        {SINFLAR.map((s) => (
-          <button key={s.kod} type="button" onClick={() => setSinf(s.kod)}
-            className={`clay-press shrink-0 rounded-full px-3 py-1.5 text-[12px] ${
-              sinf === s.kod ? "bg-brand-blue text-white" : "bg-karta text-ink-dim shadow-clay-sm"}`}>
-            {s.nom}
-          </button>
-        ))}
-      </div>
+      {/* Ikki guruh AJRATILGAN: kursdan tashqari toifalar bitta
+          uzun tasmada sinflar bilan aralashib ketsa, ular
+          "yigirmanchi sinf" kabi ko'rinardi. */}
+      <Guruh nom={t("masalaKursdanTashqari")}
+        lar={TOIFALAR.filter((x) => !x.kursdan)} joriy={sinf} on={setSinf} />
+      <Guruh nom={t("masalaSinflar")}
+        lar={TOIFALAR.filter((x) => x.kursdan)} joriy={sinf} on={setSinf} />
 
       <Maydon
         nom={t("masalaMatni")} izoh={t("masalaMatniIzoh")}
@@ -136,6 +167,35 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
         min={MIN_YECHIM} yetarli={yechimYetarli}
       />
 
+      {/* ---- rasm ----
+          YECHIMDAN KEYIN turadi va bu ataylab: rasm ixtiyoriy, matn
+          esa majburiy. Yuqorida tursa, rasmi yo'q odam uni majburiy
+          deb o'ylab, masalani umuman yozmay qo'yardi. */}
+      <p className="mt-4 mb-1.5 ml-1 text-[11px] tracking-widest text-ink-soft uppercase">
+        {t("masalaRasm")}
+      </p>
+      {rasmKor ? (
+        <div className="rounded-clay bg-karta p-3 shadow-clay-sm">
+          <img src={rasmKor} alt="" className="max-h-64 w-full rounded-2xl
+                                               bg-track object-contain" />
+          <button type="button" onClick={rasmniOchir}
+            className="clay-press mt-2 w-full rounded-clay bg-track py-2 text-[12.5px]
+                       text-ink-soft">
+            {t("masalaRasmOchir")}
+          </button>
+        </div>
+      ) : (
+        <label className="clay-press flex w-full cursor-pointer items-center gap-2.5
+                          rounded-clay bg-karta px-3.5 py-3 shadow-clay-sm">
+          <Icon name="pie" size={17} className="shrink-0 text-ink-dim" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13.5px]">{t("masalaRasmTanla")}</span>
+            <span className="block text-[11px] text-ink-dim">{t("masalaRasmIzoh")}</span>
+          </span>
+          <input type="file" accept="image/*" className="hidden" onChange={rasmniTanla} />
+        </label>
+      )}
+
       {xato && (
         <p className="mt-3 rounded-clay bg-brand-red/15 px-3.5 py-2.5 text-[12.5px] text-brand-red">
           {xato}
@@ -153,6 +213,32 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
         {ketmoqda ? t("yuklanyapti") : t("masalaYubor")}
       </button>
     </div>
+  );
+}
+
+/** Bitta toifa guruhi — sarlavha va chiplar tasmasi. */
+function Guruh({ nom, lar, joriy, on }: {
+  nom: string;
+  lar: { kod: number; nom: string }[];
+  joriy: number;
+  on: (kod: number) => void;
+}) {
+  if (!lar.length) return null;
+  return (
+    <>
+      <p className="mt-2 mb-1 ml-1 text-[11px] text-ink-dim">{nom}</p>
+      <div className="flex gap-1.5 overflow-x-auto pb-1
+                      [-ms-overflow-style:none] [scrollbar-width:none]
+                      [&::-webkit-scrollbar]:hidden">
+        {lar.map((x) => (
+          <button key={x.kod} type="button" onClick={() => on(x.kod)}
+            className={`clay-press shrink-0 rounded-full px-3 py-1.5 text-[12px] ${
+              joriy === x.kod ? "bg-brand-blue text-white" : "bg-karta text-ink-dim shadow-clay-sm"}`}>
+            {x.nom}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 

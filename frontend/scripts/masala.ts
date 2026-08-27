@@ -87,18 +87,28 @@ tekshir("nol ustidan olib tashlansa manfiy bo'lmaydi", { like: 0, dislike: 0 },
 
 /* ------------------------------------------------------------- sinflar */
 
-tekshir("sinf ro'yxati bo'sh emas", true, S.SINFLAR.length > 10);
+tekshir("toifalar ro'yxati bo'sh emas", true, S.TOIFALAR.length > 10);
 
 // Server FAQAT shu kodlarni qabul qiladi (`MasalaSerializer.validate_sinf`).
-// Ro'yxatda boshqa kod bo'lsa, o'sha sinfga yozilgan masala 400
+// Ro'yxatda boshqa kod bo'lsa, o'sha toifaga yozilgan masala 400
 // bilan rad etilardi — va buni faqat yozib ko'rgan odam bilardi.
-const yaroqli = (k: number) => (k >= 0 && k <= 11) || (k >= 107 && k <= 110);
-const yomon = S.SINFLAR.filter((s) => !yaroqli(s.kod));
-tekshir("hamma sinf kodi server qabul qiladigan oraliqda", [],
+const yaroqli = (k: number) =>
+  (k >= 0 && k <= 11) || (k >= 107 && k <= 110) || k === S.KATTALAR || k === S.OLIMPIADA;
+const yomon = S.TOIFALAR.filter((s) => !yaroqli(s.kod));
+tekshir("hamma toifa kodi server qabul qiladigan oraliqda", [],
   yomon.map((s) => `${s.nom}=${s.kod}`));
 
 tekshir("kodlar takrorlanmaydi",
-  S.SINFLAR.length, new Set(S.SINFLAR.map((s) => s.kod)).size);
+  S.TOIFALAR.length, new Set(S.TOIFALAR.map((s) => s.kod)).size);
+
+// Kursdan tashqari toifalar ENG BOSHIDA turishi kerak: ular o'n
+// oltita sinfning ostida qolsa, faqat oxirigacha surgan odam
+// ko'rardi — ya'ni deyarli hech kim.
+tekshir("kursdan tashqari toifalar boshida", [false, false],
+  S.TOIFALAR.slice(0, 2).map((x) => x.kursdan));
+tekshir("kattalar toifasi bor", true, S.TOIFALAR.some((x) => x.kod === S.KATTALAR));
+tekshir("olimpiada toifasi bor", true, S.TOIFALAR.some((x) => x.kod === S.OLIMPIADA));
+tekshir("kattalar nomi bo'sh emas", true, S.sinfNomi(S.KATTALAR).length > 3);
 tekshir("noma'lum kod yiqilmaydi", "999", S.sinfNomi(999));
 tekshir("ma'lum kod nom beradi", true, S.sinfNomi(1).length > 0);
 

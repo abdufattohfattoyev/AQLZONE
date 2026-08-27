@@ -57,7 +57,16 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
         )}
       </div>
 
-      <p className="mt-2 line-clamp-3 text-[13.5px] leading-snug">{m.matn}</p>
+      {/* Rasm bo'lsa u matn bilan YONMA-YON turadi, ustida emas:
+          ro'yxatda karta baland bo'lib ketsa, bir ekranda ikkitasi
+          qolib, tanlash uchun uzoq surish kerak bo'lardi. */}
+      <div className="mt-2 flex items-start gap-2.5">
+        <p className="line-clamp-3 min-w-0 flex-1 text-[13.5px] leading-snug">{m.matn}</p>
+        {m.rasm && (
+          <img src={m.rasm} alt="" loading="lazy"
+            className="size-14 shrink-0 rounded-2xl bg-track object-cover" />
+        )}
+      </div>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-dim">
         {muallifBilan && (

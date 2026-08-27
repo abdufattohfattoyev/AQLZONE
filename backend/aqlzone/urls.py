@@ -16,6 +16,7 @@ from django.urls import include, path
 
 from core import boshqaruv
 from core.views import health
+from core.media import media_urlpatterns
 from core.spa import spa_urlpatterns
 
 urlpatterns = [
@@ -33,5 +34,15 @@ urlpatterns = [
     path("boshqaruv/masalalar", boshqaruv.masalalar, name="boshqaruv-masalalar"),
     # Botdagi havola: /boshqaruv/havola/<imzolangan kod>
     path("boshqaruv/havola/<str:kod>", boshqaruv.havola, name="boshqaruv-havola"),
+
+    # Foydalanuvchi yuborgan rasmlar. SPA dan OLDIN turishi shart —
+    # aks holda React ilova bu manzilni ham o'ziga olib, rasm o'rniga
+    # sahifa qaytarardi.
+    #
+    # Faylni Django beradi, nginx emas: oldindagi nginx boshqa
+    # loyihaga tegishli va uning sozlamasiga tegmaslik kerak
+    # (`docker-compose.yml` dagi izohga qarang). Rasmlar soni oz va
+    # hajmi kichik — bu yuk sezilmaydi.
+    *media_urlpatterns(),
     *spa_urlpatterns(),
 ]

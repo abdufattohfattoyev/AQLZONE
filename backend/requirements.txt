@@ -11,3 +11,10 @@ djangorestframework>=3.15
 # u bitta oqimda ishlaydi va Django hujjatining o'zi uni ochiq
 # internetda ishlatmaslikni aytadi.
 gunicorn>=23.0
+
+# Rasm QAYTA YOZISH uchun (`core/rasm.py`). Faqat "rasmni ko'rsatish"
+# uchun emas — kelgan fayl haqiqatan rasmmi degan yagona ishonchli
+# tekshiruv shu: uni ochib, qaytadan kodlash. Ustiga EXIF ham
+# tushib qoladi, ya'ni bolaning suratidagi GPS koordinatasi saytga
+# chiqib ketmaydi.
+Pillow>=11.0

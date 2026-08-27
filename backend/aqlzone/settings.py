@@ -257,6 +257,28 @@ AISHA_TEZLIK_MAQTOV = env("AISHA_TEZLIK_MAQTOV", "0.8")
 OVOZ_KESH = env("OVOZ_KESH", str(Path("/data") / "ovoz") if Path("/data").exists()
                 else str(BASE_DIR / "ovoz-kesh"))
 
+# ------------------------------------------------------ foydalanuvchi fayllari
+#
+# Masalaga biriktirilgan rasmlar shu yerda yotadi. Ovoz keshi kabi u ham
+# volume ichida: konteyner qayta qurilganda foydalanuvchi yuborgan rasm
+# yo'qolib ketmasligi kerak.
+MEDIA_ROOT = env("MEDIA_ROOT", str(Path("/data") / "media") if Path("/data").exists()
+                 else str(BASE_DIR / "media"))
+MEDIA_URL = "/media/"
+
+#: Masala rasmining eng katta hajmi (bayt) — yuborishdan OLDIN tekshiriladi.
+#:
+#: 6 MB — zamonaviy telefon surati shu atrofda. Undan kattasi deyarli
+#: har doim tasodif: odam video yoki hujjat yuborayotgan bo'ladi.
+MASALA_RASM_MAX = int(env("MASALA_RASM_MAX", "6291456"))
+
+#: Saqlashdan oldin rasm shu o'lchamga qadar kichraytiriladi (piksel).
+#:
+#: 1600 — telefon ekranida ham, kompyuterda ham yetarli. Original
+#: 4000 piksellik surat esa o'n barobar ko'p joy egallab, sekin
+#: internetda ochilmasdi.
+MASALA_RASM_OLCHAM = 1600
+
 # Bir kunda eng ko'pi shuncha BELGI yangidan yasalishi mumkin.
 #
 # Bu pulni himoya qiladi. Butun kichkintoylar lug'ati ~700 belgi, ya'ni

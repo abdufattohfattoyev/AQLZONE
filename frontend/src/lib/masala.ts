@@ -9,7 +9,7 @@
  * ─────────────────── QOIDALAR SERVERDA ───────────────────
  *
  * Bu yerda hech qanday qaror qabul qilinmaydi. Yechim ochiqmi,
- * ovoz berish mumkinmi, tanga qancha — hammasini server aytadi va
+ * ovoz berish mumkinmi, rasm yaroqlimi — hammasini server aytadi va
  * mijoz shuni ko'rsatadi. Sabab: mijoz kodini har kim o'zgartira
  * oladi, ya'ni bu yerdagi tekshiruv himoya emas, faqat qulaylik.
  */
@@ -48,14 +48,8 @@ export interface Masala {
   javob?: string;
   /** Faqat muallifning o'ziga va faqat rad etilganda keladi. */
   radSababi?: string;
-  /**
-   * Shu masala muallifga qancha tanga keltirgani.
-   *
-   * FAQAT muallifning o'ziga keladi. Begonaga ko'rsatilsa, odamlar
-   * ko'p tanga keltirgan mavzuni nusxalardi — masala o'ylab
-   * topishga emas.
-   */
-  muallifTanga?: number;
+  /** Biriktirilgan rasm manzili. Yo'q bo'lsa bo'sh satr. */
+  rasm: string;
   /** Shu odam bergan ovoz. */
   ovozim?: Ovoz;
   /** Urinib ko'rilganmi — ro'yxatda "yechilgan" belgisi uchun. */
@@ -75,11 +69,10 @@ export type Tartib = "yangi" | "zor" | "qiyin" | "koplik";
 
 export interface JavobNatija {
   togri: boolean;
-  /** Shu odamning BIRINCHI urinishimi — tanga faqat shunda beriladi. */
+  /** Shu odamning BIRINCHI urinishimi — statistika faqat shunda o'zgaradi. */
   birinchi: boolean;
   yechim: string;
   javob: string;
-  tanga: number;
   urinishSoni: number;
   yechganSoni: number;
   birinchiTogri: boolean;
@@ -94,8 +87,6 @@ export interface MuallifSahifa {
 
 export interface Menikilar {
   masalalar: Masala[];
-  /** Hali olinmagan tanga — muallif mukofoti. */
-  kutayotganTanga: number;
   bugun: number;
   kunlikChegara: number;
 }
@@ -134,18 +125,26 @@ export interface YangiMasala {
   matn: string;
   javob: string;
   yechim: string;
+  /** Ixtiyoriy chizma. Berilsa so'rov `multipart/form-data` bo'ladi. */
+  rasm?: File | null;
 }
 
-export const yubor = (m: YangiMasala): Promise<{ ok: true; masala: Masala }> =>
-  sorov(`/api/v1/masalalar`, bilanProfil({ ...m }));
-
 /**
- * Kutayotgan tangani oladi.
+ * Yangi masala yuboradi.
  *
- * Server hisobni NOLGA tushiradi va nima tushirganini qaytaradi —
- * ya'ni javob faqat bir marta keladi. Shuning uchun qaytgan sonni
- * mijoz DARHOL o'z progressiga qo'shishi shart: yo'qotilsa, u tanga
- * butunlay yo'qoladi.
+ * Rasm bo'lsa `FormData`, bo'lmasa JSON. Ikkalasi ham bitta
+ * endpointga boradi — server ikkalasini ham qabul qiladi. Har doim
+ * `FormData` yuborish ham mumkin edi, lekin unda rasmsiz oddiy
+ * so'rov ham katta va o'qishga qiyin bo'lardi.
  */
-export const mukofotniOl = (): Promise<{ tanga: number }> =>
-  sorov(`/api/v1/masalalar/mukofot`, bilanProfil({}));
+export function yubor(m: YangiMasala): Promise<{ ok: true; masala: Masala }> {
+  const { rasm, ...qolgan } = m;
+  if (!rasm) return sorov(`/api/v1/masalalar`, bilanProfil({ ...qolgan }));
+
+  const f = new FormData();
+  for (const [k, v] of Object.entries(bilanProfil({ ...qolgan }))) {
+    f.append(k, String(v));
+  }
+  f.append("rasm", rasm);
+  return sorov(`/api/v1/masalalar`, f);
+}

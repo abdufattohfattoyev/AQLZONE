@@ -16,6 +16,7 @@ import time
 from unittest.mock import patch
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.core import signing
@@ -31,9 +32,8 @@ from . import masala as MS
 from . import reklama as R
 from . import views
 from .models import (
-    Duel, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaMukofot,
-    MasalaOvoz, MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul,
-    Session,
+    Duel, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaOvoz,
+    MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul, Session,
 )
 
 BOT = "123456:TEST_TOKEN_FAQAT_SINOV_UCHUN"
@@ -3743,7 +3743,6 @@ class MasalaTest(TestCase):
         self.assertTrue(d["togri"])
         self.assertFalse(d["birinchi"])
         self.assertFalse(d["birinchiTogri"])
-        self.assertEqual(d["tanga"], 0)
 
         m.refresh_from_db()
         self.assertEqual(m.urinish_soni, 1)
@@ -3756,104 +3755,6 @@ class MasalaTest(TestCase):
         self.assertEqual(m.qiyinlik, 100)
         m.urinish_soni, m.yechgan_soni = 4, 1
         self.assertEqual(m.qiyinlik, 25)
-
-    # --------------------------------------------------------------- tanga
-
-    def test_togri_yechganda_tanga_ikki_tomonga_ketadi(self):
-        m = self.masala_yasa()
-        r = self.client.post(
-            f"/api/v1/masalalar/{m.pk}/javob", {"javob": "12"},
-            content_type="application/json", **self.auth(self.yechuvchi_token),
-        )
-        # Yechgan odam DARHOL oladi — u ekran oldida turibdi.
-        self.assertEqual(r.json()["tanga"], MasalaMukofot.YECHGAN_TANGA)
-        # Muallif esa hozir ilovada emas: uniki to'planib turadi.
-        self.assertEqual(
-            MS.kutayotgan_tanga(self.muallif), MasalaMukofot.YECHILDI_TANGA
-        )
-
-    def test_oz_masalasini_yechish_muallifga_tanga_bermaydi(self):
-        m = self.masala_yasa()
-        self.client.post(
-            f"/api/v1/masalalar/{m.pk}/javob", {"javob": "12"},
-            content_type="application/json", **self.auth(self.muallif_token),
-        )
-        # Aks holda bu tekin tanga chiqaradigan tugma bo'lardi.
-        self.assertEqual(MS.kutayotgan_tanga(self.muallif), 0)
-
-    def test_yaxshi_masala_kop_masaladan_foydaliroq(self):
-        """
-        TANGA NISBATI — bo'limning eng nozik qarori.
-
-        Avval tasdiqlash 50, yechilgani 5 edi va bu TESKARI ishlardi:
-        kunlik chegaradagi beshta bo'sh masala 250 tanga berardi (hech
-        kim yechmasa ham), bitta yaxshi masala esa 14 kishi yechganda
-        atigi 120. Ya'ni ilova ko'p yozishni yaxshi yozishdan ikki
-        barobar ko'proq mukofotlardi — narxini esa admin o'z vaqti
-        bilan to'lardi.
-
-        Sinov shu nisbatni qo'riqlaydi: sonlar o'zgartirilsa va
-        muvozanat yana teskari bo'lsa, u darhol qizaradi.
-        """
-        kop = Masala.KUNLIK_CHEGARA * MasalaMukofot.TASDIQ_TANGA
-        yaxshi = MasalaMukofot.TASDIQ_TANGA + 14 * MasalaMukofot.YECHILDI_TANGA
-        self.assertGreater(
-            yaxshi, kop,
-            f"bitta yaxshi masala ({yaxshi}) kunlik bo'sh masalalardan "
-            f"({kop}) ko'proq berishi kerak",
-        )
-
-    def test_bitta_masaladan_keladigan_tanga_chegaralangan(self):
-        """
-        Tanga sarflanadigan joy oz — cheksiz oqim uni qadrsiz qiladi.
-
-        Chegara `muallif_tanga` da yig'ilgan songa qaraydi, yechganlar
-        sonidan qayta hisoblanmaydi.
-        """
-        m = self.masala_yasa()
-        chegara = MasalaMukofot.YECHILDI_CHEGARA
-        birlik = MasalaMukofot.YECHILDI_TANGA
-
-        # Chegaraga yetguncha har yechuvchi to'liq beradi.
-        for i in range(chegara // birlik):
-            MS.muallifga_ber(m)
-            self.assertEqual(m.muallif_tanga, (i + 1) * birlik)
-
-        # Chegaradan keyin — hech narsa.
-        self.assertEqual(MS.muallifga_ber(m), 0)
-        self.assertEqual(m.muallif_tanga, chegara)
-        self.assertEqual(MS.kutayotgan_tanga(self.muallif), chegara)
-
-    def test_muallif_tanga_faqat_ozida_korinadi(self):
-        m = self.masala_yasa()
-        MS.muallifga_ber(m)
-
-        oz = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.muallif_token))
-        self.assertEqual(oz.json()["muallifTanga"], MasalaMukofot.YECHILDI_TANGA)
-
-        # Begona odam bu sonni ko'rmaydi: u ko'rinsa, odamlar ko'p
-        # tanga keltirgan mavzuni nusxalardi.
-        begona = self.client.get(
-            f"/api/v1/masalalar/{m.pk}", **self.auth(self.yechuvchi_token)
-        )
-        self.assertNotIn("muallifTanga", begona.json())
-
-    def test_tasdiqlash_muallifga_tanga_yozadi_va_takrorlanmaydi(self):
-        m = self.masala_yasa(holat=Masala.KUTMOQDA)
-        MS.tasdiqla(m)
-        self.assertEqual(MS.kutayotgan_tanga(self.muallif), MasalaMukofot.TASDIQ_TANGA)
-        # Admin bir tugmani ikki marta bosishi odatiy hol.
-        MS.tasdiqla(m)
-        self.assertEqual(MS.kutayotgan_tanga(self.muallif), MasalaMukofot.TASDIQ_TANGA)
-
-    def test_mukofot_faqat_bir_marta_beriladi(self):
-        MS.mukofot_qosh(self.muallif, 30)
-        r = self.client.post("/api/v1/masalalar/mukofot", **self.auth(self.muallif_token))
-        self.assertEqual(r.json()["tanga"], 30)
-        # Ikkinchi so'rov nol qaytaradi — mijoz ikki marta yozib
-        # yuborsa ham tanga ikkilanmaydi.
-        r = self.client.post("/api/v1/masalalar/mukofot", **self.auth(self.muallif_token))
-        self.assertEqual(r.json()["tanga"], 0)
 
     # -------------------------------------------------------------- ovozlar
 
@@ -3934,6 +3835,103 @@ class MasalaTest(TestCase):
     def test_tokensiz_kirish_taqiqlanadi(self):
         self.assertEqual(self.client.get("/api/v1/masalalar").status_code, 401)
 
+    # ---------------------------------------------------------------- rasm
+
+    def rasm_fayl(self, *, kenglik=2400, balandlik=1800, format="JPEG"):
+        """Haqiqiy rasm yasaydi — soxta bayt emas."""
+        from io import BytesIO
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        img = Image.new("RGB", (kenglik, balandlik), (200, 40, 40))
+        xotira = BytesIO()
+        img.save(xotira, format=format)
+        turi = "image/jpeg" if format == "JPEG" else f"image/{format.lower()}"
+        return SimpleUploadedFile("surat." + format.lower(), xotira.getvalue(), turi)
+
+    def yubor_rasm(self, token: str, fayl):
+        """Rasm bilan yuborish — `multipart/form-data`."""
+        return self.client.post("/api/v1/masalalar", {
+            "sinf": 5,
+            "matn": "ABC uchburchakda AB = 5, BC = 12. AC ni toping.",
+            "javob": "13",
+            "yechim": "Pifagor: 5² + 12² = 169, √169 = 13.",
+            "rasm": fayl,
+        }, **self.auth(token))
+
+    def test_rasm_qabul_qilinadi_va_kichraytiriladi(self):
+        from PIL import Image
+
+        r = self.yubor_rasm(self.muallif_token, self.rasm_fayl())
+        self.assertEqual(r.status_code, 201, r.content)
+
+        m = Masala.objects.get(pk=r.json()["masala"]["id"])
+        self.assertTrue(m.rasm)
+        # Saqlashdan oldin qayta kodlanadi: bitta format va cheklangan
+        # o'lcham. Original 2400 piksel edi.
+        with Image.open(m.rasm.path) as img:
+            self.assertEqual(img.format, "WEBP")
+            self.assertLessEqual(max(img.size), settings.MASALA_RASM_OLCHAM)
+
+    def test_rasm_manzili_javobda_keladi(self):
+        r = self.yubor_rasm(self.muallif_token, self.rasm_fayl(kenglik=600, balandlik=400))
+        self.assertTrue(r.json()["masala"]["rasm"].startswith("/media/"))
+
+    def test_rasmsiz_yuborish_avvalgidek_ishlaydi(self):
+        r = self.yubor(self.muallif_token)
+        self.assertEqual(r.status_code, 201, r.content)
+        self.assertEqual(r.json()["masala"]["rasm"], "")
+
+    def test_rasm_bolmagan_fayl_rad_etiladi(self):
+        """
+        Fayl turiga ISHONILMAYDI — u ochib ko'riladi.
+
+        Mijoz `Content-Type` ni istalgan qiymatga qo'ya oladi, ya'ni
+        u himoya emas. Yagona ishonchli tekshiruv — faylni ochish.
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        soxta = SimpleUploadedFile("rasm.jpg", b"bu rasm emas, oddiy matn", "image/jpeg")
+        r = self.yubor_rasm(self.muallif_token, soxta)
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.json()["error"], "rasm")
+        # Xato matni foydalanuvchiga ko'rsatiladi — u nima
+        # noto'g'riligini bilishi kerak.
+        self.assertIn("rasm emas", r.json()["izoh"])
+
+    def test_juda_katta_rasm_rad_etiladi(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        katta = SimpleUploadedFile(
+            "katta.jpg", b"x" * (settings.MASALA_RASM_MAX + 1), "image/jpeg",
+        )
+        r = self.yubor_rasm(self.muallif_token, katta)
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("katta", r.json()["izoh"])
+
+    def test_rasm_tasdiqdan_oldin_royxatda_korinmaydi(self):
+        """Rasm ham matn kabi navbatda turadi — u masalaning bir qismi."""
+        self.yubor_rasm(self.muallif_token, self.rasm_fayl(kenglik=400, balandlik=300))
+        r = self.client.get("/api/v1/masalalar", **self.auth(self.yechuvchi_token))
+        self.assertEqual(r.json()["masalalar"], [])
+
+    # ------------------------------------------------- kursdan tashqari toifa
+
+    def test_kattalar_va_olimpiada_toifasi(self):
+        """
+        Bo'limning eng qimmatli masalalari ko'pincha hech qaysi
+        sinfga to'g'ri kelmaydi. Ular uchun ikkita alohida kod bor.
+        """
+        for kod in (Masala.KATTALAR, Masala.OLIMPIADA):
+            r = self.yubor(self.muallif_token, sinf=kod)
+            self.assertEqual(r.status_code, 201, f"{kod}: {r.content}")
+            self.assertEqual(r.json()["masala"]["sinf"], kod)
+
+    def test_oraliqdagi_notogri_kod_rad_etiladi(self):
+        # 150 hech qaysi kursga ham, toifaga ham tushmaydi.
+        self.assertEqual(self.yubor(self.muallif_token, sinf=150).status_code, 400)
+        self.assertEqual(self.yubor(self.muallif_token, sinf=202).status_code, 400)
+
 
 @override_settings(BOSHQARUV_YONIQ=True, ADMIN_TG=[ADMIN_ID])
 class MasalaBoshqaruvTest(TestCase):
@@ -3973,8 +3971,6 @@ class MasalaBoshqaruvTest(TestCase):
         self.assertEqual(r.status_code, 302)
         self.m.refresh_from_db()
         self.assertEqual(self.m.holat, Masala.TASDIQ)
-        self.assertEqual(MasalaMukofot.objects.get(profile=self.profil).tanga,
-                         MasalaMukofot.TASDIQ_TANGA)
 
     def test_sababsiz_rad_etib_bolmaydi(self):
         r = self.client.post("/boshqaruv/masalalar", {

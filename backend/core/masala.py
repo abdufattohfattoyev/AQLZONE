@@ -2,8 +2,8 @@
 Masalalar bo'limining mantig'i.
 
 `views.py` da emas, alohida faylda — chunki bu yerda qoidalar bor va
-ular sinovdan HTTP siz o'tishi kerak: kim yechimni ko'ra oladi, ovoz
-qanday almashadi, tanga qachon oqadi.
+ular sinovdan HTTP siz o'tishi kerak: kim yechimni ko'ra oladi va
+ovoz qanday almashadi.
 
 ────────────────────────── UCH QOIDA ──────────────────────────
 
@@ -15,9 +15,12 @@ qanday almashadi, tanga qachon oqadi.
    nechta odam yecha oldi" degan savolga javob beradi. Ikkinchi
    urinishda hamma to'g'ri topadi — yechim allaqachon ochiq.
 
-3. TANGA IKKI TOMONGA. Yechgan bola ham, MASALA MUALLIFI ham oladi.
-   Faqat yechganga bersak, odam masala yozish uchun emas, faqat
-   yechish uchun kirardi va bo'lim bir hafta ichida bo'shab qolardi.
+3. TANGA YO'Q. Bo'lim mukofot bilan emas, KO'RINISH bilan ishlaydi:
+   "14 kishi yechdi" degan son va muallif sahifasidagi o'quvchilar.
+   Tanga bir vaqt bor edi va u faqat noto'g'ri narsani mukofotlardi
+   — masala YOZISHNI, uning yaxshi bo'lishini emas. Ustiga u
+   tasdiqlash navbatini o'rtamiyona masalalar bilan to'ldirardi va
+   narxini admin o'z vaqti bilan to'lardi.
 """
 from __future__ import annotations
 
@@ -25,9 +28,7 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from .models import (
-    Masala, MasalaMukofot, MasalaOvoz, MasalaUrinish, Profile, javob_normal,
-)
+from .models import Masala, MasalaOvoz, MasalaUrinish, Profile, javob_normal
 
 
 # ------------------------------------------------------------------ ko'rinish
@@ -69,6 +70,10 @@ def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> d
         "like": masala.like_soni,
         "dislike": masala.dislike_soni,
         "createdAt": masala.created_at,
+        # Rasm manzili — bo'lmasa bo'sh satr, `null` emas. Mijozda
+        # `if (m.rasm)` bir xil ishlaydi va turi doim satr bo'lgani
+        # uchun tekshiruv ham soddaroq.
+        "rasm": masala.rasm.url if masala.rasm else "",
         # Yechim ochiqmi — mijoz shunga qarab tugma ko'rsatadi. Maydonning
         # O'ZI yo'qligiga qarab bilish ham mumkin edi, lekin u paytda
         # "yechim yozilmagan" bilan "yechim berilmadi" bir xil ko'rinardi.
@@ -81,10 +86,6 @@ def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> d
         # Rad etilganining sababini FAQAT muallifning o'zi ko'radi.
         if masala.holat == Masala.RAD:
             d["radSababi"] = masala.rad_sababi
-        # "Shu masala menga qancha keltirdi" — faqat o'ziga. Boshqaga
-        # ko'rsatish odamlarni ko'p tanga keltiradigan mavzuni
-        # nusxalashga undardi, masala o'ylab topishga emas.
-        d["muallifTanga"] = masala.muallif_tanga
     return d
 
 
@@ -112,11 +113,21 @@ def bugungi_soni(profile: Profile) -> int:
     return Masala.objects.filter(muallif=profile, created_at__gte=boshi).count()
 
 
-def yubor(profile: Profile, sinf: int, matn: str, javob: str, yechim: str) -> Masala:
-    """Yangi masala — navbatga tushadi, darhol ko'rinmaydi."""
+def yubor(
+    profile: Profile, sinf: int, matn: str, javob: str, yechim: str, rasm=None,
+) -> Masala:
+    """
+    Yangi masala — navbatga tushadi, darhol ko'rinmaydi.
+
+    Rasm shu yerda emas, KELISHDAN OLDIN tayyorlanadi
+    (`core/rasm.py`): u yerda fayl haqiqatan rasmligini tekshirish
+    va EXIF ni tashlash bor va u xato ko'tarishi mumkin — bu esa
+    saqlashdan oldin bo'lishi kerak.
+    """
     return Masala.objects.create(
         muallif=profile, sinf=sinf,
         matn=matn.strip(), javob=javob.strip(), yechim=yechim.strip(),
+        rasm=rasm or None,
         holat=Masala.KUTMOQDA,
     )
 
@@ -129,23 +140,19 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
     """
     Javobni tekshiradi va yechimni ochadi.
 
-    Natija: `{togri, birinchi, yechim, javob, tanga}`.
+    Natija: `{togri, birinchi, yechim, javob}`.
 
-    `birinchi` — shu odamning BIRINCHI urinishimi. Sanoqlar va tanga
-    faqat shunda o'zgaradi. Ikkinchi marta javob bergan odam yechimni
+    `birinchi` — shu odamning BIRINCHI urinishimi. Sanoqlar faqat
+    shunda o'zgaradi. Ikkinchi marta javob bergan odam yechimni
     baribir ko'radi (u allaqachon ochilgan), lekin statistikaga
-    tegmaydi.
-
-    Tanga ham faqat birinchi va faqat TO'G'RI javobda beriladi.
-    Yechganga darhol (u ekranda turibdi), muallifga esa hisobiga
-    to'planib boradi — u hozir ilovada emas.
+    tegmaydi — "nechta odam O'ZI yecha oldi" degan son halol
+    qolishi kerak.
     """
     togri = javob_normal(javob) == javob_normal(masala.javob)
     urinish, birinchi = MasalaUrinish.objects.get_or_create(
         masala=masala, profile=profile, defaults={"togri": togri},
     )
 
-    tanga = 0
     if birinchi:
         # Ikkala sanoq ham bitta so'rovda — o'qib-yozish orasida
         # boshqa urinish tushsa, sanoq yo'qolmasin.
@@ -154,12 +161,6 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
             yechgan_soni=F("yechgan_soni") + (1 if togri else 0),
         )
         masala.refresh_from_db(fields=["urinish_soni", "yechgan_soni"])
-        if togri:
-            tanga = MasalaMukofot.YECHGAN_TANGA
-            # Muallif o'z masalasini yechsa tanga OLMAYDI: aks holda
-            # bu tekin tanga chiqaradigan tugma bo'lardi.
-            if masala.muallif_id != profile.pk:
-                muallifga_ber(masala)
 
     return {
         "togri": togri,
@@ -169,7 +170,6 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
         # kerak — u aynan shu uchun keldi.
         "yechim": masala.yechim,
         "javob": masala.javob,
-        "tanga": tanga,
         "urinishSoni": masala.urinish_soni,
         "yechganSoni": masala.yechgan_soni,
         # Birinchi urinishning natijasi keyin o'zgarmaydi — mijoz
@@ -232,80 +232,16 @@ def ovozlarim(profile: Profile, idlar: list[int]) -> dict[int, str]:
     )
 
 
-# ---------------------------------------------------------------------- tanga
-
-
-def muallifga_ber(masala: Masala) -> int:
-    """
-    Masala yechilgani uchun muallifga tanga yozadi — CHEGARA bilan.
-
-    Bitta masala yechuvchilardan ko'pi bilan `YECHILDI_CHEGARA`
-    keltiradi. Chegara kerak, chunki tanga sarflanadigan joy oz
-    (`models.py` dagi izohga qarang): yuz kishi yechgan masala
-    chegarasiz ming tanga berardi va o'shanda tanganing o'zi ma'nosini
-    yo'qotardi.
-
-    Qancha berilgani `masala.muallif_tanga` da yig'ilib boradi va
-    yechganlar sonidan QAYTA hisoblanmaydi — aks holda narx yoki
-    chegara o'zgargan kuni eski masalalar ham qaytadan sanalib,
-    muallifga tekin tanga chiqib ketardi.
-    """
-    qolgan = MasalaMukofot.YECHILDI_CHEGARA - masala.muallif_tanga
-    beriladi = min(MasalaMukofot.YECHILDI_TANGA, max(0, qolgan))
-    if not beriladi:
-        return 0
-    Masala.objects.filter(pk=masala.pk).update(
-        muallif_tanga=F("muallif_tanga") + beriladi
-    )
-    masala.refresh_from_db(fields=["muallif_tanga"])
-    mukofot_qosh(masala.muallif, beriladi)
-    return beriladi
-
-
-def mukofot_qosh(profile: Profile, tanga: int) -> None:
-    """Muallifning kutayotgan hisobiga tanga qo'shadi."""
-    if tanga <= 0:
-        return
-    MasalaMukofot.objects.get_or_create(profile=profile)
-    MasalaMukofot.objects.filter(profile=profile).update(
-        tanga=F("tanga") + tanga, jami=F("jami") + tanga,
-    )
-
-
-@transaction.atomic
-def mukofotni_ol(profile: Profile) -> int:
-    """
-    Kutayotgan tangani beradi va hisobni nolga tushiradi.
-
-    ATOMAR bo'lishi shart: ikki qurilmadan bir vaqtda kirilganda
-    tanga ikki marta berilmasin. Shuning uchun avval `update` bilan
-    nolga tushiriladi va NIMA tushirilgani qaytariladi — o'qib, keyin
-    yozish emas.
-    """
-    row = MasalaMukofot.objects.select_for_update().filter(profile=profile).first()
-    if not row or row.tanga <= 0:
-        return 0
-    tanga = row.tanga
-    MasalaMukofot.objects.filter(pk=row.pk).update(tanga=0)
-    return tanga
-
-
-def kutayotgan_tanga(profile: Profile) -> int:
-    row = MasalaMukofot.objects.filter(profile=profile).first()
-    return row.tanga if row else 0
-
-
 # ------------------------------------------------------------------ tasdiqlash
 
 
 @transaction.atomic
 def tasdiqla(masala: Masala) -> None:
     """
-    Masalani ro'yxatga chiqaradi va muallifga tanga yozadi.
+    Masalani ro'yxatga chiqaradi.
 
-    Ikkinchi marta tasdiqlash tangani ikki marta bermaydi: holat
-    allaqachon `TASDIQ` bo'lsa hech narsa qilinmaydi. Admin bir
-    tugmani ikki marta bosishi mumkin va bu odatiy hol.
+    Ikkinchi marta tasdiqlash hech narsa qilmaydi: admin bir tugmani
+    ikki marta bosishi odatiy hol.
     """
     if masala.holat == Masala.TASDIQ:
         return
@@ -313,16 +249,12 @@ def tasdiqla(masala: Masala) -> None:
     masala.rad_sababi = ""
     masala.korilgan_at = timezone.now()
     masala.save(update_fields=["holat", "rad_sababi", "korilgan_at"])
-    mukofot_qosh(masala.muallif, MasalaMukofot.TASDIQ_TANGA)
 
 
 def rad_et(masala: Masala, sabab: str) -> None:
     """
     Masalani rad etadi. SABAB majburiy — muallif nimani tuzatishni bilsin.
 
-    Tanga qaytarib olinmaydi: tasdiqlangan masala keyin rad etilsa
-    ham, muallif o'sha paytda haqli edi va tangani qaytarib olish
-    jazoga o'xshab ketardi.
     """
     masala.holat = Masala.RAD
     masala.rad_sababi = (sabab or "").strip()[:300]

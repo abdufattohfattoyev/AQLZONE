@@ -29,6 +29,12 @@ export default defineConfig(({ mode }) => {
       //     VITE_API=http://localhost:8788 npm run dev
       proxy: {
         '/api': { target: env.VITE_API || 'http://localhost:8787', changeOrigin: true },
+        // Foydalanuvchi yuborgan rasmlar ham backenddan keladi
+        // (`/media/...`). Busiz ishlab chiqishda rasm o'rniga
+        // `index.html` qaytardi va rasm buzuq bo'lib ko'rinardi —
+        // ishlab chiqarishda esa hammasi joyida bo'lardi, ya'ni
+        // nosozlik faqat mahalliy mashinada chiqardi.
+        '/media': { target: env.VITE_API || 'http://localhost:8787', changeOrigin: true },
       },
     },
   }

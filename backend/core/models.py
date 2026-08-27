@@ -848,9 +848,26 @@ class Masala(models.Model):
         Profile, on_delete=models.CASCADE, related_name="masalalar"
     )
 
-    #: Qaysi sinf uchun. Kod kurslarnikiga MOS (`Course.grade`), ya'ni
-    #: 107 = 7-sinf geometriya. Alohida ro'yxat yasalmadi: ikkita
+    #: Kimga mo'ljallangan. Kod kurslarnikiga MOS (`Course.grade`),
+    #: ya'ni 107 = 7-sinf geometriya. Alohida ro'yxat yasalmadi: ikkita
     #: ro'yxat bir kun kelib albatta bir-biridan qolib ketadi.
+    #:
+    #: Ikkita QO'SHIMCHA kod bor va ular hech qaysi kursga tegishli
+    #: emas — ular kurs dasturidan TASHQARIDAGI masalalar uchun:
+    #:
+    #:   200  Kattalar uchun    — maktab dasturidan tashqari, yosh
+    #:                            chegarasi yo'q
+    #:   201  Olimpiada         — sinfi bor, lekin darslikda yo'q:
+    #:                            hiylali, o'ylantiradigan masalalar
+    #:
+    #: Nega kerak. Bo'limning eng qimmatli masalalari ko'pincha hech
+    #: qaysi sinfga to'g'ri kelmaydi: ularni yozgan odam "qaysi sinf?"
+    #: degan savolda to'xtab qolardi va tasodifiy sinfni tanlardi —
+    #: keyin o'sha masala noto'g'ri filtrda ko'rinardi.
+    KATTALAR = 200
+    OLIMPIADA = 201
+    KURSDAN_TASHQARI = (KATTALAR, OLIMPIADA)
+
     sinf = models.SmallIntegerField(default=0)
 
     matn = models.TextField(max_length=MAX_MATN)
@@ -863,6 +880,21 @@ class Masala(models.Model):
     javob = models.CharField(max_length=MAX_JAVOB)
 
     yechim = models.TextField(max_length=MAX_YECHIM)
+
+    #: Masalaga biriktirilgan rasm — chizma, jadval yoki darslik sahifasi.
+    #:
+    #: IXTIYORIY va bu ataylab: masalalarning ko'pi matn bilan
+    #: tushuniladi. Lekin geometriya masalasini chizmasiz yozib
+    #: bo'lmaydi — "ABC uchburchakda..." deb boshlangan matn chizmasiz
+    #: yarim masala bo'lib qoladi.
+    #:
+    #: Fayl SAQLASHDAN OLDIN qayta kodlanadi (`core/rasm.py`): shu
+    #: bilan uning haqiqatan rasm ekani tekshiriladi, EXIF (jumladan
+    #: GPS koordinatasi) tushib qoladi va hajmi cheklanadi.
+    #:
+    #: Rasm ham matn kabi TASDIQDAN o'tadi — u tasdiqlanmagan masala
+    #: bilan birga turadi va hech kimga ko'rinmaydi.
+    rasm = models.ImageField(upload_to="masala/%Y/%m/", blank=True, null=True)
 
     holat = models.CharField(max_length=10, choices=HOLATLAR, default=KUTMOQDA)
 
@@ -883,14 +915,6 @@ class Masala(models.Model):
     #: Ovozlar ham shu sababdan shu yerda (`MasalaOvoz` ga qarang).
     like_soni = models.IntegerField(default=0)
     dislike_soni = models.IntegerField(default=0)
-
-    #: Shu masala muallifga YECHUVCHILARDAN qancha tanga keltirgani.
-    #:
-    #: Chegarani (`MasalaMukofot.YECHILDI_CHEGARA`) tekshirish uchun
-    #: kerak. Yechganlar sonidan hisoblab olsa ham bo'lardi, lekin
-    #: unda chegara yoki narx o'zgargan kuni ESKI masalalar ham
-    #: qaytadan hisoblanib, muallifga tekin tanga chiqib ketardi.
-    muallif_tanga = models.IntegerField(default=0)
 
     class Meta:
         db_table = "masala"
@@ -1014,83 +1038,3 @@ class MasalaOvoz(models.Model):
                 fields=["masala", "profile"], name="masala_bir_odam_bir_ovoz"
             )
         ]
-
-
-class MasalaMukofot(models.Model):
-    """
-    MUALLIFNI KUTAYOTGAN TANGA.
-
-    ─────────────────── NEGA ALOHIDA JADVAL ───────────────────
-
-    Tanga bu ilovada SERVERDA turmaydi: u mijozning progress
-    blobining ichida, kurs bo'yicha ajratilgan holda yotadi
-    (`Progress.state`). Ya'ni serverning "falonchiga 20 tanga qo'sh"
-    deydigan joyi yo'q.
-
-    Muallifga esa aynan shunday qilish kerak: uning masalasi
-    tasdiqlanganda va kimdir uni yechganda tanga beriladi — o'sha
-    paytda muallif ilovada bo'lmaydi.
-
-    Shuning uchun tanga shu yerda TO'PLANIB turadi va mijoz keyingi
-    kirishida uni bir marta olib ketadi. Olish ATOMAR: server
-    hisobni nolga tushiradi va o'sha songa nima berilganini
-    qaytaradi, mijoz esa shu sonni o'z hisobiga qo'shadi. Shu sabab
-    ikki qurilmadan bir vaqtda kirilsa ham tanga ikki marta
-    berilmaydi.
-    """
-
-    # ───────────────────── TANGA QANDAY TAQSIMLANADI ─────────────────────
-    #
-    # Uchta son va ularning nisbati ATAYLAB shunday.
-    #
-    # Avval tasdiqlash 50, yechilgani 5 edi va bu TESKARI ishlardi:
-    # kuniga beshta shoshma-shosharlik masala yozgan odam 250 tanga
-    # olardi — hech kim yechmasa ham — bitta yaxshi masala esa 14
-    # kishi yechganda atigi 120 berardi. Ya'ni ilova ko'p yozishni
-    # yaxshi yozishdan ikki barobar ko'proq mukofotlardi. Narxini esa
-    # ADMIN to'lardi: har bir bo'sh masala uning tasdiqlash navbatiga
-    # tushardi.
-    #
-    # Endi og'irlik YECHILGANIGA ko'chdi. Tasdiqlash uchun kichik son
-    # qoldi va uning ishi bitta: tasdiq bilan birinchi yechuvchi
-    # orasidagi bo'shliqni to'ldirish — o'sha oraliqda muallif uchun
-    # boshqa hech narsa yo'q.
-
-    #: Masala tasdiqlanganda muallif oladigan tanga — "qabul qilindi".
-    TASDIQ_TANGA = 15
-    #: Kimdir masalani TO'G'RI yechganda muallif oladigan tanga.
-    YECHILDI_TANGA = 10
-    #: Masalani to'g'ri yechgan odam oladigan tanga.
-    #:
-    #: Dars bilan solishtirganda katta ko'rinadi (bitta dars ≈ 12
-    #: tanga), lekin buni "yig'ib olib" bo'lmaydi: har masalada faqat
-    #: BIRINCHI urinish hisoblanadi, ya'ni bitta odam bitta masaladan
-    #: bir marta oladi. Jami miqdor mavjud masalalar soni bilan
-    #: chegaralangan.
-    YECHGAN_TANGA = 10
-
-    #: Bitta masala muallifga YECHUVCHILARDAN eng ko'pi bilan shuncha
-    #: keltiradi (tasdiqlash tangasi bundan tashqarida).
-    #:
-    #: Chegara kerak, chunki tanga sarflanadigan joy OZ: do'kondagi
-    #: barcha buyum jami 575, zanjir tiklash esa oyiga ko'pi bilan
-    #: 350. Yuz kishi yechgan masala chegarasiz 1000 tanga berardi va
-    #: o'shanda tanganing o'zi ma'nosini yo'qotardi — sotib oladigan
-    #: narsa qolmaydi.
-    #:
-    #: 150 — do'kondagi eng qimmat buyumning narxi. Qoida shu sabab
-    #: bir jumlada aytiladi: "bitta zo'r masala bitta raketaga
-    #: yetadi".
-    YECHILDI_CHEGARA = 150
-
-    profile = models.OneToOneField(
-        Profile, on_delete=models.CASCADE, related_name="masala_mukofoti"
-    )
-    #: Hali olinmagan tanga.
-    tanga = models.IntegerField(default=0)
-    #: Jami qancha yig'ilgani — ko'rsatish uchun, kamaymaydi.
-    jami = models.IntegerField(default=0)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = "masala_mukofot"

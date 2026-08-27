@@ -441,7 +441,6 @@ const S = {
   masalaTogri: ["To'g'ri! 🎉", "Верно! 🎉"],
   masalaXato: ["Bu safar bo'lmadi", "В этот раз не вышло"],
   masalaTogriJavob: ["To'g'ri javob: {javob}", "Правильный ответ: {javob}"],
-  masalaTanga: ["+{n} tanga", "+{n} монет"],
   masalaYechim: ["Yechim", "Решение"],
   /* Yechim yopiqligining SABABI aytiladi. "Yopiq" degan quruq
      yozuv odamni faqat jahlini chiqarardi — u nega yopiqligini va
@@ -469,7 +468,24 @@ const S = {
     "Tekshiruvdan o'tgach hammaga ko'rinadi",
     "После проверки её увидят все",
   ],
-  masalaQaysiSinf: ["Qaysi sinf uchun", "Для какого класса"],
+  masalaQaysiSinf: ["Kimga mo'ljallangan", "Для кого задача"],
+  masalaKattalar: ["Kattalar uchun", "Для взрослых"],
+  masalaOlimpiada: ["Olimpiada", "Олимпиада"],
+  masalaKursdanTashqari: ["Maktab dasturidan tashqari", "Вне школьной программы"],
+  masalaSinflar: ["Maktab dasturi", "Школьная программа"],
+
+  /* --- rasm --- */
+  masalaRasm: ["Chizma yoki rasm", "Чертёж или картинка"],
+  /* Ixtiyoriyligi AYTILADI: majburiy deb o'ylagan odam rasm
+     topolmasa, masalani umuman yozmay qo'yardi. */
+  masalaRasmIzoh: [
+    "Ixtiyoriy — geometriya va jadval uchun qulay",
+    "Необязательно — удобно для геометрии и таблиц",
+  ],
+  masalaRasmTanla: ["Rasm tanlash", "Выбрать картинку"],
+  masalaRasmOchir: ["Rasmni olib tashlash", "Убрать картинку"],
+  masalaRasmKatta: ["Rasm juda katta — 6 MB gacha bo'lsin", "Слишком большая — до 6 МБ"],
+  masalaRasmXato: ["Bu fayl rasm emas", "Это не картинка"],
   masalaMatni: ["Masala", "Задача"],
   masalaMatniIzoh: [
     "Masala shartini to'liq yozing…",
@@ -506,12 +522,6 @@ const S = {
     "Вы ещё не писали задач. Попробуйте добавить первую!",
   ],
   masalaBugungi: ["Bugun: {n}/{jami}", "Сегодня: {n}/{jami}"],
-  masalaMukofot: ["{n} tanga sizni kutmoqda", "Вас ждут {n} монет"],
-  masalaKeltirdi: ["Shu masala {n} tanga keltirdi", "Эта задача принесла {n} монет"],
-  masalaMukofotIzoh: [
-    "Masalangiz tasdiqlangani va yechilgani uchun — olish uchun bosing",
-    "За одобрение и решения ваших задач — нажмите, чтобы забрать",
-  ],
 
   /* ---------------- umumiy qidiruv ---------------- */
   qidiruvSarlavha: ["Qidiruv", "Поиск"],
