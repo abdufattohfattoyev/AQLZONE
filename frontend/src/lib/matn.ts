@@ -382,6 +382,30 @@ const S = {
   /* Menyudagi bo'lim nomi. Faqat 7–11-sinfda ko'rinadi. */
   menyuImtihon: ["Imtihonga tayyorgarlik", "Подготовка к экзамену"],
 
+  /* ---------------- bosh sahifa: beshta eshik ---------------- */
+  boshBolimlar: ["Bo'limlar", "Разделы"],
+  boshDavom: ["Davom etish", "Продолжить"],
+  boshDavomJoy: ["{bob}-bob · {dars}-dars", "глава {bob} · урок {dars}"],
+  /* Har eshikning ostidagi bir qatorlik javob — "u yerda nima
+     bo'ladi". Nomning o'zi buni aytmaydi: "Testlar" degan yozuv
+     ichkarida nima borligi haqida hech narsa demaydi. */
+  boshKichkintoyIzoh: ["Rasm, nom va ovoz", "Картинка, название и голос"],
+  boshDarslarIzoh: ["Bob-bob yo'l xaritasi", "Карта по главам"],
+  boshMasalalarIzoh: ["O'quvchilar yozgan, siz yechasiz", "Пишут ученики, решаете вы"],
+  boshTestlarIzoh: ["Bilimni o'lchash, tartibsiz", "Проверка знаний, без порядка"],
+  boshOyinlarIzoh: ["O'yin, maydon, bellashuv", "Игры, арена, дуэль"],
+  boshMavzuSoni: ["{n} mavzu", "{n} тем"],
+  boshOyinSoni: ["{n} o'yin", "{n} игр"],
+  boshSinfOraliq: ["{a}–{b}-sinf", "{a}–{b} класс"],
+
+  /* ---------------- testlar: sinf tanlash ---------------- */
+  testlar: ["Testlar", "Тесты"],
+  testSinfIzoh: [
+    "Qaysi sinf bo'yicha o'lchaymiz?",
+    "По какому классу проверяем?",
+  ],
+  testSinfNomi: ["{n}-sinf testlari", "Тесты {n} класса"],
+
   /* ---------------- masalalar (foydalanuvchi yozgan) ---------------- */
   masalalar: ["Masalalar", "Задачи"],
   masalalarIzoh: [

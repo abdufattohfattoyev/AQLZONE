@@ -26,7 +26,9 @@ import { NotFound } from "./screens/NotFound";
  * Ajratish faqat birinchi ochilishga ta'sir qiladi: keyin har bir bo'lak
  * Service Worker keshida qoladi.
  */
+const Bosh = lazy(() => import("./screens/Bosh").then((m) => ({ default: m.Bosh })));
 const Dashboard = lazy(() => import("./screens/Dashboard").then((m) => ({ default: m.Dashboard })));
+const TestSinf = lazy(() => import("./screens/TestSinf").then((m) => ({ default: m.TestSinf })));
 const Home = lazy(() => import("./screens/Home").then((m) => ({ default: m.Home })));
 const Lesson = lazy(() => import("./screens/Lesson").then((m) => ({ default: m.Lesson })));
 const Dokon = lazy(() => import("./screens/Dokon").then((m) => ({ default: m.Dokon })));
@@ -70,6 +72,7 @@ import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
   yolDuel, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
+  yolBosh, yolTestSinf,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -99,7 +102,13 @@ function Yollar() {
   return (
     <Suspense fallback={<Kutish />}>
     <Routes>
-      <Route path="/" element={<KurslarSahifasi />} />
+      <Route path="/" element={<BoshSahifasi />} />
+      {/* Kurslar ro'yxati bosh sahifadan AJRALDI: u "qaysi sinf?"
+          degan boshqa savolga javob beradi (`lib/yollar.ts`). */}
+      <Route path="/darslar" element={<KurslarSahifasi />} />
+      {/* Testlar kursdan tashqarida: o'lchamoqchi bo'lgan odamda
+          faqat "nechanchi sinfman" degan savol bor. */}
+      <Route path="/testlar" element={<TestSinfSahifasi />} />
       <Route path="/profillar" element={<ProfilSahifasi />} />
       <Route path="/sozlamalar" element={<SozlamaSahifasi />} />
       {/* Botdagi «Saytga kirish» havolasi. Marshrut Tanishuv darvozasidan
@@ -157,22 +166,67 @@ function Yollar() {
   );
 }
 
+/**
+ * Bosh sahifa — ilovaning xaritasi.
+ *
+ * Beshta bo'lim eshigi va "davom etish". Kurslar ro'yxati bu
+ * yerda EMAS: u `/darslar` ga ko'chdi va sabab `lib/yollar.ts`
+ * dagi izohda yozilgan.
+ */
+function BoshSahifasi() {
+  const { progressOf } = useProgress();
+  const nav = useNavigate();
+  useTema("bosh");
+  return (
+    <Bosh
+      progressOf={progressOf}
+      onKichkintoy={() => nav(yolKichkintoy())}
+      onDarslar={() => nav(yolKurslar())}
+      onMasalalar={() => nav(yolMasalalar())}
+      onTestlar={() => nav(yolTestSinf())}
+      onOyinlar={() => nav(yolOyinlar())}
+      // "Davom etish" darsning O'ZIGA olib boradi, kurs xaritasiga
+      // emas: qaytib kelgan odam aynan o'sha darsni ochish uchun
+      // kelgan va uni yana bir marta bosishga majburlash ortiqcha.
+      onDavom={(c, ui, li) => nav(yolDars(c, ui, li))}
+      onQidiruv={() => nav(yolQidiruv())}
+      onReyting={() => nav(yolReyting())}
+      onSozlama={() => nav(yolSozlama())}
+      onProfillar={() => nav("/profillar")}
+    />
+  );
+}
+
+/**
+ * Testlar — sinf tanlash.
+ *
+ * Tanlangandan keyin o'sha sinfning testlar bazasiga o'tadi.
+ * Ikki fanli sinfda (algebra va geometriya) kirish nuqtasi bitta:
+ * testlar ikkalasidan aralash yig'iladi (`lib/blok.ts`).
+ */
+function TestSinfSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return (
+    <TestSinf
+      onSinf={(c) => nav(yolTestlar(c))}
+      onBack={() => nav(yolBosh())}
+    />
+  );
+}
+
+/**
+ * Kurslar ro'yxati — endi `/darslar` da.
+ *
+ * Ekranning ishi bittaga qisqardi: "qaysi sinf?". Logo, hisob
+ * chiplari, qidiruv va kichkintoylar kartasi bosh sahifaga
+ * ko'chdi.
+ */
 function KurslarSahifasi() {
   const { progressOf } = useProgress();
   const nav = useNavigate();
-  // Bosh sahifa — brendning kirish eshigi, o'z temasi bor.
   useTema("bosh");
-  return (
-    <Dashboard
-      progressOf={progressOf}
-      onOpen={(c) => nav(yolKurs(c))}
-      onProfillar={() => nav("/profillar")}
-      onSozlama={() => nav(yolSozlama())}
-      onQidiruv={() => nav(yolQidiruv())}
-      onReyting={() => nav(yolReyting())}
-      onKichkintoy={() => nav(yolKichkintoy())}
-    />
-  );
+  return <Dashboard progressOf={progressOf} onOpen={(c) => nav(yolKurs(c))} />;
 }
 
 function KursSahifasi() {

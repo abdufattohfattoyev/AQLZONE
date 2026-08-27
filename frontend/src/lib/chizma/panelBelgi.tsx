@@ -35,12 +35,15 @@
  */
 import { useId, type ReactElement } from "react";
 
-export type PanelBelgiNom = "uy" | "xarita" | "vazifa" | "reyting" | "menyu";
+export type PanelBelgiNom = "uy" | "xarita" | "oyin" | "vazifa" | "reyting" | "menyu";
 
 /** Har belgining o'z rangi — bola tugmani yozuvdan oldin rangdan taniydi. */
 const RANG: Record<PanelBelgiNom, { och: string; quyuq: string }> = {
   uy:      { och: "var(--color-brand-green)",  quyuq: "var(--color-brand-green-d)" },
   xarita:  { och: "var(--color-brand-blue)",   quyuq: "var(--color-brand-blue-d)" },
+  // O'yin ATAYLAB issiq rangda: paneldagi yagona "o'ynash" tugmasi
+  // qolganlaridan ajralib tursin. Qolganlari — ish, bu esa dam.
+  oyin:    { och: "var(--color-brand-orange)", quyuq: "var(--color-brand-orange-d)" },
   vazifa:  { och: "var(--color-brand-purple)", quyuq: "var(--color-brand-purple-d)" },
   reyting: { och: "var(--color-brand-purple)", quyuq: "var(--color-brand-purple-d)" },
   menyu:   { och: "var(--color-brand-blue)",   quyuq: "var(--color-brand-blue-d)" },
@@ -151,6 +154,24 @@ const SHAKL: Record<PanelBelgiNom, (g: string) => ReactElement> = {
 
   /* VAZIFA — o'yinlar.  Planshet: qisqichi va ichida ikki qator.
      Qatorlar faol bo'lganda navbat bilan yonadi — "ro'yxat to'ldi". */
+  /* O'YIN — soqqa (zar). Tanish shakl: uni tushuntirish kerak emas,
+     bola uni bir qarashda "o'yin" deb o'qiydi. Faol bo'lganda
+     nuqtalar navbat bilan yonadi. */
+  oyin: (g) => (
+    <>
+      <rect x="5.4" y="5.4" width="21.2" height="21.2" rx="5.2"
+        fill="var(--color-karta)" stroke={`url(#${g})`} strokeWidth="2.6" />
+      <g className="az-pb-qator">
+        <circle cx="11.4" cy="11.4" r="2.1" fill={`url(#${g})`} />
+        <circle cx="20.6" cy="20.6" r="2.1" fill={`url(#${g})`} />
+      </g>
+      <g className="az-pb-qator az-pb-qator2">
+        <circle cx="20.6" cy="11.4" r="2.1" fill={`url(#${g})`} opacity="0.75" />
+        <circle cx="11.4" cy="20.6" r="2.1" fill={`url(#${g})`} opacity="0.75" />
+      </g>
+    </>
+  ),
+
   vazifa: (g) => (
     <>
       <rect x="6" y="7.4" width="20" height="21" rx="3.4"

@@ -49,7 +49,7 @@ import { COURSES, courseBySlug } from "../lib/curriculum";
 import { oxirgiKurs } from "../lib/oxirgi";
 import { useProgress } from "../lib/progress";
 import { nishonlar, olingan } from "../lib/nishon";
-import { yolKurs, yolKurslar, yolOyinlar, yolReyting } from "../lib/yollar";
+import { yolBosh, yolKurs, yolKurslar, yolMasalalar, yolOyinlar } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
 
@@ -108,8 +108,13 @@ export function Panel() {
     [p, kunlik, kurs],
   );
 
-  const bosh = pathname === yolKurslar();
-  const darslar = /^\/kurs\/[^/]+$/.test(pathname);
+  const bosh = pathname === yolBosh();
+  // "Darslar" tugmasi kurslar RO'YXATINI ham, ochilgan kursni ham
+  // o'ziga oladi: odam uchun bu bitta joy — "darslarim". Ilgari
+  // ro'yxat "Bosh" tugmasida turardi va ikkala tugma bir narsani
+  // ko'rsatgandek tuyulardi.
+  const darslar = pathname === yolKurslar() || /^\/kurs\/[^/]+$/.test(pathname);
+  const masalalar = pathname.startsWith("/masalalar");
   // O'yinlar tugmasi butun BO'LIM uchun yonadi: ro'yxat, daraja
   // tanlash, maydon, duel — hammasi `/oyinlar` ostida. Faqat ro'yxatning
   // o'ziga qarasa, daraja tanlash ekranida panel "hech qayerdasiz" deb
@@ -140,14 +145,28 @@ export function Panel() {
   // faylda yozilgan — bu yerda beshta belgi bir-biridan AJRALIB
   // turishi kerak, ro'yxatdagidek bir xil bo'lishi emas.
   const tablar = [
-    { ic: "uy", nom: t("tabBosh"), faol: bosh, on: yur(yolKurslar(), bosh) },
-    { ic: "xarita", nom: t("tabDarslar"), faol: darslar, on: yur(yolKurs(kurs), darslar) },
+    { ic: "uy", nom: t("tabBosh"), faol: bosh, on: yur(yolBosh(), bosh) },
+    // Kurs ochilgan bo'lsa O'SHA kursga, bo'lmasa ro'yxatga. Odam
+    // ko'pincha bitta kursda yuradi va uni har safar ro'yxatdan
+    // qayta tanlashi ortiqcha qadam bo'lardi.
+    {
+      ic: "xarita", nom: t("tabDarslar"), faol: darslar,
+      on: yur(pathname.startsWith("/kurs/") ? yolKurs(kurs) : yolKurslar(), darslar),
+    },
     // O'yinlar ENG O'RTADA — paneldagi eng oson yetiladigan joy. Bu
     // yerda o'yin, bugungi maydon va duel bir eshik ortida turadi.
-    { ic: "vazifa", nom: t("tabOyinlar"), faol: oyinlar, on: yur(yolOyinlar(), oyinlar) },
+    { ic: "oyin", nom: t("tabOyinlar"), faol: oyinlar, on: yur(yolOyinlar(), oyinlar) },
+    // REYTING SHU YERDA EDI — bosh sahifaga ko'chdi.
+    //
+    // U bo'lim emas, MUKOFOT: odam unga kunda bir marta, yulduz
+    // yig'gandan keyin kiradi. Panelning beshdan biri esa doim
+    // ko'rinib turadigan joy va uni har kuni ochiladigan bo'limga
+    // berish kerak edi. Reyting endi bosh sahifadagi chipda turadi
+    // — o'zi yig'gan yulduz sonining YONIDA, ya'ni ma'nosi ham
+    // ravshanroq bo'ldi.
     {
-      ic: "reyting", nom: t("tabReyting"), faol: pathname === yolReyting(),
-      on: yur(yolReyting(), pathname === yolReyting()),
+      ic: "vazifa", nom: t("masalalar"), faol: masalalar,
+      on: yur(yolMasalalar(), masalalar),
     },
     // Menyu ENG O'NGDA: u manzil emas, ochiladigan ro'yxat. Qizil nuqta
     // ham shu yerga ko'chdi — nishon endi menyu ichida va odam yangi

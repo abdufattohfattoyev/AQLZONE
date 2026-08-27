@@ -13,7 +13,35 @@
  */
 import type { Course } from "./curriculum";
 
-export const yolKurslar = () => "/";
+/**
+ * Bosh sahifa — ilovaning XARITASI, kurslar ro'yxati emas.
+ *
+ * Ilgari `/` kurslar ro'yxatini ko'rsatardi va boshqa bo'limlar
+ * (masalalar, testlar, kichkintoylar) uning ostida yoki menyu
+ * ichida yashiringan edi. Endi `/` beshta bo'lim eshigini
+ * ko'rsatadi, kurslar esa o'z ekraniga ko'chdi.
+ */
+export const yolBosh = () => "/";
+
+/**
+ * Kurslar ro'yxati — "qaysi sinf?" degan savolning javobi.
+ *
+ * Bosh sahifadan AJRATILDI: u "ilovada nima bor?" degan boshqa
+ * savolga javob beradi. Ikkalasi bir sahifada turganda kurslar
+ * pastda qolib, ularni ko'rish uchun surish kerak edi.
+ */
+export const yolKurslar = () => "/darslar";
+
+/**
+ * Testlar — sinf tanlash.
+ *
+ * Kursdan TASHQARIDA. Test o'lchaydi, dars esa o'rgatadi:
+ * o'lchamoqchi bo'lgan odamda "qaysi bobdan boshlay" degan savol
+ * yo'q, faqat "nechanchi sinfman" degan savol bor. Ilgari testlar
+ * faqat kurs ichidan ochilardi va ko'pchilik u yerga yetib
+ * bormasdi.
+ */
+export const yolTestSinf = () => "/testlar";
 
 /** Hisob sozlamalari: ism, familiya, kirish usullari. */
 export const yolSozlama = () => "/sozlamalar";

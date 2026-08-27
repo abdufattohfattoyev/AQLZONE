@@ -61,8 +61,8 @@ import { sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import {
   yolTestlar, yolDaftar, yolDokon, yolDuel, yolFormulalar, yolHisobot, yolKichkintoy, yolKurs,
-  yolKurslar, yolMasalalar, yolMaydon, yolNishon, yolOtaOna, yolOyinlar, yolQidiruv,
-  yolReyting, yolSinov, yolSozlama,
+  yolKurslar, yolMasalalar, yolMaydon, yolNishon, yolOtaOna, yolOyinlar,
+  yolQidiruv, yolReyting, yolSinov, yolTestSinf, yolSozlama,
 } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
@@ -242,8 +242,12 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
             nuqta={sinovBor || daftarSoni > 0}>
             <Satr ic="map" rang="green" nom={kursMatn(kurs.title)}
               izoh={t("menyuDarslarIzoh")} on={yur(yolKurs(kurs))} />
-            <Satr ic="home" rang="blue" nom={t("tabBosh")}
+            <Satr ic="home" rang="blue" nom={t("tabDarslar")}
               izoh={t("menyuKurslarIzoh")} on={yur(yolKurslar())} />
+            {/* Testlar endi kursdan TASHQARIDA ham ochiladi —
+                ilgari ular faqat kurs ichida turardi. */}
+            <Satr ic="chart" rang="blue" nom={t("testlar")}
+              izoh={t("testSinfIzoh")} on={yur(yolTestSinf())} />
             {/* Masalalar TA'LIM ichida turadi, o'yin bo'limida emas.
                 U o'yin emas: bu yerda vaqt ham, rekord ham yo'q,
                 odam masalani o'ylab yechadi. */}

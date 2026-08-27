@@ -1,12 +1,6 @@
-import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon } from "../lib/icons";
-import { Logo } from "../components/Logo";
 import { Reveal } from "../components/Reveal";
-import { TilTugma } from "../components/TilTugma";
-import { YoruglikTugma } from "../components/YoruglikTugma";
-import { getHisob, joriyProfil, profilSoni } from "../lib/api";
-import type { Hisob } from "../lib/api";
 import { COURSES, lessonCount } from "../lib/curriculum";
 import { kursBelgi } from "../lib/chizma/kursBelgi";
 import { UNIT_COLORS } from "../lib/types";
@@ -25,53 +19,15 @@ import type { Progress } from "../lib/types";
 interface Props {
   progressOf: (c: Course) => Progress;
   onOpen: (c: Course) => void;
-  /** Profil tanlash ekrani. Tugma faqat ikkinchi bola qo'shilganda chiqadi. */
-  onProfillar: () => void;
-  /** Hisob sozlamalari — ism, familiya, kirish usullari. */
-  onSozlama: () => void;
-  /** Umumiy qidiruv — butun ilova bo'ylab. */
-  onQidiruv: () => void;
-  /** Reyting — barcha kurslar bo'yicha umumiy. */
-  onReyting: () => void;
-  /** Kichkintoylar bo'limi — 2–5 yosh, gapiradigan rasmlar. */
-  onKichkintoy: () => void;
 }
 
 /** Ro'yxat navbat bilan chiqsin — ekran "jonli" ochilgandek ko'rinadi. */
 const kech = (ms: number) => ({ "--az-kech": `${ms}ms` }) as CSSProperties;
 
-/**
- * Joriy bolaning profili.
- *
- * Tanlangani bo'lmasa BIRINCHISI olinadi — server ham aynan shunday
- * qiladi. Ikkalasi bir xil qoidaga bo'ysunmasa, ekranda bir bolaning
- * nomi, progressda esa boshqasiniki turardi.
- */
-function joriyBola(h: Hisob | null) {
-  const ro = h?.profillar ?? [];
-  const id = joriyProfil();
-  return ro.find((p) => String(p.id) === id) ?? ro[0] ?? null;
-}
+export function Dashboard({ progressOf, onOpen }: Props) {
 
-export function Dashboard({
-  progressOf, onOpen, onProfillar, onSozlama, onQidiruv, onReyting, onKichkintoy,
-}: Props) {
-  // Sinxron o'qiladi (localStorage) — tugma sakrab chiqmasligi uchun.
-  const kopBola = profilSoni() > 1;
-  const [hisob, setHisob] = useState<Hisob | null>(null);
 
-  // Ism serverdan keladi. Kelmaguncha tugmada "Hisobim" turadi — o'lchami
-  // deyarli bir xil, shuning uchun ism paydo bo'lganda qator sakramaydi.
-  useEffect(() => {
-    let bekor = false;
-    getHisob().then((h) => { if (!bekor) setHisob(h); });
-    return () => { bekor = true; };
-  }, []);
 
-  const bola = joriyBola(hisob);
-
-  const jamiDars = COURSES.reduce((n, c) => n + lessonCount(c), 0);
-  const jamiYulduz = COURSES.reduce((n, c) => n + progressOf(c).stars, 0);
   const maktabgacha = COURSES.filter((c) => c.grade === 0);
   const sinflar = COURSES.filter((c) => c.grade > 0);
 
@@ -84,164 +40,19 @@ export function Dashboard({
        ekrandan chiqib ketardi. */
     <div className="mx-auto w-full max-w-[430px] px-3.5 pt-[clamp(6px,1.5vh,14px)]
                     pb-10 sm:max-w-[700px] sm:px-6 lg:max-w-[1020px]">
-      {/* ---- ko'rinish: yorug'lik va til ----
-          Eng tepada. Bosh sahifa brendning kirish eshigi va til shu yerda
-          tanlanadi: noto'g'ri tilda ochilgan ilovada odam qolgan hech
-          narsani o'qiy olmaydi.
-
-          Ikkisi QARAMA-QARSHI chetda turadi, yonma-yon emas: ular ikkita
-          boshqa savolga javob beradi (qaysi til / oq yoki qora) va
-          yopishtirilganda bitta olti bo'lakli tasmaga o'xshab ketardi —
-          ko'z ularni bitta sozlama deb o'qirdi.
-
-          Sarlavhadan TASHQARIDA turadi va bu ataylab: `header` markazga
-          tekislangan, tugmalar esa chetga suriladi — ikkisini bitta
-          oqimga qo'ysak, logo markazdan siljib ketardi. */}
-      <div className="az-kirish flex items-center justify-between gap-2">
-        <YoruglikTugma />
-        <TilTugma />
+      {/* ---- sarlavha ----
+          Bu ekran endi FAQAT kurslar ro'yxati. Logo, hisob chiplari,
+          qidiruv va kichkintoylar kartasi bosh sahifaga ko'chdi
+          (`screens/Bosh.tsx`) — ular "ilovada nima bor?" degan
+          savolga javob beradi, bu ekran esa boshqasiga: "qaysi
+          sinf?". Ikkalasi bir sahifada turganda ro'yxat pastda
+          qolib, uni ko'rish uchun surish kerak edi. */}
+      <div className="az-kirish">
+        <h1 className="font-display text-[20px] leading-tight">{t("tabDarslar")}</h1>
+        <p className="mt-0.5 text-[12px] leading-snug text-ink-dim">
+          {t("boshDarslarIzoh")}
+        </p>
       </div>
-
-      {/* ---- brend ---- */}
-      <header className="az-kirish text-center">
-        {/* Bosh ekranda brend TO'LIQ ko'rinadi: belgi + yozuv + shior.
-            Yozuv logoning ichida bo'lgani uchun sarlavha takrorlanmaydi —
-            h1 faqat ekran o'quvchisi va qidiruv uchun ko'rinmas holda qoladi.
-
-            O'lcham CSS'da: `size` faqat SVG nisbatini beradi, kenglikni esa
-            klass boshqaradi — 320px li telefonda 272px qat'iy kenglik
-            chetlarga tegib ketardi.
-
-            Kenglik BALANDLIKKA ham qaraydi (`vh`). Telegram Desktop'da
-            Mini App tor va PAST oynada ochiladi: u yerda logo qat'iy
-            272px bo'lganda ekranning yarmini egallab, kurslar butunlay
-            pastda qolib ketardi — odam nima qilishni bilmay skroll
-            qidirardi. Endi oyna pasaysa, logo ham kichrayadi. */}
-        <Logo size={272} variant="toliq"
-          className="mx-auto h-auto w-[min(58vw,clamp(124px,20vh,208px))]
-                     drop-shadow-[0_6px_14px_rgb(30_50_110/0.16)] sm:w-[min(248px,28vh)]" />
-        <h1 className="sr-only">{t("shior")}</h1>
-
-        {/* Hisob belgilari va o'tish tugmalari.
-            Ikkisi IKKI GURUHGA bo'lingan va guruhlar o'ralish birligi
-            bo'lib turadi. Sabab o'lchovda ko'rindi: to'rtta chipni bitta
-            o'ralgan qatorga qo'ysak, 375px li telefonda uchtasi birinchi
-            qatorga sig'ib, "Hisobim" yolg'iz ikkinchi qatorga tushadi —
-            qator qiyshiq ko'rinadi. Guruh bilan esa tor ekranda 2+2,
-            kengida esa to'rttasi bir qatorda bo'ladi. */}
-        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
-          <span className="flex items-center gap-1.5">
-            <Belgi ic="star" matn={t("yulduzSoni", { n: jamiYulduz })} />
-            <Belgi ic="map" matn={t("darsSoni", { n: jamiDars })} />
-          </span>
-
-          <span className="flex min-w-0 items-center gap-1.5">
-            {/* Profil almashtirish faqat IKKI va undan ko'p bola bo'lganda
-                ma'noli. Bitta bolali oilada bu tugma hech narsa qilmaydi
-                va faqat "bu nima?" degan savol tug'diradi. Bola qo'shish
-                "Hisobim" ichida turadi va ikkinchisi qo'shilishi bilan bu
-                tugma o'zi paydo bo'ladi. */}
-            {kopBola && (
-              <button type="button" onClick={onProfillar}
-                className="clay-press flex shrink-0 items-center gap-1.5 rounded-full bg-karta/70
-                           px-2.5 py-1.5 text-[11.5px] text-ink-soft backdrop-blur-sm">
-                <Icon name="parent" size={14} />
-                {t("kimOynayapti")}
-              </button>
-            )}
-            {/* Reyting kursga bog'liq emas — barcha kurslar yulduzi birga
-                hisoblanadi, shuning uchun tugma bosh sahifada turadi. */}
-            {/* Belgi "order" (pog'onali qator), kubok EMAS: kubok kurs
-                ichida NISHONLAR degan ma'noni bildiradi va bitta belgi
-                ikki xil joyga olib borsa, bola uni o'rganolmaydi. */}
-            <button type="button" onClick={onReyting} title={t("reyting")}
-              className="clay-press flex shrink-0 items-center gap-1.5 rounded-full bg-karta/70
-                         px-2.5 py-1.5 text-[11.5px] text-ink-soft backdrop-blur-sm">
-              <Icon name="order" size={14} className="text-brand-gold" />
-              {t("reyting")}
-            </button>
-            {/* Hisob tugmasi — ism bilan.
-                Kimning hisobida ekanini ko'rsatish shu yerda muhim: bir
-                telefonda ota-ona ham, bola ham ochadi va "bu kimning
-                yulduzlari?" degan savol doim tug'iladi. Ism kelmaguncha
-                eski matn turadi. */}
-            <button type="button" onClick={onSozlama} title={t("hisobSozlamalari")}
-              className="clay-press flex min-w-0 items-center gap-1.5 rounded-full bg-karta/70
-                         px-2.5 py-1.5 text-[11.5px] text-ink-soft backdrop-blur-sm">
-              {bola ? (
-                <span className="grid size-[17px] shrink-0 place-items-center rounded-full
-                                 bg-track text-[10.5px] leading-none">
-                  {bola.avatar || "🦊"}
-                </span>
-              ) : (
-                <Icon name="pencil" size={14} className="shrink-0" />
-              )}
-              <span className="truncate">{hisob?.toliqIsm || t("hisobim")}</span>
-            </button>
-          </span>
-        </div>
-      </header>
-
-      {/* "OXIRGI MARTA SHU YERDA EDINGIZ" KARTASI SHU YERDA EDI.
-          Olib tashlandi.
-
-          U bitta savolga javob berardi — "kecha qayerda to'xtagan
-          edim?" — lekin buni kursning o'zi ham aytadi: kurs sahifasi
-          har doim keyingi darsda ochiladi. Bosh sahifada esa u to'rtta
-          keng kartadan biri bo'lib, ekranning yuqori yarmini
-          egallardi: uni ochgan odam kurslar ro'yxatini ko'rish uchun
-          surishga majbur bo'lardi. */}
-
-      {/* "MATEMATIK O'YINLAR" VA "DO'ST BILAN BELLASHUV" KARTALARI
-          SHU YERDA EDI. Ikkalasi ham olib tashlandi.
-
-          Ular bosh sahifada ikkita keng, rangli karta bo'lib turardi va
-          ekranning yarmini egallardi — holbuki ikkalasiga ham pastdagi
-          panelning O'RTASIDAGI tugmasidan (va menyudan) bir bosishda
-          kirish mumkin. Ya'ni ular navigatsiyaning TAKRORI edi, ustiga
-          eng ko'zga tashlanadigan joyda.
-
-          Bosh sahifaning ishi bitta: "qaysi kurs?" degan savolga javob
-          berish. Endi kurslar ro'yxati birinchi ekranga sig'adi va uni
-          topish uchun surish kerak emas.
-
-          Bellashuv o'yinlar ekraniga ko'chdi (`screens/Oyinlar.tsx`) —
-          u yerda "Bugungi maydon" bilan yonma-yon turadi va ikkalasi
-          ham bir xil narsa: bugun bo'ladigan, muddatli ish. */}
-
-      {/* ---- kichkintoylar ----
-          Maktabgacha kursdan OLDIN turadi va tartib yosh bo'yicha:
-          2–5 yosh, keyin 4–6, keyin sinflar. Ota-ona ro'yxatni yuqoridan
-          pastga o'qiydi va o'z farzandining yoshiga birinchi to'g'ri
-          kelgan joyda to'xtaydi.
-
-          Karta ATAYLAB kurs kartalariga o'xshamaydi: bu yerda foiz ham,
-          yulduz ham, "boshlash" ham yo'q — chunki bo'limda dars yo'q. */}
-      {/* ---- qidiruv ----
-          Kurslar ro'yxatidan OLDIN turadi va bu ataylab. Ro'yxat
-          "qaysi sinf?" degan savolga javob beradi, qidiruv esa
-          BOSHQA savolga: "menga falon mavzu kerak edi, u qayerda?".
-          Ikkinchi savolli odam sinflarni birma-bir ochib chiqmasin.
-
-          Ko'rinishi maydonga o'xshaydi, lekin bu TUGMA: bosilganda
-          alohida ekran ochiladi. Bu yerda haqiqiy maydon turganda,
-          klaviatura ochilishi bilan kurslar ro'yxati ekrandan
-          chiqib ketardi va odam natijani ham, ro'yxatni ham
-          ko'rmay qolardi. */}
-      <Reveal kech={40}>
-        <div className="az-kirish mt-3.5" style={kech(40)}>
-          <button type="button" onClick={onQidiruv}
-            className="clay-press flex w-full items-center gap-2.5 rounded-clay bg-karta
-                       px-3.5 py-3 text-left shadow-clay-sm">
-            <Icon name="search" size={17} className="shrink-0 text-ink-dim" />
-            <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink-dim">
-              {t("qidiruvJoy")}
-            </span>
-          </button>
-        </div>
-      </Reveal>
-
-      <KichkintoyKarta on={onKichkintoy} />
 
       {/* Maktabgacha kurs alohida sarlavha ostida turadi: u sinf emas va
           ota-ona "bolam hali maktabga bormaydi" deganda aynan shu yerni
@@ -282,44 +93,6 @@ export function Dashboard({
         {t("kurslarIzoh")}
       </p>
     </div>
-  );
-}
-
-/**
- * "Kichkintoylar" kartasi.
- *
- * Iliq sariq — ro'yxatdagi yagona shu rangdagi karta. Sabab: uni
- * IZLAYDIGAN odam boshqacha. Kurslarni ota-ona tanlaydi, bu bo'limni
- * esa ko'pincha bolaning O'ZI topadi — telefonni olib, tanish rasmni
- * qidiradi. Shuning uchun kartada uchta katta belgi turadi va ular
- * yozuvdan ko'ra ko'proq narsa aytadi.
- */
-function KichkintoyKarta({ on }: { on: () => void }) {
-  return (
-    <Reveal kech={55}>
-      <div className="az-kirish mt-4 sm:mt-6" style={kech(55)}>
-        <button type="button" onClick={on}
-          className="tugma-3d az-yaltir flex w-full items-center gap-3 rounded-clay bg-brand-gold
-                     p-[clamp(11px,2vh,14px)] text-left text-white shadow-clay">
-          <span className="grid size-[clamp(40px,7vh,48px)] shrink-0 place-items-center
-                           rounded-[16px] bg-white/25 text-[clamp(21px,3.8vh,26px)]">
-            🧸
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-display text-[16px] leading-tight">
-              {t("kichkintoyQisqa")}
-            </span>
-            <span className="mt-0.5 line-clamp-1 text-[12.5px] leading-snug text-white/90">
-              {t("kichkintoyKartaIzoh")}
-            </span>
-          </span>
-          <span aria-hidden className="hidden shrink-0 gap-1 text-[19px] min-[420px]:flex">
-            <span>🚗</span><span>🐶</span><span>🎨</span>
-          </span>
-          <Icon name="chevron" size={18} className="shrink-0 text-white/85" />
-        </button>
-      </div>
-    </Reveal>
   );
 }
 
@@ -526,15 +299,5 @@ function SinfKarta({ c, i, progressOf, onOpen }: {
         )}
       </button>
     </Reveal>
-  );
-}
-
-function Belgi({ ic, matn }: { ic: "star" | "map"; matn: string }) {
-  return (
-    <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-karta/70 px-2.5 py-1.5
-                     text-[11.5px] text-ink-soft backdrop-blur-sm">
-      <Icon name={ic} size={14} className={ic === "star" ? "text-brand-gold" : "text-brand-blue-d"} />
-      {matn}
-    </span>
   );
 }
