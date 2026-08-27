@@ -468,7 +468,57 @@ const S = {
     "Tekshiruvdan o'tgach hammaga ko'rinadi",
     "После проверки её увидят все",
   ],
-  masalaQaysiSinf: ["Kimga mo'ljallangan", "Для кого задача"],
+  /* --- qadamlar --- */
+  masalaQadam: ["{n}-qadam · {jami} tadan", "Шаг {n} из {jami}"],
+  masalaOrtga: ["Ortga", "Назад"],
+  masalaKeyingi: ["Keyingi", "Далее"],
+
+  /* 1-qadam */
+  masalaQaysiSinf: ["Masala kimga?", "Для кого задача?"],
+  masalaKimgaIzoh: ["Buni siz belgilaysiz", "Это выбираете вы"],
+  masalaMaktab: ["Maktab o'quvchisi", "Школьнику"],
+  masalaMaktabIzoh: ["Darslik dasturi bo'yicha", "По школьной программе"],
+  masalaKattalarIzoh: ["Yosh chegarasi yo'q", "Без ограничения возраста"],
+  masalaOlimpiadaIzoh: ["Darslikdan tashqari, hiylali", "Вне учебника, с хитростью"],
+
+  /* 2-qadam */
+  masalaQaysiSinfBosh: ["Qaysi sinf?", "Какой класс?"],
+  masalaSinfIzoh: ["Surish shart emas — hammasi shu yerda", "Листать не нужно — все здесь"],
+  masalaQaysiFan: ["Qaysi fan?", "Какой предмет?"],
+
+  /* 3-qadam */
+  masalaMatnBosh: ["Masala", "Задача"],
+  masalaShart: ["Shart", "Условие"],
+
+  /* 4-qadam */
+  masalaTekshirBosh: ["Tekshirib chiqing", "Проверьте"],
+  masalaTekshirIzoh: ["O'zgartirish uchun bosing", "Нажмите, чтобы изменить"],
+  masalaOzgartirish: ["o'zgartirish", "изменить"],
+  masalaShundayKoradi: ["Yechuvchi shunday ko'radi", "Так увидит решающий"],
+  masalaChizmaYoq: ["Chizma — yo'q, shart emas", "Чертёж — нет, не обязателен"],
+  masalaChizmaBor: ["Chizma qo'shildi", "Чертёж добавлен"],
+
+  /* --- tekshiruv belgilari ---
+     Ular faqat SHAKL haqida gapiradi. Matematikaning to'g'riligini
+     bu yerdagi hech narsa tekshirmaydi va yozuvlar buni va'da ham
+     qilmaydi (`lib/masalaTekshir.ts` dagi izohga qarang). */
+  tekshirUzunlik: ["{n} belgi", "{n} символов"],
+  tekshirQisqa: ["Yana {n} ta belgi kerak", "Нужно ещё {n} символов"],
+  tekshirSavol: ["Savol bor", "Вопрос есть"],
+  tekshirSavolYoq: ["Savol ko'rinmadi — nima topilishi kerak?", "Вопрос не виден — что нужно найти?"],
+  tekshirJavobQisqa: ["Qisqa va aniq", "Коротко и ясно"],
+  tekshirJavobUzun: ["Uzunroq — bu yechim emasmi?", "Длинновато — это не решение?"],
+  tekshirJavobSon: ["Son — tekshirish oson bo'ladi", "Число — проверять проще"],
+  tekshirJavobSonsiz: ["Sonsiz javob — yechuvchi topishi qiyin", "Ответ без числа — решающему сложнее"],
+  tekshirYechimUzunlik: ["Tushuntirish bor", "Объяснение есть"],
+  tekshirYechimQisqa: ["Yana {n} ta belgi kerak", "Нужно ещё {n} символов"],
+  tekshirQadam: ["{n} ta qadam", "Шагов: {n}"],
+  tekshirQadamYoq: ["Amal ko'rinmadi — qadamlarni yozing", "Действий не видно — распишите шаги"],
+  tekshirJavobBor: ["Javob ({javob}) yechimda chiqdi", "Ответ ({javob}) есть в решении"],
+  tekshirJavobYoq: [
+    "Javob ({javob}) yechimda uchramadi — mos kelyaptimi?",
+    "Ответа ({javob}) нет в решении — они совпадают?",
+  ],
   masalaKattalar: ["Kattalar uchun", "Для взрослых"],
   masalaOlimpiada: ["Olimpiada", "Олимпиада"],
   masalaKursdanTashqari: ["Maktab dasturidan tashqari", "Вне школьной программы"],

@@ -57,6 +57,52 @@ export const TOIFALAR: Toifa[] = [
 export const SINFLAR = TOIFALAR;
 
 /**
+ * Bitta sinf — bir yoki ikki fan bilan.
+ *
+ * 7–10-sinflarda algebra va geometriya alohida kurs, ya'ni bitta
+ * "8-sinf" tugmasi ortida IKKITA tanlov turadi. Ularni ro'yxatda
+ * yonma-yon ikki plitka qilib qo'yish ham mumkin edi, lekin unda
+ * setka 16 ta katakka cho'zilib, "sinf" degan tushuncha yo'qolardi:
+ * odam 1 dan 11 gacha sanay olmay qolardi.
+ */
+export interface SinfGuruh {
+  /** Ko'rinadigan raqam. Maktabgacha uchun 0. */
+  sinf: number;
+  nom: string;
+  /** Shu sinfdagi kurslar. Bittadan ko'p bo'lsa fan so'raladi. */
+  fanlar: { kod: number; nom: string }[];
+}
+
+/**
+ * Sinflar setkasi — kurslardan yasaladi.
+ *
+ * Geometriya kodlari 100 dan boshlanadi (`curriculum/index.ts`),
+ * shuning uchun ular o'z sinfiga QAYTARILADI va shu sinfning
+ * ikkinchi fani bo'lib turadi.
+ */
+export const SINF_GURUHLARI: SinfGuruh[] = (() => {
+  const jadval = new Map<number, SinfGuruh>();
+  for (const c of COURSES) {
+    const sinf = c.grade >= 100 ? c.grade - 100 : c.grade;
+    if (!jadval.has(sinf)) {
+      jadval.set(sinf, { sinf, nom: sinfMatn(sinf === 0 ? 0 : sinf), fanlar: [] });
+    }
+    jadval.get(sinf)!.fanlar.push({ kod: c.grade, nom: fanNomi(c.title) });
+  }
+  return [...jadval.values()].sort((a, b) => a.sinf - b.sinf);
+})();
+
+/**
+ * Kurs nomidan FAN qismini ajratadi: "8-sinf Algebra" → "Algebra".
+ *
+ * Sinf raqami plitkada allaqachon turadi va uni fan yozuvida
+ * takrorlash kataklarni kengaytirib, setkani buzardi.
+ */
+function fanNomi(title: string): string {
+  return title.replace(/^\s*\d+\s*-?\s*(sinf|класс)\s*/i, "").trim() || title;
+}
+
+/**
  * Toifa nomi.
  *
  * Noma'lum kod bo'lsa (masalan kurs olib tashlangan) kodning o'zi

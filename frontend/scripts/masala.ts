@@ -32,6 +32,7 @@ g.getComputedStyle = () => ({ getPropertyValue: () => "#0d1230" });
 
 const M = await import("../src/lib/masalaOvoz.ts");
 const S = await import("../src/lib/masalaSinf.ts");
+const T = await import("../src/lib/masalaTekshir.ts");
 
 let xato = 0;
 const tekshir = (nom: string, kutilgan: unknown, keldi: unknown) => {
@@ -111,6 +112,79 @@ tekshir("olimpiada toifasi bor", true, S.TOIFALAR.some((x) => x.kod === S.OLIMPI
 tekshir("kattalar nomi bo'sh emas", true, S.sinfNomi(S.KATTALAR).length > 3);
 tekshir("noma'lum kod yiqilmaydi", "999", S.sinfNomi(999));
 tekshir("ma'lum kod nom beradi", true, S.sinfNomi(1).length > 0);
+
+/* ------------------------------------------------------- sinf setkasi */
+
+// Setka kurslardan yasaladi. 7–10 sinflarda ikki fan bor va ular
+// BITTA plitka ostida turishi kerak — aks holda setka o'n oltita
+// katakka cho'zilib, "sinf" degan tushuncha yo'qolardi: odam 1 dan
+// 11 gacha sanay olmay qolardi.
+const guruhlar = S.SINF_GURUHLARI;
+
+tekshir("setkada takroriy sinf yo'q",
+  guruhlar.length, new Set(guruhlar.map((g) => g.sinf)).size);
+tekshir("setka 0 dan 11 gacha", { a: 0, b: 11 },
+  { a: Math.min(...guruhlar.map((g) => g.sinf)), b: Math.max(...guruhlar.map((g) => g.sinf)) });
+tekshir("7–10 sinflar ikki fanli", [7, 8, 9, 10],
+  guruhlar.filter((g) => g.fanlar.length > 1).map((g) => g.sinf));
+tekshir("har fan kodi toifalar ro'yxatida ham bor", true,
+  guruhlar.every((g) => g.fanlar.every((f) => S.TOIFALAR.some((x) => x.kod === f.kod))));
+// Fan nomidan sinf raqami olib tashlanadi ("8-sinf Algebra" →
+// "Algebra"): raqam plitkada allaqachon turibdi va uni takrorlash
+// katakni kengaytirib, setkani buzardi.
+tekshir("fan nomida sinf raqami qolmagan", true,
+  guruhlar.every((g) => g.fanlar.every((f) => !/\d/.test(f.nom))));
+
+/* -------------------------------------------- yozish tekshiruvlari */
+
+const belgilar = (lar: { kalit: string; holat: string }[]) =>
+  lar.map((b) => `${b.holat}:${b.kalit}`);
+
+tekshir("bo'sh matnda belgi yo'q", [], belgilar(T.matnBelgilari("   ")));
+tekshir("qisqa matn ogohlantiradi", true,
+  belgilar(T.matnBelgilari("2+2?")).includes("ogoh:tekshirQisqa"));
+tekshir("uzun matn yashil", true,
+  belgilar(T.matnBelgilari("Savatda 20 ta olma bor edi, nechta qoldi?"))
+    .includes("ok:tekshirUzunlik"));
+
+// Savol belgisiz ham savol bo'lishi mumkin — "nechta", "toping".
+tekshir("savol belgisi tanildi", true,
+  belgilar(T.matnBelgilari("Savatda 20 ta olma bor edi. Nechta qoldi?"))
+    .includes("ok:tekshirSavol"));
+tekshir("so'roq so'zi ham yetadi", true,
+  belgilar(T.matnBelgilari("Uchburchakning yuzini toping va javobni yozing"))
+    .includes("ok:tekshirSavol"));
+tekshir("savolsiz matn ogohlantiradi", true,
+  belgilar(T.matnBelgilari("Bir savatda yigirmata olma bor edi va sakkiztasi ketdi"))
+    .includes("ogoh:tekshirSavolYoq"));
+
+tekshir("uzun javob ogohlantiradi", true,
+  belgilar(T.javobBelgilari("avval 20 dan 8 ni ayiramiz keyin 5 qo'shamiz"))
+    .includes("ogoh:tekshirJavobUzun"));
+tekshir("sonsiz javob ogohlantiradi", true,
+  belgilar(T.javobBelgilari("o'n yetti")).includes("ogoh:tekshirJavobSonsiz"));
+
+// ENG FOYDALI TEKSHIRUV: javob yechim ichida uchraydimi. Muallif
+// javobga 17 yozib, yechimni "= 15" bilan tugatsa — bu haqiqiy
+// e'tiborsizlik va uni tasdiqlashdan OLDIN aytish kerak.
+tekshir("javob yechimda topiladi", true,
+  belgilar(T.yechimBelgilari("20 - 8 = 12, keyin 12 + 5 = 17", "17"))
+    .includes("ok:tekshirJavobBor"));
+tekshir("mos kelmagan javob tutiladi", true,
+  belgilar(T.yechimBelgilari("20 - 8 = 12, keyin 12 + 3 = 15", "17"))
+    .includes("ogoh:tekshirJavobYoq"));
+
+// Solishtiruv server bilan BIR XIL normallashadi (`javob_normal`):
+// bo'sh joy, vergul va harf katta-kichikligi farq qilmasin.
+tekshir("bo'sh joy va vergul ahamiyatsiz", true,
+  belgilar(T.yechimBelgilari("natija = 3.5 sm bo'ladi", " 3,5 SM "))
+    .includes("ok:tekshirJavobBor"));
+
+tekshir("javob yozilmagan bo'lsa solishtirilmaydi", false,
+  belgilar(T.yechimBelgilari("20 - 8 = 12", "")).some((x) => x.includes("tekshirJavobBor")
+    || x.includes("tekshirJavobYoq")));
+tekshir("amalsiz yechim ogohlantiradi", true,
+  belgilar(T.yechimBelgilari("Javob o'n yetti bo'ladi", "")).includes("ogoh:tekshirQadamYoq"));
 
 console.log(xato === 0 ? "\n✅ masala: hammasi joyida" : `\n❌ ${xato} ta xato`);
 if (xato) process.exit(1);
