@@ -1,7 +1,7 @@
 {
-  "name": "Aql Zone — bilim va o'yin platformasi",
+  "name": "Aql Zone — 1–11-sinf matematikasi",
   "short_name": "Aql Zone",
-  "description": "1–4-sinf matematikasi darslik bo'yicha: yo'l xaritasi, yulduzlar va har safar yangi savollar.",
+  "description": "Maktabgacha yoshdan 11-sinfgacha matematika, algebra va geometriya: darslar, o'yinlar, testlar va formulalar.",
   "lang": "uz",
   "dir": "ltr",
   "start_url": "/",

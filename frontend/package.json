@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "tekshir": "jiti scripts/tekshir.ts && jiti scripts/zanjir.ts && jiti scripts/qobiq.ts && jiti scripts/oyin.ts && jiti scripts/maydon.ts && jiti scripts/duel.ts && jiti scripts/kichkintoy.ts && jiti scripts/yechim.ts && jiti scripts/variant.ts && jiti scripts/blok.ts && jiti scripts/togri.ts && jiti scripts/navbat.ts && jiti scripts/qidiruv.ts && jiti scripts/masala.ts"
+    "tekshir": "jiti scripts/tekshir.ts && jiti scripts/zanjir.ts && jiti scripts/qobiq.ts && jiti scripts/oyin.ts && jiti scripts/maydon.ts && jiti scripts/duel.ts && jiti scripts/kichkintoy.ts && jiti scripts/yechim.ts && jiti scripts/variant.ts && jiti scripts/blok.ts && jiti scripts/togri.ts && jiti scripts/navbat.ts && jiti scripts/qidiruv.ts && jiti scripts/masala.ts && jiti scripts/brend.ts"
   },
   "dependencies": {
     "react": "^19.2.7",

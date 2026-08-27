@@ -41,7 +41,21 @@ const S = {
   saqlanmadi: ["Saqlanmadi — qaytadan urinib ko'ring", "Не сохранилось — попробуйте снова"],
 
   /* ---------------- bosh sahifa (Dashboard) ---------------- */
-  shior: ["Aql Zone — bilim va o'yin platformasi", "Aql Zone — платформа знаний и игры"],
+  /* Bosh sahifadagi h1 — ko'rinmas, lekin ekran o'quvchisi va
+     qidiruv robotlari aynan shuni o'qiydi.
+
+     Ilgari "bilim va o'yin platformasi" deb turardi. Bu ilova
+     nima ekanini AYTMAYDI: unda 16 ta kurs va 637 ta dars bor va
+     hammasi matematika. Bot allaqachon to'g'ri gapirardi
+     (`backend/core/matn.py` dagi "salom"), sayt esa yo'q — ya'ni
+     bir odam ikki joyda ikki xil tanishtiruv ko'rardi.
+
+     Endi uchalasi (bot, sayt, ilova) bir xil gapiradi va buni
+     `scripts/brend.ts` qo'riqlaydi. */
+  shior: [
+    "Aql Zone — 1–11-sinf matematikasi",
+    "Aql Zone — математика 1–11 классов",
+  ],
   kimOynayapti: ["Kim o'ynayapti?", "Кто играет?"],
   reyting: ["Reyting", "Рейтинг"],
   hisobim: ["Hisobim", "Мой профиль"],
