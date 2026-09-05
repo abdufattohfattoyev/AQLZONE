@@ -67,10 +67,23 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
       className="clay-press block w-full rounded-clay bg-karta p-3.5 text-left shadow-clay-sm">
       {/* ---- tepa qator ---- */}
       <div className="flex items-center gap-2">
-        <span className="shadow-ichki rounded-full bg-sahna px-2.5 py-1 text-[10.5px]
+        <span className="shadow-ichki shrink-0 rounded-full bg-sahna px-2.5 py-1 text-[10.5px]
                          leading-none text-ink-soft">
           {sinfNomi(m.sinf)}
         </span>
+
+        {/* Qiyinlik — sinf yorlig'ining YONIDA. U ham masalaning
+            "pasporti": qaysi sinf va qanchalik qiyin degan ikki savol
+            bitta qatorda javob topadi. */}
+        {olchangan && (
+          <span className="flex shrink-0 items-center gap-[3px]" aria-label={`${nuqta}/5`}>
+            {Array.from({ length: 5 }, (_, i) => (
+              <span key={i}
+                className={`size-[5px] rounded-full ${
+                  i < nuqta ? "bg-brand-purple" : "bg-ink-dim/30"}`} />
+            ))}
+          </span>
+        )}
 
         {/* Holat yorlig'i FAQAT o'z masalasida chiqadi — boshqalarnikida
             u har doim "tasdiq" bo'ladi va hech narsa aytmaydi. */}
@@ -94,58 +107,53 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
         </span>
       </div>
 
-      {/* ---- matn ----
-          Rasm matn bilan YONMA-YON turadi, ustida emas: ro'yxatda
-          karta baland bo'lib ketsa, bir ekranda ikkitasi qolib,
-          tanlash uchun uzoq surish kerak bo'lardi. */}
-      <div className="mt-2.5 flex items-start gap-2.5">
-        <p className="line-clamp-3 min-w-0 flex-1 text-[14px] leading-snug">{m.matn}</p>
-        {m.rasm && (
-          <img src={m.rasm} alt="" loading="lazy"
-            className="size-14 shrink-0 rounded-2xl bg-track object-cover" />
-        )}
-      </div>
+      {/* ---- matn ---- */}
+      <p className="mt-2.5 line-clamp-4 text-[14.5px] leading-relaxed">{m.matn}</p>
 
-      {/* ---- botiq qator: qiyinlik va "yechish" ---- */}
+      {/* ---- chizma ----
+          Matnning OSTIDA va butun kenglikda, yonida emas.
+          Geometriya, shaxmat taxtasi yoki gugurt naqshi — bularning
+          hammasi CHIZMA bilan tushuniladi va 56 pikselli kichkina
+          kvadratchada ulardan hech narsa ko'rinmasdi. Rasm botiq
+          ramkada turadi: karta ko'tarilgan, chizma esa uning ichiga
+          o'yilgan oynadek. */}
+      {m.rasm && (
+        <span className="shadow-ichki mt-2.5 block overflow-hidden rounded-2xl bg-sahna p-1.5">
+          <img src={m.rasm} alt="" loading="lazy"
+            className="max-h-56 w-full rounded-xl object-contain" />
+        </span>
+      )}
+
+      {/* ---- botiq qator: holat va "yechish" ---- */}
       <div className="shadow-ichki mt-2.5 flex items-center gap-2 rounded-2xl bg-sahna
                       px-3 py-2">
-        {olchangan ? (
-          <>
-            <span className="text-[11px] text-ink-dim">{t("masalaQiyinlik")}</span>
-            <span className="flex items-center gap-[3px]" aria-label={`${nuqta}/5`}>
-              {Array.from({ length: 5 }, (_, i) => (
-                <span key={i}
-                  className={`size-[5px] rounded-full ${
-                    i < nuqta ? "bg-brand-purple" : "bg-ink-dim/30"}`} />
-              ))}
-            </span>
-          </>
-        ) : (
-          <span className="text-[11px] text-ink-dim">{t("masalaUrinilmagan")}</span>
-        )}
-        <span className="ml-auto flex shrink-0 items-center gap-1 text-[11.5px] text-brand-blue">
+        <span className="min-w-0 truncate text-[11.5px] text-ink-dim">
+          {olchangan
+            ? t("masalaYechdi", { n: m.yechganSoni, jami: m.urinishSoni })
+            : t("masalaUrinilmagan")}
+        </span>
+        <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-brand-purple/15
+                         px-2.5 py-1 text-[11.5px] leading-none text-brand-purple">
           {t("masalaYechishTugma")}
           <Icon name="chevron" size={13} />
         </span>
       </div>
 
-      {/* ---- past qator ---- */}
+      {/* ---- past qator ----
+          "Nechta odam yechdi" endi bu yerda emas, yuqoridagi botiq
+          qatorda: u masalaning O'ZI haqidagi ma'lumot, muallifniki
+          emas. Muallif yozuvi yonida turganda ikkalasi bir gapdek
+          o'qilardi. */}
       <div className="mt-2.5 flex min-w-0 items-center gap-1.5 text-[11px] text-ink-dim">
         {muallifBilan && (
-          <>
-            <span className="flex min-w-0 items-center gap-1">
-              <span className="grid size-[18px] shrink-0 place-items-center rounded-full
-                               bg-track text-[10px] leading-none">
-                {m.muallif.avatar || "🦊"}
-              </span>
-              <span className="truncate">{m.muallif.ism}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="grid size-[18px] shrink-0 place-items-center rounded-full
+                             bg-track text-[10px] leading-none">
+              {m.muallif.avatar || "🦊"}
             </span>
-            <span aria-hidden className="text-ink-dim/50">·</span>
-          </>
+            <span className="truncate">{m.muallif.ism}</span>
+          </span>
         )}
-        <span className="shrink-0">
-          {t("masalaYechdi", { n: m.yechganSoni, jami: m.urinishSoni })}
-        </span>
 
         {/* Ovozlar — botiq tasmachada. Ular kartaning eng past
             og'irlikdagi ma'lumoti va shu ko'rinishda ham shunday
