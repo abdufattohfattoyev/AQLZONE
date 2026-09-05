@@ -1,6 +1,29 @@
 /**
  * MASALALAR RO'YXATI — foydalanuvchilar yozgan masalalar.
  *
+ * ─────────────── NEGA TEPA QISM SHUNCHA PAST ───────────────
+ *
+ * Ilgari ro'yxatgacha to'rtta qavat bor edi: sarlavha, ostida
+ * izoh qatori, keyin butun ekran kengligidagi binafsha "Masala
+ * qo'shish" kartasi va ikkita tasma. Telefonda birinchi masala
+ * ekranning yarmidan pastda boshlanardi — ya'ni bo'limning o'zi
+ * ko'rinmasdi.
+ *
+ * Endi uch qavat va hammasi past:
+ *
+ *   sarlavha + ikkita amal   bitta qatorda
+ *   saralash                 chiziqli tab, karta emas
+ *   sinf                     yupqa tugmachalar
+ *
+ * "Masala qo'shish" sarlavha qatoriga, binafsha tugma bo'lib
+ * ko'chdi: u ekranning eng ko'rinadigan burchagida turadi va
+ * ro'yxatdan joy olmaydi. Uzun izohi yo'qoldi, chunki bosilgandan
+ * keyingi ekran o'zi hammasini so'raydi.
+ *
+ * Bo'sh ro'yxatda esa u YANA katta bo'lib qaytadi: u yerda
+ * ro'yxatdan olinadigan joy yo'q va yozishdan boshqa qiladigan
+ * ish ham yo'q.
+ *
  * ─────────────── NEGA TO'RTTA SARALASH ───────────────
  *
  * "Yangi" — bo'limning tirikligini ko'rsatadi va yangi muallifga
@@ -30,12 +53,31 @@ import * as MS from "../lib/masala";
 import type { Masala, Tartib } from "../lib/masala";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 
-const TARTIBLAR: { kod: Tartib; nom: () => string }[] = [
-  { kod: "yangi", nom: () => t("masalaYangilar") },
-  { kod: "qiyin", nom: () => t("masalaQiyinlar") },
-  { kod: "zor", nom: () => t("masalaZorlar") },
-  { kod: "koplik", nom: () => t("masalaKoplar") },
+/**
+ * Saralash tasmasi.
+ *
+ * Har birida emoji bor va u BEZAK EMAS: to'rtta tugmacha bir xil
+ * kulrang matn bo'lib turganda ular bir-biridan faqat o'qib
+ * ajratilardi, emoji esa ularni bir qarashda ajratadi va
+ * tanlanganini eslab qolishga yordam beradi.
+ */
+const TARTIBLAR: { kod: Tartib; belgi: string; nom: () => string }[] = [
+  { kod: "yangi", belgi: "✨", nom: () => t("masalaYangilar") },
+  { kod: "qiyin", belgi: "⚡", nom: () => t("masalaQiyinlar") },
+  { kod: "zor", belgi: "🔥", nom: () => t("masalaZorlar") },
+  { kod: "koplik", belgi: "🎯", nom: () => t("masalaKoplar") },
 ];
+
+/**
+ * Yonlamasiga suriladigan tasma.
+ *
+ * Chetlari EKRAN chetiga chiqadi (`-mx-4 px-4`): shunda oxirgi
+ * tugmacha chetga tegib, "yana bor" degan ishorani beradi. Ichki
+ * chegara ichida u to'satdan uzilgandek ko'rinardi.
+ */
+const TASMA =
+  "-mx-4 flex overflow-x-auto px-4 [-ms-overflow-style:none] " +
+  "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 interface Props {
   onOch: (id: number) => void;
@@ -79,72 +121,77 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
   useEffect(() => { void yukla(0, false); }, [yukla]);
 
   const almashtir = (k: Tartib) => { tebrat("tanlov"); setTartib(k); };
+  const sinfniTanla = (k: number | null) => { tebrat("tanlov"); setSinf(k); };
+
+  /* Filtr tegilmagan bo'lsa — bo'lim haqiqatan bo'sh. Tegilgan
+     bo'lsa esa "bu filtrda yo'q" degani va u yerda katta "yozing"
+     tugmasi noto'g'ri javob bo'lardi. */
+  const bosh = holat === "tayyor" && royxat.length === 0;
+  const butunlayBosh = bosh && sinf === null && tartib === "yangi";
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-3 pb-10">
-      <div className="flex items-center gap-2.5">
+      {/* ---- sarlavha va ikkita amal ---- */}
+      <div className="flex items-center gap-2">
         {!ozStrelka && (
           <button type="button" onClick={onBack} aria-label={t("ortga")}
-            className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl
-                       bg-karta text-ink-soft shadow-clay-sm">
+            className="clay-press -ml-1 grid size-10 shrink-0 place-items-center rounded-2xl
+                       text-ink-soft">
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
         )}
-        <div className="min-w-0 flex-1">
-          <h1 className="font-display text-[18px] leading-tight">{t("masalalar")}</h1>
-          <p className="text-[11.5px] leading-snug text-ink-dim">{t("masalalarIzoh")}</p>
-        </div>
+        {/* Sarlavha yonidagi "Mening" — ikkinchi darajali amal va
+            shunday ham ko'rinadi: yozuv, karta emas. Ilgari u
+            binafsha tugma yonidagi ikkinchi kvadrat tugma edi va
+            ikkalasi bir xil og'irlikda turardi. */}
+        <h1 className="shrink-0 font-display text-[17px] leading-none">{t("masalalar")}</h1>
         <button type="button" onClick={onMenikilar} title={t("masalaMenikilar")}
-          className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl
-                     bg-karta text-ink-soft shadow-clay-sm">
-          <Icon name="pencil" size={18} />
+          className="clay-press flex min-w-0 shrink items-center gap-1 text-[12.5px]
+                     text-ink-dim">
+          <Icon name="pencil" size={14} className="shrink-0" />
+          <span className="truncate">{t("masalaMenikilarQisqa")}</span>
+        </button>
+
+        {/* Asosiy amal — ro'yxatning ustida emas, YONIDA. Matni
+            qisqa, chunki uning izohi keyingi ekranning o'zi. */}
+        <button type="button" onClick={onYangi} title={t("masalaYoz")}
+          className="tugma-3d ml-auto flex h-9 shrink-0 items-center gap-1 rounded-full
+                     bg-brand-purple pr-3.5 pl-3 text-white shadow-clay-sm">
+          <Icon name="plus" size={16} />
+          <span className="font-display text-[13px] leading-none">{t("masalaYozQisqa")}</span>
         </button>
       </div>
 
-      {/* ---- yangi masala ----
-          Ro'yxatning TEPASIDA turadi, pastida emas. Bo'lim
-          foydalanuvchi yozgan masalalar ustiga quriladi va "yozish"
-          uning asosiy amali: uni pastga qo'ysak, uzun ro'yxatni
-          surib chiqqan odamgina ko'rardi. */}
-      <button type="button" onClick={onYangi}
-        className="tugma-3d az-yaltir mt-3.5 flex w-full items-center gap-3 rounded-clay
-                   bg-brand-purple p-3.5 text-left text-white shadow-clay">
-        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/25">
-          <Icon name="plus" size={20} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-display text-[15px] leading-tight">
-            {t("masalaYoz")}
-          </span>
-          <span className="mt-0.5 block text-[11.5px] leading-snug text-white/90">
-            {t("masalaYozIzoh")}
-          </span>
-        </span>
-        <Icon name="chevron" size={18} className="shrink-0 text-white/85" />
-      </button>
-
-      {/* ---- saralash ---- */}
-      <div className="mt-3.5 flex gap-1.5 overflow-x-auto pb-1
-                      [-ms-overflow-style:none] [scrollbar-width:none]
-                      [&::-webkit-scrollbar]:hidden">
-        {TARTIBLAR.map((x) => (
-          <button key={x.kod} type="button" onClick={() => almashtir(x.kod)}
-            className={`clay-press shrink-0 rounded-full px-3.5 py-2 text-[12.5px] ${
-              tartib === x.kod
-                ? "bg-brand-purple text-white"
-                : "bg-karta text-ink-soft shadow-clay-sm"}`}>
-            {x.nom()}
-          </button>
-        ))}
+      {/* ---- saralash ----
+          Tugmachalar ko'tarilgan, tanlangani binafsha: bu ilovaning
+          o'z tili — hamma joyda tanlov shunday ko'rsatiladi. */}
+      <div className={`${TASMA} mt-3 gap-1.5`}>
+        {TARTIBLAR.map((x) => {
+          const faol = tartib === x.kod;
+          return (
+            <button key={x.kod} type="button" onClick={() => almashtir(x.kod)}
+              className={`clay-press flex h-8 shrink-0 items-center gap-1.5 rounded-full
+                          px-3.5 text-[12.5px] whitespace-nowrap shadow-clay-sm ${
+                faol
+                  ? "bg-brand-purple font-display text-white"
+                  : "bg-karta text-ink-soft"}`}>
+              <span aria-hidden className="text-[12px] leading-none">{x.belgi}</span>
+              {x.nom()}
+            </button>
+          );
+        })}
       </div>
 
-      {/* ---- sinf filtri ---- */}
-      <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1
-                      [-ms-overflow-style:none] [scrollbar-width:none]
-                      [&::-webkit-scrollbar]:hidden">
-        <Filtr faol={sinf === null} on={() => setSinf(null)}>{t("masalaHammaSinf")}</Filtr>
+      {/* ---- sinf filtri ----
+          Saralashdan PASTROQ og'irlikda: past, soyasiz va botiq.
+          Ikkalasi bir xil bo'lsa, ekran tepasida sakkizta bir xil
+          tugmacha turib, qaysi biri nima qilishi bilinmasdi. */}
+      <div className={`${TASMA} mt-2 gap-1.5`}>
+        <Filtr faol={sinf === null} on={() => sinfniTanla(null)}>
+          {t("masalaHammaSinf")}
+        </Filtr>
         {SINFLAR.map((s) => (
-          <Filtr key={s.kod} faol={sinf === s.kod} on={() => setSinf(s.kod)}>
+          <Filtr key={s.kod} faol={sinf === s.kod} on={() => sinfniTanla(s.kod)}>
             {s.nom}
           </Filtr>
         ))}
@@ -157,11 +204,8 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
       {holat === "xato" && (
         <p className="mt-10 text-center text-[13px] text-ink-dim">{t("aloqaYoq")}</p>
       )}
-      {holat === "tayyor" && royxat.length === 0 && (
-        <p className="mt-10 text-center text-[13px] leading-snug text-ink-dim">
-          {t("masalaBosh")}
-        </p>
-      )}
+
+      {bosh && <Bosh katta={butunlayBosh} onYangi={onYangi} />}
 
       <div className="mt-3 space-y-2.5">
         {royxat.map((m) => (
@@ -180,13 +224,53 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
   );
 }
 
+/**
+ * Bo'sh ro'yxat.
+ *
+ * `katta` — bo'lim butunlay bo'sh (filtr tegilmagan). Faqat
+ * o'shanda yozish tugmasi qaytadan katta bo'lib chiqadi: bo'sh
+ * ekranda undan boshqa qiladigan ish yo'q. Filtr natijasi bo'sh
+ * chiqqanida esa odamga "boshqa filtrni ko'ring" degan bir qator
+ * yetadi.
+ */
+function Bosh({ katta, onYangi }: { katta: boolean; onYangi: () => void }) {
+  if (!katta) {
+    return (
+      <p className="mx-auto mt-10 max-w-xs text-center text-[13px] leading-snug text-ink-dim">
+        {t("masalaBoshFiltr")}
+      </p>
+    );
+  }
+  return (
+    <div className="mt-10 flex flex-col items-center px-6 text-center">
+      <span className="grid size-14 place-items-center rounded-3xl bg-brand-purple/12
+                       text-brand-purple">
+        <Icon name="pencil" size={24} />
+      </span>
+      <p className="mt-3 font-display text-[15px]">{t("masalaBoshSarlavha")}</p>
+      <p className="mt-1 max-w-xs text-[12.5px] leading-snug text-ink-dim">
+        {t("masalaYozIzoh")}
+      </p>
+      <button type="button" onClick={onYangi}
+        className="tugma-3d az-yaltir mt-4 flex items-center gap-2 rounded-clay
+                   bg-brand-purple px-5 py-3 text-white shadow-clay">
+        <Icon name="plus" size={18} />
+        <span className="font-display text-[14px] leading-none">{t("masalaYoz")}</span>
+      </button>
+    </div>
+  );
+}
+
 function Filtr(
   { faol, on, children }: { faol: boolean; on: () => void; children: React.ReactNode },
 ) {
   return (
     <button type="button" onClick={on}
-      className={`clay-press shrink-0 rounded-full px-3 py-1.5 text-[12px] ${
-        faol ? "bg-brand-blue text-white" : "bg-karta text-ink-dim shadow-clay-sm"}`}>
+      className={`clay-press flex h-7 shrink-0 items-center rounded-full px-3 text-[11.5px]
+                  whitespace-nowrap transition-colors ${
+        faol
+          ? "bg-brand-blue font-display text-white"
+          : "shadow-ichki bg-sahna text-ink-dim"}`}>
       {children}
     </button>
   );

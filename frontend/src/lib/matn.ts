@@ -419,13 +419,26 @@ const S = {
   masalaKoplar: ["Ko'p yechilgan", "Часто решают"],
   masalaHammaSinf: ["Hammasi", "Все"],
   masalaYana: ["Yana ko'rsatish", "Показать ещё"],
-  masalaBosh: [
-    "Bu yerda hali masala yo'q. Birinchi bo'lib siz yozing!",
-    "Здесь пока нет задач. Напишите первую!",
+  /* Sarlavhadagi tugma matni. "Masala qo'shish" u yerga sig'maydi —
+     tor telefonda sarlavhani siqib, uni uch nuqtaga aylantirardi. */
+  masalaYozQisqa: ["Yozish", "Написать"],
+  masalaBoshSarlavha: ["Hali masala yo'q", "Пока нет задач"],
+  /* Filtr natijasi bo'sh chiqqanda. "Birinchi bo'lib yozing" bu yerda
+     noto'g'ri maslahat: masalalar bor, faqat boshqa sinfda. */
+  masalaBoshFiltr: [
+    "Bu sinfda hali masala yo'q — boshqasini tanlab ko'ring",
+    "В этом классе задач пока нет — выберите другой",
   ],
   masalaYechdi: ["{n}/{jami} yechdi", "решили {n}/{jami}"],
   masalaYechgansiz: ["Yechgansiz", "Решено"],
   masalaQaytaUrinish: ["Yecholmagansiz", "Не решено"],
+  /* Kartadagi uchinchi holat: hali ochilmagan masala. */
+  masalaYechilmagan: ["Yechilmagan", "Не решалась"],
+  masalaQiyinlik: ["Qiyinligi", "Сложность"],
+  /* Hech kim urinmagan masalada foiz yolg'on chiqadi — 0 urinishdan
+     100% "oson" hosil bo'lardi. Shuning uchun nuqta o'rniga shu yozuv. */
+  masalaUrinilmagan: ["Hali urinilmagan", "Ещё не решали"],
+  masalaYechishTugma: ["Yechish", "Решить"],
   masalaKutmoqda: ["Navbatda", "На проверке"],
   masalaRad: ["Rad etilgan", "Отклонена"],
   /* Muallif uchun: nega masalasi hali ko'rinmayapti. */
@@ -567,6 +580,8 @@ const S = {
 
   /* --- o'z masalalarim --- */
   masalaMenikilar: ["Mening masalalarim", "Мои задачи"],
+  /* Sarlavha qatorida to'liq nom sig'maydi va uch nuqtaga aylanardi. */
+  masalaMenikilarQisqa: ["Mening", "Мои"],
   masalaMenikilarBosh: [
     "Hali masala yozmagansiz. Birinchisini qo'shib ko'ring!",
     "Вы ещё не писали задач. Попробуйте добавить первую!",

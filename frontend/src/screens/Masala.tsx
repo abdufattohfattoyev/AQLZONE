@@ -115,16 +115,22 @@ export function Masala({ id, onMuallif, onBack }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-3 pb-10">
-      <div className="flex items-center gap-2.5">
+      {/* Sarlavha qatori ro'yxat ekranidagi bilan bir xil turadi:
+          orqaga — yozuvsiz strelka, o'ng chetda esa sinf yorlig'i
+          (kartadagidek botiq). */}
+      <div className="flex items-center gap-2">
         {!ozStrelka && (
           <button type="button" onClick={onBack} aria-label={t("ortga")}
-            className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl
-                       bg-karta text-ink-soft shadow-clay-sm">
+            className="clay-press -ml-1 grid size-10 shrink-0 place-items-center rounded-2xl
+                       text-ink-soft">
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
         )}
-        <h1 className="font-display text-[17px]">{t("masalaBitta")}</h1>
-        <span className="ml-auto rounded-full bg-karta px-2.5 py-1 text-[11px] text-ink-dim">
+        <h1 className="min-w-0 flex-1 truncate font-display text-[17px] leading-none">
+          {t("masalaBitta")}
+        </h1>
+        <span className="shadow-ichki shrink-0 rounded-full bg-sahna px-2.5 py-1 text-[11px]
+                         leading-none text-ink-soft">
           {sinfNomi(m.sinf)}
         </span>
       </div>
@@ -167,7 +173,11 @@ export function Masala({ id, onMuallif, onBack }: Props) {
           o'zini sinab ko'rish uchun yana yozishi mumkin. */}
       {m.holat === "tasdiq" && (
         <div className="mt-3">
-          <label className="flex items-center gap-2 rounded-clay bg-karta px-3.5 py-3 shadow-clay-sm">
+          {/* Javob maydoni BOTIQ — kartalar ko'tarilgan, yoziladigan
+              joy esa yuzaga o'yilgan. Shu farq "bu yerga yozing"
+              degan yagona ishora bo'lib turadi. */}
+          <label className="shadow-ichki flex items-center gap-2 rounded-clay bg-sahna
+                            px-3.5 py-3">
             <Icon name="pencil" size={16} className="shrink-0 text-ink-dim" />
             <input
               value={javob}
@@ -220,7 +230,8 @@ export function Masala({ id, onMuallif, onBack }: Props) {
 
       {/* ---- ovoz va statistika ---- */}
       {m.holat === "tasdiq" && (
-        <div className="mt-3 flex items-center gap-2">
+        <div className="shadow-ichki mt-3 flex items-center gap-1.5 rounded-full bg-sahna
+                        p-1.5">
           <OvozTugma
             belgi="👍" son={sonlar.like} faol={ovozim === "like"} oz={m.meniki}
             on={() => void ovozBer("like")}
@@ -229,7 +240,7 @@ export function Masala({ id, onMuallif, onBack }: Props) {
             belgi="👎" son={sonlar.dislike} faol={ovozim === "dislike"} oz={m.meniki}
             on={() => void ovozBer("dislike")}
           />
-          <span className="ml-auto text-right text-[11.5px] leading-tight text-ink-dim">
+          <span className="ml-auto pr-2 text-right text-[11.5px] leading-tight text-ink-dim">
             {t("masalaYechdi", {
               n: natija?.yechganSoni ?? m.yechganSoni,
               jami: natija?.urinishSoni ?? m.urinishSoni,
@@ -253,9 +264,9 @@ function OvozTugma(
       // faqat o'chiriladi: yashirilsa, muallif sonni umuman
       // ko'rmay qolardi.
       title={oz ? t("masalaOzOvoz") : undefined}
-      className={`clay-press flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px]
+      className={`clay-press flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px]
                   disabled:opacity-45 ${
-        faol ? "bg-brand-purple text-white" : "bg-karta text-ink-soft shadow-clay-sm"}`}>
+        faol ? "bg-brand-purple text-white shadow-clay-sm" : "bg-karta text-ink-soft"}`}>
       <span>{belgi}</span>
       <span className="tabular-nums">{son}</span>
     </button>

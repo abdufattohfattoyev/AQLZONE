@@ -74,6 +74,10 @@
   --az-soya: 0 6px 0 var(--color-clay), 0 10px 18px rgb(0 0 0 / 0.1);
   --az-soya-sm: 0 4px 0 var(--color-clay), 0 6px 12px rgb(0 0 0 / 0.08);
   --az-soya-node: 0 7px 0 rgb(0 0 0 / 0.16), 0 12px 22px rgb(0 0 0 / 0.15);
+  /* "Botiq" yuza — kartaning ICHIGA o'yilgan maydon (masala kartasidagi
+     qiyinlik qatori, ovoz tugmalari). Ko'tarilgan `shadow-clay` ning
+     teskarisi: ikkalasi birga kartaga chuqurlik beradi. */
+  --az-ichki: inset 0 2px 4px rgb(0 0 0 / 0.35);
   --az-body: #0f1436;
 
   /*
@@ -100,6 +104,7 @@
 @utility shadow-clay { box-shadow: var(--az-soya); }
 @utility shadow-clay-sm { box-shadow: var(--az-soya-sm); }
 @utility shadow-node { box-shadow: var(--az-soya-node); }
+@utility shadow-ichki { box-shadow: var(--az-ichki); }
 
 /**
  * To'liq ekran balandligi — `min-h-dvh` o'rniga.
@@ -136,6 +141,9 @@
 
   --az-soya: 0 4px 0 var(--color-clay), 0 18px 34px -12px rgb(30 50 110 / 0.26);
   --az-soya-sm: 0 3px 0 var(--color-clay), 0 10px 20px -8px rgb(30 50 110 / 0.22);
+  /* Oq kartada quyuq botiq soya iflos ko'rinadi — bu yerda u ko'kimtir
+     va ancha yengil. */
+  --az-ichki: inset 0 2px 5px rgb(30 50 110 / 0.16);
   --az-soya-node: 0 6px 0 rgb(163 183 224 / 0.8), 0 14px 26px rgb(30 50 110 / 0.18);
   --radius-clay: 24px;
 
@@ -167,6 +175,7 @@
      yumaloq, ostida qalin soya. */
   --az-soya: 0 8px 0 var(--color-clay), 0 14px 24px rgb(0 0 0 / 0.12);
   --az-soya-sm: 0 5px 0 var(--color-clay), 0 8px 14px rgb(0 0 0 / 0.1);
+  --az-ichki: inset 0 2px 4px rgb(90 75 50 / 0.14);
   --radius-clay: 32px;
 
   --az-maqsad-1: #ffe0ad;
@@ -468,6 +477,8 @@
   --az-soya: 0 5px 0 var(--color-clay), 0 14px 28px -10px rgb(26 40 90 / 0.28);
   --az-soya-sm: 0 3px 0 var(--color-clay), 0 9px 18px -8px rgb(26 40 90 / 0.22);
   --az-soya-node: 0 6px 0 rgb(26 40 90 / 0.18), 0 12px 22px rgb(26 40 90 / 0.18);
+  /* Oq kartada quyuq o'yiq iflos ko'rinadi — ko'kimtir va yengil. */
+  --az-ichki: inset 0 2px 5px rgb(26 40 90 / 0.16);
 
   --az-maqsad-1: #dfe8ff;
   --az-maqsad-2: #eef2ff;
@@ -517,6 +528,10 @@
   --az-soya: 0 5px 0 var(--color-clay), 0 16px 32px -8px rgb(0 0 0 / 0.55);
   --az-soya-sm: 0 3px 0 var(--color-clay), 0 10px 20px -6px rgb(0 0 0 / 0.45);
   --az-soya-node: 0 6px 0 rgb(0 0 0 / 0.4), 0 14px 26px rgb(0 0 0 / 0.4);
+  /* Botiq yuza ham yorug'lik tanloviga ergashishi SHART: tema
+     yorug' (`bosh`), tanlov esa qora bo'lganda quyuq karta ichida
+     och soya qolib, o'yiq umuman ko'rinmasdi. */
+  --az-ichki: inset 0 2px 4px rgb(0 0 0 / 0.35);
 
   --az-maqsad-1: #3a2f66;
   --az-maqsad-2: #2a2350;

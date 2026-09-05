@@ -187,27 +187,29 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pt-3 pb-10 lg:max-w-4xl">
-      {/* ---- sarlavha va progress ---- */}
-      <div className="flex items-center gap-2.5">
+    <div className="mx-auto w-full max-w-2xl px-4 pt-2 pb-10 lg:max-w-4xl">
+      {/* ---- sarlavha va progress ----
+          Sarlavha va qadam raqami BIR qatorda: ro'yxat ekranidagidek
+          past tepa qism, ikkinchi qavatsiz. */}
+      <div className="flex items-center gap-2">
         {!ozStrelka && (
           <button type="button" onClick={ortga} aria-label={t("ortga")}
-            className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl
-                       bg-karta text-ink-soft shadow-clay-sm">
+            className="clay-press -ml-1 grid size-10 shrink-0 place-items-center rounded-2xl
+                       text-ink-soft">
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
         )}
-        <div className="min-w-0 flex-1">
-          <h1 className="font-display text-[18px] leading-tight">{sarlavha(qadam, fanSorash)}</h1>
-          <p className="text-[11.5px] leading-snug text-ink-dim">
-            {t("masalaQadam", { n: qadam, jami: QADAMLAR })}
-          </p>
-        </div>
+        <h1 className="min-w-0 flex-1 truncate font-display text-[17px] leading-tight">
+          {sarlavha(qadam, fanSorash)}
+        </h1>
+        <span className="shrink-0 text-[11.5px] text-ink-dim">
+          {t("masalaQadam", { n: qadam, jami: QADAMLAR })}
+        </span>
       </div>
 
       {/* Progress — qadamlar soniga teng bo'lakcha. Rangi to'lgani
           sari o'sadi: odam qancha qolganini bir qarashda ko'radi. */}
-      <div className="mt-3 flex gap-1" role="progressbar"
+      <div className="mt-2.5 flex gap-1" role="progressbar"
         aria-valuenow={qadam} aria-valuemin={1} aria-valuemax={QADAMLAR}>
         {Array.from({ length: QADAMLAR }, (_, i) => (
           <span key={i}
@@ -434,7 +436,7 @@ function Uchinchi({
         <textarea
           value={matn} onChange={(e) => setMatn(e.target.value)}
           rows={5} maxLength={MAX_MATN} placeholder={t("masalaMatniIzoh")}
-          className="w-full resize-y rounded-2xl bg-sahna px-3.5 py-3 text-[14.5px]
+          className="shadow-ichki w-full resize-y rounded-2xl bg-sahna px-3.5 py-3 text-[14.5px]
                      leading-relaxed outline-none placeholder:text-ink-dim"
         />
         {rasmKor ? (
@@ -466,7 +468,7 @@ function Uchinchi({
           <input
             value={javob} onChange={(e) => setJavob(e.target.value)}
             maxLength={100} inputMode="text"
-            className="w-40 rounded-2xl bg-sahna px-3.5 py-2.5 text-[17px]
+            className="shadow-ichki w-40 rounded-2xl bg-sahna px-3.5 py-2.5 text-[17px]
                        outline-none placeholder:text-ink-dim"
           />
         </Karta>
@@ -475,7 +477,7 @@ function Uchinchi({
           <textarea
             value={yechim} onChange={(e) => setYechim(e.target.value)}
             rows={4} maxLength={MAX_YECHIM} placeholder={t("masalaYechimiIzoh")}
-            className="w-full resize-y rounded-2xl bg-sahna px-3.5 py-3 text-[14px]
+            className="shadow-ichki w-full resize-y rounded-2xl bg-sahna px-3.5 py-3 text-[14px]
                        leading-relaxed outline-none placeholder:text-ink-dim"
           />
         </Karta>
@@ -533,7 +535,7 @@ function Tortinchi({
         {/* Javob va yechim BU YERDA ko'rinmaydi — yechuvchi ham
             ularni ko'rmaydi. Ko'rsatsak, ko'rinish yolg'on
             bo'lardi. */}
-        <div className="mt-2.5 rounded-2xl bg-sahna px-3.5 py-2.5 text-[12.5px] text-ink-dim">
+        <div className="shadow-ichki mt-2.5 rounded-2xl bg-sahna px-3.5 py-2.5 text-[12.5px] text-ink-dim">
           {t("masalaJavobJoy")}
         </div>
       </div>

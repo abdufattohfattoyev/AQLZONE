@@ -42,20 +42,25 @@ export function Masalalarim({ onOch, onYangi, onBack }: Props) {
   useEffect(yukla, [yukla]);
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pt-3 pb-10">
-      <div className="flex items-center gap-2.5">
+    <div className="mx-auto w-full max-w-2xl px-4 pt-2 pb-10">
+      {/* Sarlavha qatori ro'yxat ekranidagi bilan bir xil — ikkalasi
+          bir-biriga o'tib turadi va boshqa turishi sakrab ko'rinardi. */}
+      <div className="flex items-center gap-2">
         {!ozStrelka && (
           <button type="button" onClick={onBack} aria-label={t("ortga")}
-            className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl
-                       bg-karta text-ink-soft shadow-clay-sm">
+            className="clay-press -ml-1 grid size-10 shrink-0 place-items-center rounded-2xl
+                       text-ink-soft">
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
         )}
-        <h1 className="font-display text-[17px]">{t("masalaMenikilar")}</h1>
+        <h1 className="min-w-0 flex-1 truncate font-display text-[17px] leading-tight">
+          {t("masalaMenikilar")}
+        </h1>
         <button type="button" onClick={onYangi} title={t("masalaYoz")}
-          className="clay-press ml-auto grid size-11 shrink-0 place-items-center rounded-2xl
-                     bg-brand-purple text-white shadow-clay">
-          <Icon name="plus" size={20} />
+          className="tugma-3d flex h-9 shrink-0 items-center gap-1 rounded-full
+                     bg-brand-purple pr-3.5 pl-3 text-white shadow-clay-sm">
+          <Icon name="plus" size={16} />
+          <span className="font-display text-[13px] leading-none">{t("masalaYozQisqa")}</span>
         </button>
       </div>
 
