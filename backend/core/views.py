@@ -1439,7 +1439,13 @@ def masala_korish(request, pk: int):
     # umuman qo'shilmaydi: bo'sh bo'lsa ham u "bunday imkoniyat bor"
     # deb aytib turardi va ilova kodida uni izlash boshlanardi.
     if _admin_mi(profil):
-        javob["kanal"] = {"mumkin": True, "yuborilgan": m.kanal_at is not None}
+        javob["kanal"] = {
+            "mumkin": True,
+            "yuborilgan": m.kanal_at is not None,
+            # Yuborilgan bo'lsa — postning o'ziga havola. Admin
+            # bosib, kanalda qanday chiqqanini ko'radi.
+            "havola": MK.post_havolasi(m) if m.kanal_at else "",
+        }
     return Response(javob)
 
 
@@ -1477,12 +1483,13 @@ def masala_kanal(request, pk: int):
         return Response({"detail": "topilmadi"}, status=404)
 
     holat, izoh = MK.yubor(m)
-    if holat == "yuborildi":
-        return Response({"holat": holat, "yuborilgan": True})
-    # Takror — xato emas: masala allaqachon kanalda turibdi va
-    # tugma shu holatni ko'rsatishi kerak.
-    if holat == "takror":
-        return Response({"holat": holat, "yuborilgan": True})
+    # Takror — xato emas: masala allaqachon kanalda turibdi va tugma
+    # shu holatni (havolasi bilan) ko'rsatishi kerak.
+    if holat in ("yuborildi", "takror"):
+        m.refresh_from_db(fields=["kanal_post_id"])
+        return Response({
+            "holat": holat, "yuborilgan": True, "havola": MK.post_havolasi(m),
+        })
     return Response({"holat": holat, "izoh": izoh, "yuborilgan": False}, status=400)
 
 

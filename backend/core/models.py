@@ -913,6 +913,11 @@ class Masala(models.Model):
     #: kanalda bo'lsa ham ilovada avvalgidek turaveradi.
     kanal_at = models.DateTimeField(null=True, blank=True)
 
+    #: Kanaldagi post raqami — `t.me/<kanal>/<id>` havolasi shundan
+    #: quriladi. Admin yuborgandan keyin "kanalda ko'rish" tugmasini
+    #: bosib, postni o'z ko'zi bilan tekshiradi.
+    kanal_post_id = models.IntegerField(null=True, blank=True)
+
     #: Sanoqlar ATAYLAB shu yerda turadi, `urinishlar` dan sanalmaydi.
     #:
     #: Ro'yxat ekrani har masalada "nechta odam yechdi" ni ko'rsatadi.

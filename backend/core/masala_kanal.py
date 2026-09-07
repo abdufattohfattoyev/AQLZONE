@@ -137,9 +137,10 @@ def yubor(masala: Masala) -> tuple[str, str]:
     if royxat:
         tugmalar.append((TUGMA_BOSHQA, royxat, xabar.KOK))
 
+    post_id = 0
     if masala.rasm:
         with masala.rasm.open("rb") as f:
-            holat, izoh = xabar.rasm_yubor(kanal, jpeg_qil(f), yozuv, tugmalar)
+            holat, izoh, post_id = xabar.rasm_yubor(kanal, jpeg_qil(f), yozuv, tugmalar)
     else:
         # Rasmsiz masala ham joylanadi — oddiy xabar bo'lib, lekin
         # o'sha ikkita tugma bilan.
@@ -151,5 +152,23 @@ def yubor(masala: Masala) -> tuple[str, str]:
 
     if holat == "yuborildi":
         masala.kanal_at = timezone.now()
-        masala.save(update_fields=["kanal_at"])
+        masala.kanal_post_id = post_id or None
+        masala.save(update_fields=["kanal_at", "kanal_post_id"])
     return holat, izoh
+
+
+def post_havolasi(masala: Masala) -> str:
+    """
+    Kanaldagi postga havola.
+
+    Post raqami ma'lum bo'lsa — AYNAN o'sha xabarga, aks holda
+    kanalning o'ziga (rasmsiz masalada raqam qaytmaydi). Kanal
+    sozlanmagan bo'lsa — bo'sh satr.
+    """
+    kanal = kanal_nomi().lstrip("@")
+    if not kanal:
+        return ""
+    return (
+        f"https://t.me/{kanal}/{masala.kanal_post_id}"
+        if masala.kanal_post_id else f"https://t.me/{kanal}"
+    )

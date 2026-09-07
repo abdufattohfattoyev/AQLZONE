@@ -62,7 +62,7 @@ export interface Masala {
    * Oddiy foydalanuvchida maydonning o'zi yo'q, ya'ni tugma ham
    * chizilmaydi va serverga so'rov ham ketmaydi.
    */
-  kanal?: { mumkin: boolean; yuborilgan: boolean };
+  kanal?: { mumkin: boolean; yuborilgan: boolean; havola?: string };
 }
 
 export interface Royxat {
@@ -133,7 +133,9 @@ export const ovozBer = (
  * Boshqa odamda bu yo'l umuman yo'q (server 404 qaytaradi) va
  * tugma ham ko'rinmaydi: `kanal` maydoni javobga qo'shilmaydi.
  */
-export const kanalgaYubor = (id: number): Promise<{ yuborilgan: boolean }> =>
+export const kanalgaYubor = (
+  id: number,
+): Promise<{ yuborilgan: boolean; havola: string }> =>
   sorov(`/api/v1/masalalar/${id}/kanal`, bilanProfil({}));
 
 export interface YangiMasala {

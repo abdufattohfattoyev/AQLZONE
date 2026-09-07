@@ -230,11 +230,13 @@ def rasm_yubor(
     rasm: bytes,
     sarlavha: str,
     tugmalar: list[tuple[str, str, str]] | None = None,
-) -> tuple[str, str]:
+) -> tuple[str, str, int]:
     """
     Rasmli xabar — kanalga masala joylash uchun.
 
-    `(holat, izoh)` qaytaradi, `yubor` bilan bir xil qoidada.
+    `(holat, izoh, xabar_id)` qaytaradi. Uchinchisi — Telegram bergan
+    xabar raqami: kanaldagi POSTNING O'ZIGA havola shundan quriladi
+    (`t.me/<kanal>/<id>`). Xato bo'lsa 0.
 
     Nega alohida funksiya: matnli xabarda rasm "havola kartasi" bo'lib
     chiqadi va u kichkina, kesilgan holda ko'rinadi. Chizmali masalada
@@ -269,7 +271,11 @@ def rasm_yubor(
     so_rov = urllib.request.Request(url, data=tana, headers={"Content-Type": turi})
     try:
         with urllib.request.urlopen(so_rov, timeout=60) as r:
-            return ("yuborildi", "") if json.loads(r.read()).get("ok") else ("xato", "ok=false")
+            javob = json.loads(r.read())
+            if not javob.get("ok"):
+                return "xato", "ok=false", 0
+            xabar_id = int(javob.get("result", {}).get("message_id") or 0)
+            return "yuborildi", "", xabar_id
     except urllib.error.HTTPError as e:
         izoh = ""
         try:
@@ -277,10 +283,10 @@ def rasm_yubor(
         except Exception:
             pass
         if e.code == 403 or "chat not found" in izoh.lower():
-            return "bloklandi", izoh or f"HTTP {e.code}"
-        return "xato", izoh or f"HTTP {e.code}"
+            return "bloklandi", izoh or f"HTTP {e.code}", 0
+        return "xato", izoh or f"HTTP {e.code}", 0
     except Exception as e:                       # tarmoq uzilishi va boshqalar
-        return "xato", str(e)[:200]
+        return "xato", str(e)[:200], 0
 
 
 def adminga_yangi_hisob(pupil) -> None:

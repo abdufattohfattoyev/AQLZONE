@@ -470,6 +470,7 @@ const S = {
   masalaKanalHa: ["Ha, yubor", "Да, отправить"],
   masalaKanalYoq: ["Yo'q", "Нет"],
   masalaKanalBordi: ["Kanalga yuborildi", "Отправлено в канал"],
+  masalaKanalKorish: ["Kanalda ko'rish", "Открыть в канале"],
   masalaKanalXato: ["Yuborilmadi — qaytadan urining", "Не отправилось — попробуйте снова"],
   masalaUlashMatn: [
     "Bu masalani yecha olasanmi? 🤔",

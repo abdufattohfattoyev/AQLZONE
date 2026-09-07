@@ -4111,7 +4111,11 @@ class MasalaKanalTugmaTest(TestCase):
     def test_adminda_kanal_maydoni_bor(self):
         self.adminga_aylantir()
         r = self.client.get(f"/api/v1/masalalar/{self.m.pk}", **self.auth(self.token))
-        self.assertEqual(r.json()["kanal"], {"mumkin": True, "yuborilgan": False})
+        self.assertEqual(
+            r.json()["kanal"],
+            # Havola hali bo'sh: post yuborilmagan.
+            {"mumkin": True, "yuborilgan": False, "havola": ""},
+        )
 
     def test_oddiy_odam_yubora_olmaydi(self):
         r = self.client.post(f"/api/v1/masalalar/{self.m.pk}/kanal",
@@ -4172,3 +4176,25 @@ class MasalaKanalTugmaTest(TestCase):
 
     def test_royxat_havolasi(self):
         self.assertEqual(MK.royxat_havolasi(), "https://t.me/aqlzone_bot?startapp=masalalar")
+
+    def test_yuborilgandan_keyin_postga_havola_qaytadi(self):
+        """Admin postni ko'z bilan tekshirishi uchun havola kerak."""
+        self.adminga_aylantir()
+        with patch("core.xabar.urllib.request.urlopen") as u:
+            u.return_value.__enter__.return_value.read.return_value = (
+                b'{"ok":true,"result":{"message_id":314}}'
+            )
+            r = self.client.post(f"/api/v1/masalalar/{self.m.pk}/kanal",
+                                 {}, content_type="application/json",
+                                 **self.auth(self.token))
+        # Rasmsiz masalada `sendMessage` ketadi va u xabar raqamini
+        # bermaydi — u holda kanalning o'ziga havola qoladi.
+        self.assertEqual(r.json()["havola"], "https://t.me/aqlzone")
+
+    def test_rasmli_post_aynan_ozining_havolasini_beradi(self):
+        self.adminga_aylantir()
+        self.m.kanal_post_id = 314
+        self.m.kanal_at = timezone.now()
+        self.m.save(update_fields=["kanal_post_id", "kanal_at"])
+        r = self.client.get(f"/api/v1/masalalar/{self.m.pk}", **self.auth(self.token))
+        self.assertEqual(r.json()["kanal"]["havola"], "https://t.me/aqlzone/314")

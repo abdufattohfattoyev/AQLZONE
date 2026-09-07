@@ -34,7 +34,7 @@ import * as MS from "../lib/masala";
 import type { JavobNatija, Masala as MasalaTur, Ovoz } from "../lib/masala";
 import { kelasiOvoz, sanoqniHisobla } from "../lib/masalaOvoz";
 import { masalaniUlash } from "../lib/ulash";
-import { tebrat, useOrqaga } from "../lib/qobiq";
+import { havolaniOch, tebrat, useOrqaga } from "../lib/qobiq";
 
 interface Props {
   id: number;
@@ -62,18 +62,23 @@ export function Masala({ id, onMuallif, onBack }: Props) {
   const [kanal, setKanal] = useState<
     "yopiq" | "sorayapti" | "ketmoqda" | "bordi" | "xato"
   >("yopiq");
+  /** Kanaldagi postning manzili — yuborilgandan keyin paydo bo'ladi. */
+  const [kanalHavola, setKanalHavola] = useState("");
 
   useEffect(() => {
     let bekor = false;
     setM(null); setXato(false); setNatija(null); setJavob("");
-    setKanal("yopiq");
+    setKanal("yopiq"); setKanalHavola("");
     MS.bittasi(id)
       .then((d) => {
         if (bekor) return;
         setM(d);
         setOvozim(d.ovozim ?? "");
         setSonlar({ like: d.like, dislike: d.dislike });
-        if (d.kanal?.yuborilgan) setKanal("bordi");
+        if (d.kanal?.yuborilgan) {
+          setKanal("bordi");
+          setKanalHavola(d.kanal.havola ?? "");
+        }
       })
       .catch(() => { if (!bekor) setXato(true); });
     return () => { bekor = true; };
@@ -107,8 +112,9 @@ export function Masala({ id, onMuallif, onBack }: Props) {
     if (!m || kanal === "ketmoqda") return;
     setKanal("ketmoqda");
     try {
-      await MS.kanalgaYubor(m.id);
+      const d = await MS.kanalgaYubor(m.id);
       tebrat("yutuq");
+      setKanalHavola(d.havola ?? "");
       setKanal("bordi");
     } catch {
       setKanal("xato");
@@ -227,10 +233,24 @@ export function Masala({ id, onMuallif, onBack }: Props) {
       {m.kanal?.mumkin && (
         <div className="mt-3 rounded-clay border-[1.5px] border-dashed border-track px-3.5 py-2.5">
           {kanal === "bordi" ? (
-            <p className="flex items-center gap-2 text-[12.5px] text-brand-green">
-              <Icon name="check" size={15} />
-              {t("masalaKanalBordi")}
-            </p>
+            /* Yuborilgandan keyin — kanaldagi POSTNING o'ziga o'tish.
+               Admin uni ko'z bilan tekshirmasa, rasm qanday chiqqanini
+               va tugmalar ishlashini bilmaydi. */
+            <div className="flex items-center gap-2">
+              <span className="flex min-w-0 flex-1 items-center gap-2 text-[12.5px]
+                               text-brand-green">
+                <Icon name="check" size={15} className="shrink-0" />
+                {t("masalaKanalBordi")}
+              </span>
+              {kanalHavola && (
+                <button type="button" onClick={() => havolaniOch(kanalHavola)}
+                  className="clay-press flex shrink-0 items-center gap-1 rounded-full
+                             bg-brand-blue px-3 py-1.5 text-[12px] text-white">
+                  {t("masalaKanalKorish")}
+                  <Icon name="chevron" size={13} />
+                </button>
+              )}
+            </div>
           ) : kanal === "sorayapti" ? (
             <div className="flex items-center gap-2">
               <span className="min-w-0 flex-1 text-[12.5px] text-ink-soft">
