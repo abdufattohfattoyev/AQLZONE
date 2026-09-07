@@ -454,6 +454,17 @@ const S = {
   masalaUlash: ["Ulashish", "Поделиться"],
 
   /* --- kanal (faqat admin ko'radi) --- */
+  /* --- masala statistikasi --- */
+  masalaUringanlar: ["Urinib ko'rdi", "Пробовали"],
+  masalaYechganlar: ["Yechdi", "Решили"],
+  masalaFoiz: ["Yechish foizi", "Доля решивших"],
+  /* Hech kim urinmaganda foiz yo'q — 0 dan foiz chiqmaydi. */
+  masalaFoizYoq: ["—", "—"],
+  masalaBirinchiIzoh: [
+    "Birinchi urinish hisobga olinadi",
+    "Считается первая попытка",
+  ],
+
   masalaKanal: ["Kanalga yuborish", "Отправить в канал"],
   masalaKanalSorov: ["Kanalga yuboraymi?", "Отправить в канал?"],
   masalaKanalHa: ["Ha, yubor", "Да, отправить"],

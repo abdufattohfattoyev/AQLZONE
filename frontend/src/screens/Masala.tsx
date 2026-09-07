@@ -205,6 +205,21 @@ export function Masala({ id, onMuallif, onBack }: Props) {
         )}
       </div>
 
+      {/* ---- statistika ----
+          Uchta son ATAYLAB alohida turadi. Ilgari ular pastda bitta
+          qator bo'lib chiqardi ("8/47 yechdi") va u ikki xil o'qilardi:
+          "47 tadan 8 tasi" ham, "47 ta urinishdan 8 tasi to'g'ri"
+          ham. Endi har bir son o'z nomi bilan turadi.
+
+          Foiz — bo'limning "eng qiyin" ro'yxati quriladigan son
+          (`Masala.qiyinlik`): birinchi urinishda yecha olganlar
+          ulushi. Hech kim urinmagan bo'lsa u ko'rsatilmaydi, chunki
+          nol urinishdan foiz chiqmaydi. */}
+      {m.holat === "tasdiq" && <Sanoq
+        uringan={natija?.urinishSoni ?? m.urinishSoni}
+        yechgan={natija?.yechganSoni ?? m.yechganSoni}
+      />}
+
       {/* ---- kanal tugmasi (faqat admin) ----
           Ko'rinishi ataylab boshqa: uzuq chiziqli ramka va xira rang.
           Bu foydalanuvchi tugmasi emas, ish quroli — u masalaning
@@ -329,7 +344,10 @@ export function Masala({ id, onMuallif, onBack }: Props) {
         </p>
       )}
 
-      {/* ---- ovoz va statistika ---- */}
+      {/* ---- ovoz ----
+          Sanoq bu yerdan YUQORIGA ko'chdi: u masalaning o'zi haqida
+          va shart bilan birga o'qilishi kerak, ovoz esa masaladan
+          keyingi fikr. */}
       {m.holat === "tasdiq" && (
         <div className="shadow-ichki mt-3 flex items-center gap-1.5 rounded-full bg-sahna
                         p-1.5">
@@ -341,12 +359,6 @@ export function Masala({ id, onMuallif, onBack }: Props) {
             belgi="👎" son={sonlar.dislike} faol={ovozim === "dislike"} oz={m.meniki}
             on={() => void ovozBer("dislike")}
           />
-          <span className="ml-auto pr-2 text-right text-[11.5px] leading-tight text-ink-dim">
-            {t("masalaYechdi", {
-              n: natija?.yechganSoni ?? m.yechganSoni,
-              jami: natija?.urinishSoni ?? m.urinishSoni,
-            })}
-          </span>
         </div>
       )}
     </div>
@@ -354,6 +366,48 @@ export function Masala({ id, onMuallif, onBack }: Props) {
 }
 
 /* --------------------------------------------------------------- bo'laklar */
+
+/**
+ * Uringan, yechgan va foiz — uchta botiq katak.
+ *
+ * Foiz uchinchi bo'lib turadi va u boshqa RANGDA: bu yerdagi ikkita
+ * son masalaning tarixi, foiz esa uning O'LCHOVI. Bir xil ko'rinishda
+ * turganda uchalasi bir xil og'irlikda o'qilardi.
+ */
+function Sanoq({ uringan, yechgan }: { uringan: number; yechgan: number }) {
+  const foiz = uringan > 0 ? Math.round((yechgan * 100) / uringan) : null;
+  return (
+    <div className="mt-2.5">
+      <div className="shadow-ichki flex items-stretch rounded-clay bg-sahna px-1 py-2.5">
+        <Katak nom={t("masalaUringanlar")} qiymat={String(uringan)} />
+        <Chiziq />
+        <Katak nom={t("masalaYechganlar")} qiymat={String(yechgan)} rang="text-brand-green" />
+        <Chiziq />
+        <Katak
+          nom={t("masalaFoiz")}
+          qiymat={foiz === null ? t("masalaFoizYoq") : `${foiz}%`}
+          rang="text-brand-purple"
+        />
+      </div>
+      <p className="mt-1.5 text-center text-[11px] text-ink-dim">
+        {t("masalaBirinchiIzoh")}
+      </p>
+    </div>
+  );
+}
+
+function Katak(
+  { nom, qiymat, rang = "" }: { nom: string; qiymat: string; rang?: string },
+) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
+      <span className={`font-display text-[19px] leading-none ${rang}`}>{qiymat}</span>
+      <span className="truncate text-[10.5px] leading-tight text-ink-dim">{nom}</span>
+    </div>
+  );
+}
+
+const Chiziq = () => <span aria-hidden className="w-px shrink-0 self-stretch bg-ink-dim/20" />;
 
 function OvozTugma(
   { belgi, son, faol, oz, on }:
