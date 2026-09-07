@@ -30,6 +30,8 @@ tekshiriladi, statistikaga tushadi va yechim ochiladi.
 """
 from __future__ import annotations
 
+import html
+
 from django.conf import settings
 from django.utils import timezone
 
@@ -72,19 +74,30 @@ def royxat_havolasi() -> str:
 
 
 def sarlavha(masala: Masala) -> str:
-    """Rasm ostidagi yozuv."""
+    """
+    Rasm ostidagi yozuv.
+
+    Xabar HTML rejimida ketadi, shuning uchun masala matni
+    QALQONLANADI. Bu shart emas, MAJBURIY: matematikada `<` va `>`
+    har qadamda uchraydi ("3 < x < 7") va Telegram ularni teg deb
+    o'qib, xabarni umuman rad etadi yoki matnning bir bo'lagini
+    yeb qo'yadi. Masala matnini esa foydalanuvchi yozadi — ya'ni
+    u yerda istalgan belgi bo'lishi mumkin.
+    """
     matn = masala.matn.strip()
     if len(matn) > MATN_JOYI:
         kesik = matn[:MATN_JOYI]
         bosh = kesik.rfind(" ")
         matn = (kesik[:bosh] if bosh > MATN_JOYI * 0.6 else kesik).rstrip() + "…"
 
+    nom = sinf_nomi(masala.sinf)
     # Sinf nomi teg bo'lib ham ketadi: kanal o'sganda odam o'z sinfi
-    # bo'yicha qidira oladi.
-    teg = sinf_nomi(masala.sinf).replace("-", "").replace(" ", "_")
+    # bo'yicha qidira oladi. Telegram tegida faqat harf, raqam va
+    # pastki chiziq bo'ladi.
+    teg = nom.replace("-", "").replace("'", "").replace(" ", "_")
     return (
-        f"<b>{sinf_nomi(masala.sinf)}</b>\n\n"
-        f"{matn}\n\n"
+        f"<b>{html.escape(nom)}</b>\n\n"
+        f"{html.escape(matn)}\n\n"
         f"Javobingizni ilovada kiriting — u yerda tekshiriladi va "
         f"yechimi ochiladi.\n\n"
         f"#masala #{teg}"

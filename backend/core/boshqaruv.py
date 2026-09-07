@@ -358,16 +358,26 @@ def sinf_nomi(grade) -> str:
         7–10     algebra
         11       matematika
         107–110  geometriya (100 + sinf)
+        200      kattalar uchun   } masalalar bo'limi, kurs dasturidan
+        201      olimpiada        } tashqarida (`Masala.KATTALAR`)
 
     Geometriya nega alohida kod bilan: 7-sinfda algebra ham, geometriya
     ham bor. Ikkalasi bir xil `grade` bilan kelsa, panel ularni bitta
     qatorga qo'shib yuborardi — "eng qiyin dars" jadvalida ikki xil
     fanning natijasi aralashib ketardi.
+
+    200 va 201 SHU YERDA bo'lishi shart: ular ham `>= 100` va
+    tekshirilmasa "100-sinf geometriya" bo'lib chiqardi. Aynan shu
+    nom kanal postiga chiqib ketgan edi.
     """
     if grade is None:
         return "—"
     if grade == 0:
         return "Maktabgacha"
+    if grade == Masala.KATTALAR:
+        return "Kattalar uchun"
+    if grade == Masala.OLIMPIADA:
+        return "Olimpiada"
     if grade >= 100:
         return f"{grade - 100}-sinf geometriya"
     if 7 <= grade <= 10:

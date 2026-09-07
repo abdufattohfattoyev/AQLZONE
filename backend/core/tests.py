@@ -4198,3 +4198,23 @@ class MasalaKanalTugmaTest(TestCase):
         self.m.save(update_fields=["kanal_post_id", "kanal_at"])
         r = self.client.get(f"/api/v1/masalalar/{self.m.pk}", **self.auth(self.token))
         self.assertEqual(r.json()["kanal"]["havola"], "https://t.me/aqlzone/314")
+
+    def test_kattalar_va_olimpiada_nomi_togri(self):
+        """200 va 201 ham `>= 100` — tekshirilmasa "100-sinf geometriya"
+        bo'lib chiqadi va aynan shu nom kanalga chiqib ketgan edi."""
+        from core.boshqaruv import sinf_nomi
+        self.assertEqual(sinf_nomi(Masala.KATTALAR), "Kattalar uchun")
+        self.assertEqual(sinf_nomi(Masala.OLIMPIADA), "Olimpiada")
+        self.assertEqual(sinf_nomi(107), "7-sinf geometriya")
+
+    def test_matn_html_sifatida_qalqonlanadi(self):
+        """Matematikada `<` odatiy: "3 < x < 7". Qalqonlanmasa Telegram
+        uni teg deb o'qib, xabarni rad etadi."""
+        m = Masala.objects.create(
+            muallif=self.profil, sinf=9, holat=Masala.TASDIQ,
+            matn="Agar 3 < x < 7 & x butun son bo'lsa, x ni toping.",
+            javob="4", yechim="4, 5 yoki 6.",
+        )
+        y = MK.sarlavha(m)
+        self.assertIn("3 &lt; x &lt; 7 &amp; x butun", y)
+        self.assertNotIn("< x <", y)
