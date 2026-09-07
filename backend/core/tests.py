@@ -4064,7 +4064,7 @@ class MasalaKanalTest(TestCase):
     def test_havola_ilovani_shu_masalada_ochadi(self):
         m = self.masala_yasa()
         self.assertEqual(
-            MK.havola(m), f"https://t.me/aqlzone_bot?start=masala_{m.pk}",
+            MK.havola(m), f"https://t.me/aqlzone_bot?startapp=masala_{m.pk}",
         )
 
     def test_sarlavhada_shart_va_sinf_bor(self):
@@ -4210,11 +4210,11 @@ class MasalaKanalTugmaTest(TestCase):
         tana = u.call_args[0][0].data.decode("utf-8", "replace")
         self.assertIn("Javobni kiritish", tana)
         self.assertIn("Boshqa masalalar", tana)
-        self.assertIn(f"start=masala_{self.m.pk}", tana)
-        self.assertIn("start=masalalar", tana)
+        self.assertIn(f"startapp=masala_{self.m.pk}", tana)
+        self.assertIn("startapp=masalalar", tana)
 
     def test_royxat_havolasi(self):
-        self.assertEqual(MK.royxat_havolasi(), "https://t.me/aqlzone_bot?start=masalalar")
+        self.assertEqual(MK.royxat_havolasi(), "https://t.me/aqlzone_bot?startapp=masalalar")
 
     def test_yuborilgandan_keyin_postga_havola_qaytadi(self):
         """Admin postni ko'z bilan tekshirishi uchun havola kerak."""

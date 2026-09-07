@@ -53,16 +53,18 @@ function vebHavola(id: number): string {
 /**
  * Bitta masalaning ulashiladigan havolasi.
  *
- * `?start=` ATAYLAB, `?startapp=` emas: ikkinchisi bir bosishda
- * ilovani ochadi, lekin botda "Main Mini App" yoqilgan bo'lishini
- * talab qiladi va yoqilmaganda Telegram `BOT_INVALID` deb javob
- * beradi. `?start=` esa har doim ishlaydi — bot suhbat ochib,
- * ilovaga olib boradigan tugma yuboradi
- * (`backend/core/management/commands/bot.py`).
+ * `?startapp=` — havolani bosgan odam BIR bosishda o'sha masalada
+ * turadi. Bu botda "Main Mini App" yoqilgan bo'lishini talab qiladi
+ * (BotFather → Configure Mini App); yoqilmagan botda Telegram
+ * `BOT_INVALID` deb javob beradi.
+ *
+ * Zaxira yo'l ham bor: bot `/start masala_<id>` ni tushunadi
+ * (`backend/core/management/commands/bot.py`), ya'ni eski
+ * havolalar ham ishlayveradi.
  */
 export const masalaHavolasi = (bot: string, id: number): string =>
   bot
-    ? `https://t.me/${encodeURIComponent(bot)}?start=${MASALA_BOSH}${id}`
+    ? `https://t.me/${encodeURIComponent(bot)}?startapp=${MASALA_BOSH}${id}`
     : vebHavola(id);
 
 /**

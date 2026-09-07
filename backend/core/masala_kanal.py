@@ -63,31 +63,29 @@ def _bot() -> str:
 
 def havola(masala: Masala) -> str:
     """
-    AYNAN shu masalaga olib boradigan manzil.
+    AYNAN shu masalani ochadigan manzil — BIR bosishda.
 
-    ─────────── NEGA `?start=`, `?startapp=` EMAS ───────────
+    ─────────── `?startapp=` NIMANI TALAB QILADI ───────────
 
-    `?startapp=` bir bosishda Mini App'ni ochadi va bu chiroyliroq,
-    lekin u botda "Main Mini App" YOQILGAN bo'lishini talab qiladi
-    (BotFather → Configure Mini App). Yoqilmagan botda Telegram
-    tugmani bosgan odamga `BOT_INVALID` deb javob beradi — kanal
-    tugmalari aynan shu sababdan ishlamay turgandi.
+    U Mini App'ni to'g'ridan-to'g'ri ochadi, lekin botda "Main Mini
+    App" YOQILGAN bo'lishi shart (BotFather → Configure Mini App).
+    Yoqilmagan botda Telegram tugmani bosgan odamga `BOT_INVALID`
+    deb javob beradi va tugma umuman ishlamaydi — kanal tugmalari
+    bir kun aynan shu sababdan ishlamay turgandi.
 
-    `?start=` esa har qanday botda ishlaydi: bot suhbati ochiladi va
-    bot darhol ilovani ochadigan tugma yuboradi
-    (`management/commands/bot.py`). Bitta qo'shimcha bosish, lekin
-    yon foydasi bor: odam bot bilan suhbat ochadi va unga keyin
-    eslatma yuborish mumkin bo'ladi. `?startapp=` da suhbat
-    ochilmaydi va odam bilan aloqa qolmaydi.
+    Bot sozlamasi o'chirilsa yoki bot almashtirilsa, `?start=` yo'li
+    zaxira bo'lib qoladi: bot `/start masala_<id>` ni ham tushunadi
+    (`management/commands/bot.py`) va ilovani ochadigan tugma
+    yuboradi. Ya'ni eski havolalar ham ishlayveradi.
     """
     bot = _bot()
-    return f"https://t.me/{bot}?start=masala_{masala.pk}" if bot else ""
+    return f"https://t.me/{bot}?startapp=masala_{masala.pk}" if bot else ""
 
 
 def royxat_havolasi() -> str:
-    """Masalalar RO'YXATIGA olib boradigan manzil."""
+    """Masalalar RO'YXATINI ochadigan manzil — bir bosishda."""
     bot = _bot()
-    return f"https://t.me/{bot}?start={ROYXAT_PARAM}" if bot else ""
+    return f"https://t.me/{bot}?startapp={ROYXAT_PARAM}" if bot else ""
 
 
 def qalqon(matn: str) -> str:
