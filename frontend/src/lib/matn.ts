@@ -448,6 +448,17 @@ const S = {
   ],
   masalaTopilmadi: ["Bunday masala topilmadi", "Такая задача не найдена"],
 
+  /* --- ulashish ---
+     Matn SAVOL bo'lib yozilgan: guruhga tashlanganda odam havolani
+     emas, savolni ko'radi va aynan shu bosishga undaydi. */
+  masalaUlash: ["Ulashish", "Поделиться"],
+  masalaUlashMatn: [
+    "Bu masalani yecha olasanmi? 🤔",
+    "Сможешь решить эту задачу? 🤔",
+  ],
+  /* To'g'ri javobdan keyin — eng ko'p ulashiladigan payt. */
+  masalaUlashTogri: ["Do'stlaringni sinab ko'r", "Проверь друзей"],
+
   /* --- yechish --- */
   masalaJavobJoy: ["Javobingiz", "Ваш ответ"],
   masalaTekshir: ["Tekshirish", "Проверить"],

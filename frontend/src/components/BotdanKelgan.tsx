@@ -24,14 +24,40 @@
  * bir marta chaqiruvni ochib, keyin ilovaga har kirganda o'sha eski
  * duelga qaytarilaverardi. Shuning uchun ishlatilgan kod
  * `sessionStorage` ga yoziladi va ikkinchi marta e'tiborsiz qoladi.
+ *
+ * ──────────── IKKI XIL HAVOLA ────────────
+ *
+ * `masala_12`  — ulashilgan masala (`lib/ulash.ts`)
+ * boshqasi     — duel chaqiruvi, ya'ni eski xatti-harakat
+ *
+ * Belgi ATAYLAB `_` bilan: duel kodlari faqat harf va raqamdan
+ * iborat, ya'ni ikkalasi hech qachon adashmaydi. Eski havolalar
+ * odamlarning suhbatlarida qolgan va ular avvalgidek ishlashi
+ * shart.
  */
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { boshParametri } from "../lib/qobiq";
-import { yolDuelKod } from "../lib/yollar";
+import { MASALA_BOSH } from "../lib/ulash";
+import { yolDuelKod, yolMasala } from "../lib/yollar";
 
 /** Ishlatilgan kod shu yerda qoladi — sessiya davomida. */
 const KALIT = "az_duel_kod";
+
+/**
+ * Kod qaysi ekranga olib borishini aniqlaydi.
+ *
+ * Masala raqami tekshiriladi: `masala_abc` yoki `masala_` kabi
+ * qiymat kelsa, manzilga qo'shilmaydi va odam oddiy duel yo'liga
+ * tushmaydi — bunday kod umuman e'tiborsiz qoladi.
+ */
+function manzil(kod: string): string | null {
+  if (kod.startsWith(MASALA_BOSH)) {
+    const raqam = Number(kod.slice(MASALA_BOSH.length));
+    return Number.isInteger(raqam) && raqam > 0 ? yolMasala(raqam) : null;
+  }
+  return yolDuelKod(kod);
+}
 
 export function BotdanKelgan() {
   const nav = useNavigate();
@@ -43,14 +69,19 @@ export function BotdanKelgan() {
       const kod = boshParametri();
       if (!kod) return false;
 
+      const yol = manzil(kod);
+      // Tanib bo'lmaydigan kod: o'qildi deb belgilanadi va tashlanadi.
+      // Aks holda har 300 millisekundda qayta tekshirilaverardi.
       otdi.current = true;
+      if (!yol) return true;
+
       try {
         if (sessionStorage.getItem(KALIT) === kod) return true;   // allaqachon ochilgan
         sessionStorage.setItem(KALIT, kod);
       } catch {
         /* xotira yopiq — u holda oddiygina o'tamiz */
       }
-      nav(yolDuelKod(kod), { replace: true });
+      nav(yol, { replace: true });
       return true;
     };
 

@@ -33,6 +33,7 @@ import { sinfNomi } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import type { JavobNatija, Masala as MasalaTur, Ovoz } from "../lib/masala";
 import { kelasiOvoz, sanoqniHisobla } from "../lib/masalaOvoz";
+import { masalaniUlash } from "../lib/ulash";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 
 interface Props {
@@ -133,6 +134,18 @@ export function Masala({ id, onMuallif, onBack }: Props) {
                          leading-none text-ink-soft">
           {sinfNomi(m.sinf)}
         </span>
+
+        {/* Ulashish FAQAT tasdiqlangan masalada: navbatda turgan yoki
+            rad etilgan masalani havola bilan ochgan odam "topilmadi"
+            degan ekranga tushardi. */}
+        {m.holat === "tasdiq" && (
+          <button type="button" onClick={() => void masalaniUlash(m.id, m.matn)}
+            aria-label={t("masalaUlash")} title={t("masalaUlash")}
+            className="clay-press grid size-9 shrink-0 place-items-center rounded-2xl
+                       bg-karta text-ink-soft shadow-clay-sm">
+            <Icon name="send" size={16} />
+          </button>
+        )}
       </div>
 
       {/* ---- muallif ---- */}
@@ -210,6 +223,20 @@ export function Masala({ id, onMuallif, onBack }: Props) {
             <p className="mt-1 text-[13px] text-ink-soft">
               {t("masalaTogriJavob", { javob: togriJavob })}
             </p>
+          )}
+
+          {/* Yechgan zahoti — ulashish uchun eng kuchli payt: odam
+              hozirgina yenggan va buni ko'rsatgisi keladi. Xato
+              javobdan keyin taklif qilinmaydi, u yerda u maqtanish
+              emas, malomat bo'lib eshitilardi. */}
+          {natija.togri && m.holat === "tasdiq" && (
+            <button type="button" onClick={() => void masalaniUlash(m.id, m.matn)}
+              className="tugma-3d az-yaltir mt-2.5 flex w-full items-center justify-center gap-2
+                         rounded-clay bg-brand-blue py-2.5 font-display text-[14px] text-white
+                         shadow-[0_4px_0_var(--color-brand-blue-d)]">
+              <Icon name="send" size={16} />
+              {t("masalaUlashTogri")}
+            </button>
           )}
         </div>
       )}
