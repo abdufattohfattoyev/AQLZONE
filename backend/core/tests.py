@@ -17,6 +17,7 @@ from unittest.mock import patch
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.core import signing
@@ -31,7 +32,7 @@ from . import liga as L
 from . import masala as MS
 from . import reklama as R
 from . import views
-from .management.commands import masala_post
+from . import masala_kanal as MK
 from .models import (
     Duel, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaOvoz,
     MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul, Session,
@@ -4024,12 +4025,12 @@ class MasalaKanalTest(TestCase):
     def test_havola_ilovani_shu_masalada_ochadi(self):
         m = self.masala_yasa()
         self.assertEqual(
-            masala_post.havola(m), f"https://t.me/aqlzone_bot?startapp=masala_{m.pk}",
+            MK.havola(m), f"https://t.me/aqlzone_bot?startapp=masala_{m.pk}",
         )
 
     def test_sarlavhada_shart_va_sinf_bor(self):
         m = self.masala_yasa()
-        y = masala_post.sarlavha(m)
+        y = MK.sarlavha(m)
         self.assertIn("7-sinf geometriya", y)
         self.assertIn("Katta kvadratga doira", y)
         # Javob kanalda TURMAYDI — u faqat ilovada kiritiladi.
@@ -4038,22 +4039,119 @@ class MasalaKanalTest(TestCase):
     def test_uzun_shart_kesiladi(self):
         m = self.masala_yasa(matn="Shart " * 400)
         # Telegram sarlavhasi 1024 belgi; kesilgani uch nuqta bilan tugaydi.
-        self.assertLess(len(masala_post.sarlavha(m)), 1024)
-        self.assertIn("…", masala_post.sarlavha(m))
+        self.assertLess(len(MK.sarlavha(m)), 1024)
+        self.assertIn("…", MK.sarlavha(m))
 
     def test_kunlik_joylanmaganini_oladi(self):
         eski = self.masala_yasa()
         eski.kanal_at = timezone.now()
         eski.save(update_fields=["kanal_at"])
         yangi = self.masala_yasa()
-        self.assertEqual(masala_post.kunlik(), yangi)
+        self.assertEqual(MK.kunlik(), yangi)
 
     def test_kunlik_tasdiqlanmaganini_olmaydi(self):
         self.masala_yasa(holat=Masala.KUTMOQDA)
-        self.assertIsNone(masala_post.kunlik())
+        self.assertIsNone(MK.kunlik())
 
     def test_kanal_nomi_at_bilan_beriladi(self):
         # Sozlamada `@` yo'q, Telegram esa `@nom` kutadi. Aks holda
         # butun post "chat not found" bo'lib qaytardi.
         from core.kanal import kanal_nomi
         self.assertEqual(kanal_nomi(), "@aqlzone")
+
+
+@override_settings(BOT_USERNAME="aqlzone_bot", KANAL="aqlzone",
+                   ADMIN_TG=["973358587"], BOT_TOKEN="sinov:token")
+class MasalaKanalTugmaTest(TestCase):
+    """
+    Ilovadagi «Kanalga yuborish» tugmasi.
+
+    Diqqat qaratilgan joy — KIM KO'RADI. Tugma administratorga
+    ko'rinadi, qolganlarga esa yo'lning o'zi yo'q: 403 emas, 404,
+    chunki 403 javobning o'zi "bunday imkoniyat bor" deb aytardi.
+
+    Tekshiruv TELEGRAM id bo'yicha: ism bo'yicha bo'lganda o'zini
+    "Abdufattoh Fattoyev" deb atagan har kim kanalga post yuborardi.
+    """
+
+    def kir(self, device: str) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def setUp(self):
+        # Sinovlar bitta jarayonda ketadi va DRF tezlik chegarasi
+        # KESHDA turadi: yangi sinf qo'shilishi bilan chegara to'lib,
+        # BOSHQA sinovlar 429 bilan yiqila boshlaydi. Kesh shu yerda
+        # tozalanadi — sinovlar bir-biriga ta'sir qilmasin.
+        cache.clear()
+        self.token = self.kir("dev-kanal-oddiy-000001")
+        self.pupil = Pupil.objects.get(identities__external_id="dev-kanal-oddiy-000001")
+        self.profil = self.pupil.asosiy_profil()
+        self.m = Masala.objects.create(
+            muallif=self.profil, sinf=5, matn="Ikki karra ikki nechchi?",
+            javob="4", yechim="4.", holat=Masala.TASDIQ,
+        )
+
+    def adminga_aylantir(self):
+        """Shu hisobga administratorning Telegram id'sini bog'laydi."""
+        Identity.objects.create(
+            pupil=self.pupil, provider=Identity.TELEGRAM, external_id="973358587",
+        )
+
+    def test_oddiy_odamda_kanal_maydoni_yoq(self):
+        r = self.client.get(f"/api/v1/masalalar/{self.m.pk}", **self.auth(self.token))
+        self.assertNotIn("kanal", r.json())
+
+    def test_adminda_kanal_maydoni_bor(self):
+        self.adminga_aylantir()
+        r = self.client.get(f"/api/v1/masalalar/{self.m.pk}", **self.auth(self.token))
+        self.assertEqual(r.json()["kanal"], {"mumkin": True, "yuborilgan": False})
+
+    def test_oddiy_odam_yubora_olmaydi(self):
+        r = self.client.post(f"/api/v1/masalalar/{self.m.pk}/kanal",
+                             {}, content_type="application/json", **self.auth(self.token))
+        self.assertEqual(r.status_code, 404)
+        self.m.refresh_from_db()
+        self.assertIsNone(self.m.kanal_at)
+
+    def test_admin_yuboradi(self):
+        self.adminga_aylantir()
+        with patch("core.xabar._sorov", return_value=(True, 200, "")):
+            r = self.client.post(f"/api/v1/masalalar/{self.m.pk}/kanal",
+                                 {}, content_type="application/json",
+                                 **self.auth(self.token))
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["yuborilgan"])
+        self.m.refresh_from_db()
+        self.assertIsNotNone(self.m.kanal_at)
+
+    def test_ikkinchi_marta_yuborilmaydi(self):
+        self.adminga_aylantir()
+        self.m.kanal_at = timezone.now()
+        self.m.save(update_fields=["kanal_at"])
+        with patch("core.xabar._sorov") as s:
+            r = self.client.post(f"/api/v1/masalalar/{self.m.pk}/kanal",
+                                 {}, content_type="application/json",
+                                 **self.auth(self.token))
+        # Telegram UMUMAN chaqirilmaydi — kanalda ikkita bir xil post
+        # turishi obunachi uchun xato bo'lib ko'rinadi.
+        s.assert_not_called()
+        self.assertEqual(r.json()["holat"], "takror")
+
+    def test_tasdiqlanmagan_masala_kanalga_chiqmaydi(self):
+        self.adminga_aylantir()
+        self.m.holat = Masala.KUTMOQDA
+        self.m.save(update_fields=["holat"])
+        with patch("core.xabar._sorov") as s:
+            r = self.client.post(f"/api/v1/masalalar/{self.m.pk}/kanal",
+                                 {}, content_type="application/json",
+                                 **self.auth(self.token))
+        s.assert_not_called()
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.json()["holat"], "tasdiqlanmagan")

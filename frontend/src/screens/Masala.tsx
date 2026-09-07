@@ -53,15 +53,27 @@ export function Masala({ id, onMuallif, onBack }: Props) {
   const [ovozim, setOvozim] = useState<Ovoz>("");
   const [sonlar, setSonlar] = useState({ like: 0, dislike: 0 });
 
+  /**
+   * Kanal tugmasining holati — faqat adminda ishlatiladi.
+   *
+   * "sorayapti" — tasdiq so'ralayotgan payt. Bir bosishda kanalga
+   * ketib qolmasligi uchun: kanal xabarini qaytarib olib bo'lmaydi.
+   */
+  const [kanal, setKanal] = useState<
+    "yopiq" | "sorayapti" | "ketmoqda" | "bordi" | "xato"
+  >("yopiq");
+
   useEffect(() => {
     let bekor = false;
     setM(null); setXato(false); setNatija(null); setJavob("");
+    setKanal("yopiq");
     MS.bittasi(id)
       .then((d) => {
         if (bekor) return;
         setM(d);
         setOvozim(d.ovozim ?? "");
         setSonlar({ like: d.like, dislike: d.dislike });
+        if (d.kanal?.yuborilgan) setKanal("bordi");
       })
       .catch(() => { if (!bekor) setXato(true); });
     return () => { bekor = true; };
@@ -82,6 +94,24 @@ export function Masala({ id, onMuallif, onBack }: Props) {
       setXato(true);
     } finally {
       setYuborilmoqda(false);
+    }
+  };
+
+  /**
+   * Kanalga yuboradi — tasdiq bosilgandan KEYIN.
+   *
+   * Kanal xabarini o'chirib bo'lmaydi (u obunachilarga allaqachon
+   * yetib boradi), shuning uchun bu yerda ikkinchi bosish shart.
+   */
+  const kanalgaYubor = async () => {
+    if (!m || kanal === "ketmoqda") return;
+    setKanal("ketmoqda");
+    try {
+      await MS.kanalgaYubor(m.id);
+      tebrat("yutuq");
+      setKanal("bordi");
+    } catch {
+      setKanal("xato");
     }
   };
 
@@ -174,6 +204,50 @@ export function Masala({ id, onMuallif, onBack }: Props) {
             className="mt-3 max-h-[60vh] w-full rounded-2xl bg-track object-contain" />
         )}
       </div>
+
+      {/* ---- kanal tugmasi (faqat admin) ----
+          Ko'rinishi ataylab boshqa: uzuq chiziqli ramka va xira rang.
+          Bu foydalanuvchi tugmasi emas, ish quroli — u masalaning
+          o'z tugmalari bilan bir xil og'irlikda turmasligi kerak. */}
+      {m.kanal?.mumkin && (
+        <div className="mt-3 rounded-clay border-[1.5px] border-dashed border-track px-3.5 py-2.5">
+          {kanal === "bordi" ? (
+            <p className="flex items-center gap-2 text-[12.5px] text-brand-green">
+              <Icon name="check" size={15} />
+              {t("masalaKanalBordi")}
+            </p>
+          ) : kanal === "sorayapti" ? (
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 text-[12.5px] text-ink-soft">
+                {t("masalaKanalSorov")}
+              </span>
+              <button type="button" onClick={() => void kanalgaYubor()}
+                className="clay-press shrink-0 rounded-full bg-brand-green px-3 py-1.5
+                           text-[12px] text-white">
+                {t("masalaKanalHa")}
+              </button>
+              <button type="button" onClick={() => setKanal("yopiq")}
+                className="clay-press shrink-0 rounded-full bg-track px-3 py-1.5
+                           text-[12px] text-ink-soft">
+                {t("masalaKanalYoq")}
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setKanal("sorayapti")}
+              disabled={kanal === "ketmoqda"}
+              className="clay-press flex w-full items-center gap-2 text-[12.5px]
+                         text-ink-soft disabled:opacity-50">
+              <Icon name="send" size={15} />
+              {kanal === "ketmoqda" ? t("yuklanyapti") : t("masalaKanal")}
+              {kanal === "xato" && (
+                <span className="ml-auto text-[11.5px] text-brand-red">
+                  {t("masalaKanalXato")}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ---- holat (faqat o'z masalasi) ---- */}
       {m.holat === "kutmoqda" && <Belgi rang="gold" matn={t("masalaKutmoqdaIzoh")} />}

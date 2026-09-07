@@ -56,6 +56,13 @@ export interface Masala {
   uringan?: boolean;
   /** Birinchi urinish to'g'ri bo'lganmi. Urinmagan bo'lsa `null`. */
   birinchiTogri?: boolean | null;
+  /**
+   * Kanal tugmasi — FAQAT administrator javobida keladi.
+   *
+   * Oddiy foydalanuvchida maydonning o'zi yo'q, ya'ni tugma ham
+   * chizilmaydi va serverga so'rov ham ketmaydi.
+   */
+  kanal?: { mumkin: boolean; yuborilgan: boolean };
 }
 
 export interface Royxat {
@@ -119,6 +126,15 @@ export const ovozBer = (
   id: number, tur: "like" | "dislike",
 ): Promise<{ ovozim: Ovoz; like: number; dislike: number }> =>
   sorov(`/api/v1/masalalar/${id}/ovoz`, bilanProfil({ tur }));
+
+/**
+ * Masalani Telegram kanaliga joylaydi — FAQAT admin.
+ *
+ * Boshqa odamda bu yo'l umuman yo'q (server 404 qaytaradi) va
+ * tugma ham ko'rinmaydi: `kanal` maydoni javobga qo'shilmaydi.
+ */
+export const kanalgaYubor = (id: number): Promise<{ yuborilgan: boolean }> =>
+  sorov(`/api/v1/masalalar/${id}/kanal`, bilanProfil({}));
 
 export interface YangiMasala {
   sinf: number;

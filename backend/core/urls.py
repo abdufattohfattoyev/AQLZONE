@@ -43,4 +43,6 @@ urlpatterns = [
     path("masalalar/<int:pk>", views.masala_korish, name="masala-korish"),
     path("masalalar/<int:pk>/javob", views.masala_javob, name="masala-javob"),
     path("masalalar/<int:pk>/ovoz", views.masala_ovoz, name="masala-ovoz"),
+    # Kanalga joylash — faqat admin. Boshqaga 404.
+    path("masalalar/<int:pk>/kanal", views.masala_kanal, name="masala-kanal"),
 ]

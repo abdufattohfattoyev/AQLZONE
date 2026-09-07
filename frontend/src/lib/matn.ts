@@ -452,6 +452,14 @@ const S = {
      Matn SAVOL bo'lib yozilgan: guruhga tashlanganda odam havolani
      emas, savolni ko'radi va aynan shu bosishga undaydi. */
   masalaUlash: ["Ulashish", "Поделиться"],
+
+  /* --- kanal (faqat admin ko'radi) --- */
+  masalaKanal: ["Kanalga yuborish", "Отправить в канал"],
+  masalaKanalSorov: ["Kanalga yuboraymi?", "Отправить в канал?"],
+  masalaKanalHa: ["Ha, yubor", "Да, отправить"],
+  masalaKanalYoq: ["Yo'q", "Нет"],
+  masalaKanalBordi: ["Kanalga yuborildi", "Отправлено в канал"],
+  masalaKanalXato: ["Yuborilmadi — qaytadan urining", "Не отправилось — попробуйте снова"],
   masalaUlashMatn: [
     "Bu masalani yecha olasanmi? 🤔",
     "Сможешь решить эту задачу? 🤔",

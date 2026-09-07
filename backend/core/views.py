@@ -38,10 +38,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from . import auth as A
+from . import boshqaruv as B
 from . import duel as D
 from . import kanal as K
 from . import liga as L
 from . import masala as M
+from . import masala_kanal as MK
 from . import ovoz as O
 from . import rasm as R
 from .models import (
@@ -1427,12 +1429,61 @@ def masala_korish(request, pk: int):
 
     urinish = M.uringanmi(m, profil)
     ochiq = urinish is not None or m.muallif_id == profil.pk
-    return Response({
+    javob = {
         **M.masala_json(m, profil, ochiq=ochiq),
         "ovozim": M.ovozlarim(profil, [m.pk]).get(m.pk, ""),
         "uringan": urinish is not None,
         "birinchiTogri": urinish.togri if urinish else None,
-    })
+    }
+    # Kanal tugmasi FAQAT adminda ko'rinadi. Maydon boshqalarga
+    # umuman qo'shilmaydi: bo'sh bo'lsa ham u "bunday imkoniyat bor"
+    # deb aytib turardi va ilova kodida uni izlash boshlanardi.
+    if _admin_mi(profil):
+        javob["kanal"] = {"mumkin": True, "yuborilgan": m.kanal_at is not None}
+    return Response(javob)
+
+
+def _admin_mi(profil) -> bool:
+    """
+    Shu profil administratorniki-mi.
+
+    Tekshiruv TELEGRAM id bo'yicha (`ADMIN_TG`), profil nomi bo'yicha
+    emas: ismni har kim o'zgartira oladi va "Abdufattoh Fattoyev" deb
+    yozib qo'ygan har bir odam kanalga post yubora olardi.
+    """
+    tg = profil.pupil.kirish("telegram")
+    return bool(tg) and B.admin_tg_mi(tg)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def masala_kanal(request, pk: int):
+    """
+    Masalani Telegram kanaliga joylaydi — faqat admin uchun.
+
+    Admin bo'lmagan odamga 404: 403 javobning o'zi "bunday yo'l bor"
+    degan ma'lumotni berardi.
+
+    Tasdiqlash ILOVADA so'raladi (`screens/Masala.tsx`) — bu yerda
+    emas: server tomonda "rostdanmi?" degan qadam qo'yish mumkin
+    emas, u faqat ekranda ma'noga ega.
+    """
+    profil = _profil_tanla(request)
+    if not _admin_mi(profil):
+        return Response({"detail": "topilmadi"}, status=404)
+
+    m = Masala.objects.filter(pk=pk).first()
+    if m is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    holat, izoh = MK.yubor(m)
+    if holat == "yuborildi":
+        return Response({"holat": holat, "yuborilgan": True})
+    # Takror — xato emas: masala allaqachon kanalda turibdi va
+    # tugma shu holatni ko'rsatishi kerak.
+    if holat == "takror":
+        return Response({"holat": holat, "yuborilgan": True})
+    return Response({"holat": holat, "izoh": izoh, "yuborilgan": False}, status=400)
 
 
 @api_view(["POST"])
