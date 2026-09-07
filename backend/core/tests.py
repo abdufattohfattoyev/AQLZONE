@@ -4155,3 +4155,20 @@ class MasalaKanalTugmaTest(TestCase):
         s.assert_not_called()
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.json()["holat"], "tasdiqlanmagan")
+
+    def test_ikkita_tugma_ketadi(self):
+        """Kanal postida ikkita qator: javob va boshqa masalalar."""
+        self.adminga_aylantir()
+        with patch("core.xabar.urllib.request.urlopen") as u:
+            u.return_value.__enter__.return_value.read.return_value = b'{"ok":true}'
+            self.client.post(f"/api/v1/masalalar/{self.m.pk}/kanal",
+                             {}, content_type="application/json",
+                             **self.auth(self.token))
+        tana = u.call_args[0][0].data.decode("utf-8", "replace")
+        self.assertIn("Javobni kiritish", tana)
+        self.assertIn("Boshqa masalalar", tana)
+        self.assertIn(f"startapp=masala_{self.m.pk}", tana)
+        self.assertIn("startapp=masalalar", tana)
+
+    def test_royxat_havolasi(self):
+        self.assertEqual(MK.royxat_havolasi(), "https://t.me/aqlzone_bot?startapp=masalalar")

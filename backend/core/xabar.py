@@ -116,6 +116,9 @@ def yubor(
     uslub: str = YASHIL,
     ikkinchi_uslub: str = QIZIL,
     ilovada: bool = False,
+    qoshimcha_tugma: str = "",
+    qoshimcha_havola: str = "",
+    qoshimcha_uslub: str = KOK,
 ) -> tuple[str, str]:
     """
     Bitta xabar yuboradi. `(holat, izoh)` qaytadi.
@@ -173,6 +176,10 @@ def yubor(
             tugma_yasa(tugma, uslub, web_app={"url": havola}) if mini_app
             else tugma_yasa(tugma, uslub, url=havola)
         ])
+    # Ikkinchi HAVOLA tugmasi — kanal postidagi «Boshqa masalalar»
+    # uchun. `ikkinchi_tugma` dan farqi shu: u callback, bu havola.
+    if qoshimcha_tugma and qoshimcha_havola:
+        qatorlar.append([tugma_yasa(qoshimcha_tugma, qoshimcha_uslub, url=qoshimcha_havola)])
     if ikkinchi_tugma and ikkinchi_data:
         qatorlar.append([tugma_yasa(ikkinchi_tugma, ikkinchi_uslub, callback_data=ikkinchi_data)])
     if qatorlar:
@@ -222,9 +229,7 @@ def rasm_yubor(
     chat_id: str,
     rasm: bytes,
     sarlavha: str,
-    tugma: str = "",
-    havola: str = "",
-    uslub: str = YASHIL,
+    tugmalar: list[tuple[str, str, str]] | None = None,
 ) -> tuple[str, str]:
     """
     Rasmli xabar — kanalga masala joylash uchun.
@@ -236,7 +241,11 @@ def rasm_yubor(
     esa chizmaning O'ZI xabarning yarmi — u to'liq va katta bo'lishi
     kerak, aks holda odam shartni tushunmaydi va bosmaydi.
 
-    Tugma HAR DOIM oddiy havola (`url`), Mini App tugmasi emas:
+    `tugmalar` — `(matn, havola, uslub)` uchliklari. Har biri O'Z
+    QATORIDA turadi: kanal xabarini telefonda o'qiydigan odamda
+    yonma-yon ikkita tugma tor bo'lib qoladi va matni kesiladi.
+
+    Tugmalar HAR DOIM oddiy havola (`url`), Mini App tugmasi emas:
     kanal xabarida Telegram `web_app` tugmasiga umuman ruxsat
     bermaydi va butun xabar rad etiladi. `t.me/<bot>?startapp=...`
     havolasi esa kanalda ishlaydi va ilovani baribir Telegram
@@ -247,10 +256,13 @@ def rasm_yubor(
         "caption": sarlavha[:MAX_SARLAVHA],
         "parse_mode": "HTML",
     }
-    if tugma and havola:
-        maydonlar["reply_markup"] = json.dumps({
-            "inline_keyboard": [[tugma_yasa(tugma, uslub, url=havola)]],
-        })
+    qatorlar = [
+        [tugma_yasa(matn, uslub, url=havola)]
+        for matn, havola, uslub in (tugmalar or [])
+        if matn and havola
+    ]
+    if qatorlar:
+        maydonlar["reply_markup"] = json.dumps({"inline_keyboard": qatorlar})
 
     tana, turi = _multipart(maydonlar, rasm)
     url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto"

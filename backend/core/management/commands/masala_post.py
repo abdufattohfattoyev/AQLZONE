@@ -9,12 +9,19 @@ Butun mantiq `core/masala_kanal.py` da: xuddi shu ish ilovadagi
 admin tugmasidan ham bajariladi va ikki nusxa bo'lishi mumkin emas.
 Bu yerda faqat buyruq qobig'i.
 
-Buyruq O'ZI rejalashtirmaydi — uni kuniga bir marta cron chaqiradi
-(`eslatma` buyrug'i bilan bir xil qoida).
+─────────────────── AVTOMATIK JADVAL ───────────────────
+
+    0 * * * * docker exec aqlzone python manage.py masala_post --kunlik --soat 18
+
+Cron SOAT SAYIN chaqiradi, kerakli soatni buyruqning o'zi kutadi.
+Sabab `eslatma` dagi bilan bir xil: serverning soati CEST,
+konteynerniki UTC, bolalar esa Toshkentda — cronda yozilgan soat
+yilda ikki marta siljib ketardi.
 """
 from __future__ import annotations
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from core import masala_kanal as MK
 from core.kanal import kanal_nomi
@@ -30,8 +37,16 @@ class Command(BaseCommand):
                             help="hali joylanmagan eng eski masalani tanlaydi")
         parser.add_argument("--sinov", action="store_true",
                             help="yubormaydi, faqat ko'rsatadi")
+        parser.add_argument("--soat", type=int, default=None,
+                            help="Faqat shu soatda ishlaydi (Toshkent vaqti). "
+                                 "Cron'ni soat sayin chaqirish uchun.")
 
     def handle(self, *args, **o) -> None:
+        # Soat mos kelmasa — jimgina chiqadi. Cron uni har soatda
+        # chaqiradi va faqat bittasida ish bajariladi.
+        if o["soat"] is not None and timezone.localtime().hour != o["soat"]:
+            return
+
         kanal = kanal_nomi()
         if not kanal:
             self.stderr.write("KANAL sozlanmagan — post yuborilmaydi")

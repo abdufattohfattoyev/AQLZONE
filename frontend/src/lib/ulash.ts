@@ -30,6 +30,15 @@ import { t } from "./matn";
 /** `start_param` oldiga qo'yiladigan belgi. Duel kodlarida `_` yo'q. */
 export const MASALA_BOSH = "masala_";
 
+/**
+ * Ro'yxatni ochadigan `start_param`.
+ *
+ * Kanal postidagi «Boshqa masalalar» tugmasi shu bilan keladi
+ * (`backend/core/masala_kanal.py`). Duel kodi hech qachon shunday
+ * bo'lmaydi: ular tasodifiy harf-raqam.
+ */
+export const ROYXAT_PARAM = "masalalar";
+
 /** Ulashiladigan matnda masaladan nechta belgi ko'rsatiladi. */
 const MATN_UZUNLIK = 140;
 

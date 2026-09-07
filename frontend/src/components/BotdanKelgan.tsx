@@ -25,9 +25,10 @@
  * duelga qaytarilaverardi. Shuning uchun ishlatilgan kod
  * `sessionStorage` ga yoziladi va ikkinchi marta e'tiborsiz qoladi.
  *
- * ──────────── IKKI XIL HAVOLA ────────────
+ * ──────────── UCH XIL HAVOLA ────────────
  *
  * `masala_12`  — ulashilgan masala (`lib/ulash.ts`)
+ * `masalalar`  — kanal postidagi «Boshqa masalalar» tugmasi
  * boshqasi     — duel chaqiruvi, ya'ni eski xatti-harakat
  *
  * Belgi ATAYLAB `_` bilan: duel kodlari faqat harf va raqamdan
@@ -38,8 +39,8 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { boshParametri } from "../lib/qobiq";
-import { MASALA_BOSH } from "../lib/ulash";
-import { yolDuelKod, yolMasala } from "../lib/yollar";
+import { MASALA_BOSH, ROYXAT_PARAM } from "../lib/ulash";
+import { yolDuelKod, yolMasala, yolMasalalar } from "../lib/yollar";
 
 /** Ishlatilgan kod shu yerda qoladi — sessiya davomida. */
 const KALIT = "az_duel_kod";
@@ -52,6 +53,7 @@ const KALIT = "az_duel_kod";
  * tushmaydi — bunday kod umuman e'tiborsiz qoladi.
  */
 function manzil(kod: string): string | null {
+  if (kod === ROYXAT_PARAM) return yolMasalalar();
   if (kod.startsWith(MASALA_BOSH)) {
     const raqam = Number(kod.slice(MASALA_BOSH.length));
     return Number.isInteger(raqam) && raqam > 0 ? yolMasala(raqam) : null;

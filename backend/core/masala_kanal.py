@@ -39,17 +39,36 @@ from .kanal import kanal_nomi
 from .models import Masala
 from .rasm import jpeg_qil
 
-#: Kanal xabaridagi tugma matni.
+#: Kanal xabaridagi tugmalar.
+#:
+#: Birinchisi — odam shu post uchun kelgan amal: javob kiritish.
+#: Ikkinchisi — o'sha yerdayoq keyingi masalaga o'tish yo'li:
+#: kanalda masalani yechgan odam ko'pincha yana bittasini so'raydi,
+#: lekin uni qidirib o'tirmaydi.
 TUGMA = "✍️ Javobni kiritish"
+TUGMA_BOSHQA = "📚 Boshqa masalalar"
+
+#: Ro'yxatni ochadigan `start_param` (`components/BotdanKelgan.tsx`).
+ROYXAT_PARAM = "masalalar"
 
 #: Sarlavhada shartga ajratilgan joy (Telegram jami 1024 beradi).
 MATN_JOYI = 700
 
 
+def _bot() -> str:
+    return (getattr(settings, "BOT_USERNAME", "") or "").lstrip("@")
+
+
 def havola(masala: Masala) -> str:
     """Ilovani AYNAN shu masalada ochadigan manzil."""
-    bot = (getattr(settings, "BOT_USERNAME", "") or "").lstrip("@")
+    bot = _bot()
     return f"https://t.me/{bot}?startapp=masala_{masala.pk}" if bot else ""
+
+
+def royxat_havolasi() -> str:
+    """Ilovani masalalar RO'YXATIDA ochadigan manzil."""
+    bot = _bot()
+    return f"https://t.me/{bot}?startapp={ROYXAT_PARAM}" if bot else ""
 
 
 def sarlavha(masala: Masala) -> str:
@@ -113,12 +132,22 @@ def yubor(masala: Masala) -> tuple[str, str]:
         return "sozlanmagan", ""
 
     yozuv = sarlavha(masala)
+    tugmalar = [(TUGMA, manzil, xabar.YASHIL)]
+    royxat = royxat_havolasi()
+    if royxat:
+        tugmalar.append((TUGMA_BOSHQA, royxat, xabar.KOK))
+
     if masala.rasm:
         with masala.rasm.open("rb") as f:
-            holat, izoh = xabar.rasm_yubor(kanal, jpeg_qil(f), yozuv, TUGMA, manzil)
+            holat, izoh = xabar.rasm_yubor(kanal, jpeg_qil(f), yozuv, tugmalar)
     else:
-        # Rasmsiz masala ham joylanadi, faqat oddiy xabar bo'lib.
-        holat, izoh = xabar.yubor(kanal, yozuv, TUGMA, manzil)
+        # Rasmsiz masala ham joylanadi — oddiy xabar bo'lib, lekin
+        # o'sha ikkita tugma bilan.
+        holat, izoh = xabar.yubor(
+            kanal, yozuv, TUGMA, manzil,
+            qoshimcha_tugma=TUGMA_BOSHQA if royxat else "",
+            qoshimcha_havola=royxat,
+        )
 
     if holat == "yuborildi":
         masala.kanal_at = timezone.now()
