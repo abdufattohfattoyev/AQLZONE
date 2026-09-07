@@ -3488,6 +3488,45 @@ class OvozTest(TestCase):
         # INLINE tugma — faqat u to'liq `initData` beradi.
         self.assertEqual(tugma["web_app"]["url"], "https://aql-zone.uz/duel/ABC123")
 
+
+    @patch("core.management.commands.bot.api")
+    def test_bot_masalani_inline_tugma_bilan_ochadi(self, api):
+        """Kanal postidagi tugma shu yo'l bilan keladi: `?start=masala_6`.
+        `?startapp=` ishlatib bo'lmaydi — botda Main Mini App yoqilmagan
+        bo'lsa Telegram BOT_INVALID deb javob beradi."""
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+            B.yangilikni_qayta_ishla({"message": {
+                "chat": {"id": 1}, "from": {"id": 890, "language_code": "uz"},
+                "text": "/start masala_6",
+            }})
+        tugma = api.call_args[1]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertEqual(tugma["web_app"]["url"], "https://aql-zone.uz/masalalar/6")
+
+    @patch("core.management.commands.bot.api")
+    def test_bot_masalalar_royxatini_ochadi(self, api):
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+            B.yangilikni_qayta_ishla({"message": {
+                "chat": {"id": 1}, "from": {"id": 891, "language_code": "uz"},
+                "text": "/start masalalar",
+            }})
+        tugma = api.call_args[1]["reply_markup"]["inline_keyboard"][0][0]
+        self.assertEqual(tugma["web_app"]["url"], "https://aql-zone.uz/masalalar")
+
+    @patch("core.management.commands.bot.api")
+    def test_buzuq_masala_raqami_oddiy_startga_tushadi(self, api):
+        from core.management.commands import bot as B
+
+        with self.settings(MINI_APP_URL="https://aql-zone.uz", SAYT_URL="https://aql-zone.uz"):
+            natija = B.yangilikni_qayta_ishla({"message": {
+                "chat": {"id": 1}, "from": {"id": 892, "language_code": "uz"},
+                "text": "/start masala_abc",
+            }})
+        self.assertIn("/start", natija)
+
     @patch("core.management.commands.bot.api")
     def test_buzuq_kod_oddiy_startga_tushadi(self, api):
         from core.management.commands import bot as B
@@ -4025,7 +4064,7 @@ class MasalaKanalTest(TestCase):
     def test_havola_ilovani_shu_masalada_ochadi(self):
         m = self.masala_yasa()
         self.assertEqual(
-            MK.havola(m), f"https://t.me/aqlzone_bot?startapp=masala_{m.pk}",
+            MK.havola(m), f"https://t.me/aqlzone_bot?start=masala_{m.pk}",
         )
 
     def test_sarlavhada_shart_va_sinf_bor(self):
@@ -4171,11 +4210,11 @@ class MasalaKanalTugmaTest(TestCase):
         tana = u.call_args[0][0].data.decode("utf-8", "replace")
         self.assertIn("Javobni kiritish", tana)
         self.assertIn("Boshqa masalalar", tana)
-        self.assertIn(f"startapp=masala_{self.m.pk}", tana)
-        self.assertIn("startapp=masalalar", tana)
+        self.assertIn(f"start=masala_{self.m.pk}", tana)
+        self.assertIn("start=masalalar", tana)
 
     def test_royxat_havolasi(self):
-        self.assertEqual(MK.royxat_havolasi(), "https://t.me/aqlzone_bot?startapp=masalalar")
+        self.assertEqual(MK.royxat_havolasi(), "https://t.me/aqlzone_bot?start=masalalar")
 
     def test_yuborilgandan_keyin_postga_havola_qaytadi(self):
         """Admin postni ko'z bilan tekshirishi uchun havola kerak."""

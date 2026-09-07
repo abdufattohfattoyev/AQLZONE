@@ -62,15 +62,32 @@ def _bot() -> str:
 
 
 def havola(masala: Masala) -> str:
-    """Ilovani AYNAN shu masalada ochadigan manzil."""
+    """
+    AYNAN shu masalaga olib boradigan manzil.
+
+    ─────────── NEGA `?start=`, `?startapp=` EMAS ───────────
+
+    `?startapp=` bir bosishda Mini App'ni ochadi va bu chiroyliroq,
+    lekin u botda "Main Mini App" YOQILGAN bo'lishini talab qiladi
+    (BotFather → Configure Mini App). Yoqilmagan botda Telegram
+    tugmani bosgan odamga `BOT_INVALID` deb javob beradi — kanal
+    tugmalari aynan shu sababdan ishlamay turgandi.
+
+    `?start=` esa har qanday botda ishlaydi: bot suhbati ochiladi va
+    bot darhol ilovani ochadigan tugma yuboradi
+    (`management/commands/bot.py`). Bitta qo'shimcha bosish, lekin
+    yon foydasi bor: odam bot bilan suhbat ochadi va unga keyin
+    eslatma yuborish mumkin bo'ladi. `?startapp=` da suhbat
+    ochilmaydi va odam bilan aloqa qolmaydi.
+    """
     bot = _bot()
-    return f"https://t.me/{bot}?startapp=masala_{masala.pk}" if bot else ""
+    return f"https://t.me/{bot}?start=masala_{masala.pk}" if bot else ""
 
 
 def royxat_havolasi() -> str:
-    """Ilovani masalalar RO'YXATIDA ochadigan manzil."""
+    """Masalalar RO'YXATIGA olib boradigan manzil."""
     bot = _bot()
-    return f"https://t.me/{bot}?startapp={ROYXAT_PARAM}" if bot else ""
+    return f"https://t.me/{bot}?start={ROYXAT_PARAM}" if bot else ""
 
 
 def qalqon(matn: str) -> str:

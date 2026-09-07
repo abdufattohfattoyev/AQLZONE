@@ -662,6 +662,27 @@ def yangilikni_qayta_ishla(u: dict) -> str:
             bolimni_yubor(chat_id, til, f"/duel/{kod}", "duelChaqiruvBot")
             return f"{tg_id}: chaqiruv havolasi ({kod})"
 
+    # Kanaldagi post tugmasi: `/start masala_<id>` va `/start masalalar`.
+    #
+    # NEGA `?startapp=` EMAS. U bir bosishda ilovani ochadi, lekin
+    # botda "Main Mini App" yoqilgan bo'lishini talab qiladi va
+    # yoqilmagan botda Telegram BOT_INVALID deb javob beradi — kanal
+    # tugmasi shu sabab ishlamay turgan edi. `?start=` esa har qanday
+    # botda ishlaydi.
+    #
+    # Yon foydasi ham bor va u kichik emas: bu yo'l bilan kelgan odam
+    # bot bilan SUHBAT ochadi, ya'ni unga keyin eslatma yuborish
+    # mumkin bo'ladi. `?startapp=` da suhbat ochilmaydi.
+    if matn.startswith("/start masala_"):
+        xom = matn.split("masala_", 1)[1].strip()[:12]
+        if xom.isdigit() and int(xom) > 0:
+            bolimni_yubor(chat_id, til, f"/masalalar/{int(xom)}", "masalaBot")
+            return f"{tg_id}: masala havolasi (#{int(xom)})"
+
+    if matn.startswith("/start masalalar"):
+        bolimni_yubor(chat_id, til, "/masalalar", "masalalarBot")
+        return f"{tg_id}: masalalar bo'limi"
+
     if matn.startswith("/start"):
         # Odam o'zi yozdi — demak xabarlarga qarshi emas. "Boshqa
         # yozmang" belgisi olib tashlanadi, aks holda u eslatmalardan

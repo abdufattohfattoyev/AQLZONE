@@ -147,6 +147,30 @@ XABAR: dict[str, dict[str, str]] = {
     "buyruqDuel": {"uz": "Do'st bilan bellashuv", "ru": "Дуэль с другом"},
     "buyruqMaydon": {"uz": "Bugungi maydon — 3 bosqich", "ru": "Арена дня — 3 этапа"},
     "buyruqReyting": {"uz": "Reyting jadvali", "ru": "Таблица рейтинга"},
+    "masalaBot": {
+        "uz": (
+            "🧩 <b>Masala sizni kutyapti</b>\n\n"
+            "Shartni o‘qing, javobingizni yozing — u yerda tekshiriladi "
+            "va yechimi ochiladi. Ochish uchun pastdagi tugmani bosing."
+        ),
+        "ru": (
+            "🧩 <b>Задача ждёт вас</b>\n\n"
+            "Прочитайте условие и введите ответ — он проверится, "
+            "и откроется решение. Нажмите кнопку ниже."
+        ),
+    },
+    "masalalarBot": {
+        "uz": (
+            "🧩 <b>Masalalar bo‘limi</b>\n\n"
+            "Foydalanuvchilar yozgan masalalar — yeching va o‘zingiznikini "
+            "qo‘shing. Ochish uchun pastdagi tugmani bosing."
+        ),
+        "ru": (
+            "🧩 <b>Раздел задач</b>\n\n"
+            "Задачи от пользователей — решайте и добавляйте свои. "
+            "Нажмите кнопку ниже."
+        ),
+    },
     "duelChaqiruvBot": {
         "uz": (
             "⚔️ <b>Sizni bellashuvga chaqirishdi!</b>\n\n"
