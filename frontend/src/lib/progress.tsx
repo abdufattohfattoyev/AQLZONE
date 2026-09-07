@@ -248,6 +248,15 @@ interface Ctx {
    * har kuni ilovani ochsin.
    */
   oyinTugadi: (tanga: number, savollar: number) => void;
+  /**
+   * Jami hisobdan tanga yechadi. Yetmasa `false` va hech narsa
+   * o'zgarmaydi.
+   *
+   * Masalaning yechimini ochish shu orqali to'lanadi. Zanjir
+   * tiklash bilan bir xil qoida: tanga kursga tegishli, xarid esa
+   * kursdan tashqarida — shu sabab jami hisobdan.
+   */
+  tangaYech: (narx: number) => boolean;
 }
 
 const ProgressCtx = createContext<Ctx | null>(null);
@@ -422,17 +431,22 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
    * bo'lardi, lekin bu bittasi doim ishlaydi: jami yetsa, yechish
    * albatta tugaydi va hech qaysi kurs manfiyga tushmaydi.
    */
-  const zanjirniTikla = useCallback((): boolean => {
-    const taklif = tiklashTaklifi(kunlikRef.current);
-    if (!taklif) return false;
-
+  /**
+   * Jami hisobdan tanga yechadi.
+   *
+   * Tanga ENG BOY kursdan boshlab yechiladi. Boshqa taqsimot ham
+   * bo'lardi, lekin bu bittasi doim ishlaydi: jami yetsa, yechish
+   * albatta tugaydi va hech qaysi kurs manfiyga tushmaydi.
+   */
+  const tangaYech = useCallback((narx: number): boolean => {
+    if (narx <= 0) return true;
     const joriy = allRef.current;
     const jami = COURSES.reduce((n, c) => n + (joriy[c.key]?.coins ?? 0), 0);
-    if (jami < taklif.narx) return false;
+    if (jami < narx) return false;
 
     setAll((p) => {
       const yangi = { ...p };
-      let qolgan = taklif.narx;
+      let qolgan = narx;
       // Boydan kambag'alga qarab yechamiz.
       const tartib = [...COURSES].sort(
         (a, b) => (yangi[b.key]?.coins ?? 0) - (yangi[a.key]?.coins ?? 0),
@@ -447,9 +461,16 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       }
       return yangi;
     });
-    setKunlik((k) => tiklangan(k));
     return true;
   }, []);
+
+  const zanjirniTikla = useCallback((): boolean => {
+    const taklif = tiklashTaklifi(kunlikRef.current);
+    if (!taklif) return false;
+    if (!tangaYech(taklif.narx)) return false;
+    setKunlik((k) => tiklangan(k));
+    return true;
+  }, [tangaYech]);
 
   /* -------------------------------------------------- kunlik sinov */
 
@@ -531,7 +552,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     <ProgressCtx.Provider
       value={{
         progressOf, darsTugadi, kunlik: kunlikKorinishi(kunlik), sotibOl, kiy,
-        jamiTanga, tiklash, zanjirniTikla, sinovTugadi, oyinTugadi,
+        jamiTanga, tiklash, zanjirniTikla, sinovTugadi, oyinTugadi, tangaYech,
       }}
     >
       {children}

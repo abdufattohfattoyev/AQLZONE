@@ -54,6 +54,8 @@ export interface Masala {
   ovozim?: Ovoz;
   /** Urinib ko'rilganmi — ro'yxatda "yechilgan" belgisi uchun. */
   uringan?: boolean;
+  /** Shu odam necha marta urindi. Yechim narxi shunga bog'liq. */
+  urinishim?: number;
   /** Birinchi urinish to'g'ri bo'lganmi. Urinmagan bo'lsa `null`. */
   birinchiTogri?: boolean | null;
   /**
@@ -78,8 +80,13 @@ export interface JavobNatija {
   togri: boolean;
   /** Shu odamning BIRINCHI urinishimi — statistika faqat shunda o'zgaradi. */
   birinchi: boolean;
-  yechim: string;
-  javob: string;
+  /** Nechanchi urinish ekani (1 dan). Mukofot shunga qarab beriladi. */
+  urinishim: number;
+  /** Yechim ochilganmi. Xato javobda — yo'q. */
+  yechimOchiq: boolean;
+  /** Yechim va javob FAQAT ochilganda keladi. */
+  yechim?: string;
+  javob?: string;
   urinishSoni: number;
   yechganSoni: number;
   birinchiTogri: boolean;
@@ -133,6 +140,16 @@ export const ovozBer = (
  * Boshqa odamda bu yo'l umuman yo'q (server 404 qaytaradi) va
  * tugma ham ko'rinmaydi: `kanal` maydoni javobga qo'shilmaydi.
  */
+/**
+ * Yechimni ochadi — tanga to'langandan keyin (yoki uch urinishdan
+ * keyin bepul). Tanga MIJOZDA yechiladi, server faqat ochilganini
+ * yozib qo'yadi.
+ */
+export const yechimniOch = (
+  id: number,
+): Promise<{ yechim: string; javob: string }> =>
+  sorov(`/api/v1/masalalar/${id}/yechim`, bilanProfil({}));
+
 export const kanalgaYubor = (
   id: number,
 ): Promise<{ yuborilgan: boolean; havola: string }> =>

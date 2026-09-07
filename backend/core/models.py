@@ -1005,7 +1005,30 @@ class MasalaUrinish(models.Model):
         Profile, on_delete=models.CASCADE, related_name="masala_urinishlari"
     )
     togri = models.BooleanField(default=False)
+
+    #: Shu odam necha marta javob yubordi.
+    #:
+    #: Statistikaga tushmaydi — u faqat YECHIM QACHON ochilishini hal
+    #: qiladi: uch marta urinib topolmagan odamga yechim bepul
+    #: beriladi (`YECHIM_BEPUL`). Busiz tanga yig'olmagan bola
+    #: masalada qamalib qolardi va bo'lim unga yopiq bo'lib qolardi.
+    soni = models.IntegerField(default=1)
+
+    #: Yechim shu odamga ochilganmi.
+    #:
+    #: Uch yo'l bilan ochiladi: to'g'ri yechganda, uch marta xato
+    #: urinishdan keyin va tanga sarflab. Uchinchisi — shoshayotgan
+    #: odam uchun (`views.masala_yechim`).
+    yechim_ochiq = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    #: Nechta xato urinishdan keyin yechim BEPUL ochiladi.
+    #:
+    #: Uch — ataylab: bir xato tasodif, ikkinchisi hali izlanish,
+    #: uchinchisidan keyin esa odam yordamsiz oldinga siljimaydi va
+    #: uni o'sha yerda ushlab turish o'rgatmaydi, faqat charchatadi.
+    YECHIM_BEPUL = 3
 
     class Meta:
         db_table = "masala_urinish"

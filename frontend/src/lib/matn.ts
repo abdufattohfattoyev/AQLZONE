@@ -484,6 +484,24 @@ const S = {
   masalaTekshir: ["Tekshirish", "Проверить"],
   masalaTogri: ["To'g'ri! 🎉", "Верно! 🎉"],
   masalaXato: ["Bu safar bo'lmadi", "В этот раз не вышло"],
+  /* Xato javobdan keyin — javob ko'rsatilmaydi, qayta urinish taklif
+     qilinadi. Ilgari to'g'ri javob darhol chiqib, ikkinchi urinish
+     uchun sabab qolmasdi. */
+  masalaYanaUrin: [
+    "Yana bir bor o'ylab ko'ring — javobni o'zgartirib yuboring",
+    "Подумайте ещё раз — измените ответ и отправьте",
+  ],
+  masalaTangaOldingiz: ["+{n} tanga", "+{n} монет"],
+  masalaTangaIzoh: [
+    "Birinchi urinishda ko'proq beriladi",
+    "За первую попытку дают больше",
+  ],
+  masalaYechimOch: ["Yechimni ko'rish — {n} tanga", "Открыть решение — {n} монет"],
+  masalaYechimBepul: ["Yechimni ko'rish", "Открыть решение"],
+  masalaTangaYetmadi: [
+    "Tanga yetmadi — yana {n} ta kerak",
+    "Не хватает монет — нужно ещё {n}",
+  ],
   masalaTogriJavob: ["To'g'ri javob: {javob}", "Правильный ответ: {javob}"],
   masalaYechim: ["Yechim", "Решение"],
   /* Yechim yopiqligining SABABI aytiladi. "Yopiq" degan quruq

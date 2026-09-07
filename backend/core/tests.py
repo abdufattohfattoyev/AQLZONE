@@ -3726,7 +3726,13 @@ class MasalaTest(TestCase):
         self.assertNotIn("yechim", qator)
         self.assertTrue(qator["uringan"])
 
-    def test_javob_bergandan_keyin_yechim_ochiladi(self):
+    def test_xato_javob_yechimni_ochmaydi(self):
+        """
+        Ilgari BITTA urinishdan keyin yechim ham, to'g'ri javob ham
+        darhol ko'rinardi — ya'ni "yechish" bir marta biror narsa
+        yozishdan iborat edi va ikkinchi urinish uchun sabab
+        qolmasdi.
+        """
         m = self.masala_yasa()
         r = self.client.post(
             f"/api/v1/masalalar/{m.pk}/javob", {"javob": "xato"},
@@ -3734,12 +3740,70 @@ class MasalaTest(TestCase):
         )
         d = r.json()
         self.assertFalse(d["togri"])
-        # Xato javob bergan odamga yechim AYNIQSA kerak — u aynan
-        # shuning uchun keldi.
-        self.assertIn("20 − 8", d["yechim"])
+        self.assertFalse(d["yechimOchiq"])
+        self.assertNotIn("yechim", d)
+        self.assertNotIn("javob", d)
 
         r = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.yechuvchi_token))
+        self.assertFalse(r.json()["yechimOchiq"])
+
+    def test_togri_javob_yechimni_ochadi(self):
+        m = self.masala_yasa()
+        r = self.client.post(
+            f"/api/v1/masalalar/{m.pk}/javob", {"javob": "12"},
+            content_type="application/json", **self.auth(self.yechuvchi_token),
+        )
+        d = r.json()
+        self.assertTrue(d["togri"])
+        self.assertEqual(d["urinishim"], 1)
+        self.assertIn("20 − 8", d["yechim"])
+
+    def test_uchinchi_urinishdan_keyin_yechim_bepul_ochiladi(self):
+        """Tangasi yo'q bola masalada qamalib qolmasligi kerak."""
+        m = self.masala_yasa()
+        yol = f"/api/v1/masalalar/{m.pk}/javob"
+        A = self.auth(self.yechuvchi_token)
+        for _ in range(2):
+            d = self.client.post(yol, {"javob": "xato"},
+                                 content_type="application/json", **A).json()
+            self.assertFalse(d["yechimOchiq"])
+
+        d = self.client.post(yol, {"javob": "yana xato"},
+                             content_type="application/json", **A).json()
+        self.assertEqual(d["urinishim"], 3)
+        self.assertTrue(d["yechimOchiq"])
+        self.assertIn("20 − 8", d["yechim"])
+
+        # Statistikaga faqat BIRINCHI urinish tushadi.
+        m.refresh_from_db()
+        self.assertEqual(m.urinish_soni, 1)
+        self.assertEqual(m.yechgan_soni, 0)
+
+    def test_tanga_evaziga_yechim_ochiladi(self):
+        m = self.masala_yasa()
+        A = self.auth(self.yechuvchi_token)
+        self.client.post(f"/api/v1/masalalar/{m.pk}/javob", {"javob": "xato"},
+                         content_type="application/json", **A)
+
+        r = self.client.post(f"/api/v1/masalalar/{m.pk}/yechim", {},
+                             content_type="application/json", **A)
+        self.assertIn("20 − 8", r.json()["yechim"])
+        self.assertEqual(r.json()["javob"], "12")
+
+        # Ilova qayta ochilganda ham yechim joyida — ikkinchi marta
+        # to'lanmaydi.
+        r = self.client.get(f"/api/v1/masalalar/{m.pk}", **A)
         self.assertTrue(r.json()["yechimOchiq"])
+
+    def test_urinmasdan_yechim_sotib_olinmaydi(self):
+        """Aks holda bo'lim javoblar ro'yxatiga aylanardi."""
+        m = self.masala_yasa()
+        r = self.client.post(f"/api/v1/masalalar/{m.pk}/yechim", {},
+                             content_type="application/json",
+                             **self.auth(self.yechuvchi_token))
+        self.assertEqual(r.status_code, 400)
+        r = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.yechuvchi_token))
+        self.assertFalse(r.json()["yechimOchiq"])
 
     def test_muallif_oz_yechimini_koradi(self):
         m = self.masala_yasa(holat=Masala.KUTMOQDA)

@@ -44,18 +44,25 @@ def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> d
     Masalaning mijozga ketadigan ko'rinishi.
 
     `yechim` FAQAT quyidagi hollarda qo'shiladi:
-      * odam urinib ko'rgan bo'lsa,
+      * odamga yechim ochilgan bo'lsa (`MasalaUrinish.yechim_ochiq`:
+        to'g'ri yechgan, uch marta urinib ko'rgan yoki tanga
+        sarflagan),
       * yoki masalaning O'Z muallifi bo'lsa.
 
     Muallif istisnosi zarur: u yechimni o'zi yozgan va uni ko'ra
     olmasa, o'z masalasini tuzata ham olmasdi.
+
+    Ilgari yechim BITTA urinishdan keyin ochilardi — ya'ni "yechish"
+    bir marta biror narsa yozishdan iborat edi va ikkinchi urinish
+    uchun sabab qolmasdi.
 
     `ochiq` — urinish allaqachon ma'lum bo'lganda qo'shimcha so'rov
     qilmaslik uchun (ro'yxatda ellikta masala bo'ladi).
     """
     oz = masala.muallif_id == kim.pk
     if ochiq is None:
-        ochiq = oz or uringanmi(masala, kim) is not None
+        urinish = uringanmi(masala, kim)
+        ochiq = oz or (urinish is not None and urinish.yechim_ochiq)
 
     d = {
         "id": masala.pk,
@@ -140,17 +147,38 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
     """
     Javobni tekshiradi va yechimni ochadi.
 
-    Natija: `{togri, birinchi, yechim, javob}`.
+    Natija: `{togri, birinchi, yechim, javob, ...}`.
 
     `birinchi` — shu odamning BIRINCHI urinishimi. Sanoqlar faqat
-    shunda o'zgaradi. Ikkinchi marta javob bergan odam yechimni
-    baribir ko'radi (u allaqachon ochilgan), lekin statistikaga
+    shunda o'zgaradi. Ikkinchi marta javob bergan odam statistikaga
     tegmaydi — "nechta odam O'ZI yecha oldi" degan son halol
     qolishi kerak.
+
+    ─────────────── XATO JAVOB YECHIMNI OCHMAYDI ───────────────
+
+    Ilgari yechim ham, TO'G'RI JAVOB ham birinchi urinishdan keyin
+    darhol ko'rinardi — to'g'ri yechganga ham, xato qilganga ham.
+    Ya'ni masalani "yechish" bir marta biror narsa yozishdan iborat
+    edi va ikkinchi urinish uchun sabab qolmasdi.
+
+    Endi xato javobdan keyin faqat "bo'lmadi" deyiladi. Yechim uch
+    yo'l bilan ochiladi:
+
+      * to'g'ri javob berilsa,
+      * uch marta xato urinishdan keyin — bepul
+        (`MasalaUrinish.YECHIM_BEPUL`),
+      * tanga sarflab — shoshayotgan odam uchun
+        (`views.masala_yechim`).
+
+    Tanga narxi va mukofoti MIJOZDA hisoblanadi (`lib/progress.tsx`),
+    chunki tanga hisobi shu paytgacha o'sha yerda turadi. Server esa
+    yechimni QO'RIQLAYDI: u ochilmagan bo'lsa, javob ham, yechim ham
+    umuman yuborilmaydi.
     """
     togri = javob_normal(javob) == javob_normal(masala.javob)
     urinish, birinchi = MasalaUrinish.objects.get_or_create(
-        masala=masala, profile=profile, defaults={"togri": togri},
+        masala=masala, profile=profile,
+        defaults={"togri": togri, "soni": 1, "yechim_ochiq": togri},
     )
 
     if birinchi:
@@ -161,21 +189,55 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
             yechgan_soni=F("yechgan_soni") + (1 if togri else 0),
         )
         masala.refresh_from_db(fields=["urinish_soni", "yechgan_soni"])
+    else:
+        urinish.soni = F("soni") + 1
+        urinish.save(update_fields=["soni"])
+        urinish.refresh_from_db(fields=["soni"])
 
-    return {
+    # To'g'ri javob yechimni ochadi. Uch marta urinib topolmagan odamga
+    # ham ochiladi — u yordamsiz oldinga siljimaydi.
+    if not urinish.yechim_ochiq and (
+        togri or urinish.soni >= MasalaUrinish.YECHIM_BEPUL
+    ):
+        urinish.yechim_ochiq = True
+        urinish.save(update_fields=["yechim_ochiq"])
+
+    natija = {
         "togri": togri,
         "birinchi": birinchi,
-        # Yechim HAR DOIM qaytadi: odam urinib bo'ldi, endi uni
-        # yashirishning ma'nosi yo'q. Xato qilgan odamga u ayniqsa
-        # kerak — u aynan shu uchun keldi.
-        "yechim": masala.yechim,
-        "javob": masala.javob,
+        "urinishim": urinish.soni,
+        "yechimOchiq": urinish.yechim_ochiq,
         "urinishSoni": masala.urinish_soni,
         "yechganSoni": masala.yechgan_soni,
         # Birinchi urinishning natijasi keyin o'zgarmaydi — mijoz
         # shuni ko'rsatadi ("siz buni yechgansiz" yoki "yecholmagansiz").
         "birinchiTogri": urinish.togri,
     }
+    if urinish.yechim_ochiq:
+        natija["yechim"] = masala.yechim
+        natija["javob"] = masala.javob
+    return natija
+
+
+def yechimni_och(masala: Masala, profile: Profile) -> dict | None:
+    """
+    Yechimni ochadi — tanga evaziga.
+
+    `None` qaytsa, odam bu masalaga hali UMUMAN urinmagan: yechimni
+    urinmasdan sotib olish mumkin emas, aks holda bo'lim javoblar
+    ro'yxatiga aylanardi.
+
+    Tanga mijozda yechiladi. Server bu yerda faqat ochilganini
+    yozib qo'yadi — shunda odam ilovani qayta ochganda yechim
+    joyida turadi va ikkinchi marta to'lamaydi.
+    """
+    urinish = uringanmi(masala, profile)
+    if urinish is None:
+        return None
+    if not urinish.yechim_ochiq:
+        urinish.yechim_ochiq = True
+        urinish.save(update_fields=["yechim_ochiq"])
+    return {"yechim": masala.yechim, "javob": masala.javob, "yechimOchiq": True}
 
 
 # --------------------------------------------------------------------- ovozlar

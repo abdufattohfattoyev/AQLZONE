@@ -26,13 +26,15 @@
  * muallif yozuvi masalaning O'Z ustida turadi va bosilsa uning
  * sahifasiga olib boradi.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { sinfNomi } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import type { JavobNatija, Masala as MasalaTur, Ovoz } from "../lib/masala";
 import { kelasiOvoz, sanoqniHisobla } from "../lib/masalaOvoz";
+import { YECHIM_NARX, bepulOchiladi, mukofot } from "../lib/masalaTanga";
+import { useProgress } from "../lib/progress";
 import { masalaniUlash } from "../lib/ulash";
 import { havolaniOch, tebrat, useOrqaga } from "../lib/qobiq";
 
@@ -65,16 +67,36 @@ export function Masala({ id, onMuallif, onBack }: Props) {
   /** Kanaldagi postning manzili — yuborilgandan keyin paydo bo'ladi. */
   const [kanalHavola, setKanalHavola] = useState("");
 
+  /** Tanga evaziga (yoki bepul) ochilgan yechim. */
+  const [ochilgan, setOchilgan] = useState<{ yechim: string; javob: string } | null>(null);
+  const [ochilmoqda, setOchilmoqda] = useState(false);
+  /** Shu urinishda nechta tanga berildi — natija ostida ko'rinadi. */
+  const [mukofotOlindi, setMukofotOlindi] = useState(0);
+
+  /**
+   * Yechim ushbu urinishdan OLDIN ochiq edimi.
+   *
+   * Tanga faqat o'zi yechganga beriladi: yechimni ochib, keyin
+   * o'sha javobni ko'chirgan odamga emas. Buni bilish uchun
+   * "oldingi holat" kerak — `natija` esa allaqachon yangisi.
+   */
+  const ochiqEdi = useRef(false);
+
+  const { jamiTanga, tangaYech, oyinTugadi } = useProgress();
+
   useEffect(() => {
     let bekor = false;
     setM(null); setXato(false); setNatija(null); setJavob("");
     setKanal("yopiq"); setKanalHavola("");
+    setOchilgan(null); setMukofotOlindi(0);
+    ochiqEdi.current = false;
     MS.bittasi(id)
       .then((d) => {
         if (bekor) return;
         setM(d);
         setOvozim(d.ovozim ?? "");
         setSonlar({ like: d.like, dislike: d.dislike });
+        ochiqEdi.current = Boolean(d.yechimOchiq);
         if (d.kanal?.yuborilgan) {
           setKanal("bordi");
           setKanalHavola(d.kanal.havola ?? "");
@@ -85,20 +107,59 @@ export function Masala({ id, onMuallif, onBack }: Props) {
   }, [id]);
 
   /** Yechim ekranda ochiqmi: serverdan kelgan bo'lsa — ha. */
-  const yechim = natija?.yechim ?? m?.yechim ?? "";
-  const togriJavob = natija?.javob ?? m?.javob ?? "";
+  const yechim = ochilgan?.yechim ?? natija?.yechim ?? m?.yechim ?? "";
+  const togriJavob = ochilgan?.javob ?? natija?.javob ?? m?.javob ?? "";
+
+  /** Shu odam necha marta urindi — yechim narxi shunga bog'liq. */
+  const urinishim = natija?.urinishim ?? m?.urinishim ?? 0;
+  const bepul = bepulOchiladi(urinishim);
+  const yetarli = jamiTanga >= YECHIM_NARX;
 
   const yubor = async () => {
     if (!m || !javob.trim() || yuborilmoqda) return;
     setYuborilmoqda(true);
     try {
+      const oldinOchiq = ochiqEdi.current;
       const d = await MS.javobBer(m.id, javob.trim());
       setNatija(d);
+      ochiqEdi.current = d.yechimOchiq;
       tebrat(d.togri ? "togri" : "xato");
+
+      // Tanga FAQAT o'zi yechganga. Yechimni ochib, keyin o'sha
+      // javobni ko'chirgan odamga berilmaydi — aks holda tangani
+      // "sotib olib" yig'ish mumkin bo'lardi.
+      if (d.togri && !oldinOchiq) {
+        const n = mukofot(d.urinishim);
+        setMukofotOlindi(n);
+        oyinTugadi(n, 1);
+      }
     } catch {
       setXato(true);
     } finally {
       setYuborilmoqda(false);
+    }
+  };
+
+  /**
+   * Yechimni ochadi.
+   *
+   * Uch urinishdan keyin bepul, undan oldin — tanga evaziga. Tanga
+   * AVVAL yechiladi: server javobini kutib turganda odam tugmani
+   * ikkinchi marta bosib, ikki marta to'lashi mumkin edi.
+   */
+  const yechimniOch = async () => {
+    if (!m || ochilmoqda) return;
+    if (!bepul && !tangaYech(YECHIM_NARX)) return;
+    setOchilmoqda(true);
+    try {
+      const d = await MS.yechimniOch(m.id);
+      ochiqEdi.current = true;
+      setOchilgan(d);
+      tebrat("tanlov");
+    } catch {
+      setXato(true);
+    } finally {
+      setOchilmoqda(false);
     }
   };
 
@@ -324,14 +385,33 @@ export function Masala({ id, onMuallif, onBack }: Props) {
       {natija && (
         <div className={`mt-3 rounded-clay p-3.5 ${
           natija.togri ? "bg-brand-green/15" : "bg-brand-red/15"}`}>
-          <p className={`font-display text-[15px] ${
-            natija.togri ? "text-brand-green" : "text-brand-red"}`}>
-            {natija.togri ? t("masalaTogri") : t("masalaXato")}
-          </p>
-          {!natija.togri && (
-            <p className="mt-1 text-[13px] text-ink-soft">
-              {t("masalaTogriJavob", { javob: togriJavob })}
+          <div className="flex items-center gap-2">
+            <p className={`min-w-0 flex-1 font-display text-[15px] ${
+              natija.togri ? "text-brand-green" : "text-brand-red"}`}>
+              {natija.togri ? t("masalaTogri") : t("masalaXato")}
             </p>
+            {/* Mukofot natijaning YONIDA turadi: tanga aynan shu
+                javob uchun berilgani shundagina ko'rinadi. */}
+            {mukofotOlindi > 0 && (
+              <span className="flex shrink-0 items-center gap-1 rounded-full bg-brand-gold/20
+                               px-2.5 py-1 text-[12px] font-display text-brand-gold">
+                <Icon name="coin" size={13} />
+                {t("masalaTangaOldingiz", { n: mukofotOlindi })}
+              </span>
+            )}
+          </div>
+
+          {/* Xato javobdan keyin TO'G'RI JAVOB KO'RSATILMAYDI —
+              ilgari u darhol chiqardi va ikkinchi urinish uchun sabab
+              qolmasdi. Yechim ochilgan bo'lsagina javob quyida,
+              yechimning ichida ko'rinadi. */}
+          {!natija.togri && (
+            <p className="mt-1 text-[13px] leading-snug text-ink-soft">
+              {t("masalaYanaUrin")}
+            </p>
+          )}
+          {natija.togri && mukofotOlindi > 0 && (
+            <p className="mt-1 text-[11.5px] text-ink-dim">{t("masalaTangaIzoh")}</p>
           )}
 
           {/* Yechgan zahoti — ulashish uchun eng kuchli payt: odam
@@ -356,12 +436,46 @@ export function Masala({ id, onMuallif, onBack }: Props) {
           <p className="mb-2 text-[11px] tracking-widest text-ink-soft uppercase">
             {t("masalaYechim")}
           </p>
+          {togriJavob && (
+            <p className="mb-2 text-[13.5px] text-ink-soft">
+              {t("masalaTogriJavob", { javob: togriJavob })}
+            </p>
+          )}
           <p className="whitespace-pre-wrap text-[14px] leading-relaxed">{yechim}</p>
         </div>
       ) : m.holat === "tasdiq" && (
-        <p className="mt-3 text-center text-[12.5px] leading-snug text-ink-dim">
-          {t("masalaYechimYopiq")}
-        </p>
+        /* ---- yechimni ochish ----
+            Urinmagan odamga umuman ko'rinmaydi: yechimni urinmasdan
+            sotib olish mumkin emas, aks holda bo'lim javoblar
+            ro'yxatiga aylanardi.
+
+            Uch urinishdan keyin BEPUL bo'ladi — tangasi yo'q bola
+            ham yordamsiz qolmasin. */
+        urinishim > 0 ? (
+          <div className="mt-3">
+            <button type="button" onClick={() => void yechimniOch()}
+              disabled={ochilmoqda || (!bepul && !yetarli)}
+              className={`clay-press flex w-full items-center justify-center gap-2 rounded-clay
+                          py-3 text-[13.5px] shadow-clay-sm disabled:opacity-50 ${
+                bepul ? "bg-karta text-ink-soft" : "bg-karta text-brand-gold"}`}>
+              {!bepul && <Icon name="coin" size={15} />}
+              {ochilmoqda
+                ? t("yuklanyapti")
+                : bepul
+                  ? t("masalaYechimBepul")
+                  : t("masalaYechimOch", { n: YECHIM_NARX })}
+            </button>
+            {!bepul && !yetarli && (
+              <p className="mt-1.5 text-center text-[11.5px] text-ink-dim">
+                {t("masalaTangaYetmadi", { n: YECHIM_NARX - jamiTanga })}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="mt-3 text-center text-[12.5px] leading-snug text-ink-dim">
+            {t("masalaYechimYopiq")}
+          </p>
+        )
       )}
 
       {/* ---- ovoz ----

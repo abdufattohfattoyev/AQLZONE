@@ -1428,12 +1428,17 @@ def masala_korish(request, pk: int):
         return Response({"detail": "topilmadi"}, status=404)
 
     urinish = M.uringanmi(m, profil)
-    ochiq = urinish is not None or m.muallif_id == profil.pk
+    # Yechim urinib ko'rgani uchun emas, OCHILGANI uchun beriladi:
+    # xato javob uni ochmaydi (`masala.javob_ber` dagi izohga qarang).
+    ochiq = (urinish is not None and urinish.yechim_ochiq) or m.muallif_id == profil.pk
     javob = {
         **M.masala_json(m, profil, ochiq=ochiq),
         "ovozim": M.ovozlarim(profil, [m.pk]).get(m.pk, ""),
         "uringan": urinish is not None,
         "birinchiTogri": urinish.togri if urinish else None,
+        # Necha marta urinilgani — mijoz shunga qarab "yechimni
+        # ko'rish" tugmasini bepul yoki tangali qilib ko'rsatadi.
+        "urinishim": urinish.soni if urinish else 0,
     }
     # Kanal tugmasi FAQAT adminda ko'rinadi. Maydon boshqalarga
     # umuman qo'shilmaydi: bo'sh bo'lsa ham u "bunday imkoniyat bor"
@@ -1459,6 +1464,31 @@ def _admin_mi(profil) -> bool:
     """
     tg = profil.pupil.kirish("telegram")
     return bool(tg) and B.admin_tg_mi(tg)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def masala_yechim(request, pk: int):
+    """
+    Yechimni ochadi — tanga evaziga yoki uch urinishdan keyin bepul.
+
+    Tanga MIJOZDA yechiladi (`lib/progress.tsx`), chunki tanga hisobi
+    shu paytgacha o'sha yerda turadi. Server esa ochilganini yozib
+    qo'yadi: odam ilovani qayta ochganda yechim joyida bo'ladi va
+    ikkinchi marta to'lamaydi.
+
+    Urinmagan odamga 400: yechimni urinmasdan sotib olish mumkin
+    emas, aks holda bo'lim javoblar ro'yxatiga aylanardi.
+    """
+    profil = _profil_tanla(request)
+    m = Masala.objects.filter(pk=pk).first()
+    if m is None or (m.holat != Masala.TASDIQ and m.muallif_id != profil.pk):
+        return Response({"detail": "topilmadi"}, status=404)
+
+    d = M.yechimni_och(m, profil)
+    if d is None:
+        return Response({"error": "urinilmagan"}, status=400)
+    return Response(d)
 
 
 @api_view(["POST"])
