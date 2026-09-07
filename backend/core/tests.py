@@ -4051,3 +4051,9 @@ class MasalaKanalTest(TestCase):
     def test_kunlik_tasdiqlanmaganini_olmaydi(self):
         self.masala_yasa(holat=Masala.KUTMOQDA)
         self.assertIsNone(masala_post.kunlik())
+
+    def test_kanal_nomi_at_bilan_beriladi(self):
+        # Sozlamada `@` yo'q, Telegram esa `@nom` kutadi. Aks holda
+        # butun post "chat not found" bo'lib qaytardi.
+        from core.kanal import kanal_nomi
+        self.assertEqual(kanal_nomi(), "@aqlzone")

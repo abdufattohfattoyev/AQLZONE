@@ -40,6 +40,7 @@ from django.utils import timezone
 
 from core import xabar
 from core.boshqaruv import sinf_nomi
+from core.kanal import kanal_nomi
 from core.models import Masala
 from core.rasm import jpeg_qil
 
@@ -105,7 +106,11 @@ class Command(BaseCommand):
                             help="yubormaydi, faqat ko'rsatadi")
 
     def handle(self, *args, **o) -> None:
-        kanal = (getattr(settings, "KANAL", "") or "").strip()
+        # Sozlamada kanal `@` siz turishi mumkin (`KANAL=AqlZoneUz`),
+        # Telegram esa `@nom` kutadi va boshqasiga "chat not found"
+        # deb javob beradi. Normallashtirish `core/kanal.py` da,
+        # a'zolik tekshiruvi bilan bitta joyda.
+        kanal = kanal_nomi()
         if not kanal:
             self.stderr.write("KANAL sozlanmagan — post yuborilmaydi")
             return
