@@ -31,6 +31,7 @@ from . import liga as L
 from . import masala as MS
 from . import reklama as R
 from . import views
+from .management.commands import masala_post
 from .models import (
     Duel, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaOvoz,
     MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul, Session,
@@ -3994,3 +3995,59 @@ class MasalaBoshqaruvTest(TestCase):
         r = self.client.get("/boshqaruv/masalalar")
         # Kirish sahifasi chiqadi, masala matni EMAS.
         self.assertNotContains(r, "20 ta olma")
+
+
+@override_settings(BOT_USERNAME="aqlzone_bot", KANAL="@aqlzone")
+class MasalaKanalTest(TestCase):
+    """
+    Kanalga joylanadigan post.
+
+    Diqqat qaratilgan joy — TUGMANING MANZILI. Butun postning ma'nosi
+    shunda: odam kanalda shartni o'qiydi, tugmani bosadi va ilova
+    AYNAN o'sha masalada ochiladi. Manzil buzilsa, post oddiy rasmga
+    aylanadi va hech qayerga olib bormaydi.
+    """
+
+    def setUp(self):
+        pupil = Pupil.objects.create(first_name="Muallif")
+        self.profil = pupil.asosiy_profil()
+
+    def masala_yasa(self, **o) -> Masala:
+        maydon = {
+            "muallif": self.profil, "sinf": 107,
+            "matn": "Katta kvadratga doira ichki chizilgan. Yuzlar nisbatini toping.",
+            "javob": "2", "yechim": "Nisbat 2 ga teng.", "holat": Masala.TASDIQ,
+        }
+        maydon.update(o)
+        return Masala.objects.create(**maydon)
+
+    def test_havola_ilovani_shu_masalada_ochadi(self):
+        m = self.masala_yasa()
+        self.assertEqual(
+            masala_post.havola(m), f"https://t.me/aqlzone_bot?startapp=masala_{m.pk}",
+        )
+
+    def test_sarlavhada_shart_va_sinf_bor(self):
+        m = self.masala_yasa()
+        y = masala_post.sarlavha(m)
+        self.assertIn("7-sinf geometriya", y)
+        self.assertIn("Katta kvadratga doira", y)
+        # Javob kanalda TURMAYDI — u faqat ilovada kiritiladi.
+        self.assertNotIn(m.javob, y.split("#")[0].replace("7-sinf", ""))
+
+    def test_uzun_shart_kesiladi(self):
+        m = self.masala_yasa(matn="Shart " * 400)
+        # Telegram sarlavhasi 1024 belgi; kesilgani uch nuqta bilan tugaydi.
+        self.assertLess(len(masala_post.sarlavha(m)), 1024)
+        self.assertIn("…", masala_post.sarlavha(m))
+
+    def test_kunlik_joylanmaganini_oladi(self):
+        eski = self.masala_yasa()
+        eski.kanal_at = timezone.now()
+        eski.save(update_fields=["kanal_at"])
+        yangi = self.masala_yasa()
+        self.assertEqual(masala_post.kunlik(), yangi)
+
+    def test_kunlik_tasdiqlanmaganini_olmaydi(self):
+        self.masala_yasa(holat=Masala.KUTMOQDA)
+        self.assertIsNone(masala_post.kunlik())

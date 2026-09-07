@@ -905,6 +905,14 @@ class Masala(models.Model):
     #: Admin ko'rgan payt. Navbatda qancha turgani shundan bilinadi.
     korilgan_at = models.DateTimeField(null=True, blank=True)
 
+    #: Kanalga qachon joylangani (`management/commands/masala_post.py`).
+    #:
+    #: Bir masala kanalga IKKI MARTA tushmasligi uchun kerak: kunlik
+    #: post buyrug'i har kuni ishlaydi va u "hali joylanmagani"ni
+    #: shu maydon bo'yicha tanlaydi. Ro'yxatga ta'siri yo'q — masala
+    #: kanalda bo'lsa ham ilovada avvalgidek turaveradi.
+    kanal_at = models.DateTimeField(null=True, blank=True)
+
     #: Sanoqlar ATAYLAB shu yerda turadi, `urinishlar` dan sanalmaydi.
     #:
     #: Ro'yxat ekrani har masalada "nechta odam yechdi" ni ko'rsatadi.

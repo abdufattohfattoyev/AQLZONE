@@ -49,6 +49,36 @@ class RasmXato(Exception):
 RAD_FORMAT = {"GIF", "SVG", "MPO"}
 
 
+def jpeg_qil(fayl) -> bytes:
+    """
+    Saqlangan rasmni JPEG baytlariga o'giradi — Telegramga yuborish uchun.
+
+    Nega kerak: biz hamma rasmni WebP qilib saqlaymiz, Telegram esa
+    `sendPhoto` da WebP ni ba'zan rad etadi (u WebP ni stiker formati
+    deb ham biladi). JPEG hamma joyda ishlaydi va kanal xabari uchun
+    sifati yetarli.
+
+    Oq fon ATAYLAB: JPEG shaffoflikni bilmaydi va shaffof joy qora
+    bo'lib chiqardi — chizmadagi qora chiziqlar o'sha qora fonda
+    butunlay ko'rinmay qolardi.
+    """
+    if Image is None:                                 # pragma: no cover
+        raise RasmXato("Rasm qo'llab-quvvatlanmaydi")
+
+    img = Image.open(fayl)
+    if img.mode in ("RGBA", "LA", "P"):
+        fon = Image.new("RGB", img.size, (255, 255, 255))
+        img = img.convert("RGBA")
+        fon.paste(img, mask=img.split()[-1])
+        img = fon
+    else:
+        img = img.convert("RGB")
+
+    chiqish = io.BytesIO()
+    img.save(chiqish, format="JPEG", quality=88, optimize=True)
+    return chiqish.getvalue()
+
+
 def tayyorla(fayl) -> InMemoryUploadedFile:
     """
     Yuborilgan faylni tekshiradi va WebP ga qayta kodlaydi.

@@ -19,6 +19,7 @@ import json
 import time
 import urllib.error
 import urllib.request
+import uuid
 
 from django.conf import settings
 from django.utils import timezone
@@ -183,6 +184,91 @@ def yubor(
     if kod == 403 or "chat not found" in izoh.lower():
         return "bloklandi", izoh
     return "xato", izoh
+
+
+#: Rasmli xabar ostidagi yozuvning eng katta uzunligi (Telegram cheklovi).
+MAX_SARLAVHA = 1024
+
+
+def _multipart(maydonlar: dict[str, str], rasm: bytes) -> tuple[bytes, str]:
+    """
+    Fayl yuborish uchun tana yasaydi.
+
+    `sendPhoto` ni JSON bilan chaqirib bo'lmaydi — rasm baytlari
+    `multipart/form-data` bo'lib ketishi kerak. Tashqi kutubxona
+    qo'shmaymiz: butun loyihada Telegram bilan gaplashish `urllib`
+    ustiga qurilgan va bitta funksiya uchun bog'liqlik ortdirish
+    o'rinsiz.
+    """
+    chegara = f"----aqlzone{uuid.uuid4().hex}"
+    qism: list[bytes] = []
+    for kalit, qiymat in maydonlar.items():
+        qism.append(
+            f"--{chegara}\r\n"
+            f'Content-Disposition: form-data; name="{kalit}"\r\n\r\n'
+            f"{qiymat}\r\n".encode()
+        )
+    qism.append(
+        f"--{chegara}\r\n"
+        f'Content-Disposition: form-data; name="photo"; filename="masala.jpg"\r\n'
+        f"Content-Type: image/jpeg\r\n\r\n".encode()
+    )
+    qism.append(rasm)
+    qism.append(f"\r\n--{chegara}--\r\n".encode())
+    return b"".join(qism), f"multipart/form-data; boundary={chegara}"
+
+
+def rasm_yubor(
+    chat_id: str,
+    rasm: bytes,
+    sarlavha: str,
+    tugma: str = "",
+    havola: str = "",
+    uslub: str = YASHIL,
+) -> tuple[str, str]:
+    """
+    Rasmli xabar — kanalga masala joylash uchun.
+
+    `(holat, izoh)` qaytaradi, `yubor` bilan bir xil qoidada.
+
+    Nega alohida funksiya: matnli xabarda rasm "havola kartasi" bo'lib
+    chiqadi va u kichkina, kesilgan holda ko'rinadi. Chizmali masalada
+    esa chizmaning O'ZI xabarning yarmi — u to'liq va katta bo'lishi
+    kerak, aks holda odam shartni tushunmaydi va bosmaydi.
+
+    Tugma HAR DOIM oddiy havola (`url`), Mini App tugmasi emas:
+    kanal xabarida Telegram `web_app` tugmasiga umuman ruxsat
+    bermaydi va butun xabar rad etiladi. `t.me/<bot>?startapp=...`
+    havolasi esa kanalda ishlaydi va ilovani baribir Telegram
+    ichida ochadi.
+    """
+    maydonlar = {
+        "chat_id": chat_id,
+        "caption": sarlavha[:MAX_SARLAVHA],
+        "parse_mode": "HTML",
+    }
+    if tugma and havola:
+        maydonlar["reply_markup"] = json.dumps({
+            "inline_keyboard": [[tugma_yasa(tugma, uslub, url=havola)]],
+        })
+
+    tana, turi = _multipart(maydonlar, rasm)
+    url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto"
+    so_rov = urllib.request.Request(url, data=tana, headers={"Content-Type": turi})
+    try:
+        with urllib.request.urlopen(so_rov, timeout=60) as r:
+            return ("yuborildi", "") if json.loads(r.read()).get("ok") else ("xato", "ok=false")
+    except urllib.error.HTTPError as e:
+        izoh = ""
+        try:
+            izoh = str(json.loads(e.read()).get("description", ""))[:200]
+        except Exception:
+            pass
+        if e.code == 403 or "chat not found" in izoh.lower():
+            return "bloklandi", izoh or f"HTTP {e.code}"
+        return "xato", izoh or f"HTTP {e.code}"
+    except Exception as e:                       # tarmoq uzilishi va boshqalar
+        return "xato", str(e)[:200]
 
 
 def adminga_yangi_hisob(pupil) -> None:
