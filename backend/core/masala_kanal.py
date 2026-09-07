@@ -73,6 +73,11 @@ def royxat_havolasi() -> str:
     return f"https://t.me/{bot}?startapp={ROYXAT_PARAM}" if bot else ""
 
 
+def qalqon(matn: str) -> str:
+    """Telegram HTML kutadigan uchta belgi — boshqasi tegilmaydi."""
+    return html.escape(matn, quote=False)
+
+
 def sarlavha(masala: Masala) -> str:
     """
     Rasm ostidagi yozuv.
@@ -83,6 +88,12 @@ def sarlavha(masala: Masala) -> str:
     o'qib, xabarni umuman rad etadi yoki matnning bir bo'lagini
     yeb qo'yadi. Masala matnini esa foydalanuvchi yozadi — ya'ni
     u yerda istalgan belgi bo'lishi mumkin.
+
+    `quote=False` ATAYLAB: Telegram faqat uchta belgini kutadi —
+    `&`, `<` va `>`. Standart `html.escape` esa apostrofni ham
+    `&#x27;` ga aylantiradi va Telegram uni ochmaydi — postda
+    "yo&#x27;lga" bo'lib ko'rinardi. O'zbekcha matnda apostrof esa
+    deyarli har gapda bor.
     """
     matn = masala.matn.strip()
     if len(matn) > MATN_JOYI:
@@ -96,8 +107,8 @@ def sarlavha(masala: Masala) -> str:
     # pastki chiziq bo'ladi.
     teg = nom.replace("-", "").replace("'", "").replace(" ", "_")
     return (
-        f"<b>{html.escape(nom)}</b>\n\n"
-        f"{html.escape(matn)}\n\n"
+        f"<b>{qalqon(nom)}</b>\n\n"
+        f"{qalqon(matn)}\n\n"
         f"Javobingizni ilovada kiriting — u yerda tekshiriladi va "
         f"yechimi ochiladi.\n\n"
         f"#masala #{teg}"

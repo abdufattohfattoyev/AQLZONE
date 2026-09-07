@@ -4218,3 +4218,14 @@ class MasalaKanalTugmaTest(TestCase):
         y = MK.sarlavha(m)
         self.assertIn("3 &lt; x &lt; 7 &amp; x butun", y)
         self.assertNotIn("< x <", y)
+
+    def test_apostrof_qalqonlanmaydi(self):
+        """O'zbekcha matnda apostrof deyarli har gapda bor. Telegram
+        `&#x27;` ni ochmaydi — postda o'sha ko'rinishda qolib ketardi."""
+        m = Masala.objects.create(
+            muallif=self.profil, sinf=5, holat=Masala.TASDIQ,
+            matn="Yo'lga chiqdi va to'xtadi.", javob="1", yechim="1.",
+        )
+        y = MK.sarlavha(m)
+        self.assertIn("Yo'lga chiqdi", y)
+        self.assertNotIn("&#x27;", y)
