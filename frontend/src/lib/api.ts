@@ -718,6 +718,18 @@ export interface Hisob {
    * bo'lganda yuboriladi.
    */
   til?: string;
+  /**
+   * Tilni foydalanuvchi O'ZI tanlaganmi.
+   *
+   * `til` ning o'zi yetmaydi — uning standart qiymati bor ("uz"), ya'ni
+   * "tanladi" bilan "so'ralmagan" bir xil ko'rinadi.
+   *
+   * Qurilma xotirasi yo'qolganda (Telegram ichidagi ko'rinish
+   * tozalangan, brauzer keshi o'chirilgan, boshqa telefon) ilova shu
+   * bayroqqa qarab tilni QAYTA SO'RAMAYDI — bir marta javob bergan
+   * odamdan yana so'rash eng jahl chiqaradigan xatolardan.
+   */
+  tilTanlandi?: boolean;
 }
 
 /**

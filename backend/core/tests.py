@@ -589,9 +589,23 @@ class AdminXabariTest(TestCase):
         self.assertEqual(sorov.call_count, 0)
 
     @patch("core.xabar._sorov", return_value=(True, 200, ""))
-    def test_ism_yarim_bolsa_xabar_yoq(self, sorov):
-        """Familiyasiz odam hali ro'yxatdan o'tmagan — xabar ham yo'q."""
+    def test_familiyasiz_ham_royxat_yopiladi(self, sorov):
+        """
+        Familiya shart emas — Telegram'da u ixtiyoriy.
+
+        Ilgari bunday odam ro'yxatdan o'tmagan hisoblanardi va botdan
+        kelganida darhol ism so'raydigan formaga tushardi.
+        """
         pupil = Pupil.objects.create(first_name="Yolg‘iz", last_name="")
+        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+            self.assertTrue(pupil.royxatni_yop())
+        # Ikkita admin sozlangan — har biriga bittadan xabar.
+        self.assertEqual(sorov.call_count, 2)
+
+    @patch("core.xabar._sorov", return_value=(True, 200, ""))
+    def test_ismsiz_hisob_royxatdan_otmaydi(self, sorov):
+        """Ismi yo'q hisob — hali hech kim: xabar ham yuborilmaydi."""
+        pupil = Pupil.objects.create(first_name="", last_name="Familiya")
         with self.sozlama(), patch("threading.Thread", self.DarholOqim):
             self.assertFalse(pupil.royxatni_yop())
         self.assertEqual(sorov.call_count, 0)
@@ -1154,9 +1168,16 @@ class RoyxatTest(TestCase):
         u = self.client.get("/api/v1/me", HTTP_AUTHORIZATION=f"Bearer {t}").json()["user"]
         self.assertFalse(u["royxatdan"])
 
-    def test_faqat_ism_yetarli_emas(self):
+    def test_faqat_ism_ham_yetarli(self):
+        """
+        Familiya SHART EMAS.
+
+        Ilgari ikkalasi ham talab qilinardi va botdan kelgan odam
+        ko'pincha ism so'raydigan formaga tushardi: Telegram'da
+        familiya ixtiyoriy va ko'pchilikda u umuman yo'q.
+        """
         t = self.kir()
-        self.assertFalse(self.patch(t, ism="Ali").json()["user"]["royxatdan"])
+        self.assertTrue(self.patch(t, ism="Ali").json()["user"]["royxatdan"])
 
     def test_ism_va_familiya_royxatni_yopadi(self):
         t = self.kir()
@@ -4388,3 +4409,39 @@ class BezakTest(TestCase):
         r = self.client.post("/api/v1/profil/bezak", {"bezak": 12},
                              content_type="application/json", **self.auth(self.token))
         self.assertEqual(r.status_code, 400)
+
+
+class TilQaytaSoralmasinTest(TestCase):
+    """
+    Til bir marta so'raladi va boshqa so'ralmaydi.
+
+    Tanlov QURILMADA saqlanadi, qurilma xotirasi esa yo'qoladi:
+    Telegram ichidagi ko'rinish tozalanadi, brauzer keshi
+    o'chiriladi, odam boshqa telefondan kiradi. Har safar til qayta
+    so'ralardi — bir marta javob bergan odamdan yana va yana.
+    """
+
+    def kir(self) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": "dev-til-000000000001", "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def setUp(self):
+        cache.clear()
+        self.token = self.kir()
+
+    def test_boshida_tanlanmagan(self):
+        r = self.client.get("/api/v1/me", **self.auth(self.token))
+        self.assertFalse(r.json()["user"]["tilTanlandi"])
+
+    def test_til_saqlansa_belgilanadi(self):
+        self.client.patch("/api/v1/me", {"til": "ru"},
+                          content_type="application/json", **self.auth(self.token))
+        d = self.client.get("/api/v1/me", **self.auth(self.token)).json()["user"]
+        self.assertTrue(d["tilTanlandi"])
+        self.assertEqual(d["til"], "ru")

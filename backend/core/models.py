@@ -124,6 +124,22 @@ class Pupil(models.Model):
     #: Standart qiymat "uz": bu loyihaning asosiy tili va til hali
     #: kelmagan eski hisoblar avvalgidek o'zbekcha xabar oladi.
     til = models.CharField(max_length=2, default="uz", blank=True)
+
+    #: Tilni foydalanuvchining O'ZI tanlaganmi.
+    #:
+    #: `til` ning o'zi yetmaydi: uning standart qiymati bor ("uz"), ya'ni
+    #: "o'zbekchani tanladi" bilan "hech narsa so'ralmagan" bir xil
+    #: ko'rinadi.
+    #:
+    #: Bu bayroq kerak, chunki tanlov QURILMADA saqlanadi
+    #: (`localStorage`), qurilma xotirasi esa yo'qoladi: Telegram
+    #: ichidagi ko'rinish tozalanadi, brauzer keshi o'chiriladi, odam
+    #: boshqa telefondan kiradi. Har safar til yana so'ralardi — bir
+    #: marta javob bergan odamdan yana va yana.
+    #:
+    #: Endi hisob bir marta javob bersa, ilova uni SERVERDAN oladi va
+    #: boshqa so'ramaydi.
+    til_tanlandi = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -181,14 +197,26 @@ class Pupil(models.Model):
 
     def royxatni_yop(self) -> bool:
         """
-        Ism ham, familiya ham bor bo'lsa — ro'yxatdan o'tgan deb belgilaydi.
+        Ismi bor bo'lsa — ro'yxatdan o'tgan deb belgilaydi.
 
         Bir joyda turadi, chunki uni uch joy chaqiradi: qo'lda saqlash,
         Telegram orqali kirish va hisoblarni birlashtirish. Har birida
         alohida yozilsa, biri unutilib qolardi va foydalanuvchi ro'yxat
         oynasidan chiqa olmay qolardi.
+
+        ─────────── FAMILIYA NEGA SHART EMAS ───────────
+
+        Ilgari ikkalasi ham talab qilinardi va natijada BOTDAN kelgan
+        odam ko'pincha ism so'raydigan formaga tushardi: Telegram'da
+        familiya IXTIYORIY va foydalanuvchilarning katta qismida u
+        umuman yo'q.
+
+        Ya'ni bot havolasini bosgan odam ilovaga emas, formaga
+        tushardi — eng yomon joyda, birinchi ekranda. Familiyani
+        keyin sozlamalarda qo'shsa bo'ladi; uni kirish yo'lida
+        to'siq qilishga arzimaydi.
         """
-        if self.registered_at or not (self.first_name.strip() and self.last_name.strip()):
+        if self.registered_at or not self.first_name.strip():
             return False
         self.registered_at = timezone.now()
         self.save(update_fields=["registered_at"])

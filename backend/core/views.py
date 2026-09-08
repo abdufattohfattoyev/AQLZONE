@@ -84,6 +84,9 @@ def _user_json(pupil: Pupil) -> dict:
         # Serverdagi til. Mijoz buni faqat SOLISHTIRISH uchun ishlatadi:
         # qurilmadagi tanlov boshqacha bo'lsa, u yangisini yuboradi.
         "til": pupil.til or "uz",
+        # Tilni foydalanuvchi O'ZI tanlaganmi. Qurilma xotirasi
+        # yo'qolganda ilova shu bayroqqa qarab tilni qayta so'ramaydi.
+        "tilTanlandi": pupil.til_tanlandi,
         "profillar": [_profil_json(pr) for pr in pupil.profiles.all()],
     }
 
@@ -411,7 +414,10 @@ def me(request):
         # bo'lganda ketadi.
         if "til" in s.validated_data:
             pupil.til = s.validated_data["til"]
-            yangilandi.append("til")
+            # Tanlov shu yerda YOPILADI: qurilma xotirasi yo'qolsa ham
+            # ilova tilni serverdan olib, qayta so'ramaydi.
+            pupil.til_tanlandi = True
+            yangilandi += ["til", "til_tanlandi"]
         pupil.save(update_fields=yangilandi)
         # Ikkalasi ham to'lgan bo'lsa ro'yxat shu yerda yopiladi —
         # foydalanuvchi "Davom etish" ni bosgan zahoti ilovaga kiradi.

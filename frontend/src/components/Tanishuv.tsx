@@ -26,8 +26,9 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sozlamalar } from "../screens/Sozlamalar";
 import { Kirish } from "./Kirish";
+import { Kutish } from "./Kutish";
 import { TilTanlash } from "./TilTanlash";
-import { til, tilTanlangan } from "../lib/til";
+import { til, tilTanlangan, tilniQoy } from "../lib/til";
 import { getHisob, miniAppda, tilniSaqla } from "../lib/api";
 import { royxatniBelgila, taklifgaObuna } from "../lib/sinov";
 import type { Hisob } from "../lib/api";
@@ -59,6 +60,17 @@ export function Tanishuv({ children }: { children: ReactNode }) {
    * yuklanmaydi — o'shanda ekranni React o'zi olib tashlashi kerak.
    */
   const [tilSoraladi, setTilSoraladi] = useState(() => !tilTanlangan());
+  /**
+   * Til savolini SO'RASHDAN OLDIN serverdan so'rab ko'ramiz.
+   *
+   * Qurilmada tanlov bo'lmasa, savolni darhol chizib yuborish
+   * xato bo'lardi: hisob allaqachon javob bergan bo'lishi mumkin va
+   * odam o'sha savolni ikkinchi (uchinchi, o'ninchi) marta ko'rardi.
+   *
+   * Kutish ko'pi bilan ikki soniya va faqat qurilmada tanlov
+   * bo'lmaganda — ya'ni yangi o'rnatishda yoki xotira yo'qolganda.
+   */
+  const [tilKutilmoqda, setTilKutilmoqda] = useState(() => !tilTanlangan());
   /** Sinov taklifi ko'rsatilyaptimi va bola nechta yulduz olgan edi. */
   const [taklif, setTaklif] = useState<number | null>(null);
   // Ism so'raladigan bo'lsa, o'sha ekranga TAYYOR holda beriladi. Aks
@@ -81,14 +93,35 @@ export function Tanishuv({ children }: { children: ReactNode }) {
 
       if (h) {
         setHisob(h);
-        // Til serverda eslatma va bot javoblari uchun turadi. Faqat
-        // FARQ bo'lganda yuboriladi: har ochilishda yozib turish
-        // keraksiz so'rov bo'lardi.
-        if ((h.til || "uz") !== til()) void tilniSaqla(til());
+
+        // ─── TIL IKKI TOMONLAMA SINXRON ───
+        //
+        // Qurilmada tanlov bo'lmasa-yu, hisob allaqachon javob bergan
+        // bo'lsa — SERVERDAGISI olinadi va savol umuman chiqmaydi.
+        // Ilgari bunday paytda til qayta-qayta so'ralardi: qurilma
+        // xotirasi yo'qolishi odatiy hol (Telegram ichidagi ko'rinish
+        // tozalanadi, brauzer keshi o'chiriladi, odam boshqa
+        // telefondan kiradi), hisob esa bir marta javob bergan.
+        if (!tilTanlangan() && h.tilTanlandi && (h.til === "uz" || h.til === "ru")) {
+          // Qayta yuklamaymiz: ekranda hali hech narsa yo'q va
+          // `TilTanlash` shu render'ning o'zida olib tashlanadi.
+          tilniQoy(h.til, false);
+          setTilSoraladi(false);
+          setTilKutilmoqda(false);
+        } else if ((h.til || "uz") !== til() && tilTanlangan()) {
+          // Teskari yo'nalish: qurilmadagi tanlov serverga yoziladi.
+          // Faqat FARQ bo'lganda — har ochilishda yozib turish
+          // keraksiz so'rov bo'lardi.
+          void tilniSaqla(til());
+        }
         try {
           if (h.royxatdan) localStorage.setItem(KIRGAN_KEY, "1");
           else localStorage.removeItem(KIRGAN_KEY);
         } catch { /* xotira to'lgan — faqat bayroq eslanmaydi */ }
+
+        // Serverdan javob keldi — endi til savolini ko'rsatsa bo'ladi
+        // (agar hisob ham javob bermagan bo'lsa).
+        setTilKutilmoqda(false);
 
         royxatniBelgila(h.royxatdan);
         if (h.royxatdan) return setHolat("kerak-emas");
@@ -101,6 +134,7 @@ export function Tanishuv({ children }: { children: ReactNode }) {
         // chiqarmaymiz: internetsiz odamni Telegram'ga yuborishdan
         // ma'no yo'q, u baribir ochilmaydi.
         setHolat("kerak-emas");
+        setTilKutilmoqda(false);
         return;
       }
       setTimeout(tekshir, 900);
@@ -113,7 +147,19 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   // Dars tugaganda `lib/sinov.ts` shu yerga xabar beradi.
   useEffect(() => taklifgaObuna(setTaklif), []);
 
+  // Server javob bermasa ham savol abadiy kutib turmaydi.
+  useEffect(() => {
+    if (!tilKutilmoqda) return;
+    const id = setTimeout(() => setTilKutilmoqda(false), 2000);
+    return () => clearTimeout(id);
+  }, [tilKutilmoqda]);
+
   if (kirishSahifasi) return <>{children}</>;
+
+  // Til savoli serverdan javob kelguncha ushlab turiladi (ko'pi bilan
+  // ikki soniya): hisob allaqachon javob bergan bo'lsa, savol umuman
+  // chiqmaydi.
+  if (tilKutilmoqda && tilSoraladi) return <Kutish />;
 
   // Til eng birinchi so'raladi: qolgan hamma ekran (kirish taklifi ham,
   // ism so'rash ham) allaqachon biror tilda yozilgan bo'ladi va noto'g'ri
