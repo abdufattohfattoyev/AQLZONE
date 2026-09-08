@@ -112,3 +112,22 @@ function fanNomi(title: string): string {
 export function sinfNomi(kod: number): string {
   return TOIFALAR.find((s) => s.kod === kod)?.nom ?? String(kod);
 }
+
+/**
+ * Toifa yorlig'ining rangi.
+ *
+ * Uchta guruh, uchta rang — ko'z ro'yxatda RANG bo'yicha saralaydi,
+ * yozuvni o'qimasdan. Ilgari hamma yorliq bir xil kulrang edi va
+ * o'nta kartadan iborat sahifada "olimpiada" masalasini topish
+ * uchun har birining yozuvini o'qish kerak bo'lardi.
+ *
+ * Toifalar ataylab shunday bo'lingan: olimpiada — hiylali masala,
+ * kattalar uchun — dasturdan tashqari, qolgani — maktab dasturi.
+ * Bular uch xil kayfiyat va odam ular orasidan aynan bittasini
+ * qidirib keladi.
+ */
+export function sinfRangi(kod: number): string {
+  if (kod === OLIMPIADA) return "bg-brand-purple/15 text-brand-purple";
+  if (kod === KATTALAR) return "bg-brand-orange/15 text-brand-orange";
+  return "bg-brand-blue/15 text-brand-blue";
+}

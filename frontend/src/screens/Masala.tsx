@@ -27,6 +27,9 @@
  * sahifasiga olib boradi.
  */
 import { useEffect, useRef, useState } from "react";
+import { TangaOqim } from "../components/TangaOqim";
+import { TangaSorov } from "../components/TangaSorov";
+import { Variantlar } from "../components/Variantlar";
 import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
@@ -72,6 +75,27 @@ export function Masala({ id, onMuallif, onBack }: Props) {
   const [sonlar, setSonlar] = useState({ like: 0, dislike: 0 });
 
   /**
+   * Test masalasida belgilangan variant. `-1` — hech biri.
+   *
+   * Tanlov DARHOL yuborilmaydi (`components/Variantlar.tsx` dagi
+   * izohga qarang): birinchi urinish statistikaga tushadi va uni
+   * tasodifiy bosish bilan sarflab yuborish mumkin emas.
+   */
+  const [tanlangan, setTanlangan] = useState(-1);
+
+  /**
+   * Uchayotgan tanga — `{n, yonalish}` yoki `null`.
+   *
+   * Mukofot ham, sarf ham SHU YERDAN ko'rsatiladi. Ilgari tanga
+   * jimgina qo'shilib, jimgina kamayardi va bola qancha olganini
+   * ham, nimaga sarflaganini ham sezmasdi.
+   */
+  const [oqim, setOqim] = useState<{ n: number; yonalish: "keldi" | "ketdi" } | null>(null);
+
+  /** Yechim uchun tanga sarflash ruxsati so'ralayaptimi. */
+  const [sorov, setSorov] = useState(false);
+
+  /**
    * Kanal tugmasining holati — faqat adminda ishlatiladi.
    *
    * "sorayapti" — tasdiq so'ralayotgan payt. Bir bosishda kanalga
@@ -115,6 +139,7 @@ export function Masala({ id, onMuallif, onBack }: Props) {
     setKanal("yopiq"); setKanalHavola("");
     setKanalYoq(false); setKanalTekshirildi("");
     setOchilgan(null); setMukofotOlindi(0);
+    setTanlangan(-1); setOqim(null); setSorov(false);
     ochiqEdi.current = false;
     MS.bittasi(id)
       .then((d) => {
@@ -138,17 +163,24 @@ export function Masala({ id, onMuallif, onBack }: Props) {
   const yechim = ochilgan?.yechim ?? natija?.yechim ?? m?.yechim ?? "";
   const togriJavob = ochilgan?.javob ?? natija?.javob ?? m?.javob ?? "";
 
+  /** Test masalasimi — javob tanlanadimi yoki yoziladimi. */
+  const test = (m?.variantlar.length ?? 0) > 0;
+
   /** Shu odam necha marta urindi — yechim narxi shunga bog'liq. */
   const urinishim = natija?.urinishim ?? m?.urinishim ?? 0;
   const bepul = bepulOchiladi(urinishim);
   const yetarli = jamiTanga >= YECHIM_NARX;
 
   const yubor = async () => {
-    if (!m || !javob.trim() || yuborilmoqda) return;
+    // Test masalasida javob TANLANADI, yozilmaydi. Ikkalasi shu
+    // yerda bitta satrga keladi: undan keyingi butun yo'l — tekshiruv,
+    // statistika, tanga — ikkala turda ham aynan bir xil.
+    const jonatiladigan = test ? (m?.variantlar[tanlangan] ?? "") : javob.trim();
+    if (!m || !jonatiladigan || yuborilmoqda) return;
     setYuborilmoqda(true);
     try {
       const oldinOchiq = ochiqEdi.current;
-      const d = await MS.javobBer(m.id, javob.trim());
+      const d = await MS.javobBer(m.id, jonatiladigan);
       setNatija(d);
       ochiqEdi.current = d.yechimOchiq;
       tebrat(d.togri ? "togri" : "xato");
@@ -160,6 +192,7 @@ export function Masala({ id, onMuallif, onBack }: Props) {
         const n = mukofot(d.urinishim);
         setMukofotOlindi(n);
         oyinTugadi(n, 1);
+        setOqim({ n, yonalish: "keldi" });
       }
     } catch {
       setXato(true);
@@ -174,10 +207,17 @@ export function Masala({ id, onMuallif, onBack }: Props) {
    * Uch urinishdan keyin bepul, undan oldin — tanga evaziga. Tanga
    * AVVAL yechiladi: server javobini kutib turganda odam tugmani
    * ikkinchi marta bosib, ikki marta to'lashi mumkin edi.
+   *
+   * Tangali yo'lda bu funksiya TASDIQDAN KEYIN chaqiriladi
+   * (`components/TangaSorov.tsx`): tanga qaytmaydi va tugma aynan
+   * odam qiynalgan, ya'ni shoshib bosadigan paytda turadi.
    */
   const yechimniOch = async () => {
     if (!m || ochilmoqda) return;
-    if (!bepul && !tangaYech(YECHIM_NARX)) return;
+    if (!bepul) {
+      if (!tangaYech(YECHIM_NARX)) return;
+      setOqim({ n: YECHIM_NARX, yonalish: "ketdi" });
+    }
     setOchilmoqda(true);
     try {
       const d = await MS.yechimniOch(m.id);
@@ -189,6 +229,18 @@ export function Masala({ id, onMuallif, onBack }: Props) {
     } finally {
       setOchilmoqda(false);
     }
+  };
+
+  /**
+   * Yechim tugmasi bosildi.
+   *
+   * Bepul bo'lsa darhol ochiladi, tangali bo'lsa AVVAL ruxsat
+   * so'raladi. Ikkalasi bitta tugmada, chunki odam uchun bu bitta
+   * amal — farqi faqat narxda.
+   */
+  const yechimSora = () => {
+    if (bepul) { void yechimniOch(); return; }
+    setSorov(true);
   };
 
   /**
@@ -416,28 +468,67 @@ export function Masala({ id, onMuallif, onBack }: Props) {
           o'zini sinab ko'rish uchun yana yozishi mumkin. */}
       {m.holat === "tasdiq" && (
         <div className="mt-3">
-          {/* Javob maydoni BOTIQ — kartalar ko'tarilgan, yoziladigan
-              joy esa yuzaga o'yilgan. Shu farq "bu yerga yozing"
-              degan yagona ishora bo'lib turadi. */}
-          <label className="shadow-ichki flex items-center gap-2 rounded-clay bg-sahna
-                            px-3.5 py-3">
-            <Icon name="pencil" size={16} className="shrink-0 text-ink-dim" />
-            <input
-              value={javob}
-              onChange={(e) => setJavob(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") void yubor(); }}
-              placeholder={t("masalaJavobJoy")}
-              maxLength={100}
-              className="min-w-0 flex-1 bg-transparent text-[15px] outline-none
-                         placeholder:text-ink-dim"
+          {test ? (
+            /* ---- test: variantlardan tanlanadi ---- */
+            <Variantlar
+              variantlar={m.variantlar}
+              tanlangan={tanlangan}
+              onTanla={(i) => { setTanlangan(i); tebrat("tanlov"); }}
+              ochiq={Boolean(togriJavob)}
+              togriJavob={togriJavob}
             />
-          </label>
-          <button type="button" onClick={() => void yubor()}
-            disabled={!javob.trim() || yuborilmoqda}
-            className="tugma-3d mt-2 w-full rounded-clay bg-brand-green py-3 font-display
-                       text-[15px] text-white shadow-clay disabled:opacity-50">
-            {yuborilmoqda ? t("yuklanyapti") : t("masalaTekshir")}
-          </button>
+          ) : (
+            /* Javob maydoni BOTIQ — kartalar ko'tarilgan, yoziladigan
+               joy esa yuzaga o'yilgan. Shu farq "bu yerga yozing"
+               degan yagona ishora bo'lib turadi. */
+            <label className="shadow-ichki flex items-center gap-2 rounded-clay bg-sahna
+                              px-3.5 py-3">
+              <Icon name="pencil" size={16} className="shrink-0 text-ink-dim" />
+              <input
+                value={javob}
+                onChange={(e) => setJavob(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") void yubor(); }}
+                placeholder={t("masalaJavobJoy")}
+                maxLength={100}
+                className="min-w-0 flex-1 bg-transparent text-[15px] outline-none
+                           placeholder:text-ink-dim"
+              />
+            </label>
+          )}
+
+          {/* Tugma IKKALA turda ham bir xil turadi va bu ataylab:
+              "javobni yuborish" — bitta amal, uni qanday tayyorlagani
+              (yozgan yoki tanlagan) tugmaga bog'liq emas.
+
+              Testda yechim ochilgandan keyin tugma yo'qoladi:
+              variantlar allaqachon o'chirilgan va bosadigan narsa
+              qolmaydi. Yozma turda esa maydon qoladi — odam yechimni
+              o'qib, o'zini yana sinab ko'rishi mumkin.
+
+              Mukofot tugmaning O'ZIDA: bu hozir bosiladigan tugma va
+              nima uchun bosilishi shu yerda aytilishi kerak. */}
+          {!(test && togriJavob) && (
+            <button type="button" onClick={() => void yubor()}
+              disabled={(test ? tanlangan < 0 : !javob.trim()) || yuborilmoqda}
+              className="tugma-3d mt-2 flex w-full items-center justify-center gap-2
+                         rounded-clay bg-brand-green py-3 font-display text-[15px]
+                         text-white shadow-clay disabled:opacity-50">
+              {yuborilmoqda ? t("yuklanyapti") : t("masalaTekshir")}
+              {!yuborilmoqda && !natija?.togri && (
+                <span className="flex items-center gap-0.5 rounded-full bg-white/20 px-2 py-0.5
+                                 text-[12px] leading-none">
+                  <Icon name="coin" size={12} />
+                  +{mukofot(urinishim + 1)}
+                </span>
+              )}
+            </button>
+          )}
+
+          {test && tanlangan < 0 && !togriJavob && (
+            <p className="mt-1.5 text-center text-[11.5px] text-ink-dim">
+              {t("masalaVariantTanla")}
+            </p>
+          )}
         </div>
       )}
 
@@ -513,8 +604,12 @@ export function Masala({ id, onMuallif, onBack }: Props) {
             ham yordamsiz qolmasin. */
         urinishim > 0 ? (
           <div className="mt-3">
-            <button type="button" onClick={() => void yechimniOch()}
-              disabled={ochilmoqda || (!bepul && !yetarli)}
+            {/* Tugma tanga YETMASA HAM bosiladi va bu ataylab
+                o'zgartirildi: ilgari u o'chib qolardi va nima uchun
+                o'chganini faqat pastdagi kichkina yozuv aytardi.
+                Endi bosilsa oyna ochiladi va o'sha yerda "nechta
+                yetmayapti" to'liq ko'rinadi. */}
+            <button type="button" onClick={yechimSora} disabled={ochilmoqda}
               className={`clay-press flex w-full items-center justify-center gap-2 rounded-clay
                           py-3 text-[13.5px] shadow-clay-sm disabled:opacity-50 ${
                 bepul ? "bg-karta text-ink-soft" : "bg-karta text-brand-gold"}`}>
@@ -554,6 +649,29 @@ export function Masala({ id, onMuallif, onBack }: Props) {
             on={() => void ovozBer("dislike")}
           />
         </div>
+      )}
+
+      {/* ---- tanga oqimi ----
+          Ekran DARAJASIDA, biror tugmaning ichida emas. Sabab: tanga
+          ikki xil joydan keladi (javob tugmasi va yechimni ochish) va
+          ikkalasi ham natijadan keyin YO'QOLADI — animatsiya ular
+          bilan birga o'chib qolardi. Qatlam bosishni o'tkazadi, ya'ni
+          bir soniya kutib turishga majburlamaydi. */}
+      {oqim && (
+        <span className="pointer-events-none fixed inset-0 z-[70]">
+          <TangaOqim n={oqim.n} yonalish={oqim.yonalish} onTugadi={() => setOqim(null)} />
+        </span>
+      )}
+
+      {/* ---- tanga sarflash ruxsati ---- */}
+      {sorov && (
+        <TangaSorov
+          nima={t("tangaSorovYechim")}
+          narx={YECHIM_NARX}
+          bor={jamiTanga}
+          onHa={() => { setSorov(false); void yechimniOch(); }}
+          onYoq={() => setSorov(false)}
+        />
       )}
     </div>
   );

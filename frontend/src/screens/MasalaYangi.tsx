@@ -45,9 +45,11 @@ import { Reveal } from "../components/Reveal";
 import { t } from "../lib/matn";
 import { KATTALAR, OLIMPIADA, SINF_GURUHLARI, sinfNomi } from "../lib/masalaSinf";
 import type { SinfGuruh } from "../lib/masalaSinf";
+import { HARFLAR } from "../components/Variantlar";
 import {
+  MAX_VARIANT, MIN_VARIANT,
   javobBelgilari, javobTayyor, matnBelgilari, matnTayyor,
-  yechimBelgilari, yechimTayyor,
+  variantBelgilari, variantTayyor, yechimBelgilari, yechimTayyor,
 } from "../lib/masalaTekshir";
 import type { Belgi } from "../lib/masalaTekshir";
 import * as MS from "../lib/masala";
@@ -81,6 +83,19 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
 
   const [matn, setMatn] = useState("");
   const [javob, setJavob] = useState("");
+
+  /**
+   * Masala TURI — javob yoziladimi yoki variantlardan tanlanadimi.
+   *
+   * Ikkalasi bitta formada va bir xil qadamlarda: farqi faqat javob
+   * qanday olinishida. Alohida forma qilinsa, muallif eng boshida
+   * "qaysi turdagi masala yozaman?" degan savolga duch kelardi —
+   * holbuki bu savol masala YOZILGANDAN keyin hal bo'ladi.
+   */
+  const [test, setTest] = useState(false);
+  const [variantlar, setVariantlar] = useState<string[]>(["", ""]);
+  /** Qaysi variant to'g'ri. Serverga `javob` bo'lib ketadi. */
+  const [togriI, setTogriI] = useState(0);
   const [yechim, setYechim] = useState("");
   const [rasm, setRasm] = useState<File | null>(null);
   const [rasmKor, setRasmKor] = useState("");
@@ -108,12 +123,29 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
     : kim === "olimpiada" ? OLIMPIADA
     : sinf;
 
+  /**
+   * Serverga ketadigan TO'G'RI JAVOB.
+   *
+   * Testda u belgilangan variantning O'ZI bo'ladi, alohida maydon
+   * emas. Sabab: "to'g'ri variant raqami" degan ikkinchi haqiqat
+   * manbasi paydo bo'lsa, variantlar tartibi o'zgarganda javob
+   * jimgina boshqa variantga ko'chib qolardi.
+   */
+  const yakuniyJavob = test ? (variantlar[togriI] ?? "").trim() : javob.trim();
+
   const matnB = useMemo(() => matnBelgilari(matn), [matn]);
   const javobB = useMemo(() => javobBelgilari(javob), [javob]);
-  const yechimB = useMemo(() => yechimBelgilari(yechim, javob), [yechim, javob]);
+  const variantB = useMemo(
+    () => variantBelgilari(variantlar, togriI), [variantlar, togriI],
+  );
+  const yechimB = useMemo(
+    () => yechimBelgilari(yechim, yakuniyJavob), [yechim, yakuniyJavob],
+  );
 
   const uchinchiTayyor =
-    matnTayyor(matn) && javobTayyor(javob) && yechimTayyor(yechim);
+    matnTayyor(matn)
+    && (test ? variantTayyor(variantlar, togriI) : javobTayyor(javob))
+    && yechimTayyor(yechim);
 
   const qadamTayyor =
     qadam === 1 ? kim !== null
@@ -176,7 +208,11 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
     try {
       await MS.yubor({
         sinf: tanlanganKod,
-        matn: matn.trim(), javob: javob.trim(), yechim: yechim.trim(), rasm,
+        matn: matn.trim(), javob: yakuniyJavob, yechim: yechim.trim(), rasm,
+        // Bo'sh variantlar TASHLANADI: muallif uchinchi maydonni
+        // ochib, keyin bo'sh qoldirishi mumkin va o'sha bo'sh satr
+        // testda tanlanadigan variant bo'lib chiqardi.
+        variantlar: test ? variantlar.map((v) => v.trim()).filter(Boolean) : [],
       });
       tebrat("yutuq");
       onYuborildi();
@@ -238,13 +274,16 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
             javob={javob} setJavob={setJavob} javobB={javobB}
             yechim={yechim} setYechim={setYechim} yechimB={yechimB}
             rasmKor={rasmKor} onRasm={rasmniTanla} onRasmOchir={rasmniOchir}
+            test={test} setTest={setTest}
+            variantlar={variantlar} setVariantlar={setVariantlar}
+            togriI={togriI} setTogriI={setTogriI} variantB={variantB}
           />
         )}
 
         {qadam === 4 && (
           <Tortinchi
             kim={kim} kod={tanlanganKod} matn={matn} rasmKor={rasmKor}
-            belgilar={[...matnB, ...javobB, ...yechimB]}
+            belgilar={[...matnB, ...(test ? variantB : javobB), ...yechimB]}
             onOzgartir={() => setQadam(1)}
           />
         )}
@@ -419,6 +458,7 @@ function FanTanlash({ guruh, on }: { guruh: SinfGuruh; on: (kod: number) => void
 function Uchinchi({
   matn, setMatn, matnB, javob, setJavob, javobB,
   yechim, setYechim, yechimB, rasmKor, onRasm, onRasmOchir,
+  test, setTest, variantlar, setVariantlar, togriI, setTogriI, variantB,
 }: {
   matn: string; setMatn: (v: string) => void; matnB: Belgi[];
   javob: string; setJavob: (v: string) => void; javobB: Belgi[];
@@ -426,6 +466,9 @@ function Uchinchi({
   rasmKor: string;
   onRasm: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRasmOchir: () => void;
+  test: boolean; setTest: (v: boolean) => void;
+  variantlar: string[]; setVariantlar: (v: string[]) => void;
+  togriI: number; setTogriI: (i: number) => void; variantB: Belgi[];
 }) {
   return (
     // Planshetdan boshlab ikki ustun: shart chapda, javob va yechim
@@ -461,16 +504,37 @@ function Uchinchi({
       </Karta>
 
       <div className="grid gap-2.5">
-        <Karta nom={t("masalaJavobi")} qosh={t("masalaJavobiJoy")} belgilar={javobB}>
-          {/* Javob maydoni QISQA — u bir necha belgi bo'ladi va
-              keng maydon "uzun yozing" degan noto'g'ri ishora
-              berardi. */}
-          <input
-            value={javob} onChange={(e) => setJavob(e.target.value)}
-            maxLength={100} inputMode="text"
-            className="shadow-ichki w-40 rounded-2xl bg-sahna px-3.5 py-2.5 text-[17px]
-                       outline-none placeholder:text-ink-dim"
-          />
+        <Karta nom={t("masalaJavobi")}
+          qosh={test ? undefined : t("masalaJavobiJoy")}
+          belgilar={test ? variantB : javobB}>
+          {/* Tur tanlovi javob maydonining USTIDA: u aynan shu
+              maydonni almashtiradi va boshqa joyda turganda
+              bog'lanish ko'rinmasdi. */}
+          <div className="shadow-ichki mb-2.5 flex gap-1 rounded-2xl bg-sahna p-1">
+            <TurTugma faol={!test} on={() => setTest(false)}>
+              {t("masalaTuriYozma")}
+            </TurTugma>
+            <TurTugma faol={test} on={() => setTest(true)}>
+              {t("masalaTuriTest")}
+            </TurTugma>
+          </div>
+
+          {test ? (
+            <VariantYozish
+              variantlar={variantlar} setVariantlar={setVariantlar}
+              togriI={togriI} setTogriI={setTogriI}
+            />
+          ) : (
+            /* Javob maydoni QISQA — u bir necha belgi bo'ladi va
+               keng maydon "uzun yozing" degan noto'g'ri ishora
+               berardi. */
+            <input
+              value={javob} onChange={(e) => setJavob(e.target.value)}
+              maxLength={100} inputMode="text"
+              className="shadow-ichki w-40 rounded-2xl bg-sahna px-3.5 py-2.5 text-[17px]
+                         outline-none placeholder:text-ink-dim"
+            />
+          )}
         </Karta>
 
         <Karta nom={t("masalaYechimi")} belgilar={yechimB}>
@@ -482,6 +546,105 @@ function Uchinchi({
           />
         </Karta>
       </div>
+    </div>
+  );
+}
+
+/** Masala turi tugmasi — javob yoziladimi yoki tanlanadimi. */
+function TurTugma(
+  { faol, on, children }: { faol: boolean; on: () => void; children: React.ReactNode },
+) {
+  return (
+    <button type="button" onClick={on} aria-pressed={faol}
+      className={`clay-press flex-1 rounded-xl py-2 text-[12.5px] leading-tight ${
+        faol ? "bg-brand-purple text-white shadow-clay-sm" : "text-ink-dim"}`}>
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Test variantlarini yozish.
+ *
+ * ─────────────── TO'G'RISI SHU YERDA BELGILANADI ───────────────
+ *
+ * Alohida "javob" maydoni YO'Q va bu ataylab: u bo'lganda muallif
+ * javobni ikki marta — bir marta variantda, bir marta javob
+ * maydonida — yozardi va ikkalasi bir-biriga to'g'ri kelmay
+ * qolardi. Ekranda variant to'g'ri, serverda esa boshqacha
+ * bo'lgan masalani faqat birinchi yechuvchi topardi.
+ *
+ * ─────────────── IKKITADAN BOSHLANADI ───────────────
+ *
+ * Boshida ikkita bo'sh maydon turadi, to'rttasi emas: to'rtta bo'sh
+ * katak "hammasini to'ldirish shart" degan taassurot berardi,
+ * holbuki ikkita variantli masala ham to'liq masala.
+ */
+function VariantYozish({
+  variantlar, setVariantlar, togriI, setTogriI,
+}: {
+  variantlar: string[]; setVariantlar: (v: string[]) => void;
+  togriI: number; setTogriI: (i: number) => void;
+}) {
+  const ozgar = (i: number, qiymat: string) => {
+    const yangi = [...variantlar];
+    yangi[i] = qiymat;
+    setVariantlar(yangi);
+  };
+
+  const ochir = (i: number) => {
+    setVariantlar(variantlar.filter((_, k) => k !== i));
+    // Belgilangan variant o'chsa yoki undan yuqoridagisi o'chsa,
+    // ko'rsatkich siljiydi — aks holda u boshqa javobga tushib
+    // qolardi va muallif buni sezmasdi.
+    if (togriI === i) setTogriI(0);
+    else if (togriI > i) setTogriI(togriI - 1);
+  };
+
+  return (
+    <div className="grid gap-1.5">
+      {variantlar.map((v, i) => (
+        <div key={i} className="flex items-center gap-1.5">
+          {/* To'g'risini belgilash — HARF tugmasi. U ham variantning
+              nomi (A, B, C), ham tanlagichi: ikkita alohida element
+              qo'yilsa, tor telefon ekranida maydonga joy qolmasdi. */}
+          <button type="button" onClick={() => setTogriI(i)}
+            role="radio" aria-checked={i === togriI}
+            aria-label={t("masalaVariantTogri")}
+            className={`clay-press grid size-9 shrink-0 place-items-center rounded-xl
+                        font-display text-[13px] ${
+              i === togriI
+                ? "bg-brand-green text-white shadow-clay-sm"
+                : "shadow-ichki bg-sahna text-ink-dim"}`}>
+            {HARFLAR[i]}
+          </button>
+          <input
+            value={v} onChange={(e) => ozgar(i, e.target.value)}
+            maxLength={100} placeholder={t("masalaVariantJoy", { n: i + 1 })}
+            className="shadow-ichki min-w-0 flex-1 rounded-xl bg-sahna px-3 py-2 text-[14px]
+                       outline-none placeholder:text-ink-dim"
+          />
+          {variantlar.length > MIN_VARIANT && (
+            <button type="button" onClick={() => ochir(i)}
+              aria-label={t("masalaRasmOchir")}
+              className="clay-press grid size-8 shrink-0 place-items-center rounded-xl
+                         text-ink-dim">
+              <Icon name="close" size={14} />
+            </button>
+          )}
+        </div>
+      ))}
+
+      {variantlar.length < MAX_VARIANT && (
+        <button type="button" onClick={() => setVariantlar([...variantlar, ""])}
+          className="clay-press mt-0.5 flex items-center justify-center gap-1.5 rounded-xl
+                     border-[1.5px] border-dashed border-track py-2 text-[12px] text-ink-dim">
+          <Icon name="plus" size={14} />
+          {t("masalaVariantQosh")}
+        </button>
+      )}
+
+      <p className="mt-0.5 text-[11px] text-ink-dim">{t("masalaVariantTogri")}</p>
     </div>
   );
 }

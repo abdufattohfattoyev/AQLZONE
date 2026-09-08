@@ -484,6 +484,53 @@ const S = {
   ],
   masalaKanalYoqdi: ["Kanalda topilmadi", "Не найдено в канале"],
   masalaKanalTekshirildi: ["tekshirildi", "проверено"],
+
+  /* --- tanga: animatsiya va sarflash ruxsati --- */
+  tangaQoshildi: ["{n} tanga qo'shildi", "Добавлено {n} монет"],
+  tangaSarflandi: ["{n} tanga sarflandi", "Потрачено {n} монет"],
+  tangaSorovSarlavha: ["Tanga sarflaymizmi?", "Потратить монеты?"],
+  tangaYetmadiSarlavha: ["Tanga yetmadi", "Не хватает монет"],
+  tangaSorovNarx: ["Narxi", "Цена"],
+  tangaSorovBor: ["Hozir bor", "Сейчас есть"],
+  tangaSorovQoladi: ["Qoladi", "Останется"],
+  tangaSorovYetmaydi: ["Yetmayapti", "Не хватает"],
+  tangaSorovHa: ["Ha, sarflayman", "Да, потратить"],
+  tangaSorovYoq: ["Kerak emas", "Не нужно"],
+  tangaSorovYopish: ["Yopish", "Закрыть"],
+  tangaSorovYechim: [
+    "Bu masalaning to'liq yechimi ochiladi",
+    "Откроется полное решение этой задачи",
+  ],
+
+  /* --- test variantlari --- */
+  masalaTestBelgi: ["Test", "Тест"],
+  masalaVariantTanla: ["Javob variantini tanlang", "Выберите вариант ответа"],
+  masalaVariantYoq: ["Variant tanlanmadi", "Вариант не выбран"],
+  masalaTuriSavol: ["Javob qanday olinadi?", "Как принимается ответ?"],
+  masalaTuriYozma: ["Javob yoziladi", "Ответ пишется"],
+  masalaTuriTest: ["Variantlardan tanlanadi", "Выбор из вариантов"],
+  masalaVariantlar: ["Variantlar", "Варианты"],
+  masalaVariantJoy: ["{n}-variant", "Вариант {n}"],
+  masalaVariantQosh: ["Variant qo'shish", "Добавить вариант"],
+  masalaVariantTogri: ["To'g'risini belgilang", "Отметьте правильный"],
+  masalaVariantKam: [
+    "Kamida {n} ta variant yozing",
+    "Напишите минимум {n} варианта",
+  ],
+  masalaVariantTakror: [
+    "Variantlar bir xil bo'lmasin",
+    "Варианты не должны повторяться",
+  ],
+  masalaVariantTogriYoq: [
+    "To'g'ri variantni belgilang",
+    "Отметьте правильный вариант",
+  ],
+  tekshirVariantSoni: ["{n} ta variant", "{n} варианта"],
+  tekshirVariantHarxil: ["Variantlar har xil", "Варианты различаются"],
+  tekshirVariantTogri: [
+    "To'g'ri javob: {javob}",
+    "Правильный ответ: {javob}",
+  ],
   masalaUlashMatn: [
     "Bu masalani yecha olasanmi? 🤔",
     "Сможешь решить эту задачу? 🤔",

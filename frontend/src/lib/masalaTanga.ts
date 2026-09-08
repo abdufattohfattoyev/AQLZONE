@@ -29,6 +29,15 @@
 /** Nechanchi urinishda yechilsa — nechta tanga. */
 const MUKOFOT = [10, 5, 3] as const;
 
+/**
+ * Birinchi urinishda beriladigan tanga — eng kattasi.
+ *
+ * Ro'yxatdagi kartada shu son ko'rinadi ("+10"): odam masalani
+ * ochishdan OLDIN nima uchun ishlayotganini bilishi kerak. Ochib,
+ * yechib, keyin tanga olish — mukofot emas, kutilmagan hodisa.
+ */
+export const ENG_KATTA_MUKOFOT = MUKOFOT[0];
+
 /** Yechimni ochish narxi. */
 export const YECHIM_NARX = 15;
 

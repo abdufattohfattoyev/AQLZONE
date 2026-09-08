@@ -81,6 +81,15 @@ def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> d
         # `if (m.rasm)` bir xil ishlaydi va turi doim satr bo'lgani
         # uchun tekshiruv ham soddaroq.
         "rasm": masala.rasm.url if masala.rasm else "",
+        # Test variantlari — bo'sh ro'yxat bo'lsa masala javob
+        # yoziladigan. Mijoz shu ro'yxatga qarab tugmalar yoki
+        # kiritish maydonini chizadi.
+        #
+        # Ro'yxat ARALASHTIRILMAYDI: to'g'ri javob har safar boshqa
+        # o'rinda tursa, masalani ikki marta ochgan odam o'zi topgan
+        # javobini tanib olmasdi va bir xil bosishni takrorlay
+        # olmasdi. Tartib esa muallif yozgan tartib.
+        "variantlar": list(masala.variantlar or []),
         # Yechim ochiqmi — mijoz shunga qarab tugma ko'rsatadi. Maydonning
         # O'ZI yo'qligiga qarab bilish ham mumkin edi, lekin u paytda
         # "yechim yozilmagan" bilan "yechim berilmadi" bir xil ko'rinardi.
@@ -122,6 +131,7 @@ def bugungi_soni(profile: Profile) -> int:
 
 def yubor(
     profile: Profile, sinf: int, matn: str, javob: str, yechim: str, rasm=None,
+    variantlar: list[str] | None = None,
 ) -> Masala:
     """
     Yangi masala — navbatga tushadi, darhol ko'rinmaydi.
@@ -134,6 +144,7 @@ def yubor(
     return Masala.objects.create(
         muallif=profile, sinf=sinf,
         matn=matn.strip(), javob=javob.strip(), yechim=yechim.strip(),
+        variantlar=variantlar or [],
         rasm=rasm or None,
         holat=Masala.KUTMOQDA,
     )

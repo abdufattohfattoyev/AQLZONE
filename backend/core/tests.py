@@ -4512,6 +4512,130 @@ class KanalTekshiruvTest(TestCase):
         s.assert_not_called()
 
 
+class MasalaTestVariantTest(TestCase):
+    """
+    Variantli (test) masala.
+
+    Diqqat qaratilgan joy — TO'G'RI JAVOB VARIANTLAR ORASIDA
+    ekanligi. Usiz test masalasi yechib bo'lmaydigan bo'lib qolardi:
+    odam to'rtta variantdan birini bosadi, server esa ularning hech
+    biriga to'g'ri kelmaydigan javobni kutib turardi. Xatoni faqat
+    birinchi yechuvchi topardi — muallif emas.
+    """
+
+    def kir(self, device: str) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def setUp(self):
+        cache.clear()
+        self.token = self.kir("dev-variant-00000000001")
+        self.pupil = Pupil.objects.get(identities__external_id="dev-variant-00000000001")
+        self.profil = self.pupil.asosiy_profil()
+
+    def yubor(self, **o) -> dict:
+        maydon = {
+            "sinf": 5,
+            "matn": "Yog'och kubning bitta burchagi kesib olindi. Nechta yoq bor?",
+            "javob": "7 ta",
+            "yechim": "Oltita yoq qoladi va kesik yangi yoq beradi: 6 + 1 = 7.",
+            "variantlar": ["6 ta", "7 ta", "8 ta", "9 ta"],
+        }
+        maydon.update(o)
+        r = self.client.post("/api/v1/masalalar", maydon,
+                             content_type="application/json", **self.auth(self.token))
+        return {"kod": r.status_code, "tana": r.json()}
+
+    def test_variantlar_saqlanadi(self):
+        d = self.yubor()
+        self.assertEqual(d["kod"], 201)
+        m = Masala.objects.get(pk=d["tana"]["masala"]["id"])
+        self.assertEqual(m.variantlar, ["6 ta", "7 ta", "8 ta", "9 ta"])
+
+    def test_variantsiz_masala_ham_yuboriladi(self):
+        """Ikki tur bir modelda turadi — variantsizi avvalgidek
+        ishlashi kerak."""
+        d = self.yubor(variantlar=[])
+        self.assertEqual(d["kod"], 201)
+        self.assertEqual(d["tana"]["masala"]["variantlar"], [])
+
+    def test_togri_javob_variantlar_orasida_bolmasa_rad(self):
+        d = self.yubor(javob="10 ta")
+        self.assertEqual(d["kod"], 400)
+        self.assertIn("javob", d["tana"])
+
+    def test_takroriy_variant_rad(self):
+        d = self.yubor(variantlar=["7 ta", "7 ta", "8 ta"])
+        self.assertEqual(d["kod"], 400)
+        self.assertIn("variantlar", d["tana"])
+
+    def test_bitta_variant_rad(self):
+        d = self.yubor(variantlar=["7 ta"], javob="7 ta")
+        self.assertEqual(d["kod"], 400)
+
+    def test_beshta_variant_rad(self):
+        d = self.yubor(variantlar=["6 ta", "7 ta", "8 ta", "9 ta", "10 ta"])
+        self.assertEqual(d["kod"], 400)
+
+    def test_bosh_variant_tashlanadi(self):
+        """Muallif uchinchi maydonni ochib, bo'sh qoldirishi mumkin.
+        Bo'sh satr testda tanlanadigan variant bo'lib chiqardi."""
+        d = self.yubor(variantlar=["6 ta", "7 ta", "  ", ""])
+        self.assertEqual(d["kod"], 201)
+        m = Masala.objects.get(pk=d["tana"]["masala"]["id"])
+        self.assertEqual(m.variantlar, ["6 ta", "7 ta"])
+
+    def test_javob_ikkala_turda_bir_xil_tekshiriladi(self):
+        """Testda ham javob MATN bo'lib solishtiriladi — ya'ni
+        normallashtirish (bo'sh joy, katta harf) ikkala turda ham
+        bir xil ishlaydi."""
+        d = self.yubor()
+        pk = d["tana"]["masala"]["id"]
+        Masala.objects.filter(pk=pk).update(holat=Masala.TASDIQ)
+        r = self.client.post(f"/api/v1/masalalar/{pk}/javob", {"javob": "7 TA"},
+                             content_type="application/json", **self.auth(self.token))
+        self.assertTrue(r.json()["togri"])
+
+    def test_royxatda_variantlar_keladi(self):
+        """Mijoz ro'yxatdayoq masala turini bilishi kerak — karta
+        ustidagi «Test» belgisi shu maydondan chiziladi."""
+        d = self.yubor()
+        Masala.objects.filter(pk=d["tana"]["masala"]["id"]).update(holat=Masala.TASDIQ)
+        r = self.client.get("/api/v1/masalalar", **self.auth(self.token))
+        self.assertEqual(r.json()["masalalar"][0]["variantlar"],
+                         ["6 ta", "7 ta", "8 ta", "9 ta"])
+
+    def test_multipart_variantlari_json_satr_bolib_keladi(self):
+        """Rasm bilan kelgan masala `multipart` bo'ladi va u ro'yxatni
+        bilmaydi — aynan chizmali test esa eng ko'p uchraydigan hol."""
+        r = self.client.post("/api/v1/masalalar", {
+            "sinf": 5,
+            "matn": "Yog'och kubning bitta burchagi kesib olindi. Nechta yoq bor?",
+            "javob": "7 ta",
+            "yechim": "Oltita yoq qoladi va kesik yangi yoq beradi: 6 + 1 = 7.",
+            "variantlar": json.dumps(["6 ta", "7 ta"]),
+        }, **self.auth(self.token))
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.json()["masala"]["variantlar"], ["6 ta", "7 ta"])
+
+    def test_buzuq_json_aniq_xato_beradi(self):
+        r = self.client.post("/api/v1/masalalar", {
+            "sinf": 5,
+            "matn": "Yog'och kubning bitta burchagi kesib olindi. Nechta yoq bor?",
+            "javob": "7 ta",
+            "yechim": "Oltita yoq qoladi va kesik yangi yoq beradi: 6 + 1 = 7.",
+            "variantlar": "[buzuq",
+        }, **self.auth(self.token))
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("variantlar", r.json())
+
+
 class TamgaTest(TestCase):
     """
     Masala rasmidagi AqlZone belgisi.

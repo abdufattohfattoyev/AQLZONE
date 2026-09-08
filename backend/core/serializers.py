@@ -6,9 +6,11 @@ uchun server hech qachon kelgan songa ishonmaydi. Chegaradan chiqqan qiymat
 xato qaytarmaydi — kesib qo'yiladi, aks holda internet uzilganda bolaning
 natijasi umuman saqlanmay qolardi.
 """
+import json
+
 from rest_framework import serializers
 
-from .models import LessonResult, Masala, MasalaOvoz, Profile
+from .models import LessonResult, Masala, MasalaOvoz, Profile, javob_normal
 from .nom import harfli, tozala
 
 
@@ -178,6 +180,79 @@ class MasalaSerializer(serializers.Serializer):
     matn = serializers.CharField(min_length=MIN_MATN, max_length=Masala.MAX_MATN)
     javob = serializers.CharField(min_length=1, max_length=Masala.MAX_JAVOB)
     yechim = serializers.CharField(min_length=MIN_YECHIM, max_length=Masala.MAX_YECHIM)
+    #: Test variantlari — bo'sh bo'lsa javob yoziladigan masala.
+    #: `allow_blank` ATAYLAB: muallif to'rtinchi maydonni ochib, uni
+    #: bo'sh qoldirishi mumkin. Bo'sh satrni XATO deb qaytarish
+    #: o'rniga uni `validate` da tashlab yuboramiz — odam nima
+    #: noto'g'ri qilganini tushunmaydigan xato eng yomon xato.
+    variantlar = serializers.ListField(
+        child=serializers.CharField(max_length=Masala.MAX_JAVOB, allow_blank=True),
+        required=False, allow_empty=True, default=list,
+    )
+
+    def to_internal_value(self, data):
+        """
+        Rasm bilan kelgan masala `multipart` bo'lib keladi va u
+        RO'YXATNI BILMAYDI — hamma qiymat satr. Shuning uchun
+        `variantlar` u yerda JSON satri bo'lib yuboriladi va shu
+        yerda ro'yxatga qaytariladi.
+
+        Aks holda test masalasini rasm bilan yuborib bo'lmasdi —
+        aynan chizmali test esa eng ko'p uchraydigan hol.
+
+        Oddiy `dict` ga KO'CHIRILADI, `QueryDict.copy()` ga emas:
+        `QueryDict` da har qiymat ro'yxat bo'lib saqlanadi va unga
+        ro'yxat yozilsa, o'qiganda faqat OXIRGI element qaytadi —
+        ya'ni to'rtta variantdan bittasi qolardi.
+        """
+        xom = data.get("variantlar") if hasattr(data, "get") else None
+        if isinstance(xom, str):
+            data = {**data.dict()} if hasattr(data, "dict") else {**data}
+            try:
+                data["variantlar"] = json.loads(xom)
+            except ValueError:
+                raise serializers.ValidationError(
+                    {"variantlar": "ro'yxat kutilgan edi"},
+                ) from None
+            if not isinstance(data["variantlar"], list):
+                raise serializers.ValidationError(
+                    {"variantlar": "ro'yxat kutilgan edi"},
+                )
+        return super().to_internal_value(data)
+
+    def validate(self, attrs: dict) -> dict:
+        """
+        Variantlar bo'lsa — to'g'ri javob ular ORASIDA bo'lishi shart.
+
+        Bu tekshiruvsiz test masalasi yechib bo'lmaydigan bo'lib
+        qolardi: odam to'rtta variantdan birini bosadi, server esa
+        ularning hech biriga to'g'ri kelmaydigan javobni kutib
+        turardi. Xatoni faqat birinchi yechuvchi topardi.
+        """
+        xom = attrs.get("variantlar") or []
+        variantlar = [v.strip() for v in xom if v.strip()]
+        if not variantlar:
+            attrs["variantlar"] = []
+            return attrs
+
+        if not (Masala.MIN_VARIANT <= len(variantlar) <= Masala.MAX_VARIANT):
+            raise serializers.ValidationError({
+                "variantlar": f"{Masala.MIN_VARIANT} tadan "
+                              f"{Masala.MAX_VARIANT} tagacha variant bo'lsin",
+            })
+        # Takroriy variant testni buzadi: ikkita bir xil javobning
+        # qaysi biri "to'g'ri" ekani aniqlanmaydi.
+        if len({javob_normal(v) for v in variantlar}) != len(variantlar):
+            raise serializers.ValidationError({
+                "variantlar": "variantlar bir-birini takrorlamasin",
+            })
+        togri = javob_normal(attrs["javob"])
+        if togri not in {javob_normal(v) for v in variantlar}:
+            raise serializers.ValidationError({
+                "javob": "to'g'ri javob variantlardan biri bo'lsin",
+            })
+        attrs["variantlar"] = variantlar
+        return attrs
 
     def validate_sinf(self, v: int) -> int:
         # Kod kurslarnikiga mos bo'lishi kerak: 0–11 yoki 107–110.

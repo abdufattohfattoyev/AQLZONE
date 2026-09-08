@@ -32,7 +32,8 @@
 import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { sinfNomi } from "../lib/masalaSinf";
+import { sinfNomi, sinfRangi } from "../lib/masalaSinf";
+import { ENG_KATTA_MUKOFOT } from "../lib/masalaTanga";
 import type { Masala } from "../lib/masala";
 
 interface Props {
@@ -63,15 +64,32 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
   const olchangan = m.urinishSoni > 0;
   const nuqta = nuqtaSoni(m.qiyinlik);
 
+  const test = m.variantlar.length > 0;
+
   return (
     <button type="button" onClick={on}
-      className="clay-press block w-full rounded-clay bg-karta p-3.5 text-left shadow-clay-sm">
+      className="clay-press block w-full rounded-clay border border-track bg-karta p-3.5
+                 text-left shadow-clay-sm">
       {/* ---- tepa qator ---- */}
       <div className="flex items-center gap-2">
-        <span className="shadow-ichki shrink-0 rounded-full bg-sahna px-2.5 py-1 text-[10.5px]
-                         leading-none text-ink-soft">
+        {/* Toifa yorlig'i RANGLI: o'nta kartali sahifada ko'z avval
+            rangni ko'radi, yozuvni keyin o'qiydi. Kulrang yorliqlar
+            paytida "olimpiada" masalasini topish uchun har birining
+            yozuvini o'qishga to'g'ri kelardi. */}
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10.5px] leading-none
+                          ${sinfRangi(m.sinf)}`}>
           {sinfNomi(m.sinf)}
         </span>
+
+        {/* Test belgisi — masala TURI kartadanoq bilinsin: variant
+            tanlash bilan javob yozish ikki xil ish va odam ko'pincha
+            aynan bittasini qidiradi. */}
+        {test && (
+          <span className="shrink-0 rounded-full bg-brand-green/15 px-2 py-1 text-[10.5px]
+                           leading-none text-brand-green">
+            {t("masalaTestBelgi")}
+          </span>
+        )}
 
         {/* Qiyinlik — sinf yorlig'ining YONIDA. U ham masalaning
             "pasporti": qaysi sinf va qanchalik qiyin degan ikki savol
@@ -108,8 +126,11 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
         </span>
       </div>
 
-      {/* ---- matn ---- */}
-      <p className="mt-2.5 line-clamp-4 text-[14.5px] leading-relaxed">{m.matn}</p>
+      {/* ---- matn ----
+          QALIN va biroz zichroq: karta ichida bu YAGONA asosiy narsa,
+          qolgani esa uning atrofidagi belgilar. Ilgari matn oddiy
+          og'irlikda edi va yorliqlar bilan bir xil "ovozda" turardi. */}
+      <p className="mt-2.5 line-clamp-4 font-display text-[14.5px] leading-snug">{m.matn}</p>
 
       {/* ---- chizma ----
           Matnning OSTIDA va butun kenglikda, yonida emas.
@@ -133,8 +154,21 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
             ? t("masalaYechdi", { n: m.yechganSoni, jami: m.urinishSoni })
             : t("masalaUrinilmagan")}
         </span>
-        <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-brand-purple/15
-                         px-2.5 py-1 text-[11.5px] leading-none text-brand-purple">
+        {/* Mukofot "Yechish" ning YONIDA turadi: tanga aynan shu
+            amal uchun berilishi shu qo'shnilikda o'qiladi. Faqat
+            hali yechmaganda ko'rinadi — ikkinchi marta to'g'ri
+            javob berganga tanga qayta berilmaydi. */}
+        {!m.uringan && (
+          <span className="ml-auto flex shrink-0 items-center gap-0.5 rounded-full
+                           bg-brand-gold/15 px-2 py-1 text-[11.5px] leading-none
+                           text-brand-gold">
+            <Icon name="coin" size={12} />
+            +{ENG_KATTA_MUKOFOT}
+          </span>
+        )}
+        <span className={`flex shrink-0 items-center gap-1 rounded-full bg-brand-purple/15
+                          px-2.5 py-1 text-[11.5px] leading-none text-brand-purple
+                          ${m.uringan ? "ml-auto" : ""}`}>
           {t("masalaYechishTugma")}
           <Icon name="chevron" size={13} />
         </span>

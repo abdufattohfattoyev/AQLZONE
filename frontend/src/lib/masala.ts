@@ -50,6 +50,14 @@ export interface Masala {
   radSababi?: string;
   /** Biriktirilgan rasm manzili. Yo'q bo'lsa bo'sh satr. */
   rasm: string;
+  /**
+   * Test variantlari. BO'SH ro'yxat — javob yoziladigan masala.
+   *
+   * Ikkalasi bir turda turadi, chunki farqi faqat javob qanday
+   * olinishida: matn, chizma, yechim, statistika va tanga ikkalasida
+   * ham bir xil ishlaydi.
+   */
+  variantlar: string[];
   /** Shu odam bergan ovoz. */
   ovozim?: Ovoz;
   /** Urinib ko'rilganmi — ro'yxatda "yechilgan" belgisi uchun. */
@@ -197,6 +205,8 @@ export interface YangiMasala {
   yechim: string;
   /** Ixtiyoriy chizma. Berilsa so'rov `multipart/form-data` bo'ladi. */
   rasm?: File | null;
+  /** Test variantlari. Bo'sh — javob yoziladigan masala. */
+  variantlar?: string[];
 }
 
 /**
@@ -208,12 +218,17 @@ export interface YangiMasala {
  * so'rov ham katta va o'qishga qiyin bo'lardi.
  */
 export function yubor(m: YangiMasala): Promise<{ ok: true; masala: Masala }> {
-  const { rasm, ...qolgan } = m;
-  if (!rasm) return sorov(`/api/v1/masalalar`, bilanProfil({ ...qolgan }));
+  const { rasm, variantlar, ...qolgan } = m;
+  const tana = { ...qolgan, variantlar: variantlar ?? [] };
+  if (!rasm) return sorov(`/api/v1/masalalar`, bilanProfil(tana));
 
   const f = new FormData();
-  for (const [k, v] of Object.entries(bilanProfil({ ...qolgan }))) {
-    f.append(k, String(v));
+  for (const [k, v] of Object.entries(bilanProfil(tana))) {
+    // `FormData` ro'yxatni bilmaydi — variantlar JSON satri bo'lib
+    // ketadi va server uni o'sha yerda ro'yxatga qaytaradi
+    // (`MasalaSerializer.to_internal_value`). Aks holda rasmli test
+    // masalasini umuman yuborib bo'lmasdi.
+    f.append(k, Array.isArray(v) ? JSON.stringify(v) : String(v));
   }
   f.append("rasm", rasm);
   return sorov(`/api/v1/masalalar`, f);

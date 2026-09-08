@@ -133,7 +133,57 @@ export function yechimBelgilari(yechim: string, javob: string): Belgi[] {
   return r;
 }
 
+/** Server qabul qiladigan variantlar soni (`core/models.py`). */
+export const MIN_VARIANT = 2;
+export const MAX_VARIANT = 4;
+
+/**
+ * Test variantlarining tekshiruvlari.
+ *
+ * `togriI` — muallif to'g'ri deb belgilagan variant indeksi.
+ *
+ * Uchta xato bor va uchalasi ham serverda ham tekshiriladi. Bu
+ * yerdagisi HIMOYA emas, TEZLIK: variantlarni yozib bo'lib, "keyingi"
+ * ni bosgandan keyin xato eshitish — eng jahl chiqaradigan holat, va
+ * bu forma aynan shu sababdan yozayotgan paytda tekshiradi.
+ */
+export function variantBelgilari(variantlar: string[], togriI: number): Belgi[] {
+  const tola = variantlar.map((v) => v.trim()).filter(Boolean);
+  if (!tola.length) return [];
+
+  const r: Belgi[] = [];
+  if (tola.length >= MIN_VARIANT) {
+    r.push({ holat: "ok", kalit: "tekshirVariantSoni", orin: { n: tola.length } });
+  } else {
+    r.push({ holat: "ogoh", kalit: "masalaVariantKam", orin: { n: MIN_VARIANT } });
+  }
+
+  // Takroriy variant testni yechib bo'lmaydigan qiladi: ikkita bir
+  // xil javobning qaysi biri "to'g'ri" ekani aniqlanmaydi.
+  r.push(new Set(tola.map(normal)).size === tola.length
+    ? { holat: "ok", kalit: "tekshirVariantHarxil" }
+    : { holat: "ogoh", kalit: "masalaVariantTakror" });
+
+  r.push((variantlar[togriI] ?? "").trim()
+    ? { holat: "ok", kalit: "tekshirVariantTogri",
+        orin: { javob: variantlar[togriI].trim() } }
+    : { holat: "ogoh", kalit: "masalaVariantTogriYoq" });
+
+  return r;
+}
+
 /** Qadam to'ldirilganmi — "Keyingi" tugmasi shunga qaraydi. */
 export const matnTayyor = (matn: string): boolean => matn.trim().length >= MIN_MATN;
 export const javobTayyor = (javob: string): boolean => javob.trim().length > 0;
 export const yechimTayyor = (yechim: string): boolean => yechim.trim().length >= MIN_YECHIM;
+
+/** Test variantlari yuborishga tayyormi. */
+export function variantTayyor(variantlar: string[], togriI: number): boolean {
+  const tola = variantlar.map((v) => v.trim()).filter(Boolean);
+  return (
+    tola.length >= MIN_VARIANT
+    && tola.length <= MAX_VARIANT
+    && new Set(tola.map(normal)).size === tola.length
+    && Boolean((variantlar[togriI] ?? "").trim())
+  );
+}

@@ -907,6 +907,21 @@ class Masala(models.Model):
     #: normallashtiriladi (`javob_normal`).
     javob = models.CharField(max_length=MAX_JAVOB)
 
+    #: Test variantlari — bo'sh bo'lsa masala JAVOB YOZILADIGAN.
+    #:
+    #: Ikki xil masala bir modelda turadi va bu ataylab: farqi
+    #: faqat JAVOB QANDAY OLINISHIDA, qolgan hammasi (matn, chizma,
+    #: yechim, statistika, kanal posti, tanga) bir xil. Alohida model
+    #: qilinsa, o'sha hammasi ikki nusxada yozilardi.
+    #:
+    #: To'g'ri javob shu yerda EMAS, `javob` maydonida — variantlardan
+    #: biriga aynan teng bo'ladi. Shunda tekshiruv ikkala turda ham
+    #: bitta yo'ldan ketadi (`javob_ber`) va "to'g'ri variant raqami"
+    #: degan ikkinchi haqiqat manbasi paydo bo'lmaydi.
+    MIN_VARIANT = 2
+    MAX_VARIANT = 4
+    variantlar = models.JSONField(default=list, blank=True)
+
     yechim = models.TextField(max_length=MAX_YECHIM)
 
     #: Masalaga biriktirilgan rasm — chizma, jadval yoki darslik sahifasi.

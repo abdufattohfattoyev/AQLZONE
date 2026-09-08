@@ -42,6 +42,11 @@
   --color-brand-purple-d: #8f57cf;
   --color-brand-red: #ff7a6b;
   --color-brand-gold: #f5b301;
+  /* Tanga tugmalari 3D bo'lib turadi (`shadow-[0_5px_0_...]`) va
+     buning uchun har brend rangining to'qroq juftligi kerak. Oltinda
+     u yo'q edi — sarflash tugmasi qo'shilgunga qadar oltin faqat
+     yozuv va belgi rangi bo'lib kelgan. */
+  --color-brand-gold-d: #d09400;
 
   /* --- temaga qarab o'zgaradigan tokenlar (standarti: bolalar) --- */
   --color-karta: #ffffff;            /* karta yuzasi */
@@ -1354,6 +1359,53 @@
 }
 .az-varaq { animation: az-varaq 0.34s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
 
+/*
+ * TANGA OQIMI (components/TangaOqim.tsx).
+ *
+ * Tanga jimgina qo'shilib, jimgina kamayardi — bola nechta olganini
+ * ham, nimaga sarflaganini ham sezmasdi. Endi har ikkala holat
+ * ko'rinadi va IKKALASI TESKARI yo'nalishda harakat qiladi: olingan
+ * tanga yuqoriga ko'tariladi, sarflangani pastga tushib so'nadi.
+ * Yo'nalishning o'zi "qo'shildi" va "ketdi" ni so'zsiz aytadi.
+ *
+ * Tangalar navbat bilan uchadi (`--az-kech`): birdaniga chiqqan
+ * o'nta belgi bitta dog'ga qo'shilib ketardi va sanoq ko'rinmasdi.
+ */
+@keyframes az-tanga-keldi {
+  0%   { opacity: 0; transform: translate(-50%, 26px) scale(0.5); }
+  22%  { opacity: 1; transform: translate(-50%, 0) scale(1.12); }
+  70%  { opacity: 1; transform: translate(-50%, -46px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -86px) scale(0.86); }
+}
+@keyframes az-tanga-ketdi {
+  0%   { opacity: 0; transform: translate(-50%, -30px) scale(1.1); }
+  25%  { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 48px) scale(0.6) rotate(24deg); }
+}
+.az-tanga {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  animation-duration: 1.05s;
+  animation-timing-function: cubic-bezier(0.25, 0.9, 0.35, 1);
+  animation-fill-mode: both;
+  animation-delay: var(--az-kech, 0ms);
+}
+.az-tanga-keldi { animation-name: az-tanga-keldi; }
+.az-tanga-ketdi { animation-name: az-tanga-ketdi; }
+
+/* Hisob raqami — tanga uchayotganda o'zi ham bir seskanadi. Shu
+   bilan "shu yerga qo'shildi" degan bog'lanish paydo bo'ladi. */
+@keyframes az-tanga-sanoq {
+  0%, 100% { transform: none; }
+  30%      { transform: scale(1.18); }
+}
+.az-tanga-sanoq { animation: az-tanga-sanoq 0.5s cubic-bezier(0.3, 1.4, 0.5, 1); }
+
 @media (prefers-reduced-motion: reduce) {
   .az-kanal-fon, .az-kanal, .az-varaq { animation-duration: 0.01ms; }
+  /* Tanga animatsiyasi butunlay o'chirilmaydi — u XABAR tashiydi
+     ("beshta tanga qo'shildi"). Faqat qisqartiriladi. */
+  .az-tanga { animation-duration: 0.4s; animation-delay: 0ms; }
+  .az-tanga-sanoq { animation: none; }
 }
