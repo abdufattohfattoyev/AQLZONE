@@ -1254,6 +1254,13 @@ const S = {
   duelXato: ["Aloqa yo'q — qaytadan urinib ko'ring", "Нет связи — попробуйте снова"],
   duelKutyapti: ["Javob kutilmoqda", "Ожидает ответа"],
   duelTarix: ["So'nggi bellashuvlar", "Последние дуэли"],
+  /* Onlayn ro'yxat: do'sti yo'q bola ham raqib topsin. */
+  duelOnlayn: ["Hozir ilovada — {n} ta", "Сейчас в приложении — {n}"],
+  duelChaqir: ["Chaqirish", "Позвать"],
+  duelChaqiruvKetdi: [
+    "Chaqiruv Telegramga yuborildi — javobini kutyapmiz",
+    "Вызов отправлен в Telegram — ждём ответа",
+  ],
   duelTayyorman: ["Men tayyorman", "Я готов"],
   duelTayyorBelgi: ["tayyor", "готов"],
   duelLobbiKutyapti: ["kutyapti", "ждёт"],

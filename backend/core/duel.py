@@ -223,6 +223,48 @@ def _ism(profile: Profile) -> str:
     return korinadigan_ism(profile)
 
 
+def chaqiruv_xabari(duel: Duel, raqib: Profile) -> bool:
+    """
+    Onlayn ro'yxatdan tanlangan odamga chaqiruv yuboradi.
+
+    `True` — xabar yuborishga urinildi (Telegram'i bor va sozlama
+    joyida). Natijaning O'ZI kutilmaydi: chaqirgan odam javobni
+    kutib turmasligi kerak, uning ekrani darhol ochilishi kerak.
+
+    Tugma AYNAN shu duelga olib boradi (`?startapp=<kod>`), bosh
+    sahifaga emas: raqib chaqiruvni yana qidirib o'tirmasin.
+    """
+    import html
+    import threading
+
+    tg_id = _tg_id(raqib)
+    if not tg_id or not getattr(settings, "BOT_TOKEN", ""):
+        return False
+    if getattr(settings, "TESTDA", False):
+        return True
+
+    bot = (getattr(settings, "BOT_USERNAME", "") or "").lstrip("@")
+    if not bot:
+        return False
+
+    ism = html.escape(_ism(duel.chaqirgan))
+    matn = (
+        f"⚔️ <b>{ism} sizni bellashuvga chaqirdi!</b>\n\n"
+        "Ikkalangiz bir xil savollarni yechasiz — kim tezroq va "
+        "aniqroq javob bersa, o'sha yutadi."
+    )
+    havola = f"https://t.me/{bot}?startapp={duel.kod}"
+
+    def yubor() -> None:
+        try:
+            X.yubor(tg_id, matn, tugma="⚔️ Qabul qilish", havola=havola)
+        except Exception:                            # noqa: BLE001
+            pass
+
+    threading.Thread(target=yubor, daemon=True).start()
+    return True
+
+
 def natija_xabari(duel: Duel) -> None:
     """
     Ikkala tomonga natijani yuboradi.

@@ -4445,3 +4445,96 @@ class TilQaytaSoralmasinTest(TestCase):
         d = self.client.get("/api/v1/me", **self.auth(self.token)).json()["user"]
         self.assertTrue(d["tilTanlandi"])
         self.assertEqual(d["til"], "ru")
+
+
+@override_settings(BOT_TOKEN="sinov:token", BOT_USERNAME="aqlzone_bot", TESTDA=False)
+class OnlaynTest(TestCase):
+    """
+    Onlayn o'yinchilar ro'yxati va undan chaqirish.
+
+    Duel shu paytgacha faqat HAVOLA bilan ishlardi: do'sti yo'q bola
+    raqib topa olmasdi. Ro'yxat o'sha bo'shliqni to'ldiradi.
+    """
+
+    def kir(self, device: str) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def tayyorla(self, device: str, ism: str, tg: str | None) -> Pupil:
+        """Ro'yxatdan o'tgan, ixtiyoriy ravishda Telegram'i bor hisob."""
+        self.kir(device)
+        p = Pupil.objects.get(identities__external_id=device)
+        p.first_name = ism
+        p.save(update_fields=["first_name"])
+        p.royxatni_yop()
+        if tg:
+            Identity.objects.create(pupil=p, provider=Identity.TELEGRAM, external_id=tg)
+        return p
+
+    def setUp(self):
+        cache.clear()
+        self.token = self.kir("dev-onlayn-men-0001")
+        self.men = Pupil.objects.get(identities__external_id="dev-onlayn-men-0001")
+        self.men.first_name = "Men"
+        self.men.save(update_fields=["first_name"])
+        self.men.royxatni_yop()
+
+    def royxat(self) -> list:
+        r = self.client.get("/api/v1/onlayn", **self.auth(self.token))
+        return r.json()["oyinchilar"]
+
+    def test_telegramli_odam_royxatda(self):
+        self.tayyorla("dev-onlayn-aziz-002", "Aziz", "111222333")
+        ismlar = [x["ism"] for x in self.royxat()]
+        self.assertIn("Aziz", ismlar)
+
+    def test_telegramsiz_odam_royxatda_yoq(self):
+        """Chaqiruv Telegram xabari bo'lib boradi — boshqa yo'l yo'q."""
+        self.tayyorla("dev-onlayn-anon-003", "Anon", None)
+        self.assertNotIn("Anon", [x["ism"] for x in self.royxat()])
+
+    def test_ozim_royxatda_yoq(self):
+        self.assertNotIn("Men", [x["ism"] for x in self.royxat()])
+
+    def test_uxlab_yotgan_odam_royxatda_yoq(self):
+        p = self.tayyorla("dev-onlayn-uxla-004", "Uyqu", "444555666")
+        eski = timezone.now() - timedelta(hours=3)
+        Session.objects.filter(pupil=p).update(last_seen=eski)
+        self.assertNotIn("Uyqu", [x["ism"] for x in self.royxat()])
+
+    class DarholOqim:
+        """Fon oqimi sinovda darhol ishlasin — test vaqtga bog'liq bo'lmasin."""
+
+        def __init__(self, target=None, daemon=None, **kw):
+            self._target = target
+
+        def start(self):
+            self._target()
+
+    def test_chaqiruv_xabari_yuboriladi(self):
+        raqib = self.tayyorla("dev-onlayn-raqib-005", "Raqib", "777888999")
+        profil = raqib.asosiy_profil()
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s, \
+             patch("threading.Thread", self.DarholOqim):
+            r = self.client.post("/api/v1/duel", {"kimga": profil.pk},
+                                 content_type="application/json", **self.auth(self.token))
+        self.assertEqual(r.status_code, 201)
+        self.assertTrue(r.json()["yuborildi"])
+        # Xabar ichida AYNAN shu duelning kodi bo'lishi kerak —
+        # raqib chaqiruvni qidirib o'tirmasin.
+        payload = s.call_args[0][1]
+        self.assertIn(r.json()["kod"], json.dumps(payload))
+
+    def test_ozini_chaqira_olmaydi(self):
+        men_profil = self.men.asosiy_profil()
+        with patch("core.xabar._sorov") as s:
+            r = self.client.post("/api/v1/duel", {"kimga": men_profil.pk},
+                                 content_type="application/json", **self.auth(self.token))
+        s.assert_not_called()
+        self.assertFalse(r.json()["yuborildi"])

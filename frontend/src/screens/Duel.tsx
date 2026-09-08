@@ -34,6 +34,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Oqim } from "../components/oyin/Oqim";
 import { Konfetti } from "../components/Konfetti";
 import { Kutish } from "../components/Kutish";
+import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { useOrqaga, havolaniOch } from "../lib/qobiq";
@@ -44,11 +45,11 @@ import { OYINLAR, oyinById } from "../lib/oyin";
 import { DUEL_SAVOLLAR, DUEL_VAQTLAR, duelSavollari } from "../lib/oyin/duel";
 import { tangaHisobi } from "../lib/oyin/rekord";
 import {
-  DuelXato, duelBall, duelBoshla, duelHolat, duelKorish, duelNatija,
+  DuelXato, duelBall, duelBoshla, duelHolat, duelKorish, duelNatija, onlaynOyinchilar,
   duelQabul, duelRoyxat, duelTayyor, duelYana,
 } from "../lib/api";
 import type {
-  DuelHisob, DuelHolat, DuelJonli, DuelShart, DuelYakun, DuelYozuv,
+  DuelHisob, DuelHolat, DuelJonli, DuelShart, DuelYakun, DuelYozuv, OnlaynOyinchi,
 } from "../lib/api";
 import type { Daraja, Oyin as OyinTur, OyinNatija } from "../lib/oyin/tur";
 import { UNIT_COLORS } from "../lib/types";
@@ -91,9 +92,9 @@ export function Duel({ onChiq, onOyin }: {
 
   useOrqaga(onChiq);
 
-  const yasa = (shart: DuelShart) => {
+  const yasa = (shart: DuelShart, kimga?: number) => {
     setBosqich({ nima: "yuklanmoqda" });
-    duelBoshla(shart)
+    duelBoshla(shart, kimga)
       .then((d) => setBosqich({ nima: "lobbi", duel: d }))
       .catch((e) => {
         const kod = e instanceof DuelXato ? e.kod : 0;
@@ -198,7 +199,8 @@ const DUEL_OYINLAR = OYINLAR.filter((o) => o.tur === "oqim");
  * qolardi: tanlov qancha keng bo'lsa, qaror shuncha og'ir.
  */
 function Shartlar({ onTanladi, onChiq }: {
-  onTanladi: (s: DuelShart) => void;
+  /** `kimga` — onlayn ro'yxatdan tanlangan raqib (bo'lmasa havola bilan). */
+  onTanladi: (s: DuelShart, kimga?: number) => void;
   onChiq: () => void;
 }) {
   const [oyin, setOyin] = useState<OyinTur>(DUEL_OYINLAR[0]);
@@ -278,7 +280,65 @@ function Shartlar({ onTanladi, onChiq }: {
         {t("duelOyinlarga")}
       </button>
 
+      <Onlayn onChaqir={(profil) => onTanladi({ oyin: oyin.id, savollar, vaqt }, profil)} />
+
       <Tarix />
+    </div>
+  );
+}
+
+/**
+ * HOZIR ILOVADA TURGANLAR — bitta bosishda chaqiriladi.
+ *
+ * NEGA KERAK. Duel shu paytgacha faqat HAVOLA bilan ishlardi: odam
+ * chaqiruv yasaydi, uni do'stiga yuboradi va javobini kutadi. Do'sti
+ * bor odam uchun bu yetarli, kimsasi yo'q bola esa duelni umuman
+ * o'ynay olmasdi — raqib topadigan joy yo'q edi.
+ *
+ * Ro'yxatga faqat Telegram'i bog'langanlar tushadi: chaqiruv o'sha
+ * yerga xabar bo'lib boradi va boshqa yetkazish yo'li yo'q
+ * (`backend/core/onlayn.py`).
+ *
+ * Ro'yxat KUTILMAYDI: u pastda turadi va yuklanmasa, yuqoridagi
+ * asosiy ish — havola bilan chaqirish — hech qanday kechikish
+ * ko'rmaydi.
+ */
+function Onlayn({ onChaqir }: { onChaqir: (profil: number) => void }) {
+  const [ro, setRo] = useState<OnlaynOyinchi[] | null>(null);
+
+  useEffect(() => {
+    let bekor = false;
+    onlaynOyinchilar().then((d) => { if (!bekor) setRo(d); });
+    return () => { bekor = true; };
+  }, []);
+
+  if (!ro?.length) return null;
+
+  return (
+    <div className="mt-7">
+      <h2 className="mb-2 ml-1.5 flex items-center gap-1.5 text-[11px] tracking-widest
+                     text-ink-soft uppercase">
+        {/* Yashil nuqta — "hozir" degan yagona ishora. */}
+        <span className="size-1.5 rounded-full bg-brand-green" />
+        {t("duelOnlayn", { n: ro.length })}
+      </h2>
+      <div className="space-y-1.5">
+        {ro.map((o) => (
+          <div key={o.profil}
+            className="flex items-center gap-2.5 rounded-clay bg-karta px-3 py-2.5 shadow-clay-sm">
+            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-track
+                             text-[13px]">
+              {avatarBelgi(o.avatar)}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[13px]">{o.ism}</span>
+            <button type="button" onClick={() => onChaqir(o.profil)}
+              className="clay-press shrink-0 rounded-full bg-brand-orange px-3 py-1.5
+                         text-[12px] text-white">
+              {t("duelChaqir")}
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -633,6 +693,21 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
           do'stiga havola YUBORISHI kerakligini tushunmasdi.
 
           Endi qadamlar RAQAMLANGAN: avval havola, keyin tayyorlik. */}
+      {/* Onlayn ro'yxatdan chaqirilgan bo'lsa, xabar ALLAQACHON ketgan
+          va "havola yuboring" degan qadam yolg'on bo'lardi: odam uni
+          o'qib, havolani ikkinchi marta yuborardi. Ulashish tugmasi
+          baribir qoladi — chaqiruv Telegram'da ko'zdan qochsa,
+          havolani qo'lda ham tashlash mumkin. */}
+      {menChaqirdim && duel.yuborildi && (
+        <div className="mt-6 flex items-center gap-2 rounded-clay bg-brand-green/15
+                        px-3.5 py-3 text-left">
+          <Icon name="check" size={17} className="shrink-0 text-brand-green" />
+          <span className="text-[13px] leading-snug text-brand-green">
+            {t("duelChaqiruvKetdi")}
+          </span>
+        </div>
+      )}
+
       {menChaqirdim && (
         <div className="mt-6 text-left">
           <div className="ml-1 font-display text-[14px]">{t("duelQadam1")}</div>

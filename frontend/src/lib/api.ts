@@ -947,6 +947,15 @@ export interface DuelHolat {
   ozim: boolean;
   havola: string;
   /**
+   * Chaqiruv Telegram xabari bo'lib YUBORILDIMI.
+   *
+   * Onlayn ro'yxatdan tanlab chaqirilganda `true`. Lobbi shunga
+   * qarab boshqacha gapiradi: "havola yuboring" o'rniga "yuborildi,
+   * javobini kutyapmiz" — aks holda odam xabar ketganini bilmay,
+   * havolani ikkinchi marta yuborardi.
+   */
+  yuborildi?: boolean;
+  /**
    * Boshlanishga necha soniya qoldi. Odatda `null` — lekin QAYTA
    * bellashuvda duel allaqachon boshlangan bo'ladi va sanoq shu
    * qiymatdan ketadi.
@@ -1065,9 +1074,41 @@ export interface DuelShart {
   vaqt: number;
 }
 
-/** Yangi chaqiruv boshlaydi. Shartlar berilmasa server standartini oladi. */
-export const duelBoshla = (shart?: DuelShart): Promise<DuelHolat> =>
-  duelPost<DuelHolat>("/api/v1/duel", shart ?? {});
+/**
+ * Yangi chaqiruv boshlaydi. Shartlar berilmasa server standartini oladi.
+ *
+ * `kimga` — onlayn ro'yxatdan tanlangan o'yinchining profil raqami.
+ * Berilsa, unga Telegram xabari bilan chaqiruv ketadi; berilmasa
+ * havolani odam o'zi ulashadi (eski yo'l, u ham qoladi).
+ */
+export const duelBoshla = (shart?: DuelShart, kimga?: number): Promise<DuelHolat> =>
+  duelPost<DuelHolat>("/api/v1/duel", { ...(shart ?? {}), ...(kimga ? { kimga } : {}) });
+
+/** Hozir ilovada turgan o'yinchi. */
+export interface OnlaynOyinchi {
+  /** Chaqiruv shu profilga yuboriladi. */
+  profil: number;
+  ism: string;
+  avatar: string;
+}
+
+/**
+ * Hozir ilovada turgan o'yinchilar.
+ *
+ * Ro'yxatga faqat Telegram'i bog'langanlar tushadi — chaqiruv
+ * xabari boshqa yo'l bilan yetib bormaydi (`core/onlayn.py`).
+ * Xato bo'lsa bo'sh ro'yxat: duel ekrani busiz ham ishlaydi.
+ */
+export async function onlaynOyinchilar(): Promise<OnlaynOyinchi[]> {
+  if (!(await signIn())) return [];
+  try {
+    const r = await fetch("/api/v1/onlayn", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return [];
+    return ((await r.json()) as { oyinchilar: OnlaynOyinchi[] }).oyinchilar ?? [];
+  } catch { return []; }
+}
 
 /** Chaqiruv haqida ma'lumot (ball bermaydi). */
 export async function duelKorish(kod: string): Promise<DuelHolat | null> {

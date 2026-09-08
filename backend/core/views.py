@@ -44,6 +44,7 @@ from . import kanal as K
 from . import liga as L
 from . import masala as M
 from . import masala_kanal as MK
+from . import onlayn as ON
 from . import ovoz as O
 from . import rasm as R
 from .models import (
@@ -1021,7 +1022,32 @@ def duel_boshla(request):
         savollar=_butun(request.data.get("savollar")),
         vaqt=_butun(request.data.get("vaqt")),
     )
-    return Response({**_duel_json(d, ozim=True), "urug": d.urug}, status=201)
+
+    # Onlayn ro'yxatdan tanlangan odamga chaqiruv YUBORILADI.
+    # Havolani qo'lda ulashish ham qoladi — bu qo'shimcha yo'l.
+    kimga = _butun(request.data.get("kimga"))
+    yuborildi = False
+    if kimga:
+        raqib = Profile.objects.filter(pk=kimga).first()
+        if raqib is not None and raqib.pk != profil.pk and ON.chaqirsa_boladimi(raqib):
+            yuborildi = D.chaqiruv_xabari(d, raqib)
+    return Response(
+        {**_duel_json(d, ozim=True), "urug": d.urug, "yuborildi": yuborildi},
+        status=201,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def onlayn_royxat(request):
+    """
+    Hozir ilovada turgan o'yinchilar.
+
+    Duel shu paytgacha faqat havola bilan ishlardi — ya'ni do'sti
+    yo'q bola uni umuman o'ynay olmasdi. Bu ro'yxat o'sha bo'shliqni
+    to'ldiradi (`core/onlayn.py`).
+    """
+    return Response({"oyinchilar": ON.royxat(request.user)})
 
 
 @api_view(["GET"])
