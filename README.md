@@ -424,6 +424,61 @@ to'g'ri sozlangan cron ham yiliga ikki marta bir soatga siljib ketadi.
 `--soat` bilan bu savol butunlay yo'qoladi — Django uchun mahalliy vaqt
 aniq (`TIME_ZONE = Asia/Tashkent`).
 
+### Masala Telegram kanalida
+
+Masala kanalga uch yo'l bilan chiqadi va uchalasi ham bitta koddan
+(`core/masala_kanal.py`) — ikki nusxa bo'lishi mumkin emas:
+
+* ilovadagi admin tugmasi (masala ekranida, faqat `ADMIN_TG` uchun);
+* `masala_post <id>` — buyruq satridan;
+* `masala_post --kunlik` — hali chiqmagan eng eski masalani.
+
+Post uch qismdan iborat: **chizma**, **to'liq shart** va **tugma**.
+Tugma `t.me/<bot>?startapp=masala_<id>` ga olib boradi, ya'ni Mini App
+aynan o'sha masalada ochiladi. Buning uchun botda **Main Mini App
+yoqilgan** bo'lishi shart (BotFather → Configure Mini App) — yoqilmasa
+Telegram tugmani bosgan odamga `BOT_INVALID` deydi.
+
+Javob kanalda **so'ralmaydi**: birinchi izohdagi javob qolgan
+hammaning masalasini o'ldiradi.
+
+**Qayta yuborish.** `masala_post <id> --qayta` (yoki ilovadagi «Qayta
+yuborish») eski postni o'chirib, yangisini chiqaradi. Chizma yoki matn
+tuzatilganda kerak. Bot kanalda administrator bo'lmasa eskisi
+o'chmaydi, lekin yangisi baribir ketadi.
+
+**Kunlik tekshiruv.** Kanaldan post yo'qolsa, masala kunlik postga
+boshqa qaytmaydi va jimgina yo'qoladi. `kanal_tekshir` har kuni
+hammasini ketma-ket tekshiradi, natija masala ekranida ko'rinadi va
+yangi yo'qolganlar haqida adminga xabar ketadi.
+
+```bash
+0 * * * * docker exec aqlzone python manage.py masala_post --kunlik --soat 18
+0 * * * * docker exec aqlzone python manage.py kanal_tekshir --soat 9
+```
+
+Ikkalasi ham cron tomonidan **soat sayin** chaqiriladi va kerakli
+soatni buyruqning o'zi kutadi — sababi yuqorida (`eslatma`).
+
+### Masala chizmalari
+
+Chizmalar omborda, **koddan** turadi (`masala_rasm` buyrug'i) va
+masalaga matni bo'yicha ulanadi:
+
+```bash
+python manage.py masala_rasm --sinov --papka /tmp/chizma   # faylga
+python manage.py masala_rasm                               # bazaga
+```
+
+Muharrirda chizilgan fayl bilan "brend o'zgardi", "masala tahrirlandi"
+yoki "chizmada xato bor" degan o'zgarishni qilib bo'lmasdi — o'n
+beshtasini birma-bir qayta chizishga to'g'ri kelardi.
+
+Har bir masala rasmiga (foydalanuvchi yuklaganiga ham) **AqlZone
+tamg'asi** bosiladi — `core/rasm.py` ichida, ya'ni saqlashning yagona
+yo'lida. Rasm kanaldan skrinshot bo'lib tarqaydi va tamg'asiz u yerda
+manbasiz qolardi.
+
 ### E'lon tarqatish
 
 `/boshqaruv/reklama` — matn yoziladi, Telegram'da qanday ko'rinishi yonida
