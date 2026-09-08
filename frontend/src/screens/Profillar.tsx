@@ -11,6 +11,7 @@
  * yerda saqlanadi), shuning uchun aloqa yo'q bo'lsa buni ochiq aytamiz.
  */
 import { useEffect, useState } from "react";
+import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { joriyProfil, profilQosh, profillar, profilniTanla } from "../lib/api";
@@ -106,7 +107,7 @@ export function Profillar({ onBack }: Props) {
                     text-left shadow-clay-sm ${shu ? "bg-brand-green/15 ring-2 ring-brand-green" : "bg-karta"}`}
                 >
                   <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-track text-[26px]">
-                    {p.avatar || "🦊"}
+                    {avatarBelgi(p.avatar)}
                   </span>
                   <span className="min-w-0 flex-1 font-display text-[16px]">
                     {p.ism || t("profilNomer", { n: i + 1 })}

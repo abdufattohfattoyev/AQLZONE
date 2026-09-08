@@ -27,6 +27,7 @@
  * sahifasiga olib boradi.
  */
 import { useEffect, useRef, useState } from "react";
+import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { sinfNomi } from "../lib/masalaSinf";
@@ -250,7 +251,7 @@ export function Masala({ id, onMuallif, onBack }: Props) {
         className="clay-press mt-3 flex w-full items-center gap-2.5 rounded-clay bg-karta
                    px-3.5 py-2.5 text-left shadow-clay-sm">
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-track text-[15px]">
-          {m.muallif.avatar || "🦊"}
+          {avatarBelgi(m.muallif.avatar)}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] leading-tight">{m.muallif.ism}</span>

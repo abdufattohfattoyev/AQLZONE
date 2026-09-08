@@ -12,6 +12,7 @@
  * shunchaki ro'yxatga aylanadi.
  */
 import { useEffect, useState } from "react";
+import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { getLiga } from "../lib/api";
 import type { Liga, LigaQator, LigaZona } from "../lib/api";
@@ -229,7 +230,7 @@ function Qator({ q, kech }: { q: LigaQator; kech: number }) {
       </span>
 
       <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-track text-[21px]">
-        {q.avatar || "🦊"}
+        {avatarBelgi(q.avatar)}
       </span>
 
       <span className="min-w-0 flex-1">

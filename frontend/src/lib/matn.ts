@@ -860,6 +860,23 @@ const S = {
   bKitob: ["Kitob", "Книга"],
   bRaketa: ["Raketa", "Ракета"],
 
+  /* --- kamyob qavat: tanga yetarli emas, shart ham kerak --- */
+  bOlov: ["Olov", "Огонь"],
+  bBilim: ["Bilim shohi", "Король знаний"],
+  bKubok: ["Kubok", "Кубок"],
+  bKometa: ["Kometa", "Комета"],
+  bOlmos: ["Olmos", "Алмаз"],
+  bAjdar: ["Ajdar", "Дракон"],
+  kamyob: ["Kamyob", "Редкое"],
+  shartYulduz: ["{n} yulduz kerak", "Нужно {n} звёзд"],
+  shartZanjir: ["{n} kunlik zanjir kerak", "Нужна серия {n} дней"],
+  /* Bezak endi boshqalarga ham ko'rinadi — do'konning butun ma'nosi
+     shunda. Ilgari uni faqat bolaning o'zi ko'rardi. */
+  bezakIzoh: [
+    "Kiygan buyumingiz reytingda va masalalarda ko'rinadi",
+    "Надетый предмет виден в рейтинге и в задачах",
+  ],
+
   /* ---------------- nishonlar ---------------- */
   nishonlar: ["Nishonlar", "Награды"],
   nishonHisob: ["{olingan} / {jami} qo'lga kiritildi", "Получено: {olingan} / {jami}"],

@@ -20,6 +20,7 @@
  * yozilgan raqam esa hech narsani isbotlamaydi.
  */
 import { useEffect, useState } from "react";
+import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { botHavolasi, botNomi, chiqish, getHisob, hisobniSaqla, miniAppda } from "../lib/api";
@@ -339,7 +340,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
                 {(hisob.profillar ?? []).map((p) => (
                   <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-track px-3 py-2.5">
                     <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-karta text-[20px]">
-                      {p.avatar || "🦊"}
+                      {avatarBelgi(p.avatar)}
                     </span>
                     <span className="min-w-0 flex-1 text-[14px]">{p.ism || t("ismsiz")}</span>
                   </div>

@@ -19,6 +19,7 @@
  * ekranida to'liq ko'radi.
  */
 import { useEffect, useState } from "react";
+import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { MasalaKarta } from "../components/MasalaKarta";
@@ -69,7 +70,7 @@ export function MasalaMuallif({ profilId, onOch, onMenikilar, onBack }: Props) {
         <>
           <div className="mt-3 rounded-clay bg-karta p-4 text-center shadow-clay-sm">
             <span className="mx-auto grid size-14 place-items-center rounded-full bg-track text-[26px]">
-              {d.muallif.avatar || "🦊"}
+              {avatarBelgi(d.muallif.avatar)}
             </span>
             <p className="mt-2 font-display text-[16px] leading-tight">{d.muallif.ism}</p>
 

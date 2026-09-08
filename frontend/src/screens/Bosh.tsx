@@ -39,6 +39,7 @@
  */
 import { useEffect, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { Logo } from "../components/Logo";
@@ -259,8 +260,10 @@ function Chip(
       className="clay-press flex min-w-0 shrink-0 items-center gap-1.5 rounded-full
                  bg-karta/70 px-2.5 py-1.5 text-[11.5px] text-ink-soft backdrop-blur-sm">
       {avatar ? (
+        // Serverdagi qiymat — do'kon buyumining `id` si ("shlyapa"),
+        // ya'ni uni shundayligicha chizib bo'lmaydi.
         <span className="grid size-[17px] shrink-0 place-items-center rounded-full
-                         bg-track text-[10.5px] leading-none">{avatar}</span>
+                         bg-track text-[10.5px] leading-none">{avatarBelgi(avatar)}</span>
       ) : (
         <Icon name={ic} size={14} className={`shrink-0 ${rang ?? ""}`} />
       )}

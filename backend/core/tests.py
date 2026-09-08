@@ -4332,3 +4332,59 @@ class MasalaKanalTugmaTest(TestCase):
         y = MK.sarlavha(m)
         self.assertIn("Yo'lga chiqdi", y)
         self.assertNotIn("&#x27;", y)
+
+
+class BezakTest(TestCase):
+    """
+    Do'kondan kiyilgan bezak BOSHQALARGA ko'rinishi.
+
+    Do'konning butun ma'nosi shunda: ilgari bezak faqat bolaning
+    o'ziga ko'rinardi va shuning uchun 454 profildan atigi 6 tasi
+    biror narsa sotib olgan.
+    """
+
+    def kir(self, device: str) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def setUp(self):
+        cache.clear()
+        self.token = self.kir("dev-bezak-000000000001")
+        self.profil = Pupil.objects.get(
+            identities__external_id="dev-bezak-000000000001"
+        ).asosiy_profil()
+
+    def test_bezak_saqlanadi(self):
+        r = self.client.post("/api/v1/profil/bezak", {"bezak": "olov"},
+                             content_type="application/json", **self.auth(self.token))
+        self.assertEqual(r.status_code, 200)
+        self.profil.refresh_from_db()
+        self.assertEqual(self.profil.avatar, "olov")
+
+    def test_profil_raqami_talab_qilinmaydi(self):
+        """Bitta profilli hisobda mijoz raqamni umuman bilmaydi —
+        ilgari bezak shu sababdan jimgina yozilmay qolardi."""
+        r = self.client.post("/api/v1/profil/bezak", {"bezak": "toj"},
+                             content_type="application/json", **self.auth(self.token))
+        self.assertEqual(r.json()["avatar"], "toj")
+
+    def test_bezak_masala_muallifida_korinadi(self):
+        self.client.post("/api/v1/profil/bezak", {"bezak": "olmos"},
+                         content_type="application/json", **self.auth(self.token))
+        m = Masala.objects.create(
+            muallif=self.profil, sinf=5, matn="Ikki karra ikki nechchi?",
+            javob="4", yechim="4.", holat=Masala.TASDIQ,
+        )
+        r = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.token))
+        self.assertEqual(r.json()["muallif"]["avatar"], "olmos")
+
+    def test_satr_bolmagan_qiymat_rad_etiladi(self):
+        r = self.client.post("/api/v1/profil/bezak", {"bezak": 12},
+                             content_type="application/json", **self.auth(self.token))
+        self.assertEqual(r.status_code, 400)

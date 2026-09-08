@@ -13,8 +13,9 @@
  */
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
-import { BUYUMLAR, buyumNomi, buyumTop } from "../lib/dokon";
+import { BUYUMLAR, buyumNomi, buyumTop, shartBajarildi, shartMatni } from "../lib/dokon";
 import { t } from "../lib/matn";
+import { useProgress } from "../lib/progress";
 import { useOrqaga } from "../lib/qobiq";
 import type { Progress } from "../lib/types";
 
@@ -27,6 +28,10 @@ interface Props {
 
 export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
   const ozStrelka = useOrqaga(onBack);
+  // Kamyob buyumlarning sharti BUTUN hisobga qaraydi: bola yulduzni
+  // 3-sinfda yig'ib, 1-sinf do'konida ochilmagan buyumni ko'rib
+  // turmasin.
+  const { jamiYulduz, kunlik } = useProgress();
   const olingan = progress.olingan ?? [];
   const kiygan = progress.kiygan ?? "";
   const kiyilgan = kiygan ? buyumTop(kiygan) : undefined;
@@ -75,33 +80,53 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
         )}
       </div>
 
-      {/* ---- buyumlar ---- */}
+      {/* ---- buyumlar ----
+          Kamyob buyumlar YASHIRILMAYDI, faqat sharti yozib qo'yiladi:
+          bola nimaga intilishini ko'rib turishi kerak. Yashirilgan
+          maqsad maqsad emas. */}
       <div className="mt-6 grid grid-cols-2 gap-3">
         {BUYUMLAR.map((b) => {
           const bor = olingan.includes(b.id);
           const shu = kiygan === b.id;
           const yetadi = progress.coins >= b.narx;
+          const ochiq = shartBajarildi(b, jamiYulduz, kunlik.kunlar);
+          const olsaBoladi = bor || (yetadi && ochiq);
 
           return (
             <button
               key={b.id}
               type="button"
               onClick={() => (bor ? onKiy(shu ? "" : b.id) : onSotibOl(b.id, b.narx))}
-              disabled={!bor && !yetadi}
+              disabled={!olsaBoladi}
               className={[
                 "tugma-3d flex flex-col items-center gap-1.5 rounded-clay p-4 shadow-clay-sm",
-                shu ? "bg-brand-green/20 ring-2 ring-brand-green" : "bg-karta",
-                // Tanga yetmasa xira, lekin YASHIRILMAYDI — bola nimaga
-                // intilishini ko'rib turishi kerak.
-                !bor && !yetadi ? "opacity-50" : "",
+                shu ? "bg-brand-green/20 ring-2 ring-brand-green"
+                  : b.kamyob ? "bg-karta ring-1 ring-brand-purple/40" : "bg-karta",
+                // Tanga yetmasa yoki shart bajarilmasa xira, lekin
+                // YASHIRILMAYDI.
+                !olsaBoladi ? "opacity-50" : "",
               ].join(" ")}
             >
+              {b.kamyob && (
+                <span className="rounded-full bg-brand-purple/15 px-2 py-0.5 text-[10px]
+                                 leading-none text-brand-purple">
+                  {t("kamyob")}
+                </span>
+              )}
               <span className="text-[38px] leading-none">{b.belgi}</span>
               <span className="font-display text-[13.5px] leading-tight">{buyumNomi(b)}</span>
 
               {bor ? (
                 <span className={`text-[12px] ${shu ? "text-brand-green-d" : "text-ink-dim"}`}>
                   {shu ? t("kiyilgan") : t("kiyish")}
+                </span>
+              ) : !ochiq ? (
+                /* Shart bajarilmagan — narx emas, SHART ko'rsatiladi:
+                   tangasi yetsa ham bu buyum hali olinmaydi. */
+                <span className="flex items-center gap-1 text-center text-[11px]
+                                 leading-tight text-brand-purple">
+                  <Icon name="lock" size={12} />
+                  {shartMatni(b)}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-[12.5px] text-ink-soft">
@@ -113,6 +138,13 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
           );
         })}
       </div>
+
+      {/* Do'konning butun ma'nosi shu qatorda: bezakni boshqalar ham
+          ko'radi. Ilgari uni faqat bolaning o'zi ko'rardi va shuning
+          uchun 454 profildan atigi 6 tasi biror narsa sotib olgan. */}
+      <p className="mt-5 text-center text-[12px] leading-snug text-ink-dim">
+        {t("bezakIzoh")}
+      </p>
     </div>
   );
 }

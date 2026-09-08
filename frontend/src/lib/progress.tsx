@@ -230,6 +230,8 @@ interface Ctx {
    * 3-sinfda yig'ib, 1-sinfda zanjirini tiklay olmasdi.
    */
   jamiTanga: number;
+  /** Barcha kurslardagi yulduzlar — do'kondagi kamyob buyum sharti. */
+  jamiYulduz: number;
   /** Uzilgan zanjirni tiklash taklifi. Yo'q bo'lsa `null`. */
   tiklash: TiklashTaklifi | null;
   /** Zanjirni tanga evaziga tiklaydi. Tanga yetmasa `false`. */
@@ -406,18 +408,38 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  /**
+   * Aqlga buyum kiydiradi.
+   *
+   * Bezak SERVERGA ham yoziladi (`Profile.avatar`): reyting, masala
+   * muallifi va duel aynan o'sha maydonni ko'rsatadi. Busiz bezakni
+   * faqat bolaning o'zi ko'rardi — do'konning esa butun ma'nosi
+   * boshqalarga ko'rinishida.
+   */
   const kiy = useCallback((c: Course, buyumId: string) => {
     setAll((p) => {
       const cur = p[c.key] ?? BOSH;
       if (buyumId && !(cur.olingan ?? []).includes(buyumId)) return p;
       return { ...p, [c.key]: { ...cur, kiygan: buyumId } };
     });
+    void api.bezakniSaqla(buyumId);
   }, []);
 
   /* ------------------------------------------------ zanjirni tiklash */
 
   const jamiTanga = useMemo(
     () => COURSES.reduce((n, c) => n + (all[c.key]?.coins ?? 0), 0),
+    [all],
+  );
+
+  /**
+   * Barcha kurslardagi yulduzlar yig'indisi.
+   *
+   * Do'kondagi kamyob buyumlarning sharti shu songa qaraydi — ya'ni
+   * ular tanga bilan emas, O'RGANILGAN narsa bilan ochiladi.
+   */
+  const jamiYulduz = useMemo(
+    () => COURSES.reduce((n, c) => n + (all[c.key]?.stars ?? 0), 0),
     [all],
   );
 
@@ -552,7 +574,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     <ProgressCtx.Provider
       value={{
         progressOf, darsTugadi, kunlik: kunlikKorinishi(kunlik), sotibOl, kiy,
-        jamiTanga, tiklash, zanjirniTikla, sinovTugadi, oyinTugadi, tangaYech,
+        jamiTanga, jamiYulduz, tiklash, zanjirniTikla, sinovTugadi, oyinTugadi,
+        tangaYech,
       }}
     >
       {children}

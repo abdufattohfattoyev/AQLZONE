@@ -838,6 +838,31 @@ export async function profillar(): Promise<Profil[] | null> {
   } catch { return null; }
 }
 
+/**
+ * Kiyilgan bezakni SERVERGA yozadi.
+ *
+ * Bezak `Profile.avatar` da turadi va aynan o'sha maydon reytingda,
+ * masala muallifi yonida va duelda ko'rinadi. Ya'ni bu chaqiruvsiz
+ * bezakni faqat bolaning O'ZI ko'rardi — do'konning esa butun ma'nosi
+ * boshqalarga ko'rinishida.
+ *
+ * Xatosi YUTILADI: bezak — bezak, u yozilmagani uchun ekranda hech
+ * narsa buzilmaydi va bolaga xato ko'rsatishning ma'nosi yo'q.
+ * Mahalliy holat baribir saqlanadi va keyingi kiyishda qayta
+ * urinib ko'riladi.
+ */
+export async function bezakniSaqla(buyumId: string): Promise<void> {
+  if (!(await signIn())) return;
+  try {
+    // Profil RAQAMI berilmaydi: bitta profilli hisobda u mijozda
+    // umuman tanlanmagan bo'ladi va bezak jimgina yozilmay qolardi.
+    // Server profilni boshqa yo'llardagi kabi o'zi topadi.
+    await post("/api/v1/profil/bezak", bilanProfil({ bezak: buyumId }));
+  } catch {
+    /* bezak yozilmadi — ekranga ta'siri yo'q */
+  }
+}
+
 export async function profilQosh(ism: string): Promise<Profil | null> {
   if (!token) return null;
   try {

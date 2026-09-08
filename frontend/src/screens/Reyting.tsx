@@ -17,6 +17,7 @@
  * pastda alohida qator bo'lib turadi.
  */
 import { useEffect, useState } from "react";
+import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { LigaJadval } from "../components/LigaJadval";
 import { getReyting } from "../lib/api";
@@ -172,7 +173,7 @@ function Qator({ q, kech }: { q: ReytingQator; kech: number }) {
       </span>
 
       <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-track text-[21px]">
-        {q.avatar || "🦊"}
+        {avatarBelgi(q.avatar)}
       </span>
 
       <span className="min-w-0 flex-1">

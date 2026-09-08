@@ -29,6 +29,7 @@
  * (`<button>` ichida `<button>`), ekran o'qigichda ham buziq
  * chiqadi. Ovoz masalaning o'z ekranida beriladi.
  */
+import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { sinfNomi } from "../lib/masalaSinf";
@@ -149,7 +150,7 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="grid size-[18px] shrink-0 place-items-center rounded-full
                              bg-track text-[10px] leading-none">
-              {m.muallif.avatar || "🦊"}
+              {avatarBelgi(m.muallif.avatar)}
             </span>
             <span className="truncate">{m.muallif.ism}</span>
           </span>

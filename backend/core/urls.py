@@ -11,6 +11,8 @@ urlpatterns = [
     path("me", views.me, name="me"),
     path("profiles", views.profiles, name="profiles"),
     path("profiles/<int:pk>", views.profile_detail, name="profile-detail"),
+    # Do'kondan kiyilgan bezak — joriy profilga yoziladi.
+    path("profil/bezak", views.profil_bezak, name="profil-bezak"),
     path("progress", views.progress, name="progress"),
     path("results", views.results, name="results"),
     path("summary", views.summary, name="summary"),

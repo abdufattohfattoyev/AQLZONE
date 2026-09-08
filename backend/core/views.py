@@ -818,6 +818,30 @@ def profiles(request):
     return Response({"profillar": [_profil_json(p) for p in request.user.profiles.all()]})
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def profil_bezak(request):
+    """
+    Kiyilgan bezakni saqlaydi — JORIY profilga.
+
+    Nega alohida yo'l bor, `profile_detail` turgani holda: u profil
+    RAQAMINI talab qiladi, mijozda esa bitta profilli hisobda raqam
+    umuman tanlanmagan bo'ladi (`joriyProfil()` bo'sh) va bezak
+    jimgina yozilmay qolardi. Bu yerda profil boshqa hamma yo'ldagi
+    kabi `_profil_tanla` bilan topiladi.
+
+    Bezak reytingda, masala muallifi yonida va duelda ko'rinadi —
+    do'konning butun ma'nosi shunda.
+    """
+    profil = _profil_tanla(request)
+    xom = request.data.get("bezak") if hasattr(request.data, "get") else ""
+    if not isinstance(xom, str):
+        return Response({"error": "bezak satr bo'lishi kerak"}, status=400)
+    profil.avatar = xom[:40]
+    profil.save(update_fields=["avatar"])
+    return Response({"ok": True, "avatar": profil.avatar})
+
+
 @api_view(["PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def profile_detail(request, pk: int):
