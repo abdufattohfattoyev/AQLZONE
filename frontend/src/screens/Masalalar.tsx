@@ -49,6 +49,7 @@ import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { t } from "../lib/matn";
 import { MasalaKarta } from "../components/MasalaKarta";
+import { TangaHisob } from "../components/TangaHisob";
 import { SINFLAR } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import type { Holat, Masala, Tartib } from "../lib/masala";
@@ -177,10 +178,17 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
           <span className="truncate">{t("masalaMenikilarQisqa")}</span>
         </button>
 
+        {/* Tanga hisobi — bo'limning butun iqtisodi shu songa
+            nisbatan o'lchanadi ("+10", "15 tanga"). Streak, XP va
+            liga ATAYLAB yo'q: ular boshqa ekranlarda o'z joyida
+            turadi va bu yerda to'rtta bir xil yorliq bo'lib,
+            hech biri o'qilmasdi. */}
+        <span className="ml-auto"><TangaHisob /></span>
+
         {/* Asosiy amal — ro'yxatning ustida emas, YONIDA. Matni
             qisqa, chunki uning izohi keyingi ekranning o'zi. */}
         <button type="button" onClick={onYangi} title={t("masalaYoz")}
-          className="tugma-3d ml-auto flex h-9 shrink-0 items-center gap-1 rounded-full
+          className="tugma-3d flex h-9 shrink-0 items-center gap-1 rounded-full
                      bg-brand-purple pr-3.5 pl-3 text-white shadow-clay-sm">
           <Icon name="plus" size={16} />
           <span className="font-display text-[13px] leading-none">{t("masalaYozQisqa")}</span>

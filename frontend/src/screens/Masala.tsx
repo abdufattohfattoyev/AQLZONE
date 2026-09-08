@@ -27,13 +27,14 @@
  * sahifasiga olib boradi.
  */
 import { useEffect, useRef, useState } from "react";
+import { TangaHisob } from "../components/TangaHisob";
 import { TangaOqim } from "../components/TangaOqim";
 import { TangaSorov } from "../components/TangaSorov";
 import { Variantlar } from "../components/Variantlar";
 import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { sinfNomi } from "../lib/masalaSinf";
+import { sinfNomi, sinfRangi } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import type { JavobNatija, Masala as MasalaTur, Ovoz } from "../lib/masala";
 import { kelasiOvoz, sanoqniHisobla } from "../lib/masalaOvoz";
@@ -315,8 +316,12 @@ export function Masala({ id, onMuallif, onBack }: Props) {
         <h1 className="min-w-0 flex-1 truncate font-display text-[17px] leading-none">
           {t("masalaBitta")}
         </h1>
-        <span className="shadow-ichki shrink-0 rounded-full bg-sahna px-2.5 py-1 text-[11px]
-                         leading-none text-ink-soft">
+        {/* Tanga aynan SHU ekranda sarflanadi va shu yerda topiladi —
+            oynadagi "65 dan 50 qoladi" degan gap sarlavhadagi shu
+            songa nisbatan o'qiladi. */}
+        <TangaHisob />
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] leading-none
+                          ${sinfRangi(m.sinf)}`}>
           {sinfNomi(m.sinf)}
         </span>
 
