@@ -418,6 +418,11 @@ const S = {
   masalaZorlar: ["Eng zo'r", "Лучшие"],
   masalaKoplar: ["Ko'p yechilgan", "Часто решают"],
   masalaHammaSinf: ["Hammasi", "Все"],
+  /* --- yechilganlik filtri --- */
+  masalaHolatHammasi: ["Barchasi", "Все"],
+  masalaHolatYechilmagan: ["Yechilmagan", "Нерешённые"],
+  masalaHolatYechgan: ["Yechganlarim", "Решённые"],
+  masalaJami: ["{n} ta", "{n} шт."],
   masalaYana: ["Yana ko'rsatish", "Показать ещё"],
   /* Sarlavhadagi tugma matni. "Masala qo'shish" u yerga sig'maydi —
      tor telefonda sarlavhani siqib, uni uch nuqtaga aylantirardi. */

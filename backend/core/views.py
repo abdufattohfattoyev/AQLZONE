@@ -1359,7 +1359,11 @@ def duel_yana(request, kod: str):
 
 
 #: Ro'yxatda bir sahifada nechta masala.
-MASALA_SAHIFA = 20
+#:
+#: O'nta — ataylab: kartada endi to'liq kenglikdagi chizma bor va
+#: yigirmatasi telefonda juda uzun tasma yasardi. Sahifalar esa
+#: raqamlanadi, ya'ni odam qayerda turganini ko'radi.
+MASALA_SAHIFA = 10
 
 #: Saralash usullari. Kalit — mijozdan keladigan qiymat.
 #:
@@ -1430,23 +1434,44 @@ def masalalar(request):
     if sinf not in (None, "", "hammasi"):
         qs = qs.filter(sinf=_butun(sinf, -1))
 
+    # Yechgan / yechilmagan filtri.
+    #
+    # "Yechgan" — BIRINCHI urinishda to'g'ri topgani, ya'ni kartadagi
+    # yashil belgi bilan bir xil qoida. Xato javob bergan masala
+    # "yechilmagan" tomonda qoladi va bu ataylab: odam u yerga aynan
+    # qaytib kelishi kerak.
+    holat = request.query_params.get("holat") or "hammasi"
+    yechganlarim = MasalaUrinish.objects.filter(
+        profile=profil, togri=True,
+    ).values("masala_id")
+    if holat == "yechgan":
+        qs = qs.filter(pk__in=yechganlarim)
+    elif holat == "yechilmagan":
+        qs = qs.exclude(pk__in=yechganlarim)
+
     tartib = MASALA_TARTIB.get(request.query_params.get("tartib") or "yangi")
     qs = qs.order_by(*tartib)
 
+    # Jami son SAHIFALAR uchun kerak: odam "3 / 12" ni ko'rib, qayerda
+    # turganini biladi. Bitta qo'shimcha `count()` — filtrlangan
+    # so'rovda u arzon.
+    jami = qs.count()
+    sahifalar = max(1, -(-jami // MASALA_SAHIFA))     # yuqoriga yaxlitlash
     sahifa = max(0, _butun(request.query_params.get("sahifa"), 0))
+    # Ro'yxat qisqarib qolsa (filtr almashdi, masala o'chdi) — oxirgi
+    # mavjud sahifaga tushamiz, bo'sh ekran ko'rsatmaymiz.
+    sahifa = min(sahifa, sahifalar - 1)
     boshi = sahifa * MASALA_SAHIFA
-    # Bittasini ORTIQCHA olamiz: "yana bormi" degan savolga alohida
-    # `count()` so'rovisiz javob beradi.
-    qator = list(qs[boshi:boshi + MASALA_SAHIFA + 1])
-    yana = len(qator) > MASALA_SAHIFA
-    qator = qator[:MASALA_SAHIFA]
+    qator = list(qs[boshi:boshi + MASALA_SAHIFA])
 
     idlar = [m.pk for m in qator]
     ovozlar = M.ovozlarim(profil, idlar)
-    uringan = set(
+    # Urinish natijasi ham kerak: karta "yechgansiz" va
+    # "yecholmagansiz" ni ajratib ko'rsatadi.
+    urinishlar = dict(
         MasalaUrinish.objects
         .filter(profile=profil, masala_id__in=idlar)
-        .values_list("masala_id", flat=True)
+        .values_list("masala_id", "togri")
     )
 
     return Response({
@@ -1456,12 +1481,15 @@ def masalalar(request):
                 "ovozim": ovozlar.get(m.pk, ""),
                 # "Siz buni yechgansiz" belgisi — odam bir masalani
                 # ikki marta ochib o'tirmasin.
-                "uringan": m.pk in uringan,
+                "uringan": m.pk in urinishlar,
+                "birinchiTogri": urinishlar.get(m.pk),
             }
             for m in qator
         ],
-        "yana": yana,
+        "yana": sahifa + 1 < sahifalar,
         "sahifa": sahifa,
+        "sahifalar": sahifalar,
+        "jami": jami,
     })
 
 

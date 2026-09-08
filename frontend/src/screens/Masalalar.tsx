@@ -46,11 +46,12 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
+import type { IconName } from "../lib/icons";
 import { t } from "../lib/matn";
 import { MasalaKarta } from "../components/MasalaKarta";
 import { SINFLAR } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
-import type { Masala, Tartib } from "../lib/masala";
+import type { Holat, Masala, Tartib } from "../lib/masala";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 
 /**
@@ -66,6 +67,20 @@ const TARTIBLAR: { kod: Tartib; belgi: string; nom: () => string }[] = [
   { kod: "qiyin", belgi: "⚡", nom: () => t("masalaQiyinlar") },
   { kod: "zor", belgi: "🔥", nom: () => t("masalaZorlar") },
   { kod: "koplik", belgi: "🎯", nom: () => t("masalaKoplar") },
+];
+
+/**
+ * Yechilganlik filtri.
+ *
+ * "Yechgan" — BIRINCHI urinishda to'g'ri topgani, ya'ni kartadagi
+ * yashil belgi bilan bir xil qoida. Xato javob bergan masala
+ * "yechilmagan" tomonda qoladi va bu ataylab: odam u yerga aynan
+ * qaytib kelishi kerak.
+ */
+const HOLATLAR: { kod: Holat; ic?: IconName; nom: () => string }[] = [
+  { kod: "hammasi", nom: () => t("masalaHolatHammasi") },
+  { kod: "yechilmagan", ic: "repeat", nom: () => t("masalaHolatYechilmagan") },
+  { kod: "yechgan", ic: "check", nom: () => t("masalaHolatYechgan") },
 ];
 
 /**
@@ -91,43 +106,53 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
   const [tartib, setTartib] = useState<Tartib>("yangi");
   const [sinf, setSinf] = useState<number | null>(null);
   const [royxat, setRoyxat] = useState<Masala[]>([]);
-  const [yana, setYana] = useState(false);
   const [sahifa, setSahifa] = useState(0);
+  const [sahifalar, setSahifalar] = useState(1);
+  const [jami, setJami] = useState(0);
+  /** Yechilganlik filtri — hammasi / yechilmagan / yechgan. */
+  const [yechilganlik, setYechilganlik] = useState<Holat>("hammasi");
   const [holat, setHolat] = useState<"yuklanmoqda" | "tayyor" | "xato">("yuklanmoqda");
 
   /**
-   * Ro'yxatni oladi.
+   * Ro'yxatni oladi — bitta SAHIFANI.
    *
-   * `qoshimcha` — "yana" tugmasi bosilganda: natija ustiga
-   * QO'SHILADI, almashtirilmaydi. Almashtirilsa, uzun ro'yxatni
-   * ochgan odam har safar boshiga qaytib tushardi.
+   * Ilgari "yana ko'rsatish" natijani ustiga qo'shardi va ro'yxat
+   * cheksiz cho'zilardi: o'ninchi masaladan keyin odam qayerda
+   * turganini bilmasdi, boshiga qaytish uchun esa uzoq surish
+   * kerak edi. Endi sahifalar raqamlangan va har biri o'nta.
    */
-  const yukla = useCallback(async (s: number, qoshimcha: boolean) => {
-    if (!qoshimcha) setHolat("yuklanmoqda");
+  const yukla = useCallback(async (s: number) => {
+    setHolat("yuklanmoqda");
     try {
-      const d = await MS.royxat(sinf, tartib, s);
-      setRoyxat((eski) => (qoshimcha ? [...eski, ...d.masalalar] : d.masalalar));
-      setYana(d.yana);
-      setSahifa(s);
+      const d = await MS.royxat(sinf, tartib, s, yechilganlik);
+      setRoyxat(d.masalalar);
+      setSahifa(d.sahifa);
+      setSahifalar(d.sahifalar);
+      setJami(d.jami);
       setHolat("tayyor");
+      // Yangi sahifa BOSHIDAN ko'rinadi: aks holda odam o'rtada
+      // qolib, "nima o'zgardi?" degan savol bilan qolardi.
+      if (s > 0) window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       // Bo'sh ekran o'rniga xato yozuvi: internetsiz ochgan odam
       // "bu yerda hech narsa yo'q ekan" deb chiqib ketmasin.
-      if (!qoshimcha) setHolat("xato");
+      setHolat("xato");
     }
-  }, [sinf, tartib]);
+  }, [sinf, tartib, yechilganlik]);
 
-  // Saralash yoki sinf o'zgarsa — birinchi sahifadan qaytadan.
-  useEffect(() => { void yukla(0, false); }, [yukla]);
+  // Saralash, sinf yoki filtr o'zgarsa — birinchi sahifadan qaytadan.
+  useEffect(() => { void yukla(0); }, [yukla]);
 
   const almashtir = (k: Tartib) => { tebrat("tanlov"); setTartib(k); };
   const sinfniTanla = (k: number | null) => { tebrat("tanlov"); setSinf(k); };
+  const holatniTanla = (k: Holat) => { tebrat("tanlov"); setYechilganlik(k); };
 
   /* Filtr tegilmagan bo'lsa — bo'lim haqiqatan bo'sh. Tegilgan
      bo'lsa esa "bu filtrda yo'q" degani va u yerda katta "yozing"
      tugmasi noto'g'ri javob bo'lardi. */
   const bosh = holat === "tayyor" && royxat.length === 0;
-  const butunlayBosh = bosh && sinf === null && tartib === "yangi";
+  const butunlayBosh = bosh && sinf === null && tartib === "yangi"
+    && yechilganlik === "hammasi";
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-3 pb-10">
@@ -197,6 +222,30 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
         ))}
       </div>
 
+      {/* ---- yechilganlik filtri ----
+          Uchta tanlov va ular boshqa ikkalasidan FARQ QILADI: sinf
+          masalaning o'zi haqida, bu esa SIZ haqingizda. Shuning
+          uchun ular alohida qatorda va boshqa shaklda turadi. */}
+      <div className={`${TASMA} mt-2 gap-1.5`}>
+        {HOLATLAR.map((x) => (
+          <button key={x.kod} type="button" onClick={() => holatniTanla(x.kod)}
+            className={`clay-press flex h-7 shrink-0 items-center gap-1 rounded-full px-3
+                        text-[11.5px] whitespace-nowrap transition-colors ${
+              yechilganlik === x.kod
+                ? "bg-brand-green font-display text-white"
+                : "shadow-ichki bg-sahna text-ink-dim"}`}>
+            {x.ic && <Icon name={x.ic} size={12} />}
+            {x.nom()}
+          </button>
+        ))}
+        {/* Nechta topilgani — filtr ishlaganini shu son ko'rsatadi. */}
+        {holat === "tayyor" && jami > 0 && (
+          <span className="ml-auto flex shrink-0 items-center pl-2 text-[11.5px] text-ink-dim">
+            {t("masalaJami", { n: jami })}
+          </span>
+        )}
+      </div>
+
       {/* ---- ro'yxat ---- */}
       {holat === "yuklanmoqda" && (
         <p className="mt-10 text-center text-[13px] text-ink-dim">{t("yuklanyapti")}</p>
@@ -213,13 +262,68 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
         ))}
       </div>
 
-      {yana && (
-        <button type="button" onClick={() => void yukla(sahifa + 1, true)}
-          className="clay-press mt-3 w-full rounded-clay bg-karta py-3 text-[13px]
-                     text-ink-soft shadow-clay-sm">
-          {t("masalaYana")}
-        </button>
+      {sahifalar > 1 && holat === "tayyor" && (
+        <Sahifalar joriy={sahifa} jami={sahifalar} on={(s) => void yukla(s)} />
       )}
+    </div>
+  );
+}
+
+/**
+ * SAHIFA RAQAMLARI.
+ *
+ * Ilgari "yana ko'rsatish" tugmasi bor edi va ro'yxat cheksiz
+ * cho'zilardi: o'ninchi masaladan keyin odam qayerda turganini
+ * bilmasdi va boshiga qaytish uchun uzoq surishga majbur edi.
+ *
+ * Raqamlar telefonda ham sig'ishi kerak, shuning uchun ular
+ * DOIMIY beshta o'rin egallaydi: joriy sahifa o'rtada, ikki
+ * yonida qo'shnilari. Chetlarda esa oyna surilib, birinchi yoki
+ * oxirgi sahifalar ko'rinadi — ya'ni tugmalar sakramaydi.
+ */
+function Sahifalar(
+  { joriy, jami, on }: { joriy: number; jami: number; on: (s: number) => void },
+) {
+  const KO_RINADI = 5;
+  const boshi = Math.max(0, Math.min(joriy - 2, jami - KO_RINADI));
+  const raqamlar = Array.from(
+    { length: Math.min(KO_RINADI, jami) },
+    (_, i) => boshi + i,
+  );
+
+  const oq = (yon: -1 | 1) => {
+    const s = joriy + yon;
+    if (s < 0 || s >= jami) return;
+    tebrat("tanlov");
+    on(s);
+  };
+
+  return (
+    <div className="mt-4 flex items-center justify-center gap-1.5">
+      <button type="button" onClick={() => oq(-1)} disabled={joriy === 0}
+        aria-label={t("ortga")}
+        className="clay-press grid size-9 shrink-0 place-items-center rounded-full bg-karta
+                   text-ink-soft shadow-clay-sm disabled:opacity-40">
+        <Icon name="chevron" size={16} className="rotate-180" />
+      </button>
+
+      {raqamlar.map((s) => (
+        <button key={s} type="button" onClick={() => { tebrat("tanlov"); on(s); }}
+          className={`clay-press grid size-9 shrink-0 place-items-center rounded-full
+                      text-[13px] ${
+            s === joriy
+              ? "bg-brand-purple font-display text-white shadow-clay-sm"
+              : "shadow-ichki bg-sahna text-ink-soft"}`}>
+          {s + 1}
+        </button>
+      ))}
+
+      <button type="button" onClick={() => oq(1)} disabled={joriy + 1 >= jami}
+        aria-label={t("masalaYana")}
+        className="clay-press grid size-9 shrink-0 place-items-center rounded-full bg-karta
+                   text-ink-soft shadow-clay-sm disabled:opacity-40">
+        <Icon name="chevron" size={16} />
+      </button>
     </div>
   );
 }

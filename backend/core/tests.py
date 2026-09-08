@@ -4538,3 +4538,85 @@ class OnlaynTest(TestCase):
                                  content_type="application/json", **self.auth(self.token))
         s.assert_not_called()
         self.assertFalse(r.json()["yuborildi"])
+
+
+class MasalaFiltrTest(TestCase):
+    """
+    Yechilganlik filtri va sahifalar.
+
+    "Yechgan" — BIRINCHI urinishda to'g'ri topgani. Xato javob
+    bergan masala "yechilmagan" tomonda qoladi: odam u yerga aynan
+    qaytishi kerak.
+    """
+
+    def kir(self, device: str) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def setUp(self):
+        cache.clear()
+        self.token = self.kir("dev-filtr-000000000001")
+        self.muallif = Pupil.objects.create(first_name="Muallif").asosiy_profil()
+        self.masalalar = [
+            Masala.objects.create(
+                muallif=self.muallif, sinf=5, holat=Masala.TASDIQ,
+                matn=f"Masala raqami {i} — nechchi?", javob=str(i), yechim=f"{i}.",
+            )
+            for i in range(1, 26)
+        ]
+
+    def royxat(self, **q) -> dict:
+        s = "&".join(f"{k}={v}" for k, v in q.items())
+        return self.client.get(f"/api/v1/masalalar?{s}", **self.auth(self.token)).json()
+
+    def test_sahifada_ontadan(self):
+        d = self.royxat()
+        self.assertEqual(len(d["masalalar"]), 10)
+        self.assertEqual(d["jami"], 25)
+        self.assertEqual(d["sahifalar"], 3)
+        self.assertTrue(d["yana"])
+
+    def test_oxirgi_sahifada_qoldigi(self):
+        d = self.royxat(sahifa=2)
+        self.assertEqual(len(d["masalalar"]), 5)
+        self.assertFalse(d["yana"])
+
+    def test_yoq_sahifa_oxirgisiga_tushadi(self):
+        """Filtr almashganda odam bo'sh ekranga tushib qolmasin."""
+        d = self.royxat(sahifa=99)
+        self.assertEqual(d["sahifa"], 2)
+        self.assertEqual(len(d["masalalar"]), 5)
+
+    def javob_ber(self, m: Masala, javob: str) -> None:
+        self.client.post(f"/api/v1/masalalar/{m.pk}/javob", {"javob": javob},
+                         content_type="application/json", **self.auth(self.token))
+
+    def test_yechgan_filtri(self):
+        self.javob_ber(self.masalalar[0], "1")          # to'g'ri
+        self.javob_ber(self.masalalar[1], "xato")       # xato
+        d = self.royxat(holat="yechgan")
+        self.assertEqual(d["jami"], 1)
+        self.assertIn("raqami 1 ", d["masalalar"][0]["matn"])
+
+    def test_yechilmagan_filtri_xatoni_ham_oladi(self):
+        self.javob_ber(self.masalalar[0], "1")          # to'g'ri
+        self.javob_ber(self.masalalar[1], "xato")       # xato
+        d = self.royxat(holat="yechilmagan")
+        # 25 tadan bittasi yechildi — qolgani shu filtrda.
+        self.assertEqual(d["jami"], 24)
+        matnlar = " ".join(x["matn"] for x in d["masalalar"])
+        self.assertNotIn("raqami 1 ", matnlar)
+
+    def test_royxatda_yechgan_belgisi_bor(self):
+        """Karta "yechgansiz" va "yecholmagansiz" ni ajratadi —
+        buning uchun ro'yxatda `birinchiTogri` bo'lishi kerak."""
+        self.javob_ber(self.masalalar[0], "1")
+        d = self.royxat(holat="yechgan")
+        self.assertTrue(d["masalalar"][0]["uringan"])
+        self.assertTrue(d["masalalar"][0]["birinchiTogri"])

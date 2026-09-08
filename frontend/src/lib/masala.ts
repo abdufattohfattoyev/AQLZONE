@@ -71,10 +71,23 @@ export interface Royxat {
   masalalar: Masala[];
   yana: boolean;
   sahifa: number;
+  /** Nechta sahifa bor — raqamlar shundan chiziladi. */
+  sahifalar: number;
+  /** Filtrga tushgan masalalarning jami soni. */
+  jami: number;
 }
 
 /** Ro'yxat saralash usullari. */
 export type Tartib = "yangi" | "zor" | "qiyin" | "koplik";
+
+/**
+ * Yechilganlik filtri.
+ *
+ * "yechgan" — BIRINCHI urinishda to'g'ri topgani, ya'ni kartadagi
+ * yashil belgi bilan bir xil qoida. Xato javob bergan masala
+ * "yechilmagan" tomonda qoladi: odam u yerga aynan qaytishi kerak.
+ */
+export type Holat = "hammasi" | "yechilmagan" | "yechgan";
 
 export interface JavobNatija {
   togri: boolean;
@@ -108,9 +121,9 @@ export interface Menikilar {
 /* ------------------------------------------------------------------ o'qish */
 
 export function royxat(
-  sinf: number | null, tartib: Tartib, sahifa = 0,
+  sinf: number | null, tartib: Tartib, sahifa = 0, holat: Holat = "hammasi",
 ): Promise<Royxat> {
-  const q = new URLSearchParams({ tartib, sahifa: String(sahifa) });
+  const q = new URLSearchParams({ tartib, sahifa: String(sahifa), holat });
   if (sinf !== null) q.set("sinf", String(sinf));
   return sorov<Royxat>(`/api/v1/masalalar?${q}${profilQuery("&")}`);
 }
