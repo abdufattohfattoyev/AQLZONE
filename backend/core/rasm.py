@@ -18,6 +18,10 @@ Kelgan faylni shundayligicha saqlash mumkin emas va sabab uchta.
 3. HAJM. 4000 pikselli surat o'n barobar ko'p joy egallaydi va
    sekin internetda ochilmaydi. Masalaga esa 1600 piksel yetadi.
 
+4. TAMG'A. Rasm kanalga chiqadi va u yerdan skrinshot bo'lib tarqaydi.
+   Qayta kodlash — brend belgisini bosish uchun yagona kafolatlangan
+   nuqta (`tamga.py` dagi izohga qarang).
+
 Natija HAR DOIM WebP: bitta format — bitta yo'l. Serverda saqlangan
 fayllar turli formatda bo'lsa, ularni ko'rsatadigan har joyda
 "bu qaysi turda edi?" degan savol paydo bo'lardi.
@@ -28,6 +32,8 @@ import io
 
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
+
+from .tamga import tamgala
 
 try:
     from PIL import Image, ImageOps
@@ -129,6 +135,11 @@ def tayyorla(fayl) -> InMemoryUploadedFile:
 
     olcham = settings.MASALA_RASM_OLCHAM
     img.thumbnail((olcham, olcham), Image.LANCZOS)
+
+    # Tamg'a KICHRAYTIRGANDAN keyin bosiladi: aks holda u ham birga
+    # kichrayib, katta suratda o'qib bo'lmaydigan dog'ga aylanardi.
+    # Bu yagona joy — bazaga tushadigan har bir rasm shu yerdan o'tadi.
+    img = tamgala(img)
 
     chiqish = io.BytesIO()
     img.save(chiqish, format="WEBP", quality=82, method=4)

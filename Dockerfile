@@ -26,6 +26,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Shrift masala rasmidagi AqlZone tamg'asi uchun kerak (`core/tamga.py`).
+# `python:slim` obrazida birorta ham shrift yo'q va tamg'a yozuvsiz —
+# faqat belgi bo'lib — bosilardi.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 

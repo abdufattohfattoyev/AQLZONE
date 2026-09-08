@@ -64,7 +64,24 @@ export interface Masala {
    * Oddiy foydalanuvchida maydonning o'zi yo'q, ya'ni tugma ham
    * chizilmaydi va serverga so'rov ham ketmaydi.
    */
-  kanal?: { mumkin: boolean; yuborilgan: boolean; havola?: string };
+  kanal?: KanalHolat & { mumkin: boolean };
+}
+
+/** Masalaning kanaldagi ahvoli — admin qatori shundan chiziladi. */
+export interface KanalHolat {
+  yuborilgan: boolean;
+  /** Postning o'ziga havola (`t.me/<kanal>/<id>`). */
+  havola?: string;
+  /**
+   * Kunlik tekshiruv postni KANALDA TOPMADI.
+   *
+   * Ya'ni masala bir marta chiqqan, keyin o'chib ketgan. Admin uchun
+   * bu "qayta yuborish" degan chaqiriq — shuning uchun alohida
+   * bayroq: `yuborilgan` o'zi bu holatni ayta olmaydi.
+   */
+  yoq?: boolean;
+  /** Oxirgi tekshiruv payti (ISO). Hech tekshirilmagan bo'lsa yo'q. */
+  tekshirilgan?: string | null;
 }
 
 export interface Royxat {
@@ -148,12 +165,6 @@ export const ovozBer = (
   sorov(`/api/v1/masalalar/${id}/ovoz`, bilanProfil({ tur }));
 
 /**
- * Masalani Telegram kanaliga joylaydi — FAQAT admin.
- *
- * Boshqa odamda bu yo'l umuman yo'q (server 404 qaytaradi) va
- * tugma ham ko'rinmaydi: `kanal` maydoni javobga qo'shilmaydi.
- */
-/**
  * Yechimni ochadi — tanga to'langandan keyin (yoki uch urinishdan
  * keyin bepul). Tanga MIJOZDA yechiladi, server faqat ochilganini
  * yozib qo'yadi.
@@ -163,10 +174,21 @@ export const yechimniOch = (
 ): Promise<{ yechim: string; javob: string }> =>
   sorov(`/api/v1/masalalar/${id}/yechim`, bilanProfil({}));
 
+/**
+ * Masalani Telegram kanaliga joylaydi — FAQAT admin.
+ *
+ * Boshqa odamda bu yo'l umuman yo'q (server 404 qaytaradi) va
+ * tugma ham ko'rinmaydi: `kanal` maydoni javobga qo'shilmaydi.
+ *
+ * `qayta` — allaqachon joylangan masalani qaytadan yuborish. Server
+ * eski postni o'chirib, yangisini chiqaradi. Bayroqsiz so'rov esa
+ * ikkinchi marta yubormaydi (`takror` qaytadi) — bexosdan bosilgan
+ * tugma kanalga dubl chiqarmasligi uchun.
+ */
 export const kanalgaYubor = (
-  id: number,
-): Promise<{ yuborilgan: boolean; havola: string }> =>
-  sorov(`/api/v1/masalalar/${id}/kanal`, bilanProfil({}));
+  id: number, qayta = false,
+): Promise<KanalHolat & { yuborilgan: boolean }> =>
+  sorov(`/api/v1/masalalar/${id}/kanal`, bilanProfil(qayta ? { qayta: true } : {}));
 
 export interface YangiMasala {
   sinf: number;

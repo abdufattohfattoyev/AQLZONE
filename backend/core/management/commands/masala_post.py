@@ -4,6 +4,7 @@ Masalani Telegram kanaliga joylash — buyruq satridan.
     python manage.py masala_post --sinov       # nima ketishini ko'rsatadi
     python manage.py masala_post --kunlik      # bugungi masalani joylaydi
     python manage.py masala_post 12            # aynan shu masalani
+    python manage.py masala_post 12 --qayta    # eskisini o'chirib, qaytadan
 
 Butun mantiq `core/masala_kanal.py` da: xuddi shu ish ilovadagi
 admin tugmasidan ham bajariladi va ikki nusxa bo'lishi mumkin emas.
@@ -37,6 +38,9 @@ class Command(BaseCommand):
                             help="hali joylanmagan eng eski masalani tanlaydi")
         parser.add_argument("--sinov", action="store_true",
                             help="yubormaydi, faqat ko'rsatadi")
+        parser.add_argument("--qayta", action="store_true",
+                            help="allaqachon joylangan bo'lsa ham qayta "
+                                 "yuboradi (eskisi o'chiriladi)")
         parser.add_argument("--soat", type=int, default=None,
                             help="Faqat shu soatda ishlaydi (Toshkent vaqti). "
                                  "Cron'ni soat sayin chaqirish uchun.")
@@ -77,7 +81,7 @@ class Command(BaseCommand):
             self.stdout.write("(sinov — yuborilmadi)")
             return
 
-        holat, izoh = MK.yubor(masala)
+        holat, izoh = MK.yubor(masala, qayta=o["qayta"])
         if holat != "yuborildi":
             self.stderr.write(f"yuborilmadi ({holat}): {izoh}")
             return

@@ -39,6 +39,21 @@ import { useProgress } from "../lib/progress";
 import { masalaniUlash } from "../lib/ulash";
 import { havolaniOch, tebrat, useOrqaga } from "../lib/qobiq";
 
+/**
+ * "05.09 14:30" — kanal tekshiruvi qachon bo'lgani.
+ *
+ * Yil ATAYLAB yo'q: tekshiruv har kuni ishlaydi, ya'ni sana deyarli
+ * har doim shu haftaniki. Yil esa qatorni cho'zib, undan muhimroq
+ * yozuvni telefonda siqib qo'yardi.
+ */
+function qisqaSana(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const ikki = (n: number) => String(n).padStart(2, "0");
+  return `${ikki(d.getDate())}.${ikki(d.getMonth() + 1)} `
+    + `${ikki(d.getHours())}:${ikki(d.getMinutes())}`;
+}
+
 interface Props {
   id: number;
   onMuallif: (profilId: number) => void;
@@ -63,10 +78,19 @@ export function Masala({ id, onMuallif, onBack }: Props) {
    * ketib qolmasligi uchun: kanal xabarini qaytarib olib bo'lmaydi.
    */
   const [kanal, setKanal] = useState<
-    "yopiq" | "sorayapti" | "ketmoqda" | "bordi" | "xato"
+    "yopiq" | "sorayapti" | "qaytaSorayapti" | "ketmoqda" | "bordi" | "xato"
   >("yopiq");
   /** Kanaldagi postning manzili — yuborilgandan keyin paydo bo'ladi. */
   const [kanalHavola, setKanalHavola] = useState("");
+  /**
+   * Kunlik tekshiruv postni kanalda topmadi.
+   *
+   * `kanal === "bordi"` bilan birga turadi va bu ziddiyat emas:
+   * masala bir marta CHIQQAN, keyin post o'chib ketgan. Aynan shu
+   * holatda "qayta yuborish" eng kerak bo'ladi.
+   */
+  const [kanalYoq, setKanalYoq] = useState(false);
+  const [kanalTekshirildi, setKanalTekshirildi] = useState("");
 
   /** Tanga evaziga (yoki bepul) ochilgan yechim. */
   const [ochilgan, setOchilgan] = useState<{ yechim: string; javob: string } | null>(null);
@@ -89,6 +113,7 @@ export function Masala({ id, onMuallif, onBack }: Props) {
     let bekor = false;
     setM(null); setXato(false); setNatija(null); setJavob("");
     setKanal("yopiq"); setKanalHavola("");
+    setKanalYoq(false); setKanalTekshirildi("");
     setOchilgan(null); setMukofotOlindi(0);
     ochiqEdi.current = false;
     MS.bittasi(id)
@@ -101,6 +126,8 @@ export function Masala({ id, onMuallif, onBack }: Props) {
         if (d.kanal?.yuborilgan) {
           setKanal("bordi");
           setKanalHavola(d.kanal.havola ?? "");
+          setKanalYoq(Boolean(d.kanal.yoq));
+          setKanalTekshirildi(d.kanal.tekshirilgan ?? "");
         }
       })
       .catch(() => { if (!bekor) setXato(true); });
@@ -169,14 +196,22 @@ export function Masala({ id, onMuallif, onBack }: Props) {
    *
    * Kanal xabarini o'chirib bo'lmaydi (u obunachilarga allaqachon
    * yetib boradi), shuning uchun bu yerda ikkinchi bosish shart.
+   *
+   * `qayta` — allaqachon chiqqan postni yangilash. Tasdiq bu yerda
+   * ham so'raladi va matni boshqacha: qayta yuborishda ESKI post
+   * o'chadi, ya'ni bu ham qaytarib bo'lmaydigan qadam.
    */
-  const kanalgaYubor = async () => {
+  const kanalgaYubor = async (qayta = false) => {
     if (!m || kanal === "ketmoqda") return;
     setKanal("ketmoqda");
     try {
-      const d = await MS.kanalgaYubor(m.id);
+      const d = await MS.kanalgaYubor(m.id, qayta);
       tebrat("yutuq");
       setKanalHavola(d.havola ?? "");
+      // Yangi post — "yo'q" belgisi darhol so'nadi: admin natijani
+      // keyingi kunlik tekshiruvni kutmasdan ko'rishi kerak.
+      setKanalYoq(Boolean(d.yoq));
+      setKanalTekshirildi(d.tekshirilgan ?? "");
       setKanal("bordi");
     } catch {
       setKanal("xato");
@@ -295,35 +330,59 @@ export function Masala({ id, onMuallif, onBack }: Props) {
       {m.kanal?.mumkin && (
         <div className="mt-3 rounded-clay border-[1.5px] border-dashed border-track px-3.5 py-2.5">
           {kanal === "bordi" ? (
-            /* Yuborilgandan keyin — kanaldagi POSTNING o'ziga o'tish.
-               Admin uni ko'z bilan tekshirmasa, rasm qanday chiqqanini
-               va tugmalar ishlashini bilmaydi. */
-            <div className="flex items-center gap-2">
-              <span className="flex min-w-0 flex-1 items-center gap-2 text-[12.5px]
-                               text-brand-green">
-                <Icon name="check" size={15} className="shrink-0" />
-                {t("masalaKanalBordi")}
+            /* Yuborilgandan keyin ikki qator: TEPADA holat, PASTDA
+               amallar. Holat ikki xil bo'ladi — post joyida yoki
+               kunlik tekshiruv uni topmagan. Amallar esa har ikkala
+               holatda ham kerak: postni ko'rish va qayta yuborish. */
+            <div className="flex flex-col gap-2">
+              <span className={`flex min-w-0 items-center gap-2 text-[12.5px]
+                                ${kanalYoq ? "text-brand-red" : "text-brand-green"}`}>
+                <Icon name={kanalYoq ? "repeat" : "check"} size={15} className="shrink-0" />
+                <span className="min-w-0 flex-1 truncate">
+                  {kanalYoq ? t("masalaKanalYoqdi") : t("masalaKanalBordi")}
+                </span>
+                {kanalTekshirildi && (
+                  <span className="shrink-0 text-[11px] text-ink-soft">
+                    {qisqaSana(kanalTekshirildi)} {t("masalaKanalTekshirildi")}
+                  </span>
+                )}
               </span>
-              {kanalHavola && (
-                <button type="button" onClick={() => havolaniOch(kanalHavola)}
-                  className="clay-press flex shrink-0 items-center gap-1 rounded-full
-                             bg-brand-blue px-3 py-1.5 text-[12px] text-white">
-                  {t("masalaKanalKorish")}
-                  <Icon name="chevron" size={13} />
+              <div className="flex items-center gap-2">
+                {kanalHavola && !kanalYoq && (
+                  <button type="button" onClick={() => havolaniOch(kanalHavola)}
+                    className="clay-press flex shrink-0 items-center gap-1 rounded-full
+                               bg-brand-blue px-3 py-1.5 text-[12px] text-white">
+                    {t("masalaKanalKorish")}
+                    <Icon name="chevron" size={13} />
+                  </button>
+                )}
+                {/* Qayta yuborish HAR DOIM turadi, faqat yo'qolganda
+                    emas: chizma yoki matn tuzatilgandan keyin ham
+                    kanaldagi post eskirib qoladi. */}
+                <button type="button" onClick={() => setKanal("qaytaSorayapti")}
+                  className={`clay-press flex shrink-0 items-center gap-1 rounded-full
+                              px-3 py-1.5 text-[12px] ${kanalYoq
+                                ? "bg-brand-green text-white"
+                                : "bg-track text-ink-soft"}`}>
+                  <Icon name="repeat" size={13} />
+                  {t("masalaKanalQayta")}
                 </button>
-              )}
+              </div>
             </div>
-          ) : kanal === "sorayapti" ? (
+          ) : kanal === "sorayapti" || kanal === "qaytaSorayapti" ? (
             <div className="flex items-center gap-2">
               <span className="min-w-0 flex-1 text-[12.5px] text-ink-soft">
-                {t("masalaKanalSorov")}
+                {t(kanal === "qaytaSorayapti"
+                  ? "masalaKanalQaytaSorov" : "masalaKanalSorov")}
               </span>
-              <button type="button" onClick={() => void kanalgaYubor()}
+              <button type="button"
+                onClick={() => void kanalgaYubor(kanal === "qaytaSorayapti")}
                 className="clay-press shrink-0 rounded-full bg-brand-green px-3 py-1.5
                            text-[12px] text-white">
                 {t("masalaKanalHa")}
               </button>
-              <button type="button" onClick={() => setKanal("yopiq")}
+              <button type="button"
+                onClick={() => setKanal(kanal === "qaytaSorayapti" ? "bordi" : "yopiq")}
                 className="clay-press shrink-0 rounded-full bg-track px-3 py-1.5
                            text-[12px] text-ink-soft">
                 {t("masalaKanalYoq")}

@@ -4237,8 +4237,10 @@ class MasalaKanalTugmaTest(TestCase):
         r = self.client.get(f"/api/v1/masalalar/{self.m.pk}", **self.auth(self.token))
         self.assertEqual(
             r.json()["kanal"],
-            # Havola hali bo'sh: post yuborilmagan.
-            {"mumkin": True, "yuborilgan": False, "havola": ""},
+            # Havola hali bo'sh: post yuborilmagan. `yoq` ham false —
+            # yo'qolgan post bu emas, hali umuman chiqmagan post.
+            {"mumkin": True, "yuborilgan": False, "havola": "",
+             "yoq": False, "tekshirilgan": None},
         )
 
     def test_oddiy_odam_yubora_olmaydi(self):
@@ -4353,6 +4355,248 @@ class MasalaKanalTugmaTest(TestCase):
         y = MK.sarlavha(m)
         self.assertIn("Yo'lga chiqdi", y)
         self.assertNotIn("&#x27;", y)
+
+
+@override_settings(BOT_USERNAME="aqlzone_bot", KANAL="aqlzone",
+                   ADMIN_TG=["973358587"], BOT_TOKEN="sinov:token")
+class KanalTekshiruvTest(TestCase):
+    """
+    Kanaldagi post joyidami — kunlik tekshiruv va qayta yuborish.
+
+    Diqqat qaratilgan joy — UCHINCHI HOLAT. Tekshiruv "bor" va "yo'q"
+    dan tashqari "noma'lum" ni ham qaytaradi va aynan shu holatda
+    bayroqqa TEGMASLIGI kerak: tarmoq bir kun javob bermasa, butun
+    kanal "yo'q bo'lib ketgan" deb belgilanardi va admin o'nlab
+    postni behuda qayta yuborardi.
+    """
+
+    def setUp(self):
+        cache.clear()
+        pupil = Pupil.objects.create(first_name="Muallif")
+        self.profil = pupil.asosiy_profil()
+        self.m = Masala.objects.create(
+            muallif=self.profil, sinf=5, matn="Ikki karra ikki nechchi?",
+            javob="4", yechim="4.", holat=Masala.TASDIQ,
+            kanal_at=timezone.now(), kanal_post_id=314,
+        )
+
+    # ─────────────────────────────────────── post_bormi
+
+    def test_ozgarmadi_degani_post_bor_degani(self):
+        """Telegram'ning "message is not modified" xatosi — bu XATO
+        emas, tasdiq: o'zgartiradigan xabar joyida turibdi."""
+        with patch("core.xabar._sorov",
+                   return_value=(False, 400, "Bad Request: message is not modified")):
+            self.assertEqual(xabar.post_bormi("@aqlzone", 314), "bor")
+
+    def test_topilmadi_degani_post_yoq(self):
+        with patch("core.xabar._sorov",
+                   return_value=(False, 400, "Bad Request: message to edit not found")):
+            self.assertEqual(xabar.post_bormi("@aqlzone", 314), "yoq")
+
+    def test_notanish_xato_nomalum_qoladi(self):
+        with patch("core.xabar._sorov", return_value=(False, 0, "timed out")):
+            self.assertEqual(xabar.post_bormi("@aqlzone", 314), "nomalum")
+
+    # ─────────────────────────────────────── tekshir()
+
+    def test_yoq_bolsa_bayroq_qoyiladi(self):
+        with patch("core.xabar._sorov",
+                   return_value=(False, 400, "message to edit not found")):
+            self.assertEqual(MK.tekshir(self.m), "yoq")
+        self.m.refresh_from_db()
+        self.assertTrue(self.m.kanal_yoq)
+        self.assertIsNotNone(self.m.kanal_tekshir_at)
+
+    def test_nomalum_bayroqqa_tegmaydi(self):
+        self.m.kanal_yoq = True
+        self.m.save(update_fields=["kanal_yoq"])
+        with patch("core.xabar._sorov", return_value=(False, 0, "timed out")):
+            self.assertEqual(MK.tekshir(self.m), "nomalum")
+        self.m.refresh_from_db()
+        # Bayroq O'ZGARMAGAN, lekin tekshirilgan vaqt yozilgan.
+        self.assertTrue(self.m.kanal_yoq)
+        self.assertIsNotNone(self.m.kanal_tekshir_at)
+
+    def test_topilsa_bayroq_sonadi(self):
+        self.m.kanal_yoq = True
+        self.m.save(update_fields=["kanal_yoq"])
+        with patch("core.xabar._sorov", return_value=(True, 200, "")):
+            self.assertEqual(MK.tekshir(self.m), "bor")
+        self.m.refresh_from_db()
+        self.assertFalse(self.m.kanal_yoq)
+
+    def test_yuborilmagan_masala_tekshirilmaydi(self):
+        yangi = Masala.objects.create(
+            muallif=self.profil, sinf=5, matn="Hali yuborilmagan.",
+            javob="1", yechim="1.", holat=Masala.TASDIQ,
+        )
+        with patch("core.xabar._sorov") as s:
+            self.assertEqual(MK.tekshir(yangi), "yuborilmagan")
+        s.assert_not_called()
+
+    def test_tekshiruv_postdagi_tugmalarni_qaytaradi(self):
+        """Tekshiruv postni buzmaydi — u AYNAN o'sha tugmalarni
+        qayta qo'yadi. Ro'yxat `yubor` bilan bir manbadan olinadi."""
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            MK.tekshir(self.m)
+        payload = s.call_args[0][1]
+        tugmalar = payload["reply_markup"]["inline_keyboard"]
+        self.assertEqual(payload["message_id"], 314)
+        self.assertEqual(tugmalar[0][0]["url"], MK.havola(self.m))
+        self.assertEqual(tugmalar[1][0]["url"], MK.royxat_havolasi())
+
+    # ─────────────────────────────────────── qayta yuborish
+
+    def test_qaytasiz_ikkinchi_marta_ketmaydi(self):
+        with patch("core.xabar._sorov") as s:
+            self.assertEqual(MK.yubor(self.m)[0], "takror")
+        s.assert_not_called()
+
+    def test_qayta_eskisini_ochirib_yuboradi(self):
+        with patch("core.xabar.post_ochir", return_value="ochirildi") as o, \
+             patch("core.xabar._sorov", return_value=(True, 200, "")):
+            self.assertEqual(MK.yubor(self.m, qayta=True)[0], "yuborildi")
+        o.assert_called_once_with("@aqlzone", 314)
+
+    def test_qayta_yuborish_yoq_bayrogini_sondiradi(self):
+        self.m.kanal_yoq = True
+        self.m.save(update_fields=["kanal_yoq"])
+        with patch("core.xabar.post_ochir", return_value="yoq"), \
+             patch("core.xabar._sorov", return_value=(True, 200, "")):
+            MK.yubor(self.m, qayta=True)
+        self.m.refresh_from_db()
+        self.assertFalse(self.m.kanal_yoq)
+        self.assertIsNotNone(self.m.kanal_tekshir_at)
+
+    def test_eskisi_ochmasa_ham_yangisi_ketadi(self):
+        """Bot kanalda administrator bo'lmasa o'chirish ishlamaydi.
+        Dubl — masalasiz kanaldan yaxshiroq, shuning uchun post
+        baribir chiqadi."""
+        with patch("core.xabar.post_ochir", return_value="xato"), \
+             patch("core.xabar._sorov", return_value=(True, 200, "")):
+            self.assertEqual(MK.yubor(self.m, qayta=True)[0], "yuborildi")
+
+    # ─────────────────────────────────────── buyruq
+
+    def test_buyruq_yangi_yoqolganlarni_adminga_aytadi(self):
+        with patch("core.xabar._sorov",
+                   return_value=(False, 400, "message to edit not found")), \
+             patch("core.xabar.yubor") as y:
+            call_command("kanal_tekshir", stdout=StringIO(), stderr=StringIO())
+        self.assertEqual(y.call_count, 1)
+        self.assertIn("Kanalda topilmadi", y.call_args[0][1])
+
+    def test_buyruq_eski_yoqolgan_uchun_qayta_xabar_bermaydi(self):
+        """Bir marta o'chirilgan post har kuni xabar berib tursa,
+        admin bu xabarlarni bir haftada umuman o'qimay qo'yardi."""
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        self.m.kanal_yoq = True
+        self.m.save(update_fields=["kanal_yoq"])
+        with patch("core.xabar._sorov",
+                   return_value=(False, 400, "message to edit not found")), \
+             patch("core.xabar.yubor") as y:
+            call_command("kanal_tekshir", stdout=StringIO(), stderr=StringIO())
+        y.assert_not_called()
+
+    def test_buyruq_soat_mos_kelmasa_ishlamaydi(self):
+        """Cron buyruqni SOAT SAYIN chaqiradi — kerakli soatni
+        buyruqning o'zi kutadi (server CEST, konteyner UTC)."""
+        soat = (timezone.localtime().hour + 3) % 24
+        with patch("core.xabar._sorov") as s:
+            call_command("kanal_tekshir", "--soat", str(soat),
+                         stdout=StringIO(), stderr=StringIO())
+        s.assert_not_called()
+
+
+class TamgaTest(TestCase):
+    """
+    Masala rasmidagi AqlZone belgisi.
+
+    Diqqat qaratilgan joy — TAMG'A SAQLASH YO'LIDA turishi. Uni har
+    bir chaqiruvchida alohida bosish mumkin edi, lekin bitta joyda
+    unutilsa tamg'asiz rasm bazaga tushib ketardi va o'sha rasm
+    kanalga chiqib, manbasiz tarqab ketardi.
+    """
+
+    def rasm_yasa(self, en=900, bal=700):
+        from io import BytesIO
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image as PILImage
+
+        xotira = BytesIO()
+        PILImage.new("RGB", (en, bal), (255, 255, 255)).save(xotira, "PNG")
+        return SimpleUploadedFile("chizma.png", xotira.getvalue(), "image/png")
+
+    def och(self, fayl):
+        from PIL import Image as PILImage
+
+        img = PILImage.open(fayl)
+        img.load()
+        return img.convert("RGB")
+
+    def tayyorla(self, fayl):
+        from core.rasm import tayyorla
+
+        return tayyorla(fayl)
+
+    def test_yuklangan_rasmda_tamga_paydo_boladi(self):
+        """Oq rasmning o'ng pastki burchagi endi oq emas — u yerda
+        belgi turibdi."""
+        oldin = self.och(self.rasm_yasa())
+        keyin = self.och(self.tayyorla(self.rasm_yasa()))
+        burchak = (keyin.width - 60, keyin.height - 40)
+        self.assertEqual(oldin.getpixel(burchak), (255, 255, 255))
+        self.assertNotEqual(keyin.getpixel(burchak), (255, 255, 255))
+
+    def test_chizmaning_ozi_tegilmaydi(self):
+        """Tamg'a burchakda turadi, ya'ni chizmaning markazi va yuqori
+        qismi o'zgarmaydi — aks holda u masalani yopib qo'yardi."""
+        keyin = self.och(self.tayyorla(self.rasm_yasa()))
+        self.assertEqual(keyin.getpixel((keyin.width // 2, 100)), (255, 255, 255))
+
+    def test_juda_kichik_rasm_tamgasiz_qoladi(self):
+        """Belgi rasmning yarmiga aylanadigan joyda u umuman
+        bosilmaydi: o'sha holatda tamg'a masalani yopib qo'yardi."""
+        kichik = self.och(self.rasm_yasa(120, 90))
+        keyin = self.och(self.tayyorla(self.rasm_yasa(120, 90)))
+        self.assertEqual(kichik.size, keyin.size)
+        self.assertEqual(keyin.getpixel((keyin.width - 6, keyin.height - 6)),
+                         (255, 255, 255))
+
+    def test_chizma_buyrugi_hamma_rasmni_chizadi(self):
+        """Har bir chizma haqiqatan chiziladi va bo'sh emas."""
+        from io import BytesIO
+
+        from core.management.commands.masala_rasm import CHIZMALAR, chiz
+
+        for nom in CHIZMALAR:
+            with self.subTest(chizma=nom):
+                img = self.och(BytesIO(chiz(nom)))
+                self.assertEqual(img.size, (900, 700))
+                # Oq fonda biror narsa chizilgan bo'lishi shart.
+                self.assertGreater(len(img.getcolors(maxcolors=100000) or []), 20)
+
+    def test_har_chizmaga_masala_topiladi(self):
+        """Chizma masalaga MATNI bo'yicha ulanadi. Matn tahrirlansa
+        bog'lanish uziladi va buni sinov tutishi kerak — aks holda
+        buyruq jimgina "topilmadi" deb chiqib ketardi."""
+        from core.management.commands.masala_rasm import CHIZMALAR
+
+        pupil = Pupil.objects.create(first_name="Muallif")
+        profil = pupil.asosiy_profil()
+        for nom, (_, kalit) in CHIZMALAR.items():
+            Masala.objects.create(
+                muallif=profil, sinf=5, matn=kalit + " Davomi shu yerda.",
+                javob="1", yechim="1.", holat=Masala.TASDIQ,
+            )
+        for nom, (_, kalit) in CHIZMALAR.items():
+            with self.subTest(chizma=nom):
+                self.assertTrue(Masala.objects.filter(matn__startswith=kalit).exists())
 
 
 class BezakTest(TestCase):

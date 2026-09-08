@@ -21,6 +21,18 @@ Kanaldagi xabar uchta qismdan iborat va uchalasi ham zarur:
 Tugma ATAYLAB oddiy havola tugmasi: kanal xabarida Telegram Mini App
 tugmasiga (`web_app`) ruxsat bermaydi va butun xabarni rad etadi.
 
+─────────────────── POST YO'QOLADI, SHUNING UCHUN TEKSHIRILADI ───────
+
+Kanalga chiqqan post abadiy emas: admin uni qo'lda o'chiradi, kanal
+ko'chiriladi yoki xabar shunchaki yo'qoladi. Masalada esa `kanal_at`
+to'lgan bo'lib qolaveradi — ya'ni u kunlik postga boshqa hech qachon
+qaytmaydi va jimgina yo'q bo'ladi.
+
+`tekshir()` shu holatni ko'rinadigan qiladi. U har kuni ketma-ket
+ishlaydi (`management/commands/kanal_tekshir.py`), natijasi masala
+ekranidagi admin qatorida chiqadi va "qayta yuborish" bir bosishda
+turadi.
+
 ─────────────────── JAVOB KANALDA YOZILMAYDI ───────────────────
 
 Kanalda javob variantlari ham, "javobni izohga yozing" ham yo'q va
@@ -148,7 +160,27 @@ def kunlik() -> Masala | None:
     )
 
 
-def yubor(masala: Masala) -> tuple[str, str]:
+def tugmalar(masala: Masala) -> list[tuple[str, str, str]]:
+    """
+    Post ostidagi tugmalar — `(matn, havola, uslub)` uchliklari.
+
+    Alohida funksiya, chunki ular ikki joyda bir xil kerak: postni
+    YUBORISHDA va uni TEKSHIRISHDA. Tekshiruv aynan shu tugmalarni
+    postga qayta qo'yib ko'radi (`xabar.post_bormi`), ya'ni ro'yxat
+    ikki joyda ayri yozilsa — tekshiruv har safar postni jimgina
+    o'zgartirib turardi.
+    """
+    manzil = havola(masala)
+    if not manzil:
+        return []
+    natija = [(TUGMA, manzil, xabar.YASHIL)]
+    royxat = royxat_havolasi()
+    if royxat:
+        natija.append((TUGMA_BOSHQA, royxat, xabar.KOK))
+    return natija
+
+
+def yubor(masala: Masala, qayta: bool = False) -> tuple[str, str]:
     """
     Masalani kanalga joylaydi. `(holat, izoh)` qaytaradi.
 
@@ -157,10 +189,22 @@ def yubor(masala: Masala) -> tuple[str, str]:
 
     Muvaffaqiyatli bo'lsa `kanal_at` yoziladi — shundan keyin bir
     masala ikkinchi marta kanalga tushmaydi.
+
+    ─────────────────── `qayta` NIMA UCHUN ───────────────────
+
+    `qayta=True` — admin ATAYLAB qayta yuboryapti. Uch holatda kerak:
+    post kanaldan o'chib ketgan, masala matni yoki chizmasi tuzatilgan,
+    yoki post shunchaki yomon chiqqan.
+
+    Bunda eski post AVVAL O'CHIRILADI. Aks holda kanalda bitta masala
+    ikki marta turib qolardi va odam qaysi biriga javob berishni
+    bilmasdi; eski postdagi eskirgan chizma esa kanalda abadiy
+    qolardi. O'chirib bo'lmasa (bot administrator emas) — yangi post
+    baribir ketadi: dubl masalasiz kanaldan yaxshiroq.
     """
     if masala.holat != Masala.TASDIQ:
         return "tasdiqlanmagan", ""
-    if masala.kanal_at is not None:
+    if masala.kanal_at is not None and not qayta:
         return "takror", ""
 
     kanal = kanal_nomi()
@@ -170,19 +214,20 @@ def yubor(masala: Masala) -> tuple[str, str]:
     if not kanal or not manzil:
         return "sozlanmagan", ""
 
+    if qayta and masala.kanal_post_id:
+        xabar.post_ochir(kanal, masala.kanal_post_id)
+
     yozuv = sarlavha(masala)
-    tugmalar = [(TUGMA, manzil, xabar.YASHIL)]
-    royxat = royxat_havolasi()
-    if royxat:
-        tugmalar.append((TUGMA_BOSHQA, royxat, xabar.KOK))
+    tugmalar_ = tugmalar(masala)
 
     post_id = 0
     if masala.rasm:
         with masala.rasm.open("rb") as f:
-            holat, izoh, post_id = xabar.rasm_yubor(kanal, jpeg_qil(f), yozuv, tugmalar)
+            holat, izoh, post_id = xabar.rasm_yubor(kanal, jpeg_qil(f), yozuv, tugmalar_)
     else:
         # Rasmsiz masala ham joylanadi — oddiy xabar bo'lib, lekin
         # o'sha ikkita tugma bilan.
+        royxat = royxat_havolasi()
         holat, izoh = xabar.yubor(
             kanal, yozuv, TUGMA, manzil,
             qoshimcha_tugma=TUGMA_BOSHQA if royxat else "",
@@ -192,8 +237,42 @@ def yubor(masala: Masala) -> tuple[str, str]:
     if holat == "yuborildi":
         masala.kanal_at = timezone.now()
         masala.kanal_post_id = post_id or None
-        masala.save(update_fields=["kanal_at", "kanal_post_id"])
+        # Yangi post — eski "yo'q" belgisi bekor bo'ladi va tekshiruv
+        # vaqti ham yangilanadi: hozirgina o'z ko'zimiz bilan ko'rdik.
+        masala.kanal_yoq = False
+        masala.kanal_tekshir_at = masala.kanal_at
+        masala.save(update_fields=[
+            "kanal_at", "kanal_post_id", "kanal_yoq", "kanal_tekshir_at",
+        ])
     return holat, izoh
+
+
+def tekshir(masala: Masala) -> str:
+    """
+    Bitta masalaning posti kanalda turibdimi. `bor` | `yoq` |
+    `nomalum` | `yuborilmagan`.
+
+    Natija bazaga yoziladi: `kanal_yoq` bayrog'i va tekshiruv payti.
+    `nomalum` da BAYROQ TEGILMAYDI — faqat vaqt yoziladi. Sababi
+    yuqorida (`xabar.post_bormi`): javob bermagan tarmoq postni
+    o'chirmaydi, uni "yo'q" deb belgilash esa adminni behuda
+    qayta yuborishga majburlardi.
+    """
+    if masala.kanal_at is None or not masala.kanal_post_id:
+        return "yuborilmagan"
+
+    kanal = kanal_nomi()
+    if not kanal:
+        return "nomalum"
+
+    holat = xabar.post_bormi(kanal, masala.kanal_post_id, tugmalar(masala))
+    maydonlar = ["kanal_tekshir_at"]
+    masala.kanal_tekshir_at = timezone.now()
+    if holat in ("bor", "yoq"):
+        masala.kanal_yoq = holat == "yoq"
+        maydonlar.append("kanal_yoq")
+    masala.save(update_fields=maydonlar)
+    return holat
 
 
 def post_havolasi(masala: Masala) -> str:

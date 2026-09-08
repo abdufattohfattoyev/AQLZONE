@@ -946,6 +946,21 @@ class Masala(models.Model):
     #: bosib, postni o'z ko'zi bilan tekshiradi.
     kanal_post_id = models.IntegerField(null=True, blank=True)
 
+    #: Post kanalda hali ham turibdimi — kunlik tekshiruv natijasi
+    #: (`management/commands/kanal_tekshir.py`).
+    #:
+    #: Kanaldan post O'CHIB KETADI: admin uni qo'lda o'chiradi, kanal
+    #: ko'chiriladi yoki xabar shunchaki yo'qoladi. Shundan keyin
+    #: masalaning `kanal_at` i to'la turaveradi va u kunlik postga
+    #: hech qachon qaytmaydi — ya'ni masala jimgina yo'qoladi.
+    #: Bayroq shu holatni ko'rinadigan qiladi: admin ekranda
+    #: "kanalda topilmadi" ni ko'radi va bir bosishda qayta yuboradi.
+    kanal_yoq = models.BooleanField(default=False)
+
+    #: Oxirgi tekshiruv payti. Ekranda "qachon tekshirilgan" bo'lib
+    #: chiqadi: bayroqning o'zi qachonlikdir eskirgan bo'lishi mumkin.
+    kanal_tekshir_at = models.DateTimeField(null=True, blank=True)
+
     #: Sanoqlar ATAYLAB shu yerda turadi, `urinishlar` dan sanalmaydi.
     #:
     #: Ro'yxat ekrani har masalada "nechta odam yechdi" ni ko'rsatadi.

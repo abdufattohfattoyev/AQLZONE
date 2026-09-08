@@ -289,6 +289,86 @@ def rasm_yubor(
         return "xato", str(e)[:200], 0
 
 
+#: Telegram "bunday xabar yo'q" ni shu so'zlar bilan aytadi.
+#:
+#: Kod hamma holatda ham 400 — ya'ni kodga qarab ajratib bo'lmaydi,
+#: faqat izohga qarab. Ro'yxat ataylab tor: noma'lum xatoni "post
+#: o'chirilgan" deb hisoblasak, tarmoqdagi bir kunlik uzilish butun
+#: kanalni "yo'q bo'lib ketgan" deb belgilab qo'yardi.
+YOQ_IZOHLARI = (
+    "message to edit not found",
+    "message to delete not found",
+    "message_id_invalid",
+    "message identifier is not specified",
+)
+
+#: Aksincha — xabar BOR ekanining eng ishonchli dalili.
+#:
+#: Bir xil tugmalarni qayta qo'yganda Telegram hech nimani
+#: o'zgartirmaydi va shu xato bilan javob beradi. Ya'ni xato emas,
+#: tasdiq: o'zgartiradigan xabar joyida turibdi.
+BOR_IZOHI = "message is not modified"
+
+
+def post_bormi(chat_id: str, xabar_id: int, tugmalar=None) -> str:
+    """
+    Kanaldagi post hali ham turibdimi. `bor` | `yoq` | `nomalum`.
+
+    ─────────── NEGA AYNAN `editMessageReplyMarkup` ───────────
+
+    Telegram'da "bu xabar bormi?" degan savol YO'Q — Bot API xabarni
+    o'qish imkonini bermaydi. Shuning uchun tekshiruv bilvosita: biz
+    xabarni O'ZGARTIRISHGA urinamiz va javobiga qaraymiz.
+
+    Amal ataylab shu tanlangan va, masalan, `forwardMessage` emas:
+    yo'naltirish tekshiruv izini boshqa suhbatda qoldirardi, o'chirish
+    esa tekshirilayotgan narsani yo'q qilardi. Tugmalarni qayta qo'yish
+    esa hech narsani buzmaydi — eng yomoni, u AYNAN o'sha tugmalarni
+    o'z joyiga qaytaradi. Qo'lda buzilgan post shu bilan tuzalib ham
+    ketadi.
+
+    `nomalum` — uchinchi holat va u zarur: tarmoq uzilganda yoki
+    Telegram javob bermaganda post "yo'q" deb belgilanmasligi kerak.
+    """
+    payload = {"chat_id": chat_id, "message_id": int(xabar_id)}
+    qatorlar = [
+        [tugma_yasa(matn, uslub, url=havola)]
+        for matn, havola, uslub in (tugmalar or [])
+        if matn and havola
+    ]
+    if qatorlar:
+        payload["reply_markup"] = {"inline_keyboard": qatorlar}
+
+    ok, kod, izoh = _sorov("editMessageReplyMarkup", payload)
+    if ok:
+        return "bor"
+    past = izoh.lower()
+    if BOR_IZOHI in past:
+        return "bor"
+    if any(s in past for s in YOQ_IZOHLARI):
+        return "yoq"
+    return "nomalum"
+
+
+def post_ochir(chat_id: str, xabar_id: int) -> str:
+    """
+    Kanaldagi postni o'chiradi. `ochirildi` | `yoq` | `xato`.
+
+    Qayta yuborishda kerak: eski post o'chmasa, kanalda bitta masala
+    ikki marta turib qolardi va odam qaysinisiga javob berishni
+    bilmasdi. Bot kanalda administrator bo'lmasa amal bajarilmaydi —
+    o'sha holatda `xato` qaytadi va chaqiruvchi baribir yangi post
+    yuboraveradi: dubl — masalasiz kanaldan yaxshiroq.
+    """
+    ok, kod, izoh = _sorov("deleteMessage",
+                           {"chat_id": chat_id, "message_id": int(xabar_id)})
+    if ok:
+        return "ochirildi"
+    if any(s in izoh.lower() for s in YOQ_IZOHLARI):
+        return "yoq"
+    return "xato"
+
+
 def adminga_yangi_hisob(pupil) -> None:
     """
     Yangi ro'yxatdan o'tgan odam haqida administratorlarga xabar.

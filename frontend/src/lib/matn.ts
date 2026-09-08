@@ -477,6 +477,13 @@ const S = {
   masalaKanalBordi: ["Kanalga yuborildi", "Отправлено в канал"],
   masalaKanalKorish: ["Kanalda ko'rish", "Открыть в канале"],
   masalaKanalXato: ["Yuborilmadi — qaytadan urining", "Не отправилось — попробуйте снова"],
+  masalaKanalQayta: ["Qayta yuborish", "Отправить заново"],
+  masalaKanalQaytaSorov: [
+    "Qayta yuboraymi? Eskisi kanaldan o'chiriladi.",
+    "Отправить заново? Старый пост будет удалён.",
+  ],
+  masalaKanalYoqdi: ["Kanalda topilmadi", "Не найдено в канале"],
+  masalaKanalTekshirildi: ["tekshirildi", "проверено"],
   masalaUlashMatn: [
     "Bu masalani yecha olasanmi? 🤔",
     "Сможешь решить эту задачу? 🤔",

@@ -1534,6 +1534,11 @@ def masala_korish(request, pk: int):
             # Yuborilgan bo'lsa — postning o'ziga havola. Admin
             # bosib, kanalda qanday chiqqanini ko'radi.
             "havola": MK.post_havolasi(m) if m.kanal_at else "",
+            # Kunlik tekshiruv natijasi (`kanal_tekshir` buyrug'i).
+            # Post o'chib ketgan bo'lsa admin buni ekranda ko'radi va
+            # bir bosishda qayta yuboradi.
+            "yoq": m.kanal_yoq,
+            "tekshirilgan": m.kanal_tekshir_at,
         }
     return Response(javob)
 
@@ -1587,6 +1592,11 @@ def masala_kanal(request, pk: int):
     Tasdiqlash ILOVADA so'raladi (`screens/Masala.tsx`) — bu yerda
     emas: server tomonda "rostdanmi?" degan qadam qo'yish mumkin
     emas, u faqat ekranda ma'noga ega.
+
+    `qayta=true` — allaqachon joylangan masalani QAYTA yuboradi va
+    eskisini o'chiradi (`masala_kanal.yubor` dagi izohga qarang).
+    Bayroqsiz so'rov esa avvalgidek `takror` qaytaradi: bexosdan
+    ikkinchi marta bosish kanalga dubl chiqarmasligi kerak.
     """
     profil = _profil_tanla(request)
     if not _admin_mi(profil):
@@ -1596,13 +1606,15 @@ def masala_kanal(request, pk: int):
     if m is None:
         return Response({"detail": "topilmadi"}, status=404)
 
-    holat, izoh = MK.yubor(m)
+    qayta = bool(request.data.get("qayta")) if hasattr(request.data, "get") else False
+    holat, izoh = MK.yubor(m, qayta=qayta)
     # Takror — xato emas: masala allaqachon kanalda turibdi va tugma
     # shu holatni (havolasi bilan) ko'rsatishi kerak.
     if holat in ("yuborildi", "takror"):
-        m.refresh_from_db(fields=["kanal_post_id"])
+        m.refresh_from_db(fields=["kanal_post_id", "kanal_yoq", "kanal_tekshir_at"])
         return Response({
             "holat": holat, "yuborilgan": True, "havola": MK.post_havolasi(m),
+            "yoq": m.kanal_yoq, "tekshirilgan": m.kanal_tekshir_at,
         })
     return Response({"holat": holat, "izoh": izoh, "yuborilgan": False}, status=400)
 
