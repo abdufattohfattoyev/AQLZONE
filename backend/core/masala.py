@@ -28,7 +28,9 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from .models import Masala, MasalaOvoz, MasalaUrinish, Profile, javob_normal
+from .models import (
+    Masala, MasalaKorish, MasalaOvoz, MasalaUrinish, Profile, javob_normal,
+)
 
 
 # ------------------------------------------------------------------ ko'rinish
@@ -37,6 +39,65 @@ from .models import Masala, MasalaOvoz, MasalaUrinish, Profile, javob_normal
 def uringanmi(masala: Masala, profile: Profile) -> MasalaUrinish | None:
     """Shu odam bu masalaga urinib ko'rganmi."""
     return MasalaUrinish.objects.filter(masala=masala, profile=profile).first()
+
+
+def korildi(masala: Masala, profile: Profile) -> bool:
+    """
+    Masala ochilganini yozadi. Yangi ko'rish bo'lsa `True`.
+
+    Muallifning o'zi sanalmaydi: u masalasini tekshirish uchun,
+    tuzatish uchun va shunchaki qarab qo'yish uchun ochadi — bu
+    qiziqish emas (`MasalaKorish` dagi izohga qarang).
+
+    Sanoq faqat YANGI ko'rishda oshadi va u `F()` bilan oshiriladi:
+    bir masalani bir vaqtda o'nlab odam ochishi mumkin, o'qib-yozish
+    orasida esa qo'shni ko'rish yo'qolib ketardi.
+    """
+    if masala.muallif_id == profile.pk:
+        return False
+
+    _, yangi = MasalaKorish.objects.get_or_create(masala=masala, profile=profile)
+    if yangi:
+        Masala.objects.filter(pk=masala.pk).update(korish_soni=F("korish_soni") + 1)
+        masala.refresh_from_db(fields=["korish_soni"])
+    return yangi
+
+
+def yechganlar(masala: Masala, chegara: int = 100) -> list[dict]:
+    """
+    Kim bu masalaga urinib ko'rgan — administrator uchun ro'yxat.
+
+    Yechganlar ham, YECHOLMAGANLAR ham qaytadi va bu ataylab: "kim
+    qiynaldi" degan ma'lumot "kim yechdi" dan kam qimmatli emas.
+    Masalani o'nta odam ochib, hech biri yecholmasa — shart noaniq
+    yozilgan bo'lishi mumkin va buni faqat shu ro'yxat ko'rsatadi.
+
+    Tartib: OXIRGISI birinchi. Administrator ko'pincha "hozir kim
+    yechdi?" degan savol bilan keladi, "birinchi kim yechgan edi?"
+    degan savol bilan emas.
+    """
+    qs = (
+        MasalaUrinish.objects
+        .filter(masala=masala)
+        .select_related("profile__pupil")
+        .order_by("-created_at")[:chegara]
+    )
+    return [
+        {
+            "profilId": u.profile_id,
+            "ism": u.profile.pupil.toliq_ism or u.profile.name,
+            "avatar": u.profile.avatar,
+            # Uchta holat, uchtasi ham boshqacha o'qiladi:
+            #   birinchi=True   — birinchi urinishda topgan
+            #   yechdi=True     — topgan, lekin keyingi urinishda
+            #   ikkalasi False  — hali topolmagan
+            "birinchi": u.togri,
+            "yechdi": u.yechdi,
+            "urinish": u.soni,
+            "sana": u.created_at,
+        }
+        for u in qs
+    ]
 
 
 def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> dict:
@@ -73,6 +134,10 @@ def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> d
         "meniki": oz,
         "urinishSoni": masala.urinish_soni,
         "yechganSoni": masala.yechgan_soni,
+        # Nechta ODAM ochgan. Urinishdan boshqa son: ko'p ochilib kam
+        # yechilgan masala qiziq-u qiyin, kam ochilgani esa ro'yxatda
+        # ko'zga tashlanmayapti (`MasalaKorish` ga qarang).
+        "korishSoni": masala.korish_soni,
         "qiyinlik": masala.qiyinlik,
         "like": masala.like_soni,
         "dislike": masala.dislike_soni,
@@ -189,7 +254,7 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
     togri = javob_normal(javob) == javob_normal(masala.javob)
     urinish, birinchi = MasalaUrinish.objects.get_or_create(
         masala=masala, profile=profile,
-        defaults={"togri": togri, "soni": 1, "yechim_ochiq": togri},
+        defaults={"togri": togri, "yechdi": togri, "soni": 1, "yechim_ochiq": togri},
     )
 
     if birinchi:
@@ -207,11 +272,23 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
 
     # To'g'ri javob yechimni ochadi. Uch marta urinib topolmagan odamga
     # ham ochiladi — u yordamsiz oldinga siljimaydi.
+    yangilanadi = []
     if not urinish.yechim_ochiq and (
         togri or urinish.soni >= MasalaUrinish.YECHIM_BEPUL
     ):
         urinish.yechim_ochiq = True
-        urinish.save(update_fields=["yechim_ochiq"])
+        yangilanadi.append("yechim_ochiq")
+
+    # `yechdi` — QAYSI urinishda topganidan qat'i nazar. Statistika
+    # `togri` ga (birinchi urinishga) quriladi va shunday qolishi
+    # kerak, lekin ro'yxatda odamni "yecholmagan" deb ko'rsatish
+    # uning mehnatini inkor qilish bo'lardi.
+    if togri and not urinish.yechdi:
+        urinish.yechdi = True
+        yangilanadi.append("yechdi")
+
+    if yangilanadi:
+        urinish.save(update_fields=yangilanadi)
 
     natija = {
         "togri": togri,

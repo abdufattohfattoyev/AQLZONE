@@ -34,8 +34,9 @@ from . import reklama as R
 from . import views
 from . import masala_kanal as MK
 from .models import (
-    Duel, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaOvoz,
-    MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul, Session,
+    Duel, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
+    MasalaOvoz, MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul,
+    Session,
 )
 
 BOT = "123456:TEST_TOKEN_FAQAT_SINOV_UCHUN"
@@ -4634,6 +4635,146 @@ class MasalaTestVariantTest(TestCase):
         }, **self.auth(self.token))
         self.assertEqual(r.status_code, 400)
         self.assertIn("variantlar", r.json())
+
+
+@override_settings(BOT_USERNAME="aqlzone_bot", KANAL="aqlzone",
+                   ADMIN_TG=["973358587"], BOT_TOKEN="sinov:token")
+class MasalaKorishTest(TestCase):
+    """
+    Ko'rishlar sanoqi va "kim urinib ko'rgan" ro'yxati.
+
+    Diqqat qaratilgan joy — BIR ODAM BIR MARTA. Sanoq "nechta odam
+    ko'rdi" degan savolga javob berishi kerak; takrorlar sanalsa u
+    "nechta marta ochildi" ga aylanadi va bu son hech narsa
+    haqida gapirmaydi — bitta odam masalani yigirma marta ochib,
+    uni "eng ommabop" qilib qo'yardi.
+    """
+
+    def kir(self, device: str) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def setUp(self):
+        cache.clear()
+        self.token = self.kir("dev-korish-000000000001")
+        self.pupil = Pupil.objects.get(identities__external_id="dev-korish-000000000001")
+        self.profil = self.pupil.asosiy_profil()
+
+        muallif = Pupil.objects.create(first_name="Muallif")
+        self.m = Masala.objects.create(
+            muallif=muallif.asosiy_profil(), sinf=5, matn="Ikki karra ikki nechchi?",
+            javob="4", yechim="4 ga teng.", holat=Masala.TASDIQ,
+        )
+
+    def och(self, token: str | None = None):
+        return self.client.get(f"/api/v1/masalalar/{self.m.pk}",
+                               **self.auth(token or self.token))
+
+    # ─────────────────────────────────────── sanoq
+
+    def test_birinchi_ochish_sanaladi(self):
+        self.assertEqual(self.och().json()["korishSoni"], 1)
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.korish_soni, 1)
+
+    def test_takror_ochish_sanalmaydi(self):
+        for _ in range(4):
+            self.och()
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.korish_soni, 1)
+        self.assertEqual(MasalaKorish.objects.filter(masala=self.m).count(), 1)
+
+    def test_har_odam_alohida_sanaladi(self):
+        self.och()
+        self.och(self.kir("dev-korish-000000000002"))
+        self.och(self.kir("dev-korish-000000000003"))
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.korish_soni, 3)
+
+    def test_muallif_ozini_sanamaydi(self):
+        """Muallif masalasini tekshirish uchun ochadi — bu qiziqish
+        emas va sonni ko'tarib yuborardi."""
+        oz = Masala.objects.create(
+            muallif=self.profil, sinf=5, matn="O'zimning masalam.",
+            javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
+        )
+        self.client.get(f"/api/v1/masalalar/{oz.pk}", **self.auth(self.token))
+        oz.refresh_from_db()
+        self.assertEqual(oz.korish_soni, 0)
+
+    def test_tasdiqlanmagan_masala_sanalmaydi(self):
+        """Navbatdagi masalani ko'radigan yagona odam — admin va
+        uning tekshiruvi sanoqqa kirmasligi kerak."""
+        self.m.holat = Masala.KUTMOQDA
+        self.m.save(update_fields=["holat"])
+        self.client.get(f"/api/v1/masalalar/{self.m.pk}", **self.auth(self.token))
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.korish_soni, 0)
+
+    def test_royxatda_ochish_sanalmaydi(self):
+        """Ro'yxatda o'nta masala birdan ko'rinadi va ularning hech
+        biri hali ochilgan emas."""
+        self.client.get("/api/v1/masalalar", **self.auth(self.token))
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.korish_soni, 0)
+
+    # ─────────────────────────────────────── kim urinib ko'rgan
+
+    def adminga_aylantir(self):
+        Identity.objects.create(
+            pupil=self.pupil, provider=Identity.TELEGRAM, external_id="973358587",
+        )
+
+    def test_oddiy_odamga_royxat_yoq(self):
+        r = self.client.get(f"/api/v1/masalalar/{self.m.pk}/yechganlar",
+                            **self.auth(self.token))
+        self.assertEqual(r.status_code, 404)
+
+    def test_adminga_royxat_keladi(self):
+        self.adminga_aylantir()
+        self.client.post(f"/api/v1/masalalar/{self.m.pk}/javob", {"javob": "4"},
+                         content_type="application/json", **self.auth(self.token))
+        r = self.client.get(f"/api/v1/masalalar/{self.m.pk}/yechganlar",
+                            **self.auth(self.token))
+        self.assertEqual(r.status_code, 200)
+        royxat = r.json()["royxat"]
+        self.assertEqual(len(royxat), 1)
+        self.assertTrue(royxat[0]["birinchi"])
+        self.assertTrue(royxat[0]["yechdi"])
+
+    def test_yecholmagan_ham_royxatda(self):
+        """"Kim qiynaldi" — "kim yechdi" dan kam qimmatli emas."""
+        self.adminga_aylantir()
+        self.client.post(f"/api/v1/masalalar/{self.m.pk}/javob", {"javob": "5"},
+                         content_type="application/json", **self.auth(self.token))
+        royxat = self.client.get(f"/api/v1/masalalar/{self.m.pk}/yechganlar",
+                                 **self.auth(self.token)).json()["royxat"]
+        self.assertEqual(len(royxat), 1)
+        self.assertFalse(royxat[0]["birinchi"])
+        self.assertFalse(royxat[0]["yechdi"])
+
+    def test_keyingi_urinishda_topgan_yechgan_hisoblanadi(self):
+        """`togri` birinchi urinishni saqlaydi va shunday qolishi
+        kerak. Lekin uchinchi urinishda topgan odam ham yechgan va
+        uni "yecholmagan" deb ko'rsatish mehnatini inkor qilardi."""
+        self.adminga_aylantir()
+        for javob in ("5", "6", "4"):
+            self.client.post(f"/api/v1/masalalar/{self.m.pk}/javob", {"javob": javob},
+                             content_type="application/json", **self.auth(self.token))
+        royxat = self.client.get(f"/api/v1/masalalar/{self.m.pk}/yechganlar",
+                                 **self.auth(self.token)).json()["royxat"]
+        self.assertFalse(royxat[0]["birinchi"])
+        self.assertTrue(royxat[0]["yechdi"])
+        self.assertEqual(royxat[0]["urinish"], 3)
+        # Statistika esa TEGILMAYDI: birinchi urinish xato edi.
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.yechgan_soni, 0)
 
 
 class TamgaTest(TestCase):

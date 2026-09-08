@@ -540,6 +540,20 @@ const S = {
     "Всего {n} попыток · решили {y}",
   ],
   masalaBirinchiBol: ["Birinchi bo'ling", "Будьте первым"],
+  masalaKorildi: ["{n} kishi ochgan", "Открыли {n} человек"],
+  masalaKorildiIzoh: [
+    "Bir odam necha marta ochsa ham bir marta sanaladi",
+    "Один человек считается один раз, сколько бы раз ни открыл",
+  ],
+
+  /* --- admin: kim urinib ko'rgan --- */
+  masalaKimlar: ["Kim urinib ko'rgan", "Кто пробовал"],
+  masalaKimlarOch: ["Ro'yxatni ochish", "Открыть список"],
+  masalaKimlarYoq: ["Hali hech kim urinmagan", "Ещё никто не пробовал"],
+  masalaKimlarXato: ["Ro'yxat kelmadi", "Список не загрузился"],
+  masalaKimBirinchi: ["birinchi urinishda", "с первой попытки"],
+  masalaKimYechdi: ["{n}-urinishda", "с {n}-й попытки"],
+  masalaKimYecholmagan: ["{n} marta urindi", "{n} попыток"],
   tekshirVariantHarxil: ["Variantlar har xil", "Варианты различаются"],
   tekshirVariantTogri: [
     "To'g'ri javob: {javob}",

@@ -1511,6 +1511,16 @@ def masala_korish(request, pk: int):
     if m.holat != Masala.TASDIQ and m.muallif_id != profil.pk:
         return Response({"detail": "topilmadi"}, status=404)
 
+    # Ko'rish SHU YERDA yoziladi — ro'yxatda emas. Ro'yxatda o'nta
+    # masala birdan ko'rinadi va ularning hech biri hali "ochilgan"
+    # emas: odam sarlavhani o'qib o'tib ketadi. Ochish — masalaning
+    # ustiga bosish, ya'ni aynan shu chaqiruv.
+    #
+    # Faqat tasdiqlangan masalada: navbatdagi masalani ko'radigan
+    # yagona odam — admin va uning tekshiruvi sanoqqa kirmasligi kerak.
+    if m.holat == Masala.TASDIQ:
+        M.korildi(m, profil)
+
     urinish = M.uringanmi(m, profil)
     # Yechim urinib ko'rgani uchun emas, OCHILGANI uchun beriladi:
     # xato javob uni ochmaydi (`masala.javob_ber` dagi izohga qarang).
@@ -1578,6 +1588,35 @@ def masala_yechim(request, pk: int):
     if d is None:
         return Response({"error": "urinilmagan"}, status=400)
     return Response(d)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def masala_yechganlar(request, pk: int):
+    """
+    Kim bu masalaga urinib ko'rgan — FAQAT admin uchun.
+
+    Admin bo'lmagan odamga 404: ro'yxatda odamlarning ismi bor va u
+    "kim nima yecholmadi" degan ma'lumot ham beradi. Bunday ro'yxat
+    masala muallifiga ham ochilmaydi — har kim masala yozib, keyin
+    o'ziga kim urinib ko'rganini kuzatib turadigan holat kerak emas.
+
+    403 emas, 404 — 403 javobning o'zi "bunday yo'l bor" deb aytardi.
+    """
+    profil = _profil_tanla(request)
+    if not _admin_mi(profil):
+        return Response({"detail": "topilmadi"}, status=404)
+
+    m = Masala.objects.filter(pk=pk).first()
+    if m is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    return Response({
+        "royxat": M.yechganlar(m),
+        "urinishSoni": m.urinish_soni,
+        "yechganSoni": m.yechgan_soni,
+        "korishSoni": m.korish_soni,
+    })
 
 
 @api_view(["POST"])

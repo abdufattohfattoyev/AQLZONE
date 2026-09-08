@@ -441,6 +441,7 @@ export function Masala({ id, onMuallif, onBack }: Props) {
                   {t("masalaJamiUrinish", { n: uringanSoni, y: yechganSoni })}
                 </span>
               </span>
+              <Korildi n={m.korishSoni} />
             </>
           ) : (
             <>
@@ -455,10 +456,17 @@ export function Masala({ id, onMuallif, onBack }: Props) {
                 </span>
                 <span className="text-[11px] text-ink-dim">{t("masalaHechKim")}</span>
               </span>
+              <Korildi n={m.korishSoni} />
             </>
           )}
         </div>
       )}
+
+      {/* ---- kim urinib ko'rgan (faqat admin) ----
+          Kanal qatori bilan bir xil ko'rinishda: ikkalasi ham ish
+          quroli va foydalanuvchi tugmalari bilan bir og'irlikda
+          turmasligi kerak. */}
+      {m.kanal?.mumkin && <Kimlar id={m.id} />}
 
       {/* ---- kanal tugmasi (faqat admin) ----
           Ko'rinishi ataylab boshqa: uzuq chiziqli ramka va xira rang.
@@ -832,6 +840,114 @@ export function Masala({ id, onMuallif, onBack }: Props) {
 }
 
 /* --------------------------------------------------------------- bo'laklar */
+
+/**
+ * Nechta odam ochgan.
+ *
+ * Statistika qatorining O'NG chetida, foizdan ajratib turadi va bu
+ * ataylab: foiz masalaning QIYINLIGI haqida, ko'rish esa uning
+ * TAQDIRI haqida. Ikkalasi bir joyda bir gapdek o'qilardi.
+ *
+ * Nol bo'lsa umuman chiqmaydi: "0 kishi ochgan" degan yozuv
+ * masalani tashlab ketilgandek ko'rsatadi, holbuki u hozirgina
+ * ochilgan bo'lishi mumkin.
+ */
+function Korildi({ n }: { n: number }) {
+  if (n <= 0) return null;
+  return (
+    <span title={t("masalaKorildiIzoh")}
+      className="flex shrink-0 flex-col items-center gap-0.5 border-l border-ink-dim/15
+                 pl-3 text-ink-dim">
+      <span aria-hidden className="text-[13px] leading-none">👁</span>
+      <span className="font-display text-[12px] leading-none">{n}</span>
+    </span>
+  );
+}
+
+/**
+ * Kim urinib ko'rgan — administrator uchun yig'iladigan ro'yxat.
+ *
+ * ─────────────── SO'ROV FAQAT OCHILGANDA KETADI ───────────────
+ *
+ * Ro'yxat yopiq turadi va ma'lumot ochilgandagina so'raladi. Har
+ * masala ochilganda yuzta odamning ismini yuklab olish — ekranni
+ * sekinlashtiradi va bu ro'yxat aslida kamdan-kam kerak bo'ladi.
+ *
+ * ─────────────── YECHOLMAGANLAR HAM BOR ───────────────
+ *
+ * Ro'yxatda yechganlar ham, yecholmaganlar ham turadi. "Kim
+ * qiynaldi" degan ma'lumot "kim yechdi" dan kam qimmatli emas:
+ * o'nta odam ochib, hech biri yecholmasa — shart noaniq yozilgan
+ * bo'lishi mumkin va buni faqat shu ro'yxat ko'rsatadi.
+ */
+function Kimlar({ id }: { id: number }) {
+  const [holat, setHolat] = useState<"yopiq" | "yuklanmoqda" | "tayyor" | "xato">("yopiq");
+  const [royxat, setRoyxat] = useState<MS.Urinuvchi[]>([]);
+
+  const och = async () => {
+    if (holat === "yuklanmoqda") return;
+    setHolat("yuklanmoqda");
+    try {
+      const d = await MS.yechganlar(id);
+      setRoyxat(d.royxat);
+      setHolat("tayyor");
+    } catch {
+      setHolat("xato");
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-clay border-[1.5px] border-dashed border-track px-3.5 py-2.5">
+      <button type="button" onClick={() => void och()}
+        disabled={holat === "yuklanmoqda" || holat === "tayyor"}
+        className="clay-press flex w-full items-center gap-2 text-[12.5px] text-ink-soft
+                   disabled:cursor-default">
+        <Icon name="parent" size={15} className="shrink-0" />
+        <span className="min-w-0 flex-1 text-left">{t("masalaKimlar")}</span>
+        {holat === "tayyor" ? (
+          <span className="shrink-0 font-display text-[12px] text-brand-purple">
+            {royxat.length}
+          </span>
+        ) : (
+          <span className="shrink-0 text-[11.5px] text-ink-dim">
+            {holat === "yuklanmoqda" ? t("yuklanyapti")
+              : holat === "xato" ? t("masalaKimlarXato")
+              : t("masalaKimlarOch")}
+          </span>
+        )}
+      </button>
+
+      {holat === "tayyor" && (
+        royxat.length === 0 ? (
+          <p className="mt-2 text-[11.5px] text-ink-dim">{t("masalaKimlarYoq")}</p>
+        ) : (
+          /* Ro'yxat balandligi CHEKLANGAN: yuzta odam bo'lsa u butun
+             ekranni egallab, masalaning o'zini pastga surib
+             yuborardi. */
+          <ul className="mt-2 max-h-56 space-y-1.5 overflow-y-auto">
+            {royxat.map((u) => (
+              <li key={u.profilId} className="flex items-center gap-2 text-[12px]">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full
+                                 bg-track text-[11px] leading-none">
+                  {avatarBelgi(u.avatar)}
+                </span>
+                <span className="min-w-0 flex-1 truncate">{u.ism}</span>
+                <span className={`shrink-0 text-[11px] ${
+                  u.birinchi ? "text-brand-green"
+                  : u.yechdi ? "text-brand-blue"
+                  : "text-ink-dim"}`}>
+                  {u.birinchi ? `✓ ${t("masalaKimBirinchi")}`
+                    : u.yechdi ? `✓ ${t("masalaKimYechdi", { n: u.urinish })}`
+                    : t("masalaKimYecholmagan", { n: u.urinish })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )
+      )}
+    </div>
+  );
+}
 
 function OvozTugma(
   { belgi, son, faol, oz, on }:

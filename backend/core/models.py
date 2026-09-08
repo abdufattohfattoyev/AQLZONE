@@ -983,6 +983,15 @@ class Masala(models.Model):
     #: so'rovini keltirib chiqarardi. Bu yerda esa u bitta son.
     urinish_soni = models.IntegerField(default=0)
     yechgan_soni = models.IntegerField(default=0)
+
+    #: Masalani nechta ODAM ochgan (`MasalaKorish` ga qarang).
+    #:
+    #: Urinishdan butunlay boshqa son va ikkalasi ham kerak: masala
+    #: ko'p ochilib, kam yechilsa — u qiziq, lekin qiyin; kam ochilib,
+    #: ko'p yechilsa — u ro'yxatda ko'zga tashlanmayapti. Bu ikki
+    #: holat ikki xil ish talab qiladi va faqat urinish soniga
+    #: qarab ularni ajratib bo'lmaydi.
+    korish_soni = models.IntegerField(default=0)
     #: Ovozlar ham shu sababdan shu yerda (`MasalaOvoz` ga qarang).
     like_soni = models.IntegerField(default=0)
     dislike_soni = models.IntegerField(default=0)
@@ -1064,6 +1073,16 @@ class MasalaUrinish(models.Model):
     )
     togri = models.BooleanField(default=False)
 
+    #: Shu odam masalani OXIR-OQIBAT yechdimi.
+    #:
+    #: `togri` dan farqi katta: u faqat BIRINCHI urinishni saqlaydi
+    #: va statistika uchun shunday bo'lishi kerak. Lekin uchinchi
+    #: urinishda topgan odam ham masalani yechgan va uni "yecholmagan"
+    #: deb ko'rsatish — mehnatini inkor qilish.
+    #:
+    #: Ikkalasi ham kerak: biri o'lchov uchun, ikkinchisi ODAM uchun.
+    yechdi = models.BooleanField(default=False)
+
     #: Shu odam necha marta javob yubordi.
     #:
     #: Statistikaga tushmaydi — u faqat YECHIM QACHON ochilishini hal
@@ -1093,6 +1112,51 @@ class MasalaUrinish(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["masala", "profile"], name="masala_bir_odam_bir_urinish"
+            )
+        ]
+
+
+class MasalaKorish(models.Model):
+    """
+    Kim qaysi masalani OCHGAN.
+
+    ─────────────── BIR ODAM — BIR KO'RISH ───────────────
+
+    Takroriy ochish yangi qator yasamaydi va sanoqni oshirmaydi.
+    Sabab `MasalaUrinish` dagi bilan bir xil: aks holda masalani
+    yigirma marta ochib turgan bitta odam sonni o'ziga yozib olardi
+    va "nechta odam ko'rdi" degan son "nechta marta ochildi" ga
+    aylanardi. Ikkinchisi esa hech narsa haqida gapirmaydi.
+
+    ─────────────── MUALLIF SANALMAYDI ───────────────
+
+    O'z masalasini ochgan odam hisobga olinmaydi. Muallif uni
+    tekshirish uchun, tuzatish uchun va shunchaki qarab qo'yish
+    uchun ochadi — bu qiziqish emas. Muallifsiz son "boshqalar
+    qancha ko'rdi" degan halol javob bo'ladi.
+
+    ─────────────── NEGA QATOR SAQLANADI ───────────────
+
+    Faqat sanoqni oshirish ham mumkin edi, lekin u paytda takrorni
+    ajratib bo'lmasdi: "shu odam avval ochganmi?" degan savolga
+    javob beradigan yagona joy — shu jadval. Qatorlar bilan birga
+    "kim ochgan" degan ma'lumot ham qoladi va u administratorga
+    masalaning taqdirini ko'rsatadi.
+    """
+
+    masala = models.ForeignKey(
+        Masala, on_delete=models.CASCADE, related_name="korishlar"
+    )
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="masala_korishlari"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "masala_korish"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["masala", "profile"], name="masala_bir_odam_bir_korish"
             )
         ]
 

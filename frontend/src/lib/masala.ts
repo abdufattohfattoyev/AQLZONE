@@ -37,6 +37,13 @@ export interface Masala {
   meniki: boolean;
   urinishSoni: number;
   yechganSoni: number;
+  /**
+   * Nechta ODAM ochgan — har biri bir marta sanaladi.
+   *
+   * Urinishdan boshqa son: masala ko'p ochilib kam yechilsa — u
+   * qiziq, lekin qiyin; kam ochilsa — ro'yxatda ko'zga tashlanmayapti.
+   */
+  korishSoni: number;
   /** Birinchi urinishda to'g'ri yechganlar foizi (0–100). */
   qiyinlik: number;
   like: number;
@@ -197,6 +204,33 @@ export const kanalgaYubor = (
   id: number, qayta = false,
 ): Promise<KanalHolat & { yuborilgan: boolean }> =>
   sorov(`/api/v1/masalalar/${id}/kanal`, bilanProfil(qayta ? { qayta: true } : {}));
+
+/** Ro'yxatdagi bitta odam — kim urinib ko'rgan. */
+export interface Urinuvchi {
+  profilId: number;
+  ism: string;
+  avatar: string;
+  /** Birinchi urinishda topganmi — statistikaga shu tushadi. */
+  birinchi: boolean;
+  /** Oxir-oqibat topganmi — qaysi urinishda bo'lishidan qat'i nazar. */
+  yechdi: boolean;
+  urinish: number;
+  sana: string;
+}
+
+/**
+ * Kim bu masalaga urinib ko'rgan — FAQAT admin.
+ *
+ * Boshqa odamda bu yo'l umuman yo'q (server 404 qaytaradi): ro'yxatda
+ * odamlarning ismi bor va u "kim nima yecholmadi" degan ma'lumot ham
+ * beradi.
+ */
+export const yechganlar = (
+  id: number,
+): Promise<{
+  royxat: Urinuvchi[]; urinishSoni: number; yechganSoni: number; korishSoni: number;
+}> =>
+  sorov(`/api/v1/masalalar/${id}/yechganlar${profilQuery()}`);
 
 export interface YangiMasala {
   sinf: number;

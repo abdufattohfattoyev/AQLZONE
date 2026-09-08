@@ -140,6 +140,16 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
             ? t("masalaYechdi", { n: m.yechganSoni, jami: m.urinishSoni })
             : t("masalaUrinilmagan")}
         </span>
+        {/* Nechta odam ochgan. Urinishdan boshqa son va aynan shuning
+            uchun qo'shildi: hali hech kim URINMAGAN masala ham
+            o'nlab marta ochilgan bo'lishi mumkin — ya'ni u ko'rinyapti,
+            lekin qo'rqitmoqda. */}
+        {m.korishSoni > 0 && (
+          <span className="flex shrink-0 items-center gap-0.5 text-[11.5px] text-ink-dim">
+            <span aria-hidden className="text-[11px] leading-none">👁</span>
+            {m.korishSoni}
+          </span>
+        )}
         {/* Mukofot "Yechish" ning YONIDA turadi: tanga aynan shu
             amal uchun berilishi shu qo'shnilikda o'qiladi. Faqat
             hali yechmaganda ko'rinadi — ikkinchi marta to'g'ri
