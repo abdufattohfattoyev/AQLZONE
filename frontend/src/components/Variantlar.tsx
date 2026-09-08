@@ -68,17 +68,22 @@ export function Variantlar({
         // qolgan uchtasini ham qizartirish "hammasi noto'g'ri"
         // degan taassurot berardi.
         const xato = ochiq && tanlandi && togriI >= 0 && i !== togriI;
+        const belgilangan = togri || xato || tanlandi;
 
         return (
           <button key={i} type="button" role="radio" aria-checked={tanlandi}
             onClick={() => onTanla(i)} disabled={ochiq}
-            className={`clay-press flex items-center gap-2 rounded-2xl px-3 py-2.5 text-left
-                        text-[13.5px] leading-snug transition-colors ${
-              togri ? "bg-brand-green/20 text-brand-green shadow-clay-sm"
-              : xato ? "bg-brand-red/20 text-brand-red shadow-clay-sm"
-              : tanlandi ? "bg-brand-purple/20 text-brand-purple shadow-clay-sm"
-              : "shadow-ichki bg-sahna text-ink"}`}>
-            <span className={`grid size-6 shrink-0 place-items-center rounded-lg text-[11.5px]
+            /* Tanlangan variant CHEGARA bilan ajratiladi, faqat fon
+               bilan emas: qorong'i mavzuda och fon bilan och fon
+               orasidagi farq deyarli ko'rinmasdi. Chegara esa ikkala
+               mavzuda ham bir xil aniq. */
+            className={`clay-press az-variant flex items-center gap-2.5 rounded-2xl border-2
+                        px-3 py-2.5 text-left text-[13.5px] leading-snug ${
+              togri ? "border-brand-green bg-brand-green/15 text-brand-green"
+              : xato ? "border-brand-red bg-brand-red/15 text-brand-red"
+              : tanlandi ? "az-variant-tanlandi border-brand-purple bg-brand-purple/15 text-brand-purple"
+              : "shadow-ichki border-transparent bg-sahna text-ink"}`}>
+            <span className={`grid size-7 shrink-0 place-items-center rounded-xl text-[12px]
                               leading-none font-display ${
               togri ? "bg-brand-green text-white"
               : xato ? "bg-brand-red text-white"
@@ -86,7 +91,23 @@ export function Variantlar({
               : "bg-track text-ink-dim"}`}>
               {HARFLAR[i]}
             </span>
-            <span className="min-w-0 flex-1 break-words">{v}</span>
+            <span className="min-w-0 flex-1 break-words font-display">{v}</span>
+
+            {/* O'ng chetdagi doiracha — radio tugmasining o'zi.
+                Chegara va fon bilan birga u tanlovni UCH usulda
+                ko'rsatadi: rangni ajratmaydigan odam ham, kichik
+                ekranda ham holat bir xil o'qiladi. */}
+            <span aria-hidden
+              className={`grid size-[15px] shrink-0 place-items-center rounded-full border-2 ${
+                belgilangan
+                  ? togri ? "border-brand-green" : xato ? "border-brand-red"
+                    : "border-brand-purple"
+                  : "border-ink-dim/35"}`}>
+              {belgilangan && (
+                <span className={`size-[7px] rounded-full ${
+                  togri ? "bg-brand-green" : xato ? "bg-brand-red" : "bg-brand-purple"}`} />
+              )}
+            </span>
           </button>
         );
       })}

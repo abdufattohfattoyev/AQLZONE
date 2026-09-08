@@ -460,11 +460,7 @@ const S = {
 
   /* --- kanal (faqat admin ko'radi) --- */
   /* --- masala statistikasi --- */
-  masalaUringanlar: ["Urinib ko'rdi", "Пробовали"],
-  masalaYechganlar: ["Yechdi", "Решили"],
-  masalaFoiz: ["Yechish foizi", "Доля решивших"],
   /* Hech kim urinmaganda foiz yo'q — 0 dan foiz chiqmaydi. */
-  masalaFoizYoq: ["—", "—"],
   masalaBirinchiIzoh: [
     "Birinchi urinish hisobga olinadi",
     "Считается первая попытка",
@@ -526,6 +522,24 @@ const S = {
     "Отметьте правильный вариант",
   ],
   tekshirVariantSoni: ["{n} ta variant", "{n} варианта"],
+
+  /* --- masala ekrani: qiyinlik va bo'lim sarlavhalari --- */
+  qiyinOson: ["Oson", "Лёгкая"],
+  qiyinOrta: ["O'rta", "Средняя"],
+  qiyinQiyin: ["Qiyin", "Сложная"],
+  qiyinJuda: ["Juda qiyin", "Очень сложная"],
+  masalaShartSarlavha: ["Masala #{n}", "Задача №{n}"],
+  masalaJavobSarlavha: ["Javobingizni yozing", "Напишите свой ответ"],
+  masalaYechganFoiz: [
+    "{n}% birinchi urinishda topgan",
+    "{n}% решили с первой попытки",
+  ],
+  masalaHechKim: ["Hali hech kim urinmagan", "Ещё никто не пробовал"],
+  masalaJamiUrinish: [
+    "Jami {n} ta urinish · {y} ta yechgan",
+    "Всего {n} попыток · решили {y}",
+  ],
+  masalaBirinchiBol: ["Birinchi bo'ling", "Будьте первым"],
   tekshirVariantHarxil: ["Variantlar har xil", "Варианты различаются"],
   tekshirVariantTogri: [
     "To'g'ri javob: {javob}",
@@ -541,7 +555,10 @@ const S = {
   /* --- yechish --- */
   masalaJavobJoy: ["Javobingiz", "Ваш ответ"],
   masalaTekshir: ["Tekshirish", "Проверить"],
-  masalaTogri: ["To'g'ri! 🎉", "Верно! 🎉"],
+  /* Emoji matndan OLINDI: natija bo'lagida u endi alohida belgi
+     bo'lib, doiracha ichida turadi (`screens/Masala.tsx`). Matnda
+     ham qolsa, ekranda ikkita bayram belgisi chiqardi. */
+  masalaTogri: ["To'g'ri!", "Верно!"],
   masalaXato: ["Bu safar bo'lmadi", "В этот раз не вышло"],
   /* Xato javobdan keyin — javob ko'rsatilmaydi, qayta urinish taklif
      qilinadi. Ilgari to'g'ri javob darhol chiqib, ikkinchi urinish
@@ -562,6 +579,9 @@ const S = {
     "Не хватает монет — нужно ещё {n}",
   ],
   masalaTogriJavob: ["To'g'ri javob: {javob}", "Правильный ответ: {javob}"],
+  /* Javobning O'ZI endi alohida yorliqcha bo'lib turadi, shuning
+     uchun nomi ham matndan ajratildi (`screens/Masala.tsx`). */
+  masalaTogriJavobNomi: ["To'g'ri javob:", "Правильный ответ:"],
   masalaYechim: ["Yechim", "Решение"],
   /* Yechim yopiqligining SABABI aytiladi. "Yopiq" degan quruq
      yozuv odamni faqat jahlini chiqarardi — u nega yopiqligini va

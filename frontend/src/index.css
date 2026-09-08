@@ -1402,10 +1402,52 @@
 }
 .az-tanga-sanoq { animation: az-tanga-sanoq 0.5s cubic-bezier(0.3, 1.4, 0.5, 1); }
 
+/*
+ * MASALA EKRANI (screens/Masala.tsx).
+ *
+ * Uchta harakat va uchalasi ham bir vazifani bajaradi: ko'zni
+ * o'zgargan joyga olib borish. Ekran uzun — shart, chizma,
+ * variantlar, statistika, yechim — va unda nima o'zgarganini
+ * harakatsiz payqash qiyin.
+ */
+
+/* Variant tanlanganda bir seskanadi. Bosish HAQIQATAN qabul
+   qilinganini shu bildiradi: rang o'zgarishining o'zi telefonda,
+   barmoq ostida ko'rinmay qoladi. */
+@keyframes az-variant {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.045); }
+  100% { transform: scale(1); }
+}
+.az-variant-tanlandi { animation: az-variant 0.28s cubic-bezier(0.3, 1.4, 0.5, 1); }
+
+/* Foiz halqasi noldan chiziladi (components/Halqa.tsx). Harakat
+   raqamdan OLDIN keladi va "qancha" degan savolga javob beradi. */
+@keyframes az-halqa {
+  from { stroke-dashoffset: var(--az-halqa-bosh, 999); }
+  to   { stroke-dashoffset: var(--az-halqa-oxir, 0); }
+}
+.az-halqa {
+  stroke-dashoffset: var(--az-halqa-oxir, 0);
+  animation: az-halqa 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+/* To'g'ri javobdan keyingi bo'lak pastdan ko'tarilib chiqadi.
+   Natija ekranning O'RTASIDA paydo bo'ladi va uzun sahifada uni
+   sezmay qolish oson — harakat esa uni o'zi ko'rsatadi. */
+@keyframes az-natija {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.az-natija { animation: az-natija 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
 @media (prefers-reduced-motion: reduce) {
   .az-kanal-fon, .az-kanal, .az-varaq { animation-duration: 0.01ms; }
   /* Tanga animatsiyasi butunlay o'chirilmaydi — u XABAR tashiydi
      ("beshta tanga qo'shildi"). Faqat qisqartiriladi. */
   .az-tanga { animation-duration: 0.4s; animation-delay: 0ms; }
   .az-tanga-sanoq { animation: none; }
+  /* Halqa va natija DARHOL o'z holatida turadi — ular ma'lumot
+     ko'rsatadi va harakatsiz ham to'liq o'qiladi. */
+  .az-variant-tanlandi, .az-halqa, .az-natija { animation: none; }
 }

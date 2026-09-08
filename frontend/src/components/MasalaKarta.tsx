@@ -32,6 +32,7 @@
 import { avatarBelgi } from "../lib/dokon";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
+import { nuqtaSoni } from "../lib/masalaQiyin";
 import { sinfNomi, sinfRangi } from "../lib/masalaSinf";
 import { ENG_KATTA_MUKOFOT } from "../lib/masalaTanga";
 import type { Masala } from "../lib/masala";
@@ -41,21 +42,6 @@ interface Props {
   on: () => void;
   /** Muallif yozuvi ko'rsatilsinmi. Muallif sahifasida u ortiqcha. */
   muallifBilan?: boolean;
-}
-
-/**
- * Qiyinlik — beshta nuqta.
- *
- * `qiyinlik` — birinchi urinishda TO'G'RI yechganlar foizi, ya'ni
- * son qancha KATTA bo'lsa, masala shuncha oson. Nuqtalar teskari
- * o'qiladi: ko'p nuqta — qiyin masala.
- */
-function nuqtaSoni(qiyinlik: number): number {
-  if (qiyinlik >= 80) return 1;
-  if (qiyinlik >= 60) return 2;
-  if (qiyinlik >= 40) return 3;
-  if (qiyinlik >= 20) return 4;
-  return 5;
 }
 
 export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
