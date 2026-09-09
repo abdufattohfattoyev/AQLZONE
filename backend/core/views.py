@@ -1046,8 +1046,17 @@ def onlayn_royxat(request):
     Duel shu paytgacha faqat havola bilan ishlardi — ya'ni do'sti
     yo'q bola uni umuman o'ynay olmasdi. Bu ro'yxat o'sha bo'shliqni
     to'ldiradi (`core/onlayn.py`).
+
+    `onlaynSoni` — ro'yxatning AYNAN HOZIR ilovada turgan qismi.
+    Uni mijozda sanash ham mumkin edi, lekin sarlavhada ("3 kishi
+    onlayn") aynan shu son turadi va uni serverdan olish ikki
+    joyda ikki xil hisoblash ehtimolini yo'q qiladi.
     """
-    return Response({"oyinchilar": ON.royxat(request.user)})
+    oyinchilar = ON.royxat(request.user)
+    return Response({
+        "oyinchilar": oyinchilar,
+        "onlaynSoni": sum(1 for o in oyinchilar if o["onlayn"]),
+    })
 
 
 @api_view(["GET"])

@@ -15,15 +15,30 @@ bittasini bosib chaqirsa bo'ladi.
 
 Uchta shart va uchalasi ham zarur:
 
-  1. **Oxirgi 15 daqiqada faol** (`Session.last_seen`). Sanoq
-     boshqaruv panelidagi bilan bir xil — ikkita "onlayn" ta'rifi
-     bo'lsa, ular albatta bir-biriga zid javob berardi.
+  1. **Oxirgi bir kunda faol** (`Session.last_seen`) — pastdagi
+     "NEGA BIR KUN" ga qarang.
   2. **Ro'yxatdan o'tgan.** Ismsiz hisob ro'yxatda "Do'stingiz"
      bo'lib turardi va uni tanlashning ma'nosi yo'q.
   3. **Telegram'i bog'langan.** Chaqiruv Telegram xabari bo'lib
      boradi — boshqa yetkazish yo'li yo'q. Bog'lanmagan odamga
      chaqiruv yuborilsa, u hech qachon yetib bormasdi va
      chaqirgan odam javobini kutib o'tirardi.
+
+─────────────────── NEGA BIR KUN, 15 DAQIQA EMAS ───────────────
+
+Avval ro'yxat faqat oxirgi 15 daqiqada faol bo'lganlarni ko'rsatardi
+va u deyarli HAR DOIM BO'SH edi. Sabab arifmetikada: bir kunda
+ilovaga o'n besh chog'li odam kiradi, ya'ni istalgan lahzada ichkarida
+bir-ikki kishi bo'ladi — va ulardan biri qarayotgan odamning o'zi.
+
+Bo'sh ro'yxat esa xususiyatni o'ldiradi: bola duel ekranini ochadi,
+hech kimni ko'rmaydi va boshqa qaramaydi.
+
+Shuning uchun ro'yxat bir kunlik va ikki qismga bo'lingan: HOZIR
+onlayn turganlar (`ONLAYN_DAQIQA`) va BUGUN kirganlar. Ikkinchisi
+yolg'on emas — chaqiruv Telegram xabari bo'lib boradi va u odam
+ilovada bo'lmasa ham yetib boradi. "Onlayn" degan so'z esa faqat
+birinchi guruhga nisbatan ishlatiladi.
 
 ─────────────────── ISM QAYSI ───────────────────
 
@@ -47,10 +62,19 @@ from .models import Identity, Profile, Pupil, Session
 #: bosilmaydi. Yigirmatasi bir ekranga sig'adi.
 MAX_ODAM = 20
 
+#: Ro'yxat qancha orqaga qaraydi (daqiqa). Bir kun — yuqoridagi
+#: "NEGA BIR KUN" ga qarang.
+ROYXAT_DAQIQA = 24 * 60
 
-def onlayn_pupillar(bundan_tashqari: Pupil | None = None):
-    """Hozir faol bo'lgan hisoblar — eng oxirgi ko'ringani birinchi."""
-    chegara = timezone.now() - timedelta(minutes=ONLAYN_DAQIQA)
+
+def onlayn_pupillar(bundan_tashqari: Pupil | None = None, daqiqa: int = ROYXAT_DAQIQA):
+    """
+    Faol hisoblar — eng oxirgi ko'ringani birinchi.
+
+    `korindi` annotatsiyasi qaytadi va u chaqiruvchiga kerak:
+    "hozir onlayn" bilan "bugun kirgan" ni aynan shu ajratadi.
+    """
+    chegara = timezone.now() - timedelta(minutes=daqiqa)
     qs = (
         Pupil.objects
         .filter(
@@ -75,7 +99,14 @@ def royxat(men: Pupil) -> list[dict]:
     bir necha bola bo'lishi mumkin va chaqiruvni ularning
     ASOSIYSIGA yuboramiz: qaysi bola ilovani ochib turganini server
     bilmaydi.
+
+    `onlayn` — shu odam AYNAN HOZIR ilovadami. Mijoz shu bayroqqa
+    qarab yashil nuqta qo'yadi yoki "bugun kirgan" deb yozadi.
+    Ikkalasini bitta ro'yxatda berish ataylab: ular bitta savolga —
+    "kimni chaqirsam bo'ladi?" — javob beradi va ikki alohida
+    so'rov qilish ekranni ikki marta kutdirardi.
     """
+    hozir = timezone.now() - timedelta(minutes=ONLAYN_DAQIQA)
     javob = []
     for p in onlayn_pupillar(men):
         profil = p.profiles.order_by("created_at", "pk").first()
@@ -85,6 +116,8 @@ def royxat(men: Pupil) -> list[dict]:
             "profil": profil.pk,
             "ism": p.toliq_ism or profil.name,
             "avatar": profil.avatar,
+            "onlayn": p.korindi >= hozir,
+            "korindi": p.korindi,
         })
     return javob
 

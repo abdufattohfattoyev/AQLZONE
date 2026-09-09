@@ -1090,24 +1090,42 @@ export interface OnlaynOyinchi {
   profil: number;
   ism: string;
   avatar: string;
+  /**
+   * AYNAN HOZIR ilovadami.
+   *
+   * `false` bo'lsa odam bugun kirgan, lekin hozir yo'q. Uni ham
+   * chaqirsa bo'ladi — chaqiruv Telegram xabari bo'lib boradi va
+   * ilovada bo'lmasa ham yetib boradi (`core/onlayn.py`).
+   */
+  onlayn: boolean;
+  /** Oxirgi marta qachon ko'ringani (ISO). */
+  korindi: string;
+}
+
+export interface OnlaynRoyxat {
+  oyinchilar: OnlaynOyinchi[];
+  /** Ro'yxatning aynan hozir ilovada turgan qismi. */
+  onlaynSoni: number;
 }
 
 /**
- * Hozir ilovada turgan o'yinchilar.
+ * Chaqirsa bo'ladigan o'yinchilar — hozir onlayn va bugun kirganlar.
  *
  * Ro'yxatga faqat Telegram'i bog'langanlar tushadi — chaqiruv
  * xabari boshqa yo'l bilan yetib bormaydi (`core/onlayn.py`).
  * Xato bo'lsa bo'sh ro'yxat: duel ekrani busiz ham ishlaydi.
  */
-export async function onlaynOyinchilar(): Promise<OnlaynOyinchi[]> {
-  if (!(await signIn())) return [];
+export async function onlaynOyinchilar(): Promise<OnlaynRoyxat> {
+  const bosh: OnlaynRoyxat = { oyinchilar: [], onlaynSoni: 0 };
+  if (!(await signIn())) return bosh;
   try {
     const r = await fetch("/api/v1/onlayn", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!r.ok) return [];
-    return ((await r.json()) as { oyinchilar: OnlaynOyinchi[] }).oyinchilar ?? [];
-  } catch { return []; }
+    if (!r.ok) return bosh;
+    const d = (await r.json()) as Partial<OnlaynRoyxat>;
+    return { oyinchilar: d.oyinchilar ?? [], onlaynSoni: d.onlaynSoni ?? 0 };
+  } catch { return bosh; }
 }
 
 /** Chaqiruv haqida ma'lumot (ball bermaydi). */

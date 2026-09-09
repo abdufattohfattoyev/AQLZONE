@@ -5011,11 +5011,53 @@ class OnlaynTest(TestCase):
     def test_ozim_royxatda_yoq(self):
         self.assertNotIn("Men", [x["ism"] for x in self.royxat()])
 
-    def test_uxlab_yotgan_odam_royxatda_yoq(self):
+    def test_bugun_kirgan_royxatda_lekin_onlayn_emas(self):
+        """
+        Ro'yxat bir kunlik va bu ataylab o'zgartirilgan: ilgari u
+        faqat 15 daqiqalik edi va deyarli HAR DOIM bo'sh chiqardi —
+        kuniga o'n besh chog'li odam kiradi, ya'ni istalgan lahzada
+        ichkarida bir-ikki kishi bo'ladi.
+
+        Uch soat oldin kirgan odamni chaqirsa bo'ladi: chaqiruv
+        Telegram xabari bo'lib boradi va u ilovada bo'lmasa ham
+        yetib boradi. Lekin u "onlayn" DEB ATALMAYDI.
+        """
         p = self.tayyorla("dev-onlayn-uxla-004", "Uyqu", "444555666")
-        eski = timezone.now() - timedelta(hours=3)
-        Session.objects.filter(pupil=p).update(last_seen=eski)
-        self.assertNotIn("Uyqu", [x["ism"] for x in self.royxat()])
+        Session.objects.filter(pupil=p).update(
+            last_seen=timezone.now() - timedelta(hours=3),
+        )
+        qator = next(x for x in self.royxat() if x["ism"] == "Uyqu")
+        self.assertFalse(qator["onlayn"])
+
+    def test_kecha_kirgan_odam_royxatda_yoq(self):
+        p = self.tayyorla("dev-onlayn-kecha-006", "Kecha", "444555777")
+        Session.objects.filter(pupil=p).update(
+            last_seen=timezone.now() - timedelta(days=2),
+        )
+        self.assertNotIn("Kecha", [x["ism"] for x in self.royxat()])
+
+    def test_hozir_kirgan_odam_onlayn(self):
+        p = self.tayyorla("dev-onlayn-hozir-007", "Hozir", "444555888")
+        Session.objects.filter(pupil=p).update(last_seen=timezone.now())
+        qator = next(x for x in self.royxat() if x["ism"] == "Hozir")
+        self.assertTrue(qator["onlayn"])
+
+    def test_onlayn_soni_faqat_hozirgilarni_sanaydi(self):
+        """Sarlavhadagi son ("3 kishi onlayn") serverdan keladi —
+        ikki joyda ikki xil hisoblash ehtimoli bo'lmasin."""
+        hozir = self.tayyorla("dev-onlayn-son-a-008", "SonHozir", "444556001")
+        bugun = self.tayyorla("dev-onlayn-son-b-009", "SonBugun", "444556002")
+        Session.objects.filter(pupil=hozir).update(last_seen=timezone.now())
+        Session.objects.filter(pupil=bugun).update(
+            last_seen=timezone.now() - timedelta(hours=5),
+        )
+        r = self.client.get("/api/v1/onlayn", **self.auth(self.token)).json()
+        ismlar = [x["ism"] for x in r["oyinchilar"]]
+        self.assertIn("SonHozir", ismlar)
+        self.assertIn("SonBugun", ismlar)
+        self.assertEqual(
+            r["onlaynSoni"], sum(1 for x in r["oyinchilar"] if x["onlayn"]),
+        )
 
     class DarholOqim:
         """Fon oqimi sinovda darhol ishlasin — test vaqtga bog'liq bo'lmasin."""

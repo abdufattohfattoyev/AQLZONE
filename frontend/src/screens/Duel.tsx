@@ -287,8 +287,11 @@ function Shartlar({ onTanladi, onChiq }: {
   );
 }
 
+/** Ro'yxat necha soniyada bir yangilanadi. */
+const ONLAYN_YANGILASH_MS = 20_000;
+
 /**
- * HOZIR ILOVADA TURGANLAR — bitta bosishda chaqiriladi.
+ * KIMNI CHAQIRSA BO'LADI — bitta bosishda chaqiriladi.
  *
  * NEGA KERAK. Duel shu paytgacha faqat HAVOLA bilan ishlardi: odam
  * chaqiruv yasaydi, uni do'stiga yuboradi va javobini kutadi. Do'sti
@@ -299,46 +302,110 @@ function Shartlar({ onTanladi, onChiq }: {
  * yerga xabar bo'lib boradi va boshqa yetkazish yo'li yo'q
  * (`backend/core/onlayn.py`).
  *
- * Ro'yxat KUTILMAYDI: u pastda turadi va yuklanmasa, yuqoridagi
- * asosiy ish — havola bilan chaqirish — hech qanday kechikish
- * ko'rmaydi.
+ * ─────────────── BO'SH BO'LSA HAM KO'RINADI ───────────────
+ *
+ * Ilgari ro'yxat bo'sh bo'lganda BUTUNLAY yashirinardi va u deyarli
+ * har doim bo'sh edi (kuniga o'n besh chog'li odam kiradi, ya'ni
+ * istalgan lahzada ichkarida bir-ikki kishi bo'ladi). Natijada
+ * xususiyat bor edi-yu, uni hech kim ko'rmasdi — hatto uni
+ * yozganlar ham "ishlamayapti" deb o'ylardi.
+ *
+ * Endi bo'lim har doim turadi va bo'sh bo'lsa buni AYTADI. Yo'qlik
+ * ham javob: odam nima bo'layotganini biladi va havola bilan
+ * chaqirish yo'liga o'tadi.
+ *
+ * ─────────────── O'ZI YANGILANADI ───────────────
+ *
+ * Ro'yxat yigirma soniyada bir qayta so'raladi va ekranga qaytilganda
+ * ham (`visibilitychange`). Bir marta yuklab qo'yish yetarli emas:
+ * odam duel ekranida o'ylanib turadi va shu orada boshqa birov
+ * ilovaga kirishi mumkin — u esa ro'yxatda paydo bo'lmasdi.
  */
 function Onlayn({ onChaqir }: { onChaqir: (profil: number) => void }) {
   const [ro, setRo] = useState<OnlaynOyinchi[] | null>(null);
+  const [onlaynSoni, setOnlaynSoni] = useState(0);
 
   useEffect(() => {
     let bekor = false;
-    onlaynOyinchilar().then((d) => { if (!bekor) setRo(d); });
-    return () => { bekor = true; };
+
+    const yukla = async () => {
+      const d = await onlaynOyinchilar();
+      if (bekor) return;
+      setRo(d.oyinchilar);
+      setOnlaynSoni(d.onlaynSoni);
+    };
+
+    void yukla();
+    const soat = setInterval(() => { void yukla(); }, ONLAYN_YANGILASH_MS);
+    // Ilova fonda turganda so'rov yubormaymiz va qaytilganda darhol
+    // yangilaymiz: telefon fonda soatlab tursa, o'nlab keraksiz
+    // so'rov ketardi va qaytgan odam baribir eski ro'yxatni ko'rardi.
+    const korinish = () => { if (!document.hidden) void yukla(); };
+    document.addEventListener("visibilitychange", korinish);
+
+    return () => {
+      bekor = true;
+      clearInterval(soat);
+      document.removeEventListener("visibilitychange", korinish);
+    };
   }, []);
 
-  if (!ro?.length) return null;
+  // Birinchi yuklanish tugamaguncha hech narsa chizilmaydi: bo'sh
+  // ro'yxat bir lahza chaqnab, keyin to'lishi "xato bo'ldimi?" degan
+  // taassurot berardi.
+  if (ro === null) return null;
 
   return (
     <div className="mt-7">
       <h2 className="mb-2 ml-1.5 flex items-center gap-1.5 text-[11px] tracking-widest
                      text-ink-soft uppercase">
-        {/* Yashil nuqta — "hozir" degan yagona ishora. */}
-        <span className="size-1.5 rounded-full bg-brand-green" />
-        {t("duelOnlayn", { n: ro.length })}
+        {/* Yashil nuqta — "hozir" degan yagona ishora. Hech kim
+            onlayn bo'lmasa u ham so'nadi. */}
+        <span className={`size-1.5 rounded-full ${
+          onlaynSoni > 0 ? "bg-brand-green" : "bg-ink-dim/40"}`} />
+        {onlaynSoni > 0 ? t("duelOnlayn", { n: onlaynSoni }) : t("duelKimChaqirish")}
       </h2>
-      <div className="space-y-1.5">
-        {ro.map((o) => (
-          <div key={o.profil}
-            className="flex items-center gap-2.5 rounded-clay bg-karta px-3 py-2.5 shadow-clay-sm">
-            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-track
-                             text-[13px]">
-              {avatarBelgi(o.avatar)}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-[13px]">{o.ism}</span>
-            <button type="button" onClick={() => onChaqir(o.profil)}
-              className="clay-press shrink-0 rounded-full bg-brand-orange px-3 py-1.5
-                         text-[12px] text-white">
-              {t("duelChaqir")}
-            </button>
-          </div>
-        ))}
-      </div>
+
+      {ro.length === 0 ? (
+        <p className="rounded-clay bg-karta px-3.5 py-3 text-[12.5px] leading-snug
+                      text-ink-dim shadow-clay-sm">
+          {t("duelHechKim")}
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {ro.map((o) => (
+            <div key={o.profil}
+              className="flex items-center gap-2.5 rounded-clay bg-karta px-3 py-2.5
+                         shadow-clay-sm">
+              <span className="relative shrink-0">
+                <span className="grid size-7 place-items-center rounded-full bg-track
+                                 text-[13px]">
+                  {avatarBelgi(o.avatar)}
+                </span>
+                {/* Yashil nuqta avatarning ustida — "hozir shu yerda"
+                    degan belgi messenjerlarda ham shu joyda turadi va
+                    uni tushuntirish kerak emas. */}
+                {o.onlayn && (
+                  <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full
+                                   bg-brand-green ring-2 ring-karta" />
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] leading-tight">{o.ism}</span>
+                <span className={`text-[10.5px] ${
+                  o.onlayn ? "text-brand-green" : "text-ink-dim"}`}>
+                  {o.onlayn ? t("duelHozir") : t("duelBugun")}
+                </span>
+              </span>
+              <button type="button" onClick={() => onChaqir(o.profil)}
+                className="clay-press shrink-0 rounded-full bg-brand-orange px-3 py-1.5
+                           text-[12px] text-white">
+                {t("duelChaqir")}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

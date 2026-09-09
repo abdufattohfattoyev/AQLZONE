@@ -1350,6 +1350,15 @@ const S = {
   /* Onlayn ro'yxat: do'sti yo'q bola ham raqib topsin. */
   duelOnlayn: ["Hozir ilovada — {n} ta", "Сейчас в приложении — {n}"],
   duelChaqir: ["Chaqirish", "Позвать"],
+  /* Hech kim onlayn bo'lmaganda sarlavha o'zgaradi: "hozir ilovada
+     — 0 ta" degan yozuv bo'limni buzuq ko'rsatardi. */
+  duelKimChaqirish: ["Kimni chaqirsa bo'ladi", "Кого можно позвать"],
+  duelHozir: ["hozir ilovada", "сейчас в приложении"],
+  duelBugun: ["bugun kirgan", "заходил сегодня"],
+  duelHechKim: [
+    "Hozircha hech kim yo'q. Chaqiruv yasab, havolasini do'stingizga yuboring — u istalgan vaqtda ochadi.",
+    "Пока никого нет. Создайте вызов и отправьте ссылку другу — он откроет её в любое время.",
+  ],
   duelChaqiruvKetdi: [
     "Chaqiruv Telegramga yuborildi — javobini kutyapmiz",
     "Вызов отправлен в Telegram — ждём ответа",
