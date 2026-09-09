@@ -176,11 +176,20 @@ export interface Menikilar {
 
 /* ------------------------------------------------------------------ o'qish */
 
+/**
+ * Ro'yxatning bitta sahifasi.
+ *
+ * `teskari` — o'sha saralashning teskari yo'nalishi ("Yangi" →
+ * eng eskisi birinchi). Alohida tartib kodlari qo'shish o'rniga
+ * bitta bayroq: u har qanday saralashga bir xil qo'llanadi.
+ */
 export function royxat(
   sinf: number | null, tartib: Tartib, sahifa = 0, holat: Holat = "hammasi",
+  teskari = false,
 ): Promise<Royxat> {
   const q = new URLSearchParams({ tartib, sahifa: String(sahifa), holat });
   if (sinf !== null) q.set("sinf", String(sinf));
+  if (teskari) q.set("teskari", "1");
   return sorov<Royxat>(`/api/v1/masalalar?${q}${profilQuery("&")}`);
 }
 

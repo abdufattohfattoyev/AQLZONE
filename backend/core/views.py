@@ -115,6 +115,18 @@ def _butun(xom, standart: int = 0) -> int:
         return standart
 
 
+def _rost(xom) -> bool:
+    """
+    So'rov satridagi bayroqni o'qiydi.
+
+    Manzilda hamma narsa SATR: `?teskari=false` ham, `?teskari=0` ham
+    Python uchun "rost" bo'lib chiqadi va shunchaki `bool(xom)`
+    bayroqni hech qachon o'chira olmasdi. Shuning uchun ro'yxat
+    aniq: faqat quyidagi to'rttasi rost deb qabul qilinadi.
+    """
+    return str(xom).strip().lower() in {"1", "true", "ha", "yes"}
+
+
 def _profil_tanla(request) -> Profile:
     """
     So'rov qaysi bolaga tegishli.
@@ -1419,7 +1431,7 @@ def masalalar(request):
     """
     Tasdiqlangan masalalar ro'yxati va yangi masala yuborish.
 
-        GET  ?sinf=7&tartib=yangi|zor|qiyin|koplik&sahifa=0
+        GET  ?sinf=7&tartib=yangi|zor|qiyin|koplik&sahifa=0&teskari=1
         POST {sinf, matn, javob, yechim}
 
     Ro'yxatda YECHIM YO'Q — hatto urinib ko'rgan odam uchun ham.
@@ -1481,6 +1493,15 @@ def masalalar(request):
         qs = qs.exclude(pk__in=yechganlarim)
 
     tartib = MASALA_TARTIB.get(request.query_params.get("tartib") or "yangi")
+    # `teskari` — o'sha saralashning TESKARI yo'nalishi.
+    #
+    # Alohida tartib kodlari qo'shish ham mumkin edi ("eski", "oson"),
+    # lekin u paytda ro'yxat sakkizta koddan iborat bo'lardi va
+    # ularning yarmi ikkinchi yarmining aksi ekani faqat nomidan
+    # taxmin qilinardi. Yo'nalish esa alohida, bitta bayroq: u har
+    # qanday saralashga bir xil qo'llanadi.
+    if _rost(request.query_params.get("teskari")):
+        tartib = [x[1:] if x.startswith("-") else f"-{x}" for x in tartib]
     qs = qs.order_by(*tartib)
 
     # Jami son SAHIFALAR uchun kerak: odam "3 / 12" ni ko'rib, qayerda

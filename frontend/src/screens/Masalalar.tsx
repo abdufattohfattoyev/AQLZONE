@@ -113,6 +113,14 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
 
   /** Yechilganlik filtri — hammasi / yechilmagan / yechgan. */
   const [yechilganlik, setYechilganlik] = useState<Holat>("hammasi");
+  /**
+   * Saralash YO'NALISHI — teskarisiga o'girilganmi.
+   *
+   * Tanlangan saralashdan alohida saqlanadi: odam "Yangi" dan
+   * "Eng qiyin" ga o'tganda yo'nalish o'zgarmasligi kerak — u
+   * boshqa savolga javob beradi.
+   */
+  const [teskari, setTeskari] = useState(false);
   const [holat, setHolat] = useState<"yuklanmoqda" | "tayyor" | "xato">("yuklanmoqda");
 
   /** Joriy saralashning nomi — natija qatorida yozuv bo'lib turadi. */
@@ -129,7 +137,7 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
   const yukla = useCallback(async (s: number) => {
     setHolat("yuklanmoqda");
     try {
-      const d = await MS.royxat(sinf, tartib, s, yechilganlik);
+      const d = await MS.royxat(sinf, tartib, s, yechilganlik, teskari);
       setRoyxat(d.masalalar);
       setSahifa(d.sahifa);
       setSahifalar(d.sahifalar);
@@ -143,7 +151,7 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
       // "bu yerda hech narsa yo'q ekan" deb chiqib ketmasin.
       setHolat("xato");
     }
-  }, [sinf, tartib, yechilganlik]);
+  }, [sinf, tartib, yechilganlik, teskari]);
 
   // Saralash, sinf yoki filtr o'zgarsa — birinchi sahifadan qaytadan.
   useEffect(() => { void yukla(0); }, [yukla]);
@@ -151,6 +159,7 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
   const almashtir = (k: Tartib) => { tebrat("tanlov"); setTartib(k); };
   const sinfniTanla = (k: number | null) => { tebrat("tanlov"); setSinf(k); };
   const holatniTanla = (k: Holat) => { tebrat("tanlov"); setYechilganlik(k); };
+  const teskariAlmashtir = () => { tebrat("tanlov"); setTeskari((x) => !x); };
 
   /* Filtr tegilmagan bo'lsa — bo'lim haqiqatan bo'sh. Tegilgan
      bo'lsa esa "bu filtrda yo'q" degani va u yerda katta "yozing"
@@ -294,16 +303,28 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
             <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-brand-green" />
             <span className="truncate">{t("masalaTopildi", { n: jami })}</span>
           </span>
-          {/* Tor ekranda BUTUNLAY yashirinadi, faqat yozuvi emas.
-              Yolg'iz qolgan "Yangi" degan so'z hech narsa
-              anglatmasdi — u nimaning nomi ekani ko'rinmasdi.
-              Saralash esa shundoq ham yuqorida, tanlangan tugmacha
-              bo'lib turibdi. */}
-          <span className="ml-auto hidden shrink-0 items-center gap-1 text-ink-dim
-                           min-[360px]:flex">
-            {t("masalaSaralash")}:
+          {/* Yo'nalish tugmasi — o'sha saralashni teskarisiga
+              o'giradi ("Yangi" → eng eskisi birinchi).
+
+              Bu yuqoridagi tasmaning takrori EMAS: u yerda QAYSI
+              saralash ekani tanlanadi, bu yerda esa uning
+              YO'NALISHI. Alohida "eski" va "oson" kodlari qo'shish
+              ham mumkin edi, lekin u paytda tasmada sakkizta
+              tugmacha bo'lardi va ularning yarmi ikkinchi yarmining
+              aksi ekani faqat nomidan taxmin qilinardi.
+
+              Tor ekranda "Saralash:" yozuvi ketadi, o'q qoladi:
+              o'qning o'zi yo'nalishni to'liq aytadi. */}
+          <button type="button" onClick={teskariAlmashtir}
+            aria-label={t(teskari ? "masalaEskidan" : "masalaYangidan")}
+            className="clay-press ml-auto flex shrink-0 items-center gap-1 rounded-full
+                       bg-karta px-2.5 py-1 text-ink-dim shadow-clay-sm">
+            <span className="hidden min-[360px]:inline">{t("masalaSaralash")}:</span>
             <b className="font-display text-brand-purple">{tartibNomi}</b>
-          </span>
+            <Icon name="chevron" size={13}
+              className={`shrink-0 text-brand-purple transition-transform ${
+                teskari ? "-rotate-90" : "rotate-90"}`} />
+          </button>
         </div>
       )}
 

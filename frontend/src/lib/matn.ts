@@ -554,6 +554,10 @@ const S = {
   ],
   masalaTopildi: ["{n} ta masala topildi", "Найдено задач: {n}"],
   masalaSaralash: ["Saralash", "Сортировка"],
+  /* Tugmaning ekran o'qigich uchun nomi — u BOSILGANDA nima
+     bo'lishini aytadi, hozirgi holatni emas. */
+  masalaYangidan: ["Teskarisiga: eskisidan boshlab", "Наоборот: от старых"],
+  masalaEskidan: ["Teskarisiga: yangisidan boshlab", "Наоборот: от новых"],
   masalaNavbatdagi: ["Navbatdagi masala", "Следующая задача"],
   masalaKorildi: ["{n} kishi ochgan", "Открыли {n} человек"],
   masalaKorildiIzoh: [

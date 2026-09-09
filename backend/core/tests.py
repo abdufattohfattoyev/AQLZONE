@@ -4777,6 +4777,62 @@ class MasalaKorishTest(TestCase):
         self.assertEqual(self.m.yechgan_soni, 0)
 
 
+class MasalaTeskariTest(TestCase):
+    """
+    Saralash yo'nalishi — `?teskari=1`.
+
+    Diqqat qaratilgan joy — BAYROQ SATR bo'lib kelishi. Manzilda
+    hamma narsa satr va `?teskari=false` ham, `?teskari=0` ham
+    Python uchun "rost" bo'lib chiqadi: shunchaki `bool()` bilan
+    tekshirilsa, bayroqni hech qachon o'chirib bo'lmasdi.
+    """
+
+    def kir(self, device: str) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def setUp(self):
+        cache.clear()
+        self.token = self.kir("dev-teskari-000000001")
+        muallif = Pupil.objects.create(first_name="Muallif").asosiy_profil()
+        # Uchtasi ketma-ket yaratiladi — `created_at` shu tartibda.
+        self.idlar = [
+            Masala.objects.create(
+                muallif=muallif, sinf=5, matn=f"{i}-masala matni shu yerda turadi.",
+                javob=str(i), yechim=f"{i} ga teng.", holat=Masala.TASDIQ,
+            ).pk
+            for i in range(1, 4)
+        ]
+
+    def royxat(self, **q) -> list[int]:
+        r = self.client.get("/api/v1/masalalar", q, **self.auth(self.token))
+        return [m["id"] for m in r.json()["masalalar"]]
+
+    def test_standart_yangisidan(self):
+        self.assertEqual(self.royxat(), list(reversed(self.idlar)))
+
+    def test_teskari_eskisidan(self):
+        self.assertEqual(self.royxat(teskari="1"), self.idlar)
+
+    def test_notogri_bayroq_tartibni_ozgartirmaydi(self):
+        """`?teskari=0` va `?teskari=false` — bu "yo'q" degani."""
+        for xom in ("0", "false", "", "yoq"):
+            with self.subTest(qiymat=xom):
+                self.assertEqual(self.royxat(teskari=xom), list(reversed(self.idlar)))
+
+    def test_boshqa_saralash_ham_teskarilanadi(self):
+        """Bayroq har qanday saralashga bir xil qo'llanadi — u
+        alohida "eski" kodi emas, YO'NALISH."""
+        oddiy = self.royxat(tartib="koplik")
+        self.assertEqual(self.royxat(tartib="koplik", teskari="1"), list(reversed(oddiy)))
+
+
 class KeyingiMasalaTest(TestCase):
     """
     Yechib bo'lgandan keyingi davom yo'li.

@@ -58,6 +58,18 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
                  text-left shadow-clay-sm">
       {/* ---- tepa qator ---- */}
       <div className="flex items-center gap-2">
+        {/* Masala raqami — eng oldida.
+
+            Bu POZITSIYA emas, masalaning O'Z raqami: sahifa
+            almashganda ham, saralash o'zgarganda ham u o'zgarmaydi.
+            Shu sabab uni do'stiga aytsa bo'ladi ("7-masalani ko'rdingmi?")
+            va u masala ekranidagi, kanaldagi post bilan ham bir xil
+            bo'ladi. Sahifadagi o'rni (1, 2, 3…) esa har filtrda
+            boshqa masalani ko'rsatardi. */}
+        <span className="shrink-0 font-display text-[12px] leading-none text-ink-dim">
+          #{m.id}
+        </span>
+
         {/* Toifa yorlig'i RANGLI: o'nta kartali sahifada ko'z avval
             rangni ko'radi, yozuvni keyin o'qiydi. Kulrang yorliqlar
             paytida "olimpiada" masalasini topish uchun har birining
