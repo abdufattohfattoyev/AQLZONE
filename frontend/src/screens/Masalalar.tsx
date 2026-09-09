@@ -110,9 +110,13 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
   const [sahifa, setSahifa] = useState(0);
   const [sahifalar, setSahifalar] = useState(1);
   const [jami, setJami] = useState(0);
+
   /** Yechilganlik filtri — hammasi / yechilmagan / yechgan. */
   const [yechilganlik, setYechilganlik] = useState<Holat>("hammasi");
   const [holat, setHolat] = useState<"yuklanmoqda" | "tayyor" | "xato">("yuklanmoqda");
+
+  /** Joriy saralashning nomi — natija qatorida yozuv bo'lib turadi. */
+  const tartibNomi = (TARTIBLAR.find((x) => x.kod === tartib) ?? TARTIBLAR[0]).nom();
 
   /**
    * Ro'yxatni oladi — bitta SAHIFANI.
@@ -157,25 +161,47 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-3 pb-10">
-      {/* ---- sarlavha va ikkita amal ---- */}
+      {/* ---- sarlavha va amallar ----
+          ENG TOR EKRANGA moslangan va bu shart: Telegram Mini App
+          320 piksellik telefonlarda ham ochiladi, bu qatorda esa
+          beshta narsa bor. Uchta o'lchov nuqtasi:
+
+            <360px   "Yozish" yozuvi yashirinadi, tugma faqat + belgisi
+            <400px   "Mening" yozuvi yashirinadi, faqat qalam qoladi
+            >=400px  hammasi yozuvi bilan
+
+          Belgilar QOLADI, yozuvlar ketadi: tugmaning o'lchami
+          o'zgarmaydi, ya'ni barmoq o'sha joyni topaveradi. */}
       <div className="flex items-center gap-2">
         {!ozStrelka && (
           <button type="button" onClick={onBack} aria-label={t("ortga")}
-            className="clay-press -ml-1 grid size-10 shrink-0 place-items-center rounded-2xl
-                       text-ink-soft">
-            <Icon name="chevron" size={20} className="rotate-180" />
+            className="clay-press grid size-9 shrink-0 place-items-center rounded-full
+                       bg-karta text-ink-soft shadow-clay-sm">
+            <Icon name="chevron" size={18} className="rotate-180" />
           </button>
         )}
-        {/* Sarlavha yonidagi "Mening" — ikkinchi darajali amal va
-            shunday ham ko'rinadi: yozuv, karta emas. Ilgari u
-            binafsha tugma yonidagi ikkinchi kvadrat tugma edi va
-            ikkalasi bir xil og'irlikda turardi. */}
-        <h1 className="shrink-0 font-display text-[17px] leading-none">{t("masalalar")}</h1>
+
+        {/* Sarlavha bloki — ikki qator. Shior nima uchun kerak:
+            bo'lim nomi ("Masalalar") uning nimaligini aytadi, lekin
+            nima uchun kerakligini aytmaydi. Birinchi marta kirgan
+            odam aynan shu ikkinchi savol bilan keladi. */}
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate font-display text-[19px] leading-tight">
+            {t("masalalar")}
+          </h1>
+          <p className="truncate text-[11px] leading-tight text-ink-dim">
+            {t("masalalarShior")}
+          </p>
+        </div>
+
+        {/* "Mening" — ikkinchi darajali amal va shunday ham
+            ko'rinadi: yozuv, karta emas. */}
         <button type="button" onClick={onMenikilar} title={t("masalaMenikilar")}
-          className="clay-press flex min-w-0 shrink items-center gap-1 text-[12.5px]
-                     text-ink-dim">
-          <Icon name="pencil" size={14} className="shrink-0" />
-          <span className="truncate">{t("masalaMenikilarQisqa")}</span>
+          aria-label={t("masalaMenikilar")}
+          className="clay-press flex h-9 shrink-0 items-center gap-1 rounded-full px-2
+                     text-[12.5px] text-ink-dim">
+          <Icon name="pencil" size={15} className="shrink-0" />
+          <span className="hidden min-[400px]:inline">{t("masalaMenikilarQisqa")}</span>
         </button>
 
         {/* Tanga hisobi — bo'limning butun iqtisodi shu songa
@@ -183,15 +209,18 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
             liga ATAYLAB yo'q: ular boshqa ekranlarda o'z joyida
             turadi va bu yerda to'rtta bir xil yorliq bo'lib,
             hech biri o'qilmasdi. */}
-        <span className="ml-auto"><TangaHisob /></span>
+        <TangaHisob />
 
         {/* Asosiy amal — ro'yxatning ustida emas, YONIDA. Matni
             qisqa, chunki uning izohi keyingi ekranning o'zi. */}
         <button type="button" onClick={onYangi} title={t("masalaYoz")}
+          aria-label={t("masalaYoz")}
           className="tugma-3d flex h-9 shrink-0 items-center gap-1 rounded-full
-                     bg-brand-purple pr-3.5 pl-3 text-white shadow-clay-sm">
+                     bg-brand-purple px-3 text-white shadow-clay-sm">
           <Icon name="plus" size={16} />
-          <span className="font-display text-[13px] leading-none">{t("masalaYozQisqa")}</span>
+          <span className="hidden font-display text-[13px] leading-none min-[360px]:inline">
+            {t("masalaYozQisqa")}
+          </span>
         </button>
       </div>
 
@@ -246,13 +275,37 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
             {x.nom()}
           </button>
         ))}
-        {/* Nechta topilgani — filtr ishlaganini shu son ko'rsatadi. */}
-        {holat === "tayyor" && jami > 0 && (
-          <span className="ml-auto flex shrink-0 items-center pl-2 text-[11.5px] text-ink-dim">
-            {t("masalaJami", { n: jami })}
-          </span>
-        )}
       </div>
+
+      {/* ---- natija qatori ----
+          Son filtr qatoridan SHU YERGA ko'chdi. Sabab: u filtrning
+          bir bo'lagi emas, uning NATIJASI. Qator oxirida turganda u
+          "yana bitta tugma" bo'lib ko'rinardi va sonni o'qish uchun
+          tasmani surish kerak bo'lardi.
+
+          O'ngda saralash nomi turadi — u ham natijaga tegishli:
+          "nechta topildi va qanday tartibda" degan ikki savol bitta
+          qatorda javob topadi. Bu YOZUV, tugma emas: saralash
+          yuqorida allaqachon tanlanadi va ikkinchi boshqaruv
+          "qaysi biri ishlayapti?" degan savol tug'dirardi. */}
+      {holat === "tayyor" && jami > 0 && (
+        <div className="mt-2.5 flex items-center gap-2 px-1 text-[12px]">
+          <span className="flex min-w-0 items-center gap-1.5 text-ink-soft">
+            <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-brand-green" />
+            <span className="truncate">{t("masalaTopildi", { n: jami })}</span>
+          </span>
+          {/* Tor ekranda BUTUNLAY yashirinadi, faqat yozuvi emas.
+              Yolg'iz qolgan "Yangi" degan so'z hech narsa
+              anglatmasdi — u nimaning nomi ekani ko'rinmasdi.
+              Saralash esa shundoq ham yuqorida, tanlangan tugmacha
+              bo'lib turibdi. */}
+          <span className="ml-auto hidden shrink-0 items-center gap-1 text-ink-dim
+                           min-[360px]:flex">
+            {t("masalaSaralash")}:
+            <b className="font-display text-brand-purple">{tartibNomi}</b>
+          </span>
+        </div>
+      )}
 
       {/* ---- ro'yxat ---- */}
       {holat === "yuklanmoqda" && (

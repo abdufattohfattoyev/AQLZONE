@@ -422,7 +422,6 @@ const S = {
   masalaHolatHammasi: ["Barchasi", "Все"],
   masalaHolatYechilmagan: ["Yechilmagan", "Нерешённые"],
   masalaHolatYechgan: ["Yechganlarim", "Решённые"],
-  masalaJami: ["{n} ta", "{n} шт."],
   masalaYana: ["Yana ko'rsatish", "Показать ещё"],
   /* Sarlavhadagi tugma matni. "Masala qo'shish" u yerga sig'maydi —
      tor telefonda sarlavhani siqib, uni uch nuqtaga aylantirardi. */
@@ -549,6 +548,12 @@ const S = {
     "У автора {n} задач"
   ],
   masalaBarchasi: ["Barchasi", "Все"],
+  masalalarShior: [
+    "Yeching, tanga yig'ing, o'zingiznikini qo'shing",
+    "Решайте, копите монеты, добавляйте свои",
+  ],
+  masalaTopildi: ["{n} ta masala topildi", "Найдено задач: {n}"],
+  masalaSaralash: ["Saralash", "Сортировка"],
   masalaNavbatdagi: ["Navbatdagi masala", "Следующая задача"],
   masalaKorildi: ["{n} kishi ochgan", "Открыли {n} человек"],
   masalaKorildiIzoh: [
