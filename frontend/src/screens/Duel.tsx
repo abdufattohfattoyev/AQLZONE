@@ -287,8 +287,33 @@ function Shartlar({ onTanladi, onChiq }: {
   );
 }
 
-/** Ro'yxat necha soniyada bir yangilanadi. */
-const ONLAYN_YANGILASH_MS = 20_000;
+/**
+ * "20 daqiqa oldin", "3 soat oldin" — oxirgi marta qachon ko'ringani.
+ *
+ * ANIQ VAQT ataylab: "bugun kirgan" degan yozuv ertalab kirgan odam
+ * bilan yigirma daqiqa oldin chiqib ketgan odamni bir xil ko'rsatardi.
+ * Holbuki ikkinchisi deyarli albatta javob beradi, birinchisi esa
+ * yo'q — va odam kimni chaqirishni aynan shunga qarab tanlaydi.
+ */
+function qachonKorindi(iso: string): string {
+  const daqiqa = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (daqiqa < 60) return t("duelDaqiqaOldin", { n: Math.max(1, daqiqa) });
+  return t("duelSoatOldin", { n: Math.round(daqiqa / 60) });
+}
+
+/**
+ * Ro'yxat necha soniyada bir yangilanadi.
+ *
+ * Sakkiz soniya — bu ekranda odam raqib QIDIRIB turadi va ro'yxat
+ * jonli bo'lishi kerak: kimdir kirsa, u yarim daqiqadan keyin emas,
+ * darrov paydo bo'lsin. So'rov kichkina (bir necha yuz bayt) va
+ * faqat shu ekran ochiq turganda ketadi.
+ *
+ * Bundan tezroq qilishning ma'nosi yo'q: serverdagi `last_seen`
+ * baribir 120 soniyada bir yoziladi, ya'ni ma'lumot o'zi shundan
+ * tez yangilanmaydi.
+ */
+const ONLAYN_YANGILASH_MS = 8_000;
 
 /**
  * KIMNI CHAQIRSA BO'LADI — bitta bosishda chaqiriladi.
@@ -359,10 +384,12 @@ function Onlayn({ onChaqir }: { onChaqir: (profil: number) => void }) {
     <div className="mt-7">
       <h2 className="mb-2 ml-1.5 flex items-center gap-1.5 text-[11px] tracking-widest
                      text-ink-soft uppercase">
-        {/* Yashil nuqta — "hozir" degan yagona ishora. Hech kim
-            onlayn bo'lmasa u ham so'nadi. */}
+        {/* Yashil nuqta — "hozir" degan yagona ishora. Kimdir onlayn
+            bo'lsa u JIMIRLAYDI: ro'yxat tirik ekanini va o'zi
+            yangilanib turishini shu bildiradi. Hech kim bo'lmasa
+            nuqta so'nadi va tinch turadi. */}
         <span className={`size-1.5 rounded-full ${
-          onlaynSoni > 0 ? "bg-brand-green" : "bg-ink-dim/40"}`} />
+          onlaynSoni > 0 ? "az-jonli bg-brand-green" : "bg-ink-dim/40"}`} />
         {onlaynSoni > 0 ? t("duelOnlayn", { n: onlaynSoni }) : t("duelKimChaqirish")}
       </h2>
 
@@ -386,15 +413,15 @@ function Onlayn({ onChaqir }: { onChaqir: (profil: number) => void }) {
                     degan belgi messenjerlarda ham shu joyda turadi va
                     uni tushuntirish kerak emas. */}
                 {o.onlayn && (
-                  <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full
-                                   bg-brand-green ring-2 ring-karta" />
+                  <span className="az-jonli absolute -right-0.5 -bottom-0.5 size-2.5
+                                   rounded-full bg-brand-green ring-2 ring-karta" />
                 )}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] leading-tight">{o.ism}</span>
                 <span className={`text-[10.5px] ${
                   o.onlayn ? "text-brand-green" : "text-ink-dim"}`}>
-                  {o.onlayn ? t("duelHozir") : t("duelBugun")}
+                  {o.onlayn ? t("duelHozir") : qachonKorindi(o.korindi)}
                 </span>
               </span>
               <button type="button" onClick={() => onChaqir(o.profil)}

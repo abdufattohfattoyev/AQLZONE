@@ -29,6 +29,9 @@ urlpatterns = [
     path("duel", views.duel_boshla, name="duel-boshla"),
     # Hozir ilovada turgan o'yinchilar — duelga chaqirish uchun.
     path("onlayn", views.onlayn_royxat, name="onlayn"),
+    # "Men shu yerdaman" — ilova ochiq turganini bildiradi. Butun
+    # ishi tekshiruvdan o'tish: u `Session.last_seen` ni yangilaydi.
+    path("tirik", views.tirik, name="tirik"),
     path("duel/royxat", views.duel_royxat, name="duel-royxat"),
     path("duel/<str:kod>", views.duel_korish, name="duel-korish"),
     path("duel/<str:kod>/qabul", views.duel_qabul, name="duel-qabul"),

@@ -78,6 +78,7 @@ import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
 import { kursMatn } from "./lib/tarjima/kurs";
+import { useTirik } from "./lib/tirik";
 
 export default function App() {
   // Panel `Routes` dan TASHQARIDA turadi va shu sabab marshrut
@@ -85,6 +86,11 @@ export default function App() {
   // esa faqat rangini o'zgartiradi. Har ekranda alohida chizilsa, panel
   // har o'tishda bir lahzaga yo'qolib, qaytadan paydo bo'lardi.
   const { pathname } = useLocation();
+
+  // "Men shu yerdaman" — ilova ochiq turganini serverga bildiradi.
+  // ILOVA darajasida, ekranda emas: "onlayn" degani "ilova ochiq"
+  // degani, "duel ekranida turibdi" degani emas (`lib/tirik.ts`).
+  useTirik();
 
   return (
     <>

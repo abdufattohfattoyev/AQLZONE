@@ -1354,7 +1354,8 @@ const S = {
      — 0 ta" degan yozuv bo'limni buzuq ko'rsatardi. */
   duelKimChaqirish: ["Kimni chaqirsa bo'ladi", "Кого можно позвать"],
   duelHozir: ["hozir ilovada", "сейчас в приложении"],
-  duelBugun: ["bugun kirgan", "заходил сегодня"],
+  duelDaqiqaOldin: ["{n} daqiqa oldin", "{n} мин назад"],
+  duelSoatOldin: ["{n} soat oldin", "{n} ч назад"],
   duelHechKim: [
     "Hozircha hech kim yo'q. Chaqiruv yasab, havolasini do'stingizga yuboring — u istalgan vaqtda ochadi.",
     "Пока никого нет. Создайте вызов и отправьте ссылку другу — он откроет её в любое время.",

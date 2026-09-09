@@ -1109,6 +1109,28 @@ export interface OnlaynRoyxat {
 }
 
 /**
+ * "Men shu yerdaman" — ilova ochiq turganini serverga bildiradi.
+ *
+ * "Onlayn" `Session.last_seen` ga qarab aniqlanadi va u faqat so'rov
+ * kelganda yangilanadi. Ya'ni ilovani ochib, hech narsa bosmay
+ * o'tirgan odam o'n besh daqiqadan keyin ro'yxatdan tushib ketardi —
+ * holbuki u ekranga qarab turibdi va aynan uni chaqirish kerak edi.
+ *
+ * Javob KUTILMAYDI va xatosi ham yutiladi: bu fon signali, uning
+ * ishlamagani ekranda hech narsani o'zgartirmasligi kerak.
+ */
+export async function tirikman(): Promise<void> {
+  if (!token) return;
+  try {
+    await fetch("/api/v1/tirik", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      keepalive: true,
+    });
+  } catch { /* fon signali — jim qoladi */ }
+}
+
+/**
  * Chaqirsa bo'ladigan o'yinchilar — hozir onlayn va bugun kirganlar.
  *
  * Ro'yxatga faqat Telegram'i bog'langanlar tushadi — chaqiruv

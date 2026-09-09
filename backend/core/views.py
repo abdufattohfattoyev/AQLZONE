@@ -1059,6 +1059,28 @@ def onlayn_royxat(request):
     })
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def tirik(request):
+    """
+    "Men shu yerdaman" — ilova ochiq turganini bildiradi.
+
+    ─────────────────── NEGA KERAK ───────────────────
+
+    "Onlayn" `Session.last_seen` ga qarab aniqlanadi va u FAQAT
+    so'rov kelganda yangilanadi (`auth.BearerTokenAuthentication`).
+    Ya'ni ilovani ochib, hech narsa bosmay o'tirgan odam o'n besh
+    daqiqadan keyin "onlayn emas" bo'lib qolardi — holbuki u ekranga
+    qarab turibdi va aynan uni chaqirish kerak edi.
+
+    Bu yo'lning butun ishi — TEKSHIRUVDAN O'TISH. Autentifikatsiya
+    `last_seen` ni o'zi yangilaydi, shuning uchun bu yerda kod yo'q.
+    Ro'yxat esa qaytmaydi: uni faqat duel ekrani so'raydi va uni
+    har bir urishga qo'shib yuborish behuda trafik bo'lardi.
+    """
+    return Response({"onlayn": True})
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def duel_korish(request, kod: str):

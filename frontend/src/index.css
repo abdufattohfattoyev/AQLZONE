@@ -1441,8 +1441,28 @@
 }
 .az-natija { animation: az-natija 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
 
+/*
+ * JONLI NUQTA — duel ekranidagi "hozir onlayn" belgisi.
+ *
+ * Sekin jimirlaydi va bu bezak emas: ro'yxat o'zi yangilanib
+ * turishini boshqa hech narsa aytmaydi. Harakatsiz yashil nuqta
+ * bir marta chizilgan rasm bo'lib qolardi va odam "bu ma'lumot
+ * qachonlik?" degan savol bilan qolardi.
+ *
+ * Halqa (`box-shadow`) bilan, o'lcham bilan emas: o'lcham
+ * o'zgarsa yonidagi matn ham siljib turardi.
+ */
+@keyframes az-jonli {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(from var(--color-brand-green) r g b / 0.55); }
+  70%      { box-shadow: 0 0 0 5px rgb(from var(--color-brand-green) r g b / 0); }
+}
+.az-jonli { animation: az-jonli 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   .az-kanal-fon, .az-kanal, .az-varaq { animation-duration: 0.01ms; }
+  /* Jimirlash butunlay o'chadi: nuqtaning O'ZI (yashil rang) baribir
+     "onlayn" degan ma'lumotni to'liq beradi. */
+  .az-jonli { animation: none; }
   /* Tanga animatsiyasi butunlay o'chirilmaydi — u XABAR tashiydi
      ("beshta tanga qo'shildi"). Faqat qisqartiriladi. */
   .az-tanga { animation-duration: 0.4s; animation-delay: 0ms; }

@@ -5042,6 +5042,27 @@ class OnlaynTest(TestCase):
         qator = next(x for x in self.royxat() if x["ism"] == "Hozir")
         self.assertTrue(qator["onlayn"])
 
+    def test_tirik_signali_last_seen_ni_yangilaydi(self):
+        """
+        Ilovani ochib, hech narsa bosmay o'tirgan odam ro'yxatdan
+        tushib ketardi — "onlayn" `last_seen` ga qarab aniqlanadi,
+        u esa faqat so'rov kelganda yangilanadi.
+
+        Signalning butun ishi — tekshiruvdan o'tish: `last_seen` ni
+        autentifikatsiyaning o'zi yangilaydi.
+        """
+        eski = timezone.now() - timedelta(hours=2)
+        Session.objects.filter(pupil=self.men).update(last_seen=eski)
+
+        r = self.client.post("/api/v1/tirik", **self.auth(self.token))
+        self.assertEqual(r.status_code, 200)
+
+        yangi = Session.objects.filter(pupil=self.men).first().last_seen
+        self.assertGreater(yangi, eski)
+
+    def test_tiriksiz_signal_rad_etiladi(self):
+        self.assertEqual(self.client.post("/api/v1/tirik").status_code, 401)
+
     def test_onlayn_soni_faqat_hozirgilarni_sanaydi(self):
         """Sarlavhadagi son ("3 kishi onlayn") serverdan keladi —
         ikki joyda ikki xil hisoblash ehtimoli bo'lmasin."""
