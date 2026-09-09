@@ -33,6 +33,17 @@ ishlaydi (`management/commands/kanal_tekshir.py`), natijasi masala
 ekranidagi admin qatorida chiqadi va "qayta yuborish" bir bosishda
 turadi.
 
+─────────────────── POST JONLI QOLADI ───────────────────
+
+Post chiqqandan keyin o'lik bo'lib qolardi: obunachi uni ko'radi,
+lekin uni yana kimdir yechdimi — bilmaydi. Yozuvning oxirida jonli
+sanoq turadi ("👀 42 · ✍️ 18 · ✅ 7") va u `yangila()` orqali
+yangilanadi (`management/commands/kanal_yangila.py`, har o'n besh
+daqiqada).
+
+Sonlar o'zgarmagan bo'lsa Telegramga UMUMAN murojaat qilinmaydi:
+oxirgi yozilgan sonlar `Masala.kanal_sanoq` da turadi.
+
 ─────────────────── JAVOB KANALDA YOZILMAYDI ───────────────────
 
 Kanalda javob variantlari ham, "javobni izohga yozing" ham yo'q va
@@ -105,6 +116,46 @@ def qalqon(matn: str) -> str:
     return html.escape(matn, quote=False)
 
 
+def sanoq_kaliti(masala: Masala) -> str:
+    """
+    Sanoqlarning qisqa yozuvi — "42:18:7".
+
+    Faqat SOLISHTIRISH uchun: postdagi qator o'zgardimi degan
+    savolga bazadan javob beradi va Telegramga behuda so'rov
+    yubormaslikka imkon beradi.
+    """
+    return f"{masala.korish_soni}:{masala.urinish_soni}:{masala.yechgan_soni}"
+
+
+def sanoq_qatori(masala: Masala) -> str:
+    """
+    Post ostidagi jonli qator: nechta ko'rdi, urindi va yechdi.
+
+    ─────────────── NEGA KERAK ───────────────
+
+    Kanal posti chiqqandan keyin o'lik bo'lib qolardi: obunachi uni
+    ko'radi, lekin uni yana kimdir yechdimi, qiyinmi yoki osonmi —
+    hech narsa bilmaydi. Jonli sanoq esa postni tirik qiladi va
+    ikkita ish qiladi: kech kelgan odamga "bu hali ham ochiq" deb
+    aytadi, va yechganlar soni o'sib borishi bosishga undaydi.
+
+    ─────────────── NOL SONLAR YOZILMAYDI ───────────────
+
+    Yangi post ostida "0 ko'rdi · 0 urindi · 0 yechdi" turardi va u
+    masalani tashlab ketilgandek ko'rsatardi. Aslida u hozirgina
+    chiqqan. Shuning uchun nol bo'lgan bo'lak umuman qo'shilmaydi,
+    hammasi nol bo'lsa — qator ham bo'lmaydi.
+    """
+    bolaklar = []
+    if masala.korish_soni:
+        bolaklar.append(f"👀 {masala.korish_soni}")
+    if masala.urinish_soni:
+        bolaklar.append(f"✍️ {masala.urinish_soni}")
+    if masala.yechgan_soni:
+        bolaklar.append(f"✅ {masala.yechgan_soni}")
+    return " · ".join(bolaklar)
+
+
 def sarlavha(masala: Masala) -> str:
     """
     Rasm ostidagi yozuv.
@@ -133,12 +184,18 @@ def sarlavha(masala: Masala) -> str:
     # bo'yicha qidira oladi. Telegram tegida faqat harf, raqam va
     # pastki chiziq bo'ladi.
     teg = nom.replace("-", "").replace("'", "").replace(" ", "_")
+
+    # Sanoq qatori tegLARDAN OLDIN turadi: teglar postning oxiri va
+    # ular orasiga kirgan jonli son "yana bitta teg" bo'lib
+    # ko'rinardi.
+    sanoq = sanoq_qatori(masala)
     return (
         f"<b>{qalqon(nom)}</b>\n\n"
         f"{qalqon(matn)}\n\n"
         f"Javobingizni ilovada kiriting — u yerda tekshiriladi va "
-        f"yechimi ochiladi.\n\n"
-        f"#masala #{teg}"
+        f"yechimi ochiladi.\n"
+        + (f"\n{sanoq}\n" if sanoq else "")
+        + f"\n#masala #{teg}"
     )
 
 
@@ -241,10 +298,63 @@ def yubor(masala: Masala, qayta: bool = False) -> tuple[str, str]:
         # vaqti ham yangilanadi: hozirgina o'z ko'zimiz bilan ko'rdik.
         masala.kanal_yoq = False
         masala.kanal_tekshir_at = masala.kanal_at
+        # Postda qanday sonlar yozilgani ESLAB QOLINADI — keyingi
+        # yangilash "o'zgardimi?" degan savolga bazadan javob
+        # topadi va Telegramga behuda so'rov ketmaydi.
+        masala.kanal_sanoq = sanoq_kaliti(masala)
         masala.save(update_fields=[
             "kanal_at", "kanal_post_id", "kanal_yoq", "kanal_tekshir_at",
+            "kanal_sanoq",
         ])
     return holat, izoh
+
+
+def yangila(masala: Masala) -> str:
+    """
+    Kanaldagi postning sanoq qatorini yangilaydi.
+
+    `yangilandi` | `ozgarmagan` | `yoq` | `xato` | `yuborilmagan`.
+
+    ─────────────── AVVAL BAZA, KEYIN TELEGRAM ───────────────
+
+    Sonlar o'zgarmagan bo'lsa Telegramga UMUMAN murojaat qilinmaydi.
+    Busiz har yurishda o'nlab post uchun so'rov ketardi va ularning
+    deyarli hammasi "message is not modified" bo'lib qaytardi —
+    ya'ni butun ish behuda va limitni behuda yeydigan bo'lardi.
+
+    ─────────────── POST YO'QOLGAN BO'LSA ───────────────
+
+    Tahrirlash "bunday xabar yo'q" desa, bu kunlik tekshiruv topadigan
+    holatning o'zi (`tekshir`). Uni shu yerda ham belgilab qo'yamiz:
+    ma'lumot allaqachon qo'lda va uni tashlab yuborishning ma'nosi
+    yo'q.
+    """
+    if masala.kanal_at is None or not masala.kanal_post_id:
+        return "yuborilmagan"
+
+    kalit = sanoq_kaliti(masala)
+    if kalit == masala.kanal_sanoq:
+        return "ozgarmagan"
+
+    kanal = kanal_nomi()
+    if not kanal:
+        return "xato"
+
+    holat = xabar.sarlavhani_yangila(
+        kanal, masala.kanal_post_id, sarlavha(masala),
+        tugmalar(masala), rasmli=bool(masala.rasm),
+    )
+
+    maydonlar = []
+    if holat in ("yangilandi", "ozgarmagan"):
+        masala.kanal_sanoq = kalit
+        maydonlar.append("kanal_sanoq")
+    if holat == "yoq" and not masala.kanal_yoq:
+        masala.kanal_yoq = True
+        maydonlar.append("kanal_yoq")
+    if maydonlar:
+        masala.save(update_fields=maydonlar)
+    return holat
 
 
 def tekshir(masala: Masala) -> str:

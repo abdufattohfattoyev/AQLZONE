@@ -976,6 +976,20 @@ class Masala(models.Model):
     #: chiqadi: bayroqning o'zi qachonlikdir eskirgan bo'lishi mumkin.
     kanal_tekshir_at = models.DateTimeField(null=True, blank=True)
 
+    #: Kanal postida OXIRGI MARTA yozilgan sanoqlar ("42:18:7").
+    #:
+    #: Post ostidagi "42 ko'rdi · 18 urindi · 7 yechdi" qatori jonli
+    #: bo'lishi kerak, lekin Telegram bir xil matn bilan tahrirlashni
+    #: rad etadi ("message is not modified") va har safar so'rov
+    #: yuborish behuda bo'lardi. Shu satr esa "o'zgardimi?" degan
+    #: savolga BAZADAN javob beradi — Telegramga umuman murojaat
+    #: qilmasdan.
+    #:
+    #: Uchta son bitta satrda: alohida uchta ustun qo'shish ham
+    #: mumkin edi, lekin ular hech qachon alohida o'qilmaydi —
+    #: faqat "o'zgardimi" degan solishtirish uchun kerak.
+    kanal_sanoq = models.CharField(max_length=40, default="", blank=True)
+
     #: Sanoqlar ATAYLAB shu yerda turadi, `urinishlar` dan sanalmaydi.
     #:
     #: Ro'yxat ekrani har masalada "nechta odam yechdi" ni ko'rsatadi.

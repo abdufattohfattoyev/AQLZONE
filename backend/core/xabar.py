@@ -350,6 +350,60 @@ def post_bormi(chat_id: str, xabar_id: int, tugmalar=None) -> str:
     return "nomalum"
 
 
+def sarlavhani_yangila(
+    chat_id: str, xabar_id: int, sarlavha: str,
+    tugmalar=None, rasmli: bool = True,
+) -> str:
+    """
+    Kanaldagi postning YOZUVINI almashtiradi. `yangilandi` | `yoq` |
+    `ozgarmagan` | `xato`.
+
+    ─────────────── NEGA IKKI XIL AMAL ───────────────
+
+    Rasmli post `sendPhoto` bilan chiqqan va uning matni "caption"
+    deb ataladi; rasmsizi `sendMessage` bilan chiqqan va uniki
+    "text". Telegram ularni ALOHIDA amal bilan tahrirlaydi va
+    noto'g'risi "there is no caption in the message to edit" degan
+    xato bilan qaytadi.
+
+    ─────────────── `ozgarmagan` XATO EMAS ───────────────
+
+    Bir xil matn bilan tahrirlashni Telegram rad etadi. Bu holat
+    normal: sanoq o'zgarmagan bo'lsa post ham o'zgarmasligi kerak.
+    Chaqiruvchi buni xato deb hisoblasa, har safar "yangilanmadi"
+    deb yozib turardi.
+    """
+    payload = {
+        "chat_id": chat_id,
+        "message_id": int(xabar_id),
+        "parse_mode": "HTML",
+    }
+    if rasmli:
+        payload["caption"] = sarlavha[:MAX_SARLAVHA]
+    else:
+        payload["text"] = sarlavha[:MAX_MATN]
+        payload["link_preview_options"] = {"is_disabled": True}
+
+    qatorlar = [
+        [tugma_yasa(matn, uslub, url=havola)]
+        for matn, havola, uslub in (tugmalar or [])
+        if matn and havola
+    ]
+    if qatorlar:
+        payload["reply_markup"] = {"inline_keyboard": qatorlar}
+
+    usul = "editMessageCaption" if rasmli else "editMessageText"
+    ok, kod, izoh = _sorov(usul, payload)
+    if ok:
+        return "yangilandi"
+    past = izoh.lower()
+    if BOR_IZOHI in past:
+        return "ozgarmagan"
+    if any(s in past for s in YOQ_IZOHLARI):
+        return "yoq"
+    return "xato"
+
+
 def post_ochir(chat_id: str, xabar_id: int) -> str:
     """
     Kanaldagi postni o'chiradi. `ochirildi` | `yoq` | `xato`.

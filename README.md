@@ -452,9 +452,21 @@ boshqa qaytmaydi va jimgina yo'qoladi. `kanal_tekshir` har kuni
 hammasini ketma-ket tekshiradi, natija masala ekranida ko'rinadi va
 yangi yo'qolganlar haqida adminga xabar ketadi.
 
+**Jonli sanoq.** Post ostida "👀 42 · ✍️ 18 · ✅ 7" turadi va u
+`kanal_yangila` bilan yangilanib boradi. Busiz post chiqqandan keyin
+o'lik bo'lib qolardi: obunachi uni ko'radi, lekin uni yana kimdir
+yechdimi — bilmaydi.
+
+Sonlar o'zgarmagan bo'lsa Telegramga **umuman murojaat qilinmaydi**:
+postda oxirgi marta qanday sonlar yozilgani `Masala.kanal_sanoq` da
+turadi. Sanoq javob berish yo'lida emas, cron'da yangilanadi — bir
+sinf bola bir masalani birdaniga yechsa, o'sha bitta post yigirma
+marta tahrirlanardi va har biri javobni sekinlashtirardi.
+
 ```bash
-0 * * * * docker exec aqlzone python manage.py masala_post --kunlik --soat 18
-0 * * * * docker exec aqlzone python manage.py kanal_tekshir --soat 9
+0  * * * * docker exec aqlzone python manage.py masala_post --kunlik --soat 18
+0  * * * * docker exec aqlzone python manage.py kanal_tekshir --soat 9
+*/15 * * * * docker exec aqlzone python manage.py kanal_yangila
 ```
 
 Ikkalasi ham cron tomonidan **soat sayin** chaqiriladi va kerakli

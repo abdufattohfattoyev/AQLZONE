@@ -4944,6 +4944,140 @@ class KeyingiMasalaTest(TestCase):
         self.assertNotIn("keyingi", d)
 
 
+@override_settings(BOT_USERNAME="aqlzone_bot", KANAL="aqlzone",
+                   ADMIN_TG=["973358587"], BOT_TOKEN="sinov:token")
+class KanalSanoqTest(TestCase):
+    """
+    Kanal postidagi jonli sanoq qatori.
+
+    Diqqat qaratilgan joy — O'ZGARMAGANDA TELEGRAMGA MUROJAAT
+    QILMASLIK. Busiz har yurishda o'nlab post uchun so'rov ketardi
+    va ularning deyarli hammasi "message is not modified" bo'lib
+    qaytardi: butun ish behuda va limitni behuda yeydigan bo'lardi.
+    """
+
+    def setUp(self):
+        cache.clear()
+        muallif = Pupil.objects.create(first_name="Muallif").asosiy_profil()
+        self.m = Masala.objects.create(
+            muallif=muallif, sinf=5, matn="Ikki karra ikki nechchi?",
+            javob="4", yechim="4 ga teng.", holat=Masala.TASDIQ,
+            kanal_at=timezone.now(), kanal_post_id=314,
+        )
+
+    # ─────────────────────────────────────── qator
+
+    def test_nol_sonlar_yozilmaydi(self):
+        """Yangi post ostida "0 ko'rdi · 0 urindi" turardi va u
+        masalani tashlab ketilgandek ko'rsatardi."""
+        self.assertEqual(MK.sanoq_qatori(self.m), "")
+        self.assertNotIn("👀", MK.sarlavha(self.m))
+
+    def test_faqat_nolmas_sonlar_chiqadi(self):
+        self.m.korish_soni = 42
+        self.m.yechgan_soni = 7
+        qator = MK.sanoq_qatori(self.m)
+        self.assertIn("👀 42", qator)
+        self.assertIn("✅ 7", qator)
+        # Urinish noldaligicha — u qatorda umuman yo'q.
+        self.assertNotIn("✍️", qator)
+
+    def test_qator_teglardan_oldin_turadi(self):
+        """Teglar postning oxiri; ular orasiga kirgan jonli son
+        "yana bitta teg" bo'lib ko'rinardi."""
+        self.m.korish_soni = 5
+        y = MK.sarlavha(self.m)
+        self.assertLess(y.index("👀 5"), y.index("#masala"))
+
+    # ─────────────────────────────────────── yangilash
+
+    def test_ozgarmasa_telegramga_sorov_ketmaydi(self):
+        self.m.kanal_sanoq = MK.sanoq_kaliti(self.m)
+        self.m.save(update_fields=["kanal_sanoq"])
+        with patch("core.xabar._sorov") as s:
+            self.assertEqual(MK.yangila(self.m), "ozgarmagan")
+        s.assert_not_called()
+
+    def test_ozgarsa_yangilanadi_va_eslab_qolinadi(self):
+        self.m.korish_soni = 9
+        self.m.save(update_fields=["korish_soni"])
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            self.assertEqual(MK.yangila(self.m), "yangilandi")
+        s.assert_called_once()
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.kanal_sanoq, "9:0:0")
+
+    def test_rasmli_post_sarlavha_bilan_tahrirlanadi(self):
+        # Fayl ochilmaydi — kerak bo'lgani `bool(masala.rasm)`, ya'ni
+        # post `sendPhoto` bilan chiqqanmi degan savolga javob.
+        self.m.rasm = "masala/2026/09/sinov.webp"
+        self.m.korish_soni = 8
+        self.m.save(update_fields=["rasm", "korish_soni"])
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            MK.yangila(self.m)
+        self.assertEqual(s.call_args[0][0], "editMessageCaption")
+
+    def test_rasmsiz_post_matn_bilan_tahrirlanadi(self):
+        """Rasmli post `sendPhoto` bilan chiqqan va uning matni
+        "caption"; rasmsizi esa "text" — Telegram ularni alohida
+        amal bilan tahrirlaydi."""
+        self.m.korish_soni = 3
+        self.m.save(update_fields=["korish_soni"])
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            MK.yangila(self.m)
+        self.assertEqual(s.call_args[0][0], "editMessageText")
+
+    def test_yoqolgan_post_belgilanadi(self):
+        self.m.korish_soni = 4
+        self.m.save(update_fields=["korish_soni"])
+        with patch("core.xabar._sorov",
+                   return_value=(False, 400, "message to edit not found")):
+            self.assertEqual(MK.yangila(self.m), "yoq")
+        self.m.refresh_from_db()
+        self.assertTrue(self.m.kanal_yoq)
+
+    def test_yuborilmagan_masala_yangilanmaydi(self):
+        yangi = Masala.objects.create(
+            muallif=self.m.muallif, sinf=5, matn="Hali kanalga chiqmagan.",
+            javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
+        )
+        with patch("core.xabar._sorov") as s:
+            self.assertEqual(MK.yangila(yangi), "yuborilmagan")
+        s.assert_not_called()
+
+    def test_yuborishda_sanoq_eslab_qolinadi(self):
+        """Post chiqqan zahoti unda qanday sonlar yozilgani yoziladi —
+        aks holda birinchi yangilash behuda so'rov bo'lardi."""
+        yangi = Masala.objects.create(
+            muallif=self.m.muallif, sinf=5, matn="Yangi masala kanalga chiqadi.",
+            javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
+            korish_soni=6,
+        )
+        with patch("core.xabar._sorov", return_value=(True, 200, "")):
+            MK.yubor(yangi)
+        yangi.refresh_from_db()
+        self.assertEqual(yangi.kanal_sanoq, "6:0:0")
+
+    # ─────────────────────────────────────── buyruq
+
+    def test_buyruq_faqat_ozgarganlarini_oladi(self):
+        ozgargan = Masala.objects.create(
+            muallif=self.m.muallif, sinf=5, matn="Sanoqlari o'zgargan masala.",
+            javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
+            kanal_at=timezone.now(), kanal_post_id=315,
+            korish_soni=11, kanal_sanoq="0:0:0",
+        )
+        self.m.kanal_sanoq = MK.sanoq_kaliti(self.m)
+        self.m.save(update_fields=["kanal_sanoq"])
+
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            call_command("kanal_yangila", stdout=StringIO(), stderr=StringIO())
+        # Faqat bittasi uchun so'rov ketdi.
+        self.assertEqual(s.call_count, 1)
+        ozgargan.refresh_from_db()
+        self.assertEqual(ozgargan.kanal_sanoq, "11:0:0")
+
+
 class TamgaTest(TestCase):
     """
     Masala rasmidagi AqlZone belgisi.
