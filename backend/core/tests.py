@@ -5036,6 +5036,29 @@ class KanalSanoqTest(TestCase):
         self.m.refresh_from_db()
         self.assertTrue(self.m.kanal_yoq)
 
+    def test_yoqolgan_post_qayta_sorlmaydi(self):
+        """Yo'qolgan post admindan qayta yuborishni kutyapti va uni
+        yangilashning iloji yo'q. Buyruq har o'n besh daqiqada
+        ishlaydi — busiz o'sha post uchun kuniga yuzlab behuda
+        so'rov ketardi."""
+        self.m.kanal_yoq = True
+        self.m.korish_soni = 5
+        self.m.save(update_fields=["kanal_yoq", "korish_soni"])
+        with patch("core.xabar._sorov") as s:
+            self.assertEqual(MK.yangila(self.m), "yoq")
+        s.assert_not_called()
+
+    def test_qayta_yuborish_yangilashni_tiklaydi(self):
+        """Qayta yuborish bayroqni so'ndiradi va post ro'yxatga
+        qaytadi."""
+        self.m.kanal_yoq = True
+        self.m.save(update_fields=["kanal_yoq"])
+        with patch("core.xabar.post_ochir", return_value="yoq"), \
+             patch("core.xabar._sorov", return_value=(True, 200, "")):
+            MK.yubor(self.m, qayta=True)
+        self.m.refresh_from_db()
+        self.assertFalse(self.m.kanal_yoq)
+
     def test_yuborilmagan_masala_yangilanmaydi(self):
         yangi = Masala.objects.create(
             muallif=self.m.muallif, sinf=5, matn="Hali kanalga chiqmagan.",

@@ -67,8 +67,11 @@ class Command(BaseCommand):
             self.stderr.write("KANAL sozlanmagan — yangilanmadi")
             return
 
+        # Yo'qolgan postlar OLINMAYDI: ular admindan qayta yuborishni
+        # kutyapti va ularni yangilashning iloji yo'q. Busiz o'sha
+        # ikki-uchta post uchun kuniga yuzlab behuda so'rov ketardi.
         qs = Masala.objects.filter(
-            kanal_at__isnull=False, kanal_post_id__isnull=False,
+            kanal_at__isnull=False, kanal_post_id__isnull=False, kanal_yoq=False,
         ).order_by("-kanal_at")
         if o["id"]:
             qs = qs.filter(pk=o["id"])

@@ -332,6 +332,14 @@ def yangila(masala: Masala) -> str:
     if masala.kanal_at is None or not masala.kanal_post_id:
         return "yuborilmagan"
 
+    # Yo'qolgan post yangilanmaydi. U allaqachon belgilangan va
+    # admindan qayta yuborishni kutyapti; buyruq esa har o'n besh
+    # daqiqada ishlaydi — ya'ni busiz o'sha ikki-uchta post uchun
+    # kuniga yuzlab behuda so'rov ketardi. Qayta yuborish bayroqni
+    # o'zi so'ndiradi va post ro'yxatga qaytadi (`yubor`).
+    if masala.kanal_yoq:
+        return "yoq"
+
     kalit = sanoq_kaliti(masala)
     if kalit == masala.kanal_sanoq:
         return "ozgarmagan"
