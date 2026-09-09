@@ -4777,6 +4777,117 @@ class MasalaKorishTest(TestCase):
         self.assertEqual(self.m.yechgan_soni, 0)
 
 
+class KeyingiMasalaTest(TestCase):
+    """
+    Yechib bo'lgandan keyingi davom yo'li.
+
+    Diqqat qaratilgan joy — QAYSI masala tanlanishi. Masalani yechgan
+    odam ro'yxatga qaytib, keyingisini o'zi qidirishi kerak edi va
+    ko'pchilik qidirmaydi — shu yerda to'xtaydi. Lekin noto'g'ri
+    tanlangan "keyingi" ham to'xtatadi: 5-sinf bolasiga olimpiada
+    masalasi berilsa, u davom etmaydi.
+    """
+
+    def kir(self, device: str) -> str:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return r.json()["token"]
+
+    def auth(self, token: str) -> dict:
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def setUp(self):
+        cache.clear()
+        self.token = self.kir("dev-keyingi-0000000001")
+        self.pupil = Pupil.objects.get(identities__external_id="dev-keyingi-0000000001")
+        self.profil = self.pupil.asosiy_profil()
+        self.muallif = Pupil.objects.create(first_name="Muallif").asosiy_profil()
+
+    def masala(self, sinf=5, matn="Ikki karra ikki nechchi?", muallif=None, **o):
+        maydon = {
+            "muallif": muallif or self.muallif, "sinf": sinf, "matn": matn,
+            "javob": "4", "yechim": "4 ga teng.", "holat": Masala.TASDIQ,
+        }
+        maydon.update(o)
+        return Masala.objects.create(**maydon)
+
+    def test_ozini_qaytarmaydi(self):
+        m = self.masala()
+        self.assertIsNone(MS.keyingi_masala(m, self.profil))
+
+    def test_shu_sinfdan_tanlanadi(self):
+        """5-sinf bolasiga olimpiada masalasi berilsa, u davom
+        etmaydi — to'xtaydi."""
+        m = self.masala(sinf=5)
+        self.masala(sinf=Masala.OLIMPIADA, matn="Olimpiada masalasi shu yerda.")
+        kutilgan = self.masala(sinf=5, matn="Shu sinfning ikkinchi masalasi.")
+        self.assertEqual(MS.keyingi_masala(m, self.profil)["id"], kutilgan.pk)
+
+    def test_shu_sinfda_qolmasa_boshqasidan(self):
+        m = self.masala(sinf=5)
+        boshqa = self.masala(sinf=7, matn="Boshqa sinfning masalasi shu.")
+        self.assertEqual(MS.keyingi_masala(m, self.profil)["id"], boshqa.pk)
+
+    def test_uringanini_qaytarmaydi(self):
+        """"Keyingi" degani YANGI degani."""
+        m = self.masala()
+        uringan = self.masala(matn="Bunga allaqachon urinib ko'rganman.")
+        MasalaUrinish.objects.create(masala=uringan, profile=self.profil)
+        self.assertIsNone(MS.keyingi_masala(m, self.profil))
+
+    def test_oz_masalasini_qaytarmaydi(self):
+        m = self.masala()
+        self.masala(matn="Bu mening o'zimning masalam.", muallif=self.profil)
+        self.assertIsNone(MS.keyingi_masala(m, self.profil))
+
+    def test_tasdiqlanmaganini_qaytarmaydi(self):
+        m = self.masala()
+        self.masala(matn="Bu hali navbatda turibdi.", holat=Masala.KUTMOQDA)
+        self.assertIsNone(MS.keyingi_masala(m, self.profil))
+
+    def test_qolmasa_none(self):
+        self.assertIsNone(MS.keyingi_masala(self.masala(), self.profil))
+
+    # ─────────────────────────────────────── API
+
+    def test_togri_javobdan_keyin_keyingi_keladi(self):
+        m = self.masala()
+        keyingi = self.masala(matn="Keyingi masala aynan shu bo'ladi.")
+        r = self.client.post(f"/api/v1/masalalar/{m.pk}/javob", {"javob": "4"},
+                             content_type="application/json", **self.auth(self.token))
+        d = r.json()
+        self.assertEqual(d["keyingi"]["id"], keyingi.pk)
+        # Muallif kartasi ham shu javobdan chiziladi.
+        self.assertEqual(d["muallifMasalalari"], 2)
+
+    def test_xato_javobda_keyingi_yoq(self):
+        """Yechim ochilmagan bo'lsa davom yo'li ham yo'q: odam hali
+        shu masalada turibdi."""
+        m = self.masala()
+        self.masala(matn="Keyingi masala aynan shu bo'ladi.")
+        r = self.client.post(f"/api/v1/masalalar/{m.pk}/javob", {"javob": "5"},
+                             content_type="application/json", **self.auth(self.token))
+        self.assertNotIn("keyingi", r.json())
+
+    def test_yechilgan_masalani_ochganda_keyingi_keladi(self):
+        m = self.masala()
+        keyingi = self.masala(matn="Keyingi masala aynan shu bo'ladi.")
+        self.client.post(f"/api/v1/masalalar/{m.pk}/javob", {"javob": "4"},
+                         content_type="application/json", **self.auth(self.token))
+        d = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.token)).json()
+        self.assertEqual(d["keyingi"]["id"], keyingi.pk)
+
+    def test_yechilmagan_masalada_keyingi_maydoni_yoq(self):
+        """Maydon bo'sh bo'lsa ham qo'shilmaydi: u "yechib bo'ldingiz"
+        degan ma'noni tashiydi va yechilmagan masalada turishi
+        mumkin emas."""
+        m = self.masala()
+        d = self.client.get(f"/api/v1/masalalar/{m.pk}", **self.auth(self.token)).json()
+        self.assertNotIn("keyingi", d)
+
+
 class TamgaTest(TestCase):
     """
     Masala rasmidagi AqlZone belgisi.

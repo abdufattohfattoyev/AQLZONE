@@ -703,6 +703,11 @@ function MasalaSahifasi() {
       id={raqam}
       onMuallif={(pid) => nav(yolMasalaMuallif(pid))}
       onBack={() => nav(yolMasalalar())}
+      // Keyingi masala tarixni ALMASHTIRADI, unga qo'shmaydi: ketma-ket
+      // o'nta masala yechgan bola orqaga bosganda o'nta yechilgan
+      // masaladan qaytib chiqishga majbur bo'lardi. `replace` bilan
+      // orqaga tugmasi har doim ro'yxatga olib boradi.
+      onKeyingi={(kid) => nav(yolMasala(kid), { replace: true })}
     />
   );
 }

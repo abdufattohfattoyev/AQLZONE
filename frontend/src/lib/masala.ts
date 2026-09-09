@@ -80,6 +80,26 @@ export interface Masala {
    * chizilmaydi va serverga so'rov ham ketmaydi.
    */
   kanal?: KanalHolat & { mumkin: boolean };
+  /**
+   * Keyingi masala — FAQAT yechim ochilganda keladi.
+   *
+   * Yechib bo'lgan odam ro'yxatga qaytib, o'sha sahifani qaytadan
+   * ko'zdan kechirib, keyingisini o'zi qidirishi kerak edi.
+   * Ko'pchilik qidirmaydi — shu yerda to'xtaydi.
+   */
+  keyingi?: Keyingi | null;
+  /** Muallifning tasdiqlangan masalalari soni — yechilgandan keyin. */
+  muallifMasalalari?: number;
+}
+
+/** "Navbatdagi masala" kartasi uchun qisqacha ma'lumot. */
+export interface Keyingi {
+  id: number;
+  sinf: number;
+  /** Matnning birinchi qatori — kartada sarlavha bo'lib turadi. */
+  matn: string;
+  rasm: string;
+  variantlar: string[];
 }
 
 /** Masalaning kanaldagi ahvoli — admin qatori shundan chiziladi. */
@@ -135,6 +155,10 @@ export interface JavobNatija {
   urinishSoni: number;
   yechganSoni: number;
   birinchiTogri: boolean;
+  /** Yechim shu javob bilan ochilgan bo'lsa — davom yo'li. */
+  keyingi?: Keyingi | null;
+  /** Muallifning tasdiqlangan masalalari soni. */
+  muallifMasalalari?: number;
 }
 
 export interface MuallifSahifa {
@@ -186,7 +210,10 @@ export const ovozBer = (
  */
 export const yechimniOch = (
   id: number,
-): Promise<{ yechim: string; javob: string }> =>
+): Promise<{
+  yechim: string; javob: string;
+  keyingi?: Keyingi | null; muallifMasalalari?: number;
+}> =>
   sorov(`/api/v1/masalalar/${id}/yechim`, bilanProfil({}));
 
 /**

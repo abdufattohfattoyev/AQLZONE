@@ -540,6 +540,16 @@ const S = {
     "Всего {n} попыток · решили {y}",
   ],
   masalaBirinchiBol: ["Birinchi bo'ling", "Будьте первым"],
+  masalaShartKor: ["Shartni ko'rish", "Показать условие"],
+  masalaShartYop: ["Yopish", "Свернуть"],
+  masalaYechgandingiz: ["Bu masalani yechgansiz", "Вы решили эту задачу"],
+  masalaYechimOchilgan: ["Yechim ochilgan", "Решение открыто"],
+  masalaMuallifJami: [
+    "Muallifning {n} ta masalasi bor",
+    "У автора {n} задач"
+  ],
+  masalaBarchasi: ["Barchasi", "Все"],
+  masalaNavbatdagi: ["Navbatdagi masala", "Следующая задача"],
   masalaKorildi: ["{n} kishi ochgan", "Открыли {n} человек"],
   masalaKorildiIzoh: [
     "Bir odam necha marta ochsa ham bir marta sanaladi",

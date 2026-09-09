@@ -1565,6 +1565,17 @@ def masala_korish(request, pk: int):
         # ko'rish" tugmasini bepul yoki tangali qilib ko'rsatadi.
         "urinishim": urinish.soni if urinish else 0,
     }
+    # Yechim ochilgan bo'lsa ekran QAYTA TUZILADI: shart yig'iladi,
+    # yechim asosiy bo'ladi va pastda davom yo'li chiqadi. Shu ikki
+    # maydon o'sha ekranni to'ldiradi va faqat o'sha holatda
+    # hisoblanadi — har ochilishda ikkita ortiqcha so'rov qilishning
+    # ma'nosi yo'q.
+    if ochiq:
+        javob["keyingi"] = M.keyingi_masala(m, profil)
+        javob["muallifMasalalari"] = Masala.objects.filter(
+            muallif=m.muallif, holat=Masala.TASDIQ,
+        ).count()
+
     # Kanal tugmasi FAQAT adminda ko'rinadi. Maydon boshqalarga
     # umuman qo'shilmaydi: bo'sh bo'lsa ham u "bunday imkoniyat bor"
     # deb aytib turardi va ilova kodida uni izlash boshlanardi.
@@ -1618,6 +1629,12 @@ def masala_yechim(request, pk: int):
     d = M.yechimni_och(m, profil)
     if d is None:
         return Response({"error": "urinilmagan"}, status=400)
+    # Tanga sarflab ochgan odam ham yechib bo'ldi — davom yo'li unga
+    # ham kerak (`masala_javob` dagi izohga qarang).
+    d["keyingi"] = M.keyingi_masala(m, profil)
+    d["muallifMasalalari"] = Masala.objects.filter(
+        muallif=m.muallif, holat=Masala.TASDIQ,
+    ).count()
     return Response(d)
 
 
@@ -1702,7 +1719,17 @@ def masala_javob(request, pk: int):
     if not isinstance(xom, str) or not xom.strip():
         return Response({"error": "javob bosh"}, status=400)
 
-    return Response(M.javob_ber(m, profil, xom[:Masala.MAX_JAVOB]))
+    natija = M.javob_ber(m, profil, xom[:Masala.MAX_JAVOB])
+    # Yechim shu javob bilan ochilgan bo'lsa — davom yo'lini DARHOL
+    # beramiz. Aks holda mijoz "keyingi masala" kartasini ko'rsatish
+    # uchun sahifani qaytadan so'rashi kerak bo'lardi va karta bir
+    # necha yuz millisekunddan keyin sakrab chiqardi.
+    if natija.get("yechimOchiq"):
+        natija["keyingi"] = M.keyingi_masala(m, profil)
+        natija["muallifMasalalari"] = Masala.objects.filter(
+            muallif=m.muallif, holat=Masala.TASDIQ,
+        ).count()
+    return Response(natija)
 
 
 @api_view(["POST"])

@@ -41,7 +41,7 @@ import { sinfNomi, sinfRangi } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import type { JavobNatija, Masala as MasalaTur, Ovoz } from "../lib/masala";
 import { kelasiOvoz, sanoqniHisobla } from "../lib/masalaOvoz";
-import { YECHIM_NARX, bepulOchiladi, mukofot } from "../lib/masalaTanga";
+import { ENG_KATTA_MUKOFOT, YECHIM_NARX, bepulOchiladi, mukofot } from "../lib/masalaTanga";
 import { useProgress } from "../lib/progress";
 import { masalaniUlash } from "../lib/ulash";
 import { havolaniOch, tebrat, useOrqaga } from "../lib/qobiq";
@@ -65,9 +65,11 @@ interface Props {
   id: number;
   onMuallif: (profilId: number) => void;
   onBack: () => void;
+  /** Yechib bo'lgandan keyingi davom yo'li — boshqa masalaga o'tish. */
+  onKeyingi: (masalaId: number) => void;
 }
 
-export function Masala({ id, onMuallif, onBack }: Props) {
+export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
   const ozStrelka = useOrqaga(onBack);
 
   const [m, setM] = useState<MasalaTur | null>(null);
@@ -121,7 +123,11 @@ export function Masala({ id, onMuallif, onBack }: Props) {
   const [kanalTekshirildi, setKanalTekshirildi] = useState("");
 
   /** Tanga evaziga (yoki bepul) ochilgan yechim. */
-  const [ochilgan, setOchilgan] = useState<{ yechim: string; javob: string } | null>(null);
+  const [ochilgan, setOchilgan] =
+    useState<{
+      yechim: string; javob: string;
+      keyingi?: MS.Keyingi | null; muallifMasalalari?: number;
+    } | null>(null);
   const [ochilmoqda, setOchilmoqda] = useState(false);
   /** Shu urinishda nechta tanga berildi — natija ostida ko'rinadi. */
   const [mukofotOlindi, setMukofotOlindi] = useState(0);
@@ -169,6 +175,31 @@ export function Masala({ id, onMuallif, onBack }: Props) {
 
   /** Test masalasimi — javob tanlanadimi yoki yoziladimi. */
   const test = (m?.variantlar.length ?? 0) > 0;
+
+  /**
+   * Yechim ochilganmi — EKRAN SHUNGA QARAB QAYTA TUZILADI.
+   *
+   * Yechilgunga qadar asosiy narsa — shart: u ochiq turadi va
+   * ekranning yarmini egallaydi. Yechilgandan keyin esa u
+   * O'QILGAN bo'ladi va shu joyni yechim egallashi kerak. Shuning
+   * uchun shart yig'iladi, yechim esa ochiq karta bo'lib chiqadi.
+   *
+   * Ikkala holat uchun ikkita ekran yozish ham mumkin edi, lekin
+   * ular albatta bir-biridan qolib ketardi: bittasiga kanal tugmasi
+   * qo'shiladi, ikkinchisi eski holida qolardi.
+   */
+  const yechildi = Boolean(yechim);
+
+  /** Yechib bo'lgandan keyingi davom yo'li. */
+  const keyingi = ochilgan?.keyingi ?? natija?.keyingi ?? m?.keyingi ?? null;
+
+  /* Muallifning masalalari soni UCH manbadan kelishi mumkin va
+     tartib muhim: sahifa yechilgan holda ochilsa — `m` dan, shu
+     yerda yechilsa — javobdan yoki yechimni ochish javobidan.
+     Faqat `m` ga qarab qolsak, hozirgina yechgan odamga karta
+     umuman chiqmasdi: sahifa yechilishdan OLDIN yuklangan. */
+  const muallifSoni =
+    ochilgan?.muallifMasalalari ?? natija?.muallifMasalalari ?? m?.muallifMasalalari ?? 0;
 
   /* Sanoqlar javob berilgandan keyin YANGILANADI: odam o'z
      urinishini darhol ko'rishi kerak, sahifani qayta ochib emas. */
@@ -372,24 +403,49 @@ export function Masala({ id, onMuallif, onBack }: Props) {
         <Icon name="chevron" size={14} className="shrink-0 text-ink-dim" />
       </button>
 
-      {/* ---- masala kartasi: sarlavha, shart, chizma ---- */}
-      <div className="mt-2.5 rounded-clay border border-track bg-karta p-4 shadow-clay-sm">
+      {/* ---- masala kartasi: sarlavha, shart, chizma ----
+          YECHILGANDAN KEYIN YIG'ILADI. Shart o'qilgan bo'ladi va
+          ekranning yarmini egallab turishi kerak emas — o'sha joyni
+          yechim egallaydi. Lekin butunlay olib tashlanmaydi: yechimni
+          o'qiyotgan odam "xo'sh, savol nima edi?" deb qaytishi juda
+          tez-tez uchraydi va u bir bosishda qaytishi kerak. */}
+      <details open={!yechildi}
+        className="az-natija group mt-2.5 rounded-clay border border-track bg-karta p-4
+                   shadow-clay-sm">
         {/* Kartaning sarlavha qatori. Chapda masala raqami — odam
             uni do'stiga aytadi va kanaldagi post bilan solishtiradi;
             o'ngda qiyinlik — SO'Z bilan, chunki bu yerda joy bor va
-            "Qiyin" degan so'z besh nuqtadan aniqroq. */}
-        <div className="flex items-center gap-2 border-b border-track pb-2.5">
+            "Qiyin" degan so'z besh nuqtadan aniqroq.
+
+            Yig'ilgan holatda shu qator BOSILADIGAN bo'ladi va o'ng
+            chetda chevron paydo bo'ladi. Ochiq holatda esa u oddiy
+            sarlavha bo'lib turadi: bosadigan narsa yo'q. */}
+        <summary className={`flex items-center gap-2 border-b border-track pb-2.5 ${
+          yechildi ? "cursor-pointer list-none" : "pointer-events-none list-none"}`}>
           <span className="min-w-0 flex-1 truncate font-display text-[11.5px] tracking-widest
                            text-brand-purple uppercase">
             {t("masalaShartSarlavha", { n: m.id })}
           </span>
-          {olchangan && (
+          {olchangan && !yechildi && (
             <span className="shrink-0 text-[11px] text-ink-dim">
               {t("masalaQiyinlik")}:{" "}
               <b className={`font-display ${qiyin.rang}`}>{qiyin.nom}</b>
             </span>
           )}
-        </div>
+          {yechildi && (
+            <>
+              <span className="shrink-0 text-[11px] text-ink-dim group-open:hidden">
+                {t("masalaShartKor")}
+              </span>
+              <span className="hidden shrink-0 text-[11px] text-ink-dim group-open:inline">
+                {t("masalaShartYop")}
+              </span>
+              <Icon name="chevron" size={15}
+                className="shrink-0 rotate-90 text-ink-dim transition-transform
+                           group-open:-rotate-90" />
+            </>
+          )}
+        </summary>
 
         <div className="mt-3">
           <MasalaMatn matn={m.matn} />
@@ -410,7 +466,7 @@ export function Masala({ id, onMuallif, onBack }: Props) {
               className="max-h-[60vh] w-full rounded-xl object-contain" />
           </figure>
         )}
-      </div>
+      </details>
 
       {/* ---- yechuvchilar statistikasi ----
           Halqa + bitta gap. Ilgari bu yerda uchta raqamli katak
@@ -716,6 +772,28 @@ export function Masala({ id, onMuallif, onBack }: Props) {
         </div>
       )}
 
+      {/* ---- "yechgansiz" belgisi ----
+          FAQAT qaytib kelganda: shu seansda javob berilgan bo'lsa,
+          yuqorida allaqachon to'liq natija bo'lagi turibdi va ikkita
+          bir xil xabar chiqardi.
+
+          Nima uchun kerak: qaytib kelganda shart yig'ilgan, yechim
+          esa ochiq turadi — bu holat "men buni yechganmidim yoki
+          javobni sotib olganmidimmi?" degan savol tug'dirardi. */}
+      {yechildi && !natija && m.holat === "tasdiq" && (
+        <div className={`mt-3 flex items-center gap-2 rounded-clay border px-3.5 py-2.5 ${
+          m.birinchiTogri
+            ? "border-brand-green/40 bg-brand-green/10"
+            : "border-track bg-karta"}`}>
+          <Icon name={m.birinchiTogri ? "check" : "repeat"} size={15}
+            className={`shrink-0 ${m.birinchiTogri ? "text-brand-green" : "text-ink-dim"}`} />
+          <span className={`min-w-0 flex-1 text-[12.5px] ${
+            m.birinchiTogri ? "text-brand-green" : "text-ink-soft"}`}>
+            {t(m.birinchiTogri ? "masalaYechgandingiz" : "masalaYechimOchilgan")}
+          </span>
+        </div>
+      )}
+
       {/* ---- yechim ---- */}
       {yechim ? (
         /* Yechim YIG'ILADIGAN bo'limda va ochiq holda chiqadi.
@@ -728,31 +806,31 @@ export function Masala({ id, onMuallif, onBack }: Props) {
            majbur bo'lardi. */
         <details open className="az-natija group mt-3 rounded-clay border border-track
                                  bg-karta p-4 shadow-clay-sm">
-          <summary className="flex cursor-pointer list-none items-center gap-2">
+          <summary className="flex cursor-pointer list-none items-center gap-2
+                              border-b border-track pb-2.5">
             <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-xl
                                          bg-brand-purple/15 text-[15px] leading-none">
               💡
             </span>
-            <span className="min-w-0 flex-1 font-display text-[12px] tracking-widest
+            <span className="shrink-0 font-display text-[12px] tracking-widest
                              text-brand-purple uppercase">
               {t("masalaYechim")}
             </span>
+            {/* To'g'ri javob SARLAVHADA turadi: yechim yig'ilgan
+                bo'lsa ham u ko'rinib qoladi. Odam masalaga ko'pincha
+                aynan shu bitta son uchun qaytadi. */}
+            {togriJavob && (
+              <span className="ml-auto flex min-w-0 items-center gap-1.5 text-[12px]">
+                <Icon name="check" size={13} className="shrink-0 text-brand-green" />
+                <b className="truncate font-display text-brand-green">{togriJavob}</b>
+              </span>
+            )}
             <Icon name="chevron" size={16}
-              className="shrink-0 rotate-90 text-ink-dim transition-transform
-                         group-open:-rotate-90" />
+              className={`shrink-0 rotate-90 text-ink-dim transition-transform
+                          group-open:-rotate-90 ${togriJavob ? "" : "ml-auto"}`} />
           </summary>
 
-          {togriJavob && (
-            <p className="mt-3 flex items-center gap-2 text-[13.5px]">
-              <span className="shrink-0 text-ink-dim">{t("masalaTogriJavobNomi")}</span>
-              <b className="rounded-lg bg-brand-green/15 px-2 py-0.5 font-display
-                            text-brand-green">
-                {togriJavob}
-              </b>
-            </p>
-          )}
-          <p className="mt-2.5 border-t border-track pt-2.5 text-[14px] leading-relaxed
-                        whitespace-pre-wrap">
+          <p className="mt-3 text-[14.5px] leading-relaxed whitespace-pre-wrap">
             {yechim}
           </p>
         </details>
@@ -811,6 +889,67 @@ export function Masala({ id, onMuallif, onBack }: Props) {
             on={() => void ovozBer("dislike")}
           />
         </div>
+      )}
+
+      {/* ---- muallif va davom yo'li (yechilgandan keyin) ----
+          Muallif TEPADA ham turadi, lekin u yerda ingichka qator
+          bo'lib: masalani o'qiyotgan odamga "kim yozgan" degan
+          savol keyin keladi. Yechib bo'lgandan keyin esa u boshqa
+          savolga aylanadi — "yana nimalar yozgan?" — va aynan shu
+          payt uni karta qilib ko'rsatish ma'noga ega. */}
+      {yechildi && muallifSoni > 1 && (
+        <button type="button" onClick={() => onMuallif(m.muallif.id)}
+          className="clay-press az-natija mt-3 flex w-full items-center gap-2.5 rounded-clay
+                     border border-track bg-karta px-3.5 py-3 text-left shadow-clay-sm">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-track
+                           text-[18px]">
+            {avatarBelgi(m.muallif.avatar)}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13px] leading-tight">{m.muallif.ism}</span>
+            <span className="text-[11.5px] text-ink-dim">
+              {t("masalaMuallifJami", { n: muallifSoni })}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-0.5 text-[12px] text-brand-blue">
+            {t("masalaBarchasi")}
+            <Icon name="chevron" size={14} />
+          </span>
+        </button>
+      )}
+
+      {/* ---- navbatdagi masala ----
+          Yechib bo'lgan odam ro'yxatga qaytib, o'sha sahifani
+          qaytadan ko'zdan kechirib, keyingisini o'zi qidirishi
+          kerak edi. Ko'pchilik qidirmaydi — shu yerda to'xtaydi.
+
+          Karta ekranning ENG PASTIDA: u yechimni o'qib bo'lgandan
+          keyingi qadam va yechimdan oldin turmasligi kerak. */}
+      {yechildi && keyingi && (
+        <button type="button" onClick={() => onKeyingi(keyingi.id)}
+          className="tugma-3d az-natija mt-3 flex w-full items-center gap-3 rounded-clay
+                     bg-brand-purple px-4 py-3.5 text-left text-white
+                     shadow-[0_5px_0_var(--color-brand-purple-d)]">
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5">
+              <span className="text-[10.5px] tracking-widest uppercase opacity-80">
+                {t("masalaNavbatdagi")}
+              </span>
+              <span className="flex items-center gap-0.5 rounded-full bg-white/20 px-1.5
+                               py-0.5 text-[10.5px] leading-none">
+                <Icon name="coin" size={10} />
+                +{ENG_KATTA_MUKOFOT}
+              </span>
+            </span>
+            <span className="mt-1 block truncate font-display text-[14px] leading-snug">
+              {keyingi.matn}
+            </span>
+            <span className="text-[11px] opacity-80">{sinfNomi(keyingi.sinf)}</span>
+          </span>
+          <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-white/20">
+            <Icon name="chevron" size={18} />
+          </span>
+        </button>
       )}
 
       {/* ---- tanga oqimi ----

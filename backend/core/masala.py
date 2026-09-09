@@ -100,6 +100,54 @@ def yechganlar(masala: Masala, chegara: int = 100) -> list[dict]:
     ]
 
 
+def keyingi_masala(masala: Masala, kim: Profile) -> dict | None:
+    """
+    Yechib bo'lgan odamga keyingi masala.
+
+    ─────────────── NEGA KERAK ───────────────
+
+    Masalani yechgan odam ro'yxatga qaytib, o'sha sahifani qaytadan
+    ko'zdan kechirib, keyingisini o'zi qidirishi kerak edi. Ko'pchilik
+    qidirmaydi — shu yerda to'xtaydi. Bir bosishli davom yo'li esa
+    bo'limni "bitta masala" dan "ketma-ket masalalar" ga aylantiradi.
+
+    ─────────────── QAYSI MASALA TANLANADI ───────────────
+
+    Avval SHU SINFDAN, topilmasa istalganidan. Sinf ustuvorligi
+    ataylab: 5-sinf bolasiga olimpiada masalasini berish uni davom
+    ettirmaydi, to'xtatadi.
+
+    Urinib ko'rilganlari chiqarib tashlanadi — "keyingi" degani
+    yangi degani. O'z masalasi ham chiqarib tashlanadi: uni yechish
+    mumkin emas.
+
+    Eng YANGISI birinchi: ro'yxatning o'z tartibi ham shunday va
+    ikki joyda ikki xil tartib bo'lsa, odam "bu qayerdan chiqdi?"
+    deb qolardi.
+    """
+    korilgan = MasalaUrinish.objects.filter(profile=kim).values("masala_id")
+    tayyor = (
+        Masala.objects
+        .filter(holat=Masala.TASDIQ)
+        .exclude(pk=masala.pk)
+        .exclude(pk__in=korilgan)
+        .exclude(muallif=kim)
+        .order_by("-created_at")
+    )
+    keyingi = tayyor.filter(sinf=masala.sinf).first() or tayyor.first()
+    if keyingi is None:
+        return None
+    return {
+        "id": keyingi.pk,
+        "sinf": keyingi.sinf,
+        # Matnning boshi — kartada bir qatorlik sarlavha bo'lib
+        # turadi. To'lig'i keraksiz: odam uni ochganda baribir o'qiydi.
+        "matn": keyingi.matn.strip().split("\n")[0][:120],
+        "rasm": keyingi.rasm.url if keyingi.rasm else "",
+        "variantlar": list(keyingi.variantlar or []),
+    }
+
+
 def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> dict:
     """
     Masalaning mijozga ketadigan ko'rinishi.
