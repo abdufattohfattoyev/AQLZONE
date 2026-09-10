@@ -896,6 +896,31 @@ class Masala(models.Model):
     OLIMPIADA = 201
     KURSDAN_TASHQARI = (KATTALAR, OLIMPIADA)
 
+    #: Ekranda ko'rinadigan raqam — 1 dan boshlab, ketma-ket.
+    #:
+    #: ─────────────── NEGA `pk` EMAS ───────────────
+    #:
+    #: Kartada va masala ekranida "#7" turadi va odam uni do'stiga
+    #: aytadi. `pk` esa bunga yaramaydi: u BAZANING ichki raqami va
+    #: unda teshiklar bo'ladi. Bir masala o'chirilgani uchun ro'yxat
+    #: 2 dan boshlanib qolgan edi — o'n beshta masala "2 dan 16
+    #: gacha" bo'lib ko'rinardi.
+    #:
+    #: ─────────────── NEGA `pk` QOLDIRILDI ───────────────
+    #:
+    #: Havolalar va bog'lanishlar `pk` ga tayanadi: kanaldagi har bir
+    #: postning tugmasi `?startapp=masala_<pk>` ga olib boradi,
+    #: urinishlar va ovozlar ham `pk` ga bog'langan. Raqamlarni
+    #: almashtirish kanalda chiqqan hamma havolani buzardi.
+    #:
+    #: Ya'ni ikkita raqam ikki xil ish qiladi: `pk` — mashina uchun,
+    #: `raqam` — odam uchun.
+    #:
+    #: `null` ATAYLAB: migratsiya paytida eski satrlar to'ldirilgunga
+    #: qadar bo'sh turadi. Yangi masalada u har doim beriladi
+    #: (`masala.yubor`).
+    raqam = models.IntegerField(unique=True, null=True, blank=True)
+
     sinf = models.SmallIntegerField(default=0)
 
     matn = models.TextField(max_length=MAX_MATN)

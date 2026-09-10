@@ -29,6 +29,15 @@ export interface Muallif {
 
 export interface Masala {
   id: number;
+  /**
+   * EKRANDA ko'rinadigan raqam — 1 dan boshlab, ketma-ket.
+   *
+   * `id` dan farqi bor va u muhim: `id` — bazaning ichki raqami,
+   * unda teshiklar bo'ladi (o'chirilgan masala). Bir masala
+   * o'chirilgani uchun o'n beshta masala "2 dan 16 gacha" bo'lib
+   * ko'rinardi. Havolalar esa hamon `id` ga tayanadi.
+   */
+  raqam: number;
   sinf: number;
   matn: string;
   holat: MasalaHolat;

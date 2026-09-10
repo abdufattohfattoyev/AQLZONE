@@ -424,7 +424,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           yechildi ? "cursor-pointer list-none" : "pointer-events-none list-none"}`}>
           <span className="min-w-0 flex-1 truncate font-display text-[11.5px] tracking-widest
                            text-brand-purple uppercase">
-            {t("masalaShartSarlavha", { n: m.id })}
+            {t("masalaShartSarlavha", { n: m.raqam })}
           </span>
           {olchangan && !yechildi && (
             <span className="shrink-0 text-[11px] text-ink-dim">

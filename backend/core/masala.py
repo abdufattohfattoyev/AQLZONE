@@ -24,8 +24,8 @@ ovoz qanday almashadi.
 """
 from __future__ import annotations
 
-from django.db import transaction
-from django.db.models import F
+from django.db import IntegrityError, transaction
+from django.db.models import F, Max
 from django.utils import timezone
 
 from .models import (
@@ -175,6 +175,12 @@ def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> d
 
     d = {
         "id": masala.pk,
+        # Ekranda ko'rinadigan raqam — `pk` EMAS. Ikkalasi ikki xil
+        # ish qiladi: `pk` havolalar va bog'lanishlar uchun, `raqam`
+        # esa odam uchun ("#7 ni ko'rdingmi?"). `pk` da teshiklar
+        # bo'ladi va o'n beshta masala "2 dan 16 gacha" bo'lib
+        # ko'rinardi (`Masala.raqam` dagi izohga qarang).
+        "raqam": masala.raqam or masala.pk,
         "sinf": masala.sinf,
         "matn": masala.matn,
         "holat": masala.holat,
@@ -253,14 +259,37 @@ def yubor(
     (`core/rasm.py`): u yerda fayl haqiqatan rasmligini tekshirish
     va EXIF ni tashlash bor va u xato ko'tarishi mumkin — bu esa
     saqlashdan oldin bo'lishi kerak.
+
+    ─────────────── KO'RINADIGAN RAQAM ───────────────
+
+    `raqam` — ekranda turadigan son (`Masala.raqam` dagi izohga
+    qarang). U eng kattasidan bittaga oshiriladi va TAKRORLANMAYDI:
+    ustunda unikal cheklov bor.
+
+    Ikki odam bir soniyada masala yuborsa, ikkinchisi shu cheklovga
+    urilishi mumkin — o'shanda bir marta qaytadan urinamiz. Qulf
+    olish ham mumkin edi, lekin masala kuniga bir-ikkitadan
+    yuboriladi: har yuborishga qulf qo'yish shu ehtimol uchun
+    qimmat narx bo'lardi.
     """
-    return Masala.objects.create(
+    maydonlar = dict(
         muallif=profile, sinf=sinf,
         matn=matn.strip(), javob=javob.strip(), yechim=yechim.strip(),
         variantlar=variantlar or [],
         rasm=rasm or None,
         holat=Masala.KUTMOQDA,
     )
+    for _ in range(2):
+        keyingi = (Masala.objects.aggregate(m=Max("raqam"))["m"] or 0) + 1
+        try:
+            with transaction.atomic():
+                return Masala.objects.create(raqam=keyingi, **maydonlar)
+        except IntegrityError:
+            continue
+    # Ikki urinishdan keyin ham bo'lmadi — masala RAQAMSIZ saqlanadi.
+    # Uni yo'qotgandan ko'ra shunisi yaxshi: raqam ekrandagi yozuv,
+    # masalaning o'zi esa odamning mehnati.
+    return Masala.objects.create(**maydonlar)
 
 
 # -------------------------------------------------------------------- yechish

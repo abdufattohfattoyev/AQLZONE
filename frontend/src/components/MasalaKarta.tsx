@@ -67,7 +67,7 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
             bo'ladi. Sahifadagi o'rni (1, 2, 3…) esa har filtrda
             boshqa masalani ko'rsatardi. */}
         <span className="shrink-0 font-display text-[12px] leading-none text-ink-dim">
-          #{m.id}
+          #{m.raqam}
         </span>
 
         {/* Toifa yorlig'i RANGLI: o'nta kartali sahifada ko'z avval

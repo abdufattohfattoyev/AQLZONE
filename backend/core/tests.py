@@ -4782,6 +4782,63 @@ class MasalaKorishTest(TestCase):
         self.assertEqual(self.m.yechgan_soni, 0)
 
 
+class MasalaRaqamTest(TestCase):
+    """
+    Ekranda ko'rinadigan raqam — `Masala.raqam`.
+
+    Diqqat qaratilgan joy — RAQAM BILAN `pk` NING AJRALGANI. Ilgari
+    ekranda `pk` turardi va bitta masala o'chirilganidan keyin o'n
+    beshta masala "2 dan 16 gacha" bo'lib ko'rinardi. Endi ikkalasi
+    ikki ish qiladi va bu testlar aynan shuni qo'riqlaydi: raqam
+    odam uchun teshiksiz, `pk` esa havolalar uchun o'zgarmas
+    (kanalda `?startapp=masala_<pk>` postlari allaqachon turibdi).
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.muallif = Pupil.objects.create(first_name="Muallif").asosiy_profil()
+
+    def yubor(self, i: int) -> Masala:
+        return MS.yubor(
+            self.muallif, 5, f"{i}-masala matni shu yerda turadi.",
+            str(i), f"{i} ga teng.",
+        )
+
+    def test_raqam_birdan_ketma_ket(self):
+        uchta = [self.yubor(i) for i in range(1, 4)]
+        self.assertEqual([m.raqam for m in uchta], [1, 2, 3])
+
+    def test_ochirilgan_masala_teshik_qoldirmaydi(self):
+        """
+        ASOSIY holat — foydalanuvchi shu sababli murojaat qilgan.
+
+        Birinchi masala o'chiriladi, keyin yana bittasi qo'shiladi.
+        `pk` da teshik qoladi (bu normal), ekrandagi raqamlar esa
+        ketma-ket bo'lib qolaveradi.
+        """
+        birinchi = self.yubor(1)
+        ikkinchi = self.yubor(2)
+        birinchi.delete()
+        uchinchi = self.yubor(3)
+
+        self.assertEqual([ikkinchi.raqam, uchinchi.raqam], [2, 3])
+        # `pk` esa TEGILMAYDI: kanaldagi eski havolalar shunga tayanadi.
+        self.assertEqual(uchinchi.pk, ikkinchi.pk + 1)
+
+    def test_raqam_takrorlanmaydi(self):
+        raqamlar = [self.yubor(i).raqam for i in range(1, 6)]
+        self.assertEqual(len(set(raqamlar)), 5)
+
+    def test_javobda_raqam_ham_pk_ham_bor(self):
+        """Mijozga ikkalasi kerak: raqam — ko'rsatishga, `id` — so'rovga."""
+        m = self.yubor(1)
+        m.holat = Masala.TASDIQ
+        m.save(update_fields=["holat"])
+        d = MS.masala_json(m, self.muallif)
+        self.assertEqual(d["raqam"], 1)
+        self.assertEqual(d["id"], m.pk)
+
+
 class MasalaTeskariTest(TestCase):
     """
     Saralash yo'nalishi — `?teskari=1`.
