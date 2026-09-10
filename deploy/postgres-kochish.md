@@ -1,7 +1,58 @@
 # SQLite → Postgres ko'chishi
 
+> **Bajarilgan: 2026-09-10.** Server Postgres 17 da ishlayapti.
+> Quyidagi qo'llanma o'sha ko'chishning yozuvi — takrorlash yoki
+> orqaga qaytish uchun.
+
 Ishlab turgan bazani ko'chirish. Har qadamda tekshiruv bor va
 **orqaga qaytish yo'li ochiq qoladi**: eski SQLite fayli tegilmaydi.
+
+---
+
+## Yo'lda chiqqan uchta tuzoq
+
+Ular shu yerda yozilgan, chunki qo'llanmani ikkinchi marta
+o'qiyotgan odam aynan shularga urilishi mumkin.
+
+**1. SQLite uzunlikni tekshirmaydi, Postgres tekshiradi.**
+`loaddata` bitta satrda yiqildi:
+
+```
+Could not load core.Profile(pk=271): value too long for type character varying(40)
+```
+
+`max_length=40` bo'lgan ismda 48 belgi turgan edi — SQLite uni
+jimgina qabul qilgan. Ko'chishdan oldin hammasini bir marta
+tekshirib chiqish kerak:
+
+```bash
+docker exec -i aqlzone python manage.py shell -c "
+from django.apps import apps
+from django.db import models
+for M in apps.get_app_config('core').get_models():
+    ml = [f for f in M._meta.get_fields()
+          if isinstance(f, models.CharField) and f.max_length]
+    for o in M.objects.all().iterator():
+        for f in ml:
+            v = getattr(o, f.attname) or ''
+            if len(v) > f.max_length:
+                print(f'{M.__name__}(pk={o.pk}).{f.name}: {len(v)} > {f.max_length}')
+"
+```
+
+**2. `docker compose run` chiqishi dump faylga tushadi.**
+Entrypoint `migrate` ni chaqiradi va uning yozuvi stdout'ga —
+ya'ni to'g'ridan-to'g'ri JSON faylining boshiga — tushadi. Natijada
+`loaddata` "DeserializationError" bilan yiqiladi.
+
+Yechim: entrypoint'ni chetlab o'tish va TTY'ni o'chirish —
+`-T --entrypoint python`.
+
+**3. `FOR UPDATE` tashqi birlashtirish bilan ishlamaydi.**
+Sinovlar Postgres'da yuritilganda topildi va u ishlab turgan
+serverda chiqadigan turdagi xato edi (`duel.py`, `of=("self",)`
+bilan tuzatilgan). Shuning uchun **6-qadamdagi sinovlarni o'tkazib
+yubormang**.
 
 Ko'chish `git pull` bilan O'ZI bo'lmaydi va bu ataylab. Yangi kod
 `DB_HOST` berilgan bo'lsagina Postgres'ga ulanadi; berilmasa
@@ -37,7 +88,7 @@ docker cp aqlzone:/data/az-data.sqlite3 ~/az-zaxira-$SANA.sqlite3
 # 1b. JSON dump — ko'chishning o'zi shu fayldan yuklanadi.
 docker exec -i aqlzone python manage.py dumpdata \
   --natural-foreign --natural-primary \
-  --exclude contenttypes --exclude sessions \
+  --exclude contenttypes \
   --indent 0 > ~/az-dump-$SANA.json
 
 ls -lh ~/az-zaxira-$SANA.sqlite3 ~/az-dump-$SANA.json
@@ -91,10 +142,10 @@ docker compose ps db               # "healthy" bo'lishini kuting
 
 ```bash
 # 4a. Bo'sh Postgres'ga sxema.
-docker compose run --rm --no-deps aqlzone python manage.py migrate --noinput
+docker compose run --rm --no-deps -T aqlzone python manage.py migrate --noinput
 
 # 4b. Ma'lumot.
-docker compose run --rm --no-deps -v ~/az-dump-$SANA.json:/tmp/dump.json \
+docker compose run --rm --no-deps -T -v ~/az-dump-$SANA.json:/tmp/dump.json \
   aqlzone python manage.py loaddata /tmp/dump.json
 ```
 
@@ -111,7 +162,7 @@ Ikki bazadagi satrlar sonini solishtiramiz. Farq bo'lsa keyingi
 qadamga o'tmang.
 
 ```bash
-docker compose run --rm --no-deps aqlzone python manage.py shell -c "
+docker compose run --rm --no-deps -T --entrypoint python aqlzone manage.py shell -c "
 from django.apps import apps
 for M in sorted(apps.get_app_config('core').get_models(), key=lambda m: m.__name__):
     print(f'{M.__name__:22} {M.objects.count()}')
@@ -166,5 +217,13 @@ narsa yo'qoladi.
   qarang). Postgres'da bir marta yuritish uchun:
 
   ```bash
-  docker compose run --rm aqlzone python manage.py test core
+  docker compose run --rm --no-deps -T \
+    -e SSL_MAJBURIY=0 -e MINI_APP_URL= -e ALLOWED_HOSTS='*' \
+    aqlzone python manage.py test core
   ```
+
+  Uchala o'zgaruvchi ham SHART va sababi Postgres'da emas: sinov
+  mijozi `http://testserver` ga murojaat qiladi, ishlab chiqarish
+  sozlamasi esa uni `https` ga yo'naltiradi va boshqa domenni rad
+  etadi. `MINI_APP_URL` bo'sh qoldiriladi, chunki bot javoblari
+  Mini App sozlanganmi-yo'qmi shunga qarab o'zgaradi.

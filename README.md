@@ -197,6 +197,43 @@ ikkalasi ham ATAYLAB shunday:
 | `CsrfViewMiddleware` yo'q | CSRF cookie'ga tayanadi, bizda cookie yo'q — himoya Bearer token orqali |
 | `XFrameOptionsMiddleware` yo'q | Telegram Mini App saytni o'z ramkasida ochadi; `DENY` qo'ysak ilova ochilmay qoladi |
 
+### Baza: serverda Postgres, ishlab chiqishda SQLite
+
+`DB_HOST` berilgan bo'lsa Django Postgres'ga ulanadi, berilmasa —
+SQLite fayliga. Bu murosa emas, ataylab: lokal ishlash uchun
+Postgres o'rnatish, ishga tushirish va uni yodda tutish kerak
+bo'lardi. SQLite esa faylning o'zi — `manage.py runserver` va tamom.
+
+```bash
+DB_HOST=db           # docker-compose dagi baza xizmatining nomi
+DB_NAME=aqlzone
+DB_USER=aqlzone
+DB_PASSWORD=<uzun tasodifiy satr>
+```
+
+`DB_PASSWORD` berilmasa `docker compose up` **xato bilan to'xtaydi**
+va sayt ko'tarilmaydi. Qattiq, lekin muqobili yomonroq: parolsiz
+Postgres — ochiq baza.
+
+Baza alohida ichki tarmoqda (`az-tarmoq`) va **port ochmaydi**.
+Oldingi nginx turgan tarmoq boshqa loyihalar bilan umumiy — u
+yerdagi har bir konteyner bazaga nomi bilan yeta olardi.
+
+**Kamchiligi yashirilmagan:** sinovlar SQLite'da ketadi, ya'ni
+Postgres'ga xos xato ular orqali tutilmaydi. Ko'chishning o'zida
+aynan shunday ikkita xato chiqqan (`deploy/postgres-kochish.md`),
+shuning uchun jiddiy o'zgarishdan keyin sinovlarni Postgres'da ham
+bir marta yuritish kerak.
+
+Zaxira:
+
+```bash
+docker exec aqlzone_db pg_dump -U aqlzone aqlzone | gzip > ~/az-$(date +%F).sql.gz
+```
+
+SQLite'dan ko'chirish yozuvi va orqaga qaytish yo'li —
+[`deploy/postgres-kochish.md`](deploy/postgres-kochish.md).
+
 ## Nimalar bor
 
 | | Qayerda |
