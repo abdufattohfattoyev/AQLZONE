@@ -9,9 +9,13 @@ Kanaldagi postlarning sanoq qatorini yangilaydi.
 
 Kanal posti chiqqandan keyin o'lik bo'lib qolardi. Obunachi uni
 ko'radi, lekin uni yana kimdir yechdimi, qiyinmi yoki osonmi — hech
-narsa bilmaydi. Post ostidagi jonli qator ("✅ Masalani yechganlar: 7")
-ikkita ish qiladi: kech kelgan odamga "bu hali ham ochiq" deb
-aytadi va sonning o'sishi bosishga undaydi.
+narsa bilmaydi. Post ostidagi jonli qator buni aytadi:
+
+    hech kim yechmagan   🥇 Hali hech kim yechmagan — birinchi bo'ling!
+    yechganlar bor       ✅ Masalani yechganlar: 7
+
+Birinchisi chaqiriq, ikkinchisi esa sabab: son o'sib borishini
+ko'rgan odam bosadi.
 
 ─────────────────── NEGA JADVAL, JAVOB PAYTIDA EMAS ───────────────
 
@@ -35,6 +39,7 @@ from __future__ import annotations
 import time
 
 from django.core.management.base import BaseCommand
+from django.db.models import Count, Q
 
 from core import masala_kanal as MK
 from core.kanal import kanal_nomi
@@ -69,8 +74,14 @@ class Command(BaseCommand):
         # Yo'qolgan postlar OLINMAYDI: ular admindan qayta yuborishni
         # kutyapti va ularni yangilashning iloji yo'q. Busiz o'sha
         # ikki-uchta post uchun kuniga yuzlab behuda so'rov ketardi.
+        #
+        # Yechganlar soni BITTA so'rovda sanaladi (`yechganlar_annot`).
+        # Busiz har post uchun alohida `COUNT` ketardi — o'n beshta
+        # post uchun o'n beshta so'rov, har o'n besh daqiqada.
         qs = Masala.objects.filter(
             kanal_at__isnull=False, kanal_post_id__isnull=False, kanal_yoq=False,
+        ).annotate(
+            yechganlar_annot=Count("urinishlar", filter=Q(urinishlar__yechdi=True)),
         ).order_by("-kanal_at")
         if o["id"]:
             qs = qs.filter(pk=o["id"])
@@ -84,7 +95,7 @@ class Command(BaseCommand):
 
         sanoq: dict[str, int] = {}
         for masala in ozgargan:
-            qator = MK.sanoq_qatori(masala) or "—"
+            qator = MK.sanoq_qatori(masala)
             if o["sinov"]:
                 self.stdout.write(f"  #{masala.pk}  {masala.kanal_sanoq or '—'}"
                                   f"  →  {MK.sanoq_kaliti(masala)}   {qator}")

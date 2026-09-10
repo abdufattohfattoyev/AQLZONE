@@ -37,12 +37,14 @@ turadi.
 
 Post chiqqandan keyin o'lik bo'lib qolardi: obunachi uni ko'radi,
 lekin uni yana kimdir yechdimi — bilmaydi. Yozuvning oxirida jonli
-sanoq turadi ("👀 42 · ✍️ 18 · ✅ 7") va u `yangila()` orqali
-yangilanadi (`management/commands/kanal_yangila.py`, har o'n besh
-daqiqada).
+qator turadi va u `yangila()` orqali yangilanadi
+(`management/commands/kanal_yangila.py`, har o'n besh daqiqada):
 
-Sonlar o'zgarmagan bo'lsa Telegramga UMUMAN murojaat qilinmaydi:
-oxirgi yozilgan sonlar `Masala.kanal_sanoq` da turadi.
+    hech kim yechmagan   🥇 Hali hech kim yechmagan — birinchi bo'ling!
+    yechganlar bor       ✅ Masalani yechganlar: 7
+
+Son o'zgarmagan bo'lsa Telegramga UMUMAN murojaat qilinmaydi:
+oxirgi yozilgani `Masala.kanal_sanoq` da turadi.
 
 ─────────────────── JAVOB KANALDA YOZILMAYDI ───────────────────
 
@@ -61,7 +63,7 @@ from django.utils import timezone
 from . import xabar
 from .boshqaruv import sinf_nomi
 from .kanal import kanal_nomi
-from .models import Masala
+from .models import Masala, MasalaUrinish
 from .rasm import jpeg_qil
 
 #: Kanal xabaridagi tugmalar.
@@ -116,6 +118,37 @@ def qalqon(matn: str) -> str:
     return html.escape(matn, quote=False)
 
 
+def yechganlar_soni(masala: Masala) -> int:
+    """
+    Masalani nechta odam YECHGAN — qaysi urinishda bo'lishidan
+    qat'i nazar.
+
+    ─────────────── NEGA `yechgan_soni` EMAS ───────────────
+
+    `Masala.yechgan_soni` faqat BIRINCHI urinishda topganlarni
+    sanaydi va u shunday bo'lishi kerak: ilovadagi qiyinlik foizi
+    va "Eng qiyin" ro'yxati o'sha songa quriladi. "Yuztadan o'ntasi
+    birinchi urinishda yechdi" — masalaning qiyinligini halol
+    o'lchaydigan yagona son.
+
+    Kanal posti esa o'sha sonni qarzga olgan edi va natijada
+    YOLG'ON gapirardi: serverdagi #2-masalani bir kishi yechgan,
+    postda esa hech narsa yozilmagan — chunki u birinchi urinishda
+    topmagan. Yozuvda "Masalani yechganlar" deb turib, yechganlarning
+    bir qismini ko'rsatish mumkin emas.
+
+    ─────────────── SO'ROV BIR MARTA ───────────────
+
+    Ro'yxat orqali kelgan masalada son ALLAQACHON sanalgan bo'ladi
+    (`kanal_yangila` uni bitta so'rovda oladi). Busiz o'n beshta post
+    uchun o'n beshta alohida `COUNT` ketardi.
+    """
+    tayyor = getattr(masala, "yechganlar_annot", None)
+    if tayyor is not None:
+        return tayyor
+    return MasalaUrinish.objects.filter(masala=masala, yechdi=True).count()
+
+
 def sanoq_kaliti(masala: Masala) -> str:
     """
     Postda oxirgi marta yozilgan son.
@@ -129,7 +162,7 @@ def sanoq_kaliti(masala: Masala) -> str:
     ("42:18:7") va u paytda ko'rishlar soni o'zgargani ham postni
     tahrirlashga sabab bo'lardi — post esa o'zgarmasdi.
     """
-    return str(masala.yechgan_soni)
+    return str(yechganlar_soni(masala))
 
 
 def sanoq_qatori(masala: Masala) -> str:
@@ -158,16 +191,21 @@ def sanoq_qatori(masala: Masala) -> str:
     Endi bitta son va u SO'Z bilan atalgan. Raqamni noto'g'ri o'qib
     bo'lmaydi.
 
-    ─────────────── NOL YOZILMAYDI ───────────────
+    ─────────────── NOL — CHAQIRIQ, YOZUV EMAS ───────────────
 
     "Masalani yechganlar: 0" degan yozuv masalani hech kim
-    yecholmagandek ko'rsatardi, holbuki post hozirgina chiqqan
-    bo'lishi mumkin. Hech kim yechmagan bo'lsa — qator ham
-    bo'lmaydi.
+    yecholmagandek ko'rsatardi va postni o'lik qilardi. Qatorni
+    umuman olib tashlash ham yaxshi emas edi: o'shanda yangi post
+    jim turardi va unda hech qanday chaqiriq bo'lmasdi.
+
+    Endi nol o'rnida TAKLIF turadi. Bosh sahifada turgan odam uchun
+    "birinchi bo'lish" — sondan kuchliroq sabab; keyin esa u sonni
+    o'sib borishini ko'radi va bu ikkinchi sabab bo'ladi.
     """
-    if not masala.yechgan_soni:
-        return ""
-    return f"<b>✅ Masalani yechganlar: {masala.yechgan_soni}</b>"
+    son = yechganlar_soni(masala)
+    if not son:
+        return "<b>🥇 Hali hech kim yechmagan — birinchi bo'ling!</b>"
+    return f"<b>✅ Masalani yechganlar: {son}</b>"
 
 
 def sarlavha(masala: Masala) -> str:

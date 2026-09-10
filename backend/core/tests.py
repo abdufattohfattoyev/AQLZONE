@@ -4963,27 +4963,43 @@ class KanalSanoqTest(TestCase):
 
     def setUp(self):
         cache.clear()
-        muallif = Pupil.objects.create(first_name="Muallif").asosiy_profil()
+        self.muallif = Pupil.objects.create(first_name="Muallif").asosiy_profil()
         self.m = Masala.objects.create(
-            muallif=muallif, sinf=5, matn="Ikki karra ikki nechchi?",
+            muallif=self.muallif, sinf=5, matn="Ikki karra ikki nechchi?",
             javob="4", yechim="4 ga teng.", holat=Masala.TASDIQ,
             kanal_at=timezone.now(), kanal_post_id=314,
         )
 
+    def yechsin(self, masala, soni: int, birinchida: bool = False) -> None:
+        """
+        `soni` ta odam masalani YECHDI deb belgilaydi.
+
+        `birinchida=False` — ular ikkinchi-uchinchi urinishda topgan,
+        ya'ni `Masala.yechgan_soni` ga TUSHMAYDI. Sinovning butun
+        ma'nosi shunda: post aynan shu odamlarni ham sanashi kerak.
+        """
+        for i in range(soni):
+            pr = Pupil.objects.create(first_name=f"Yechuvchi{i}").asosiy_profil()
+            MasalaUrinish.objects.create(
+                masala=masala, profile=pr,
+                togri=birinchida, yechdi=True, soni=1 if birinchida else 3,
+                yechim_ochiq=True,
+            )
+
     # ─────────────────────────────────────── qator
 
-    def test_hech_kim_yechmagan_bolsa_qator_yoq(self):
+    def test_hech_kim_yechmagan_bolsa_chaqiriq_turadi(self):
         """"Masalani yechganlar: 0" degan yozuv masalani hech kim
-        yecholmagandek ko'rsatardi — post esa hozirgina chiqqan
-        bo'lishi mumkin."""
-        self.assertEqual(MK.sanoq_qatori(self.m), "")
-        self.assertNotIn("yechganlar", MK.sarlavha(self.m))
+        yecholmagandek ko'rsatardi; qatorni umuman olib tashlash esa
+        yangi postni jim qoldirardi. Nol o'rnida TAKLIF turadi."""
+        self.assertIn("birinchi bo'ling", MK.sanoq_qatori(self.m))
+        self.assertNotIn("yechganlar: 0", MK.sarlavha(self.m))
 
     def test_qator_sozi_bilan_yoziladi(self):
         """Ilgari uchta belgi bor edi ("👀 42 · ✍️ 18 · ✅ 7") va
         ularning ma'nosi tushunarsiz edi. Endi bitta son va u SO'Z
         bilan atalgan."""
-        self.m.yechgan_soni = 7
+        self.yechsin(self.m, 7)
         qator = MK.sanoq_qatori(self.m)
         self.assertIn("Masalani yechganlar: 7", qator)
         # Ko'rish va urinish sonlari postga UMUMAN chiqmaydi:
@@ -4993,10 +5009,27 @@ class KanalSanoqTest(TestCase):
         self.assertNotIn("42", MK.sanoq_qatori(self.m))
         self.assertNotIn("18", MK.sanoq_qatori(self.m))
 
+    def test_keyingi_urinishda_yechgan_ham_sanaladi(self):
+        """
+        ENG MUHIM SINOV. Ilgari post `Masala.yechgan_soni` ga
+        qarardi — u esa faqat BIRINCHI urinishda topganlarni
+        sanaydi. Natijada serverdagi #2-masalani bir kishi yechgan,
+        postda esa hech narsa yozilmagan edi.
+
+        "Masalani yechganlar" deb turib, yechganlarning bir qismini
+        ko'rsatish mumkin emas.
+        """
+        self.yechsin(self.m, 3, birinchida=False)
+        self.m.refresh_from_db()
+        # Qiyinlik o'lchovi TEGILMAYDI — u birinchi urinishga quriladi.
+        self.assertEqual(self.m.yechgan_soni, 0)
+        # Post esa uchalasini ham sanaydi.
+        self.assertIn("Masalani yechganlar: 3", MK.sanoq_qatori(self.m))
+
     def test_qator_teglardan_oldin_turadi(self):
         """Teglar postning oxiri; ular orasiga kirgan jonli son
         "yana bitta teg" bo'lib ko'rinardi."""
-        self.m.yechgan_soni = 5
+        self.yechsin(self.m, 5)
         y = MK.sarlavha(self.m)
         self.assertLess(y.index("Masalani yechganlar"), y.index("#masala"))
 
@@ -5014,7 +5047,7 @@ class KanalSanoqTest(TestCase):
         self.m.korish_soni = 99
         self.m.urinish_soni = 50
         self.assertEqual(MK.sanoq_kaliti(self.m), oldin)
-        self.m.yechgan_soni = 1
+        self.yechsin(self.m, 1)
         self.assertNotEqual(MK.sanoq_kaliti(self.m), oldin)
 
     # ─────────────────────────────────────── yangilash
@@ -5027,8 +5060,7 @@ class KanalSanoqTest(TestCase):
         s.assert_not_called()
 
     def test_ozgarsa_yangilanadi_va_eslab_qolinadi(self):
-        self.m.yechgan_soni = 9
-        self.m.save(update_fields=["yechgan_soni"])
+        self.yechsin(self.m, 9)
         with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
             self.assertEqual(MK.yangila(self.m), "yangilandi")
         s.assert_called_once()
@@ -5039,8 +5071,8 @@ class KanalSanoqTest(TestCase):
         # Fayl ochilmaydi — kerak bo'lgani `bool(masala.rasm)`, ya'ni
         # post `sendPhoto` bilan chiqqanmi degan savolga javob.
         self.m.rasm = "masala/2026/09/sinov.webp"
-        self.m.yechgan_soni = 8
-        self.m.save(update_fields=["rasm", "yechgan_soni"])
+        self.m.save(update_fields=["rasm"])
+        self.yechsin(self.m, 8)
         with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
             MK.yangila(self.m)
         self.assertEqual(s.call_args[0][0], "editMessageCaption")
@@ -5049,15 +5081,13 @@ class KanalSanoqTest(TestCase):
         """Rasmli post `sendPhoto` bilan chiqqan va uning matni
         "caption"; rasmsizi esa "text" — Telegram ularni alohida
         amal bilan tahrirlaydi."""
-        self.m.yechgan_soni = 3
-        self.m.save(update_fields=["yechgan_soni"])
+        self.yechsin(self.m, 3)
         with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
             MK.yangila(self.m)
         self.assertEqual(s.call_args[0][0], "editMessageText")
 
     def test_yoqolgan_post_belgilanadi(self):
-        self.m.yechgan_soni = 4
-        self.m.save(update_fields=["yechgan_soni"])
+        self.yechsin(self.m, 4)
         with patch("core.xabar._sorov",
                    return_value=(False, 400, "message to edit not found")):
             self.assertEqual(MK.yangila(self.m), "yoq")
@@ -5070,8 +5100,8 @@ class KanalSanoqTest(TestCase):
         ishlaydi — busiz o'sha post uchun kuniga yuzlab behuda
         so'rov ketardi."""
         self.m.kanal_yoq = True
-        self.m.yechgan_soni = 5
-        self.m.save(update_fields=["kanal_yoq", "yechgan_soni"])
+        self.m.save(update_fields=["kanal_yoq"])
+        self.yechsin(self.m, 5)
         with patch("core.xabar._sorov") as s:
             self.assertEqual(MK.yangila(self.m), "yoq")
         s.assert_not_called()
@@ -5102,8 +5132,8 @@ class KanalSanoqTest(TestCase):
         yangi = Masala.objects.create(
             muallif=self.m.muallif, sinf=5, matn="Yangi masala kanalga chiqadi.",
             javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
-            yechgan_soni=6,
         )
+        self.yechsin(yangi, 6)
         with patch("core.xabar._sorov", return_value=(True, 200, "")):
             MK.yubor(yangi)
         yangi.refresh_from_db()
@@ -5116,8 +5146,9 @@ class KanalSanoqTest(TestCase):
             muallif=self.m.muallif, sinf=5, matn="Sanoqlari o'zgargan masala.",
             javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
             kanal_at=timezone.now(), kanal_post_id=315,
-            yechgan_soni=11, kanal_sanoq="0",
+            kanal_sanoq="0",
         )
+        self.yechsin(ozgargan, 11)
         self.m.kanal_sanoq = MK.sanoq_kaliti(self.m)
         self.m.save(update_fields=["kanal_sanoq"])
 
