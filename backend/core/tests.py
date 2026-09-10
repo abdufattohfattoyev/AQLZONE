@@ -3636,9 +3636,17 @@ class ProgressQulfTest(TransactionTestCase):
         Yuqoridagi sinov qulflarga bog'liq va mashina sekin bo'lsa
         tasodifan yashil o'tishi mumkin. Bu esa sababni to'g'ridan-to'g'ri
         tekshiradi: `transaction_mode` olib tashlansa, darhol qizaradi.
+
+        FAQAT SQLITE UCHUN. `transaction_mode` — SQLite'ning sozlamasi
+        va u boshqa bazada umuman yo'q. Postgres'da bu muammoning
+        o'zi yo'q: u yozuvchilarni navbatga qo'yadi, "database is
+        locked" bilan yiqilmaydi. Sinov o'tkazib yuboriladi, chunki
+        u yerda tekshiradigan narsa qolmaydi.
         """
         from django.db import connection
 
+        if connection.vendor != "sqlite":
+            self.skipTest("`transaction_mode` — SQLite sozlamasi")
         self.assertEqual(connection.transaction_mode, "IMMEDIATE")
 
 

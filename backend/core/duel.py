@@ -569,7 +569,26 @@ def yana_soradi(duel: Duel, chaqirganmi: bool) -> Duel:
     o'shanda ikkita yangi duel yasalib, har biri o'zinikida yolg'iz
     qolardi.
     """
-    d = Duel.objects.select_for_update().select_related("keyingi").get(pk=duel.pk)
+    # `of=("self",)` — qulf FAQAT duel qatoriga qo'yiladi.
+    #
+    # Usiz Postgres butun so'rovni rad etadi:
+    #
+    #     FOR UPDATE cannot be applied to the nullable side of an outer join
+    #
+    # Sabab: `keyingi` — bo'sh bo'lishi mumkin bo'lgan bog'lanish, ya'ni
+    # `select_related` uni LEFT OUTER JOIN bilan oladi. Yo'q qatorni
+    # qulflab bo'lmaydi va Postgres taxmin qilishdan ko'ra to'xtashni
+    # tanlaydi.
+    #
+    # SQLite'da bu sezilmasdi: u `FOR UPDATE` ni umuman e'tiborga
+    # olmaydi. Ya'ni xato bazani almashtirgandagina chiqadigan turdan
+    # edi va uni sinovlar Postgres'da yuritilganda topdi.
+    d = (
+        Duel.objects
+        .select_for_update(of=("self",))
+        .select_related("keyingi")
+        .get(pk=duel.pk)
+    )
 
     # Allaqachon yasalgan — ikkinchi bosish hech narsani o'zgartirmaydi.
     if d.keyingi_id:
