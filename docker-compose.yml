@@ -162,7 +162,20 @@ services:
   jadval:
     build: .
     container_name: aqlzone_jadval
-    command: ["celery", "-A", "aqlzone", "beat", "--loglevel=info"]
+    # Jadval fayli VOLUME'da, konteyner ichida emas.
+    #
+    # Beat unda har vazifa oxirgi marta qachon yuborilganini
+    # saqlaydi. Konteyner ichida qolsa, u har joylashda yo'qolardi
+    # va Beat o'tib ketgan vaqtni "hali bajarilmagan" deb hisoblab,
+    # darhol yuborardi. 18:01 da joylash qilinsa — kunlik masala
+    # ikkinchi marta kanalga chiqib ketardi.
+    command:
+      - celery
+      - -A
+      - aqlzone
+      - beat
+      - --loglevel=info
+      - --schedule=/data/celerybeat-schedule
     env_file: .env
     environment:
       AZ_ROL: jadval
