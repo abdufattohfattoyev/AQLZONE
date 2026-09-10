@@ -118,18 +118,23 @@ def qalqon(matn: str) -> str:
 
 def sanoq_kaliti(masala: Masala) -> str:
     """
-    Sanoqlarning qisqa yozuvi — "42:18:7".
+    Postda oxirgi marta yozilgan son.
 
     Faqat SOLISHTIRISH uchun: postdagi qator o'zgardimi degan
     savolga bazadan javob beradi va Telegramga behuda so'rov
     yubormaslikka imkon beradi.
+
+    Postda faqat YECHGANLAR soni turadi, shuning uchun kalit ham
+    shu bitta sondan iborat. Ilgari uchtasi ham yozilardi
+    ("42:18:7") va u paytda ko'rishlar soni o'zgargani ham postni
+    tahrirlashga sabab bo'lardi — post esa o'zgarmasdi.
     """
-    return f"{masala.korish_soni}:{masala.urinish_soni}:{masala.yechgan_soni}"
+    return str(masala.yechgan_soni)
 
 
 def sanoq_qatori(masala: Masala) -> str:
     """
-    Post ostidagi jonli qator: nechta ko'rdi, urindi va yechdi.
+    Post ostidagi jonli qator: masalani nechta odam yechgan.
 
     ─────────────── NEGA KERAK ───────────────
 
@@ -137,23 +142,32 @@ def sanoq_qatori(masala: Masala) -> str:
     ko'radi, lekin uni yana kimdir yechdimi, qiyinmi yoki osonmi —
     hech narsa bilmaydi. Jonli sanoq esa postni tirik qiladi va
     ikkita ish qiladi: kech kelgan odamga "bu hali ham ochiq" deb
-    aytadi, va yechganlar soni o'sib borishi bosishga undaydi.
+    aytadi, va sonning o'sishi bosishga undaydi.
 
-    ─────────────── NOL SONLAR YOZILMAYDI ───────────────
+    ─────────────── NEGA BITTA SON ───────────────
 
-    Yangi post ostida "0 ko'rdi · 0 urindi · 0 yechdi" turardi va u
-    masalani tashlab ketilgandek ko'rsatardi. Aslida u hozirgina
-    chiqqan. Shuning uchun nol bo'lgan bo'lak umuman qo'shilmaydi,
-    hammasi nol bo'lsa — qator ham bo'lmaydi.
+    Ilgari uchta belgi bor edi: "👀 42 · ✍️ 18 · ✅ 7". Ikkita
+    muammosi chiqdi va ikkalasi ham jiddiy:
+
+      * 👀 Telegramning O'Z ko'rish sanoqi bilan urishardi — kanal
+        posti ostida u allaqachon turadi va ikkita turli son
+        yonma-yon chiqardi;
+      * belgilarning ma'nosi tushunarsiz edi. Loyihani yozgan odam
+        ham so'radi — demak obunachi ham tushunmasdi.
+
+    Endi bitta son va u SO'Z bilan atalgan. Raqamni noto'g'ri o'qib
+    bo'lmaydi.
+
+    ─────────────── NOL YOZILMAYDI ───────────────
+
+    "Masalani yechganlar: 0" degan yozuv masalani hech kim
+    yecholmagandek ko'rsatardi, holbuki post hozirgina chiqqan
+    bo'lishi mumkin. Hech kim yechmagan bo'lsa — qator ham
+    bo'lmaydi.
     """
-    bolaklar = []
-    if masala.korish_soni:
-        bolaklar.append(f"👀 {masala.korish_soni}")
-    if masala.urinish_soni:
-        bolaklar.append(f"✍️ {masala.urinish_soni}")
-    if masala.yechgan_soni:
-        bolaklar.append(f"✅ {masala.yechgan_soni}")
-    return " · ".join(bolaklar)
+    if not masala.yechgan_soni:
+        return ""
+    return f"<b>✅ Masalani yechganlar: {masala.yechgan_soni}</b>"
 
 
 def sarlavha(masala: Masala) -> str:
@@ -189,9 +203,15 @@ def sarlavha(masala: Masala) -> str:
     # ular orasiga kirgan jonli son "yana bitta teg" bo'lib
     # ko'rinardi.
     sanoq = sanoq_qatori(masala)
+
+    # Masala MATNI qalin. Kanal oqimida post bir necha soniya ichida
+    # sur'atda o'tib ketadi va oddiy og'irlikdagi matn o'sha yerda
+    # ko'zga tashlanmaydi — postning butun mazmuni esa aynan shu
+    # matnda. Qolgan qatorlar (izoh, teglar) ataylab yengil qoladi:
+    # hammasi qalin bo'lsa, hech narsa qalin bo'lmaydi.
     return (
         f"<b>{qalqon(nom)}</b>\n\n"
-        f"{qalqon(matn)}\n\n"
+        f"<b>{qalqon(matn)}</b>\n\n"
         f"Javobingizni ilovada kiriting — u yerda tekshiriladi va "
         f"yechimi ochiladi.\n"
         + (f"\n{sanoq}\n" if sanoq else "")
