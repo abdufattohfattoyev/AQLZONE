@@ -448,7 +448,6 @@ def adminga_yangi_hisob(pupil) -> None:
       * sinov ishlayapti (`TESTDA`).
     """
     import html
-    import threading
 
     from django.utils import timezone
 
@@ -489,14 +488,16 @@ def adminga_yangi_hisob(pupil) -> None:
         # shuning uchun bu yerda jim qolamiz.
         return
 
-    def yubor_hammaga() -> None:
-        for tg_id in adminlar:
-            try:
-                yubor(tg_id, matn)
-            except Exception:                    # noqa: BLE001
-                pass
+    # Har adminga ALOHIDA vazifa: bittasiga yetmagani ikkinchisini
+    # to'smasin va qayta urinish ham faqat yiqilganiga tegsin.
+    #
+    # Import shu yerda, chunki `vazifalar` moduli `xabar` ni o'zi
+    # chaqiradi — yuqorida qilinsa, ikkalasi bir-birini kutib
+    # qolardi (aylanma import).
+    from .vazifalar import fonda, telegram_xabar
 
-    threading.Thread(target=yubor_hammaga, daemon=True).start()
+    for tg_id in adminlar:
+        fonda(telegram_xabar, tg_id, matn)
 
 
 def bloklanganini_belgila(pupil_id: int) -> None:

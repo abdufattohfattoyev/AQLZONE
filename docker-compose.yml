@@ -45,6 +45,29 @@ services:
       retries: 10
       start_period: 10s
 
+  # ────────────────────────── NAVBAT ──────────────────────────
+  #
+  # Celery brokeri. Baza kabi FAQAT ichki tarmoqda va portsiz.
+  #
+  # Ma'lumot saqlanmaydi (volume yo'q) va bu ataylab: navbatdagi
+  # vazifalar bir necha soniya yashaydi. Redis qayta ishga tushsa,
+  # o'sha lahzadagi bir-ikki xabar yo'qoladi — jadval esa Beat'da,
+  # ya'ni u tiklanadi. Volume qo'shish shu kichik foyda uchun yana
+  # bitta kuzatiladigan joy ochardi.
+  redis:
+    image: redis:7-alpine
+    container_name: aqlzone_redis
+    # `--save ""` — diskka yozmaydi. Sabab yuqorida.
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    networks:
+      - az-tarmoq
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   # XIZMAT NOMI `aqlzone` BO'LISHI SHART, `web` emas.
   #
   # Compose xizmat nomini tarmoqda DNS nomi qilib ro'yxatga oladi va
@@ -98,6 +121,60 @@ services:
       aqlzone:
         condition: service_started
       db:
+        condition: service_healthy
+
+  # ─────────────────── FON VAZIFALARI ───────────────────
+  #
+  # ISHCHI — vazifalarni bajaradi. Migratsiya QILMAYDI (`AZ_ROL`
+  # "web" emas), `web` tugatishini kutadi.
+  #
+  # `--concurrency=2`: bizdagi vazifalar tarmoqni kutadi, protsessor
+  # yemaydi. Ikkitasi yetadi va xotirada ~150 MB turadi; ko'proq
+  # jarayon shu qadar bo'sh serverda faqat xotira yeb yotardi.
+  vazifa:
+    build: .
+    container_name: aqlzone_vazifa
+    command: ["celery", "-A", "aqlzone", "worker", "--loglevel=info", "--concurrency=2"]
+    env_file: .env
+    environment:
+      AZ_ROL: vazifa
+    volumes:
+      - data:/data
+    networks:
+      - az-tarmoq
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # JADVAL — vazifalarni belgilangan vaqtda navbatga qo'yadi.
+  #
+  # Ilgari bu serverning `crontab` ida edi, ya'ni git'da yo'q edi:
+  # serverni ko'chirsak jadval jimgina yo'qolardi. Endi u kodda
+  # (`aqlzone/celery.py`) va joylash bilan birga keladi.
+  #
+  # ALOHIDA konteyner: ishchi bilan bitta jarayonda yuritish mumkin
+  # (`worker -B`), lekin u paytda ishchini qayta ishga tushirish
+  # jadvalni ham uzib qo'yardi. Ustiga ishchi bir nechta bo'lsa,
+  # har biri o'z jadvalini yuritib, vazifalar takrorlanardi.
+  jadval:
+    build: .
+    container_name: aqlzone_jadval
+    command: ["celery", "-A", "aqlzone", "beat", "--loglevel=info"]
+    env_file: .env
+    environment:
+      AZ_ROL: jadval
+    volumes:
+      - data:/data
+    networks:
+      - az-tarmoq
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
 volumes:

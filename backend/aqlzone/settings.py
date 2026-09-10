@@ -172,6 +172,45 @@ TIME_ZONE = "Asia/Tashkent"
 USE_I18N = False
 USE_TZ = True
 
+# ------------------------------------------------------------- Celery
+#
+# Fon vazifalari va jadval (`aqlzone/celery.py` dagi izohga qarang).
+#
+# BROKER BERILMASA vazifalar DARHOL, o'sha yerda bajariladi. Bu
+# ishlab chiqish uchun: lokal mashinada Redis ko'tarish va ishchi
+# jarayonni alohida yuritish kerak bo'lardi. Xuddi baza bilan
+# bo'lgani kabi — server boshqacha, lokal soddaroq.
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", "")
+CELERY_TASK_ALWAYS_EAGER = not CELERY_BROKER_URL
+# Eager rejimda xato YUTILMAYDI, ko'tariladi: aks holda ishlab
+# chiqishda buzuq vazifa jimgina o'tib ketardi va u faqat serverda
+# ko'rinardi.
+CELERY_TASK_EAGER_PROPAGATES = True
+
+CELERY_TIMEZONE = TIME_ZONE
+# Jadval Toshkent vaqtida yuritiladi. Cron'da bu muammo edi: server
+# soati CEST, konteynerniki UTC, bolalar esa Toshkentda.
+CELERY_ENABLE_UTC = False
+
+# Natija saqlanmaydi. Bizdagi vazifalar hech narsa qaytarmaydi —
+# ular xabar yuboradi yoki bazani yangilaydi. Natija ombori esa
+# Redis'ni behuda to'ldirib borardi.
+CELERY_TASK_IGNORE_RESULT = True
+
+# Vazifa ISHCHI OLGANDAN KEYIN emas, BAJARILGANDAN keyin navbatdan
+# o'chadi. Ishchi vazifa o'rtasida yiqilsa (deploy, OOM), u navbatga
+# qaytadi va boshqasi oladi — aynan shu chidamlilik uchun Celery
+# qo'shilgan.
+#
+# Bahosi: ishchi yiqilganda vazifa IKKI MARTA bajarilishi mumkin.
+# Bizda bu xavfsiz — yuboriladigan xabarlar takrorlansa ham
+# zarari yo'q, buyruqlar esa o'zi takrorga chidamli
+# (`kanal_yangila` o'zgarmaganini qayta yubormaydi).
+CELERY_TASK_ACKS_LATE = True
+# Bir ishchi bir vaqtda bitta vazifa oladi. Ko'proq olsa, ular
+# navbatda turib qolardi va yiqilganda hammasi birga yo'qolardi.
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 

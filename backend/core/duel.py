@@ -41,6 +41,7 @@ from django.utils import timezone
 
 from .models import Duel, Identity, Profile
 from . import xabar as X
+from .vazifalar import fonda, telegram_xabar
 
 #: Duelda ishlatiladigan o'yinlar — frontenddagi "oqim" turidagilar.
 #: Ro'yxat SHU YERDA takrorlanadi (frontendda ham bor) va bu ataylab:
@@ -235,7 +236,6 @@ def chaqiruv_xabari(duel: Duel, raqib: Profile) -> bool:
     sahifaga emas: raqib chaqiruvni yana qidirib o'tirmasin.
     """
     import html
-    import threading
 
     tg_id = _tg_id(raqib)
     if not tg_id or not getattr(settings, "BOT_TOKEN", ""):
@@ -255,13 +255,10 @@ def chaqiruv_xabari(duel: Duel, raqib: Profile) -> bool:
     )
     havola = f"https://t.me/{bot}?startapp={duel.kod}"
 
-    def yubor() -> None:
-        try:
-            X.yubor(tg_id, matn, tugma="⚔️ Qabul qilish", havola=havola)
-        except Exception:                            # noqa: BLE001
-            pass
-
-    threading.Thread(target=yubor, daemon=True).start()
+    # Xabar NAVBATGA qo'yiladi, oqimga emas. Farqi: oqim konteyner
+    # qayta ishga tushganda jimgina yo'qolardi va chaqiruv hech
+    # qayerga yetib bormasdi — chaqirgan odam esa kutib turardi.
+    fonda(telegram_xabar, tg_id, matn, tugma="⚔️ Qabul qilish", havola=havola)
     return True
 
 
@@ -277,7 +274,6 @@ def natija_xabari(duel: Duel) -> None:
     xabar yuborilmagani uchun bekor qilib bo'lmaydi.
     """
     import html
-    import threading
 
     if getattr(settings, "TESTDA", False) or not getattr(settings, "BOT_TOKEN", ""):
         return
@@ -314,22 +310,19 @@ def natija_xabari(duel: Duel) -> None:
     except Exception:                                # noqa: BLE001
         return
 
-    def yubor() -> None:
-        for tg_id, matn in ((chaqirgan_tg, ch_matn), (qabul_tg, qa_matn)):
-            if not tg_id:
-                continue
-            try:
-                X.yubor(
-                    tg_id, matn,
-                    # "Javob berish" — duel zanjirini davom ettiradi.
-                    # Bitta zarbadan keyin tugaydigan bellashuv qaytish
-                    # sababi yaratmaydi.
-                    tugma="⚔️ Javob berish", havola=ilova, ilovada=ilovada,
-                )
-            except Exception:                        # noqa: BLE001
-                pass
-
-    threading.Thread(target=yubor, daemon=True).start()
+    # Har tomonga ALOHIDA vazifa. Bittasida yig'ilsa, birinchisi
+    # yiqilganda ikkinchisi ham qayta yuborilardi va g'olib
+    # "siz yutdingiz" xabarini ikki marta olardi.
+    for tg_id, matn in ((chaqirgan_tg, ch_matn), (qabul_tg, qa_matn)):
+        if not tg_id:
+            continue
+        fonda(
+            telegram_xabar, tg_id, matn,
+            # "Javob berish" — duel zanjirini davom ettiradi. Bitta
+            # zarbadan keyin tugaydigan bellashuv qaytish sababi
+            # yaratmaydi.
+            tugma="⚔️ Javob berish", havola=ilova, ilovada=ilovada,
+        )
 
 
 # ------------------------------------------------------------ amallar

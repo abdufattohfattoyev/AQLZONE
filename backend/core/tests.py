@@ -13,7 +13,7 @@ import threading
 from datetime import timedelta
 from io import StringIO
 import time
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -530,18 +530,16 @@ class AdminXabariTest(TestCase):
     """
     Yangi ro'yxatdan o'tgan odam haqida adminga ketadigan xabar.
 
-    Xabar FON OQIMIDA yuboriladi, sinovda esa natija darhol kerak —
-    shuning uchun `threading.Thread` o'rniga vazifani joyida bajaradigan
-    soxta sinf qo'yiladi. Oqimni kutib o'tirish (`join`) ham mumkin edi,
-    lekin unda test vaqtga bog'liq bo'lib qolardi.
+    Xabar FON VAZIFASI bo'lib ketadi (`core/vazifalar.py`), sinovda esa
+    natija darhol kerak. Hech narsa qilish shart emas: broker
+    berilmagan bo'lsa Celery vazifani o'sha yerda bajaradi
+    (`CELERY_TASK_ALWAYS_EAGER`) — sinovlar aynan shu holatda ketadi.
+
+    Ilgari bu yerda `threading.Thread` ni almashtiradigan soxta sinf
+    turardi. U endi kerak emas va OLIB TASHLANDI: kod oqim
+    ishlatmaydi, patch esa hech narsaga tegmay, "sinov fonni
+    boshqaryapti" degan yolg'on taassurot qoldirardi.
     """
-
-    class DarholOqim:
-        def __init__(self, target=None, daemon=None, **kw):
-            self._target = target
-
-        def start(self):
-            self._target()
 
     def royxatdan_otkaz(self, ism="Abdufattoh", familiya="Fattoyev"):
         pupil = Pupil.objects.create(first_name=ism, last_name=familiya)
@@ -556,7 +554,7 @@ class AdminXabariTest(TestCase):
     @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_royxat_yopilganda_adminga_ketadi(self, sorov):
         pupil = self.royxatdan_otkaz()
-        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+        with self.sozlama():
             self.assertTrue(pupil.royxatni_yop())
 
         # Ikkala adminga ham bordi.
@@ -574,7 +572,7 @@ class AdminXabariTest(TestCase):
 
     @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_sanoq_haqiqiy_songa_teng(self, sorov):
-        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+        with self.sozlama():
             self.royxatdan_otkaz("Bir", "Birov").royxatni_yop()
             self.royxatdan_otkaz("Ikki", "Ikkov").royxatni_yop()
         self.assertIn("Jami ro‘yxatdan o‘tganlar: <b>2</b>", sorov.call_args[0][1]["text"])
@@ -582,7 +580,7 @@ class AdminXabariTest(TestCase):
     @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_takror_chaqiruvda_xabar_takrorlanmaydi(self, sorov):
         pupil = self.royxatdan_otkaz()
-        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+        with self.sozlama():
             pupil.royxatni_yop()
             sorov.reset_mock()
             # Ikkinchi chaqiruv `False` qaytaradi — ro'yxat allaqachon yopiq.
@@ -598,7 +596,7 @@ class AdminXabariTest(TestCase):
         kelganida darhol ism so'raydigan formaga tushardi.
         """
         pupil = Pupil.objects.create(first_name="Yolg‘iz", last_name="")
-        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+        with self.sozlama():
             self.assertTrue(pupil.royxatni_yop())
         # Ikkita admin sozlangan — har biriga bittadan xabar.
         self.assertEqual(sorov.call_count, 2)
@@ -607,15 +605,14 @@ class AdminXabariTest(TestCase):
     def test_ismsiz_hisob_royxatdan_otmaydi(self, sorov):
         """Ismi yo'q hisob — hali hech kim: xabar ham yuborilmaydi."""
         pupil = Pupil.objects.create(first_name="", last_name="Familiya")
-        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+        with self.sozlama():
             self.assertFalse(pupil.royxatni_yop())
         self.assertEqual(sorov.call_count, 0)
 
     @patch("core.xabar._sorov", return_value=(True, 200, ""))
     def test_admin_sozlanmagan_serverda_jim(self, sorov):
         pupil = self.royxatdan_otkaz()
-        with self.settings(ADMIN_TG=[], BOT_TOKEN="sinov:token", TESTDA=False), \
-             patch("threading.Thread", self.DarholOqim):
+        with self.settings(ADMIN_TG=[], BOT_TOKEN="sinov:token", TESTDA=False):
             pupil.royxatni_yop()
         self.assertEqual(sorov.call_count, 0)
 
@@ -623,7 +620,7 @@ class AdminXabariTest(TestCase):
     def test_ismdagi_belgi_xabarni_buzmaydi(self, sorov):
         """HTML rejimida yuboriladi — ism ichidagi `<` qochirilishi shart."""
         pupil = self.royxatdan_otkaz("<b>Ali", "Valiyev")
-        with self.sozlama(), patch("threading.Thread", self.DarholOqim):
+        with self.sozlama():
             pupil.royxatni_yop()
         matn = sorov.call_args[0][1]["text"]
         self.assertIn("&lt;b&gt;Ali Valiyev", matn)
@@ -5132,6 +5129,77 @@ class KanalSanoqTest(TestCase):
         self.assertEqual(ozgargan.kanal_sanoq, "11")
 
 
+class VazifaTest(TestCase):
+    """
+    Fon vazifalari — Celery.
+
+    Diqqat qaratilgan joy — FON ISHI ASOSIY AMALNI TO'XTATMASLIGI.
+    Bildirishnoma yuborilmagani ro'yxatdan o'tishni yiqitmasligi
+    kerak: odam hisob ochdi, hammasi joyida — admin xabari esa
+    ikkinchi darajali ish.
+    """
+
+    def test_navbat_yiqilsa_asosiy_amal_davom_etadi(self):
+        """Redis o'chgan bo'lsa ham chaqiruvchi xato ko'rmasligi
+        kerak — vazifa jurnalga tushadi va shu."""
+        from core import vazifalar
+
+        soxta = MagicMock()
+        soxta.name = "sinov"
+        soxta.delay.side_effect = RuntimeError("redis o'chgan")
+        with self.assertLogs("core.vazifalar", level="ERROR"):
+            vazifalar.fonda(soxta)          # xato KO'TARILMAYDI
+
+    def test_navbat_ishlasa_vazifa_qoyiladi(self):
+        from core import vazifalar
+
+        soxta = MagicMock()
+        soxta.name = "sinov"
+        vazifalar.fonda(soxta, "a", b=1)
+        soxta.delay.assert_called_once_with("a", b=1)
+
+    def test_buyruq_vazifasi_manage_py_ni_chaqiradi(self):
+        """Jadval bitta vazifadan foydalanadi va unga buyruq nomini
+        beradi — har buyruq uchun alohida vazifa yozilsa, ular
+        nomidan boshqa hech narsasi bilan farq qilmasdi."""
+        from core import vazifalar
+
+        with patch("core.vazifalar.call_command") as c:
+            vazifalar.buyruq("kanal_yangila", "--sinov")
+        c.assert_called_once_with("kanal_yangila", "--sinov")
+
+    # ─────────────────────────────── telegram_xabar
+
+    @override_settings(BOT_TOKEN="sinov:token")
+    def test_xabar_yuborilsa_qayta_urinilmaydi(self):
+        from core import vazifalar
+
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            self.assertEqual(vazifalar.telegram_xabar("555", "salom"), "yuborildi")
+        self.assertEqual(s.call_count, 1)
+
+    @override_settings(BOT_TOKEN="sinov:token")
+    def test_bloklangan_odamga_qayta_urinilmaydi(self):
+        """Odam botni bloklagan — buni yuz marta urinish ham
+        o'zgartirmaydi."""
+        from core import vazifalar
+
+        with patch("core.xabar._sorov", return_value=(False, 403, "blocked")) as s:
+            self.assertEqual(vazifalar.telegram_xabar("555", "salom"), "bloklandi")
+        self.assertEqual(s.call_count, 1)
+
+    @override_settings(BOT_TOKEN="sinov:token")
+    def test_tarmoq_xatosida_qayta_urinadi(self):
+        """`xabar.yubor` xato KO'TARMAYDI — holatni satr bo'lib
+        qaytaradi. Shuning uchun vazifa uni o'zi tekshirib, qayta
+        urinish uchun ko'taradi."""
+        from core import vazifalar
+
+        with patch("core.xabar._sorov", return_value=(False, 0, "timed out")):
+            with self.assertRaises(RuntimeError):
+                vazifalar.telegram_xabar("555", "salom")
+
+
 class TamgaTest(TestCase):
     """
     Masala rasmidagi AqlZone belgisi.
@@ -5435,20 +5503,17 @@ class OnlaynTest(TestCase):
             r["onlaynSoni"], sum(1 for x in r["oyinchilar"] if x["onlayn"]),
         )
 
-    class DarholOqim:
-        """Fon oqimi sinovda darhol ishlasin — test vaqtga bog'liq bo'lmasin."""
-
-        def __init__(self, target=None, daemon=None, **kw):
-            self._target = target
-
-        def start(self):
-            self._target()
-
     def test_chaqiruv_xabari_yuboriladi(self):
+        """
+        Chaqiruv fon VAZIFASI bo'lib ketadi (`core/vazifalar.py`).
+
+        Sinovda hech narsa qilish shart emas: broker berilmagan
+        bo'lsa Celery vazifani o'sha yerda bajaradi
+        (`CELERY_TASK_ALWAYS_EAGER`).
+        """
         raqib = self.tayyorla("dev-onlayn-raqib-005", "Raqib", "777888999")
         profil = raqib.asosiy_profil()
-        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s, \
-             patch("threading.Thread", self.DarholOqim):
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
             r = self.client.post("/api/v1/duel", {"kimga": profil.pk},
                                  content_type="application/json", **self.auth(self.token))
         self.assertEqual(r.status_code, 201)

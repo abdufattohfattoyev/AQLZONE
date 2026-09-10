@@ -29,3 +29,12 @@ Pillow>=11.0
 # obrazga `libpq-dev` va kompilyator qo'shish, ya'ni obraz yuz
 # megabaytga shishardi.
 psycopg[binary]>=3.2
+
+# Fon vazifalari va jadval (`aqlzone/celery.py`). `[redis]` bilan —
+# broker sifatida Redis ishlatiladi va u qo'shimcha paket talab
+# qiladi.
+#
+# Broker berilmasa Celery baribir ishlaydi: vazifalar navbatsiz,
+# o'sha yerda bajariladi. Shuning uchun paket har doim o'rnatiladi,
+# lekin Redis faqat serverda kerak.
+celery[redis]>=5.4
