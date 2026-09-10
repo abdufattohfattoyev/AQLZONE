@@ -27,11 +27,9 @@ soniya — kuniga bir marta ishlaydigan buyruq uchun arzon narx.
 
 ─────────────────── AVTOMATIK JADVAL ───────────────────
 
-    0 * * * * docker exec aqlzone python manage.py kanal_tekshir --soat 9
-
-Cron soat sayin chaqiradi, kerakli soatni buyruqning o'zi kutadi —
-sabab `masala_post` dagi bilan bir xil (server CEST, konteyner UTC,
-bolalar Toshkentda).
+Har kuni 09:00 (Toshkent) — Celery Beat chaqiradi
+(`aqlzone/celery.py`). `--soat` bayrog'i qoldirilgan: u qo'lda
+yurgizishda va zarur bo'lsa cron'ga qaytishda ishlatiladi.
 """
 from __future__ import annotations
 

@@ -234,6 +234,51 @@ docker exec aqlzone_db pg_dump -U aqlzone aqlzone | gzip > ~/az-$(date +%F).sql.
 SQLite'dan ko'chirish yozuvi va orqaga qaytish yo'li —
 [`deploy/postgres-kochish.md`](deploy/postgres-kochish.md).
 
+### Fon vazifalari va jadval — Celery
+
+Ikki narsa uchun va faqat shu ikkisi uchun:
+
+**1. Jadval kodda tursin.** Ilgari u serverning `crontab` ida edi —
+ya'ni git'da yo'q. Serverni ko'chirsak jadval jimgina yo'qolardi va
+buni faqat kanalga post chiqmay qolgandagina bilardik. Endi u
+`aqlzone/celery.py` da:
+
+| Vazifa | Qachon |
+|---|---|
+| `eslatma` | har kuni 18:00 |
+| `masala_post --kunlik` | har kuni 18:05 |
+| `kanal_tekshir` | har kuni 09:00 |
+| `kanal_yangila` | har 15 daqiqada |
+
+Soatlar **Toshkent vaqtida**. Cron'da bu muammo edi: server soati
+CEST, konteynerniki UTC, bolalar esa Toshkentda — shuning uchun
+buyruqlar `--soat` bilan chaqirilib, kerakli soatni o'zlari kutardi.
+
+**2. Xabarlar yo'qolmasin.** Duel chaqiruvi, duel natijasi va admin
+bildirishnomasi `threading.Thread` bilan ketardi: konteyner o'sha
+lahzada qayta ishga tushsa, xabar jimgina yo'qolardi. Endi ular
+navbatda turadi va tarmoq xatosida uch marta qayta urinadi ("bot
+bloklangan" da esa urinmaydi — buni takrorlash o'zgartirmaydi).
+
+```bash
+CELERY_BROKER_URL=redis://redis:6379/0
+```
+
+**Broker berilmasa vazifalar o'sha yerda bajariladi.** Bu ishlab
+chiqish uchun: lokal mashinada Redis ko'tarish va ishchi jarayonni
+alohida yuritish kerak bo'lardi. Sinovlar ham shu rejimda ketadi.
+
+Ishchi (`aqlzone_vazifa`) va jadval (`aqlzone_jadval`) — **alohida**
+konteynerlar. Bitta jarayonda yuritish mumkin (`worker -B`), lekin u
+paytda ishchini qayta ishga tushirish jadvalni ham uzib qo'yardi.
+
+Nima bo'layotganini ko'rish:
+
+```bash
+docker logs aqlzone_vazifa --tail 50    # bajarilgan vazifalar
+docker logs aqlzone_jadval --tail 50    # jadval nima yubordi
+```
+
 ## Nimalar bor
 
 | | Qayerda |
@@ -448,18 +493,21 @@ tasodifan ikki marta ishga tushsa ham bola bitta xabar oladi.
 **Soatni to'g'ri tanlang:** 17:00–19:00. Ertalab yuborilgan eslatma
 darsga ketayotgan bolada ochilmaydi va o'qilmagan xabar bo'lib qoladi.
 
-Cron **soat sayin** chaqiriladi, soatni esa buyruqning o'zi tekshiradi:
+Jadval **Celery Beat** da (`aqlzone/celery.py`) va soat Toshkent
+vaqtida yoziladi:
 
-```bash
-0 * * * * docker exec aqlzone python manage.py eslatma --soat 18
+```python
+"kunlik-eslatma": {"schedule": crontab(hour=18, minute=0), ...}
 ```
 
-Nega shunday. Serverning soati CEST, konteynerniki UTC, bolalar esa
-Toshkent vaqtida yashaydi — cron'da "18:00" deb yozish uchalasidan
-qaysi biri ekanini taxmin qilish demak. Ustiga yozgi vaqt ko'chishi bor:
-to'g'ri sozlangan cron ham yiliga ikki marta bir soatga siljib ketadi.
-`--soat` bilan bu savol butunlay yo'qoladi — Django uchun mahalliy vaqt
-aniq (`TIME_ZONE = Asia/Tashkent`).
+Ilgari buni cron chaqirardi va soat qaysi mintaqada ekani noaniq
+edi: serverning soati CEST, konteynerniki UTC, bolalar esa
+Toshkentda. Shuning uchun buyruq `--soat 18` bilan chaqirilib,
+kerakli soatni o'zi kutardi. Endi kutish kerak emas — Beat
+`CELERY_TIMEZONE` da ishlaydi.
+
+`--soat` bayrog'i buyruqda QOLDIRILDI: u qo'lda yurgizishda va
+zarur bo'lsa cron'ga qaytishda ishlatiladi.
 
 ### Masala Telegram kanalida
 
@@ -496,18 +544,21 @@ yechdimi — bilmaydi.
 
 Sonlar o'zgarmagan bo'lsa Telegramga **umuman murojaat qilinmaydi**:
 postda oxirgi marta qanday sonlar yozilgani `Masala.kanal_sanoq` da
-turadi. Sanoq javob berish yo'lida emas, cron'da yangilanadi — bir
+turadi. Sanoq javob berish yo'lida emas, JADVALDA yangilanadi — bir
 sinf bola bir masalani birdaniga yechsa, o'sha bitta post yigirma
 marta tahrirlanardi va har biri javobni sekinlashtirardi.
 
-```bash
-0  * * * * docker exec aqlzone python manage.py masala_post --kunlik --soat 18
-0  * * * * docker exec aqlzone python manage.py kanal_tekshir --soat 9
-*/15 * * * * docker exec aqlzone python manage.py kanal_yangila
-```
+Uchalasi ham **Celery jadvalida** (`aqlzone/celery.py`), cron'da
+emas. Kunlik masala 18:05 da, kanal tekshiruvi 09:00 da, sanoq esa
+har 15 daqiqada chiqadi.
 
-Ikkalasi ham cron tomonidan **soat sayin** chaqiriladi va kerakli
-soatni buyruqning o'zi kutadi — sababi yuqorida (`eslatma`).
+Qo'lda yurgizish kerak bo'lsa:
+
+```bash
+docker exec aqlzone python manage.py masala_post --kunlik
+docker exec aqlzone python manage.py kanal_tekshir
+docker exec aqlzone python manage.py kanal_yangila
+```
 
 ### Masala chizmalari
 
@@ -1271,8 +1322,9 @@ cd backend
 .venv/Scripts/python.exe manage.py eslatma           # yuboradi
 ```
 
-Buyruq o'zi rejalashtirmaydi — uni kuniga bir marta Windows Task Scheduler
-yoki cron chaqiradi. Xabar faqat Telegram'i bog'langan, bugun o'ynamagan
+Serverda buyruqni Celery Beat kuniga bir marta chaqiradi (18:00,
+Toshkent vaqti). Lokal mashinada esa u o'zi rejalashtirmaydi — qo'lda
+yurgiziladi. Xabar faqat Telegram'i bog'langan, bugun o'ynamagan
 va oxirgi 14 kunda faol bo'lgan bolalarga ketadi.
 
 ## Telegram bot va Mini App

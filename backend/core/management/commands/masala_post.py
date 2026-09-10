@@ -12,12 +12,16 @@ Bu yerda faqat buyruq qobig'i.
 
 ─────────────────── AVTOMATIK JADVAL ───────────────────
 
-    0 * * * * docker exec aqlzone python manage.py masala_post --kunlik --soat 18
+Har kuni 18:05 (Toshkent) — Celery Beat chaqiradi
+(`aqlzone/celery.py`).
 
-Cron SOAT SAYIN chaqiradi, kerakli soatni buyruqning o'zi kutadi.
-Sabab `eslatma` dagi bilan bir xil: serverning soati CEST,
-konteynerniki UTC, bolalar esa Toshkentda — cronda yozilgan soat
-yilda ikki marta siljib ketardi.
+Ilgari buni cron soat sayin chaqirardi va kerakli soatni buyruqning
+o'zi kutardi: serverning soati CEST, konteynerniki UTC, bolalar esa
+Toshkentda — cronda yozilgan soat yilda ikki marta siljib ketardi.
+Beat esa `CELERY_TIMEZONE` da ishlaydi va bu savol yo'qoladi.
+
+`--soat` bayrog'i QOLDIRILDI: qo'lda yurgizishda va zarur bo'lsa
+cron'ga qaytishda ishlatiladi.
 """
 from __future__ import annotations
 

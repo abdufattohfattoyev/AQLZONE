@@ -9,25 +9,24 @@ Kanaldagi postlarning sanoq qatorini yangilaydi.
 
 Kanal posti chiqqandan keyin o'lik bo'lib qolardi. Obunachi uni
 ko'radi, lekin uni yana kimdir yechdimi, qiyinmi yoki osonmi — hech
-narsa bilmaydi. Post ostidagi jonli qator ("👀 42 · ✍️ 18 · ✅ 7")
+narsa bilmaydi. Post ostidagi jonli qator ("✅ Masalani yechganlar: 7")
 ikkita ish qiladi: kech kelgan odamga "bu hali ham ochiq" deb
-aytadi va yechganlar sonining o'sishi bosishga undaydi.
+aytadi va sonning o'sishi bosishga undaydi.
 
-─────────────────── NEGA CRON, JAVOB PAYTIDA EMAS ───────────────
+─────────────────── NEGA JADVAL, JAVOB PAYTIDA EMAS ───────────────
 
 Sanoqni har javob berilganda yangilash ham mumkin edi, lekin unda
 Telegram chaqiruvi javob berish yo'liga kirib qolardi: bir sinf
 bola bir masalani birdaniga yechsa, o'sha bitta post yigirma marta
 tahrirlanardi va har biri javobni sekinlashtirardi.
 
-Cron esa buni tashqarida qiladi: o'n besh daqiqada bir marta,
+Jadval esa buni tashqarida qiladi: o'n besh daqiqada bir marta,
 faqat SONI O'ZGARGAN postlar uchun. Kanal posti uchun bu yetarli
 "jonli" — uni hech kim soniyalab kuzatmaydi.
 
 ─────────────────── AVTOMATIK JADVAL ───────────────────
 
-    */15 * * * * docker exec aqlzone python manage.py kanal_yangila
-
+Har 15 daqiqada — Celery Beat chaqiradi (`aqlzone/celery.py`).
 Soat kutilmaydi (`--soat` yo'q): bu buyruq kun bo'yi ishlashi
 kerak, boshqalari esa kuniga bir marta.
 """
