@@ -8,6 +8,43 @@
 # talashib, ISHLAYOTGAN saytlar o'chib qolardi.
 
 services:
+  # ─────────────────────────── BAZA ───────────────────────────
+  #
+  # Postgres FAQAT ichki tarmoqda (`az-tarmoq`) turadi va port
+  # ochmaydi. Ikkala sabab ham jiddiy:
+  #
+  #   * oldingi nginx turgan tarmoq (`web-tarmoq`) BOSHQA loyihalar
+  #     bilan umumiy — u yerdagi har bir konteyner bazaga nomi bilan
+  #     yeta olardi;
+  #   * port ochilsa baza butun internetdan ko'rinadi va uni faqat
+  #     parol qo'riqlab qolardi.
+  #
+  # Ya'ni bazaga faqat shu `docker-compose` dagi ikki konteyner
+  # ulanadi va boshqa hech kim.
+  db:
+    image: postgres:17-alpine
+    container_name: aqlzone_db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-aqlzone}
+      POSTGRES_USER: ${DB_USER:-aqlzone}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env da sozlanmagan}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - az-tarmoq
+    restart: unless-stopped
+    # Sog'liq tekshiruvi — `depends_on: condition` shunga qaraydi.
+    # Usiz web konteyner Postgres hali ulanish qabul qilmagan paytda
+    # migratsiya qilishga urinib, "connection refused" bilan
+    # yiqilardi. `restart` uni ko'tarardi, lekin har joylashda bir
+    # necha behuda qayta ishga tushish bo'lardi.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-aqlzone} -d ${DB_NAME:-aqlzone}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
   # XIZMAT NOMI `aqlzone` BO'LISHI SHART, `web` emas.
   #
   # Compose xizmat nomini tarmoqda DNS nomi qilib ro'yxatga oladi va
@@ -31,7 +68,11 @@ services:
       - data:/data
     networks:
       - web-tarmoq
+      - az-tarmoq
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
 
   # Telegram boti — long polling. Alohida konteyner, chunki u veb
   # so'rovlarni kutmaydi va yiqilsa sayt bilan birga o'chmasligi kerak.
@@ -49,18 +90,31 @@ services:
       - data:/data
     networks:
       - web-tarmoq
+      - az-tarmoq
     restart: unless-stopped
     # DIQQAT: `depends_on` faqat konteyner boshlanishini kutadi,
     # migratsiya tugashini emas. Haqiqiy kutish entrypoint ichida.
     depends_on:
-      - aqlzone
+      aqlzone:
+        condition: service_started
+      db:
+        condition: service_healthy
 
 volumes:
-  # SQLite fayli. Konteyner qayta qurilganda ham qoladi — ichida
-  # bolalarning butun progressi bor.
+  # Yuklangan fayllar (masala rasmlari). Ilgari bu yerda SQLite
+  # bazasi ham turardi — u Postgres'ga ko'chdi, lekin volume
+  # QOLDIRILDI: ichida `media/` bor va eski `az-data.sqlite3` ham
+  # o'sha yerda, zaxira sifatida.
   data:
+  # Postgres ma'lumotlari. Konteyner qayta qurilganda ham qoladi —
+  # ichida bolalarning butun progressi bor.
+  pgdata:
 
 networks:
+  # Faqat shu loyihaning ichki tarmog'i: baza shu yerda turadi va
+  # tashqaridan ko'rinmaydi.
+  az-tarmoq:
+
   web-tarmoq:
     # Oldingi nginx shu tarmoqda turadi. `external` — ya'ni uni biz
     # yaratmaymiz va o'chirmaymiz; u boshqa loyihaga tegishli.

@@ -79,44 +79,91 @@ TEMPLATES = [
 WSGI_APPLICATION = "aqlzone.wsgi.application"
 ASGI_APPLICATION = "aqlzone.asgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": env("DB_FILE", str(BASE_DIR / "az-data.sqlite3")),
-        "OPTIONS": {
-            # WAL — bir vaqtda o'qish va yozish tez bo'lsin.
-            "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
-            # SQLite'da bir vaqtda FAQAT BITTA yozuvchi bo'ladi. WAL o'qishni
-            # to'smaydi, lekin ikki yozuv to'qnashsa ikkinchisi darhol
-            # "database is locked" bilan yiqilardi — foydalanuvchi uchun bu
-            # 500 xato. Kutish esa bu holatni butunlay yo'q qiladi: yozuvlar
-            # qisqa (bir necha millisekund), navbat ko'rinmaydi.
-            "timeout": 15,
-            # ...lekin kutish O'ZI YETMAYDI, va sabab nozik.
-            #
-            # Progressni saqlash avval O'QIYDI (satr bormi), keyin YOZADI.
-            # Tranzaksiya oddiy `BEGIN` bilan boshlansa, o'qish paytida
-            # hech qanday qulf olinmaydi; yozishga o'tishda esa SQLite
-            # NAVBAT KUTMAYDI — darhol "database is locked" qaytaradi.
-            # Kutishning foydasi yo'q, chunki bu tranzaksiya boshida
-            # ko'rgan nusxasi allaqachon eskirgan bo'lardi.
-            #
-            # `IMMEDIATE` yozuv qulfini eng boshida oladi. Shunda
-            # qolganlar yuqoridagi `timeout` ichida tinchgina navbatda
-            # turadi va hech biri yiqilmaydi. Bahosi: har bir yozuv
-            # tranzaksiyasi bir-birini kutadi — bizda ular bir necha
-            # millisekund, ya'ni sezilmaydi.
-            "transaction_mode": "IMMEDIATE",
-        },
-        "TEST": {
-            # Sinov bazasi ham FAYLDA turadi. Django standart holda SQLite
-            # sinovini xotirada bajaradi, xotiradagi baza esa qulflarni
-            # boshqacha tutadi — "database is locked" u yerda umuman
-            # takrorlanmasdi va sozlamadagi xato sezilmay qolardi.
-            "NAME": str(BASE_DIR / "az-test.sqlite3"),
-        },
+#: Baza POSTGRES bo'ladi — `DB_HOST` berilgan bo'lsa.
+#
+# ─────────────────── NEGA IKKI XIL BAZA ───────────────────
+#
+# Serverda Postgres, ishlab chiqishda SQLite. Bu murosa emas, ataylab
+# tanlangan: lokal ishlash uchun Postgres o'rnatish, ishga tushirish
+# va uni yodda tutish kerak bo'lardi — ya'ni loyihaga kirish narxi
+# oshardi. SQLite esa faylning o'zi: `manage.py runserver` va tamom.
+#
+# Sinovlar ham SQLite'da ketadi va bu YAGONA jiddiy kamchilik:
+# Postgres'ga xos xato (masalan `JSONField` da katta-kichik harf yoki
+# tranzaksiya xatti-harakati) sinovda tutilmaydi. Shuning uchun
+# serverda joylashdan oldin sinovlar Postgres'da ham bir marta
+# yuritilgan: `DB_HOST` berib, o'sha yerda.
+#
+# ─────────────────── NEGA UMUMAN POSTGRES ───────────────────
+#
+# SQLite'da bir vaqtda FAQAT BITTA yozuvchi bo'ladi. Hozircha bu
+# yetadi (kuniga o'n besh odam), lekin ikkita yo'l undan chiqishni
+# talab qiladi: fon vazifalari (Celery) va bir necha ishchi jarayon.
+# Ikkalasi ham SQLite bilan `database is locked` beradi.
+_postgres = env("DB_HOST", "")
+
+if _postgres:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("DB_NAME", "aqlzone"),
+            "USER": env("DB_USER", "aqlzone"),
+            "PASSWORD": env("DB_PASSWORD", ""),
+            "HOST": _postgres,
+            "PORT": env("DB_PORT", "5432"),
+            # Ulanishni QAYTA ISHLATAMIZ. Har so'rovda yangi ulanish
+            # ochish Postgres'da qimmat (TCP + autentifikatsiya) va u
+            # javob vaqtiga o'nlab millisekund qo'shardi. O'n daqiqa —
+            # xavfsiz oraliq: undan uzun ulanish serverda "idle"
+            # bo'lib to'planib qolardi.
+            "CONN_MAX_AGE": 600,
+            # O'lik ulanishni QAYTA ISHLATMAYMIZ. `CONN_MAX_AGE` bilan
+            # birga bu majburiy: Postgres qayta ishga tushsa, keshdagi
+            # ulanish yaroqsiz bo'lib qoladi va birinchi so'rov
+            # "server closed the connection unexpectedly" bilan
+            # yiqilardi.
+            "CONN_HEALTH_CHECKS": True,
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": env("DB_FILE", str(BASE_DIR / "az-data.sqlite3")),
+            "OPTIONS": {
+                # WAL — bir vaqtda o'qish va yozish tez bo'lsin.
+                "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
+                # SQLite'da bir vaqtda FAQAT BITTA yozuvchi bo'ladi. WAL o'qishni
+                # to'smaydi, lekin ikki yozuv to'qnashsa ikkinchisi darhol
+                # "database is locked" bilan yiqilardi — foydalanuvchi uchun bu
+                # 500 xato. Kutish esa bu holatni butunlay yo'q qiladi: yozuvlar
+                # qisqa (bir necha millisekund), navbat ko'rinmaydi.
+                "timeout": 15,
+                # ...lekin kutish O'ZI YETMAYDI, va sabab nozik.
+                #
+                # Progressni saqlash avval O'QIYDI (satr bormi), keyin YOZADI.
+                # Tranzaksiya oddiy `BEGIN` bilan boshlansa, o'qish paytida
+                # hech qanday qulf olinmaydi; yozishga o'tishda esa SQLite
+                # NAVBAT KUTMAYDI — darhol "database is locked" qaytaradi.
+                # Kutishning foydasi yo'q, chunki bu tranzaksiya boshida
+                # ko'rgan nusxasi allaqachon eskirgan bo'lardi.
+                #
+                # `IMMEDIATE` yozuv qulfini eng boshida oladi. Shunda
+                # qolganlar yuqoridagi `timeout` ichida tinchgina navbatda
+                # turadi va hech biri yiqilmaydi. Bahosi: har bir yozuv
+                # tranzaksiyasi bir-birini kutadi — bizda ular bir necha
+                # millisekund, ya'ni sezilmaydi.
+                "transaction_mode": "IMMEDIATE",
+            },
+            "TEST": {
+                # Sinov bazasi ham FAYLDA turadi. Django standart holda SQLite
+                # sinovini xotirada bajaradi, xotiradagi baza esa qulflarni
+                # boshqacha tutadi — "database is locked" u yerda umuman
+                # takrorlanmasdi va sozlamadagi xato sezilmay qolardi.
+                "NAME": str(BASE_DIR / "az-test.sqlite3"),
+            },
+        }
+    }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

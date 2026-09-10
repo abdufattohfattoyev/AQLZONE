@@ -18,3 +18,14 @@ gunicorn>=23.0
 # tushib qoladi, ya'ni bolaning suratidagi GPS koordinatasi saytga
 # chiqib ketmaydi.
 Pillow>=11.0
+
+# Postgres drayveri. Serverda baza Postgres, ishlab chiqishda SQLite
+# (`settings.py` dagi izohga qarang) — shuning uchun paket har doim
+# o'rnatiladi, lekin faqat `DB_HOST` berilgan bo'lsa ishlatiladi.
+#
+# `[binary]` ATAYLAB: usiz `psycopg` C kutubxonasini (libpq)
+# tizimdan izlaydi va `python:slim` obrazida u yo'q — o'rnatish
+# "pg_config executable not found" bilan yiqilardi. Ikkinchi yo'l —
+# obrazga `libpq-dev` va kompilyator qo'shish, ya'ni obraz yuz
+# megabaytga shishardi.
+psycopg[binary]>=3.2

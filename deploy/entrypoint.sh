@@ -32,6 +32,40 @@ set -e
 
 ROL="${AZ_ROL:-web}"
 
+# Baza ulanish qabul qilishini kutamiz.
+#
+# `depends_on: service_healthy` allaqachon kutadi, lekin u FAQAT
+# birinchi ko'tarilishda ishlaydi. Postgres keyinroq qayta ishga
+# tushsa (yangilanish, OOM), konteyner `restart` bilan ko'tariladi
+# va o'sha payt hech kim kutmaydi — migratsiya "connection refused"
+# bilan yiqilardi.
+#
+# Django'ning o'zidan so'raymiz: `dbshell` yoki `psql` kerak emas va
+# obrazda ular yo'q ham.
+if [ -n "${DB_HOST:-}" ]; then
+  KUTISH=0
+  until python -c "
+import sys
+import django, os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'aqlzone.settings')
+django.setup()
+from django.db import connection
+try:
+    connection.ensure_connection()
+except Exception as e:
+    print(e, file=sys.stderr)
+    sys.exit(1)
+" 2>/dev/null; do
+    KUTISH=$((KUTISH + 2))
+    if [ "$KUTISH" -gt 60 ]; then
+      echo "baza 60 soniyada javob bermadi — db konteynerni tekshiring" >&2
+      exit 1
+    fi
+    echo "baza kutilmoqda… (${KUTISH}s)"
+    sleep 2
+  done
+fi
+
 if [ "$ROL" = "web" ]; then
   python manage.py migrate --noinput
 else
