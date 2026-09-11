@@ -104,7 +104,7 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onDuel }: {
             Pastdagi mashq ro'yxatida bunday qilinmaydi: u yerda sakkizta
             belgi birga sakrab, ro'yxatni o'qib bo'lmasdi. */}
         <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20">
-          <EmojiBelgi e="⚔️" olcham={22} jonli />
+          <EmojiBelgi e="⚔️" olcham={32} jonli />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-display text-[17px] leading-tight">{t("duel")}</span>
@@ -156,7 +156,7 @@ function MaydonKarta({ bugun, onOch }: {
                    bg-karta p-4 text-left shadow-clay">
         <span className="grid size-12 shrink-0 place-items-center rounded-2xl
                          bg-brand-green/15">
-          <EmojiBelgi e="✅" olcham={22} />
+          <EmojiBelgi e="✅" olcham={30} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-display text-[16px] leading-tight">
@@ -176,7 +176,7 @@ function MaydonKarta({ bugun, onOch }: {
       className="az-kirish tugma-3d az-yaltir mt-5 flex w-full items-center gap-3.5 rounded-clay
                  bg-brand-green p-4 text-left text-white shadow-clay">
       <span className="grid size-14 shrink-0 place-items-center rounded-[20px] bg-white/20">
-        <EmojiBelgi e="🏟" olcham={25} />
+        <EmojiBelgi e="🏟" olcham={36} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block font-display text-[19px] leading-tight">{t("maydon")}</span>
@@ -223,7 +223,7 @@ function Karta({ o, i, onOch }: { o: Oyin; i: number; onOch: () => void }) {
         {/* Harakat ATAYLAB yo'q: bu yerda sakkizta karta yonma-yon
             turadi va hammasi birga qimirlasa ko'z hech biriga
             qadalmasdi. */}
-        <EmojiBelgi e={o.emoji} olcham={25} />
+        <EmojiBelgi e={o.emoji} olcham={38} />
       </span>
 
       <span className="font-display text-[13.5px] leading-tight text-ink">{t(o.nom)}</span>

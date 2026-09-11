@@ -58,7 +58,7 @@ export function OyinDaraja({ oyin, onBack, onBoshla }: {
       <div className="az-kirish mt-4 text-center">
         <span style={{ backgroundColor: `${rang.road}20` }}
           className="mx-auto grid size-[76px] place-items-center rounded-[26px]">
-          <EmojiBelgi e={oyin.emoji} olcham={34} />
+          <EmojiBelgi e={oyin.emoji} olcham={46} />
         </span>
         <h1 className="mt-3 text-[21px] leading-tight">{t(oyin.nom)}</h1>
         {/* Qoida ENG BOSHIDA, o'yin ichida emas. O'yin boshlangandan

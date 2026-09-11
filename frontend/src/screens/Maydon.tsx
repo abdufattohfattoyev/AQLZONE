@@ -154,7 +154,7 @@ function Tanishuv({ bosqich, orin, jami, onBoshla, onChiq }: {
         </span>
         <span className={`mt-4 grid size-24 place-items-center rounded-[30px]
                           ${rang.bg} shadow-clay`}>
-          <EmojiBelgi e={bosqich.oyin.emoji} olcham={41} />
+          <EmojiBelgi e={bosqich.oyin.emoji} olcham={54} />
         </span>
         <h1 className="mt-4 text-[26px] leading-tight">{t(bosqich.oyin.nom)}</h1>
         <p className="mt-2 max-w-[300px] text-[14px] leading-snug text-ink-soft">
@@ -186,7 +186,7 @@ function MaydonYakun({ natija, bosqichlar, onChiq }: {
       <div className="relative mx-auto w-fit">
         <Konfetti />
         <span className="grid size-20 place-items-center rounded-[26px] bg-brand-gold shadow-clay">
-          <EmojiBelgi e="🏟" olcham={34} />
+          <EmojiBelgi e="🏟" olcham={46} />
         </span>
       </div>
 
@@ -205,7 +205,7 @@ function MaydonYakun({ natija, bosqichlar, onChiq }: {
             className="flex items-center gap-3 rounded-clay bg-karta p-3 text-left shadow-clay-sm">
             {/* `shrink-0` SHART: belgi endi SVG va u qator ichida
                 siqilib, cho'zilib ketardi. */}
-            <EmojiBelgi e={b.oyin.emoji} olcham={20} className="shrink-0" />
+            <EmojiBelgi e={b.oyin.emoji} olcham={27} className="shrink-0" />
             <span className="flex-1 font-display text-[14px]">{t(b.oyin.nom)}</span>
             <span className="font-display text-[16px] text-ink-soft">
               {natija.bosqichlar[i] ?? 0}

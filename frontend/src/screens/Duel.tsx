@@ -223,7 +223,7 @@ function Shartlar({ onTanladi, onChiq }: {
               past telefonda siqiladi va tomon `clamp` bo'lishi kerak,
               raqam esa buni ifodalay olmaydi. `olcham` faqat xaritada
               yo'q emoji uchun — o'shanda matn bo'lib chiqadi. */}
-          <EmojiBelgi e="⚔️" olcham={30} className="size-[clamp(23px,4vh,30px)]" />
+          <EmojiBelgi e="⚔️" olcham={40} className="size-[clamp(30px,5vh,40px)]" />
         </span>
         <h1 className="mt-2.5 text-[clamp(19px,3.4vh,23px)] leading-tight">{t("duel")}</h1>
         <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">{t("duelShartIzoh")}</p>
@@ -248,7 +248,7 @@ function Shartlar({ onTanladi, onChiq }: {
               className={`clay-press flex min-w-0 flex-col items-center justify-start gap-1
                           rounded-clay px-1.5 py-2.5 text-center transition-colors
                           ${tanlangan ? `${rang.bg} text-white shadow-clay` : "text-ink shadow-clay-sm"}`}>
-              <EmojiBelgi e={o.emoji} olcham={22} className="size-[clamp(18px,3vh,22px)]" />
+              <EmojiBelgi e={o.emoji} olcham={30} className="size-[clamp(24px,4vh,30px)]" />
               {/* Nom KESILMAYDI, ikki qatorgacha o'raladi: "Ko'paytirish
                   jadvali" kesilganda "Ko'paytirish jad…" bo'lib qolardi
                   va bola qaysi o'yin ekanini bilmasdi. */}
@@ -771,7 +771,7 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
                     text-center sm:max-w-[560px]">
       <span className="mx-auto grid size-20 place-items-center rounded-[26px] bg-brand-orange
                        shadow-clay">
-        <EmojiBelgi e="⚔️" olcham={34} />
+        <EmojiBelgi e="⚔️" olcham={44} />
       </span>
 
       <h1 className="mt-4 text-[23px] leading-tight">
@@ -780,7 +780,7 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
 
       {oyin && (
         <div className="mx-auto mt-4 flex items-center gap-2.5 rounded-clay bg-karta px-4 py-3 shadow-clay-sm">
-          <EmojiBelgi e={oyin.emoji} olcham={22} className="shrink-0" />
+          <EmojiBelgi e={oyin.emoji} olcham={30} className="shrink-0" />
           <span className="font-display text-[15px]">{t(oyin.nom)}</span>
           <span className="text-[12.5px] text-ink-soft">
             · {duel.savollar || 20} · {t("duelSoniya", { n: duel.vaqt || 60 })}
@@ -1057,7 +1057,7 @@ function HavolaEkrani({ duel, onChiq }: { duel: DuelHolat; onChiq: () => void })
         {/* Chaqiruv YASALDI — ekrandagi butun gap shu, konfetti ham shu
             yerda otiladi. Qilichlar qimirlagani mana shuning davomi. */}
         <span className="grid size-20 place-items-center rounded-[26px] bg-brand-green shadow-clay">
-          <EmojiBelgi e="⚔️" olcham={34} jonli />
+          <EmojiBelgi e="⚔️" olcham={44} jonli />
         </span>
       </div>
 
@@ -1105,7 +1105,7 @@ function Taklif({ duel, onQabul, onChiq }: {
                     text-center sm:max-w-[560px]">
       <span className="mx-auto grid size-24 place-items-center rounded-[30px] bg-brand-orange
                        shadow-clay">
-        <EmojiBelgi e="⚔️" olcham={41} />
+        <EmojiBelgi e="⚔️" olcham={52} />
       </span>
 
       <h1 className="mt-5 text-[24px] leading-tight">
@@ -1115,7 +1115,7 @@ function Taklif({ duel, onQabul, onChiq }: {
 
       {oyin && (
         <div className="mx-auto mt-5 flex items-center gap-2.5 rounded-clay bg-karta px-4 py-3 shadow-clay-sm">
-          <EmojiBelgi e={oyin.emoji} olcham={22} className="shrink-0" />
+          <EmojiBelgi e={oyin.emoji} olcham={30} className="shrink-0" />
           <span className="font-display text-[15px]">{t(oyin.nom)}</span>
           {/* Shartlar shu yerda ham ko'rinadi: do'sti nimaga rozi
               bo'layotganini bilishi kerak. */}
@@ -1249,7 +1249,7 @@ function Natija({ yakun, xato, oyinId, onQayta, onYangi, onMashq, onChiq }: {
           {/* Uchala holat ham qimirlaydi, yutqazgani ham. Harakat bu
               yerda mukofot emas — ekranning butun mazmuni shu bitta
               belgida va ko'z birinchi navbatda unga tushishi kerak. */}
-          <EmojiBelgi e={yutdi ? "🏆" : durang ? "🤝" : "😔"} olcham={34} jonli />
+          <EmojiBelgi e={yutdi ? "🏆" : durang ? "🤝" : "😔"} olcham={46} jonli />
         </span>
       </div>
 
@@ -1352,7 +1352,7 @@ function Xabar({ belgi, sarlavha, onChiq }: {
           o'zgarmaydi, ya'ni xaritada yo'q emoji berilsa ham ekran
           hozirgidek ishlayveradi. */}
       <span className="grid size-20 place-items-center rounded-[26px] bg-karta shadow-clay">
-        <EmojiBelgi e={belgi} olcham={34} />
+        <EmojiBelgi e={belgi} olcham={46} />
       </span>
       <h1 className="mt-4 text-[21px] leading-tight">{sarlavha}</h1>
       <button type="button" onClick={onChiq}
