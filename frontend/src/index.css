@@ -103,7 +103,13 @@
    */
   --az-ekran: 100dvh;
   --az-tepa: env(safe-area-inset-top);
-  --az-past: env(safe-area-inset-bottom);
+  /* ENG KAMIDA 10 piksel.
+     Telegram'ning Android oynasida `safe-area-inset-bottom` NOL
+     qaytaradi — u yerda jismoniy "notch" yo'q. Natijada paneldagi
+     yozuvlar ekranning eng chekkasiga yopishib qolardi va panel
+     kesilgandek ko'rinardi. iPhone'da esa haqiqiy qiymat kattaroq
+     va u saqlanadi. */
+  --az-past: max(env(safe-area-inset-bottom), 10px);
 }
 
 @utility shadow-clay { box-shadow: var(--az-soya); }
@@ -1617,6 +1623,13 @@
 .hajmli-rasm {
   filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.22));
 }
+
+/* To'yingan rangli tugma ustida turadigan belgi.
+   Yashil tugmadagi yashil belgi fonga singib ketardi — rang u yerda
+   ma'no bermaydi, chunki tugmaning O'ZI allaqachon o'sha rangda.
+   Shuning uchun belgi oqarib, faqat shakl bo'lib qoladi. */
+.hajmli-oq { --bl: #ffffff; --bm: #eef2f6; --bd: #b9c6d2; }
+.hajmli-rasm.hajmli-oq { filter: brightness(0) invert(1) opacity(0.92); }
 
 .az-pb-rasm {
   filter: saturate(0.55) opacity(0.62)

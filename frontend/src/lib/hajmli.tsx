@@ -133,17 +133,6 @@ interface Props {
 }
 
 /**
- * Bitta hajmli belgi.
- *
- * ─────────────── HARAKAT ATAYLAB O'CHIQ ───────────────
- *
- * `jonli` berilmasa belgi qimirlamaydi. Ro'yxatda yigirmata belgi
- * birdan sakrab tursa, ko'z hech qayerga qadala olmaydi va sahifa
- * o'qilmay qoladi. Harakat FAQAT bitta narsaga e'tibor tortish
- * kerak bo'lganda yoqiladi: mukofot berilganda, javob to'g'ri
- * chiqqanda, kunlik sinov ochilganda.
- */
-/**
  * Qaysi belgi 3D RASM bilan chiziladi — chizma bilan emas.
  *
  * ─────────────── NEGA IKKI XIL ───────────────
@@ -164,8 +153,22 @@ interface Props {
  */
 const RASM = new Set<string>([
   "chaqmoq", "kopaytir", "savol", "raqamlar", "koz", "tarozi", "zar", "miya",
+  // Bo'limlar ro'yxati uchun chizilgan, lekin o'yinlar sahifasining
+  // sarlavhasida ham shu belgi turadi — ikkala joyda BITTA fayl.
+  "puzzle",
 ]);
 
+/**
+ * Bitta hajmli belgi.
+ *
+ * ─────────────── HARAKAT ATAYLAB O'CHIQ ───────────────
+ *
+ * `jonli` berilmasa belgi qimirlamaydi. Ro'yxatda yigirmata belgi
+ * birdan sakrab tursa, ko'z hech qayerga qadala olmaydi va sahifa
+ * o'qilmay qoladi. Harakat FAQAT bitta narsaga e'tibor tortish
+ * kerak bo'lganda yoqiladi: mukofot berilganda, javob to'g'ri
+ * chiqqanda, kunlik sinov ochilganda.
+ */
 export function Hajmli({ nom, olcham = 24, jonli, className, nomi }: Props) {
   // React har chizilishda o'zi noyob kalit beradi. Qo'lda sanoq
   // yuritish ham mumkin edi, lekin serverda va mijozda ikki xil

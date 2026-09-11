@@ -970,6 +970,16 @@ export const ILOVA = {
     </>),
   },
 
+  puzzle: {
+    rang: "qizil", jon: "az-sakra", davom: "2.8s", emoji: ["🧩"],
+    chiz: (y) => (<>
+      {soya(y, 11, 36)}
+      <path d="M13.6 5h12.8v4.4a3.4 3.4 0 100 6.8V28a3.4 3.4 0 110 6.8v.2H13.6v-4.6a3.4 3.4 0 110-6.8V10.6a3.4 3.4 0 103.4-3.4 3.4 3.4 0 00-3.4-2.2z"
+        fill={y.r} />
+      {yalt(17.4, 11.4, 3, 2, -28, 0.3)}
+    </>),
+  },
+
   suyak: {
     rang: "kumush", jon: "az-chayqal", davom: "3s", emoji: ["🦴"],
     chiz: (y) => (<>

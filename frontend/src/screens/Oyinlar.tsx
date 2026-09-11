@@ -77,8 +77,9 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onDuel }: {
       )}
 
       <div className="az-kirish mt-4 text-center">
-        <span className="mx-auto grid size-16 place-items-center rounded-[22px] bg-brand-purple/15">
-          <Icon name="puzzle" size={34} className="text-brand-purple" />
+        <span className="mx-auto grid size-[72px] place-items-center rounded-[24px]
+                         bg-brand-purple/15">
+          <EmojiBelgi e="🧩" olcham={48} />
         </span>
         <h1 className="mt-3 text-[22px]">{t("oyinlarBolim")}</h1>
         <p className="mt-1 text-[13px] leading-snug text-ink-soft">{t("oyinlarIzoh")}</p>
@@ -104,11 +105,13 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onDuel }: {
             Pastdagi mashq ro'yxatida bunday qilinmaydi: u yerda sakkizta
             belgi birga sakrab, ro'yxatni o'qib bo'lmasdi. */}
         <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20">
-          <EmojiBelgi e="⚔️" olcham={32} jonli />
+          <EmojiBelgi e="⚔️" olcham={32} jonli className="hajmli-oq" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-display text-[17px] leading-tight">{t("duel")}</span>
-          <span className="mt-0.5 block text-[12.5px] text-white/85">{t("duelIzoh")}</span>
+          <span className="mt-0.5 block truncate text-[12.5px] text-white/85">
+            {t("duelIzoh")}
+          </span>
         </span>
         <Icon name="chevron" size={18} className="shrink-0 text-white/80" />
       </button>
@@ -176,7 +179,7 @@ function MaydonKarta({ bugun, onOch }: {
       className="az-kirish tugma-3d az-yaltir mt-5 flex w-full items-center gap-3.5 rounded-clay
                  bg-brand-green p-4 text-left text-white shadow-clay">
       <span className="grid size-14 shrink-0 place-items-center rounded-[20px] bg-white/20">
-        <EmojiBelgi e="🏟" olcham={36} />
+        <EmojiBelgi e="🏟" olcham={36} className="hajmli-oq" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block font-display text-[19px] leading-tight">{t("maydon")}</span>
