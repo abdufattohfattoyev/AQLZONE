@@ -298,15 +298,18 @@ function Eshik({
         <button type="button" onClick={on}
           className="clay-press flex w-full items-center gap-3 rounded-clay bg-karta
                      p-3.5 text-left shadow-clay-sm">
-          {/* BELGI — ilovaning O'Z chiziqli belgisi, emoji EMAS.
-              Emoji har qurilmada boshqacha chiziladi (Windowsda ba'zisi
-              umuman chizilmaydi) va menyudagi satrlar bilan yonma-yon
-              qo'yilganda ular ikki xil ilovadan kelgandek ko'rinardi.
-              Rang esa fonda yumshoq holda turadi — menyudagi qoida
-              bilan bir xil (`components/Menyu.tsx` dagi `Satr`). */}
-          <span aria-hidden style={{ backgroundColor: `${r.road}1f`, color: r.road }}
-            className="grid size-[46px] shrink-0 place-items-center rounded-[16px]">
-            <Icon name={ic} size={23} />
+          {/* BELGI — 3D chizma, emoji EMAS va chiziqli ikonka ham emas.
+              Emoji har qurilmada boshqacha chiziladi. Chiziqli belgi
+              esa bu yerda juda tinch turardi: bu beshta satr bosh
+              sahifaning ASOSIY tanlovi va ular ko'zga birinchi
+              tashlanishi kerak. Rang fonda yumshoq holda turadi —
+              menyudagi qoida bilan bir xil (`components/Menyu.tsx`
+              dagi `Satr`). */}
+          <span aria-hidden style={{ backgroundColor: `${r.road}1f` }}
+            className="az-eshik-quti grid size-[46px] shrink-0 place-items-center
+                       rounded-[16px]">
+            <img src={`/belgi/${ic}.webp`} width={34} height={34} alt=""
+              className="az-eshik-belgi" decoding="async" loading="lazy" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-display text-[15px] leading-tight">{nom}</span>
