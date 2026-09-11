@@ -1612,6 +1612,12 @@
   filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.22));
   transition: transform 260ms cubic-bezier(0.34, 1.35, 0.64, 1);
 }
+/* 3D rasm bilan chizilgan hajmli belgi. Soyasi rasmda emas, shu
+   yerda — sababi yuqoridagi izohda. */
+.hajmli-rasm {
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.22));
+}
+
 .az-pb-rasm {
   filter: saturate(0.55) opacity(0.62)
           drop-shadow(0 1px 2px rgb(0 0 0 / 0.2));

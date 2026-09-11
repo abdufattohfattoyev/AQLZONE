@@ -143,12 +143,46 @@ interface Props {
  * kerak bo'lganda yoqiladi: mukofot berilganda, javob to'g'ri
  * chiqqanda, kunlik sinov ochilganda.
  */
+/**
+ * Qaysi belgi 3D RASM bilan chiziladi — chizma bilan emas.
+ *
+ * ─────────────── NEGA IKKI XIL ───────────────
+ *
+ * SVG'da haqiqiy yorug'likni hisoblab bo'lmaydi, faqat unga
+ * o'xshatiladi. Bu ro'yxatda turgan belgi uchun yetadi, lekin
+ * ilovaning YUZIDA turadigan bir nechta belgi uchun kam: o'yin
+ * kartasi ekranning yarmini egallaydi va u yerda o'xshatish
+ * ko'rinib qoladi. O'sha bir nechtasi 3D dasturda chizildi.
+ *
+ * Qolgan yuzdan ortig'i SVG bo'lib qoladi va bu ATAYLAB: mashqdagi
+ * olma yoki sichqon ekranda 20 piksel bo'lib chiqadi, u yerda farq
+ * ko'rinmaydi. Ularning hammasini rasm qilish esa ilovaga bir necha
+ * megabayt qo'shardi — internetsiz ochilmaydigan bir necha megabayt.
+ *
+ * Ro'yxat qo'lda yozilgan: papkaga fayl tashlab qo'yish bilan belgi
+ * o'z-o'zidan almashib ketmasin.
+ */
+const RASM = new Set<string>([
+  "chaqmoq", "kopaytir", "savol", "raqamlar", "koz", "tarozi", "zar", "miya",
+]);
+
 export function Hajmli({ nom, olcham = 24, jonli, className, nomi }: Props) {
   // React har chizilishda o'zi noyob kalit beradi. Qo'lda sanoq
   // yuritish ham mumkin edi, lekin serverda va mijozda ikki xil
   // bo'lib, React ularni bir-biriga mos kelmadi deb hisoblardi.
   const kalit = useId().replace(/:/g, "");
   const b = BELGILAR[nom] as Belgi;
+
+  if (RASM.has(nom)) {
+    return (
+      <img src={`/belgi/${nom}.webp`} width={olcham} height={olcham} alt={nomi ?? ""}
+        loading="lazy" decoding="async"
+        className={`hajmli hajmli-rasm${jonli && b.jon ? " jonli" : ""}`
+          + (className ? " " + className : "")}
+        data-nom={nom} style={{ "--h": b.jon, "--d": b.davom } as CSSProperties}
+        aria-hidden={nomi ? undefined : true} />
+    );
+  }
 
   const y: Yuz = {
     t: `url(#${kalit}t)`, v: `url(#${kalit}v)`, s: `url(#${kalit}s)`,
