@@ -28,6 +28,7 @@
  */
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
+import { Hajmli } from "../lib/hajmli";
 import { t } from "../lib/matn";
 
 interface Props {
@@ -82,7 +83,7 @@ export function TangaOqim({ n, yonalish, onTugadi }: Props) {
             marginLeft: `${(i - (soni - 1) / 2) * 22}px`,
             "--az-kech": `${i * KECHIKISH}ms`,
           } as CSSProperties}>
-          🪙
+          <Hajmli nom="tanga" olcham={20} />
         </span>
       ))}
 

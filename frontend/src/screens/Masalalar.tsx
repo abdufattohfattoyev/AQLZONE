@@ -45,6 +45,7 @@
  * ham, qulf ham yo'q.
  */
 import { useCallback, useEffect, useState } from "react";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { t } from "../lib/matn";
@@ -246,7 +247,7 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
                 faol
                   ? "bg-brand-purple font-display text-white"
                   : "bg-karta text-ink-soft"}`}>
-              <span aria-hidden className="text-[12px] leading-none">{x.belgi}</span>
+              <EmojiBelgi e={x.belgi} olcham={13} />
               {x.nom()}
             </button>
           );

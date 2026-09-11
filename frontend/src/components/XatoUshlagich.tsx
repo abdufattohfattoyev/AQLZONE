@@ -17,6 +17,7 @@
  */
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
+import { Hajmli } from "../lib/hajmli";
 import { t } from "../lib/matn";
 
 interface Props {
@@ -49,7 +50,7 @@ export class XatoUshlagich extends Component<Props, State> {
     return (
       <div className="grid min-h-ekran place-items-center px-6">
         <div className="w-full max-w-[360px] rounded-clay bg-karta p-7 text-center shadow-clay">
-          <div className="text-[56px] leading-none">🛠️</div>
+          <Hajmli nom="asbob" olcham={50} className="mx-auto" />
 
           <h1 className="mt-3 text-[21px]">{t("xatoSarlavha")}</h1>
 

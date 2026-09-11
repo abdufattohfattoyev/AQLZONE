@@ -23,6 +23,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import { OyinSahna } from "./Sahna";
 import { Konfetti } from "../Konfetti";
+import { EmojiBelgi } from "../../lib/hajmli";
 import { Icon } from "../../lib/icons";
 import { UNIT_COLORS } from "../../lib/types";
 import { t } from "../../lib/matn";
@@ -230,7 +231,7 @@ export function YigirmaTort({ oyin, daraja, onChiq, onTugadi, rekord, yakun }: P
           </div>
         ) : nishon > 0 ? (
           <div className="az-xabar text-center">
-            <div className="text-[46px] leading-none">🎉</div>
+            <EmojiBelgi e="🎉" olcham={41} jonli className="mx-auto" />
             <div className="mt-2 font-display text-[21px] text-brand-green-d">
               {t("oyin24Topildi")}
             </div>

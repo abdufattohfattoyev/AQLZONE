@@ -37,3 +37,21 @@ media/
 # Kod emas, NATIJA: kerak bo`lsa `.rolik/` ichidagi skriptlar bilan
 # qaytadan yasaladi va git`da o`nlab megabayt joy egallardi.
 .rolik/
+
+# Higgsfield asboblari — `npx skills add higgsfield-ai/skills` qo`ygan
+# ko`nikmalar va ularning qulfi. Kod emas, ASBOB: har dasturchi o`zi
+# o`rnatadi va versiyasi mashinasiga bog`liq bo`ladi.
+.agents/
+.claude/skills/
+skills-lock.json
+
+# Ko`z bilan tekshirish uchun vaqtinchalik sahifalar.
+.afisha/*.html
+frontend/belgilar.html
+frontend/src/belgiSinov.tsx
+emoji-royxat.txt
+
+# Higgsfield chizgan xom varaqlar va kesish skripti. Natija
+# `frontend/public/belgi/` ga tushadi — xom fayl 3-4 MB va uni
+# saqlashning ma'nosi yo`q.
+.belgi/

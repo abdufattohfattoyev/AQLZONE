@@ -933,6 +933,17 @@
   transform-origin: center;
 }
 
+/* 3D RASM belgilari uchun harakat BUTUN belgida.
+   SVG'da tom alohida ko'tarilardi, varaq alohida ochilardi — rasmda
+   esa ichki qismlar yo'q, u bitta yuza. Shuning uchun butun belgi bir
+   marta sakrab qo'yadi: panel tirik qoladi, lekin bola nimadir
+   bosilganini ham sezadi. */
+@keyframes az-pb-sakra {
+  0%   { transform: scale(1)    translateY(0); }
+  35%  { transform: scale(1.14) translateY(-2px); }
+  100% { transform: scale(1)    translateY(0); }
+}
+
 /* Uyning tomi bir ko'tarilib joyiga tushadi — "eshik ochildi". */
 @keyframes az-pb-tom {
   0%   { transform: translateY(0); }
@@ -953,6 +964,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .az-pb-rasm.az-pb-faol   { animation: az-pb-sakra 520ms cubic-bezier(0.34, 1.45, 0.64, 1); }
   .az-pb-faol .az-pb-tom   { animation: az-pb-tom 620ms cubic-bezier(0.34, 1.4, 0.64, 1); }
   .az-pb-faol .az-pb-varaq { animation: az-pb-varaq 620ms cubic-bezier(0.34, 1.3, 0.64, 1); }
   /* Guruhlar navbat bilan keladi — birdaniga kelsa, ko'z bitta
@@ -1470,4 +1482,121 @@
   /* Halqa va natija DARHOL o'z holatida turadi — ular ma'lumot
      ko'rsatadi va harakatsiz ham to'liq o'qiladi. */
   .az-variant-tanlandi, .az-halqa, .az-natija { animation: none; }
+}
+
+/* ============================================================
+   HAJMLI BELGILAR — `lib/hajmli.tsx`
+   ============================================================
+   Emoji o'rnini bosadigan rangli SVG belgilar. Ranglar SHU YERDA
+   turadi, chizmalarda emas: bitta ohangni o'zgartirish kerak
+   bo'lsa, 157 ta faylni emas, bitta qatorni tahrirlash yetadi.
+
+   Har ohangda uch pog'ona: `--bl` yorug' (tepa yoq), `--bm` o'rtacha
+   (old yoq), `--bd` to'q (yon yoq va soya). Hajm aynan shu uchligidan
+   chiqadi — ikkitasi bilan narsa yassi ko'rinadi.
+
+   Ranglar ikkala temada ham BIR XIL. Emoji ham shunday edi: olma
+   qorong'ida ham qizil bo'ladi. Faqat soya kuchi farq qiladi va u
+   `drop-shadow` ichida, pastda. */
+.hajmli { display: block; flex-shrink: 0; }
+
+.hajmli[data-rang="yashil"]   { --bl:#8ce8ae; --bm:#48c97a; --bd:#2b8f53 }
+.hajmli[data-rang="sariq"]    { --bl:#ffd85f; --bm:#f5b301; --bd:#b98500 }
+.hajmli[data-rang="zangori"]  { --bl:#93d9f2; --bm:#4fb8e0; --bd:#2a86af }
+.hajmli[data-rang="binafsha"] { --bl:#d3aef4; --bm:#b07be8; --bd:#8148be }
+.hajmli[data-rang="qizil"]    { --bl:#ffb0a5; --bm:#ff7a6b; --bd:#d14b3a }
+.hajmli[data-rang="olov"]     { --bl:#ffc98f; --bm:#ff9f43; --bd:#cf7418 }
+.hajmli[data-rang="kumush"]   { --bl:#eaf0f4; --bm:#b6c5d0; --bd:#7f909d }
+.hajmli[data-rang="bronza"]   { --bl:#f2bd8e; --bm:#cd8f52; --bd:#95602c }
+.hajmli[data-rang="jigar"]    { --bl:#c99a72; --bm:#a3703f; --bd:#734b26 }
+.hajmli[data-rang="tuproq"]   { --bl:#b6c08f; --bm:#8d9a5e; --bd:#5f6a38 }
+
+/* --- harakat ---
+   FAQAT `jonli` berilganda. Ro'yxatda yigirmata belgi birga sakrab
+   tursa ko'z hech qayerga qadala olmaydi — shuning uchun sukut
+   bo'yicha hammasi jim turadi. */
+.hajmli.jonli {
+  animation: var(--h) var(--d, 2.4s) ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes az-tebran {
+  0%, 100% { transform: rotate(-3deg) scaleY(1) }
+  25%  { transform: rotate(2.5deg) scaleY(1.07) }
+  50%  { transform: rotate(-1.5deg) scaleY(.95) }
+  75%  { transform: rotate(3deg) scaleY(1.04) }
+}
+@keyframes az-aylan {
+  0%, 55%, 100% { transform: perspective(200px) rotateY(0) }
+  80% { transform: perspective(200px) rotateY(360deg) }
+}
+@keyframes az-urish {
+  0%, 45%, 100% { transform: scale(1) }
+  12% { transform: scale(1.17) }
+  24% { transform: scale(1) }
+  33% { transform: scale(1.1) }
+}
+@keyframes az-sakra {
+  0%, 55%, 100% { transform: translateY(0) }
+  25% { transform: translateY(-16%) scaleY(1.04) }
+  40% { transform: translateY(-5%) }
+}
+@keyframes az-chayqal {
+  0%, 100% { transform: rotate(-7deg) }
+  50% { transform: rotate(7deg) }
+}
+@keyframes az-yaltira {
+  0%, 100% { transform: scale(1) rotate(0deg) }
+  50% { transform: scale(1.14) rotate(14deg) }
+}
+@keyframes az-uch {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) }
+  50% { transform: translate(5%, -11%) rotate(-5deg) }
+}
+@keyframes az-qoqish {
+  0%, 60%, 100% { transform: rotate(0deg) }
+  12% { transform: rotate(14deg) }
+  24% { transform: rotate(-11deg) }
+  36% { transform: rotate(7deg) }
+  48% { transform: rotate(-4deg) }
+}
+/* Ko'z pilpillashi: deyarli butun davr ochiq turadi va faqat
+   oxirida bir lahza yumiladi — tez-tez yumilgan ko'z asabiy
+   ko'rinadi. */
+@keyframes az-qara {
+  0%, 90%, 100% { transform: scaleY(1) }
+  95% { transform: scaleY(.08) }
+}
+@keyframes az-nafas {
+  0%, 100% { transform: scale(1) }
+  50% { transform: scale(1.08) }
+}
+@keyframes az-surish {
+  0%, 100% { transform: translate(0, 0) }
+  50% { transform: translate(var(--sx, 0), var(--sy, 0)) }
+}
+@keyframes az-qadam {
+  0%, 100% { transform: translateY(0) rotate(-2deg) }
+  25% { transform: translateY(-7%) rotate(2deg) }
+  50% { transform: translateY(0) rotate(2deg) }
+  75% { transform: translateY(-7%) rotate(-2deg) }
+}
+@keyframes az-suzish {
+  0%, 100% { transform: translateX(-5%) rotate(-3deg) }
+  50% { transform: translateX(5%) rotate(3deg) }
+}
+@keyframes az-tushish {
+  0% { transform: translateY(-14%) }
+  100% { transform: translateY(9%) }
+}
+
+/* Yo'nalish belgilari O'Z tomoniga siljiydi — pastga qaragan
+   strelka tepaga sakrasa, u belgining MA'NOSIGA qarshi chiqadi. */
+.hajmli[data-nom="yuqoriga"] { --sy: -12% }
+.hajmli[data-nom="pastga"]   { --sy:  12% }
+.hajmli[data-nom="chapga"]   { --sx: -12% }
+.hajmli[data-nom="ongga"]    { --sx:  12% }
+
+@media (prefers-reduced-motion: reduce) {
+  .hajmli.jonli { animation: none }
 }

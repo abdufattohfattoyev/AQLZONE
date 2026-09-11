@@ -21,6 +21,7 @@
 import { Chizma, ChizmaOlma, chizmaBormi } from "../lib/chizma";
 import { ChizmaRang } from "../lib/chizma/rang";
 import { surat } from "../lib/chizma/surat";
+import { EmojiBelgi } from "../lib/hajmli";
 import { kNom } from "../lib/kichkintoy";
 import type { Karta } from "../lib/kichkintoy";
 
@@ -48,24 +49,33 @@ export type Olcham = "katta" | "kichik" | "belgi" | "mayda";
  * bilan bir xil bo'lishi kerak — aks holda rang kartasi qo'shni
  * kartadan kichik chiqardi.
  */
+/*
+ * `zaxira` — klass emas, SON.
+ *
+ * Zaxira endi emoji matni emas, hajmli belgi (`lib/hajmli`) va u
+ * `olcham` ni piksel bilan oladi. Sonlar emojining avvalgi
+ * `font-size` idan ~10% kichik: emoji glifi o'z qutisining ~80% ini
+ * egallaydi, SVG esa 100% ini — teng son berilsa zaxira karta
+ * qo'shnisidan kattaroq bo'lib ko'rinardi.
+ */
 const OLCHAM = {
   katta: {
-    chizma: "size-[168px]", emoji: "text-[104px]", doira: "size-[168px]",
+    chizma: "size-[168px]", zaxira: 94, doira: "size-[168px]",
     raqam: "text-[92px]", nuqta: "size-[26px]",
   },
   kichik: {
-    chizma: "size-[86px]", emoji: "text-[46px]", doira: "size-[86px]",
+    chizma: "size-[86px]", zaxira: 41, doira: "size-[86px]",
     raqam: "text-[42px]", nuqta: "size-[12px]",
   },
   belgi: {
-    chizma: "size-[64px]", emoji: "text-[40px]", doira: "size-[64px]",
+    chizma: "size-[64px]", zaxira: 36, doira: "size-[64px]",
     raqam: "text-[40px]", nuqta: "size-[9px]",
   },
   mayda: {
     // 32px — 26px da mashina SURATLARI qorayib ketardi: fotoda
     // tafsilot ko'p va u kichrayganda bir dog'ga aylanadi. Chizmalar
     // 26px da ham o'qilardi, lekin ikkalasi bitta qatorda turadi.
-    chizma: "size-[32px]", emoji: "text-[18px]", doira: "size-[32px]",
+    chizma: "size-[32px]", zaxira: 16, doira: "size-[32px]",
     raqam: "text-[16px]", nuqta: "size-[5px]",
   },
 } as const;
@@ -138,8 +148,14 @@ export function KichkintoyKarta({ k, olcham = "katta" }: { k: Karta; olcham?: Ol
     );
   }
 
-  /* ---- zaxira: emoji ---- */
-  return <span aria-hidden className={`${o.emoji} block leading-none`}>{k.e}</span>;
+  /* ---- zaxira: hajmli belgi ----
+     Hajmli to'plamda ham topilmasa emojining o'zi chiqadi, ya'ni
+     rasmi hali yasalmagan karta baribir ishlab turaveradi. */
+  // `e` ba'zi kartalarda umuman yo'q (`lib/kichkintoy.ts` dagi turga
+  // qarang) — u yerda chizma bor deb hisoblangan. Bo'sh satr esa
+  // xaritada topilmaydi va hech narsa chizilmaydi, ya'ni karta
+  // buzilmaydi.
+  return <EmojiBelgi e={k.e ?? ""} olcham={o.zaxira} className="block" />;
 }
 
 /**

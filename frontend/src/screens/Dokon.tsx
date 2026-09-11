@@ -14,6 +14,7 @@
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { BUYUMLAR, buyumNomi, buyumTop, shartBajarildi, shartMatni } from "../lib/dokon";
+import { EmojiBelgi } from "../lib/hajmli";
 import { t } from "../lib/matn";
 import { useProgress } from "../lib/progress";
 import { useOrqaga } from "../lib/qobiq";
@@ -59,11 +60,12 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
         <div className="relative">
           <Logo size={110} className="drop-shadow-[0_8px_16px_rgb(0_0_0/0.2)]" />
           {kiyilgan && (
-            // Buyum Aqlning boshiga tushadi. Belgi emoji bo'lgani uchun
-            // o'lchami shriftdan keladi.
+            // Buyum Aqlning boshiga tushadi. O'rovchi span qoladi: joylashuv
+            // ham, `az-sakra` harakati ham unda — belgining o'zi esa
+            // o'lchamini `olcham` dan oladi, shriftdan emas.
             <span className="az-sakra pointer-events-none absolute -top-3 left-1/2 -translate-x-1/2
-                             text-[42px] leading-none">
-              {kiyilgan.belgi}
+                             leading-none">
+              <EmojiBelgi e={kiyilgan.belgi} olcham={38} />
             </span>
           )}
         </div>
@@ -113,7 +115,7 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
                   {t("kamyob")}
                 </span>
               )}
-              <span className="text-[38px] leading-none">{b.belgi}</span>
+              <EmojiBelgi e={b.belgi} olcham={34} />
               <span className="font-display text-[13.5px] leading-tight">{buyumNomi(b)}</span>
 
               {bor ? (

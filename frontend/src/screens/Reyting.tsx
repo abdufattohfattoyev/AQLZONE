@@ -18,6 +18,7 @@
  */
 import { useEffect, useState } from "react";
 import { avatarBelgi } from "../lib/dokon";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { LigaJadval } from "../components/LigaJadval";
 import { getReyting } from "../lib/api";
@@ -100,7 +101,7 @@ export function Reyting({ onBack }: { onBack: () => void }) {
 
       {!yuklanyapti && ma === null && (
         <div className="az-kirish mt-6 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
-          <div className="text-[34px] leading-none">📶</div>
+          <EmojiBelgi e="📶" olcham={30} className="mx-auto" />
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
             {t("reytingAloqaYoq")}
           </p>
@@ -109,7 +110,7 @@ export function Reyting({ onBack }: { onBack: () => void }) {
 
       {!yuklanyapti && ma?.top.length === 0 && (
         <div className="az-kirish mt-6 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
-          <div className="text-[34px] leading-none">⭐</div>
+          <EmojiBelgi e="⭐" olcham={30} className="mx-auto" />
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
             {davr === "hafta" ? t("haftaBosh") : t("reytingBosh")}
           </p>
@@ -168,12 +169,14 @@ function Qator({ q, kech }: { q: ReytingQator; kech: number }) {
           aks holda 1 va 100 turli joydan boshlanib, ustun tishli ko'rinardi. */}
       <span className="grid w-9 shrink-0 place-items-center">
         {medal
-          ? <span className="text-[24px] leading-none">{medal}</span>
+          /* Harakat FAQAT o'z qatorda: butun uchlik birdan sakrab tursa,
+             u e'tibor tortmaydi, shunchaki shovqin bo'ladi. */
+          ? <EmojiBelgi e={medal} olcham={22} jonli={q.men} />
           : <span className="font-display text-[15px] text-ink-dim">{q.orin}</span>}
       </span>
 
-      <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-track text-[21px]">
-        {avatarBelgi(q.avatar)}
+      <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-track">
+        <EmojiBelgi e={avatarBelgi(q.avatar)} olcham={19} />
       </span>
 
       <span className="min-w-0 flex-1">

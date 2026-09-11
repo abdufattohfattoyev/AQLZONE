@@ -37,6 +37,7 @@ import { Icon } from "../lib/icons";
 import { Konfetti } from "../components/Konfetti";
 import { KichkintoyKarta } from "../components/KichkintoyKarta";
 import { OvozTugma } from "../components/OvozTugma";
+import { EmojiBelgi } from "../lib/hajmli";
 import { aytiladigan, kNom, kOvoz, savolMatni } from "../lib/kichkintoy";
 import type { Karta, Mavzu } from "../lib/kichkintoy";
 import { korildi, korilganSoni } from "../lib/kichkintoyHolat";
@@ -256,8 +257,8 @@ function Albom({ m, onOyin }: { m: Mavzu; onOyin: () => void }) {
         <button type="button" onClick={() => { tebrat("tanlov"); onOyin(); }}
           className="az-kirish tugma-3d az-yaltir mt-5 flex w-full items-center gap-3.5 rounded-clay
                      bg-brand-green p-4 text-left text-white shadow-clay">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20 text-[26px]">
-            🎯
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20">
+            <EmojiBelgi e="🎯" olcham={24} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-display text-[17px] leading-tight">{t("kichkintoyOyin")}</span>
@@ -416,8 +417,10 @@ function Oyin({ m, onChiq }: { m: Mavzu; onChiq: () => void }) {
   if (tugadi) {
     return (
       <div className="az-savol mt-4 rounded-clay bg-karta p-6 text-center shadow-clay">
-        <span className="relative mx-auto grid size-24 place-items-center rounded-full bg-brand-green/15 text-[52px]">
-          🎉
+        <span className="relative mx-auto grid size-24 place-items-center rounded-full bg-brand-green/15">
+          {/* Yagona joy, shuning uchun harakat bor: o'yin tugadi va
+              ekranda e'tibor tortadigan boshqa narsa yo'q. */}
+          <EmojiBelgi e="🎉" olcham={48} jonli />
           <Konfetti key={portlash} />
         </span>
         <p className="mt-4 font-display text-[22px] leading-tight">{t("kichkintoyBarakalla")}</p>

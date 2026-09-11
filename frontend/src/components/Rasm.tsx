@@ -9,16 +9,24 @@
  *     bir xil uslub. Emoji bu yerda har qurilmada boshqacha ko'rinadi
  *     (Windows'da bir xil, telefonda boshqa) va o'lchamlari ham qochadi.
  *
- *   • Emoji — hayvon, meva, transport kabi murakkab narsalar uchun.
- *     Ularni yomon chizgandan ko'ra, professional chizilgan emojini
- *     ISHLATGAN yaxshi. Lekin u yolg'iz qolmaydi: rangli pufak ustida,
- *     kattalashtirilgan va sekin suzib turgan holda beriladi — shunda
- *     yassi belgi emas, tirik rasmga o'xshaydi.
+ *   • HAJMLI BELGI (`lib/hajmli`) — hayvon, meva, transport kabi murakkab
+ *     narsalar uchun. Ular ham bizniki, lekin butun ilova bo'ylab yagona
+ *     to'plam: bitta yorug'lik yo'nalishi, bitta soya qoidasi. Shu sabab
+ *     ular emojidan ustun turadi — emoji har qurilmada boshqa rassom
+ *     qo'lida chizilgan va o'nta emoji o'nta uslubda chiqardi.
+ *
+ *   • Emoji — eng oxirgi zaxira. Hajmli to'plamda ham yo'q narsa o'zi
+ *     bo'lib chiqaveradi, ya'ni eng yomon holatda hech narsa yo'qolmaydi.
+ *
+ * Tartib ataylab shunday: CHIZMA birinchi, chunki u AYNAN shu mashqlar
+ * uchun chizilgan (savoldagi uchburchak — o'sha uchburchak), hajmli
+ * to'plam esa umumiy.
  *
  * Yangi chizma qo'shish: CHIZMA ga emojini kalit qilib, funksiyani yozing.
  * Boshqa hech qayerga tegish shart emas — butun ilova shu yerdan o'tadi.
  */
 import type { ReactNode } from "react";
+import { EmojiBelgi } from "../lib/hajmli";
 
 /* ---------------- yordamchilar ---------------- */
 
@@ -137,9 +145,9 @@ interface Props {
 /**
  * Bitta rasm.
  *
- * Chizmasi bo'lsa — SVG, bo'lmasa emojining o'zi. Ikkalasi ham bir xil
- * o'lchamda chiqadi, shuning uchun ular yonma-yon turganda ham qatorlar
- * qiyshaymaydi.
+ * Chizmasi bo'lsa — SVG, bo'lmasa hajmli belgi, u ham bo'lmasa emojining
+ * o'zi. Uchalasi ham bir xil o'lchamda chiqadi, shuning uchun ular
+ * yonma-yon turganda ham qatorlar qiyshaymaydi.
  */
 export function Rasm({ e, size = 56, pufak = false, kech, className = "" }: Props) {
   const chizma = CHIZMA[e];
@@ -147,7 +155,10 @@ export function Rasm({ e, size = 56, pufak = false, kech, className = "" }: Prop
 
   const rasm = chizma
     ? <span style={{ width: ichki, height: ichki, display: "block" }}>{chizma}</span>
-    : <span style={{ fontSize: ichki, lineHeight: 1 }}>{e}</span>;
+    // Hajmli belgi o'z qutisini TO'LA egallaydi, emoji glifi esa ~80%
+    // ini — shu sabab o'lcham biroz kichraytiriladi, aks holda belgi
+    // qo'shnisidan kattaroq bo'lib ko'rinardi.
+    : <EmojiBelgi e={e} olcham={Math.round(ichki * 0.9)} />;
 
   const uslub = kech === undefined ? undefined : ({ "--az-kech": `${kech}ms` } as React.CSSProperties);
   const jonli = kech === undefined ? "" : "az-suzish";

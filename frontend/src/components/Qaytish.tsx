@@ -12,6 +12,7 @@
  * ketadi — va endi qaytmaydi. Qaytish narxi past bo'lishi kerak: eng
  * avval "yulduzlaring joyida" deyish, keyin oson ish taklif qilish.
  */
+import { Hajmli } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
@@ -69,7 +70,7 @@ export function ZanjirTiklash({ taklif, jamiTanga, onTikla }: {
 export function Qaytish({ kun }: { kun: number }) {
   return (
     <div className="az-kirish mt-3 flex items-center gap-3 rounded-clay bg-karta p-3.5 shadow-clay-sm">
-      <span className="text-[26px] leading-none">👋</span>
+      <Hajmli nom="salom" olcham={24} jonli />
       <span className="min-w-0 flex-1">
         <span className="block font-display text-[14.5px] leading-tight">
           {t("qaytishSarlavha")}

@@ -21,6 +21,7 @@
  */
 import { useEffect, useState } from "react";
 import { avatarBelgi } from "../lib/dokon";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { botHavolasi, botNomi, chiqish, getHisob, hisobniSaqla, miniAppda } from "../lib/api";
@@ -237,7 +238,7 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
 
       {yuklandi && hisob === null && (
         <div className="az-kirish mt-6 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
-          <div className="text-[34px] leading-none">📶</div>
+          <EmojiBelgi e="📶" olcham={30} className="mx-auto" />
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
             {t("hisobAloqaYoq")}
           </p>

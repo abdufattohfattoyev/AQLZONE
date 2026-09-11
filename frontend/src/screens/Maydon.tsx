@@ -19,6 +19,7 @@
 import { useMemo, useState } from "react";
 import { Oqim } from "../components/oyin/Oqim";
 import { Konfetti } from "../components/Konfetti";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { useOrqaga } from "../lib/qobiq";
 import { useProgress } from "../lib/progress";
@@ -151,9 +152,9 @@ function Tanishuv({ bosqich, orin, jami, onBoshla, onChiq }: {
         <span className="text-[13px] tracking-widest text-ink-soft uppercase">
           {t("maydonBosqich", { n: orin + 1, jami })}
         </span>
-        <span className={`mt-4 grid size-24 place-items-center rounded-[30px] text-[46px]
+        <span className={`mt-4 grid size-24 place-items-center rounded-[30px]
                           ${rang.bg} shadow-clay`}>
-          {bosqich.oyin.emoji}
+          <EmojiBelgi e={bosqich.oyin.emoji} olcham={41} />
         </span>
         <h1 className="mt-4 text-[26px] leading-tight">{t(bosqich.oyin.nom)}</h1>
         <p className="mt-2 max-w-[300px] text-[14px] leading-snug text-ink-soft">
@@ -184,8 +185,8 @@ function MaydonYakun({ natija, bosqichlar, onChiq }: {
     <div className="mx-auto w-full max-w-[430px] px-4 pt-8 pb-10 text-center sm:max-w-[560px]">
       <div className="relative mx-auto w-fit">
         <Konfetti />
-        <span className="grid size-20 place-items-center rounded-[26px] bg-brand-gold text-[38px] shadow-clay">
-          🏟
+        <span className="grid size-20 place-items-center rounded-[26px] bg-brand-gold shadow-clay">
+          <EmojiBelgi e="🏟" olcham={34} />
         </span>
       </div>
 
@@ -202,7 +203,9 @@ function MaydonYakun({ natija, bosqichlar, onChiq }: {
         {bosqichlar.map((b, i) => (
           <div key={b.oyin.id}
             className="flex items-center gap-3 rounded-clay bg-karta p-3 text-left shadow-clay-sm">
-            <span className="text-[22px]">{b.oyin.emoji}</span>
+            {/* `shrink-0` SHART: belgi endi SVG va u qator ichida
+                siqilib, cho'zilib ketardi. */}
+            <EmojiBelgi e={b.oyin.emoji} olcham={20} className="shrink-0" />
             <span className="flex-1 font-display text-[14px]">{t(b.oyin.nom)}</span>
             <span className="font-display text-[16px] text-ink-soft">
               {natija.bosqichlar[i] ?? 0}

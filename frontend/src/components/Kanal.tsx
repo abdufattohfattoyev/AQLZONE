@@ -22,6 +22,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { getKanal } from "../lib/api";
 import { havolaniOch } from "../lib/qobiq";
@@ -183,7 +184,7 @@ export function Kanal() {
 function Qator({ belgi, bosh, children }: { belgi: string; bosh: string; children: string }) {
   return (
     <li className="flex gap-3">
-      <span className="text-[19px] leading-none" aria-hidden>{belgi}</span>
+      <EmojiBelgi e={belgi} olcham={20} className="mt-px shrink-0" />
       <span className="text-[13.5px] leading-snug">
         <b className="font-semibold">{bosh}</b>
         <span className="text-ink-dim"> — {children}</span>

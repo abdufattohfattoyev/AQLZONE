@@ -13,6 +13,7 @@
  * qurilmadagi xatolar daftari baribir ko'rsatiladi, chunki u mahalliy.
  */
 import { useEffect, useState } from "react";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { getXulosa } from "../lib/api";
 import type { Xulosa } from "../lib/api";
@@ -177,7 +178,7 @@ export function OtaOna({ onBack }: Props) {
       {/* ---- ma'lumot yo'q holatlari ---- */}
       {yuklandi && !xulosa && (
         <div className="az-kirish mt-5 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
-          <div className="text-[34px] leading-none">📶</div>
+          <EmojiBelgi e="📶" olcham={30} className="mx-auto" />
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
             {t("hisobotAloqaYoq")}
           </p>
@@ -186,7 +187,7 @@ export function OtaOna({ onBack }: Props) {
 
       {yuklandi && xulosa && xulosa.jami.darslar === 0 && (
         <div className="az-kirish mt-5 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
-          <div className="text-[34px] leading-none">🌱</div>
+          <EmojiBelgi e="🌱" olcham={30} className="mx-auto" />
           <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
             {t("hisobotBosh")}
           </p>

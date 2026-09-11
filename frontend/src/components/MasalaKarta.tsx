@@ -30,6 +30,7 @@
  * chiqadi. Ovoz masalaning o'z ekranida beriladi.
  */
 import { avatarBelgi } from "../lib/dokon";
+import { EmojiBelgi, Hajmli } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { nuqtaSoni } from "../lib/masalaQiyin";
@@ -158,7 +159,7 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
             lekin qo'rqitmoqda. */}
         {m.korishSoni > 0 && (
           <span className="flex shrink-0 items-center gap-0.5 text-[11.5px] text-ink-dim">
-            <span aria-hidden className="text-[11px] leading-none">👁</span>
+            <Hajmli nom="koz" olcham={13} />
             {m.korishSoni}
           </span>
         )}
@@ -192,7 +193,7 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="grid size-[18px] shrink-0 place-items-center rounded-full
                              bg-track text-[10px] leading-none">
-              {avatarBelgi(m.muallif.avatar)}
+              <EmojiBelgi e={avatarBelgi(m.muallif.avatar)} olcham={13} />
             </span>
             <span className="truncate">{m.muallif.ism}</span>
           </span>
@@ -203,9 +204,13 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
             o'qiladi. */}
         <span className="shadow-ichki ml-auto flex shrink-0 items-center gap-1.5 rounded-full
                          bg-sahna px-2 py-1 leading-none">
-          <span>👍 {m.like}</span>
+          <span className="flex items-center gap-1">
+            <Hajmli nom="yoqdi" olcham={12} />{m.like}
+          </span>
           <span aria-hidden className="h-2.5 w-px bg-ink-dim/25" />
-          <span>👎 {m.dislike}</span>
+          <span className="flex items-center gap-1">
+            <Hajmli nom="yoqmadi" olcham={12} />{m.dislike}
+          </span>
         </span>
       </div>
     </button>

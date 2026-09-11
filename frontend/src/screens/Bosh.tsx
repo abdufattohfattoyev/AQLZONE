@@ -40,6 +40,7 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { avatarBelgi } from "../lib/dokon";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { Logo } from "../components/Logo";
@@ -263,7 +264,7 @@ function Chip(
         // Serverdagi qiymat — do'kon buyumining `id` si ("shlyapa"),
         // ya'ni uni shundayligicha chizib bo'lmaydi.
         <span className="grid size-[17px] shrink-0 place-items-center rounded-full
-                         bg-track text-[10.5px] leading-none">{avatarBelgi(avatar)}</span>
+                         bg-track"><EmojiBelgi e={avatarBelgi(avatar)} olcham={10} /></span>
       ) : (
         <Icon name={ic} size={14} className={`shrink-0 ${rang ?? ""}`} />
       )}

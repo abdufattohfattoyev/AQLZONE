@@ -22,9 +22,28 @@
  *   3. Tashqi yumshoq nur (`drop-shadow`) — belgi panel yuzasidan
  *      bir barmoq ko'tarilgandek turadi.
  *
- * Rasm EMAS, SVG. PNG bilan uchta muammo bo'lardi: temaga moslashmaydi
- * (tungi temada oq hoshiya qoladi), harakatlanmaydi va beshta fayl
- * yuklanguncha panel bo'sh turadi.
+ * RASM, SVG EMAS — VA BU QARORDAN QAYTILDI. Ilgari bu yerda "PNG
+ * bo'lmaydi" deb yozilgan edi va uchta sabab keltirilgandi. Beshta
+ * belgi 3D dasturda qayta chizilgach, uchalasi ham hal bo'ldi:
+ *
+ *   1. "Temaga moslashmaydi, tungi temada oq hoshiya qoladi" —
+ *      fon chetdan quyib o'chirilgan (`.belgi/kes.py`), ya'ni oq
+ *      piksel umuman qolmagan. Qorong'i panelda tekshirildi.
+ *   2. "Harakatlanmaydi" — harakat endi belgi ICHIDA emas, butun
+ *      belgida: faol bo'lganda bir marta sakrab qo'yadi
+ *      (`az-pb-rasm`). Tomning alohida ko'tarilishi yo'qoldi,
+ *      lekin panel yozuvsiz ham tirik qoladi.
+ *   3. "Beshta fayl yuklanguncha panel bo'sh turadi" — beshtasi
+ *      birga 26 KB va `index.html` da oldindan yuklanadi
+ *      (`rel="preload"`), ya'ni panel chizilganda ular tayyor.
+ *
+ * Nega umuman almashtirildi: SVG bilan HAQIQIY yorug'likni chizib
+ * bo'lmaydi, faqat unga o'xshatiladi. Bu belgilar esa ekranning eng
+ * pastida, hamma sahifada turadi — ilovaning yuzi. Ular yuzida
+ * o'xshatish emas, haqiqiy soya va material bo'lgani yaxshi.
+ *
+ * `reyting` SVG bo'lib QOLADI: u paneldan chiqib ketgan (pastdagi
+ * izohga qarang) va unga rasm chizdirish ortiqcha bo'lardi.
  *
  * HARAKAT FAQAT FAOL TUGMADA va faqat BIR MARTA. Doim aylanadigan
  * belgi — bu ekranning pastidagi doimiy chalg'ituvchi; bola darsni
@@ -60,6 +79,16 @@ const RANG: Record<PanelBelgiNom, { och: string; quyuq: string }> = {
  */
 export const panelRang = (nom: PanelBelgiNom): string => RANG[nom].quyuq;
 
+/**
+ * Qaysi belgi 3D rasm bilan chiziladi.
+ *
+ * Ro'yxat ATAYLAB qo'lda: papkaga fayl tashlab qo'yish bilan belgi
+ * o'z-o'zidan almashib ketmasin. Yangi rasm qo'shilganda u shu yerga
+ * ham yoziladi va o'shanda `index.html` dagi oldindan yuklash
+ * ro'yxatini ham yangilash esga tushadi.
+ */
+const RASM = new Set<PanelBelgiNom>(["uy", "xarita", "oyin", "vazifa", "menyu"]);
+
 export function PanelBelgi({ nom, faol = false, size = 26 }: {
   nom: PanelBelgiNom;
   /** Shu tugma turgan sahifa ochiqmi — harakat va to'liq rang shundan. */
@@ -74,6 +103,17 @@ export function PanelBelgi({ nom, faol = false, size = 26 }: {
   const xom = useId().replace(/[^a-zA-Z0-9]/g, "");
   const g = `az-pb-${nom}-${xom}`;
   const { och, quyuq } = RANG[nom];
+
+  if (RASM.has(nom)) {
+    return (
+      <img src={`/belgi/${nom}.webp`} width={size} height={size} alt=""
+        // Panelda beshta rasm bor va ular BIRINCHI ko'rinadigan
+        // narsalardan. Brauzerga "keyinroq" deb qo'yib berilsa,
+        // panel bir zum bo'sh turardi.
+        decoding="sync" fetchPriority="high"
+        className={`az-pb az-pb-rasm ${faol ? "az-pb-faol" : ""}`} />
+    );
+  }
 
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} aria-hidden="true"

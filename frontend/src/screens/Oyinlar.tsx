@@ -41,6 +41,7 @@
  * natijasi.
  */
 import type { CSSProperties } from "react";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { OYINLAR } from "../lib/oyin";
 import { DARAJALAR } from "../lib/oyin/tur";
@@ -99,8 +100,11 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onDuel }: {
         className="az-kirish tugma-3d mt-3 flex w-full items-center gap-3.5 rounded-clay
                    bg-brand-orange p-4 text-left text-white shadow-clay"
         style={{ "--az-kech": "90ms" } as CSSProperties}>
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20 text-[24px]">
-          ⚔️
+        {/* Ekrandagi YAGONA chorlov — shuning uchun qilichlar qimirlaydi.
+            Pastdagi mashq ro'yxatida bunday qilinmaydi: u yerda sakkizta
+            belgi birga sakrab, ro'yxatni o'qib bo'lmasdi. */}
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20">
+          <EmojiBelgi e="⚔️" olcham={22} jonli />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-display text-[17px] leading-tight">{t("duel")}</span>
@@ -151,8 +155,8 @@ function MaydonKarta({ bugun, onOch }: {
         className="az-kirish tugma-3d mt-5 flex w-full items-center gap-3.5 rounded-clay
                    bg-karta p-4 text-left shadow-clay">
         <span className="grid size-12 shrink-0 place-items-center rounded-2xl
-                         bg-brand-green/15 text-[24px]">
-          ✅
+                         bg-brand-green/15">
+          <EmojiBelgi e="✅" olcham={22} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-display text-[16px] leading-tight">
@@ -171,8 +175,8 @@ function MaydonKarta({ bugun, onOch }: {
     <button type="button" onClick={onOch}
       className="az-kirish tugma-3d az-yaltir mt-5 flex w-full items-center gap-3.5 rounded-clay
                  bg-brand-green p-4 text-left text-white shadow-clay">
-      <span className="grid size-14 shrink-0 place-items-center rounded-[20px] bg-white/20 text-[28px]">
-        🏟
+      <span className="grid size-14 shrink-0 place-items-center rounded-[20px] bg-white/20">
+        <EmojiBelgi e="🏟" olcham={25} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block font-display text-[19px] leading-tight">{t("maydon")}</span>
@@ -215,8 +219,11 @@ function Karta({ o, i, onOch }: { o: Oyin; i: number; onOch: () => void }) {
           kabi yig'ilgan satr hech qachon CSS'ga tushmasdi va doira
           rangsiz qolardi. `road` — o'sha rangning HEX ko'rinishi. */}
       <span style={{ backgroundColor: `${rang.road}20` }}
-        className="grid size-14 shrink-0 place-items-center rounded-[20px] text-[28px]">
-        {o.emoji}
+        className="grid size-14 shrink-0 place-items-center rounded-[20px]">
+        {/* Harakat ATAYLAB yo'q: bu yerda sakkizta karta yonma-yon
+            turadi va hammasi birga qimirlasa ko'z hech biriga
+            qadalmasdi. */}
+        <EmojiBelgi e={o.emoji} olcham={25} />
       </span>
 
       <span className="font-display text-[13.5px] leading-tight text-ink">{t(o.nom)}</span>

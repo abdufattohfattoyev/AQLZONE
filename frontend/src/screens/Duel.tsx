@@ -35,6 +35,7 @@ import { Oqim } from "../components/oyin/Oqim";
 import { Konfetti } from "../components/Konfetti";
 import { Kutish } from "../components/Kutish";
 import { avatarBelgi } from "../lib/dokon";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { useOrqaga, havolaniOch } from "../lib/qobiq";
@@ -217,8 +218,12 @@ function Shartlar({ onTanladi, onChiq }: {
                     pb-8 sm:max-w-[600px] lg:max-w-[760px]">
       <div className="text-center">
         <span className="mx-auto grid place-items-center rounded-[24px] bg-brand-orange shadow-clay
-                         size-[clamp(52px,9vh,72px)] text-[clamp(26px,4.5vh,34px)]">
-          ⚔️
+                         size-[clamp(52px,9vh,72px)]">
+          {/* O'lcham `olcham` bilan emas, klass bilan beriladi: bu ekran
+              past telefonda siqiladi va tomon `clamp` bo'lishi kerak,
+              raqam esa buni ifodalay olmaydi. `olcham` faqat xaritada
+              yo'q emoji uchun — o'shanda matn bo'lib chiqadi. */}
+          <EmojiBelgi e="⚔️" olcham={30} className="size-[clamp(23px,4vh,30px)]" />
         </span>
         <h1 className="mt-2.5 text-[clamp(19px,3.4vh,23px)] leading-tight">{t("duel")}</h1>
         <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">{t("duelShartIzoh")}</p>
@@ -243,7 +248,7 @@ function Shartlar({ onTanladi, onChiq }: {
               className={`clay-press flex min-w-0 flex-col items-center justify-start gap-1
                           rounded-clay px-1.5 py-2.5 text-center transition-colors
                           ${tanlangan ? `${rang.bg} text-white shadow-clay` : "text-ink shadow-clay-sm"}`}>
-              <span className="text-[clamp(20px,3.4vh,24px)] leading-none">{o.emoji}</span>
+              <EmojiBelgi e={o.emoji} olcham={22} className="size-[clamp(18px,3vh,22px)]" />
               {/* Nom KESILMAYDI, ikki qatorgacha o'raladi: "Ko'paytirish
                   jadvali" kesilganda "Ko'paytirish jad…" bo'lib qolardi
                   va bola qaysi o'yin ekanini bilmasdi. */}
@@ -407,7 +412,7 @@ function Onlayn({ onChaqir }: { onChaqir: (profil: number) => void }) {
               <span className="relative shrink-0">
                 <span className="grid size-7 place-items-center rounded-full bg-track
                                  text-[13px]">
-                  {avatarBelgi(o.avatar)}
+                  <EmojiBelgi e={avatarBelgi(o.avatar)} olcham={12} />
                 </span>
                 {/* Yashil nuqta avatarning ustida — "hozir shu yerda"
                     degan belgi messenjerlarda ham shu joyda turadi va
@@ -474,7 +479,12 @@ function Tarix() {
                 : d.durang ? "bg-track text-ink-soft"
                 : d.yutdim ? "bg-brand-green/15 text-brand-green-d"
                 : "bg-brand-red/15 text-brand-red"}`}>
-              {d.yutdim === null ? "…" : d.durang ? "=" : d.yutdim ? "🏆" : "·"}
+              {/* Faqat kubok belgi bo'ladi. Qolgan uchtasi — `…`, `=`,
+                  `·` — chizma emas, MATN: ular shu qatordagi yozuv
+                  bilan bir xil qalinlikda va bir xil rangda turishi
+                  kerak, chunki ma'nosini rang aytadi. */}
+              {d.yutdim === null ? "…" : d.durang ? "=" : d.yutdim
+                ? <EmojiBelgi e="🏆" olcham={12} /> : "·"}
             </span>
             <span className="min-w-0 flex-1 truncate text-[13px]">
               {d.raqib || t("duelRaqib")}
@@ -760,8 +770,8 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
     <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col justify-center px-4 py-10
                     text-center sm:max-w-[560px]">
       <span className="mx-auto grid size-20 place-items-center rounded-[26px] bg-brand-orange
-                       text-[38px] shadow-clay">
-        ⚔️
+                       shadow-clay">
+        <EmojiBelgi e="⚔️" olcham={34} />
       </span>
 
       <h1 className="mt-4 text-[23px] leading-tight">
@@ -770,7 +780,7 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
 
       {oyin && (
         <div className="mx-auto mt-4 flex items-center gap-2.5 rounded-clay bg-karta px-4 py-3 shadow-clay-sm">
-          <span className="text-[24px]">{oyin.emoji}</span>
+          <EmojiBelgi e={oyin.emoji} olcham={22} className="shrink-0" />
           <span className="font-display text-[15px]">{t(oyin.nom)}</span>
           <span className="text-[12.5px] text-ink-soft">
             · {duel.savollar || 20} · {t("duelSoniya", { n: duel.vaqt || 60 })}
@@ -1044,8 +1054,10 @@ function HavolaEkrani({ duel, onChiq }: { duel: DuelHolat; onChiq: () => void })
     <div className="mx-auto w-full max-w-[430px] px-4 pt-10 pb-10 text-center sm:max-w-[560px]">
       <div className="relative mx-auto w-fit">
         <Konfetti />
-        <span className="grid size-20 place-items-center rounded-[26px] bg-brand-green text-[38px] shadow-clay">
-          ⚔️
+        {/* Chaqiruv YASALDI — ekrandagi butun gap shu, konfetti ham shu
+            yerda otiladi. Qilichlar qimirlagani mana shuning davomi. */}
+        <span className="grid size-20 place-items-center rounded-[26px] bg-brand-green shadow-clay">
+          <EmojiBelgi e="⚔️" olcham={34} jonli />
         </span>
       </div>
 
@@ -1092,8 +1104,8 @@ function Taklif({ duel, onQabul, onChiq }: {
     <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col justify-center px-4 py-10
                     text-center sm:max-w-[560px]">
       <span className="mx-auto grid size-24 place-items-center rounded-[30px] bg-brand-orange
-                       text-[46px] shadow-clay">
-        ⚔️
+                       shadow-clay">
+        <EmojiBelgi e="⚔️" olcham={41} />
       </span>
 
       <h1 className="mt-5 text-[24px] leading-tight">
@@ -1103,7 +1115,7 @@ function Taklif({ duel, onQabul, onChiq }: {
 
       {oyin && (
         <div className="mx-auto mt-5 flex items-center gap-2.5 rounded-clay bg-karta px-4 py-3 shadow-clay-sm">
-          <span className="text-[24px]">{oyin.emoji}</span>
+          <EmojiBelgi e={oyin.emoji} olcham={22} className="shrink-0" />
           <span className="font-display text-[15px]">{t(oyin.nom)}</span>
           {/* Shartlar shu yerda ham ko'rinadi: do'sti nimaga rozi
               bo'layotganini bilishi kerak. */}
@@ -1232,9 +1244,12 @@ function Natija({ yakun, xato, oyinId, onQayta, onYangi, onMashq, onChiq }: {
     <div className="mx-auto w-full max-w-[430px] px-4 pt-10 pb-10 text-center sm:max-w-[560px]">
       <div className="relative mx-auto w-fit">
         {yutdi && <Konfetti />}
-        <span className={`grid size-20 place-items-center rounded-[26px] text-[38px] shadow-clay
+        <span className={`grid size-20 place-items-center rounded-[26px] shadow-clay
                           ${yutdi ? "bg-brand-gold" : "bg-karta"}`}>
-          {yutdi ? "🏆" : durang ? "🤝" : "😔"}
+          {/* Uchala holat ham qimirlaydi, yutqazgani ham. Harakat bu
+              yerda mukofot emas — ekranning butun mazmuni shu bitta
+              belgida va ko'z birinchi navbatda unga tushishi kerak. */}
+          <EmojiBelgi e={yutdi ? "🏆" : durang ? "🤝" : "😔"} olcham={34} jonli />
         </span>
       </div>
 
@@ -1332,8 +1347,12 @@ function Xabar({ belgi, sarlavha, onChiq }: {
   return (
     <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col items-center justify-center
                     px-4 text-center">
-      <span className="grid size-20 place-items-center rounded-[26px] bg-karta text-[38px] shadow-clay">
-        {belgi}
+      {/* `belgi` emoji bo'lib keladi — chaqiruvchilar (`⚠️`, `🙈`) uni
+          shunday berishadi. Almashtirish AYNAN shu yerda: prop turi
+          o'zgarmaydi, ya'ni xaritada yo'q emoji berilsa ham ekran
+          hozirgidek ishlayveradi. */}
+      <span className="grid size-20 place-items-center rounded-[26px] bg-karta shadow-clay">
+        <EmojiBelgi e={belgi} olcham={34} />
       </span>
       <h1 className="mt-4 text-[21px] leading-tight">{sarlavha}</h1>
       <button type="button" onClick={onChiq}

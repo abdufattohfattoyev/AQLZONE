@@ -30,6 +30,7 @@ import { Icon } from "../lib/icons";
 import { Reveal } from "../components/Reveal";
 import { KichkintoyKarta } from "../components/KichkintoyKarta";
 import { ChizmaRang } from "../lib/chizma/rang";
+import { EmojiBelgi } from "../lib/hajmli";
 import { MAVZULAR, kNom, kartaById } from "../lib/kichkintoy";
 import type { Mavzu } from "../lib/kichkintoy";
 import { korilganSoni } from "../lib/kichkintoyHolat";
@@ -61,8 +62,8 @@ export function Kichkintoy({ onBack, onMavzu }: {
       </div>
 
       <div className="az-kirish mt-4 text-center">
-        <span className="mx-auto grid size-16 place-items-center rounded-[22px] bg-brand-orange/15 text-[34px]">
-          🧸
+        <span className="mx-auto grid size-16 place-items-center rounded-[22px] bg-brand-orange/15">
+          <EmojiBelgi e="🧸" olcham={30} />
         </span>
         <h1 className="mt-3 font-display text-[24px] leading-tight">{t("kichkintoy")}</h1>
         <p className="mt-1 text-[13px] leading-snug text-ink-soft">{t("kichkintoyIzoh")}</p>
@@ -149,7 +150,7 @@ function MavzuBelgi({ m }: { m: Mavzu }) {
   const k = m.kartalar[0];
   return k
     ? <KichkintoyKarta k={k} olcham="belgi" />
-    : <span aria-hidden className="text-[40px] leading-none">{m.e}</span>;
+    : <EmojiBelgi e={m.e} olcham={36} />;
 }
 
 /**

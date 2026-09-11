@@ -27,6 +27,7 @@
  * katta esa bir daqiqada yuqoriga chiqadi.
  */
 import type { CSSProperties } from "react";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { DARAJALAR } from "../lib/oyin/tur";
 import type { Daraja, Oyin } from "../lib/oyin/tur";
@@ -56,8 +57,8 @@ export function OyinDaraja({ oyin, onBack, onBoshla }: {
       {/* ---- o'yin ---- */}
       <div className="az-kirish mt-4 text-center">
         <span style={{ backgroundColor: `${rang.road}20` }}
-          className="mx-auto grid size-[76px] place-items-center rounded-[26px] text-[38px]">
-          {oyin.emoji}
+          className="mx-auto grid size-[76px] place-items-center rounded-[26px]">
+          <EmojiBelgi e={oyin.emoji} olcham={34} />
         </span>
         <h1 className="mt-3 text-[21px] leading-tight">{t(oyin.nom)}</h1>
         {/* Qoida ENG BOSHIDA, o'yin ichida emas. O'yin boshlangandan

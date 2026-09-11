@@ -5,6 +5,7 @@
  * qancha qolgani bilan. Yashirin nishon bolani harakatga undamaydi:
  * u nimaga intilishini bilishi kerak.
  */
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import type { Nishon } from "../lib/nishon";
 import { t } from "../lib/matn";
@@ -35,7 +36,7 @@ export function Nishonlar({ nishonlar, onBack }: Props) {
       </div>
 
       <div className="az-kirish mt-4 text-center">
-        <div className="text-[52px] leading-none">🏅</div>
+        <EmojiBelgi e="🏅" olcham={47} className="mx-auto" />
         <h1 className="mt-2 text-[22px]">{t("nishonlar")}</h1>
         <p className="mt-1 text-[13px] text-ink-soft">
           {t("nishonHisob", { olingan, jami: nishonlar.length })}

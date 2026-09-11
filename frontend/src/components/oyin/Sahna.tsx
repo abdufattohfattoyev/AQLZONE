@@ -15,6 +15,7 @@
  */
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { EmojiBelgi } from "../../lib/hajmli";
 import { Icon } from "../../lib/icons";
 import { Konfetti } from "../Konfetti";
 import { UNIT_COLORS } from "../../lib/types";
@@ -99,7 +100,7 @@ export function OyinSahna({
               <span key={zanjir}
                 className="az-xabar flex items-center gap-0.5 rounded-full bg-brand-orange/15
                            px-1.5 py-0.5 font-display text-[11px] leading-none text-brand-orange-d">
-                🔥{zanjir}
+                <EmojiBelgi e="🔥" olcham={10} />{zanjir}
               </span>
             )}
             <span className={`font-display text-[22px] leading-none
@@ -107,8 +108,11 @@ export function OyinSahna({
               {ball}
             </span>
           </div>
-          <div className="mt-0.5 text-[10px] leading-none text-ink-soft">
-            {rekordOshdi ? "🏆" : ballNomi}
+          {/* Kubok o'sha qatordagi yozuvdan sal kattaroq: u yolg'iz
+              turadi, yoniga solishtiradigan matn yo'q — o'n pikselda
+              esa kosaning shakli umuman bilinmasdi. */}
+          <div className="mt-0.5 flex justify-end text-[10px] leading-none text-ink-soft">
+            {rekordOshdi ? <EmojiBelgi e="🏆" olcham={13} jonli /> : ballNomi}
           </div>
         </div>
       </div>
@@ -182,9 +186,13 @@ export function Yakun({
             natija" degan ma'nosini yo'qotib, shunchaki bezakka
             aylanardi. */}
         {yangiRekord && <Konfetti />}
-        <span className={`grid size-20 place-items-center rounded-[26px] text-[38px]
+        <span className={`grid size-20 place-items-center rounded-[26px]
                           ${yangiRekord ? rang.bg : "bg-karta"} shadow-clay`}>
-          {yangiRekord ? "🏆" : oyin.emoji}
+          {/* Faqat REKORD qimirlaydi. Oddiy yakunda ham harakat bo'lsa,
+              u "bugun nimadir bo'ldi" degan ma'nosini yo'qotardi. */}
+          {yangiRekord
+            ? <EmojiBelgi e="🏆" olcham={34} jonli />
+            : <EmojiBelgi e={oyin.emoji} olcham={34} />}
         </span>
       </div>
 

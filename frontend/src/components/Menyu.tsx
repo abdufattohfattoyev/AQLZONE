@@ -48,6 +48,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { EmojiBelgi, Hajmli } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { TilTugma } from "./TilTugma";
@@ -396,7 +397,7 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
           <details className="group mt-3.5 overflow-hidden rounded-clay bg-karta shadow-clay-sm">
             <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5
                                 marker:hidden">
-              <span aria-hidden className="text-[14px] leading-none">💡</span>
+              <Hajmli nom="goya" olcham={15} />
               <span className="flex-1 font-display text-[12.5px] leading-tight">
                 {t("menyuBall")}
               </span>
@@ -566,15 +567,15 @@ function Son({ ic, rang, n, nom }: { ic: IconName; rang: string; n: number; nom:
 /**
  * "Ball qanday yig'iladi" bo'limining bitta qoidasi.
  *
- * Belgi bu yerda EMOJI, ikonka emas — va bu yagona joy. Sabab: bu
- * satrlar bosilmaydi, ular matn. Ikonka bo'lganda ular yuqoridagi
- * bosiladigan satrlarga o'xshab ketardi va odam ularni bosishga
- * urinardi.
+ * Belgi bu yerda RANGLI, chiziqli ikonka emas — va bu yagona joy.
+ * Sabab: bu satrlar bosilmaydi, ular matn. Chiziqli ikonka bo'lganda
+ * ular yuqoridagi bosiladigan satrlarga o'xshab ketardi va odam
+ * ularni bosishga urinardi.
  */
 function Qoida({ belgi, nom, izoh }: { belgi: string; nom: string; izoh: string }) {
   return (
     <div className="flex gap-2.5 py-1.5 first:pt-0 last:pb-0">
-      <span aria-hidden className="shrink-0 text-[15px] leading-tight">{belgi}</span>
+      <EmojiBelgi e={belgi} olcham={16} className="mt-px shrink-0" />
       <p className="min-w-0 text-[11.5px] leading-snug text-ink-soft">
         <span className="font-display text-ink">{nom}</span>{" — "}{izoh}
       </p>

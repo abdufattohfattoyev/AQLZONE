@@ -13,6 +13,7 @@
  */
 import { useEffect, useState } from "react";
 import { avatarBelgi } from "../lib/dokon";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { getLiga } from "../lib/api";
 import type { Liga, LigaQator, LigaZona } from "../lib/api";
@@ -99,9 +100,10 @@ export function LigaJadval() {
           xabar.natija === "kotarildi" ? "bg-brand-green/15"
             : xabar.natija === "tushdi" ? "bg-brand-red/15" : "bg-karta"
         }`}>
-          <span className="text-[28px] leading-none">
-            {xabar.natija === "kotarildi" ? "🎉" : xabar.natija === "tushdi" ? "💪" : "👏"}
-          </span>
+          {/* Yagona harakatlanadigan belgi shu: hafta natijasi e'lon
+              qilinyapti va ko'z aynan shu yerga tushishi kerak. */}
+          <EmojiBelgi olcham={25} jonli className="shrink-0"
+            e={xabar.natija === "kotarildi" ? "🎉" : xabar.natija === "tushdi" ? "💪" : "👏"} />
           <span className="min-w-0 flex-1">
             <span className="block font-display text-[14.5px] leading-tight">
               {xabar.natija === "kotarildi"
@@ -137,10 +139,13 @@ export function LigaJadval() {
               className={`grid flex-1 place-items-center rounded-2xl py-1.5 transition-colors ${
                 joriy ? "bg-brand-gold/20 ring-2 ring-brand-gold" : ""
               }`}>
-              <span className={`text-[19px] leading-none ${
+              {/* Daraja belgisi SERVERDAN keladi (`core/liga.py`), ya'ni bu
+                  yerda bo'lmagan emoji ham kelishi mumkin — o'shanda emojining
+                  o'zi chiqadi. Xiralik o'rovchi spanda qoladi. */}
+              <span className={
                 joriy ? "" : otilgan ? "opacity-55" : "opacity-25 grayscale"
-              }`}>
-                {d.emoji}
+              }>
+                <EmojiBelgi e={d.emoji} olcham={17} />
               </span>
               <span className={`mt-0.5 text-[9.5px] leading-none ${
                 joriy ? "font-display text-ink" : "text-ink-dim"
@@ -229,8 +234,8 @@ function Qator({ q, kech }: { q: LigaQator; kech: number }) {
         {q.orin}
       </span>
 
-      <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-track text-[21px]">
-        {avatarBelgi(q.avatar)}
+      <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-track">
+        <EmojiBelgi e={avatarBelgi(q.avatar)} olcham={19} />
       </span>
 
       <span className="min-w-0 flex-1">
@@ -255,7 +260,7 @@ function Qator({ q, kech }: { q: LigaQator; kech: number }) {
 function Karta({ emoji, children }: { emoji: string; children: React.ReactNode }) {
   return (
     <div className="az-kirish mt-6 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
-      <div className="text-[34px] leading-none">{emoji}</div>
+      <EmojiBelgi e={emoji} olcham={30} className="mx-auto" />
       <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">{children}</p>
     </div>
   );

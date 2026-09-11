@@ -34,6 +34,8 @@ import { TangaOqim } from "../components/TangaOqim";
 import { TangaSorov } from "../components/TangaSorov";
 import { Variantlar } from "../components/Variantlar";
 import { avatarBelgi } from "../lib/dokon";
+import { EmojiBelgi, Hajmli } from "../lib/hajmli";
+import type { HajmliNom } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { qiyinlikNomi } from "../lib/masalaQiyin";
@@ -393,8 +395,8 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           shartdan boshlanishi kerak. */}
       <button type="button" onClick={() => onMuallif(m.muallif.id)}
         className="clay-press mt-3 flex w-full items-center gap-2 text-left">
-        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-track text-[13px]">
-          {avatarBelgi(m.muallif.avatar)}
+        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-track">
+          <EmojiBelgi e={avatarBelgi(m.muallif.avatar)} olcham={16} />
         </span>
         <span className="min-w-0 flex-1 truncate text-[12.5px] leading-tight">
           {m.muallif.ism}
@@ -502,8 +504,8 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           ) : (
             <>
               <span className="grid size-11 shrink-0 place-items-center rounded-full
-                               bg-brand-purple/15 text-[18px]">
-                🚩
+                               bg-brand-purple/15">
+                <Hajmli nom="bayroq" olcham={20} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-display text-[13px] leading-tight
@@ -684,7 +686,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               className="tugma-3d mt-2 flex w-full items-center gap-2 rounded-clay
                          bg-brand-green px-3.5 py-3 font-display text-[15px] text-white
                          shadow-clay disabled:opacity-50">
-              <span aria-hidden className="shrink-0 text-[17px] leading-none">✅</span>
+              <Hajmli nom="togri" olcham={18} />
               <span className="min-w-0 flex-1 truncate text-left">
                 {yuborilmoqda ? t("yuklanyapti") : t("masalaTekshir")}
               </span>
@@ -723,10 +725,9 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               ? "border-brand-green/40 bg-brand-green/12"
               : "border-brand-red/40 bg-brand-red/12"}`}>
           <div className="flex items-center gap-2">
-            <span aria-hidden className={`grid size-8 shrink-0 place-items-center rounded-2xl
-                                          text-[17px] leading-none ${
+            <span className={`grid size-8 shrink-0 place-items-center rounded-2xl ${
               natija.togri ? "bg-brand-green/20" : "bg-brand-red/20"}`}>
-              {natija.togri ? "🎉" : "🔁"}
+              <Hajmli nom={natija.togri ? "bayram" : "qayta"} olcham={18} jonli />
             </span>
             <p className={`min-w-0 flex-1 font-display text-[15px] ${
               natija.togri ? "text-brand-green" : "text-brand-red"}`}>
@@ -808,9 +809,9 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
                                  bg-karta p-4 shadow-clay-sm">
           <summary className="flex cursor-pointer list-none items-center gap-2
                               border-b border-track pb-2.5">
-            <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-xl
-                                         bg-brand-purple/15 text-[15px] leading-none">
-              💡
+            <span className="grid size-7 shrink-0 place-items-center rounded-xl
+                             bg-brand-purple/15">
+              <Hajmli nom="goya" olcham={16} />
             </span>
             <span className="shrink-0 font-display text-[12px] tracking-widest
                              text-brand-purple uppercase">
@@ -881,11 +882,11 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
         <div className="shadow-ichki mt-3 flex items-center gap-1.5 rounded-full bg-sahna
                         p-1.5">
           <OvozTugma
-            belgi="👍" son={sonlar.like} faol={ovozim === "like"} oz={m.meniki}
+            belgi="yoqdi" son={sonlar.like} faol={ovozim === "like"} oz={m.meniki}
             on={() => void ovozBer("like")}
           />
           <OvozTugma
-            belgi="👎" son={sonlar.dislike} faol={ovozim === "dislike"} oz={m.meniki}
+            belgi="yoqmadi" son={sonlar.dislike} faol={ovozim === "dislike"} oz={m.meniki}
             on={() => void ovozBer("dislike")}
           />
         </div>
@@ -901,9 +902,8 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
         <button type="button" onClick={() => onMuallif(m.muallif.id)}
           className="clay-press az-natija mt-3 flex w-full items-center gap-2.5 rounded-clay
                      border border-track bg-karta px-3.5 py-3 text-left shadow-clay-sm">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-track
-                           text-[18px]">
-            {avatarBelgi(m.muallif.avatar)}
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-track">
+            <EmojiBelgi e={avatarBelgi(m.muallif.avatar)} olcham={22} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[13px] leading-tight">{m.muallif.ism}</span>
@@ -997,7 +997,7 @@ function Korildi({ n }: { n: number }) {
     <span title={t("masalaKorildiIzoh")}
       className="flex shrink-0 flex-col items-center gap-0.5 border-l border-ink-dim/15
                  pl-3 text-ink-dim">
-      <span aria-hidden className="text-[13px] leading-none">👁</span>
+      <Hajmli nom="koz" olcham={14} />
       <span className="font-display text-[12px] leading-none">{n}</span>
     </span>
   );
@@ -1067,8 +1067,8 @@ function Kimlar({ id }: { id: number }) {
             {royxat.map((u) => (
               <li key={u.profilId} className="flex items-center gap-2 text-[12px]">
                 <span className="grid size-6 shrink-0 place-items-center rounded-full
-                                 bg-track text-[11px] leading-none">
-                  {avatarBelgi(u.avatar)}
+                                 bg-track">
+                  <EmojiBelgi e={avatarBelgi(u.avatar)} olcham={14} />
                 </span>
                 <span className="min-w-0 flex-1 truncate">{u.ism}</span>
                 <span className={`shrink-0 text-[11px] ${
@@ -1090,7 +1090,7 @@ function Kimlar({ id }: { id: number }) {
 
 function OvozTugma(
   { belgi, son, faol, oz, on }:
-  { belgi: string; son: number; faol: boolean; oz: boolean; on: () => void },
+  { belgi: HajmliNom; son: number; faol: boolean; oz: boolean; on: () => void },
 ) {
   return (
     <button type="button" onClick={on} disabled={oz}
@@ -1101,7 +1101,7 @@ function OvozTugma(
       className={`clay-press flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px]
                   disabled:opacity-45 ${
         faol ? "bg-brand-purple text-white shadow-clay-sm" : "bg-karta text-ink-soft"}`}>
-      <span>{belgi}</span>
+      <Hajmli nom={belgi} olcham={15} />
       <span className="tabular-nums">{son}</span>
     </button>
   );
