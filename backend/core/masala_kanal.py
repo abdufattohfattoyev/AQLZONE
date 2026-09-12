@@ -63,7 +63,7 @@ from django.utils import timezone
 from . import xabar
 from .boshqaruv import sinf_nomi
 from .kanal import kanal_nomi
-from .models import Masala, MasalaUrinish
+from .models import Masala
 from .rasm import jpeg_qil
 
 #: Kanal xabaridagi tugmalar.
@@ -118,94 +118,91 @@ def qalqon(matn: str) -> str:
     return html.escape(matn, quote=False)
 
 
-def yechganlar_soni(masala: Masala) -> int:
-    """
-    Masalani nechta odam YECHGAN — qaysi urinishda bo'lishidan
-    qat'i nazar.
-
-    ─────────────── NEGA `yechgan_soni` EMAS ───────────────
-
-    `Masala.yechgan_soni` faqat BIRINCHI urinishda topganlarni
-    sanaydi va u shunday bo'lishi kerak: ilovadagi qiyinlik foizi
-    va "Eng qiyin" ro'yxati o'sha songa quriladi. "Yuztadan o'ntasi
-    birinchi urinishda yechdi" — masalaning qiyinligini halol
-    o'lchaydigan yagona son.
-
-    Kanal posti esa o'sha sonni qarzga olgan edi va natijada
-    YOLG'ON gapirardi: serverdagi #2-masalani bir kishi yechgan,
-    postda esa hech narsa yozilmagan — chunki u birinchi urinishda
-    topmagan. Yozuvda "Masalani yechganlar" deb turib, yechganlarning
-    bir qismini ko'rsatish mumkin emas.
-
-    ─────────────── SO'ROV BIR MARTA ───────────────
-
-    Ro'yxat orqali kelgan masalada son ALLAQACHON sanalgan bo'ladi
-    (`kanal_yangila` uni bitta so'rovda oladi). Busiz o'n beshta post
-    uchun o'n beshta alohida `COUNT` ketardi.
-    """
-    tayyor = getattr(masala, "yechganlar_annot", None)
-    if tayyor is not None:
-        return tayyor
-    return MasalaUrinish.objects.filter(masala=masala, yechdi=True).count()
-
-
 def sanoq_kaliti(masala: Masala) -> str:
     """
-    Postda oxirgi marta yozilgan son.
+    Postda oxirgi marta yozilgan sonlar.
 
     Faqat SOLISHTIRISH uchun: postdagi qator o'zgardimi degan
     savolga bazadan javob beradi va Telegramga behuda so'rov
     yubormaslikka imkon beradi.
 
-    Postda faqat YECHGANLAR soni turadi, shuning uchun kalit ham
-    shu bitta sondan iborat. Ilgari uchtasi ham yozilardi
-    ("42:18:7") va u paytda ko'rishlar soni o'zgargani ham postni
-    tahrirlashga sabab bo'lardi — post esa o'zgarmasdi.
+    IKKI son, chunki qatorda ikkalasi turadi: nechta odam urinib
+    ko'rgani va nechtasi birinchi urinishda topgani. Bittasi
+    o'zgarsa ham qator boshqacha yoziladi.
     """
-    return str(yechganlar_soni(masala))
+    return f"{masala.urinish_soni}:{masala.yechgan_soni}"
 
 
-def sanoq_qatori(masala: Masala) -> str:
+def qiyinlik_qatori(masala: Masala) -> str:
     """
-    Post ostidagi jonli qator: masalani nechta odam yechgan.
+    Post ostidagi jonli qator: masala QANCHALIK QIYIN chiqdi.
 
-    ─────────────── NEGA KERAK ───────────────
+    ─────────────── NEGA SON EMAS, NISBAT ───────────────
 
-    Kanal posti chiqqandan keyin o'lik bo'lib qolardi: obunachi uni
-    ko'radi, lekin uni yana kimdir yechdimi, qiyinmi yoki osonmi —
-    hech narsa bilmaydi. Jonli sanoq esa postni tirik qiladi va
-    ikkita ish qiladi: kech kelgan odamga "bu hali ham ochiq" deb
-    aytadi, va sonning o'sishi bosishga undaydi.
+    Ilgari bu yerda "Masalani yechganlar: 7" turardi. U hisoblagich
+    edi va hech narsa aytmasdi: yettita ko'pmi yoki ozmi — bilib
+    bo'lmasdi, chunki nechta odam umuman urinib ko'rgani noma'lum.
 
-    ─────────────── NEGA BITTA SON ───────────────
+    "12 kishidan atigi 4 tasi birinchi urinishda topdi" esa
+    masalaning QIYINLIGINI aytadi. Va u boshqa ish qiladi: odam
+    o'zini o'sha to'rttaning ichiga qo'ymoqchi bo'ladi. Hisoblagich
+    hech kimni hech qayerga chorlamaydi, nisbat esa chorlaydi.
 
-    Ilgari uchta belgi bor edi: "👀 42 · ✍️ 18 · ✅ 7". Ikkita
-    muammosi chiqdi va ikkalasi ham jiddiy:
+    ─────────────── BIRINCHI URINISH ───────────────
 
-      * 👀 Telegramning O'Z ko'rish sanoqi bilan urishardi — kanal
-        posti ostida u allaqachon turadi va ikkita turli son
-        yonma-yon chiqardi;
-      * belgilarning ma'nosi tushunarsiz edi. Loyihani yozgan odam
-        ham so'radi — demak obunachi ham tushunmasdi.
+    Sanoq BIRINCHI urinishda topganlarni oladi ("oxir-oqibat
+    yechganlarni" emas). Sabab: yechim uchinchi urinishdan keyin
+    ochiladi, ya'ni "oxir-oqibat yechdi" degan son qiyinlik haqida
+    deyarli hech narsa demaydi — vaqti bor odam baribir topadi.
 
-    Endi bitta son va u SO'Z bilan atalgan. Raqamni noto'g'ri o'qib
-    bo'lmaydi.
+    ─────────────── TO'RTTA HOLAT ───────────────
 
-    ─────────────── NOL — CHAQIRIQ, YOZUV EMAS ───────────────
+    Qator masala qanday ketayotganiga qarab boshqacha gapiradi:
 
-    "Masalani yechganlar: 0" degan yozuv masalani hech kim
-    yecholmagandek ko'rsatardi va postni o'lik qilardi. Qatorni
-    umuman olib tashlash ham yaxshi emas edi: o'shanda yangi post
-    jim turardi va unda hech qanday chaqiriq bo'lmasdi.
+      hech kim urinmagan   chaqiriq — "birinchi bo'ling"
+      hech kim topolmagan  eng kuchli chaqiriq, sonsiz
+      yarmidan kami        "atigi" bilan — masala qiyin
+      ko'pchilik topgan    quruq son, maqtovsiz
 
-    Endi nol o'rnida TAKLIF turadi. Bosh sahifada turgan odam uchun
-    "birinchi bo'lish" — sondan kuchliroq sabab; keyin esa u sonni
-    o'sib borishini ko'radi va bu ikkinchi sabab bo'ladi.
+    "atigi" faqat qiyin masalada qo'shiladi. Oson masalada u
+    maqtanchoqdek eshitilardi va son o'zi yetarli.
     """
-    son = yechganlar_soni(masala)
-    if not son:
+    urinish, topgan = masala.urinish_soni, masala.yechgan_soni
+
+    if not urinish:
         return "<b>🥇 Hali hech kim yechmagan — birinchi bo'ling!</b>"
-    return f"<b>✅ Masalani yechganlar: {son}</b>"
+    if not topgan:
+        return (
+            f"<b>🔥 {urinish} kishidan hech biri birinchi urinishda topolmadi</b>"
+        )
+
+    atigi = "atigi " if topgan * 2 < urinish else ""
+    belgi = "🔥" if atigi else "✅"
+    return (
+        f"<b>{belgi} {urinish} kishidan {atigi}{topgan} tasi "
+        f"birinchi urinishda topdi</b>"
+    )
+
+
+def variantlar_qatori(masala: Masala) -> str:
+    """
+    Test variantlari — A) B) C) D).
+
+    Ilgari post variantlarni umuman ko'rsatmasdi va odam ilovaga
+    kirmasdan turib o'ylay olmasdi: post o'zi hech narsa bermay,
+    faqat havola bo'lib qolardi. Endi u kanalning o'zida o'qiladi
+    va ilovaga TEKSHIRISH uchun kiriladi.
+
+    Javob yoziladigan masalada bo'sh qaytadi — o'shanda post
+    variantsiz, lekin xuddi shu shaklda chiqadi.
+    """
+    if not masala.variantlar:
+        return ""
+    harflar = "ABCDEFGH"
+    return "\n".join(
+        f"{harflar[i]})  {qalqon(str(v))}"
+        for i, v in enumerate(masala.variantlar[:len(harflar)])
+    )
 
 
 def sarlavha(masala: Masala) -> str:
@@ -224,49 +221,76 @@ def sarlavha(masala: Masala) -> str:
     `&#x27;` ga aylantiradi va Telegram uni ochmaydi — postda
     "yo&#x27;lga" bo'lib ko'rinardi. O'zbekcha matnda apostrof esa
     deyarli har gapda bor.
-    """
-    matn = masala.matn.strip()
-    if len(matn) > MATN_JOYI:
-        kesik = matn[:MATN_JOYI]
-        bosh = kesik.rfind(" ")
-        matn = (kesik[:bosh] if bosh > MATN_JOYI * 0.6 else kesik).rstrip() + "…"
 
+    ─────────────── POSTDA NIMA BOR ───────────────
+
+      sinf · muallif      qalin emas — ma'lumot, mazmun emas
+      shart               oddiy og'irlikda
+      SAVOL               qalin — ko'z shu yerga tushadi
+      A) B) C) D)         faqat test masalasida
+      qiyinlik qatori     jonli, har yangilanishda o'zgaradi
+      teglar              postning oxiri
+
+    "Javobingizni ilovada kiriting…" degan chaqiriq OLINDI: u
+    tugmaning ostida turardi va tugmaning o'zi allaqachon shuni
+    aytadi.
+    """
     nom = sinf_nomi(masala.sinf)
     # Sinf nomi teg bo'lib ham ketadi: kanal o'sganda odam o'z sinfi
     # bo'yicha qidira oladi. Telegram tegida faqat harf, raqam va
     # pastki chiziq bo'ladi.
     teg = nom.replace("-", "").replace("'", "").replace(" ", "_")
 
-    # Sanoq qatori tegLARDAN OLDIN turadi: teglar postning oxiri va
-    # ular orasiga kirgan jonli son "yana bitta teg" bo'lib
-    # ko'rinardi.
-    sanoq = sanoq_qatori(masala)
-
-    # Muallif SARLAVHA QATORIDA, pastda emas. Kanal oqimida odam
-    # postning faqat birinchi qatorini ko'radi va "buni kim yozgan"
-    # degan savol aynan o'sha yerda tug'iladi. Pastda, teglar
-    # yonida turganda u yana bitta teg bo'lib ko'rinardi.
+    # Muallif BIRINCHI QATORDA. Kanal oqimida odam postning faqat
+    # birinchi qatorini ko'radi va "buni kim yozgan?" degan savol
+    # aynan o'sha yerda tug'iladi. Ustoz yozgan masalada nom unvoni
+    # bilan chiqadi (`Pupil.muallif_ismi`): masalani kim yozgani
+    # uning og'irligini o'zgartiradi — o'quvchi yozgani mashq,
+    # ustoz yozgani dars.
     #
-    # Ustoz yozgan masalada nom unvoni bilan chiqadi
-    # (`Pupil.muallif_ismi`) — masalani kim yozgani uning
-    # og'irligini o'zgartiradi.
+    # Bu qator QALIN EMAS. U ma'lumot, mazmun emas — ko'z avval
+    # masalaning o'ziga tushishi kerak.
     muallif = masala.muallif.pupil.muallif_ismi or masala.muallif.name
+    bosh = qalqon(nom) + (f" · {qalqon(muallif)}" if muallif else "")
 
-    # Masala MATNI qalin. Kanal oqimida post bir necha soniya ichida
-    # sur'atda o'tib ketadi va oddiy og'irlikdagi matn o'sha yerda
-    # ko'zga tashlanmaydi — postning butun mazmuni esa aynan shu
-    # matnda. Qolgan qatorlar (izoh, teglar) ataylab yengil qoladi:
-    # hammasi qalin bo'lsa, hech narsa qalin bo'lmaydi.
-    return (
-        f"<b>{qalqon(nom)}</b>"
-        + (f" · {qalqon(muallif)}" if muallif else "")
-        + "\n\n"
-        + f"<b>{qalqon(matn)}</b>\n\n"
-        f"Javobingizni ilovada kiriting — u yerda tekshiriladi va "
-        f"yechimi ochiladi.\n"
-        + (f"\n{sanoq}\n" if sanoq else "")
-        + f"\n#masala #{teg}"
-    )
+    variantlar = variantlar_qatori(masala)
+    qiyinlik = qiyinlik_qatori(masala)
+
+    # Matnga qolgan joy: variantlar allaqachon o'z ulushini oldi.
+    # Busiz uzun shartli test masalasida sarlavha Telegram
+    # chegarasidan oshib ketardi va xabar umuman ketmasdi.
+    joy = MATN_JOYI - len(variantlar)
+    matn = masala.matn.strip()
+    if len(matn) > joy:
+        kesik = matn[:joy]
+        chek = kesik.rfind(" ")
+        matn = (kesik[:chek] if chek > joy * 0.6 else kesik).rstrip() + "…"
+
+    # SAVOL ajratiladi va faqat U qalin bo'ladi.
+    #
+    # Ilgari butun shart qalin edi. Ikki abzas qalin matn ko'zni
+    # charchatadi va ichidagi savol ajralib turmaydi — hammasi
+    # qalin bo'lsa, hech narsa qalin emas.
+    #
+    # Ajratish oxirgi bo'sh qatordan: masala odatda "shart, keyin
+    # savol" tarzida yoziladi. Bo'sh qator bo'lmasa — butun matn
+    # savol deb olinadi, ya'ni qisqa masalada ham qoida buzilmaydi.
+    shart, ajratgich, savol = matn.rpartition("\n\n")
+    if not ajratgich:
+        shart, savol = "", matn
+
+    bolaklar = [bosh]
+    if shart:
+        bolaklar.append(qalqon(shart.strip()))
+    bolaklar.append(f"<b>{qalqon(savol.strip())}</b>")
+    if variantlar:
+        bolaklar.append(variantlar)
+    bolaklar.append(qiyinlik)
+    bolaklar.append(f"#masala #{teg}")
+
+    # Bo'laklar orasida BITTA bo'sh qator. Ilgari ular turli
+    # masofada turardi va post bitta uzun bo'lak bo'lib ko'rinardi.
+    return "\n\n".join(bolaklar)
 
 
 def kunlik() -> Masala | None:

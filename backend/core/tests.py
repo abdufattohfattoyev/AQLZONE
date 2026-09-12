@@ -5102,68 +5102,111 @@ class KanalSanoqTest(TestCase):
                 yechim_ochiq=True,
             )
 
-    # ─────────────────────────────────────── qator
+    # ─────────────────────────────────────── qiyinlik qatori
 
-    def test_hech_kim_yechmagan_bolsa_chaqiriq_turadi(self):
-        """"Masalani yechganlar: 0" degan yozuv masalani hech kim
-        yecholmagandek ko'rsatardi; qatorni umuman olib tashlash esa
-        yangi postni jim qoldirardi. Nol o'rnida TAKLIF turadi."""
-        self.assertIn("birinchi bo'ling", MK.sanoq_qatori(self.m))
-        self.assertNotIn("yechganlar: 0", MK.sarlavha(self.m))
+    def test_hech_kim_urinmagan_bolsa_chaqiriq_turadi(self):
+        """Nol o'rnida TAKLIF turadi. "Yechganlar: 0" degan yozuv
+        masalani hech kim yecholmagandek ko'rsatardi, qatorni
+        umuman olib tashlash esa yangi postni jim qoldirardi."""
+        self.assertIn("birinchi bo'ling", MK.qiyinlik_qatori(self.m))
 
-    def test_qator_sozi_bilan_yoziladi(self):
-        """Ilgari uchta belgi bor edi ("👀 42 · ✍️ 18 · ✅ 7") va
-        ularning ma'nosi tushunarsiz edi. Endi bitta son va u SO'Z
-        bilan atalgan."""
-        self.yechsin(self.m, 7)
-        qator = MK.sanoq_qatori(self.m)
-        self.assertIn("Masalani yechganlar: 7", qator)
-        # Ko'rish va urinish sonlari postga UMUMAN chiqmaydi:
-        # birinchisi Telegramning o'z sanoqi bilan urishardi.
+    def test_qiyin_masalada_atigi_sozi_qoshiladi(self):
+        """
+        ENG MUHIM SINOV. Qator SON emas, NISBAT ko'rsatadi.
+
+        "Yechganlar: 4" hech narsa aytmaydi — to'rtta ko'pmi yoki
+        ozmi, bilib bo'lmaydi. "12 kishidan atigi 4 tasi" esa
+        masalaning qiyinligini aytadi va odamni o'sha to'rttaning
+        ichiga qo'shilishga chorlaydi.
+        """
+        self.m.urinish_soni, self.m.yechgan_soni = 12, 4
+        q = MK.qiyinlik_qatori(self.m)
+        self.assertIn("12 kishidan", q)
+        self.assertIn("atigi 4 tasi", q)
+        self.assertIn("birinchi urinishda", q)
+
+    def test_oson_masalada_atigi_sozi_yoq(self):
+        """Ko'pchilik topgan masalada "atigi" maqtanchoqdek
+        eshitilardi — u faqat yarmidan kami topganda qo'shiladi."""
+        self.m.urinish_soni, self.m.yechgan_soni = 31, 19
+        q = MK.qiyinlik_qatori(self.m)
+        self.assertIn("31 kishidan 19 tasi", q)
+        self.assertNotIn("atigi", q)
+
+    def test_hech_kim_topolmagan_holat_alohida(self):
+        """"0 tasi topdi" g'aliz o'qilardi — bu holat o'z gapiga ega."""
+        self.m.urinish_soni, self.m.yechgan_soni = 6, 0
+        q = MK.qiyinlik_qatori(self.m)
+        self.assertIn("hech biri", q)
+        self.assertNotIn("0 tasi", q)
+
+    def test_korish_soni_postga_chiqmaydi(self):
+        """Ko'rish soni Telegramning O'Z sanoqi bilan urishardi."""
         self.m.korish_soni = 42
-        self.m.urinish_soni = 18
-        self.assertNotIn("42", MK.sanoq_qatori(self.m))
-        self.assertNotIn("18", MK.sanoq_qatori(self.m))
-
-    def test_keyingi_urinishda_yechgan_ham_sanaladi(self):
-        """
-        ENG MUHIM SINOV. Ilgari post `Masala.yechgan_soni` ga
-        qarardi — u esa faqat BIRINCHI urinishda topganlarni
-        sanaydi. Natijada serverdagi #2-masalani bir kishi yechgan,
-        postda esa hech narsa yozilmagan edi.
-
-        "Masalani yechganlar" deb turib, yechganlarning bir qismini
-        ko'rsatish mumkin emas.
-        """
-        self.yechsin(self.m, 3, birinchida=False)
-        self.m.refresh_from_db()
-        # Qiyinlik o'lchovi TEGILMAYDI — u birinchi urinishga quriladi.
-        self.assertEqual(self.m.yechgan_soni, 0)
-        # Post esa uchalasini ham sanaydi.
-        self.assertIn("Masalani yechganlar: 3", MK.sanoq_qatori(self.m))
+        self.assertNotIn("42", MK.qiyinlik_qatori(self.m))
 
     def test_qator_teglardan_oldin_turadi(self):
         """Teglar postning oxiri; ular orasiga kirgan jonli son
         "yana bitta teg" bo'lib ko'rinardi."""
-        self.yechsin(self.m, 5)
+        self.m.urinish_soni, self.m.yechgan_soni = 9, 5
         y = MK.sarlavha(self.m)
-        self.assertLess(y.index("Masalani yechganlar"), y.index("#masala"))
+        self.assertLess(y.index("kishidan"), y.index("#masala"))
 
-    def test_masala_matni_qalin(self):
-        """Kanal oqimida post sur'atda o'tib ketadi va oddiy
-        og'irlikdagi matn ko'zga tashlanmaydi — postning butun
-        mazmuni esa aynan shu matnda."""
-        self.assertIn(f"<b>{MK.qalqon(self.m.matn)}</b>", MK.sarlavha(self.m))
+    # ─────────────────────────────────────── sarlavha tuzilishi
 
-    def test_kalit_faqat_yechganlar_soniga_qaraydi(self):
-        """Ilgari kalit uchta sondan iborat edi va ko'rishlar soni
-        o'zgargani ham postni tahrirlashga sabab bo'lardi — post esa
-        o'zgarmasdi."""
+    def test_faqat_savol_qalin(self):
+        """
+        Ilgari butun shart qalin edi. Ikki abzas qalin matn ko'zni
+        charchatadi va ichidagi savol ajralib turmaydi — hammasi
+        qalin bo'lsa, hech narsa qalin emas.
+        """
+        self.m.matn = "Uzun shart bir necha gapdan iborat.\n\nSavol shu yerda?"
+        y = MK.sarlavha(self.m)
+        self.assertIn("<b>Savol shu yerda?</b>", y)
+        # Shart qalin EMAS.
+        self.assertIn("\nUzun shart bir necha gapdan iborat.\n", y)
+
+    def test_bosh_qatorsiz_masalada_hammasi_savol(self):
+        """Qisqa masalada bo'sh qator bo'lmaydi — o'shanda butun
+        matn savol deb olinadi va qoida buzilmaydi."""
+        self.m.matn = "Ikki karra ikki nechaga teng?"
+        self.assertIn("<b>Ikki karra ikki nechaga teng?</b>", MK.sarlavha(self.m))
+
+    def test_test_variantlari_postda_korinadi(self):
+        """Ilgari post variantlarni ko'rsatmasdi va odam ilovaga
+        kirmasdan turib o'ylay olmasdi — post faqat havola edi."""
+        self.m.variantlar = ["2%", "11,8%", "13,3%"]
+        y = MK.sarlavha(self.m)
+        for harf, qiymat in (("A", "2%"), ("B", "11,8%"), ("C", "13,3%")):
+            self.assertIn(f"{harf})  {qiymat}", y)
+
+    def test_javob_yoziladigan_masalada_variant_yoq(self):
+        """Bitta shakl ikkala turga ham yaraydi."""
+        self.m.variantlar = []
+        y = MK.sarlavha(self.m)
+        self.assertNotIn("A)", y)
+        self.assertIn("#masala", y)
+
+    def test_uzun_shartda_variantlarga_joy_qoladi(self):
+        """Variantlar o'z ulushini oladi, aks holda uzun shartli test
+        Telegram chegarasidan oshib ketardi va xabar ketmasdi."""
+        self.m.matn = "x" * 900 + "\n\nSavol?"
+        self.m.variantlar = ["birinchi javob", "ikkinchi javob", "uchinchi javob"]
+        y = MK.sarlavha(self.m)
+        self.assertLess(len(y), 1024)
+        self.assertIn("A)  birinchi javob", y)
+
+    def test_chaqiriq_olindi(self):
+        """Tugmaning o'zi allaqachon shuni aytadi."""
+        self.assertNotIn("Javobingizni ilovada kiriting", MK.sarlavha(self.m))
+
+    def test_kalit_ikkala_songa_qaraydi(self):
+        """Qatorda ikkala son turadi — bittasi o'zgarsa ham qator
+        boshqacha yoziladi."""
         oldin = MK.sanoq_kaliti(self.m)
         self.m.korish_soni = 99
-        self.m.urinish_soni = 50
         self.assertEqual(MK.sanoq_kaliti(self.m), oldin)
-        self.yechsin(self.m, 1)
+        self.m.urinish_soni = 5
         self.assertNotEqual(MK.sanoq_kaliti(self.m), oldin)
 
     # ─────────────────────────────────────── yangilash
@@ -5176,12 +5219,16 @@ class KanalSanoqTest(TestCase):
         s.assert_not_called()
 
     def test_ozgarsa_yangilanadi_va_eslab_qolinadi(self):
-        self.yechsin(self.m, 9)
+        # Sanoqlar `Masala` ustunlarida turadi (`urinish_soni`,
+        # `yechgan_soni`) — `yechsin` esa `MasalaUrinish` qatorlarini
+        # yasaydi va ularga tegmaydi.
+        self.m.urinish_soni, self.m.yechgan_soni = 9, 3
+        self.m.save(update_fields=["urinish_soni", "yechgan_soni"])
         with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
             self.assertEqual(MK.yangila(self.m), "yangilandi")
         s.assert_called_once()
         self.m.refresh_from_db()
-        self.assertEqual(self.m.kanal_sanoq, "9")
+        self.assertEqual(self.m.kanal_sanoq, "9:3")
 
     def test_rasmli_post_sarlavha_bilan_tahrirlanadi(self):
         # Fayl ochilmaydi — kerak bo'lgani `bool(masala.rasm)`, ya'ni
@@ -5249,11 +5296,12 @@ class KanalSanoqTest(TestCase):
             muallif=self.m.muallif, sinf=5, matn="Yangi masala kanalga chiqadi.",
             javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
         )
-        self.yechsin(yangi, 6)
+        yangi.urinish_soni, yangi.yechgan_soni = 6, 2
+        yangi.save(update_fields=["urinish_soni", "yechgan_soni"])
         with patch("core.xabar._sorov", return_value=(True, 200, "")):
             MK.yubor(yangi)
         yangi.refresh_from_db()
-        self.assertEqual(yangi.kanal_sanoq, "6")
+        self.assertEqual(yangi.kanal_sanoq, "6:2")
 
     # ─────────────────────────────────────── buyruq
 
@@ -5262,9 +5310,9 @@ class KanalSanoqTest(TestCase):
             muallif=self.m.muallif, sinf=5, matn="Sanoqlari o'zgargan masala.",
             javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
             kanal_at=timezone.now(), kanal_post_id=315,
-            kanal_sanoq="0",
+            kanal_sanoq="0:0",
+            urinish_soni=11, yechgan_soni=4,
         )
-        self.yechsin(ozgargan, 11)
         self.m.kanal_sanoq = MK.sanoq_kaliti(self.m)
         self.m.save(update_fields=["kanal_sanoq"])
 
@@ -5273,7 +5321,7 @@ class KanalSanoqTest(TestCase):
         # Faqat bittasi uchun so'rov ketdi.
         self.assertEqual(s.call_count, 1)
         ozgargan.refresh_from_db()
-        self.assertEqual(ozgargan.kanal_sanoq, "11")
+        self.assertEqual(ozgargan.kanal_sanoq, "11:4")
 
 
 class VazifaTest(TestCase):
