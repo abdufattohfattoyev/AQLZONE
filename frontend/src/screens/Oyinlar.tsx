@@ -153,7 +153,7 @@ function MaydonKarta({ bugun, onOch }: {
       // qolmagan. Shuning uchun u oddiy karta rangiga qaytadi.
       rang={oynalgan ? "bg-karta text-ink shadow-clay-sm" : "bg-brand-green text-white shadow-clay"}
       quti={oynalgan ? "bg-brand-green/15" : "bg-white/20"}
-      belgi={oynalgan ? "✅" : "🏟"} oq={!oynalgan} jonli={!oynalgan}
+      belgi={oynalgan ? "✅" : "🏟"} oq={!oynalgan} jonli={!oynalgan} halqa={!oynalgan}
       nom={oynalgan ? t("maydonBugunOynadingiz") : t("maydon")}
       izoh={oynalgan ? t("maydonNatijangiz", { n: bugun!.ball }) : t("maydonIzoh")}
       yorliq={oynalgan ? "" : t("maydonQolgan", { n: qolganSoat() })}
@@ -174,7 +174,7 @@ function DuelKarta({ onOch }: { onOch: () => void }) {
     <Chorlov
       onOch={onOch} kech={90}
       rang="bg-brand-orange text-white shadow-clay" quti="bg-white/20"
-      belgi="⚔️" oq jonli
+      belgi="⚔️" oq jonli halqa
       nom={t("duel")} izoh={t("duelIzoh")} yorliq=""
     />
   );
@@ -192,33 +192,34 @@ function DuelKarta({ onOch }: { onOch: () => void }) {
  * bittasida bor va usiz ikkinchisi pastroq bo'lib qolardi.
  */
 function Chorlov({
-  onOch, kech: ms, rang, quti, belgi, oq, jonli, nom, izoh, yorliq,
+  onOch, kech: ms, rang, quti, belgi, oq, jonli, halqa, nom, izoh, yorliq,
 }: {
   onOch: () => void; kech: number; rang: string; quti: string;
-  belgi: string; oq?: boolean; jonli?: boolean;
+  belgi: string; oq?: boolean; jonli?: boolean; halqa?: boolean;
   nom: string; izoh: string; yorliq: string;
 }) {
   return (
     <button type="button" onClick={onOch}
-      className={`az-kirish az-chorlov tugma-3d flex h-full flex-col items-start gap-2
-                  rounded-clay p-3.5 text-left ${rang}`}
+      className={`az-kirish az-chorlov tugma-3d flex h-full w-full flex-col items-start gap-1.5
+                  rounded-clay p-3 text-left ${halqa ? "az-yaltir " : ""}${rang}`}
       style={{ "--az-kech": `${ms}ms` } as CSSProperties}>
-      <span className={`grid size-11 shrink-0 place-items-center rounded-[15px] ${quti}`}>
-        <EmojiBelgi e={belgi} olcham={30} jonli={jonli}
+      <span className={`grid size-10 shrink-0 place-items-center rounded-[14px] ${quti}`}>
+        <EmojiBelgi e={belgi} olcham={26} jonli={jonli}
           className={oq ? "hajmli-oq" : undefined} />
       </span>
-      <span className="block font-display text-[15px] leading-tight">{nom}</span>
-      {/* Izoh IKKI QATORGACHA. Uchinchi qator ikkita tugmani ham
+      <span className="block font-display text-[14px] leading-tight">{nom}</span>
+      {/* Izoh IKKI QATORGACHA. Uchinchi qator ikkala tugmani ham
           cho'zib, ro'yxatni ekrandan tushirib yuborardi. */}
-      <span className="line-clamp-2 text-[11.5px] leading-snug opacity-85">{izoh}</span>
+      <span className="line-clamp-2 text-[11px] leading-snug opacity-85">{izoh}</span>
       {yorliq && (
-        <span className="mt-auto rounded-full bg-white/25 px-2 py-0.5 text-[10.5px]
+        <span className="mt-auto rounded-full bg-white/25 px-2 py-0.5 text-[10px]
                          whitespace-nowrap">
           {yorliq}
         </span>
       )}
     </button>
   );
+
 }
 
 /**
