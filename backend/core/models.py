@@ -54,6 +54,19 @@ class Pupil(models.Model):
     first_name = models.CharField(max_length=120, default="", blank=True)
     last_name = models.CharField(max_length=120, default="", blank=True)
     username = models.CharField(max_length=120, default="", blank=True)
+    #: Bu hisob USTOZNIKIMI.
+    #:
+    #: Nomi oldiga "Ustoz" qo'shiladi — ilovada ham, kanal postida
+    #: ham. Bu bezak emas: masalani kim yozgani uning OG'IRLIGINI
+    #: o'zgartiradi. O'quvchi yozgan masala — mashq, ustoz yozgani
+    #: esa dars. Bolaga qaysi biri ekanini bilish kerak.
+    #:
+    #: Nega alohida maydon, ismga "Ustoz" deb yozib qo'yilmaydi?
+    #: Chunki ism reytingda, duel ro'yxatida va profilida ham
+    #: ko'rinadi — u yerlarda unvon ortiqcha. Ustiga ism
+    #: Telegram'dan yangilanganda qo'lda yozilgan qo'shimcha
+    #: yo'qolib ketardi.
+    ustoz = models.BooleanField(default=False)
     #: Ism qo'lda tahrirlanganmi.
     #:
     #: Telegram'ga har kirganda ism o'sha yerdan yangilanadi — bu ism
@@ -190,6 +203,18 @@ class Pupil(models.Model):
     def toliq_ism(self) -> str:
         """Ism va familiya birga. Ikkalasi ham bo'sh bo'lsa — bo'sh satr."""
         return " ".join(x for x in (self.first_name, self.last_name) if x)
+
+    @property
+    def muallif_ismi(self) -> str:
+        """
+        Masala ustida ko'rinadigan nom — unvoni bilan.
+
+        FAQAT muallif sifatida ishlatiladi. Reyting va duel ro'yxati
+        oddiy `toliq_ism` ni oladi: u yerda hamma teng qatnashchi va
+        unvon begona ko'rinardi.
+        """
+        ism = self.toliq_ism
+        return f"Ustoz {ism}" if self.ustoz and ism else ism
 
     @property
     def royxatdan_otgan(self) -> bool:

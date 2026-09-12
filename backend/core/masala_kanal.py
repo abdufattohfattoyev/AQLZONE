@@ -242,14 +242,26 @@ def sarlavha(masala: Masala) -> str:
     # ko'rinardi.
     sanoq = sanoq_qatori(masala)
 
+    # Muallif SARLAVHA QATORIDA, pastda emas. Kanal oqimida odam
+    # postning faqat birinchi qatorini ko'radi va "buni kim yozgan"
+    # degan savol aynan o'sha yerda tug'iladi. Pastda, teglar
+    # yonida turganda u yana bitta teg bo'lib ko'rinardi.
+    #
+    # Ustoz yozgan masalada nom unvoni bilan chiqadi
+    # (`Pupil.muallif_ismi`) — masalani kim yozgani uning
+    # og'irligini o'zgartiradi.
+    muallif = masala.muallif.pupil.muallif_ismi or masala.muallif.name
+
     # Masala MATNI qalin. Kanal oqimida post bir necha soniya ichida
     # sur'atda o'tib ketadi va oddiy og'irlikdagi matn o'sha yerda
     # ko'zga tashlanmaydi — postning butun mazmuni esa aynan shu
     # matnda. Qolgan qatorlar (izoh, teglar) ataylab yengil qoladi:
     # hammasi qalin bo'lsa, hech narsa qalin bo'lmaydi.
     return (
-        f"<b>{qalqon(nom)}</b>\n\n"
-        f"<b>{qalqon(matn)}</b>\n\n"
+        f"<b>{qalqon(nom)}</b>"
+        + (f" · {qalqon(muallif)}" if muallif else "")
+        + "\n\n"
+        + f"<b>{qalqon(matn)}</b>\n\n"
         f"Javobingizni ilovada kiriting — u yerda tekshiriladi va "
         f"yechimi ochiladi.\n"
         + (f"\n{sanoq}\n" if sanoq else "")

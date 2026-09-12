@@ -4192,6 +4192,64 @@ class MasalaKanalTest(TestCase):
 
 @override_settings(BOT_USERNAME="aqlzone_bot", KANAL="aqlzone",
                    ADMIN_TG=["973358587"], BOT_TOKEN="sinov:token")
+class MuallifUnvoniTest(TestCase):
+    """
+    Muallif nomi va "Ustoz" unvoni.
+
+    Diqqat qaratilgan joy — UNVON QAYERDA CHIQADI VA QAYERDA
+    CHIQMAYDI. U masala ustida ma'no beradi ("buni ustoz yozgan,
+    ya'ni bu dars"), reyting va duel ro'yxatida esa begona: u
+    yerda hamma teng qatnashchi. Ikkalasi bitta `toliq_ism` dan
+    o'qilsa, unvon hamma joyga tarqab ketardi.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.oquvchi = Pupil.objects.create(first_name="Dilnoza", last_name="Rahimova")
+        self.ustoz = Pupil.objects.create(first_name="Fattoyev Abdujabbor", ustoz=True)
+
+    def test_oddiy_muallifda_unvon_yoq(self):
+        self.assertEqual(self.oquvchi.muallif_ismi, "Dilnoza Rahimova")
+
+    def test_ustozda_unvon_qoshiladi(self):
+        self.assertEqual(self.ustoz.muallif_ismi, "Ustoz Fattoyev Abdujabbor")
+
+    def test_reytingdagi_ism_tegilmaydi(self):
+        """`toliq_ism` — hamma joy uchun oddiy nom, unvonsiz."""
+        self.assertEqual(self.ustoz.toliq_ism, "Fattoyev Abdujabbor")
+
+    def test_ismsiz_hisobda_unvon_yolgiz_qolmaydi(self):
+        """Ismi bo'sh ustozda "Ustoz" yolg'iz chiqib qolmasin."""
+        bosh = Pupil.objects.create(ustoz=True)
+        self.assertEqual(bosh.muallif_ismi, "")
+
+    def test_javobda_unvonli_ism_keladi(self):
+        pr = self.ustoz.asosiy_profil()
+        m = Masala.objects.create(
+            muallif=pr, sinf=8, matn="Ishchi daromadining 17% ini olardi.",
+            javob="11,8%", yechim="2/17 = 11,8%.", holat=Masala.TASDIQ,
+        )
+        d = MS.masala_json(m, pr)
+        self.assertEqual(d["muallif"]["ism"], "Ustoz Fattoyev Abdujabbor")
+
+    def test_kanal_postida_muallif_bor(self):
+        """Muallif SARLAVHA qatorida — post ochilmasdan ko'rinadi."""
+        for pupil, kutilgan in (
+            (self.oquvchi, "Dilnoza Rahimova"),
+            (self.ustoz, "Ustoz Fattoyev Abdujabbor"),
+        ):
+            with self.subTest(muallif=kutilgan):
+                m = Masala.objects.create(
+                    muallif=pupil.asosiy_profil(), sinf=8,
+                    matn="Ishchi daromadining 17% ini olardi.",
+                    javob="11,8%", yechim="2/17.", holat=Masala.TASDIQ,
+                )
+                birinchi = MK.sarlavha(m).splitlines()[0]
+                self.assertIn(kutilgan, birinchi)
+                # Sinf nomi ham o'sha qatorda qoladi.
+                self.assertIn("8-sinf", birinchi)
+
+
 class MasalaKanalTugmaTest(TestCase):
     """
     Ilovadagi «Kanalga yuborish» tugmasi.
@@ -4321,7 +4379,7 @@ class MasalaKanalTugmaTest(TestCase):
                                  **self.auth(self.token))
         # Rasmsiz masalada `sendMessage` ketadi va u xabar raqamini
         # bermaydi — u holda kanalning o'ziga havola qoladi.
-        self.assertEqual(r.json()["havola"], "https://t.me/aqlzone")
+        self.assertEqual(r.json()["havola"], f"https://t.me/{settings.KANAL}")
 
     def test_rasmli_post_aynan_ozining_havolasini_beradi(self):
         self.adminga_aylantir()
@@ -4329,7 +4387,8 @@ class MasalaKanalTugmaTest(TestCase):
         self.m.kanal_at = timezone.now()
         self.m.save(update_fields=["kanal_post_id", "kanal_at"])
         r = self.client.get(f"/api/v1/masalalar/{self.m.pk}", **self.auth(self.token))
-        self.assertEqual(r.json()["kanal"]["havola"], "https://t.me/aqlzone/314")
+        self.assertEqual(r.json()["kanal"]["havola"],
+                         f"https://t.me/{settings.KANAL}/314")
 
     def test_kattalar_va_olimpiada_nomi_togri(self):
         """200 va 201 ham `>= 100` — tekshirilmasa "100-sinf geometriya"

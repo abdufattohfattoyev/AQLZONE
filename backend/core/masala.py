@@ -229,12 +229,14 @@ def muallif_json(pr: Profile) -> dict:
     Masala muallifi — ro'yxatda va masala ustida ko'rinadi.
 
     Ism reyting bilan BIR XIL manbadan olinadi (`Pupil`), ya'ni bir
-    odam ikki joyda ikki xil nom bilan ko'rinmaydi.
+    odam ikki joyda ikki xil nom bilan ko'rinmaydi. Farqi bitta:
+    bu yerda unvon ham qo'shiladi ("Ustoz …"), chunki masalani kim
+    yozgani uning og'irligini o'zgartiradi.
     """
     pupil = pr.pupil
     return {
         "id": pr.pk,
-        "ism": pupil.toliq_ism or pr.name,
+        "ism": pupil.muallif_ismi or pr.name,
         "avatar": pr.avatar,
     }
 
