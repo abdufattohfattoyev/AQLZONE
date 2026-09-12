@@ -609,15 +609,28 @@ export const ILOVA = {
 
   maydon: {
     rang: "yashil", jon: "az-nafas", davom: "3s", emoji: ["🏟"],
+    // Stadion YUQORIDAN emas, YON-TEPADAN ko'rinadi. Tik yuqoridan
+    // qaralganda u oddiy ovalga aylanadi va oq holatda (rangli tugma
+    // ustida) bitta dog' bo'lib qolardi — ichidagi hech narsa
+    // bilinmasdi. Yon-tepadan qaralganda esa minora devori
+    // ko'rinadi va shakl "idish" bo'lib o'qiladi.
     chiz: (y) => (<>
       {soya(y, 15, 34.4, 0.26)}
-      <path d="M2 19v5.6c0 6.6 8 12 18 12s18-5.4 18-12V19z" fill={y.s} />
-      <ellipse cx="20" cy="19" rx="18" ry="12" fill={y.v} />
-      <ellipse cx="20" cy="19" rx="13" ry="8.2" fill={y.t} />
-      <ellipse cx="20" cy="19" rx="5.4" ry="3.4" fill="none" stroke="#fff"
-        strokeWidth="1.4" opacity=".65" />
-      <path d="M20 10.8v16.4" stroke="#fff" strokeWidth="1.4" opacity=".65" />
-      {yalt(11, 14, 4.4, 2.2, -12, 0.28)}
+      {/* tashqi devor */}
+      <path d="M2 17v6.4c0 6.6 8 12 18 12s18-5.4 18-12V17z" fill={y.s} />
+      <ellipse cx="20" cy="17" rx="18" ry="11.4" fill={y.v} />
+      {/* minora — devordan ichkarida, quyuqroq halqa */}
+      <ellipse cx="20" cy="17" rx="14.6" ry="9" fill={y.t} />
+      <ellipse cx="20" cy="17" rx="11.4" ry="6.8" fill={y.s} opacity=".45" />
+      {/* maydonning o'zi */}
+      <ellipse cx="20" cy="17" rx="10" ry="5.8" fill={y.v} />
+      {/* Faqat markaz doirasi va o'rta chiziq. Darvoza qutilari ham
+          chizilgandi, lekin belgi ekranda 30 piksel bo'lib chiqadi va
+          u yerda ular bir-biriga qo'shilib, kir dog'ga aylanardi. */}
+      <ellipse cx="20" cy="17" rx="3.6" ry="2.2" fill="none"
+        stroke="#fff" strokeWidth="1.6" opacity=".85" />
+      <path d="M20 11.2v11.6" stroke="#fff" strokeWidth="1.5" opacity=".85" />
+      {yalt(10.4, 12.4, 4.4, 2, -14, 0.3)}
     </>),
   },
 

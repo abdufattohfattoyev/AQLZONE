@@ -213,7 +213,11 @@ export function Hajmli({ nom, olcham = 24, jonli, className, nomi }: Props) {
         </linearGradient>
         <linearGradient id={`${kalit}s`} x1="0" y1="0" x2="1" y2=".6">
           <stop offset="0" stopColor="var(--bd)" />
-          <stop offset="1" stopColor="#000" stopOpacity=".5" />
+          {/* Eng to'q nuqta ham TOKEN. Qora qotirib qo'yilganda oq
+              variantda (`hajmli-oq`) belgi oqarmay, yon tomoni
+              qop-qora bo'lib qolardi — rangli tugma ustida u dog'
+              bo'lib ko'rinardi. */}
+          <stop offset="1" stopColor="var(--bx, #000)" stopOpacity=".5" />
         </linearGradient>
         <radialGradient id={`${kalit}r`} cx=".34" cy=".28" r=".85">
           <stop offset="0" stopColor="var(--bl)" />

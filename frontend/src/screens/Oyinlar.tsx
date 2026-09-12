@@ -76,45 +76,37 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onDuel }: {
         </button>
       )}
 
-      <div className="az-kirish mt-4 text-center">
-        <span className="mx-auto grid size-[72px] place-items-center rounded-[24px]
+      {/* Sarlavha YONMA-YON, ustma-ust emas.
+          Markazga tizilgan katta belgi va uning ostidagi sarlavha
+          ekranning uchdan birini yeb qo'yardi va asosiy ikkita
+          tugma ekrandan tushib ketardi. Sahifaning maqsadi esa
+          o'sha tugmalarda, sarlavhada emas. */}
+      <div className="az-kirish mt-3 flex items-center gap-3">
+        <span className="grid size-12 shrink-0 place-items-center rounded-[18px]
                          bg-brand-purple/15">
-          <EmojiBelgi e="🧩" olcham={48} />
+          <EmojiBelgi e="🧩" olcham={32} />
         </span>
-        <h1 className="mt-3 text-[22px]">{t("oyinlarBolim")}</h1>
-        <p className="mt-1 text-[13px] leading-snug text-ink-soft">{t("oyinlarIzoh")}</p>
+        <span className="min-w-0">
+          <h1 className="text-[19px] leading-tight">{t("oyinlarBolim")}</h1>
+          <p className="mt-0.5 text-[12px] leading-snug text-ink-soft">{t("oyinlarIzoh")}</p>
+        </span>
       </div>
 
-      {/* ---- bugungi maydon ----
-          Ekrandagi ENG KATTA tugma va u ro'yxatdan OLDIN turadi. Butun
-          qayta tizishning ma'nosi shu: odam ekranni ochganda sakkizta
-          emas, BITTA qaror ko'rsin. */}
-      <MaydonKarta bugun={bugun} onOch={onMaydon} />
+      {/* ---- ikkita chorlov, YONMA-YON ----
 
-      {/* ---- do'st bilan bellashuv ----
-          Maydondan KEYIN va mashqdan OLDIN. Tartib tasodifiy emas:
-          maydonda odam yolg'iz o'ynaydi, bellashuvda do'stini kutadi,
-          mashqda esa hech kim kutmaydi. Ya'ni ro'yxat "eng tez
-          boshlanadigan"dan "eng ko'p tayyorgarlik talab qiladigan"ga
-          qarab emas, BOG'LIQLIK bo'yicha tizilgan. */}
-      <button type="button" onClick={onDuel}
-        className="az-kirish tugma-3d mt-3 flex w-full items-center gap-3.5 rounded-clay
-                   bg-brand-orange p-4 text-left text-white shadow-clay"
-        style={{ "--az-kech": "90ms" } as CSSProperties}>
-        {/* Ekrandagi YAGONA chorlov — shuning uchun qilichlar qimirlaydi.
-            Pastdagi mashq ro'yxatida bunday qilinmaydi: u yerda sakkizta
-            belgi birga sakrab, ro'yxatni o'qib bo'lmasdi. */}
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20">
-          <EmojiBelgi e="⚔️" olcham={32} jonli className="hajmli-oq" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-display text-[17px] leading-tight">{t("duel")}</span>
-          <span className="mt-0.5 block truncate text-[12.5px] text-white/85">
-            {t("duelIzoh")}
-          </span>
-        </span>
-        <Icon name="chevron" size={18} className="shrink-0 text-white/80" />
-      </button>
+          Ilgari ular ustma-ust ikkita keng tugma edi va ikkalasi
+          birga ekranning yarmini egallardi — pastdagi o'yin ro'yxati
+          esa umuman ko'rinmasdi, ya'ni odam sahifaning yarmini
+          bilmay qolardi.
+
+          Yonma-yon turgani mazmunan ham to'g'ri: ikkalasi ham
+          "bugun bir marta" turidagi taklif va ular bir-birining
+          MUQOBILI — yolg'iz o'ynaysizmi yoki do'st bilanmi.
+          Ustma-ust turganda esa ular ketma-ketlikdek o'qilardi. */}
+      <div className="mt-4 grid grid-cols-2 items-stretch gap-2.5">
+        <MaydonKarta bugun={bugun} onOch={onMaydon} />
+        <DuelKarta onOch={onDuel} />
+      </div>
 
       <h2 className="az-kirish mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
         {t("maydonMashq")}
@@ -152,42 +144,79 @@ function MaydonKarta({ bugun, onOch }: {
   bugun: ReturnType<typeof maydonNatija>;
   onOch: () => void;
 }) {
-  if (bugun) {
-    return (
-      <button type="button" onClick={onOch}
-        className="az-kirish tugma-3d mt-5 flex w-full items-center gap-3.5 rounded-clay
-                   bg-karta p-4 text-left shadow-clay">
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl
-                         bg-brand-green/15">
-          <EmojiBelgi e="✅" olcham={30} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-display text-[16px] leading-tight">
-            {t("maydonBugunOynadingiz")}
-          </span>
-          <span className="mt-0.5 block text-[12.5px] text-ink-soft">
-            {t("maydonNatijangiz", { n: bugun.ball })}
-          </span>
-        </span>
-        <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
-      </button>
-    );
-  }
+  const oynalgan = Boolean(bugun);
+  return (
+    <Chorlov
+      onOch={onOch} kech={0}
+      // O'ynab bo'lingandan keyin karta CHORLOV emas, XABAR bo'ladi:
+      // to'yingan yashil "hozir bos" deb turadi va bosadigan narsa
+      // qolmagan. Shuning uchun u oddiy karta rangiga qaytadi.
+      rang={oynalgan ? "bg-karta text-ink shadow-clay-sm" : "bg-brand-green text-white shadow-clay"}
+      quti={oynalgan ? "bg-brand-green/15" : "bg-white/20"}
+      belgi={oynalgan ? "✅" : "🏟"} oq={!oynalgan} jonli={!oynalgan}
+      nom={oynalgan ? t("maydonBugunOynadingiz") : t("maydon")}
+      izoh={oynalgan ? t("maydonNatijangiz", { n: bugun!.ball }) : t("maydonIzoh")}
+      yorliq={oynalgan ? "" : t("maydonQolgan", { n: qolganSoat() })}
+    />
+  );
+}
 
+/**
+ * Do'st bilan bellashuv kartasi.
+ *
+ * Maydonning YONIDA, ostida emas. Ikkalasi bir turdagi taklif —
+ * "bugun bir marta" — va ular bir-birining muqobili: yolg'iz
+ * o'ynaysizmi yoki do'st bilanmi. Ustma-ust turganda esa ular
+ * ketma-ketlikdek o'qilardi.
+ */
+function DuelKarta({ onOch }: { onOch: () => void }) {
+  return (
+    <Chorlov
+      onOch={onOch} kech={90}
+      rang="bg-brand-orange text-white shadow-clay" quti="bg-white/20"
+      belgi="⚔️" oq jonli
+      nom={t("duel")} izoh={t("duelIzoh")} yorliq=""
+    />
+  );
+}
+
+/**
+ * Sahifaning ikkita asosiy chorlovi — bitta shakl.
+ *
+ * Ikkalasi alohida yozilsa, ular albatta bir-biridan chetga chiqib
+ * ketardi: biriga yorliq qo'shiladi, ikkinchisining ichki bo'shlig'i
+ * o'zgaradi va yonma-yon turgan ikkita tugma turli bo'yda bo'lib
+ * qolardi. Bu yerda esa farq faqat rang va yozuvda.
+ *
+ * Bo'yi TENGLASHADI (`h-full` va `items-stretch`): yorliq faqat
+ * bittasida bor va usiz ikkinchisi pastroq bo'lib qolardi.
+ */
+function Chorlov({
+  onOch, kech: ms, rang, quti, belgi, oq, jonli, nom, izoh, yorliq,
+}: {
+  onOch: () => void; kech: number; rang: string; quti: string;
+  belgi: string; oq?: boolean; jonli?: boolean;
+  nom: string; izoh: string; yorliq: string;
+}) {
   return (
     <button type="button" onClick={onOch}
-      className="az-kirish tugma-3d az-yaltir mt-5 flex w-full items-center gap-3.5 rounded-clay
-                 bg-brand-green p-4 text-left text-white shadow-clay">
-      <span className="grid size-14 shrink-0 place-items-center rounded-[20px] bg-white/20">
-        <EmojiBelgi e="🏟" olcham={36} className="hajmli-oq" />
+      className={`az-kirish az-chorlov tugma-3d flex h-full flex-col items-start gap-2
+                  rounded-clay p-3.5 text-left ${rang}`}
+      style={{ "--az-kech": `${ms}ms` } as CSSProperties}>
+      <span className={`grid size-11 shrink-0 place-items-center rounded-[15px] ${quti}`}>
+        <EmojiBelgi e={belgi} olcham={30} jonli={jonli}
+          className={oq ? "hajmli-oq" : undefined} />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-display text-[19px] leading-tight">{t("maydon")}</span>
-        <span className="mt-0.5 block text-[12.5px] text-white/85">{t("maydonIzoh")}</span>
-      </span>
-      <span className="shrink-0 rounded-full bg-white/25 px-2.5 py-1 text-[11.5px] whitespace-nowrap">
-        {t("maydonQolgan", { n: qolganSoat() })}
-      </span>
+      <span className="block font-display text-[15px] leading-tight">{nom}</span>
+      {/* Izoh IKKI QATORGACHA. Uchinchi qator ikkita tugmani ham
+          cho'zib, ro'yxatni ekrandan tushirib yuborardi. */}
+      <span className="line-clamp-2 text-[11.5px] leading-snug opacity-85">{izoh}</span>
+      {yorliq && (
+        <span className="mt-auto rounded-full bg-white/25 px-2 py-0.5 text-[10.5px]
+                         whitespace-nowrap">
+          {yorliq}
+        </span>
+      )}
     </button>
   );
 }

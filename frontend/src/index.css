@@ -1628,7 +1628,7 @@
    Yashil tugmadagi yashil belgi fonga singib ketardi — rang u yerda
    ma'no bermaydi, chunki tugmaning O'ZI allaqachon o'sha rangda.
    Shuning uchun belgi oqarib, faqat shakl bo'lib qoladi. */
-.hajmli-oq { --bl: #ffffff; --bm: #eef2f6; --bd: #b9c6d2; }
+.hajmli-oq { --bl: #ffffff; --bm: #f2f6fa; --bd: #cfdae4; --bx: #7d8f9e; }
 .hajmli-rasm.hajmli-oq { filter: brightness(0) invert(1) opacity(0.92); }
 
 .az-pb-rasm {
@@ -1660,4 +1660,45 @@
 @media (prefers-reduced-motion: reduce) {
   .az-eshik-belgi { transition: none; }
   .clay-press:active .az-eshik-belgi { transform: none; }
+}
+
+/* ============================================================
+   IKKITA CHORLOV — o'yinlar sahifasining tepasi
+   ============================================================
+   Bu ikkita tugma sahifaning MAQSADI: qolgani ro'yxat, bular esa
+   taklif. Shuning uchun ular tinch turmaydi — sekin "nafas oladi".
+
+   Nur juda sekin (4.5s) va juda yumshoq. Tez pulsatsiya bolalar
+   ilovasida bir zumda charchatadi va odam uni o'chirilgan reklama
+   deb o'qiy boshlaydi. Bu yerdagi maqsad e'tiborni TORTISH emas,
+   ko'z sahifaga tushganda birinchi o'shanga qadalishi. */
+@keyframes az-chorlov-nur {
+  0%, 100% { box-shadow: var(--az-soya), 0 0 0 0 rgb(255 255 255 / 0.22); }
+  50%      { box-shadow: var(--az-soya), 0 0 0 5px rgb(255 255 255 / 0); }
+}
+
+.az-chorlov {
+  /* Kirish animatsiyasi tugagach boshlanadi — ikkalasi bir vaqtda
+     ishlasa, karta paydo bo'layotganda allaqachon pulsatsiya
+     qilardi va harakat chalkash chiqardi. */
+  animation-delay: calc(var(--az-kech, 0ms)), calc(var(--az-kech, 0ms) + 520ms);
+}
+.az-chorlov:not(.bg-karta) {
+  animation-name: az-kirish, az-chorlov-nur;
+  animation-duration: 420ms, 4.5s;
+  animation-timing-function: cubic-bezier(0.34, 1.3, 0.64, 1), ease-in-out;
+  animation-iteration-count: 1, infinite;
+  /* `forwards` — `backwards` EMAS. `.az-kirish` ning asosida
+     `opacity: 0` turadi va kirish animatsiyasi uni `forwards` bilan
+     ushlab qoladi. `backwards` qo'yilganda animatsiya tugashi bilan
+     karta o'sha nol shaffoflikka qaytib, butunlay yo'qolardi. */
+  animation-fill-mode: forwards, none;
+}
+
+/* Bosilganda ichkariga bosiladi va nur bir zum to'xtaydi: bosayotgan
+   odam allaqachon e'tibor bergan, chorlash esa unga qaratilgan. */
+.az-chorlov:active { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .az-chorlov:not(.bg-karta) { animation: none; }
 }
