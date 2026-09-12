@@ -187,7 +187,12 @@ def masala_json(masala: Masala, kim: Profile, *, ochiq: bool | None = None) -> d
         "muallif": muallif_json(masala.muallif),
         "meniki": oz,
         "urinishSoni": masala.urinish_soni,
-        "yechganSoni": masala.yechgan_soni,
+        # Oxir-oqibat topganlar — nechanchi urinishda bo'lishidan
+        # qat'i nazar (`Masala.yechdi_soni`). Birinchi urinishda
+        # topganlar soni ham bor, lekin u FAQAT qiyinlik foizini
+        # hisoblashda ishlatiladi: odamni "yecholmagan" deb
+        # ko'rsatish uning mehnatini inkor qilish bo'lardi.
+        "yechganSoni": masala.yechdi_soni,
         # Nechta ODAM ochgan. Urinishdan boshqa son: ko'p ochilib kam
         # yechilgan masala qiziq-u qiyin, kam ochilgani esa ro'yxatda
         # ko'zga tashlanmayapti (`MasalaKorish` ga qarang).
@@ -341,9 +346,15 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
         # boshqa urinish tushsa, sanoq yo'qolmasin.
         Masala.objects.filter(pk=masala.pk).update(
             urinish_soni=F("urinish_soni") + 1,
+            # `yechgan_soni` — faqat BIRINCHI urinishda topgan;
+            # `yechdi_soni` — umuman topgan. Birinchi urinishda
+            # ikkalasi birga oshadi, keyingilarida esa faqat
+            # ikkinchisi (pastdagi izohga qarang).
             yechgan_soni=F("yechgan_soni") + (1 if togri else 0),
+            yechdi_soni=F("yechdi_soni") + (1 if togri else 0),
         )
-        masala.refresh_from_db(fields=["urinish_soni", "yechgan_soni"])
+        masala.refresh_from_db(
+            fields=["urinish_soni", "yechgan_soni", "yechdi_soni"])
     else:
         urinish.soni = F("soni") + 1
         urinish.save(update_fields=["soni"])
@@ -365,6 +376,12 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
     if togri and not urinish.yechdi:
         urinish.yechdi = True
         yangilanadi.append("yechdi")
+        # Birinchi urinishda bu allaqachon oshirilgan, shuning uchun
+        # faqat KEYINGI urinishlarda qo'shiladi.
+        if not birinchi:
+            Masala.objects.filter(pk=masala.pk).update(
+                yechdi_soni=F("yechdi_soni") + 1)
+            masala.refresh_from_db(fields=["yechdi_soni"])
 
     if yangilanadi:
         urinish.save(update_fields=yangilanadi)
@@ -375,7 +392,7 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
         "urinishim": urinish.soni,
         "yechimOchiq": urinish.yechim_ochiq,
         "urinishSoni": masala.urinish_soni,
-        "yechganSoni": masala.yechgan_soni,
+        "yechganSoni": masala.yechdi_soni,
         # Birinchi urinishning natijasi keyin o'zgarmaydi — mijoz
         # shuni ko'rsatadi ("siz buni yechgansiz" yoki "yecholmagansiz").
         "birinchiTogri": urinish.togri,

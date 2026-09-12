@@ -1418,7 +1418,7 @@ MASALA_TARTIB = {
     "yangi": ["-created_at"],
     "zor": ["-like_soni", "-created_at"],
     "qiyin": ["yechgan_soni", "-urinish_soni", "-created_at"],
-    "koplik": ["-urinish_soni", "-created_at"],
+    "koplik": ["-yechdi_soni", "-urinish_soni", "-created_at"],
 }
 
 
@@ -1683,7 +1683,7 @@ def masala_yechganlar(request, pk: int):
     return Response({
         "royxat": M.yechganlar(m),
         "urinishSoni": m.urinish_soni,
-        "yechganSoni": m.yechgan_soni,
+        "yechganSoni": m.yechdi_soni,
         "korishSoni": m.korish_soni,
     })
 
@@ -1802,7 +1802,7 @@ def masala_muallif(request, pk: int):
     ovozlar = M.ovozlarim(men, [m.pk for m in qator])
 
     jami = Masala.objects.filter(muallif=pr, holat=Masala.TASDIQ).aggregate(
-        soni=Count("id"), yechilgan=Sum("yechgan_soni"), like=Sum("like_soni"),
+        soni=Count("id"), yechilgan=Sum("yechdi_soni"), like=Sum("like_soni"),
     )
     return Response({
         "muallif": M.muallif_json(pr),

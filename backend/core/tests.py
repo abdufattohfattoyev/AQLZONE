@@ -3938,7 +3938,10 @@ class MasalaTest(TestCase):
 
     def test_muallif_sahifasi(self):
         m = self.masala_yasa()
-        Masala.objects.filter(pk=m.pk).update(yechgan_soni=3, like_soni=2)
+        # Muallif sahifasi OXIR-OQIBAT yechganlarni sanaydi
+        # (`yechdi_soni`): muallif uchun muhimi nechta odam uning
+        # masalasini yecha olgani, nechanchi urinishda emas.
+        Masala.objects.filter(pk=m.pk).update(yechdi_soni=3, like_soni=2)
         # Tasdiqlanmagani begona odamga ko'rinmasligi kerak.
         self.masala_yasa(holat=Masala.KUTMOQDA)
 
@@ -5119,26 +5122,47 @@ class KanalSanoqTest(TestCase):
         masalaning qiyinligini aytadi va odamni o'sha to'rttaning
         ichiga qo'shilishga chorlaydi.
         """
-        self.m.urinish_soni, self.m.yechgan_soni = 12, 4
+        self.m.urinish_soni, self.m.yechdi_soni = 12, 4
         q = MK.qiyinlik_qatori(self.m)
         self.assertIn("12 kishidan", q)
         self.assertIn("atigi 4 tasi", q)
-        self.assertIn("birinchi urinishda", q)
 
     def test_oson_masalada_atigi_sozi_yoq(self):
         """Ko'pchilik topgan masalada "atigi" maqtanchoqdek
         eshitilardi — u faqat yarmidan kami topganda qo'shiladi."""
-        self.m.urinish_soni, self.m.yechgan_soni = 31, 19
+        self.m.urinish_soni, self.m.yechdi_soni = 31, 19
         q = MK.qiyinlik_qatori(self.m)
         self.assertIn("31 kishidan 19 tasi", q)
         self.assertNotIn("atigi", q)
 
     def test_hech_kim_topolmagan_holat_alohida(self):
         """"0 tasi topdi" g'aliz o'qilardi — bu holat o'z gapiga ega."""
-        self.m.urinish_soni, self.m.yechgan_soni = 6, 0
+        self.m.urinish_soni, self.m.yechdi_soni = 6, 0
         q = MK.qiyinlik_qatori(self.m)
-        self.assertIn("hech biri", q)
+        self.assertIn("hali hech kim yecholmadi", q)
         self.assertNotIn("0 tasi", q)
+
+    def test_hammasi_yechgan_bolsa_nisbat_berilmaydi(self):
+        """"3 kishidan 3 tasi yechdi" o'zi bilan o'zi gaplashadi."""
+        self.m.urinish_soni, self.m.yechdi_soni = 3, 3
+        q = MK.qiyinlik_qatori(self.m)
+        self.assertIn("3 kishi yechdi", q)
+        self.assertNotIn("kishidan", q)
+
+    def test_keyingi_urinishda_yechgan_ham_sanaladi(self):
+        """
+        ENG MUHIM SINOV. Qator OXIR-OQIBAT yechganlarni sanaydi.
+
+        Ilgari u faqat birinchi urinishda topganlarni olardi va
+        ikkinchi urinishda topgan odam "yecholmagan" tomonda
+        qolardi — bu uning mehnatini inkor qilish edi.
+        """
+        self.m.urinish_soni, self.m.yechgan_soni, self.m.yechdi_soni = 5, 1, 4
+        q = MK.qiyinlik_qatori(self.m)
+        # Birinchi urinishdagi son (1) EMAS, yechganlar soni (4).
+        self.assertIn("5 kishidan 4 tasi", q)
+        # Qiyinlik foizi esa hamon birinchi urinishga quriladi.
+        self.assertEqual(self.m.qiyinlik, 20)
 
     def test_korish_soni_postga_chiqmaydi(self):
         """Ko'rish soni Telegramning O'Z sanoqi bilan urishardi."""
@@ -5148,7 +5172,7 @@ class KanalSanoqTest(TestCase):
     def test_qator_teglardan_oldin_turadi(self):
         """Teglar postning oxiri; ular orasiga kirgan jonli son
         "yana bitta teg" bo'lib ko'rinardi."""
-        self.m.urinish_soni, self.m.yechgan_soni = 9, 5
+        self.m.urinish_soni, self.m.yechdi_soni = 9, 5
         y = MK.sarlavha(self.m)
         self.assertLess(y.index("kishidan"), y.index("#masala"))
 
@@ -5222,8 +5246,8 @@ class KanalSanoqTest(TestCase):
         # Sanoqlar `Masala` ustunlarida turadi (`urinish_soni`,
         # `yechgan_soni`) — `yechsin` esa `MasalaUrinish` qatorlarini
         # yasaydi va ularga tegmaydi.
-        self.m.urinish_soni, self.m.yechgan_soni = 9, 3
-        self.m.save(update_fields=["urinish_soni", "yechgan_soni"])
+        self.m.urinish_soni, self.m.yechdi_soni = 9, 3
+        self.m.save(update_fields=["urinish_soni", "yechdi_soni"])
         with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
             self.assertEqual(MK.yangila(self.m), "yangilandi")
         s.assert_called_once()
@@ -5296,8 +5320,8 @@ class KanalSanoqTest(TestCase):
             muallif=self.m.muallif, sinf=5, matn="Yangi masala kanalga chiqadi.",
             javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
         )
-        yangi.urinish_soni, yangi.yechgan_soni = 6, 2
-        yangi.save(update_fields=["urinish_soni", "yechgan_soni"])
+        yangi.urinish_soni, yangi.yechdi_soni = 6, 2
+        yangi.save(update_fields=["urinish_soni", "yechdi_soni"])
         with patch("core.xabar._sorov", return_value=(True, 200, "")):
             MK.yubor(yangi)
         yangi.refresh_from_db()
@@ -5311,7 +5335,7 @@ class KanalSanoqTest(TestCase):
             javob="1", yechim="1 ga teng.", holat=Masala.TASDIQ,
             kanal_at=timezone.now(), kanal_post_id=315,
             kanal_sanoq="0:0",
-            urinish_soni=11, yechgan_soni=4,
+            urinish_soni=11, yechdi_soni=4,
         )
         self.m.kanal_sanoq = MK.sanoq_kaliti(self.m)
         self.m.save(update_fields=["kanal_sanoq"])

@@ -1046,7 +1046,21 @@ class Masala(models.Model):
     #: Har safar sanasak, ellikta masalali sahifa ellikta guruh
     #: so'rovini keltirib chiqarardi. Bu yerda esa u bitta son.
     urinish_soni = models.IntegerField(default=0)
+    #: BIRINCHI urinishda topganlar. Faqat QIYINLIK o'lchovi uchun.
     yechgan_soni = models.IntegerField(default=0)
+    #: Oxir-oqibat topganlar — nechanchi urinishda bo'lishidan
+    #: QAT'I NAZAR.
+    #:
+    #: `yechgan_soni` dan farqi shundaki, u masalaning qiyinligini
+    #: o'lchaydi, bu esa nechta odam MAQSADGA YETGANINI aytadi.
+    #: Ikkalasi ikki xil savolga javob beradi va bittasi bilan
+    #: ikkalasini ham bera olmaydi: birinchi urinishda topmagan,
+    #: lekin keyin topgan odamni "yecholmagan" deb sanash uning
+    #: mehnatini inkor qilish bo'lardi.
+    #:
+    #: Ro'yxatda va kanal postida SHU son ko'rinadi, qiyinlik foizi
+    #: esa `yechgan_soni` ga quriladi.
+    yechdi_soni = models.IntegerField(default=0)
 
     #: Masalani nechta ODAM ochgan (`MasalaKorish` ga qarang).
     #:

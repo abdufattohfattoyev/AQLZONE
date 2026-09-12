@@ -127,10 +127,10 @@ def sanoq_kaliti(masala: Masala) -> str:
     yubormaslikka imkon beradi.
 
     IKKI son, chunki qatorda ikkalasi turadi: nechta odam urinib
-    ko'rgani va nechtasi birinchi urinishda topgani. Bittasi
-    o'zgarsa ham qator boshqacha yoziladi.
+    ko'rgani va nechtasi yechgani. Bittasi o'zgarsa ham qator
+    boshqacha yoziladi.
     """
-    return f"{masala.urinish_soni}:{masala.yechgan_soni}"
+    return f"{masala.urinish_soni}:{masala.yechdi_soni}"
 
 
 def qiyinlik_qatori(masala: Masala) -> str:
@@ -148,40 +148,48 @@ def qiyinlik_qatori(masala: Masala) -> str:
     o'zini o'sha to'rttaning ichiga qo'ymoqchi bo'ladi. Hisoblagich
     hech kimni hech qayerga chorlamaydi, nisbat esa chorlaydi.
 
-    ─────────────── BIRINCHI URINISH ───────────────
+    ─────────────── QAYSI URINISH BO'LISHIDAN QAT'I NAZAR ───────────────
 
-    Sanoq BIRINCHI urinishda topganlarni oladi ("oxir-oqibat
-    yechganlarni" emas). Sabab: yechim uchinchi urinishdan keyin
-    ochiladi, ya'ni "oxir-oqibat yechdi" degan son qiyinlik haqida
-    deyarli hech narsa demaydi — vaqti bor odam baribir topadi.
+    Sanoq masalani OXIR-OQIBAT topganlarni oladi. Ilgari u faqat
+    birinchi urinishda topganlarni sanardi va o'shanda ikkinchi
+    urinishda topgan odam "yecholmagan" tomonda qolardi — bu uning
+    mehnatini inkor qilish edi.
 
-    ─────────────── TO'RTTA HOLAT ───────────────
+    Qiyinlik foizi esa hamon BIRINCHI urinishga quriladi
+    (`Masala.qiyinlik`): u masalaning o'zi haqidagi o'lchov va
+    "kim yetib keldi" degan savoldan boshqa narsani so'raydi.
+
+    ─────────────── BESHTA HOLAT ───────────────
 
     Qator masala qanday ketayotganiga qarab boshqacha gapiradi:
 
       hech kim urinmagan   chaqiriq — "birinchi bo'ling"
-      hech kim topolmagan  eng kuchli chaqiriq, sonsiz
+      hech kim yecholmagan eng kuchli chaqiriq
       yarmidan kami        "atigi" bilan — masala qiyin
-      ko'pchilik topgan    quruq son, maqtovsiz
+      ko'pchilik yechgan   quruq nisbat, maqtovsiz
+      hammasi yechgan      nisbatsiz — u g'aliz o'qilardi
 
     "atigi" faqat qiyin masalada qo'shiladi. Oson masalada u
     maqtanchoqdek eshitilardi va son o'zi yetarli.
     """
-    urinish, topgan = masala.urinish_soni, masala.yechgan_soni
+    urinish, topgan = masala.urinish_soni, masala.yechdi_soni
 
     if not urinish:
         return "<b>🥇 Hali hech kim yechmagan — birinchi bo'ling!</b>"
     if not topgan:
         return (
-            f"<b>🔥 {urinish} kishidan hech biri birinchi urinishda topolmadi</b>"
+            f"<b>🔥 {urinish} kishi urinib ko'rdi — hali hech kim yecholmadi</b>"
         )
+
+    # Hamma yechgan bo'lsa NISBAT bermaydi: "3 kishidan 3 tasi
+    # yechdi" degan gap o'zi bilan o'zi gaplashadi va g'aliz
+    # o'qiladi. Bunday paytda son o'zi yetadi.
+    if topgan == urinish:
+        return f"<b>✅ {topgan} kishi yechdi</b>"
 
     atigi = "atigi " if topgan * 2 < urinish else ""
     belgi = "🔥" if atigi else "✅"
-    return (
-        f"<b>{belgi} {urinish} kishidan {atigi}{topgan} tasi "
-        f"birinchi urinishda topdi</b>"
-    )
+    return f"<b>{belgi} {urinish} kishidan {atigi}{topgan} tasi yechdi</b>"
 
 
 def variantlar_qatori(masala: Masala) -> str:
