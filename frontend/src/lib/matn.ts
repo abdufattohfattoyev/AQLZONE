@@ -418,6 +418,11 @@ const S = {
   masalaZorlar: ["Eng zo'r", "Лучшие"],
   masalaKoplar: ["Ko'p yechilgan", "Часто решают"],
   masalaHammaSinf: ["Hammasi", "Все"],
+  // Tanlagich ustidagi yorliqlar. Ular qiymatdan ALOHIDA kerak:
+  // uchta tanlagich yonma-yon turganda "Hammasi" ham sinfniki,
+  // ham holatniki bo'lishi mumkin.
+  masalaSinfYorliq: ["Sinf", "Класс"],
+  masalaHolatYorliq: ["Holat", "Статус"],
   /* --- yechilganlik filtri --- */
   masalaHolatHammasi: ["Barchasi", "Все"],
   masalaHolatYechilmagan: ["Yechilmagan", "Нерешённые"],

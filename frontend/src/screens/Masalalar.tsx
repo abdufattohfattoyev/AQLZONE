@@ -45,6 +45,7 @@
  * ham, qulf ham yo'q.
  */
 import { useCallback, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
@@ -85,16 +86,6 @@ const HOLATLAR: { kod: Holat; ic?: IconName; nom: () => string }[] = [
   { kod: "yechgan", ic: "check", nom: () => t("masalaHolatYechgan") },
 ];
 
-/**
- * Yonlamasiga suriladigan tasma.
- *
- * Chetlari EKRAN chetiga chiqadi (`-mx-4 px-4`): shunda oxirgi
- * tugmacha chetga tegib, "yana bor" degan ishorani beradi. Ichki
- * chegara ichida u to'satdan uzilgandek ko'rinardi.
- */
-const TASMA =
-  "-mx-4 flex overflow-x-auto px-4 [-ms-overflow-style:none] " +
-  "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 interface Props {
   onOch: (id: number) => void;
@@ -124,8 +115,26 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
   const [teskari, setTeskari] = useState(false);
   const [holat, setHolat] = useState<"yuklanmoqda" | "tayyor" | "xato">("yuklanmoqda");
 
-  /** Joriy saralashning nomi — natija qatorida yozuv bo'lib turadi. */
-  const tartibNomi = (TARTIBLAR.find((x) => x.kod === tartib) ?? TARTIBLAR[0]).nom();
+  /**
+   * Qaysi tanlov varag'i ochiq — yoki hech qaysi.
+   *
+   * Uchala filtr bitta qatorda, uchta tanlagichda turadi va
+   * ro'yxatlari varaqda ochiladi. Ilgari uchalasi ham ekranda
+   * ochiq tugmachalar tasmasi edi: uch qator bir xil og'irlikda
+   * turib, ekranning yarmini yerdi va sinf ro'yxati (o'n oltita)
+   * baribir tasmaga sig'may, yonlamasiga surilardi — ya'ni
+   * "8-sinf" ni topish uchun surish kerak bo'lardi.
+   */
+  const [varaq, setVaraq] = useState<"tartib" | "sinf" | "holat" | null>(null);
+
+  /** Tanlagichlarda ko'rinadigan joriy qiymatlar. */
+  const joriyTartib = TARTIBLAR.find((x) => x.kod === tartib) ?? TARTIBLAR[0];
+  const joriyHolat = HOLATLAR.find((x) => x.kod === yechilganlik) ?? HOLATLAR[0];
+  const sinfNomi = sinf === null
+    ? t("masalaHammaSinf")
+    : (SINFLAR.find((x) => x.kod === sinf)?.nom ?? t("masalaHammaSinf"));
+
+  const och = (v: "tartib" | "sinf" | "holat") => { tebrat("tanlov"); setVaraq(v); };
 
   /**
    * Ro'yxatni oladi — bitta SAHIFANI.
@@ -234,58 +243,64 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
         </button>
       </div>
 
-      {/* ---- saralash ----
-          Tugmachalar ko'tarilgan, tanlangani binafsha: bu ilovaning
-          o'z tili — hamma joyda tanlov shunday ko'rsatiladi. */}
-      <div className={`${TASMA} mt-3 gap-1.5`}>
-        {TARTIBLAR.map((x) => {
-          const faol = tartib === x.kod;
-          return (
-            <button key={x.kod} type="button" onClick={() => almashtir(x.kod)}
-              className={`clay-press flex h-8 shrink-0 items-center gap-1.5 rounded-full
-                          px-3.5 text-[12.5px] whitespace-nowrap shadow-clay-sm ${
-                faol
-                  ? "bg-brand-purple font-display text-white"
-                  : "bg-karta text-ink-soft"}`}>
-              <EmojiBelgi e={x.belgi} olcham={13} />
-              {x.nom()}
-            </button>
-          );
-        })}
+      {/* ---- uchta tanlagich, bitta qator ----
+          Har biri yorliq (nima tanlanmoqda) va qiymat (nima
+          tanlangan) ko'rsatadi. Yorliq shart: qiymatning o'zi
+          ("Hammasi") qaysi filtrniki ekanini aytmaydi. */}
+      <div className="mt-3 flex gap-1.5">
+        <Tanlagich yorliq={t("masalaSaralash")} on={() => och("tartib")}
+          qiymat={<><EmojiBelgi e={joriyTartib.belgi} olcham={12} />{joriyTartib.nom()}</>} />
+        <Tanlagich yorliq={t("masalaSinfYorliq")} on={() => och("sinf")}
+          qiymat={sinfNomi} />
+        <Tanlagich yorliq={t("masalaHolatYorliq")} on={() => och("holat")}
+          qiymat={joriyHolat.nom()} />
       </div>
 
-      {/* ---- sinf filtri ----
-          Saralashdan PASTROQ og'irlikda: past, soyasiz va botiq.
-          Ikkalasi bir xil bo'lsa, ekran tepasida sakkizta bir xil
-          tugmacha turib, qaysi biri nima qilishi bilinmasdi. */}
-      <div className={`${TASMA} mt-2 gap-1.5`}>
-        <Filtr faol={sinf === null} on={() => sinfniTanla(null)}>
-          {t("masalaHammaSinf")}
-        </Filtr>
-        {SINFLAR.map((s) => (
-          <Filtr key={s.kod} faol={sinf === s.kod} on={() => sinfniTanla(s.kod)}>
-            {s.nom}
-          </Filtr>
-        ))}
-      </div>
+      {varaq === "tartib" && (
+        <TanlovVaraq sarlavha={t("masalaSaralash")} onYop={() => setVaraq(null)}>
+          {TARTIBLAR.map((x) => (
+            <Tanlov key={x.kod} faol={tartib === x.kod}
+              on={() => { almashtir(x.kod); setVaraq(null); }}>
+              <EmojiBelgi e={x.belgi} olcham={14} />{x.nom()}
+            </Tanlov>
+          ))}
+          {/* Yo'nalish SHU YERDA, chunki u saralashning bir qismi:
+              "Yangi" ni tanlab bo'lib, "eng eskisidan" deyish
+              mumkin. Alohida tugma bo'lganda u qaysi saralashga
+              tegishli ekani ko'rinmasdi. */}
+          <span className="mt-1 w-full border-t border-track pt-2.5" />
+          <Tanlov faol={teskari} on={teskariAlmashtir}>
+            <Icon name="chevron" size={13}
+              className={`transition-transform ${teskari ? "-rotate-90" : "rotate-90"}`} />
+            {t(teskari ? "masalaEskidan" : "masalaYangidan")}
+          </Tanlov>
+        </TanlovVaraq>
+      )}
 
-      {/* ---- yechilganlik filtri ----
-          Uchta tanlov va ular boshqa ikkalasidan FARQ QILADI: sinf
-          masalaning o'zi haqida, bu esa SIZ haqingizda. Shuning
-          uchun ular alohida qatorda va boshqa shaklda turadi. */}
-      <div className={`${TASMA} mt-2 gap-1.5`}>
-        {HOLATLAR.map((x) => (
-          <button key={x.kod} type="button" onClick={() => holatniTanla(x.kod)}
-            className={`clay-press flex h-7 shrink-0 items-center gap-1 rounded-full px-3
-                        text-[11.5px] whitespace-nowrap transition-colors ${
-              yechilganlik === x.kod
-                ? "bg-brand-green font-display text-white"
-                : "shadow-ichki bg-sahna text-ink-dim"}`}>
-            {x.ic && <Icon name={x.ic} size={12} />}
-            {x.nom()}
-          </button>
-        ))}
-      </div>
+      {varaq === "sinf" && (
+        <TanlovVaraq sarlavha={t("masalaSinfYorliq")} onYop={() => setVaraq(null)}>
+          <Tanlov faol={sinf === null} on={() => { sinfniTanla(null); setVaraq(null); }}>
+            {t("masalaHammaSinf")}
+          </Tanlov>
+          {SINFLAR.map((x) => (
+            <Tanlov key={x.kod} faol={sinf === x.kod}
+              on={() => { sinfniTanla(x.kod); setVaraq(null); }}>
+              {x.nom}
+            </Tanlov>
+          ))}
+        </TanlovVaraq>
+      )}
+
+      {varaq === "holat" && (
+        <TanlovVaraq sarlavha={t("masalaHolatYorliq")} onYop={() => setVaraq(null)}>
+          {HOLATLAR.map((x) => (
+            <Tanlov key={x.kod} faol={yechilganlik === x.kod}
+              on={() => { holatniTanla(x.kod); setVaraq(null); }}>
+              {x.ic && <Icon name={x.ic} size={13} />}{x.nom()}
+            </Tanlov>
+          ))}
+        </TanlovVaraq>
+      )}
 
       {/* ---- natija qatori ----
           Son filtr qatoridan SHU YERGA ko'chdi. Sabab: u filtrning
@@ -293,39 +308,18 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
           "yana bitta tugma" bo'lib ko'rinardi va sonni o'qish uchun
           tasmani surish kerak bo'lardi.
 
-          O'ngda saralash nomi turadi — u ham natijaga tegishli:
-          "nechta topildi va qanday tartibda" degan ikki savol bitta
-          qatorda javob topadi. Bu YOZUV, tugma emas: saralash
-          yuqorida allaqachon tanlanadi va ikkinchi boshqaruv
-          "qaysi biri ishlayapti?" degan savol tug'dirardi. */}
+          SARALASH NOMI BU YERDAN OLINDI. U tepada ham turardi va
+          bitta narsa ikki joyda ko'rinardi — odam "ikkalasi
+          boshqa-boshqa narsami?" deb o'ylardi. Yo'nalish tugmasi
+          ham shu yerda edi, endi u saralash varag'ining ichida:
+          yo'nalish saralashning bir qismi, alohida boshqaruv
+          emas. */}
       {holat === "tayyor" && jami > 0 && (
         <div className="mt-2.5 flex items-center gap-2 px-1 text-[12px]">
           <span className="flex min-w-0 items-center gap-1.5 text-ink-soft">
             <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-brand-green" />
             <span className="truncate">{t("masalaTopildi", { n: jami })}</span>
           </span>
-          {/* Yo'nalish tugmasi — o'sha saralashni teskarisiga
-              o'giradi ("Yangi" → eng eskisi birinchi).
-
-              Bu yuqoridagi tasmaning takrori EMAS: u yerda QAYSI
-              saralash ekani tanlanadi, bu yerda esa uning
-              YO'NALISHI. Alohida "eski" va "oson" kodlari qo'shish
-              ham mumkin edi, lekin u paytda tasmada sakkizta
-              tugmacha bo'lardi va ularning yarmi ikkinchi yarmining
-              aksi ekani faqat nomidan taxmin qilinardi.
-
-              Tor ekranda "Saralash:" yozuvi ketadi, o'q qoladi:
-              o'qning o'zi yo'nalishni to'liq aytadi. */}
-          <button type="button" onClick={teskariAlmashtir}
-            aria-label={t(teskari ? "masalaEskidan" : "masalaYangidan")}
-            className="clay-press ml-auto flex shrink-0 items-center gap-1 rounded-full
-                       bg-karta px-2.5 py-1 text-ink-dim shadow-clay-sm">
-            <span className="hidden min-[360px]:inline">{t("masalaSaralash")}:</span>
-            <b className="font-display text-brand-purple">{tartibNomi}</b>
-            <Icon name="chevron" size={13}
-              className={`shrink-0 text-brand-purple transition-transform ${
-                teskari ? "-rotate-90" : "rotate-90"}`} />
-          </button>
         </div>
       )}
 
@@ -448,17 +442,88 @@ function Bosh({ katta, onYangi }: { katta: boolean; onYangi: () => void }) {
   );
 }
 
-function Filtr(
-  { faol, on, children }: { faol: boolean; on: () => void; children: React.ReactNode },
+/**
+ * Filtr tanlagichi — yorliq va joriy qiymat.
+ *
+ * Yorliq ("Saralash", "Sinf") SHART. Qiymatning o'zi qaysi
+ * filtrniki ekanini aytmaydi: uchta tanlagich yonma-yon turganda
+ * "Hammasi" ham sinfniki, ham holatniki bo'lishi mumkin.
+ *
+ * Uchalasi bir xil kenglikda (`flex-1`) va ichidagi uzun nom
+ * qisqartiriladi: "Ko'p yechilgan" va "Barchasi" yonma-yon
+ * turganda birinchisi ikkinchisini siqib qo'ymasin.
+ */
+function Tanlagich(
+  { yorliq, qiymat, on }: { yorliq: string; qiymat: ReactNode; on: () => void },
 ) {
   return (
     <button type="button" onClick={on}
-      className={`clay-press flex h-7 shrink-0 items-center rounded-full px-3 text-[11.5px]
-                  whitespace-nowrap transition-colors ${
+      className="clay-press shadow-ichki flex min-w-0 flex-1 items-center gap-1.5
+                 rounded-2xl bg-sahna px-2.5 py-1.5 text-left">
+      <span className="min-w-0 flex-1">
+        <span className="block text-[9.5px] tracking-wider text-ink-dim uppercase">
+          {yorliq}
+        </span>
+        <span className="flex min-w-0 items-center gap-1 truncate font-display text-[12.5px]
+                         leading-tight text-ink">
+          {qiymat}
+        </span>
+      </span>
+      <Icon name="chevron" size={12} className="shrink-0 rotate-90 text-ink-dim" />
+    </button>
+  );
+}
+
+/**
+ * Tanlov varag'i — filtr ro'yxati ochiladigan oyna.
+ *
+ * Ro'yxat ekranda emas, VARAQDA: sinflar o'n oltita va ular hech
+ * qanday tasmaga sig'maydi. Varaqda esa ular o'ralib joylashadi va
+ * hammasi bir vaqtda ko'rinadi — ya'ni "8-sinf" ni qidirib surish
+ * kerak bo'lmaydi.
+ *
+ * Fonga bosilsa yopiladi. Bu yerda tanga sarflanmaydi, ya'ni
+ * e'tiborsiz bosishning narxi yo'q (`components/TangaSorov.tsx`
+ * dagi holat boshqacha va u yerda fon yopmaydi).
+ */
+function TanlovVaraq(
+  { sarlavha, onYop, children }:
+  { sarlavha: string; onYop: () => void; children: ReactNode },
+) {
+  return (
+    <div onClick={onYop} role="dialog" aria-modal="true" aria-label={sarlavha}
+      className="az-kanal-fon fixed inset-0 z-[80] grid place-items-end bg-black/45
+                 backdrop-blur-[2px] sm:place-items-center sm:p-4">
+      <div onClick={(e) => e.stopPropagation()}
+        className="az-kanal w-full rounded-t-clay bg-karta p-4 shadow-clay
+                   sm:max-w-[420px] sm:rounded-clay">
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="font-display text-[15px] leading-tight">{sarlavha}</h2>
+          <button type="button" onClick={onYop} aria-label={t("yopish")}
+            className="clay-press ml-auto grid size-7 shrink-0 place-items-center rounded-full
+                       bg-sahna text-ink-dim">
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-1.5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/** Varaq ichidagi bitta tanlov. */
+function Tanlov(
+  { faol, on, children }: { faol: boolean; on: () => void; children: ReactNode },
+) {
+  return (
+    <button type="button" onClick={on}
+      className={`clay-press flex items-center gap-1.5 rounded-full px-3.5 py-1.5
+                  text-[12.5px] whitespace-nowrap ${
         faol
-          ? "bg-brand-blue font-display text-white"
-          : "shadow-ichki bg-sahna text-ink-dim"}`}>
+          ? "bg-brand-purple font-display text-white shadow-clay-sm"
+          : "shadow-ichki bg-sahna text-ink-soft"}`}>
       {children}
     </button>
   );
 }
+
