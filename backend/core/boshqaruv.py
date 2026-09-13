@@ -245,7 +245,9 @@ def panel(request):
         raise Http404
     if not kirganmi(request):
         return kirish(request)
-    return render(request, "boshqaruv/panel.html", statistika(davr(request)))
+    return render(
+        request, "boshqaruv/panel.html", statistika(davr(request)) | bolim("panel")
+    )
 
 
 # -------------------------------------------------------------- e'lonlar
@@ -280,7 +282,7 @@ def reklama(request):
         return _reklama_amal(request)
 
     xabar = request.GET.get("xabar", "")[:200]
-    return render(request, "boshqaruv/reklama.html", {
+    return render(request, "boshqaruv/reklama.html", bolim("reklama") | {
         "royxat": Reklama.objects.order_by("-created_at")[:REKLAMA_ROYXAT],
         "qancha": R.qancha_odam(),
         "bloklagan": Pupil.objects.filter(bot_bloklandi_at__isnull=False).count(),
@@ -1032,7 +1034,33 @@ def statistika(kunlar: int = 30) -> dict:
             # "Necha kun ko'rinmadi" — sanadan ko'ra tezroq o'qiladi.
             "jimlik": (bugun - max(kun_toplam)).days if kun_toplam else None,
             "onlayn": bool(oxirgi and oxirgi >= onlayn_vaqt),
+            # Oxirgi ko'rinishdan beri o'tgan DAQIQA. Ikki ishi bor:
+            # jadvalda "5 daqiqa oldin" bo'lib chiqadi va saralash
+            # kalitini beradi — sana matn bo'lib solishtirilganda
+            # tartib buzilardi.
+            "korindi": (
+                int((hozir - oxirgi).total_seconds() // 60) if oxirgi else None
+            ),
         })
+
+    # Tartib: ONLAYNLAR BIRINCHI, keyin oxirgi ko'rinishi bo'yicha.
+    #
+    # Bazadan kelgan tartib ham shunga yaqin edi, lekin faqat
+    # TASODIFAN: onlayn odamning `last_seen` i eng yangi bo'lgani
+    # uchun. `last_seen` esa har so'rovda emas, ma'lum oraliqda
+    # yangilanadi — ya'ni hozir o'ynayotgan bola bir necha daqiqa
+    # oldin kirgan odamdan pastda turib qolishi mumkin edi. Bu yerda
+    # esa "onlayn" belgisining o'zi birinchi kalit.
+    foydalanuvchilar.sort(
+        key=lambda f: (not f["onlayn"], f["korindi"] if f["korindi"] is not None else 10**9)
+    )
+
+    # --- hozir ilovada turganlar ---
+    #
+    # Alohida ro'yxat: "nechta" degan son "kim" degan savolga javob
+    # bermaydi, admin esa ko'pincha aynan ikkinchisini so'raydi —
+    # ayni paytda kim o'ynayotganini ko'rish uchun.
+    onlaynlar = [f for f in foydalanuvchilar if f["onlayn"]]
 
     # --- eng ko'p mashq qilganlar ---
     faollar = [f for f in sorted(foydalanuvchilar, key=lambda f: -f["darslar"])[:10] if f["darslar"]]
@@ -1114,6 +1142,7 @@ def statistika(kunlar: int = 30) -> dict:
         "yetkazish": yetkazish,
         "tillar": tillar,
         "foydalanuvchilar": foydalanuvchilar,
+        "onlaynlar": onlaynlar,
         "faollar": faollar,
         "oqim": oqim,
         "platformalar": platformalar,
@@ -1229,7 +1258,9 @@ def duellar(request):
         raise Http404
     if not kirganmi(request):
         return kirish(request)
-    return render(request, "boshqaruv/duel.html", duel_statistika(davr(request)))
+    return render(
+        request, "boshqaruv/duel.html", duel_statistika(davr(request)) | bolim("duel")
+    )
 
 
 # ------------------------------------------------------------- masalalar
@@ -1287,7 +1318,7 @@ def masalalar(request):
     sanoq = dict(
         Masala.objects.values_list("holat").annotate(n=Count("id"))
     )
-    return render(request, "boshqaruv/masala.html", {
+    return render(request, "boshqaruv/masala.html", bolim("navbat") | {
         "royxat": qs[:MASALA_ROYXAT],
         "holat": holat,
         "sanoq": {

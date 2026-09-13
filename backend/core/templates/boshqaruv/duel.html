@@ -1,5 +1,7 @@
-{% extends "boshqaruv/asos.html" %}
+{% extends "boshqaruv/qobiq.html" %}
 {% block sarlavha %}Duellar{% endblock %}
+{% block sahifa_nomi %}Duellar{% endblock %}
+{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }} · so'nggi {{ kunlar }} kun{% endblock %}
 
 {% comment %}
 Sahifaning tartibi bitta savolga bo'ysunadi: CHAQIRUVLAR JAVOB
@@ -12,27 +14,15 @@ ochib, tugatmasdan chiqib ketganlar. Ular ko'p bo'lsa muammo duelda
 emas, o'yinning o'zida.
 {% endcomment %}
 
-{% block tana %}
-<header class="tepa">
-  <div class="nishon">AZ</div>
-  <div>
-    <h1>Duellar</h1>
-    <div class="vaqt">{{ yangilangan|date:"d.m.Y H:i" }} · so'nggi {{ kunlar }} kun</div>
+{% block asboblar %}
+  <div class="tanlagich">
+    <a class="{% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
+    <a class="{% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
+    <a class="{% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
   </div>
-  <div class="ong">
-    <div class="tanlagich">
-      <a class="{% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
-      <a class="{% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
-      <a class="{% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
-    </div>
-    <a class="tugma" href="/boshqaruv">Panel</a>
-    <a class="tugma" href="/boshqaruv/reklama">E'lonlar</a>
-    <a class="tugma" href="/boshqaruv/masalalar">Masalalar</a>
-    <a class="tugma" href="/boshqaruv/chiqish">Chiqish</a>
-  </div>
-</header>
+{% endblock %}
 
-<main class="ichki">
+{% block ichki %}
 
   <div class="setka k4">
     <div class="karta olchov">
@@ -178,5 +168,4 @@ emas, o'yinning o'zida.
     {% endif %}
   </section>
 
-</main>
 {% endblock %}

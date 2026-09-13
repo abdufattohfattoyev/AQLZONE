@@ -2732,6 +2732,202 @@ class BoshqaruvDuelTest(TestCase):
         self.assertIn("30 : 41", matn)
 
 
+@override_settings(BOSHQARUV_YONIQ=True, ADMIN_TG=[ADMIN_ID])
+class MasalaHisobotTest(TestCase):
+    """
+    Masalalar bo'limining hisoboti — /boshqaruv/masalalar/hisobot.
+
+    Sahifaning asosiy va'dasi bitta: **bugun kim yechdi**. Shuning
+    uchun testlarning ko'pi aynan shu sonning halolligini tekshiradi:
+
+      * kecha urinib BUGUN topgan odam bugungi sonda turadimi,
+      * bitta odam ikkita masala yechsa "ikki odam" bo'lib
+        ko'rinmaydimi,
+      * yecholmagan urinish yechim deb sanalmaydimi.
+
+    Oxirgi ikkitasi arzimasdek tuyuladi, lekin aynan shunday xatolar
+    hisobotni jimgina yolg'onga aylantiradi: raqam bor, u ishonarli
+    ko'rinadi va uni hech kim tekshirmaydi.
+    """
+
+    def setUp(self):
+        from . import masala_hisobot as MH
+        self.MH = MH
+
+        self.muallif = Pupil.objects.create(
+            first_name="Anvar", last_name="Qodirov", registered_at=timezone.now()
+        ).asosiy_profil()
+        self.aziz = Pupil.objects.create(
+            first_name="Aziz", registered_at=timezone.now()
+        ).asosiy_profil()
+        self.malika = Pupil.objects.create(
+            first_name="Malika", registered_at=timezone.now()
+        ).asosiy_profil()
+
+    def masala(self, javob="12", **kw):
+        n = Masala.objects.count() + 1
+        return Masala.objects.create(
+            muallif=self.muallif, raqam=n, sinf=5,
+            matn=f"Sinov masalasi {n}", javob=javob, yechim="Yechim",
+            holat=kw.pop("holat", Masala.TASDIQ), **kw,
+        )
+
+    def kir(self):
+        self.client.cookies[boshqaruv.COOKIE] = signing.dumps(
+            {"ok": True, "tg": ADMIN_ID}, salt=boshqaruv.TUZ
+        )
+
+    # ------------------------------------------------------------ bugun
+
+    def test_bugun_kim_yechdi(self):
+        m = self.masala()
+        MS.javob_ber(m, self.aziz, "12")            # topdi
+        MS.javob_ber(m, self.malika, "99")          # topolmadi
+
+        h = self.MH.hisobot(30)
+        self.assertEqual(h["bugun"]["yechganlar"], 1)
+        self.assertEqual(h["bugun"]["yechishlar"], 1)
+        # Urinib ko'rgan IKKI kishi — yecholmagani ham urindi.
+        self.assertEqual(h["bugun"]["uringanlar"], 2)
+        self.assertEqual([b["ism"] for b in h["bugungilar"]], ["Aziz"])
+        self.assertTrue(h["bugungilar"][0]["birinchida"])
+
+    def test_kecha_uringan_bugun_topsa_bugun_sanaladi(self):
+        """
+        Eng nozik joy: urinish qatori KECHA yaralgan.
+
+        `created_at` bo'yicha sanalganda bu yechim kechagi bo'lib
+        qolardi va "bugun nechta odam yechdi" har kuni kamaytirib
+        ko'rsatardi — aynan shuning uchun `yechdi_at` qo'shilgan.
+        """
+        m = self.masala()
+        MS.javob_ber(m, self.aziz, "notogri")
+        MasalaUrinish.objects.filter(masala=m, profile=self.aziz).update(
+            created_at=timezone.now() - timedelta(days=1)
+        )
+
+        MS.javob_ber(m, self.aziz, "12")            # bugun topdi
+
+        h = self.MH.hisobot(30)
+        self.assertEqual(h["bugun"]["yechganlar"], 1)
+        self.assertEqual([b["ism"] for b in h["bugungilar"]], ["Aziz"])
+        # Birinchi urinishda emas — belgisi ham shunday turishi kerak.
+        self.assertFalse(h["bugungilar"][0]["birinchida"])
+        # Urinish esa KECHAGI kun bilan qoladi.
+        self.assertEqual(h["bugun"]["uringanlar"], 0)
+
+    def test_bir_odam_ikki_masala_bir_marta_sanaladi(self):
+        for _ in range(2):
+            MS.javob_ber(self.masala(), self.aziz, "12")
+
+        h = self.MH.hisobot(30)
+        self.assertEqual(h["bugun"]["yechganlar"], 1)   # odam
+        self.assertEqual(h["bugun"]["yechishlar"], 2)   # yechim
+
+    def test_yecholmagan_yechim_deb_sanalmaydi(self):
+        m = self.masala()
+        MS.javob_ber(m, self.aziz, "xato")
+
+        h = self.MH.hisobot(30)
+        self.assertEqual(h["bugun"]["yechganlar"], 0)
+        self.assertEqual(h["bugungilar"], [])
+        self.assertEqual(h["umumiy"]["yechuvchilar"], 0)
+        self.assertEqual(h["umumiy"]["uringanlar"], 1)
+
+    # ---------------------------------------------------------- voronka
+
+    def test_voronka_qadamlari_ichma_ich(self):
+        m = self.masala()
+        MS.korildi(m, self.aziz)
+        MS.korildi(m, self.malika)
+        MS.javob_ber(m, self.aziz, "12")
+
+        h = self.MH.hisobot(30)
+        nomlar = [q["son"] for q in h["voronka"]]
+        # ko'rdi 2 → urindi 1 → yechdi 1 → birinchida 1
+        self.assertEqual(nomlar, [2, 1, 1, 1])
+        # Ikkinchi qadamda bitta odam yo'qolgan.
+        self.assertEqual(h["voronka"][1]["tushdi"], 1)
+        self.assertEqual(h["voronka"][1]["tushdi_foiz"], 50)
+
+    # -------------------------------------------------------- jadvallar
+
+    def test_yechuvchilar_jadvali(self):
+        a = self.masala()
+        b = self.masala()
+        MS.javob_ber(a, self.aziz, "12")            # birinchi urinishda
+        MS.javob_ber(b, self.aziz, "xato")
+        MS.javob_ber(b, self.aziz, "12")            # ikkinchisida
+
+        h = self.MH.hisobot(30)
+        qator = h["yechuvchilar"][0]
+        self.assertEqual(qator["ism"], "Aziz")
+        self.assertEqual(qator["yechdi"], 2)
+        self.assertEqual(qator["masalalar"], 2)
+        self.assertEqual(qator["birinchida"], 1)
+        self.assertEqual(qator["foiz"], 50)
+        self.assertEqual(qator["oxirgi_kun"], 0)
+
+    def test_mualliflar_jadvali(self):
+        self.masala()
+        self.masala(holat=Masala.KUTMOQDA)
+        self.masala(holat=Masala.RAD)
+
+        h = self.MH.hisobot(30)
+        a = h["mualliflar"][0]
+        self.assertEqual(a["ism"], "Anvar Qodirov")
+        self.assertEqual(a["jami"], 3)
+        self.assertEqual(a["tasdiq"], 1)
+        self.assertEqual(a["navbat"], 1)
+        self.assertEqual(a["rad"], 1)
+        self.assertEqual(a["tasdiq_foiz"], 33)
+
+    def test_qiyinlik_yetarli_urinishdan_hisoblanadi(self):
+        """Ikki urinishdan chiqqan 0% tasodif — u ro'yxatga tushmaydi."""
+        oz = self.masala()
+        MS.javob_ber(oz, self.aziz, "xato")
+
+        h = self.MH.hisobot(30)
+        self.assertEqual(h["qiyin"], [])
+        self.assertEqual(h["oson"], [])
+
+    def test_hech_kim_urinmagan_alohida_korinadi(self):
+        self.masala()
+        h = self.MH.hisobot(30)
+        self.assertEqual(h["umumiy"]["tegilmagan"], 1)
+
+    # ------------------------------------------------------------ sahifa
+
+    def test_sahifa_ochiladi(self):
+        m = self.masala()
+        MS.korildi(m, self.malika)
+        MS.javob_ber(m, self.aziz, "12")
+
+        self.kir()
+        r = self.client.get("/boshqaruv/masalalar/hisobot")
+        self.assertEqual(r.status_code, 200)
+        matn = r.content.decode()
+        self.assertIn("Bugun kim yechdi", matn)
+        self.assertIn("Aziz", matn)
+        self.assertIn("Anvar Qodirov", matn)
+
+    def test_kirmagan_odam_kormaydi(self):
+        r = self.client.get("/boshqaruv/masalalar/hisobot")
+        self.assertNotContains(r, "Bugun kim yechdi")
+
+    def test_bosh_bazada_yiqilmaydi(self):
+        """Nolga bo'linish — hisobot sahifalarining eng ko'p uchraydigan xatosi."""
+        self.kir()
+        r = self.client.get("/boshqaruv/masalalar/hisobot")
+        self.assertEqual(r.status_code, 200)
+
+    def test_buzuq_davr_500_bermaydi(self):
+        self.kir()
+        r = self.client.get("/boshqaruv/masalalar/hisobot?kun=abc")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.context["kunlar"], 30)
+
+
 class DuelJonliTest(TestCase):
     """
     Jonli duel: ikkalasi bir vaqtda o'ynaydi.

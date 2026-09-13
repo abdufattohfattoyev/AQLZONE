@@ -1,5 +1,10 @@
-{% extends "boshqaruv/asos.html" %}
+{% extends "boshqaruv/qobiq.html" %}
 {% block sarlavha %}Boshqaruv{% endblock %}
+{% block sahifa_nomi %}Umumiy panel{% endblock %}
+{% block sahifa_izoh %}
+  {{ yangilangan|date:"d.m.Y H:i" }} · {{ umumiy.royxatdan }} ro'yxatdan o'tgan
+  · <span style="color:var(--yashil)">{{ faollik.onlayn }} onlayn</span>
+{% endblock %}
 
 {% comment %}
 Sahifa yuqoridan pastga BIR SAVOLDAN boshqasiga o'tadi:
@@ -21,47 +26,32 @@ Butun sahifa FAQAT ro'yxatdan o'tgan hisoblarni ko'rsatadi
 qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
 {% endcomment %}
 
-{% block tana %}
-<header class="tepa">
-  <div class="nishon">AZ</div>
-  <div>
-    <h1>Aql Zone</h1>
-    <div class="vaqt">{{ yangilangan|date:"d.m.Y H:i" }} · {{ umumiy.royxatdan }} ro'yxatdan o'tgan</div>
+{% block asboblar %}
+  <div class="tanlagich">
+    <a class="{% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
+    <a class="{% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
+    <a class="{% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
   </div>
-  <div class="ong">
-    <div class="tanlagich">
-      <a class="{% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
-      <a class="{% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
-      <a class="{% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
-    </div>
-    <a class="tugma" href="/boshqaruv/duel">Duellar</a>
-    <a class="tugma" href="/boshqaruv/masalalar">Masalalar</a>
-    <a class="tugma" href="/boshqaruv/reklama">E'lonlar</a>
-    <a class="tugma" href="/boshqaruv/chiqish">Chiqish</a>
-  </div>
+{% endblock %}
+
+{% block ichki %}
 
   {% comment %}
   Bo'lim yo'lchisi. Sahifa uzun va har kuni ochiladi — kerakli joyga
   aylantirib emas, bosib borish kerak. Havolalar oddiy langar: JS
-  ishlamasa ham ishlayveradi. Tepa panelning ichida, chunki ikkalasi
-  birga yopishib turishi kerak.
+  ishlamasa ham ishlayveradi.
   {% endcomment %}
   <nav class="yolchi">
-    <div class="yolchi-ichi">
-      <a href="#hozir">Hozir</a>
-      <a href="#osish">O'sish</a>
-      <a href="#ushlash">Ushlab qolish</a>
-      <a href="#xavf">Xavf</a>
-      <a href="#sifat">O'quv sifati</a>
-      <a href="#kurslar">Kurslar</a>
-      <a href="#vaqt">Vaqt</a>
-      <a href="#kanal">Yetkazish</a>
-      <a href="#odamlar">Odamlar</a>
-    </div>
+    <a href="#hozir">Hozir</a>
+    <a href="#osish">O'sish</a>
+    <a href="#ushlash">Ushlab qolish</a>
+    <a href="#xavf">Xavf</a>
+    <a href="#sifat">O'quv sifati</a>
+    <a href="#kurslar">Kurslar</a>
+    <a href="#vaqt">Vaqt</a>
+    <a href="#kanal">Yetkazish</a>
+    <a href="#odamlar">Odamlar</a>
   </nav>
-</header>
-
-<div class="ichki">
 
   <!-- ============================================== 1. hozir nima bo'lyapti -->
   <div class="bolim" id="hozir">
@@ -116,6 +106,37 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
       <div class="qosh">DAU / MAU — 20% dan yuqorisi kuchli odat</div>
     </div>
   </div>
+
+  {% comment %}
+  Hozir kim ilovada — ISMLAR bilan.
+
+  "12 onlayn" degan son savolning yarmiga javob beradi. Admin
+  ko'pincha ikkinchi yarmini so'raydi: kim? Shuning uchun ro'yxat shu
+  yerda, jadvalgacha aylantirmasdan turadi — jadval sahifaning
+  pastida va u yerga yetgunicha bola chiqib ketgan bo'lishi mumkin.
+  {% endcomment %}
+  {% if onlaynlar %}
+    <div class="bolim" id="onlayn">
+      <h2>Hozir ilovada</h2>
+      <p>{{ onlaynlar|length }} ta hisob · oxirgi {{ onlayn_daqiqa }} daqiqada ko'ringan</p>
+    </div>
+    <div class="karta">
+      <div class="onlayn-royxat">
+        {% for f in onlaynlar %}
+          <div class="onlayn-odam">
+            <span class="harf onlayn">{{ f.bosh }}</span>
+            <div style="min-width:0">
+              <div class="onlayn-ism">{{ f.ism }}</div>
+              <div class="juda-xira" style="font-size:11.5px">
+                {% if f.korindi == 0 %}hozir{% else %}{{ f.korindi }} daq oldin{% endif %}
+                {% if f.platforma != "—" %} · {{ f.platforma }}{% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
 
   <!-- ========================================================= 2. o'sish -->
   <div class="bolim" id="osish">
@@ -602,7 +623,7 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
         <b>Duellar</b>
         <a href="/boshqaruv/duel" style="margin-left:auto;font-size:12.5px">to'liq hisobot →</a>
       </div>
-      <div class="setka k2" style="gap:10px">
+      <div class="setka ichkari" style="gap:10px">
         <div class="ichki-olchov">
           <div class="nom">Yasalgan</div>
           <div class="katta">{{ duel.jami }}</div>
@@ -752,39 +773,62 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
   <!-- =============================================== foydalanuvchilar -->
   <div class="bolim">
     <h2>Foydalanuvchilar</h2>
-    <p>{{ foydalanuvchilar|length }} ta ro'yxatdan o'tgan hisob, oxirgi faollik bo'yicha</p>
+    <p>
+      {{ foydalanuvchilar|length }} ta ro'yxatdan o'tgan hisob ·
+      onlaynlar tepada, keyin oxirgi ko'rinishi bo'yicha
+    </p>
   </div>
-  <div class="jadval-oram">
+  <div class="jadval-oram" data-jadval>
     <div class="jadval-tepa">
-      <input class="qidiruv" id="qidiruv" type="search" autocomplete="off"
+      <input class="qidiruv" data-izla type="search" autocomplete="off"
              placeholder="Ism, username yoki telefon bo'yicha qidirish…">
-      <span class="juda-xira" id="topildi" style="font-size:12.5px"></span>
+      {% comment %} Suzgich tugmasi: "hozir kim o'ynayapti" — eng ko'p beriladigan
+         savol va uni har safar qidiruv bilan qidirib bo'lmaydi. {% endcomment %}
+      <button class="tugma" data-suzgi="yoniq">Faqat onlayn</button>
+      <span class="juda-xira" data-topildi style="font-size:12.5px"></span>
     </div>
     <div class="jadval-siljish">
-      <table id="jadval">
+      <table>
         <thead><tr>
           <th style="width:36px"></th>
-          <th class="keng">Ism</th><th>Kirish</th><th>Telefon</th>
-          <th class="raqam saralash" data-tur="son">Bolalar</th>
-          <th class="raqam saralash" data-tur="son">Darslar</th>
-          <th class="raqam saralash" data-tur="son">Kunlar</th>
-          <th class="raqam saralash" data-tur="son">Zanjir</th>
-          <th class="raqam saralash" data-tur="son">Aniqlik</th>
-          <th class="raqam saralash" data-tur="son">Yulduz</th>
+          <th class="keng">Ism</th>
+          <th class="saralash">Oxirgi ko'rinishi</th>
+          <th>Kirish</th><th>Telefon</th>
+          <th class="raqam saralash">Bolalar</th>
+          <th class="raqam saralash">Darslar</th>
+          <th class="raqam saralash">Kunlar</th>
+          <th class="raqam saralash">Zanjir</th>
+          <th class="raqam saralash">Aniqlik</th>
+          <th class="raqam saralash">Yulduz</th>
           <th>Kurs</th>
-          <th class="saralash" data-tur="son">Jimlik</th>
-          <th>Ro'yxatdan o'tgan</th><th>Oxirgi faollik</th>
+          <th class="saralash">Jimlik</th>
+          <th>Ro'yxatdan o'tgan</th>
         </tr></thead>
-        <tbody id="tana">
+        <tbody>
           {% for f in foydalanuvchilar %}
-            <tr data-qidiruv="{{ f.qidiruv }}">
+            <tr class="{% if f.onlayn %}yoniq{% endif %}" data-qidiruv="{{ f.qidiruv }}">
               <td>
-                <span class="harf" title="{% if f.onlayn %}onlayn{% else %}oflayn{% endif %}"
-                      style="{% if f.onlayn %}box-shadow:0 0 0 2px rgba(52,211,153,.5){% endif %}">{{ f.bosh }}</span>
+                <span class="harf {% if f.onlayn %}onlayn{% endif %}"
+                      title="{% if f.onlayn %}hozir ilovada{% else %}oflayn{% endif %}">{{ f.bosh }}</span>
               </td>
               <td class="keng">
                 {{ f.ism }}
                 {% if f.username %}<div class="juda-xira" style="font-size:11.5px">@{{ f.username }}</div>{% endif %}
+              </td>
+              {% comment %} Saralash kaliti — DAQIQA, sana emas: sana matn bo'lib
+                 solishtirilganda tartib butunlay buzilardi. Hech
+                 qachon kirmagan hisob esa eng oxirida tursin deb
+                 katta son oladi. {% endcomment %}
+              <td data-q="{{ f.korindi|default:999999 }}">
+                {% if f.onlayn %}
+                  <span class="belgi yashil"><span class="nuqta yoniq"></span> hozir ilovada</span>
+                {% elif f.korindi is None %}
+                  <span class="juda-xira">hech qachon</span>
+                {% elif f.korindi < 60 %}
+                  <span class="belgi moviy">{{ f.korindi }} daq oldin</span>
+                {% else %}
+                  {{ f.oxirgi|date:"d.m.y H:i" }}
+                {% endif %}
               </td>
               <td>
                 {% for u in f.usullar %}
@@ -809,7 +853,6 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
                 {% else %}<span class="belgi qizil">{{ f.jimlik }} kun</span>{% endif %}
               </td>
               <td class="juda-xira">{{ f.qoshilgan|date:"d.m.y" }}</td>
-              <td>{% if f.oxirgi %}{{ f.oxirgi|date:"d.m.y H:i" }}{% else %}<span class="juda-xira">—</span>{% endif %}</td>
             </tr>
           {% empty %}
             <tr><td colspan="14" class="bosh-holat">Hali hech kim ro'yxatdan o'tmagan</td></tr>
@@ -851,78 +894,23 @@ qadamida, "qanchasi yarim yo'lda to'xtadi" degan savol uchun.
     </div>
   </div>
 
-</div>
 
-<script>
-  // --- kohort jadvalidagi issiqlik ---
-  //
-  // Foiz raqam bo'lib turganda qatorlar solishtirilmaydi — ko'z rangni
-  // raqamdan tez o'qiydi. Fon shaffofligi foizga bog'lanadi, ya'ni
-  // yaxshi hafta darrov ko'zga tashlanadi.
-  (function () {
-    [].forEach.call(document.querySelectorAll(".issiq"), function (x) {
-      var f = parseInt(x.getAttribute("data-f"), 10) || 0;
-      x.style.background = "rgba(52,211,153," + Math.min(f / 60, 1) * 0.28 + ")";
-      if (f >= 25) x.style.color = "var(--yashil)";
-    });
-  })();
-
-  // --- foydalanuvchilar jadvali: qidiruv va saralash ---
-  //
-  // Serverga so'rov ketmaydi: qatorlar allaqachon sahifada va ular
-  // ko'pi bilan bir necha yuzta. Har harfda so'rov yuborish bu yerda
-  // faqat kutish paydo qilardi.
-  (function () {
-    var maydon = document.getElementById("qidiruv");
-    var tana = document.getElementById("tana");
-    var son = document.getElementById("topildi");
-    if (!maydon || !tana) return;
-
-    var qatorlar = [].slice.call(tana.querySelectorAll("tr[data-qidiruv]"));
-
-    function izla() {
-      var s = maydon.value.trim().toLowerCase();
-      var topildi = 0;
-      qatorlar.forEach(function (q) {
-        var mos = !s || q.getAttribute("data-qidiruv").indexOf(s) !== -1;
-        q.style.display = mos ? "" : "none";
-        if (mos) topildi++;
-      });
-      son.textContent = s ? topildi + " ta topildi" : "";
+  {% comment %} Onlayn ro'yxatining uslubi SHU SAHIFADA: u boshqa hech qayerda
+     ishlatilmaydi va umumiy faylni shishirib turishi kerak emas. {% endcomment %}
+  <style>
+    .onlayn-royxat {
+      display: grid; gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
     }
-    maydon.addEventListener("input", izla);
+    .onlayn-odam {
+      display: flex; align-items: center; gap: 10px; min-width: 0;
+      background: var(--fon-2); border-radius: var(--r-kichik);
+      padding: 9px 11px;
+    }
+    .onlayn-ism {
+      font-size: 13px; font-weight: 600;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+  </style>
 
-    // Saralash. Birinchi bosishda KAMAYISH tartibida: "eng ko'p kim"
-    // degan savol "eng kam kim" dan ko'ra ko'proq beriladi.
-    var boshlar = [].slice.call(document.querySelectorAll("#jadval th.saralash"));
-    boshlar.forEach(function (th) {
-      var indeks = [].indexOf.call(th.parentNode.children, th);
-      // `true` dan boshlanadi, chunki qiymat bosishda AVVAL teskarilanadi:
-      // ya'ni birinchi bosish kamayish tartibini beradi.
-      var teskari = true;
-      th.addEventListener("click", function () {
-        teskari = !teskari;
-        boshlar.forEach(function (b) { b.classList.remove("osdi", "tushdi"); });
-        th.classList.add(teskari ? "osdi" : "tushdi");
-        qatorlar.slice().sort(function (a, b) {
-          var x = +a.children[indeks].getAttribute("data-q") || 0;
-          var y = +b.children[indeks].getAttribute("data-q") || 0;
-          return teskari ? x - y : y - x;
-        }).forEach(function (q) { tana.appendChild(q); });
-      });
-    });
-  })();
-
-  // --- sahifa o'zi yangilanib turadi ---
-  //
-  // Panel ochiq turganda son eskirmasin. `location.reload()` emas,
-  // manzilga qayta o'tish: tanlangan davr (?kun=) saqlanib qolsin.
-  // Qidiruvda turgan odamni bezovta qilmaymiz — yozilgan matn
-  // yangilanishda yo'qolib ketardi.
-  setTimeout(function () {
-    var q = document.getElementById("qidiruv");
-    if (q && q.value.trim()) return;
-    location.replace(location.href);
-  }, 60000);
-</script>
 {% endblock %}

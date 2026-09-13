@@ -1,5 +1,12 @@
-{% extends "boshqaruv/asos.html" %}
+{% extends "boshqaruv/qobiq.html" %}
 {% block sarlavha %}E'lonlar{% endblock %}
+{% block sahifa_nomi %}E'lonlar{% endblock %}
+{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }} · botdan xabar tarqatish{% endblock %}
+
+{% comment %} Bu sahifa o'z vaqtida O'ZI yangilanadi (e'lon ketayotganda,
+   pastdagi yozuvga qarang). Umumiy yangilanish unga xalaqit
+   berardi va yarim yozilgan e'lonni yo'qotib qo'yardi. {% endcomment %}
+{% block yangilan %}{% endblock %}
 
 {% comment %}
 Sahifa tartibi ataylab: yozish maydoni tepada, tarix pastda. Bu yerga
@@ -11,21 +18,7 @@ tushadi — e'lonni orqaga qaytarib bo'lmaydi, xato terilgan so'z ming
 kishining telefonida qoladi.
 {% endcomment %}
 
-{% block tana %}
-<header class="tepa">
-  <div class="nishon">AZ</div>
-  <div>
-    <h1>E'lonlar</h1>
-    <div class="vaqt">{{ yangilangan|date:"d.m.Y H:i" }} · botdan xabar tarqatish</div>
-  </div>
-  <div class="ong">
-    <a class="tugma" href="/boshqaruv">← Hisobot</a>
-    <a class="tugma" href="/boshqaruv/masalalar">Masalalar</a>
-    <a class="tugma" href="/boshqaruv/chiqish">Chiqish</a>
-  </div>
-</header>
-
-<div class="ichki">
+{% block ichki %}
 
   {% if xabar %}
   <div class="ogoh">{{ xabar }}</div>
@@ -175,7 +168,6 @@ kishining telefonida qoladi.
     </div>
   </div>
   {% endfor %}
-</div>
 
 <style>
   .ogoh {

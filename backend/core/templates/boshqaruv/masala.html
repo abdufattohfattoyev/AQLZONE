@@ -1,5 +1,12 @@
-{% extends "boshqaruv/asos.html" %}
-{% block sarlavha %}Masalalar{% endblock %}
+{% extends "boshqaruv/qobiq.html" %}
+{% block sarlavha %}Tasdiqlash{% endblock %}
+{% block sahifa_nomi %}Tasdiqlash navbati{% endblock %}
+{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }}{% endblock %}
+
+{% comment %} Bu sahifada o'z-o'zidan yangilanish YO'Q: admin masala matnini
+   o'qib turganda sahifa ostidan almashsa, o'qigani yo'qoladi va
+   tasdiqlash tugmasi boshqa masalaniki bo'lib qolardi. {% endcomment %}
+{% block yangilan %}{% endblock %}
 
 {% comment %}
 Tasdiqlash navbati.
@@ -14,33 +21,22 @@ sababni yozish "qo'shimcha qadam" bo'lib qolmasligi kerak, aks holda
 admin sababsiz rad etish yo'lini qidiradi.
 {% endcomment %}
 
-{% block tana %}
-<header class="tepa">
-  <div class="nishon">AZ</div>
-  <div>
-    <h1>Masalalar</h1>
-    <div class="vaqt">{{ yangilangan|date:"d.m.Y H:i" }}</div>
+{% block asboblar %}
+  <div class="tanlagich">
+    <a class="{% if holat == 'kutmoqda' %}faol{% endif %}" href="?holat=kutmoqda">
+      Navbat{% if sanoq.kutmoqda %} · {{ sanoq.kutmoqda }}{% endif %}
+    </a>
+    <a class="{% if holat == 'tasdiq' %}faol{% endif %}" href="?holat=tasdiq">
+      Tasdiqlangan · {{ sanoq.tasdiq }}
+    </a>
+    <a class="{% if holat == 'rad' %}faol{% endif %}" href="?holat=rad">
+      Rad · {{ sanoq.rad }}
+    </a>
   </div>
-  <div class="ong">
-    <div class="tanlagich">
-      <a class="{% if holat == 'kutmoqda' %}faol{% endif %}" href="?holat=kutmoqda">
-        Navbat{% if sanoq.kutmoqda %} · {{ sanoq.kutmoqda }}{% endif %}
-      </a>
-      <a class="{% if holat == 'tasdiq' %}faol{% endif %}" href="?holat=tasdiq">
-        Tasdiqlangan · {{ sanoq.tasdiq }}
-      </a>
-      <a class="{% if holat == 'rad' %}faol{% endif %}" href="?holat=rad">
-        Rad · {{ sanoq.rad }}
-      </a>
-    </div>
-    <a class="tugma" href="/boshqaruv">Panel</a>
-    <a class="tugma" href="/boshqaruv/reklama">E'lonlar</a>
-    <a class="tugma" href="/boshqaruv/duel">Duellar</a>
-    <a class="tugma" href="/boshqaruv/chiqish">Chiqish</a>
-  </div>
-</header>
+  <a class="tugma" href="/boshqaruv/masalalar/hisobot">Hisobot</a>
+{% endblock %}
 
-<main class="ichki">
+{% block ichki %}
 
   {% if xabar %}<div class="xabar">{{ xabar }}</div>{% endif %}
 
@@ -87,11 +83,11 @@ admin sababsiz rad etish yo'lini qidiradi.
           <div class="qism">
             <div class="qism-nom">Masala</div>
             <div class="qism-matn">{{ m.matn|linebreaksbr }}</div>
-            {# Rasm matn bilan BIR USTUNDA turadi: u masalaning bir
+            {% comment %} Rasm matn bilan BIR USTUNDA turadi: u masalaning bir
                qismi, alohida ilova emas. Tasdiqlashda admin matn va
                chizmani birga o'qishi kerak — chizmasiz "ABC
                uchburchakda..." degan matn tekshirib bo'lmaydigan
-               yarim masala. #}
+               yarim masala. {% endcomment %}
             {% if m.rasm %}
               <a href="{{ m.rasm.url }}" target="_blank" rel="noopener">
                 <img class="masala-rasm" src="{{ m.rasm.url }}" alt="Masala rasmi">
@@ -133,8 +129,6 @@ admin sababsiz rad etish yo'lini qidiradi.
       </div>
     {% endfor %}
   </div>
-
-</main>
 
 <style>
   /* Uslub SHU SAHIFADA: `asos.html` boshqa uchta sahifa uchun ham

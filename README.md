@@ -579,6 +579,57 @@ tamg'asi** bosiladi — `core/rasm.py` ichida, ya'ni saqlashning yagona
 yo'lida. Rasm kanaldan skrinshot bo'lib tarqaydi va tamg'asiz u yerda
 manbasiz qolardi.
 
+### Boshqaruv paneli
+
+`/boshqaruv` — server tomonda chiziladigan sahifa, React ilovadan
+BUTUNLAY alohida. Kirishning yagona yo'li Telegram: admin botga
+`/boshqaruv` yozadi, bot 10 daqiqalik havola yuboradi. Parol yo'li
+ataylab yo'q — o'zgarmas sir bir marta sizsa, buni hech kim sezmaydi.
+
+Beshta bo'lim, chapdagi yon paneldan:
+
+```
+/boshqaruv                     umumiy panel — o'sish, ushlab qolish, odamlar
+/boshqaruv/masalalar/hisobot   masalalar bo'limi statistikasi
+/boshqaruv/masalalar           tasdiqlash navbati
+/boshqaruv/duel                duel hisoboti
+/boshqaruv/reklama             botdan e'lon tarqatish
+```
+
+Umumiy panelda foydalanuvchilar ro'yxati **onlaynlardan** boshlanadi,
+keyin oxirgi ko'rinishi bo'yicha. "Hozir ilovada" degan ro'yxat esa
+tepada, ismlari bilan turadi: "12 onlayn" degan son savolning yarmiga
+javob beradi, admin esa ko'pincha ikkinchi yarmini — kim ekanini —
+so'raydi.
+
+### Masalalar hisoboti
+
+`/boshqaruv/masalalar/hisobot` — bo'lim tirikmi yoki yo'qmi, shu
+sahifadan ko'rinadi. Eng tepada **bugun kim yechdi**: ism, masala
+raqami, soat va birinchi urinishdami yoki uchinchisidami.
+
+Yechilgan payt `MasalaUrinish.yechdi_at` da yoziladi va bu maydon
+ataylab alohida. `created_at` — BIRINCHI urinishning payti va u
+o'zgarmaydi: kecha urinib bugun topgan odamning yechimi o'sha bo'yicha
+"kechagi" bo'lib qolardi, ya'ni "bugun nechta odam yechdi" degan son
+har kuni kamaytirib ko'rsatardi.
+
+Sahifadagi asosiy o'lchov — **ko'rdi → urindi → yechdi** voronkasi:
+
+- «ochgan → javob yozgan» past bo'lsa, masala matni qo'rqityapti;
+- «javob yozgan → yechgan» past bo'lsa, masala qiyin yoki sharti noaniq.
+
+Qolganlari: yechuvchilar reytingi (kim nechta yechgan va qanchasini
+o'z kuchi bilan), masalalar jadvali (ko'rish/urinish/yechim, qiyinlik,
+ovoz, kanalda turganmi), mualliflar jadvali, eng qiyin va eng oson
+masalalar hamda **hech kim urinmaganlar** — ular bilan qilinadigan ish
+boshqacha: tuzatish emas, ko'rinadigan qilish.
+
+Hisob-kitobning hammasi `core/masala_hisobot.py` da, bitta funksiyada:
+avval bir marta o'qiladigan xom ma'lumot, keyin undan chiqadigan hamma
+ko'rsatkich. Yangi raqam kerak bo'lganda yangi so'rov emas, o'sha
+to'plamdan hisob qo'shiladi.
+
 ### E'lon tarqatish
 
 `/boshqaruv/reklama` — matn yoziladi, Telegram'da qanday ko'rinishi yonida

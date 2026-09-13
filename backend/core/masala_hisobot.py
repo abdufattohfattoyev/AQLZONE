@@ -38,8 +38,8 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from .boshqaruv import (
-    _chiziq, _foiz, _ozgarish, _yoniq, davr as davr_tanla, kirganmi, kirish,
-    sinf_nomi,
+    _chiziq, _foiz, _ozgarish, _yoniq, bolim, davr as davr_tanla, kirganmi,
+    kirish, sinf_nomi,
 )
 from .models import Masala, MasalaKorish, MasalaUrinish
 
@@ -360,10 +360,15 @@ def hisobot(kunlar: int = 30) -> dict:
     # Hech kim urinmagan tasdiqlangan masalalar — ro'yxatda ko'zga
     # tashlanmayotganlari. Ular uchun ish boshqacha: masalani tuzatish
     # emas, uni ko'rinadigan qilish (kanal posti).
+    #
+    # Ro'yxat ekrandagi 300 tadan olinadi, SONI esa bazadan: jadvalda
+    # o'nta ko'rsatish yetadi, kartadagi raqam esa hammasini aytishi
+    # kerak — aks holda u 300-masaladan keyin jimgina to'xtab qolardi.
     tegilmagan = [
         m for m in masalalar
         if m["holat"] == Masala.TASDIQ and not m["urinish"]
     ]
+    tegilmagan_soni = tasdiq_qs.filter(urinish_soni=0).count()
 
     # -------------------------------------------------------- mualliflar
     xom_muallif = (
@@ -495,7 +500,7 @@ def hisobot(kunlar: int = 30) -> dict:
                 kanal_at__isnull=False, kanal_yoq=False
             ).count(),
             "kanal_yoq": masalalar_qs.filter(kanal_yoq=True).count(),
-            "tegilmagan": len(tegilmagan),
+            "tegilmagan": tegilmagan_soni,
             "like": yigindi["like"] or 0,
             "dislike": yigindi["dislike"] or 0,
             "jami_urinish_qator": jami_urinish,
@@ -524,5 +529,6 @@ def sahifa(request):
     if not kirganmi(request):
         return kirish(request)
     return render(
-        request, "boshqaruv/masala_hisobot.html", hisobot(davr_tanla(request))
+        request, "boshqaruv/masala_hisobot.html",
+        hisobot(davr_tanla(request)) | bolim("masala"),
     )

@@ -1,0 +1,71 @@
+{% extends "boshqaruv/asos.html" %}
+
+{% comment %}
+Panelning ICHKI qobig'i: yon panel + tepa + kontent.
+
+Kirish sahifasidan tashqari hamma sahifa shundan o'sadi. Sabab: bo'limlar
+ro'yxati ilgari to'rtta sahifada to'rt marta yozilgan edi va har biri
+boshqacha tartibda turardi. Yangi sahifa qo'shilganda uni qolganlariga
+qo'shish unutilardi — natijada masalalar sahifasidan duellarga o'tish
+mumkin edi, teskarisiga esa yo'q.
+
+Sahifa to'ldiradigan joylar:
+
+    {% block sahifa_nomi %}   tepadagi sarlavha
+    {% block sahifa_izoh %}   uning ostidagi qator (sana, son)
+    {% block asboblar %}      o'ng tomondagi tanlagich va tugmalar
+    {% block ichki %}         sahifaning o'zi
+
+`joriy_bolim` va `navbat_soni` kontekstga `boshqaruv.bolim()` dan
+keladi — har bir ko'rinish uni qo'shib beradi.
+{% endcomment %}
+
+{% block tana %}
+<div class="qobiq">
+
+  <aside class="yon">
+    <div class="yon-bosh">
+      <div class="nishon">AZ</div>
+      <div>
+        <b>Aql Zone</b>
+        <span>boshqaruv</span>
+      </div>
+    </div>
+
+    <a class="{% if joriy_bolim == 'panel' %}faol{% endif %}" href="/boshqaruv">
+      <span class="belgicha">◧</span> Umumiy panel
+    </a>
+    <a class="{% if joriy_bolim == 'masala' %}faol{% endif %}" href="/boshqaruv/masalalar/hisobot">
+      <span class="belgicha">∑</span> Masalalar
+    </a>
+    {% comment %} Navbat soni HAR sahifada ko'rinadi: u "hozir qilinadigan ish"
+       va uni ko'rish uchun bo'lim ochib turish kerak bo'lmasligi lozim. {% endcomment %}
+    <a class="{% if joriy_bolim == 'navbat' %}faol{% endif %}" href="/boshqaruv/masalalar">
+      <span class="belgicha">✓</span> Tasdiqlash
+      {% if navbat_soni %}<span class="sanoqcha">{{ navbat_soni }}</span>{% endif %}
+    </a>
+    <a class="{% if joriy_bolim == 'duel' %}faol{% endif %}" href="/boshqaruv/duel">
+      <span class="belgicha">⚔</span> Duellar
+    </a>
+    <a class="{% if joriy_bolim == 'reklama' %}faol{% endif %}" href="/boshqaruv/reklama">
+      <span class="belgicha">✉</span> E'lonlar
+    </a>
+
+    <div class="ajratgich"></div>
+    <a class="chiqish" href="/boshqaruv/chiqish"><span class="belgicha">⏻</span> Chiqish</a>
+  </aside>
+
+  <div class="asosiy">
+    <header class="tepa" {% block yangilan %}data-yangilan{% endblock %}>
+      <div>
+        <h1>{% block sahifa_nomi %}Boshqaruv{% endblock %}</h1>
+        <div class="vaqt">{% block sahifa_izoh %}{% endblock %}</div>
+      </div>
+      <div class="ong">{% block asboblar %}{% endblock %}</div>
+    </header>
+
+    <main class="ichki">{% block ichki %}{% endblock %}</main>
+  </div>
+
+</div>
+{% endblock %}

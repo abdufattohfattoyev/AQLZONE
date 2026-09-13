@@ -6,6 +6,18 @@ fayllariga umuman bog'liq emas va ular o'zgarganda buzilmasligi kerak.
 Bitta fayl — bitta sahifa, tashqi bog'liqlik yo'q. Shrift ham tizimniki:
 tashqi shrift xizmati sekinlashsa yoki yopilsa, hisobot sahifasi shu
 sababdan ochilmay qolmasligi kerak.
+
+─────────────────── DIZAYN QOIDALARI ───────────────────
+
+Uchta qoida butun panel bo'ylab bir xil ishlaydi:
+
+  1. RAQAM — eng qora, izoh — eng xira. Ekranda o'ntacha son bor va
+     ko'z ular orasidan kerakligini bir qarashda topishi kerak.
+  2. CHEGARA emas, QATLAM ajratadi. Chiziq ko'p bo'lsa ekran to'rga
+     o'xshab qoladi; fon farqi esa ko'zga urilmasdan ajratadi.
+  3. RANG — ma'no, bezak emas. Yashil "yaxshi", sariq "qarang",
+     qizil "ish bor" degani. Oddiy son hech qachon rangli bo'lmaydi,
+     aks holda rang ma'nosini yo'qotadi.
 {% endcomment %}<!doctype html>
 <html lang="uz">
 <head>
@@ -16,30 +28,35 @@ sababdan ochilmay qolmasligi kerak.
 <title>{% block sarlavha %}Boshqaruv{% endblock %} — Aql Zone</title>
 <style>
   :root {
-    /* Fon uch qatlamli: sahifa → karta → karta ichidagi maydon.
-       Chegara emas, SOYA va qatlam farqi ajratadi — chiziq ko'p bo'lsa
-       ekran to'rga o'xshab qoladi va raqamlar ko'zga tashlanmaydi. */
-    --fon: #080b14;
-    --fon-2: #0d1220;
-    --karta: #121829;
-    --karta-2: #182136;
-    --chegara: #1e2942;
-    --chegara-yorqin: #2b3a5c;
+    /* Fon uch qatlamli: sahifa → karta → karta ichidagi maydon. */
+    --fon: #070a12;
+    --fon-2: #0c111c;
+    --karta: #111827;
+    --karta-2: #18202f;
 
-    --matn: #eef2fb;
-    --xira: #8b98b8;
-    --juda-xira: #5a6788;
+    /* Chegaralar — oq rangning shaffof ulushi. Shunda ular qaysi
+       qatlam ustida bo'lsa, o'shanga moslashadi va hech qayerda
+       "chizilgan chiziq" bo'lib turmaydi. */
+    --chegara: rgba(255,255,255,.07);
+    --chegara-yorqin: rgba(255,255,255,.14);
 
-    --asos: #6c8cff;      /* asosiy urg'u */
+    --matn: #f1f5fd;
+    --xira: #93a0bd;
+    --juda-xira: #5d6b8c;
+
+    --asos: #7c8cff;      /* asosiy urg'u */
+    --binafsha: #a78bfa;
     --yashil: #34d399;
     --sariq: #fbbf24;
     --qizil: #fb7185;
-    --binafsha: #a78bfa;
     --moviy: #38bdf8;
 
-    --r: 16px;            /* katta radius */
-    --r-kichik: 10px;
-    --soya: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    --r: 18px;            /* katta radius */
+    --r-kichik: 12px;
+    --r-mitti: 9px;
+    --soya: 0 1px 2px rgba(0,0,0,.5), 0 12px 32px -18px rgba(0,0,0,.9);
+
+    --yon-keng: 216px;    /* yon panel kengligi */
   }
 
   * { box-sizing: border-box; }
@@ -47,8 +64,8 @@ sababdan ochilmay qolmasligi kerak.
   body {
     margin: 0;
     background:
-      radial-gradient(900px 500px at 12% -10%, rgba(108,140,255,.10), transparent 60%),
-      radial-gradient(700px 400px at 95% 0%, rgba(167,139,250,.08), transparent 55%),
+      radial-gradient(1100px 600px at 8% -12%, rgba(124,140,255,.10), transparent 60%),
+      radial-gradient(800px 460px at 100% 0%, rgba(167,139,250,.07), transparent 55%),
       var(--fon);
     background-attachment: fixed;
     color: var(--matn);
@@ -59,34 +76,109 @@ sababdan ochilmay qolmasligi kerak.
   a { color: var(--asos); text-decoration: none; }
 
   /* Raqamlar ustma-ust turganda qatorlar sakramasin. */
-  .son, td.raqam, th.raqam { font-variant-numeric: tabular-nums; }
+  .son, td.raqam, th.raqam, .katta, .sanoqcha { font-variant-numeric: tabular-nums; }
 
-  .ichki { max-width: 1280px; margin: 0 auto; padding: 22px 18px 80px; }
+  /* ═══════════════════════════════════════════════ qobiq: yon + asosiy */
+
+  /* Yon panel — bo'limlar tepadagi tasmadan SHU YERGA ko'chirildi.
+     Sabab: hisobot sahifalari uzun va tepa panel ularda ikki qatorga
+     bo'linib, ekranning to'rtdan birini yeb qo'yardi. Yon panel esa
+     kengligi o'zgarmas joyni egallaydi va aylantirilganda ham
+     ko'rinib turadi. Tor ekranda u pastga — barmoq yetadigan joyga —
+     tushadi. */
+  .qobiq { display: flex; min-height: 100dvh; }
+
+  .yon {
+    position: sticky; top: 0; align-self: flex-start;
+    width: var(--yon-keng); flex: none; height: 100dvh;
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 16px 12px;
+    border-right: 1px solid var(--chegara);
+    background: rgba(9,12,20,.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .yon-bosh {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 8px 16px;
+  }
+  .nishon {
+    width: 34px; height: 34px; border-radius: 11px; flex: none;
+    display: grid; place-items: center;
+    background: linear-gradient(140deg, var(--asos), var(--binafsha));
+    font-weight: 800; font-size: 13px; color: #fff; letter-spacing: -.02em;
+    box-shadow: 0 8px 22px -8px rgba(124,140,255,.8);
+  }
+  .yon-bosh b { font-size: 14px; font-weight: 700; letter-spacing: -.01em; display: block; }
+  .yon-bosh span { color: var(--juda-xira); font-size: 11.5px; }
+
+  .yon a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 11px; border-radius: var(--r-mitti);
+    color: var(--xira); font-size: 13px; font-weight: 600;
+    transition: background .15s, color .15s;
+  }
+  .yon a:hover { color: var(--matn); background: rgba(255,255,255,.04); }
+  .yon a.faol {
+    color: var(--matn);
+    background: linear-gradient(90deg, rgba(124,140,255,.18), rgba(124,140,255,.05));
+    box-shadow: inset 2px 0 0 var(--asos);
+  }
+  .yon a .belgicha { width: 18px; text-align: center; flex: none; opacity: .85; }
+  .yon .ajratgich { flex: 1; }
+  .yon a.chiqish { color: var(--juda-xira); font-weight: 500; }
+
+  /* Navbatdagi masalalar soni. Qizil emas: kutayotgan masala nosozlik
+     emas, oddiy ish. Lekin ko'rinib turishi kerak. */
+  .sanoqcha {
+    margin-left: auto; min-width: 20px; padding: 1px 6px; border-radius: 999px;
+    background: var(--asos); color: #fff;
+    font-size: 11px; font-weight: 700; text-align: center;
+  }
+
+  .asosiy { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
   /* ------------------------------------------------------------ tepa */
 
   header.tepa {
     position: sticky; top: 0; z-index: 20;
     display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-    padding: 12px 18px;
-    background: rgba(8,11,20,.82);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    padding: 14px 24px;
+    background: rgba(7,10,18,.78);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--chegara);
   }
-  .nishon {
-    width: 34px; height: 34px; border-radius: 11px; flex: none;
-    display: grid; place-items: center;
-    background: linear-gradient(140deg, var(--asos), var(--binafsha));
-    font-weight: 800; font-size: 14px; color: #fff;
-    box-shadow: 0 6px 18px -6px rgba(108,140,255,.7);
-  }
-  header.tepa h1 { font-size: 15px; margin: 0; font-weight: 700; letter-spacing: -.01em; }
+  header.tepa h1 { font-size: 17px; margin: 0; font-weight: 750; letter-spacing: -.02em; }
   header.tepa .vaqt { color: var(--juda-xira); font-size: 12px; margin-top: 1px; }
   .ong { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-  /* Davr tanlagich — uchta tugma emas, bitta bo'lak. Tanlangani
-     ichidagi "sirg'aluvchi" fon bilan ko'rinadi. */
+  .ichki { max-width: 1360px; width: 100%; margin: 0 auto; padding: 24px 24px 90px; }
+
+  @media (max-width: 900px) {
+    /* Tor ekranda yon panel PASTGA tushadi: telefonda ekranning
+       yon tomoni qimmat, pastki chekkasi esa barmoqqa eng yaqin joy. */
+    .qobiq { flex-direction: column; }
+    .yon {
+      position: fixed; bottom: 0; left: 0; right: 0; top: auto;
+      z-index: 30; width: auto; height: auto;
+      flex-direction: row; gap: 2px; padding: 6px 8px;
+      border-right: 0; border-top: 1px solid var(--chegara);
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .yon::-webkit-scrollbar { display: none; }
+    .yon-bosh, .yon .ajratgich { display: none; }
+    .yon a { padding: 8px 11px; white-space: nowrap; font-size: 12.5px; }
+    .yon a.faol { box-shadow: inset 0 2px 0 var(--asos); }
+    header.tepa { padding: 12px 16px; }
+    .ichki { padding: 16px 14px 92px; }
+  }
+
+  /* Langarga o'tganda sarlavha yopishqoq tepa ostida qolib ketmasin. */
+  [id] { scroll-margin-top: 84px; }
+
+  /* --------------------------------------------------- davr tanlagich */
+
   .tanlagich {
     display: flex; gap: 2px; padding: 3px;
     background: var(--karta); border: 1px solid var(--chegara);
@@ -97,97 +189,61 @@ sababdan ochilmay qolmasligi kerak.
     color: var(--xira); font-weight: 600; transition: .15s;
   }
   .tanlagich a:hover { color: var(--matn); }
-  .tanlagich a.faol { background: var(--asos); color: #fff; }
+  .tanlagich a.faol {
+    background: linear-gradient(140deg, var(--asos), var(--binafsha));
+    color: #fff;
+  }
 
   .tugma {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 7px 13px; border-radius: 999px;
     border: 1px solid var(--chegara); color: var(--xira);
     font-size: 12.5px; font-weight: 600; background: var(--karta);
-    cursor: pointer; transition: .15s;
+    cursor: pointer; transition: .15s; font-family: inherit;
   }
   .tugma:hover { color: var(--matn); border-color: var(--chegara-yorqin); }
-
-  /* Bo'limlar tasmasi (`_bolimlar.html`). Tugmalardan farqi: bu
-     YO'LCHI, ya'ni turgan joyingizni ham ko'rsatadi. Shuning uchun
-     faol bo'lim rangi emas, ostidagi chizig'i bilan ajraladi — rang
-     bu ekranda allaqachon "e'tibor bering" degan ma'noni tashiydi. */
-  nav.bolimlar { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
-  nav.bolimlar a {
-    position: relative;
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 12px; border-radius: 9px;
-    color: var(--xira); font-size: 12.5px; font-weight: 600;
-    transition: .15s;
-  }
-  nav.bolimlar a:hover { color: var(--matn); background: var(--karta); }
-  nav.bolimlar a.faol { color: var(--matn); background: var(--karta-2); }
-  nav.bolimlar a.faol::after {
-    content: ""; position: absolute; left: 12px; right: 12px; bottom: 2px;
-    height: 2px; border-radius: 2px; background: var(--asos);
-  }
-  nav.bolimlar a.chiqish { color: var(--juda-xira); margin-left: 6px; }
-  /* Navbatdagi masalalar soni. Qizil emas: kutayotgan masala nosozlik
-     emas, oddiy ish. Lekin ko'rinib turishi kerak. */
-  .sanoqcha {
-    min-width: 18px; padding: 0 5px; border-radius: 999px;
-    background: var(--asos); color: #fff;
-    font-size: 11px; font-weight: 700; text-align: center;
-    font-variant-numeric: tabular-nums;
+  /* Yoqilgan suzgich. Busiz jadval "nega hamma qator ko'rinmayapti?"
+     degan savol qoldirardi — ro'yxat qisqargan, sababi esa ekranda
+     hech qayerda turmagan bo'lardi. */
+  .tugma.faol {
+    color: var(--matn); background: rgba(124,140,255,.18);
+    border-color: rgba(124,140,255,.45);
   }
 
-  /* Bo'lim yo'lchisi — tepa panelning ICHIDA, ikkinchi qator bo'lib
-     turadi.
-     Alohida yopishqoq element qilib ham bo'lardi, lekin unda `top`
-     tepaning balandligiga qo'lda moslanardi — tepa esa tor ekranda
-     ikki qatorga bo'linadi va o'sha payt ikkalasi orasida teshik
-     ochilib, ostidan kontent ko'rinib qolardi. Bitta blok ichida bunday
-     holat umuman bo'lmaydi. */
+  /* Sahifa ichidagi langarlar tasmasi. */
   nav.yolchi {
-    flex: 1 0 100%;
-    margin: 4px -18px -12px;
-    border-top: 1px solid var(--chegara);
-    overflow-x: auto;
-    scrollbar-width: none;
+    display: flex; gap: 4px; flex-wrap: wrap;
+    margin: 0 0 4px;
   }
-  nav.yolchi::-webkit-scrollbar { display: none; }
-  .yolchi-ichi {
-    padding: 7px 18px; display: flex; gap: 4px; white-space: nowrap;
-  }
-  .yolchi-ichi a {
+  nav.yolchi a {
     padding: 5px 11px; border-radius: 999px;
     color: var(--xira); font-size: 12.5px; font-weight: 600;
+    background: var(--karta); border: 1px solid var(--chegara);
   }
-  .yolchi-ichi a:hover { color: var(--matn); background: var(--karta); }
-
-  /* Langarga o'tganda sarlavha yopishqoq paneller ostida qolib
-     ketmasin — brauzerga to'xtash joyini oldindan aytamiz. */
-  /* Tepa ikki qatorga bo'linganda ham sarlavha uning ostida qolmasin —
-     shuning uchun eng baland holatiga qarab olingan. */
-  [id] { scroll-margin-top: 126px; }
-  /* Tor ekranda tepadagi tugmalar yana bir qatorga tushadi. */
-  @media (max-width: 900px) { [id] { scroll-margin-top: 180px; } }
+  nav.yolchi a:hover { color: var(--matn); border-color: var(--chegara-yorqin); }
 
   /* ------------------------------------------------------- sarlavhalar */
 
-  .bolim { margin: 34px 0 14px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-  .bolim h2 {
-    font-size: 15px; margin: 0; font-weight: 700; letter-spacing: -.01em;
-  }
+  .bolim { margin: 36px 0 14px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .bolim:first-child { margin-top: 6px; }
+  .bolim h2 { font-size: 16px; margin: 0; font-weight: 750; letter-spacing: -.02em; }
   .bolim p { margin: 0; color: var(--juda-xira); font-size: 12.5px; }
 
   /* ------------------------------------------------------------ karta */
 
   .setka { display: grid; gap: 14px; }
-  .setka.k5 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .setka.k5 { grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); }
   .setka.k4 { grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); }
   .setka.k3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
   .setka.k2 { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+  /* Karta ICHIDAGI setka — u yerda joy kam va tashqi o'lchamlar
+     kartani bitta ustunga aylantirib, uni cho'zib yuborardi. */
+  .setka.ichkari { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 
   .karta {
     background: linear-gradient(180deg, var(--karta), var(--fon-2));
     border: 1px solid var(--chegara);
-    border-radius: var(--r); padding: 16px;
+    border-radius: var(--r); padding: 17px;
     box-shadow: var(--soya);
   }
   .karta.tekis { background: var(--karta); }
@@ -196,23 +252,21 @@ sababdan ochilmay qolmasligi kerak.
   .olchov { position: relative; overflow: hidden; }
   .olchov .bosh { display: flex; align-items: center; gap: 8px; }
   .olchov .belgicha {
-    width: 26px; height: 26px; border-radius: 8px; flex: none;
+    width: 27px; height: 27px; border-radius: var(--r-mitti); flex: none;
     display: grid; place-items: center; font-size: 13px;
     background: var(--karta-2); color: var(--xira);
   }
   .olchov .nom { color: var(--xira); font-size: 12.5px; font-weight: 600; }
-  .olchov .son { font-size: 30px; font-weight: 750; line-height: 1.15; margin-top: 10px; letter-spacing: -.025em; }
-  .olchov .qosh { color: var(--juda-xira); font-size: 12px; margin-top: 3px; }
+  .olchov .son { font-size: 31px; font-weight: 760; line-height: 1.12; margin-top: 11px; letter-spacing: -.03em; }
+  .olchov .qosh { color: var(--juda-xira); font-size: 12px; margin-top: 4px; }
 
-  .olchov.urgu { border-color: rgba(108,140,255,.35); }
-  .olchov.urgu .belgicha { background: rgba(108,140,255,.16); color: var(--asos); }
+  .olchov.urgu { border-color: rgba(124,140,255,.35); }
+  .olchov.urgu .belgicha { background: rgba(124,140,255,.16); color: var(--asos); }
   .olchov.yashil .belgicha { background: rgba(52,211,153,.14); color: var(--yashil); }
   .olchov.sariq .belgicha { background: rgba(251,191,36,.14); color: var(--sariq); }
   .olchov.binafsha .belgicha { background: rgba(167,139,250,.16); color: var(--binafsha); }
   .olchov.moviy .belgicha { background: rgba(56,189,248,.14); color: var(--moviy); }
-  /* Qizil FAQAT e'tibor talab qiladigan holatda: yopishqoqlik pasayib
-     ketgani yoki bloklash ulushi oshgani. Oddiy son hech qachon qizil
-     bo'lmaydi — bo'lsa, rang ma'nosini yo'qotadi. */
+  /* Qizil FAQAT e'tibor talab qiladigan holatda. */
   .olchov.qizil-urgu { border-color: rgba(251,113,133,.35); }
   .olchov.qizil-urgu .belgicha { background: rgba(251,113,133,.14); color: var(--qizil); }
 
@@ -231,7 +285,7 @@ sababdan ochilmay qolmasligi kerak.
   .ichki-olchov .nom { color: var(--xira); font-size: 12px; font-weight: 600; }
   .ichki-olchov .katta { font-size: 22px; font-weight: 750; letter-spacing: -.02em; margin-top: 2px; }
 
-  /* O'sish ko'rsatkichi. Rang ATAYLAB shartli emas: dars soni tushishi
+  /* O'sish ko'rsatkichi. Rang ATAYLAB shartli emas: son tushishi
      yomon, lekin bu "xato" degani emas — shuning uchun qizil emas, sariq. */
   .ozgarish { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; }
   .ozgarish.osdi { color: var(--yashil); }
@@ -250,6 +304,7 @@ sababdan ochilmay qolmasligi kerak.
   .belgi.sariq  { color: var(--sariq);  background: rgba(251,191,36,.12); }
   .belgi.qizil  { color: var(--qizil);  background: rgba(251,113,133,.12); }
   .belgi.moviy  { color: var(--moviy);  background: rgba(56,189,248,.12); }
+  .belgi.binafsha { color: var(--binafsha); background: rgba(167,139,250,.14); }
 
   .nuqta { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #33405f; }
   .nuqta.yoniq {
@@ -258,14 +313,24 @@ sababdan ochilmay qolmasligi kerak.
     animation: puls 2.4s ease-in-out infinite;
   }
   @keyframes puls { 50% { box-shadow: 0 0 0 6px rgba(52,211,153,0); } }
+  /* Harakatni o'chirgan odamga u ko'rsatilmaydi — bu sozlama
+     ko'pincha bosh og'rig'i sababli qo'yiladi. */
+  @media (prefers-reduced-motion: reduce) { .nuqta.yoniq { animation: none; } }
 
-  /* Ism o'rnidagi bosh harf — avatar o'rniga. Rang id'dan chiqadi,
-     ya'ni bir odam har safar bir xil rangda ko'rinadi. */
+  /* Ism o'rnidagi bosh harf — avatar o'rniga. */
   .harf {
-    width: 28px; height: 28px; border-radius: 9px; flex: none;
-    display: grid; place-items: center;
+    width: 29px; height: 29px; border-radius: var(--r-mitti); flex: none;
+    display: grid; place-items: center; position: relative;
     font-size: 12px; font-weight: 700; color: #fff;
     background: linear-gradient(140deg, var(--asos), var(--binafsha));
+  }
+  /* Onlayn belgisi — avatarning burchagidagi yashil nuqta. Alohida
+     ustun qilib ham bo'lardi, lekin o'shanda u ismdan uzoqda turardi
+     va "kim onlayn" degan savol ikki marta qarashni talab qilardi. */
+  .harf.onlayn::after {
+    content: ""; position: absolute; right: -2px; bottom: -2px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--yashil); border: 2px solid var(--karta);
   }
 
   /* ---------------------------------------------------------- jadval */
@@ -283,9 +348,9 @@ sababdan ochilmay qolmasligi kerak.
     text-transform: uppercase; letter-spacing: .07em;
     background: var(--fon-2); border-bottom: 1px solid var(--chegara);
   }
-  tbody tr { border-bottom: 1px solid rgba(30,41,66,.6); }
+  tbody tr { border-bottom: 1px solid rgba(255,255,255,.04); }
   tbody tr:last-child { border-bottom: 0; }
-  tbody tr:hover { background: var(--karta-2); }
+  tbody tr:hover { background: rgba(255,255,255,.025); }
   td.raqam, th.raqam { text-align: right; }
   td.keng, th.keng { white-space: normal; min-width: 200px; }
   .jadval-tepa {
@@ -301,11 +366,20 @@ sababdan ochilmay qolmasligi kerak.
   .qidiruv:focus { border-color: var(--asos); }
   .qidiruv::placeholder { color: var(--juda-xira); }
 
-  .bosh-holat { color: var(--juda-xira); padding: 28px; text-align: center; font-size: 13px; }
+  th.saralash { cursor: pointer; user-select: none; }
+  th.saralash:hover { color: var(--xira); }
+  th.saralash.tushdi::after { content: " ▼"; color: var(--asos); }
+  th.saralash.osdi::after { content: " ▲"; color: var(--asos); }
+
+  .bosh-holat { color: var(--juda-xira); padding: 30px; text-align: center; font-size: 13px; }
+
+  /* Ikki qatorli katak: tepada asosiy qiymat, ostida izoh. Jadvalni
+     kengaytirmasdan ikki ma'lumot beradi. */
+  .ost { color: var(--juda-xira); font-size: 11.5px; }
 
   /* ---------------------------------------------------------- voronka */
 
-  .bosqich { padding: 11px 0; border-bottom: 1px solid rgba(30,41,66,.6); }
+  .bosqich { padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
   .bosqich:last-of-type { border-bottom: 0; }
   .bosqich .qator { display: flex; align-items: baseline; gap: 10px; }
   .bosqich .yozuv { font-size: 13.5px; font-weight: 600; }
@@ -320,24 +394,21 @@ sababdan ochilmay qolmasligi kerak.
     display: block; height: 100%; border-radius: 999px;
     background: linear-gradient(90deg, var(--asos), var(--binafsha));
   }
-  /* Yo'qotish — bir qadamdan keyingisiga qancha odam yetmagani. */
   .tushish { color: var(--qizil); font-size: 11.5px; font-weight: 600; }
 
   /* ---------------------------------------------------------- grafik */
 
   .grafik { position: relative; height: 190px; margin-top: 4px; }
-  .ustunlar {
-    position: absolute; inset: 0;
-    display: flex; align-items: flex-end; gap: 2px;
-  }
+  .ustunlar { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 2px; }
   .ustunlar .ustun { flex: 1 1 0; min-width: 3px; height: 100%; display: flex; align-items: flex-end; }
   .ustunlar .ustun i {
-    display: block; width: 100%; border-radius: 4px 4px 2px 2px; min-height: 2px;
-    background: linear-gradient(180deg, var(--asos), rgba(108,140,255,.25));
+    display: block; width: 100%; border-radius: 5px 5px 2px 2px; min-height: 2px;
+    background: linear-gradient(180deg, var(--asos), rgba(124,140,255,.22));
     transition: filter .12s;
   }
-  .ustunlar .ustun:hover i { filter: brightness(1.4); }
-  .ustunlar .ustun.quruq i { background: #172034; }
+  .ustunlar .ustun:hover i { filter: brightness(1.45); }
+  .ustunlar .ustun.quruq i { background: rgba(255,255,255,.05); }
+  .ustunlar .ustun.dam { background: rgba(167,139,250,.05); border-radius: 5px; }
   .qatlam { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .oq-belgilar {
     display: flex; justify-content: space-between;
@@ -347,14 +418,8 @@ sababdan ochilmay qolmasligi kerak.
   .izohlar span { display: inline-flex; align-items: center; gap: 6px; }
   .izohlar i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 
-  /* Dam olish kunlari xira fonda — ish kunlari bilan solishtirish
-     uchun ular ko'zga tashlanib turishi kerak. */
-  .ustunlar .ustun.dam { background: rgba(167,139,250,.05); border-radius: 4px; }
-
   /* ------------------------------------------------------------- xavf */
 
-  /* Bitta tasma — hamma guruh bir qatorda. Nisbatni raqamdan ko'ra
-     tezroq ko'rsatadi: "yarmi ketgan" bir qarashda ko'rinadi. */
   .xavf-tasma {
     display: flex; gap: 2px; height: 14px;
     border-radius: 999px; overflow: hidden; background: var(--fon-2);
@@ -389,19 +454,10 @@ sababdan ochilmay qolmasligi kerak.
   }
   .kunlar-ustun .k i {
     display: block; width: 100%; min-height: 2px; border-radius: 5px 5px 3px 3px;
-    background: linear-gradient(180deg, var(--asos), rgba(108,140,255,.3));
+    background: linear-gradient(180deg, var(--asos), rgba(124,140,255,.3));
   }
   .kunlar-ustun .k.dam i { background: linear-gradient(180deg, var(--binafsha), rgba(167,139,250,.3)); }
-  .kunlar-ustun .k span {
-    text-align: center; color: var(--juda-xira); font-size: 11.5px; flex: none;
-  }
-
-  /* ------------------------------------------------------- saralash */
-
-  th.saralash { cursor: pointer; user-select: none; }
-  th.saralash:hover { color: var(--xira); }
-  th.saralash.tushdi::after { content: " ▼"; color: var(--asos); }
-  th.saralash.osdi::after { content: " ▲"; color: var(--asos); }
+  .kunlar-ustun .k span { text-align: center; color: var(--juda-xira); font-size: 11.5px; flex: none; }
 
   /* Kohort katakchasi — foni JS'da foizga qarab to'ldiriladi. */
   .issiq {
@@ -420,18 +476,23 @@ sababdan ochilmay qolmasligi kerak.
 
   /* ------------------------------------------------------- yordamchi */
 
-  .ust-chiziq {
-    height: 5px; border-radius: 999px; background: var(--fon-2); overflow: hidden;
-  }
+  .ust-chiziq { height: 5px; border-radius: 999px; background: var(--fon-2); overflow: hidden; }
   .ust-chiziq span { display: block; height: 100%; background: var(--asos); border-radius: 999px; }
   .xira { color: var(--xira); }
   .juda-xira { color: var(--juda-xira); }
   .izoh-matn { color: var(--juda-xira); font-size: 12.5px; margin: 10px 0 0; line-height: 1.5; }
 
+  /* Uzun matn jadval katagida — bir qatorga siqiladi. Masala matni
+     to'liq kerak emas, uni tanish uchun boshi yetadi. */
+  .qirqilgan {
+    display: block; max-width: 420px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+
   @media (max-width: 640px) {
-    .ichki { padding: 16px 12px 60px; }
-    .olchov .son { font-size: 25px; }
+    .olchov .son { font-size: 26px; }
     th, td { padding: 9px 11px; }
+    .qirqilgan { max-width: 200px; }
   }
 </style>
 </head>
@@ -451,11 +512,12 @@ sababdan ochilmay qolmasligi kerak.
   // faqat kutish paydo qilardi.
   //
   // Kerakli belgilar:
-  //   [data-jadval]  jadval qobig'i
-  //   [data-izla]    qidiruv maydoni (ixtiyoriy)
-  //   [data-topildi] topilganlar soni yoziladigan joy (ixtiyoriy)
+  //   [data-jadval]     jadval qobig'i
+  //   [data-izla]       qidiruv maydoni (ixtiyoriy)
+  //   [data-topildi]    topilganlar soni yoziladigan joy (ixtiyoriy)
+  //   [data-suzgi=".."] shu sinfdagi qatorlarni qoldiradigan tugma
   //   tr[data-qidiruv]  qator — qidiriladigan matn shu yerda
-  //   th.saralash + td[data-q]  saralanadigan ustun
+  //   th.saralash + td[data-q]   saralanadigan ustun
   (function () {
     [].forEach.call(document.querySelectorAll("[data-jadval]"), function (oram) {
       var tana = oram.querySelector("tbody");
@@ -463,19 +525,38 @@ sababdan ochilmay qolmasligi kerak.
       var qatorlar = [].slice.call(tana.querySelectorAll("tr[data-qidiruv]"));
       var maydon = oram.querySelector("[data-izla]");
       var son = oram.querySelector("[data-topildi]");
+      var suzgilar = [].slice.call(oram.querySelectorAll("[data-suzgi]"));
+      var suzgi = "";
 
-      if (maydon && qatorlar.length) {
-        maydon.addEventListener("input", function () {
-          var s = maydon.value.trim().toLowerCase();
-          var topildi = 0;
-          qatorlar.forEach(function (q) {
-            var mos = !s || q.getAttribute("data-qidiruv").indexOf(s) !== -1;
-            q.style.display = mos ? "" : "none";
-            if (mos) topildi++;
-          });
-          if (son) son.textContent = s ? topildi + " ta topildi" : "";
+      function chiz() {
+        var s = maydon ? maydon.value.trim().toLowerCase() : "";
+        var topildi = 0;
+        qatorlar.forEach(function (q) {
+          var mos =
+            (!s || q.getAttribute("data-qidiruv").indexOf(s) !== -1) &&
+            (!suzgi || q.classList.contains(suzgi));
+          q.style.display = mos ? "" : "none";
+          if (mos) topildi++;
         });
+        if (son) son.textContent = (s || suzgi) ? topildi + " ta ko'rsatilyapti" : "";
       }
+
+      if (maydon) maydon.addEventListener("input", chiz);
+
+      // Suzgich — bosilganida yoqiladi, qayta bosilganda o'chadi.
+      // Ikkinchi bosishda o'chishi MUHIM: aks holda "faqat onlayn"
+      // ni yoqib qo'ygan odam qolganlarini qaytarish yo'lini
+      // topolmasdi.
+      suzgilar.forEach(function (t) {
+        t.addEventListener("click", function () {
+          var tanlov = t.getAttribute("data-suzgi");
+          suzgi = suzgi === tanlov ? "" : tanlov;
+          suzgilar.forEach(function (b) {
+            b.classList.toggle("faol", b.getAttribute("data-suzgi") === suzgi);
+          });
+          chiz();
+        });
+      });
 
       // Saralash. Birinchi bosishda KAMAYISH tartibida: "eng ko'p kim"
       // degan savol "eng kam kim" dan ko'ra ko'proq beriladi.
@@ -499,15 +580,27 @@ sababdan ochilmay qolmasligi kerak.
     });
   })();
 
+  // ─────────────── Kohort va issiqlik katakchalari ───────────────
+  //
+  // Foiz raqam bo'lib turganda qatorlar solishtirilmaydi — ko'z
+  // rangni raqamdan tez o'qiydi. Fon shaffofligi foizga bog'lanadi.
+  (function () {
+    [].forEach.call(document.querySelectorAll(".issiq"), function (x) {
+      var f = parseInt(x.getAttribute("data-f"), 10) || 0;
+      var eng = parseInt(x.getAttribute("data-eng"), 10) || 60;
+      x.style.background = "rgba(52,211,153," + Math.min(f / eng, 1) * 0.28 + ")";
+      if (f >= eng * 0.4) x.style.color = "var(--yashil)";
+    });
+  })();
+
   // ─────────────── Sahifa o'zi yangilanib turadi ───────────────
   //
   // Panel ochiq turganda son eskirmasin. `location.reload()` emas,
   // manzilga qayta o'tish: tanlangan davr (?kun=) saqlanib qolsin.
   //
   // FAQAT `data-yangilan` belgisi qo'yilgan sahifalarda. Bu ataylab
-  // ixtiyoriy: hisobot sahifasi eskirsa foydasi qolmaydi, e'lon
-  // sahifasi esa o'z vaqtida o'zi yangilanadi va tashqaridan
-  // aralashish u yerda faqat xalaqit berardi.
+  // ixtiyoriy: e'lon sahifasi o'z vaqtida o'zi yangilanadi va
+  // tashqaridan aralashish u yerda faqat xalaqit berardi.
   //
   // Yozayotgan odam bezovta qilinmaydi: maydonda matn turgan bo'lsa
   // yoki unga yozilayotgan bo'lsa, yangilanish keyingi safarga
