@@ -1,0 +1,24 @@
+{% comment %}
+Panelning bo'limlari — BITTA joyda.
+
+Ilgari bu ro'yxat to'rtta sahifada to'rt marta yozilgan edi va har
+biri boshqacha tartibda turardi: yangi sahifa qo'shilganda esa uni
+qolganlariga qo'shish unutilardi — natijada masalalar sahifasidan
+duellarga o'tish mumkin edi, teskarisiga esa yo'q.
+
+Joriy bo'lim ajratib ko'rsatiladi: uzun hisobot sahifasini pastigacha
+aylantirgan odam qayerda turganini bilishi kerak.
+
+Navbat soni SHU YERDA turadi, chunki u eng muhim "hozir qilinadigan
+ish" — qaysi sahifada bo'lishidan qat'i nazar ko'rinib turishi kerak.
+{% endcomment %}
+<nav class="bolimlar">
+  <a class="{% if joriy_bolim == 'panel' %}faol{% endif %}" href="/boshqaruv">Panel</a>
+  <a class="{% if joriy_bolim == 'navbat' %}faol{% endif %}" href="/boshqaruv/masalalar">
+    Navbat{% if navbat_soni %} <span class="sanoqcha">{{ navbat_soni }}</span>{% endif %}
+  </a>
+  <a class="{% if joriy_bolim == 'masala' %}faol{% endif %}" href="/boshqaruv/masalalar/hisobot">Masalalar</a>
+  <a class="{% if joriy_bolim == 'duel' %}faol{% endif %}" href="/boshqaruv/duel">Duellar</a>
+  <a class="{% if joriy_bolim == 'reklama' %}faol{% endif %}" href="/boshqaruv/reklama">E'lonlar</a>
+  <a class="chiqish" href="/boshqaruv/chiqish">Chiqish</a>
+</nav>

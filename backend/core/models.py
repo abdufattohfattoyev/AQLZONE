@@ -1138,12 +1138,15 @@ def javob_normal(v: str) -> str:
 #: kabi so'z-javoblarda harflarni kesish javobning o'zini yeb
 #: qo'yardi.
 #:
-#: Birlik HARF yoki belgi bilan boshlanishi shart, keyin raqam ham
-#: bo'lishi mumkin ("sm2", "m3"). Raqamdan boshlansa "152" ning
-#: oxiridagi "2" birlik deb kesilardi. Kvadrat belgisi bu yerga
-#: yetib kelganda allaqachon oddiy "2" ga aylangan bo'ladi —
-#: `javob_normal` dagi NFKC shunday qiladi.
-_BIRLIK = re.compile(r"^(-?\d+(?:\.\d+)?)(?:[a-z°%][a-z0-9°%]*)?$")
+#: Birlik HARF yoki belgi bilan BOSHLANISHI shart, davomida esa
+#: raqam, nuqta va qiyshiq chiziq ham bo'lishi mumkin — "sm2",
+#: "kv.sm", "km/soat". Raqamdan boshlanishga ruxsat berilsa, "152"
+#: ning oxiridagi "2" birlik deb kesilardi; nuqta birinchi bo'la
+#: olmagani uchun esa "15.5" kasr son bo'lib qolaveradi.
+#:
+#: Kvadrat belgisi bu yerga yetib kelganda allaqachon oddiy "2" ga
+#: aylangan bo'ladi — `javob_normal` dagi NFKC shunday qiladi.
+_BIRLIK = re.compile(r"^(-?\d+(?:\.\d+)?)(?:[a-z°%][a-z0-9°%./]*)?$")
 
 
 def javob_ozagi(v: str) -> str:

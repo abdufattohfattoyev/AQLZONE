@@ -4170,6 +4170,16 @@ class JavobTengTest(TestCase):
         # "kvadrat" son bilan boshlanmaydi — hech narsa kesilmaydi.
         self.assertFalse(MDL.javob_teng("kv", "kvadrat"))
 
+    def test_murakkab_birliklar(self):
+        """Birlik ichida nuqta va qiyshiq chiziq bo'lishi mumkin."""
+        self.assertTrue(MDL.javob_teng("15 kv.sm", "15 sm²"))
+        self.assertTrue(MDL.javob_teng("60 km/soat", "60"))
+
+    def test_kasr_son_birlik_deb_kesilmaydi(self):
+        """Nuqta birlikni BOSHLAY olmaydi — "15.5" butun kasr son."""
+        self.assertFalse(MDL.javob_teng("15.5", "15"))
+        self.assertTrue(MDL.javob_teng("15.5", "15,5 sm"))
+
     def test_manfiy_va_kasr(self):
         self.assertTrue(MDL.javob_teng("-3", "-3 sm"))
         self.assertTrue(MDL.javob_teng("3.5", "3,5 kg"))

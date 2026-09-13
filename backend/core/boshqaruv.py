@@ -209,13 +209,43 @@ def chiqish(request):
     return javob
 
 
+#: Tepadagi tanlagichda turadigan davrlar (kun).
+DAVRLAR = (7, 30, 90)
+
+
+def bolim(joriy: str) -> dict:
+    """
+    Bo'limlar tasmasi uchun kontekst (`_bolimlar.html`).
+
+    Navbat soni HAR sahifada ko'rinadi — u "hozir qilinadigan ish" va
+    uni ko'rish uchun masalalar sahifasiga o'tib turish kerak
+    bo'lmasligi lozim. Bitta indeksli sanoq so'rovi, sezilmaydi.
+    """
+    return {"joriy_bolim": joriy, "navbat_soni": MS.navbat_soni()}
+
+
+def davr(request) -> int:
+    """
+    `?kun=` dagi qiymat — tekshirilgan holda.
+
+    Raqam bo'lmagan qiymat 500 sahifasini keltirib chiqarardi
+    (`int("abc")`), holbuki bu shunchaki xato havola. Chegaralar esa
+    manzilni qo'lda yozgan odam butun tarixni bitta so'rovda
+    so'rab, sahifani qotirib qo'ymasligi uchun.
+    """
+    try:
+        kun = int(request.GET.get("kun") or 30)
+    except (TypeError, ValueError):
+        kun = 30
+    return max(7, min(120, kun))
+
+
 def panel(request):
     if not _yoniq():
         raise Http404
     if not kirganmi(request):
         return kirish(request)
-    kun = max(7, min(120, int(request.GET.get("kun") or 30)))
-    return render(request, "boshqaruv/panel.html", statistika(kun))
+    return render(request, "boshqaruv/panel.html", statistika(davr(request)))
 
 
 # -------------------------------------------------------------- e'lonlar
@@ -1199,8 +1229,7 @@ def duellar(request):
         raise Http404
     if not kirganmi(request):
         return kirish(request)
-    kun = max(7, min(120, int(request.GET.get("kun") or 30)))
-    return render(request, "boshqaruv/duel.html", duel_statistika(kun))
+    return render(request, "boshqaruv/duel.html", duel_statistika(davr(request)))
 
 
 # ------------------------------------------------------------- masalalar

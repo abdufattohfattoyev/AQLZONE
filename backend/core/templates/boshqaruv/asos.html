@@ -108,6 +108,34 @@ sababdan ochilmay qolmasligi kerak.
   }
   .tugma:hover { color: var(--matn); border-color: var(--chegara-yorqin); }
 
+  /* Bo'limlar tasmasi (`_bolimlar.html`). Tugmalardan farqi: bu
+     YO'LCHI, ya'ni turgan joyingizni ham ko'rsatadi. Shuning uchun
+     faol bo'lim rangi emas, ostidagi chizig'i bilan ajraladi — rang
+     bu ekranda allaqachon "e'tibor bering" degan ma'noni tashiydi. */
+  nav.bolimlar { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+  nav.bolimlar a {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border-radius: 9px;
+    color: var(--xira); font-size: 12.5px; font-weight: 600;
+    transition: .15s;
+  }
+  nav.bolimlar a:hover { color: var(--matn); background: var(--karta); }
+  nav.bolimlar a.faol { color: var(--matn); background: var(--karta-2); }
+  nav.bolimlar a.faol::after {
+    content: ""; position: absolute; left: 12px; right: 12px; bottom: 2px;
+    height: 2px; border-radius: 2px; background: var(--asos);
+  }
+  nav.bolimlar a.chiqish { color: var(--juda-xira); margin-left: 6px; }
+  /* Navbatdagi masalalar soni. Qizil emas: kutayotgan masala nosozlik
+     emas, oddiy ish. Lekin ko'rinib turishi kerak. */
+  .sanoqcha {
+    min-width: 18px; padding: 0 5px; border-radius: 999px;
+    background: var(--asos); color: #fff;
+    font-size: 11px; font-weight: 700; text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
   /* Bo'lim yo'lchisi — tepa panelning ICHIDA, ikkinchi qator bo'lib
      turadi.
      Alohida yopishqoq element qilib ham bo'lardi, lekin unda `top`
@@ -409,5 +437,96 @@ sababdan ochilmay qolmasligi kerak.
 </head>
 <body>
 {% block tana %}{% endblock %}
+
+<script>
+  // ─────────────── Jadval: qidiruv va saralash ───────────────
+  //
+  // Bitta yozuv hamma sahifadagi hamma jadvalga yetadi. Ilgari u
+  // faqat foydalanuvchilar jadvalida bor edi va yangi jadval
+  // qo'shilganda ko'chirib yozilardi — nusxalar esa bir-biridan
+  // qolib ketardi.
+  //
+  // Serverga so'rov KETMAYDI: qatorlar allaqachon sahifada va ular
+  // ko'pi bilan bir necha yuzta. Har harfda so'rov yuborish bu yerda
+  // faqat kutish paydo qilardi.
+  //
+  // Kerakli belgilar:
+  //   [data-jadval]  jadval qobig'i
+  //   [data-izla]    qidiruv maydoni (ixtiyoriy)
+  //   [data-topildi] topilganlar soni yoziladigan joy (ixtiyoriy)
+  //   tr[data-qidiruv]  qator — qidiriladigan matn shu yerda
+  //   th.saralash + td[data-q]  saralanadigan ustun
+  (function () {
+    [].forEach.call(document.querySelectorAll("[data-jadval]"), function (oram) {
+      var tana = oram.querySelector("tbody");
+      if (!tana) return;
+      var qatorlar = [].slice.call(tana.querySelectorAll("tr[data-qidiruv]"));
+      var maydon = oram.querySelector("[data-izla]");
+      var son = oram.querySelector("[data-topildi]");
+
+      if (maydon && qatorlar.length) {
+        maydon.addEventListener("input", function () {
+          var s = maydon.value.trim().toLowerCase();
+          var topildi = 0;
+          qatorlar.forEach(function (q) {
+            var mos = !s || q.getAttribute("data-qidiruv").indexOf(s) !== -1;
+            q.style.display = mos ? "" : "none";
+            if (mos) topildi++;
+          });
+          if (son) son.textContent = s ? topildi + " ta topildi" : "";
+        });
+      }
+
+      // Saralash. Birinchi bosishda KAMAYISH tartibida: "eng ko'p kim"
+      // degan savol "eng kam kim" dan ko'ra ko'proq beriladi.
+      var boshlar = [].slice.call(oram.querySelectorAll("th.saralash"));
+      boshlar.forEach(function (th) {
+        var indeks = [].indexOf.call(th.parentNode.children, th);
+        // `true` dan boshlanadi, chunki qiymat bosishda AVVAL
+        // teskarilanadi: ya'ni birinchi bosish kamayish beradi.
+        var teskari = true;
+        th.addEventListener("click", function () {
+          teskari = !teskari;
+          boshlar.forEach(function (b) { b.classList.remove("osdi", "tushdi"); });
+          th.classList.add(teskari ? "osdi" : "tushdi");
+          qatorlar.slice().sort(function (a, b) {
+            var x = +a.children[indeks].getAttribute("data-q") || 0;
+            var y = +b.children[indeks].getAttribute("data-q") || 0;
+            return teskari ? x - y : y - x;
+          }).forEach(function (q) { tana.appendChild(q); });
+        });
+      });
+    });
+  })();
+
+  // ─────────────── Sahifa o'zi yangilanib turadi ───────────────
+  //
+  // Panel ochiq turganda son eskirmasin. `location.reload()` emas,
+  // manzilga qayta o'tish: tanlangan davr (?kun=) saqlanib qolsin.
+  //
+  // FAQAT `data-yangilan` belgisi qo'yilgan sahifalarda. Bu ataylab
+  // ixtiyoriy: hisobot sahifasi eskirsa foydasi qolmaydi, e'lon
+  // sahifasi esa o'z vaqtida o'zi yangilanadi va tashqaridan
+  // aralashish u yerda faqat xalaqit berardi.
+  //
+  // Yozayotgan odam bezovta qilinmaydi: maydonda matn turgan bo'lsa
+  // yoki unga yozilayotgan bo'lsa, yangilanish keyingi safarga
+  // qoldiriladi — aks holda rad etish sababi yarim yozilgan joyida
+  // yo'qolib ketardi.
+  (function () {
+    if (!document.querySelector("[data-yangilan]")) return;
+    var YANGILANISH = 60000;
+    function tekshir() {
+      var yozilyapti = [].some.call(
+        document.querySelectorAll("input, textarea"),
+        function (m) { return m === document.activeElement || m.value.trim(); }
+      );
+      if (yozilyapti) return setTimeout(tekshir, YANGILANISH);
+      location.replace(location.href);
+    }
+    setTimeout(tekshir, YANGILANISH);
+  })();
+</script>
+{% block skript %}{% endblock %}
 </body>
 </html>

@@ -4,6 +4,8 @@ Aql Zone — asosiy marshrutlar.
     /api/health          holat tekshiruvi
     /api/v1/...          REST API (core.urls)
     /boshqaruv           administrator hisoboti (Telegram orqali)
+    /boshqaruv/masalalar          tasdiqlash navbati
+    /boshqaruv/masalalar/hisobot  masalalar bo'limi statistikasi
     /boshqaruv/reklama   botdan e'lon tarqatish
     boshqa hammasi       React ilova (SPA) — /kurs/1-sinf kabi URL'lar
                          sahifa yangilanganda ham ishlashi uchun.
@@ -14,7 +16,7 @@ o'ziga oladi. `/boshqaruv` undan keyin yozilsa, React ilova ochilib,
 """
 from django.urls import include, path
 
-from core import boshqaruv
+from core import boshqaruv, masala_hisobot
 from core.views import health
 from core.media import media_urlpatterns
 from core.spa import spa_urlpatterns
@@ -32,6 +34,13 @@ urlpatterns = [
     path("boshqaruv/reklama", boshqaruv.reklama, name="boshqaruv-reklama"),
     path("boshqaruv/duel", boshqaruv.duellar, name="boshqaruv-duel"),
     path("boshqaruv/masalalar", boshqaruv.masalalar, name="boshqaruv-masalalar"),
+    # Masalalar hisoboti — tasdiqlash navbatidan ALOHIDA manzil.
+    # Ikkalasi ikki xil ish: navbatda masala O'QILADI va qaror
+    # qilinadi, hisobotda esa bo'lim qanday ishlayotgani ko'riladi.
+    # Bitta sahifada bo'lsa, har tasdiqlashdan keyin butun hisobot
+    # qaytadan hisoblanardi.
+    path("boshqaruv/masalalar/hisobot", masala_hisobot.sahifa,
+         name="boshqaruv-masala-hisobot"),
     # Botdagi havola: /boshqaruv/havola/<imzolangan kod>
     path("boshqaruv/havola/<str:kod>", boshqaruv.havola, name="boshqaruv-havola"),
 
