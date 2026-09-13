@@ -597,6 +597,16 @@ const S = {
      bo'lib, doiracha ichida turadi (`screens/Masala.tsx`). Matnda
      ham qolsa, ekranda ikkita bayram belgisi chiqardi. */
   masalaTogri: ["To'g'ri!", "Верно!"],
+  masalaBahoSarlavha: ["Yechding!", "Решено!"],
+  masalaBahoBirinchi: ["Birinchi urinishdayoq — zo'r!", "С первой попытки — отлично!"],
+  masalaBahoUrinish: ["{n}-urinishda topding — qoyil!", "Нашёл с {n}-й попытки — молодец!"],
+  masalaBahoSavol: ["Masala senga yoqdimi?", "Понравилась задача?"],
+  masalaBahoYoqdi: ["Yoqdi", "Нравится"],
+  masalaBahoYoqmadi: ["Yoqmadi", "Не нравится"],
+  masalaBahoRahmat: ["Rahmat! Bahoing muallifga yetib bordi", "Спасибо! Автор увидит твою оценку"],
+  masalaBahoKeyingi: ["Keyingi masalaga o'tamizmi?", "Перейдём к следующей?"],
+  masalaBahoYechim: ["Avval yechimni ko'raman", "Сначала посмотрю решение"],
+  masalaBahoRoyxat: ["Boshqa masala tanlash", "Выбрать другую задачу"],
   masalaXato: ["Bu safar bo'lmadi", "В этот раз не вышло"],
   /* Xato javobdan keyin — javob ko'rsatilmaydi, qayta urinish taklif
      qilinadi. Ilgari to'g'ri javob darhol chiqib, ikkinchi urinish
@@ -839,6 +849,17 @@ const S = {
   yechimTushundim: ["Tushundim", "Понятно"],
   yop: ["Yopish", "Закрыть"],
   zorIsh: ["Zo'r ish!", "Отличная работа!"],
+  yulduzJami: ["Jami yulduzing", "Всего звёзд"],
+  yulduzYangi: ["yangi", "новая"],
+  yulduzQoshildi: ["+{n} yulduz qo'shildi!", "+{n} звезды добавлено!"],
+  yulduzOldinEdi: [
+    "Oldin {oldin} ta edi — endi {yangi} ta!",
+    "Было {oldin} — стало {yangi}!",
+  ],
+  yulduzRekord: [
+    "Bu darsdagi rekording {n} ta. Undan ko'p olsang, qo'shiladi!",
+    "Твой рекорд здесь — {n}. Набери больше, и они добавятся!",
+  ],
   natijaSavol: ["SAVOL", "ВОПРОСЫ"],
   natijaTogri: ["TO'G'RI", "ВЕРНО"],
   natijaXato: ["XATO", "ОШИБКИ"],

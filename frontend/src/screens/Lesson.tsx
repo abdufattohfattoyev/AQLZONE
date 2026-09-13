@@ -31,6 +31,16 @@ interface Props {
   joy?: { kurs: string; ui: number; li: number };
   /** Takrorlash darsimi — javob daftar narvonini suradi. */
   takrorlash?: boolean;
+  /**
+   * Yulduzlar hisobi — natija ekranidagi hisoblagich uchun.
+   *
+   *   jami   kursdagi yulduzlar hozir (dars tugashidan OLDIN)
+   *   oldin  shu darsda avval olingan eng ko'p yulduz
+   *
+   * Takrorlash darsida berilmaydi: u yo'l xaritasiga yozilmaydi va
+   * yulduz qo'shmaydi — hisoblagich u yerda yolg'on gapirardi.
+   */
+  hisob?: { jami: number; oldin: number };
 }
 
 /**
@@ -39,7 +49,12 @@ interface Props {
  * qiymatdan olinadi va `lesson` o'zgarishini alohida kuzatish shart emas.
  * O'sha `key` ni olib tashlasangiz, bu yerga effekt qo'shish kerak bo'ladi.
  */
-export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Props) {
+export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob }: Props) {
+  // Hisob dars BOSHIDA qotiriladi. "Davom etish" bosilganda progress
+  // yangilanadi va sahifa almashguncha natija ekrani yangi `jami` bilan
+  // bir marta qayta chiziladi — o'shanda hisoblagich noldan qayta
+  // sanab, "+3" ni ikkinchi marta ko'rsatib yuborardi.
+  const [hisobBosh] = useState(hisob);
   /**
    * Darsning savollarini yasaydi — ULAR TAKRORLANMASLIGI SHART.
    *
@@ -247,6 +262,7 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
         correct={birinchidanTogri}
         mistakes={xato}
         stars={yulduz}
+        hisob={hisobBosh}
         onQayta={qaytaBoshla}
         onNext={() =>
           onFinish({
@@ -438,9 +454,59 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash }: Prop
 
 /* ---------------- natija ---------------- */
 
-function Natija({ asked, correct, mistakes, stars, onNext, onQayta }:
-  Omit<LessonResult, "davomiylik"> & { onNext: () => void; onQayta: () => void }) {
+/**
+ * Kechikishlar — yulduzlar birin-ketin tushadi, keyin hisoblagich
+ * sanaydi. Tartib muhim: bola avval "nechta oldim" ni ko'radi, keyin
+ * "qancha bo'ldi" ni. Ikkalasi birdan bo'lsa, qo'shilish ko'rinmasdi.
+ */
+const YULDUZ_KECH = 180;
+const YULDUZ_QADAM = 260;
+
+/**
+ * Jami yulduzlar hisoblagichi — `oldin` dan `keyin` gacha sanaydi.
+ *
+ * Har bir qo'shilgan yulduzda son SAKRAYDI va jiringlaydi. Sekin
+ * sanalishi ataylab: "12 → 15" bir lahzada almashsa, bola uni o'qib
+ * ulgurmaydi va mehnati son bo'lib emas, shunchaki boshqa raqam bo'lib
+ * qoladi. Uch marta sakrash esa "uchta qo'shildi" ni ko'z bilan sanatadi.
+ */
+function useSanoq(oldin: number, keyin: number, boshla: number): [number, number] {
+  const [son, setSon] = useState(oldin);
+  const [sakrash, setSakrash] = useState(0);
+
+  useEffect(() => {
+    if (keyin <= oldin) return;
+    const vaqtlar: number[] = [];
+    for (let i = 1; i <= keyin - oldin; i++) {
+      vaqtlar.push(window.setTimeout(() => {
+        setSon(oldin + i);
+        setSakrash((s) => s + 1);
+        tovush("yulduz");
+        tebrat("tanlov");
+      }, boshla + (i - 1) * 420));
+    }
+    return () => vaqtlar.forEach(clearTimeout);
+  }, [oldin, keyin, boshla]);
+
+  return [son, sakrash];
+}
+
+function Natija({ asked, correct, mistakes, stars, hisob, onNext, onQayta }:
+  Omit<LessonResult, "davomiylik"> & {
+    hisob?: { jami: number; oldin: number };
+    onNext: () => void; onQayta: () => void;
+  }) {
   const pct = asked ? Math.round((correct / asked) * 100) : 0;
+
+  // Darsni qayta o'ynasa yulduz ikki marta qo'shilmaydi — faqat o'sishi
+  // (`lib/progress.tsx` → `darsTugadi`). Hisoblagich AYNAN shuni ko'rsatadi,
+  // aks holda ekran "+3" deb, xarita esa "+0" deb yozgan bo'lardi.
+  const oldin = hisob?.oldin ?? 0;
+  const qoshimcha = hisob ? Math.max(0, stars - oldin) : 0;
+  const jami = hisob?.jami ?? 0;
+  // Hisoblagich oxirgi yulduz tushgandan keyin boshlanadi.
+  const [son, sakrash] = useSanoq(jami, jami + qoshimcha, YULDUZ_KECH + 3 * YULDUZ_QADAM + 250);
+  const tugadi = son === jami + qoshimcha;
 
   // Uch yulduz — darsning eng katta lahzasi. Konfetti bilan birga
   // kuchli tebranish ketadi: bola qo'lida ham "yutdim" degan javobni
@@ -464,13 +530,76 @@ function Natija({ asked, correct, mistakes, stars, onNext, onQayta }:
                       shadow-[0_12px_40px_rgb(0_0_0/0.3)]">
         <h2 className="text-2xl">{t("zorIsh")}</h2>
 
-        <div className="mt-2 flex justify-center gap-1 text-brand-gold">
-          {Array.from({ length: 3 }, (_, i) => (
-            <span key={i} className="az-yulduz" style={{ "--az-kech": `${180 + i * 220}ms` } as React.CSSProperties}>
-              <Icon name={i < stars ? "star" : "starOff"} size={34} />
-            </span>
-          ))}
+        {/* Uch yulduz. O'rtadagisi kattaroq va biroz balandda — shohsupa.
+            YANGI olingan yulduzda (avval bu darsda bo'lmagan) nur halqasi
+            va "+1" chiqadi: qayta o'ynagan bola qaysi yulduzni HOZIR
+            yutganini ko'radi. */}
+        <div className="mt-3 flex items-end justify-center gap-2">
+          {Array.from({ length: 3 }, (_, i) => {
+            const bor = i < stars;
+            const yangi = bor && hisob !== undefined && i >= oldin;
+            const kech = YULDUZ_KECH + i * YULDUZ_QADAM;
+            return (
+              <span key={i}
+                className={`az-yulduz relative grid place-items-center ${i === 1 ? "-translate-y-2" : ""}`}
+                style={{ "--az-kech": `${kech}ms` } as React.CSSProperties}>
+                {yangi && (
+                  <span aria-hidden className="az-yulduz-nur pointer-events-none absolute inset-[-10px] rounded-full"
+                    style={{ "--az-kech": `${kech + 250}ms` } as React.CSSProperties} />
+                )}
+                <Icon name={bor ? "star" : "starOff"} size={i === 1 ? 52 : 42}
+                  className={bor
+                    ? "text-brand-gold drop-shadow-[0_4px_6px_rgb(245_179_1/0.45)]"
+                    : "text-ink-dim/40"} />
+                {yangi && (
+                  <span className="az-yulduz-plus absolute -top-3 -right-2 rounded-full bg-brand-green px-1.5
+                                   font-display text-[11px] leading-[18px] text-white shadow-clay-sm"
+                    style={{ "--az-kech": `${kech + 320}ms` } as React.CSSProperties}>
+                    +1
+                  </span>
+                )}
+              </span>
+            );
+          })}
         </div>
+
+        {/* ---- jami hisoblagich ----
+            Faqat haqiqiy darsda (takrorlash va sinovda `hisob` yo'q).
+            Chapda eski son xira, o'ngda yangisi sanalib boradi — "oldin
+            qancha edi, qanchaga qo'shildi" bir qatorda o'qiladi. */}
+        {hisob && (
+          <div className="mt-4 rounded-2xl bg-track px-3 py-2.5">
+            <div className="text-[10.5px] tracking-wider text-ink-dim uppercase">{t("yulduzJami")}</div>
+            <div className="mt-1 flex items-center justify-center gap-2.5 font-display">
+              {qoshimcha > 0 && (
+                <>
+                  <span className="text-[18px] text-ink-dim tabular-nums line-through decoration-2">{jami}</span>
+                  <Icon name="chevron" size={16} className="text-ink-dim" />
+                </>
+              )}
+              <span key={sakrash}
+                className={`flex items-center gap-1 text-[28px] leading-none tabular-nums
+                            ${sakrash ? "az-sanoq-sakra" : ""} ${tugadi && qoshimcha ? "text-brand-gold" : "text-ink"}`}>
+                <Icon name="star" size={24} className="text-brand-gold" />
+                {son}
+              </span>
+              {qoshimcha > 0 && (
+                <span className={`rounded-full bg-brand-green px-2 py-0.5 text-[13px] text-white
+                                  transition-all duration-300 ${tugadi ? "scale-110 opacity-100" : "scale-75 opacity-0"}`}>
+                  +{qoshimcha}
+                </span>
+              )}
+            </div>
+            <div className="mt-1 min-h-[16px] text-[12px] text-ink-soft">
+              {qoshimcha === 0
+                ? t("yulduzRekord", { n: oldin })
+                : !tugadi ? ""
+                  : oldin > 0
+                    ? t("yulduzOldinEdi", { oldin, yangi: stars })
+                    : t("yulduzQoshildi", { n: qoshimcha })}
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 flex gap-2">
           <Box v={asked} l={t("natijaSavol")} />

@@ -28,6 +28,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Halqa } from "../components/Halqa";
+import { MasalaBaho } from "../components/MasalaBaho";
 import { MasalaMatn } from "../components/MasalaMatn";
 import { TangaHisob } from "../components/TangaHisob";
 import { TangaOqim } from "../components/TangaOqim";
@@ -104,6 +105,15 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
   const [sorov, setSorov] = useState(false);
 
   /**
+   * "Yechding!" oynasi ochiqmi (`components/MasalaBaho.tsx`).
+   *
+   * Faqat SHU seansda to'g'ri javob berilganda ochiladi. Yechilgan
+   * masalaga qaytib kelganda chiqmaydi: g'alaba o'tib ketgan va har
+   * ochilishda baho so'rash bezovta qilish bo'lardi.
+   */
+  const [baho, setBaho] = useState(false);
+
+  /**
    * Kanal tugmasining holati — faqat adminda ishlatiladi.
    *
    * "sorayapti" — tasdiq so'ralayotgan payt. Bir bosishda kanalga
@@ -151,7 +161,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
     setKanal("yopiq"); setKanalHavola("");
     setKanalYoq(false); setKanalTekshirildi("");
     setOchilgan(null); setMukofotOlindi(0);
-    setTanlangan(-1); setOqim(null); setSorov(false);
+    setTanlangan(-1); setOqim(null); setSorov(false); setBaho(false);
     ochiqEdi.current = false;
     MS.bittasi(id)
       .then((d) => {
@@ -244,6 +254,11 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
         setMukofotOlindi(n);
         oyinTugadi(n, 1);
         setOqim({ n, yonalish: "keldi" });
+      }
+      // Oyna tanga uchib bo'lgandan KEYIN chiqadi: ikkalasi birdan
+      // bo'lsa, tanga oyna ortida qolib, mukofot ko'rinmay ketardi.
+      if (d.togri && m.holat === "tasdiq") {
+        window.setTimeout(() => setBaho(true), 1100);
       }
     } catch {
       setXato(true);
@@ -962,6 +977,20 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
         <span className="pointer-events-none fixed inset-0 z-[70]">
           <TangaOqim n={oqim.n} yonalish={oqim.yonalish} onTugadi={() => setOqim(null)} />
         </span>
+      )}
+
+      {baho && natija?.togri && (
+        <MasalaBaho
+          tanga={mukofotOlindi}
+          urinish={natija.urinishim}
+          ovozim={ovozim}
+          meniki={m.meniki}
+          keyingi={keyingi}
+          onOvoz={(tur) => void ovozBer(tur)}
+          onKeyingi={(kid) => { setBaho(false); onKeyingi(kid); }}
+          onRoyxat={() => { setBaho(false); onBack(); }}
+          onYop={() => setBaho(false)}
+        />
       )}
 
       {/* ---- tanga sarflash ruxsati ---- */}

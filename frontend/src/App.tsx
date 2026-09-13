@@ -62,7 +62,7 @@ import { ochiqmi } from "./lib/oyin/rekord";
 import { courseBySlug } from "./lib/curriculum";
 import { KUNLIK_MAQSAD, useProgress } from "./lib/progress";
 import type { LessonResult } from "./lib/progress";
-import { isUnlocked } from "./lib/types";
+import { isUnlocked, lessonId } from "./lib/types";
 import { temaOf, useTema } from "./lib/tema";
 import { takrorlashDarsi } from "./lib/takrorlash";
 import { oxirginiYoz } from "./lib/oxirgi";
@@ -304,6 +304,10 @@ function DarsSahifasi() {
       unit={U}
       lesson={L}
       joy={{ kurs: c.slug, ui, li }}
+      hisob={{
+        jami: progressOf(c).stars,
+        oldin: progressOf(c).done[lessonId(ui, li)] ?? 0,
+      }}
       onExit={() => nav(yolKurs(c))}
       onFinish={(r: LessonResult) => {
         darsTugadi(c, ui, li, r);

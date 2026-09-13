@@ -779,6 +779,40 @@
   animation: az-yol-kir 380ms cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
 }
 
+/* ---- 3D orollar (RoadMap.tsx → Orol) ----
+   Joriy orol sekin SUZADI, soyasi esa suvda qoladi va orol ko'tarilganda
+   kichrayadi — ikkalasi birga "havoda turibdi" degan tuyg'u beradi.
+   Faqat bitta orol harakatlanadi: yettitasi birdan chayqalsa, ko'z
+   qayerga qarashni bilmasdi. */
+@keyframes az-orol-suz { 50% { translate: 0 -5px; } }
+.az-orol-suz { animation: az-orol-suz 2.6s ease-in-out infinite; }
+
+@keyframes az-orol-soya { 50% { scale: 0.82 1; opacity: 0.7; } }
+.az-orol-soya {
+  transform-box: fill-box; transform-origin: center;
+  animation: az-orol-soya 2.6s ease-in-out infinite;
+}
+
+@keyframes az-orol-halqa {
+  0%   { scale: 0.92; opacity: 0.8; }
+  75%  { scale: 1.22; opacity: 0; }
+  100% { opacity: 0; }
+}
+.az-orol-halqa {
+  transform-box: fill-box; transform-origin: center;
+  animation: az-orol-halqa 2s ease-out infinite;
+}
+
+/* Bosilganda orol suvga "cho'kadi" — tugma bosilgani qo'lda seziladi. */
+/* `translate` o'zi EMAS, Tailwind o'zgaruvchisi: tugma `-translate-x-1/2`
+   bilan markazlangan va `translate: 0 3px` uni gorizontal siljishidan
+   mahrum qilib, orolni yarim eniga o'ngga sakratardi. */
+.az-orol-bos { transition: translate 120ms ease, scale 120ms ease; }
+.az-orol-bos:active { --tw-translate-y: 3px; scale: 0.96; }
+@media (hover: hover) {
+  .az-orol-bos:hover { scale: 1.05; }
+}
+
 /* Diqqat: bu animatsiya faqat ICHKI elementga qo'yiladi va faqat Y bo'yicha
    siljitadi. Tashqi elementda joylashuv uchun `transform` ishlatiladi —
    ikkisi bir elementda bo'lsa, siljishlar qo'shilib tugun markazidan chiqib
@@ -1110,6 +1144,87 @@
   animation-delay: var(--az-kech, 0ms);
 }
 
+/* YANGI yulduz atrofidagi nur — bir marta otilib, tarqaladi.
+   Aylanib turadigan doimiy nur emas: u "bu yulduz hozir keldi" deydi
+   va jim bo'ladi, aks holda ekran bir daqiqa bayram qilib turardi. */
+@keyframes az-yulduz-nur {
+  0%   { opacity: 0; scale: 0.4; }
+  30%  { opacity: 1; }
+  100% { opacity: 0; scale: 1.6; }
+}
+.az-yulduz-nur {
+  opacity: 0;
+  background: radial-gradient(circle, rgb(255 209 102 / 0.75), rgb(255 209 102 / 0) 70%);
+  animation: az-yulduz-nur 900ms ease-out forwards;
+  animation-delay: var(--az-kech, 0ms);
+}
+
+/* "+1" — yulduzdan tepaga otilib chiqadi va o'sha joyda qoladi. */
+@keyframes az-yulduz-plus {
+  from { opacity: 0; translate: 0 10px; scale: 0.3; }
+  60%  { opacity: 1; translate: 0 -4px; scale: 1.2; }
+  to   { opacity: 1; translate: 0 0; scale: 1; }
+}
+.az-yulduz-plus {
+  opacity: 0;
+  animation: az-yulduz-plus 500ms cubic-bezier(0.34, 1.6, 0.64, 1) forwards;
+  animation-delay: var(--az-kech, 0ms);
+}
+
+/* Hisoblagich har bir qo'shilgan yulduzda sakraydi. `key` almashgani
+   uchun animatsiya har safar boshidan o'ynaydi. */
+@keyframes az-sanoq-sakra {
+  0%   { scale: 1; }
+  35%  { scale: 1.35; rotate: -6deg; }
+  70%  { scale: 0.95; rotate: 3deg; }
+  100% { scale: 1; rotate: 0deg; }
+}
+.az-sanoq-sakra { animation: az-sanoq-sakra 380ms cubic-bezier(0.34, 1.5, 0.64, 1); }
+
+/* ---- "Yechding!" oynasi (components/MasalaBaho.tsx) ----
+   Varaq pastdan otilib chiqadi, medal ichida aylanib kattalashadi,
+   tanga keyin keladi. Uch bosqich ketma-ket — hammasi birdan chiqsa,
+   bayram emas, shunchaki ochilgan oyna bo'lib qolardi. */
+@keyframes az-baho-fon { from { opacity: 0; } }
+.az-baho-fon { animation: az-baho-fon 220ms ease-out; }
+
+@keyframes az-baho-varaq {
+  from { translate: 0 100%; }
+  to   { translate: 0 0; }
+}
+.az-baho-varaq { animation: az-baho-varaq 420ms cubic-bezier(0.22, 1.25, 0.36, 1); }
+
+@keyframes az-baho-medal {
+  0%   { scale: 0; rotate: -180deg; }
+  70%  { scale: 1.18; rotate: 12deg; }
+  100% { scale: 1; rotate: 0deg; }
+}
+.az-baho-medal { animation: az-baho-medal 650ms cubic-bezier(0.34, 1.4, 0.64, 1) 180ms backwards; }
+
+@keyframes az-baho-halqa {
+  0%   { opacity: 0.9; scale: 1; }
+  100% { opacity: 0; scale: 1.8; }
+}
+.az-baho-halqa { animation: az-baho-halqa 1.4s ease-out 600ms infinite; }
+
+@keyframes az-baho-tanga {
+  from { opacity: 0; translate: 0 12px; scale: 0.6; }
+  to   { opacity: 1; translate: 0 0; scale: 1; }
+}
+.az-baho-tanga { animation: az-baho-tanga 420ms cubic-bezier(0.34, 1.6, 0.64, 1) 700ms backwards; }
+
+/* Baho tanlanganda tugma bir sakraydi — bosish "qabul qilindi". */
+@keyframes az-baho-tanlandi {
+  40% { scale: 1.1; }
+  100% { scale: 1; }
+}
+.az-baho-tanlandi { animation: az-baho-tanlandi 320ms cubic-bezier(0.34, 1.6, 0.64, 1); }
+
+/* Baho berilgach "keyingi masala" tugmasi sekin nafas oladi —
+   ko'zni bahodan yo'lga olib o'tadi. */
+@keyframes az-baho-chaqir { 50% { scale: 1.03; } }
+.az-baho-chaqir { animation: az-baho-chaqir 1.6s ease-in-out infinite; }
+
 /* ============================================================
  * O'git — savoldan oldingi animatsion tushuntirish.
  * (components/Ogit.tsx). Kechikish inline: style={{ "--az-kech": "240ms" }}
@@ -1338,6 +1453,11 @@
   .az-tur-gap { animation: none; }
   .az-yol-oqim { animation: none; }
   .az-yol-kir { animation: none; opacity: 1; translate: none; scale: none; }
+  .az-orol-suz, .az-orol-soya, .az-orol-halqa { animation: none; }
+  .az-yulduz-plus { animation: none; opacity: 1; }
+  .az-yulduz-nur, .az-sanoq-sakra { animation: none; }
+  .az-baho-fon, .az-baho-varaq, .az-baho-medal, .az-baho-halqa,
+  .az-baho-tanga, .az-baho-tanlandi, .az-baho-chaqir { animation: none; }
   .az-pulse::after, .az-bob, .az-yaltir::before, .az-konfetti,
   .az-nur, .az-halqa, .az-naqsh, .az-yur { animation: none; }
   /* Yorug'lik yo'li harakatsiz holda "A" ustida oq dog' bo'lib qolmasin */

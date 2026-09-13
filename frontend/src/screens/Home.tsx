@@ -133,7 +133,7 @@ export function Home({
     /* Kenglik ekranga qarab o'sadi, ammo cheklangan: dars yo'li ilon izi
        bo'lib buriladi va juda keng ustunda uning burilishlari yassilanib,
        "yo'l" o'rniga tarqoq nuqtalarga aylanadi. */
-    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-3 pb-4 sm:max-w-[560px] sm:px-6">
+    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-3 pb-4 sm:max-w-[560px] sm:px-6 lg:max-w-[1000px]">
       {/* ---- yuqori panel ----
           Bu yerda endi faqat "menda nima bor" turadi: yulduz va tanga.
           O'tish tugmalari pastdagi panelga ko'chdi. Sabab: ular bir xil
@@ -148,7 +148,7 @@ export function Home({
           "Kurslar ro'yxati" tugmasi ham ketdi: uning ishini pastdagi
           paneldagi "Bosh" bajaradi va ikkita bir xil yo'l bitta ekranda
           turishi keraksiz. */}
-      <div className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-[560px] items-center gap-2">
         {/* `data-tur` — yo'lboshchi shu atributlar bo'yicha nishonni topadi
             (components/Yolboshchi.tsx). Ekran o'zgarsa, atribut ko'chadi. */}
         <span data-tur="hisob" className="flex items-center gap-2 rounded-full">
@@ -187,7 +187,7 @@ export function Home({
       </div>
 
       {/* ---- umumiy taraqqiyot ---- */}
-      <div className="mt-3">
+      <div className="mx-auto mt-3 max-w-[560px]">
         <div className="mb-1 text-center text-[12.5px] text-ink-soft">
           {t("darsTugallandi", { done: totals.done, jami: totals.total })}
         </div>
@@ -199,57 +199,66 @@ export function Home({
         </div>
       </div>
 
-      {/* ---- davom etish ----
-          Ekrandagi ENG KATTA tugma va u ataylab shu yerda — ro'yxatdan
-          oldin. Ilgari darsga yetish uchun bob ochilib, yo'ldan to'g'ri
-          tugun topilishi kerak edi; endi bola ilovani ochib, bir bosishda
-          o'zi to'xtagan joydan davom etadi. Ro'yxat esa quyida turaveradi:
-          boshqa darsni tanlamoqchi bo'lganlar uchun. */}
-      {keyingi && (
-        <Davom units={units} keyingi={keyingi} boshlanmagan={totals.done === 0}
-          onStart={onStart} />
-      )}
-
       {/* ---- qaytish va zanjir ----
-          Ikkalasi kunlik maqsaddan OLDIN turadi va bu ataylab: uzilgan
-          zanjirni ko'rgan bola avval "hali saqlash mumkin" degan
-          javobni olishi kerak, keyin bugungi maqsadni. Teskari tartibda
-          u avval nolga tushgan zanjirni ko'rib, ilovani yopardi. */}
+          Ikkalasi kartalar to'ridan OLDIN, to'liq enida turadi: bu
+          ogohlantirish, kunlik ish emas. Uzilgan zanjirni ko'rgan bola
+          avval "hali saqlash mumkin" degan javobni olishi kerak, keyin
+          bugungi maqsadni — teskari tartibda u ilovani yopardi. */}
       {tiklash && (
         <ZanjirTiklash taklif={tiklash} jamiTanga={jamiTanga} onTikla={zanjirniTikla} />
       )}
       {!tiklash && qaytganKun > 0 && <Qaytish kun={qaytganKun} />}
 
-      {/* ---- kunlik maqsad ---- */}
-      <div data-tur="maqsad">
-        <KunlikMaqsad kunlik={kunlik} maqsad={maqsad} />
-      </div>
+      {/* ---- bugungi kartalar: davom, maqsad, sinov, daftar ----
 
-      {/* ---- bugungi sinov ----
-          Kunlik maqsaddan KEYIN: maqsad majburiy qism, sinov esa
-          qo'shimcha. Bajarilganda ham ko'rinib turadi — "bugun buni
-          qildim" degan belgi mukofotning bir qismi. */}
-      <Sinov bajarildi={sinovBajarilgan(slug)} onSinov={onSinov} />
+          TO'R, ro'yxat emas. Ilgari to'rttasi ustma-ust keng tasmalar
+          edi va dars yo'liga yetish uchun ekranning yarmini aylantirish
+          kerak bo'lardi. Endi:
 
-      {/* ---- xatolar daftari ----
-          Faqat takrorlash vaqti kelgan savol bo'lsa ko'rinadi. Doim
-          tursa, bola uni fon deb qabul qilib, e'tibor bermay qo'yardi. */}
-      {daftarSoni > 0 && (
-        <button type="button" onClick={onDaftar}
-          className="tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay bg-karta p-3.5
-                     text-left shadow-clay-sm">
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand-red/15 text-brand-red">
-            <Icon name="repeat" size={20} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-display text-[15px] leading-tight">{t("xatolarDaftari")}</span>
-            <span className="block text-[12.5px] text-ink-soft">
+            telefon   2 ustun. "Davom etish" to'liq enida — u ekrandagi
+                      ENG MUHIM tugma va kichraysa oddiy kartaga
+                      aylanib qolardi. Qolganlari yonma-yon.
+            keng      bitta qatorda hammasi (3 yoki 4 ta). `auto-cols-fr`
+                      — daftar bo'lmagan kuni uchtasi ham qatorni
+                      to'liq to'ldiradi, bo'sh katak qolmaydi.
+
+          Toq qolgan oxirgi karta telefonda ham to'liq enga cho'ziladi:
+          yonida bo'sh katak turib qolsa, to'r "yarim yasalgan" ko'rinardi. */}
+      <div className="mt-3.5 grid grid-cols-2 gap-2.5
+                      [&>*:first-child]:col-span-2 [&>*:last-child:nth-child(even)]:col-span-2
+                      lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none
+                      lg:[&>*]:!col-span-1">
+        {keyingi && (
+          <Davom units={units} keyingi={keyingi} boshlanmagan={totals.done === 0}
+            onStart={onStart} />
+        )}
+
+        <div data-tur="maqsad" className="min-w-0">
+          <KunlikMaqsad kunlik={kunlik} maqsad={maqsad} />
+        </div>
+
+        {/* Sinov bajarilganda ham ko'rinib turadi — "bugun buni qildim"
+            degan belgi mukofotning bir qismi. */}
+        <Sinov bajarildi={sinovBajarilgan(slug)} onSinov={onSinov} />
+
+        {/* Faqat takrorlash vaqti kelgan savol bo'lsa. Doim tursa, bola
+            uni fon deb qabul qilib, e'tibor bermay qo'yardi. */}
+        {daftarSoni > 0 && (
+          <button type="button" onClick={onDaftar}
+            className="tugma-3d flex h-full min-w-0 flex-col rounded-clay bg-karta p-3.5 text-left shadow-clay-sm">
+            <span className="flex w-full items-start">
+              <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand-red/15 text-brand-red">
+                <Icon name="repeat" size={20} />
+              </span>
+              <Icon name="chevron" size={18} className="ml-auto shrink-0 text-ink-dim" />
+            </span>
+            <span className="mt-2 block font-display text-[15px] leading-tight">{t("xatolarDaftari")}</span>
+            <span className="mt-0.5 line-clamp-2 block text-[12px] leading-snug text-ink-soft">
               {t("daftarKutyapti", { n: daftarSoni })}
             </span>
-          </span>
-          <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
-        </button>
-      )}
+          </button>
+        )}
+      </div>
 
       {/* ---- imtihonga tayyorgarlik ----
           Faqat 7–11-sinfda. Xatolar daftaridan KEYIN turadi: daftar
@@ -260,7 +269,7 @@ export function Home({
           tarqatib yuborilsa, har biri tasodifiy tugmaga o'xshab
           qolardi. */}
       {onBlok && onHisobot && onFormulalar && (
-        <div className="mt-4 space-y-2">
+        <div className="mx-auto mt-4 max-w-[560px] space-y-2">
           <TayyorgarlikTugma ic="order" rang="bg-brand-purple" nom={t("testlarTugma")}
             izoh={t("testlarTugmaIzoh")} on={onBlok} />
           <TayyorgarlikTugma ic="chart" rang="bg-brand-blue" nom={t("hisobotTugma")}
@@ -276,11 +285,13 @@ export function Home({
           keraksiz: nomlanadigan narsa faqat ikkitasi bo'lganda
           ma'noli bo'ladi. */}
       {onBlok && (
-        <h2 className="mt-5 mb-1 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
+        <h2 className="mx-auto mt-5 mb-1 max-w-[560px] px-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
           {t("amaliyMisollar")}
         </h2>
       )}
-      <div className="mt-4 space-y-2.5">
+      {/* Dars yo'li keng ekranda ham TOR ustunda qoladi: ilon izi juda
+          keng joyda yassilanib, "yo'l" o'rniga tarqoq orollarga aylanadi. */}
+      <div className="mx-auto mt-4 max-w-[560px] space-y-2.5">
         {units.map((U, ui) => {
           const done = U.lessons.filter((_, li) => progress.done[lessonId(ui, li)]).length;
           const color = UNIT_COLORS[U.color];
@@ -368,38 +379,38 @@ function TayyorgarlikTugma({ ic, rang, nom, izoh, on }: {
 function Sinov({ bajarildi, onSinov }: { bajarildi: boolean; onSinov: () => void }) {
   if (bajarildi) {
     return (
-      <div className="mt-2.5 flex items-center gap-3 rounded-clay bg-karta/70 p-3.5 shadow-clay-sm">
+      <div className="flex h-full min-w-0 flex-col rounded-clay bg-karta/70 p-3.5 shadow-clay-sm">
         <span className="grid size-10 shrink-0 place-items-center rounded-2xl
                          bg-brand-green/15 text-brand-green-d">
           <Icon name="check" size={20} />
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-display text-[14px] leading-tight text-ink-soft">
-            {t("sinovBajarildi")}
-          </span>
-          <span className="block text-[12px] text-ink-dim">{t("sinovErtaga")}</span>
+        <span className="mt-2 block font-display text-[14px] leading-tight text-ink-soft">
+          {t("sinovBajarildi")}
         </span>
+        <span className="mt-0.5 line-clamp-2 block text-[12px] leading-snug text-ink-dim">{t("sinovErtaga")}</span>
       </div>
     );
   }
 
   return (
     <button type="button" onClick={onSinov}
-      className="tugma-3d az-yaltir mt-2.5 flex w-full items-center gap-3 rounded-clay
+      className="tugma-3d az-yaltir flex h-full min-w-0 flex-col rounded-clay
                  bg-brand-gold p-3.5 text-left text-white shadow-clay">
-      <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/25">
-        <Icon name="flame" size={21} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-display text-[15px] leading-tight">
-          {t("sinovSarlavha")}
+      <span className="flex w-full items-start gap-2">
+        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/25">
+          <Icon name="flame" size={21} />
         </span>
-        <span className="mt-0.5 block truncate text-[12px] text-white/85">
-          {t("sinovIzoh")}
+        {/* Qolgan vaqt burchakda — sinov yarim tunda yopiladi va aynan
+            shu raqam "keyinroq" emas, "hozir" deb bostiradi. */}
+        <span className="ml-auto rounded-full bg-white/25 px-2 py-0.5 text-[11px] whitespace-nowrap">
+          {t("sinovQolgan", { n: qolganSoat() })}
         </span>
       </span>
-      <span className="shrink-0 rounded-full bg-white/25 px-2.5 py-1 text-[11.5px] whitespace-nowrap">
-        {t("sinovQolgan", { n: qolganSoat() })}
+      <span className="mt-2 block font-display text-[15px] leading-tight">
+        {t("sinovSarlavha")}
+      </span>
+      <span className="mt-0.5 line-clamp-2 block text-[12px] leading-snug text-white/85">
+        {t("sinovIzoh")}
       </span>
     </button>
   );
@@ -432,21 +443,28 @@ function Davom({ units, keyingi, boshlanmagan, onStart }: {
       type="button"
       onClick={() => onStart(keyingi.ui, keyingi.li)}
       data-tur="davom"
-      className="tugma-3d az-yaltir mt-3.5 flex w-full items-center gap-3 rounded-clay
-                 bg-brand-green p-3.5 text-left text-white shadow-clay"
+      /* Telefonda keng tasma (to'r uni to'liq enga cho'zadi), keng
+         ekranda qolgan kartalar kabi tik — bitta qatorda to'rttasi
+         bir xil qolipda turishi uchun. */
+      className="tugma-3d az-yaltir flex h-full w-full min-w-0 items-center gap-3 rounded-clay
+                 bg-brand-green p-3.5 text-left text-white shadow-clay
+                 lg:flex-col lg:items-start lg:gap-0"
     >
-      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/20">
-        <Icon name={L.ic} size={24} />
+      <span className="flex shrink-0 items-start lg:w-full">
+        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/20 lg:size-10">
+          <Icon name={L.ic} size={24} />
+        </span>
+        <Icon name="chevron" size={20} className="ml-auto hidden shrink-0 text-white/80 lg:block" />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-display text-[16px] leading-tight">
+      <span className="min-w-0 flex-1 lg:mt-2 lg:w-full lg:flex-none">
+        <span className="block font-display text-[16px] leading-tight lg:text-[15px]">
           {boshlanmagan ? t("boshlash") : t("davomEtish")}
         </span>
-        <span className="mt-0.5 block truncate text-[12.5px] text-white/85">
+        <span className="mt-0.5 block truncate text-[12.5px] text-white/85 lg:line-clamp-2 lg:text-[12px] lg:whitespace-normal">
           {kursMatn(U.u)} · {nom}
         </span>
       </span>
-      <Icon name="chevron" size={20} className="shrink-0 text-white/80" />
+      <Icon name="chevron" size={20} className="shrink-0 text-white/80 lg:hidden" />
     </button>
   );
 }
@@ -465,29 +483,32 @@ function KunlikMaqsad({ kunlik, maqsad }: { kunlik: Kunlik; maqsad: number }) {
   const bajarildi = kunlik.savollar >= maqsad;
 
   return (
-    <div className="mt-3 flex items-center gap-3 rounded-clay bg-[linear-gradient(135deg,var(--az-maqsad-1),var(--az-maqsad-2))] p-3.5 shadow-clay-sm">
-      <Icon name={bajarildi ? "trophy" : "flame"} size={24}
-        className={`shrink-0 ${bajarildi ? "text-brand-gold" : "text-[#e2571f]"}`} />
-
-      <div className="min-w-0 flex-1">
-        <div className="font-display text-[14.5px] leading-tight">
-          {bajarildi ? t("maqsadBajarildi") : t("kunlikMaqsad")}
-        </div>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="h-2 flex-1 overflow-hidden rounded-full bg-black/15">
-            <span className="block h-full rounded-full bg-gradient-to-r from-brand-orange to-brand-gold
-                             transition-[width] duration-500"
-              style={{ width: `${foiz}%` }} />
-          </span>
-          <span className="text-[12px] whitespace-nowrap text-ink-soft">
-            {Math.min(kunlik.savollar, maqsad)}/{maqsad}
-          </span>
+    <div className="flex h-full min-w-0 flex-col rounded-clay bg-[linear-gradient(135deg,var(--az-maqsad-1),var(--az-maqsad-2))] p-3.5 shadow-clay-sm">
+      <div className="flex items-start">
+        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-karta/60">
+          <Icon name={bajarildi ? "trophy" : "flame"} size={22}
+            className={bajarildi ? "text-brand-gold" : "text-[#e2571f]"} />
+        </span>
+        {/* Zanjir burchakda: maqsad bajarilgandan keyin ham ko'rinib
+            turadi va bolani ertaga qaytishga undaydi. */}
+        <div className="ml-auto rounded-xl bg-karta/70 px-2.5 py-1 text-center">
+          <div className="font-display text-[14px] leading-none">{kunlik.kunlar}</div>
+          <div className="text-[10px] text-ink-dim">{t("kun")}</div>
         </div>
       </div>
 
-      <div className="shrink-0 rounded-xl bg-karta/70 px-3 py-1.5 text-center">
-        <div className="font-display text-[15px] leading-none">{kunlik.kunlar}</div>
-        <div className="text-[10px] text-ink-dim">{t("kun")}</div>
+      <div className="mt-2 font-display text-[14.5px] leading-tight">
+        {bajarildi ? t("maqsadBajarildi") : t("kunlikMaqsad")}
+      </div>
+      <div className="mt-auto flex items-center gap-2 pt-1.5">
+        <span className="h-2 flex-1 overflow-hidden rounded-full bg-black/15">
+          <span className="block h-full rounded-full bg-gradient-to-r from-brand-orange to-brand-gold
+                           transition-[width] duration-500"
+            style={{ width: `${foiz}%` }} />
+        </span>
+        <span className="text-[12px] whitespace-nowrap text-ink-soft">
+          {Math.min(kunlik.savollar, maqsad)}/{maqsad}
+        </span>
       </div>
     </div>
   );

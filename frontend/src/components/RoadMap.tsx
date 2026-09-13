@@ -16,8 +16,8 @@
  *   bir xil doira ustma-ust turganda ko'z ularni sanay olmasdi: qaysi
  *   biri qayerda ekani faqat o'qib bilinardi.
  *
- * Endi yo'l — NUQTALAR IZI, tugunlar esa har biri o'z rangida, hajmli
- * (gradient + yumshoq nur) va oq halqa bilan yuzadan ko'tarilgan.
+ * Endi yo'l — NUQTALAR IZI, tugunlar esa 3D OROLLAR (pastdagi `Orol`):
+ * har biri o'z rangida, tepasida tanga, joriysi bayroqli va suzib turadi.
  * Yozuvlar sarlavha va izohli kartaga aylandi, ya'ni bir qarashda
  * "nima" va "qaysi holatda" degan ikkala savolga javob beradi.
  *
@@ -43,9 +43,34 @@ import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import type { Progress, Unit } from "../lib/types";
 
-const NODE = 72;         // tugallangan va joriy tugun o'lchami
-const NODE_SM = 56;      // ochilmagan tugun — kichikroq, bosim kamayadi
+const NODE = 72;         // tugun QATORINING balandligi — yo'l shu o'q bo'yicha yuradi
 const STEP = 104;        // tugunlar orasidagi vertikal masofa
+
+/**
+ * 3D OROLLAR — tugunning o'lchamlari.
+ *
+ * ─────────── NEGA OROL ───────────
+ *
+ * Doira tugun yassi edi: gradient va nur bilan "ko'tarilgan" deb
+ * ko'rsatilardi, lekin baribir tugma bo'lib qolardi. Orol esa JOY —
+ * bola unga qadam qo'yadi, o'tganlari yashil maysaga aylanadi, oldinda
+ * turganlari hali tumanda. Kurs kartalaridagi 3D narsalar bilan bir
+ * oila: yumaloq, loy kabi, tepadan yorug'lik.
+ *
+ * Orol SVG bilan chiziladi, rasm bilan emas: rangi holatga qarab
+ * o'zgaradi (tugagan, joriy, oldinda) va har bob o'z rangida. Rasm
+ * bo'lsa har rang uchun alohida fayl kerak bo'lardi.
+ *
+ * Joriy orol eng katta va sekin suzadi — "shu yerdasan" degan ishora
+ * harakat bilan beriladi. Qolganlari qimirlamaydi: yettita orol birdan
+ * chayqalsa, ko'z qayerga qarashni bilmaydi.
+ */
+const OROL = 80;         // tugagan orol eni
+const OROL_SM = 62;      // hali oldindagi orol — kichikroq, bosim kamayadi
+const OROL_JORIY = 94;   // joriy orol — eng kattasi
+const OROL_NISBAT = 0.78; // balandlik / en
+/** Tepa yuza markazining balandlik ulushi — yo'l shu nuqtadan o'tadi. */
+const YUZA_Y = 0.42;
 const SVG_W = 252;       // yo'l chizig'i tuvali (markazga nisbatan ±126)
 
 /**
@@ -86,14 +111,14 @@ const TUGAGAN = "#3fbf6f";
 /** Rangning to'q juftligi — gradientning pastki chekkasi. */
 const quyuq = (r: string) => `color-mix(in srgb, ${r} 76%, #101a33)`;
 /**
- * Ochilmagan tugun uchun — o'sha rang, lekin sutga qo'shilgan.
+ * Hali oldindagi orol uchun — o'sha rang, lekin tumanga cho'kkan.
  *
- * 26% dan 38% ga ko'tarildi: ekranda o'lchanganda och qatordagi
- * tugunlar deyarli oq bo'lib chiqdi va ichidagi belgi ham ko'rinmay
- * ketdi — ya'ni "hali oldinda" o'rniga "bu yerda hech narsa yo'q"
- * degan ma'no berardi.
+ * Sutga emas, karta foniga aralashtiriladi: qorong'i temada oq
+ * aralashma orolni yorqin dog'ga aylantirardi va u "oldinda" emas,
+ * "shu yerga bos" deb chaqirardi.
  */
-const och = (r: string) => `color-mix(in srgb, ${r} 38%, #fff)`;
+const tuman = (r: string, ulush: number) =>
+  `color-mix(in srgb, ${r} ${ulush}%, var(--color-karta, #2b3556))`;
 
 const offAt = (i: number) => OFF[i % OFF.length];
 const cx = (i: number) => SVG_W / 2 + offAt(i);
@@ -207,9 +232,16 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
         const st = nodeState(units, progress, unitIndex, li);
         const stars = progress.done[lessonId(unitIndex, li)] ?? 0;
         const locked = st === "locked";
-        const size = locked ? NODE_SM : NODE;
+        const joriy = st === "current";
+        // Orol ENLI: tepa yuzasi ellips, shuning uchun kengligi
+        // balandligidan katta. Joriy orol eng kattasi — "shu yerdasan".
+        const en = joriy ? OROL_JORIY : locked ? OROL_SM : OROL;
+        const boy = Math.round(en * OROL_NISBAT);
         const off = offAt(li);
-        const top = PAD + li * STEP + (NODE - size) / 2;  // markazi bir chizig'da qolsin
+        // Yo'l orolning TEPA YUZASI markazidan o'tadi — xuddi odam
+        // orolga qadam qo'yayotgandek. Shuning uchun tepa chekka o'sha
+        // markazdan yuza ulushicha yuqorida turadi.
+        const top = PAD + cy(li) - boy * YUZA_Y;
 
         // Tugunning rangi: tugagani — yashil, joriysi — bobniki (bola
         // qaysi bobda turganini shu rangdan biladi), qolgani —
@@ -220,7 +252,8 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
 
         // karta tugunning bo'sh tomonida turadi
         const onRight = off <= 0;
-        const gap = size / 2 + 12;
+        // Joriy orolda o'ng tomonda bayroq bor — karta unga tegmasin.
+        const gap = en / 2 + (joriy ? 20 : 12);
 
         // Paydo bo'lish kechikishi — tugun, pufak va karta BIRGA
         // kelishi kerak. O'ram elementiga qo'yib bo'lmaydi: `transform`
@@ -235,48 +268,16 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
               disabled={locked}
               onClick={() => onStart(unitIndex, li)}
               title={kursMatn(L.n).split(" · ")[0]}
-              style={{
-                ...kir,
-                top, left: `calc(50% + ${off}px)`, width: size, height: size,
-                /* HAJM UCH QATLAMDAN. Gradient (tepasi yorug', pasti
-                   quyuq) shaklni yassilikdan chiqaradi; oq halqa uni
-                   yuzadan ajratadi; rangli nur esa ko'tarib turadi.
-                   Nur SOYA EMAS, o'sha tugunning rangida — shuning
-                   uchun u "qorong'i dog'" bo'lib ko'rinmaydi. */
-                background: locked
-                  ? `linear-gradient(180deg, color-mix(in srgb, ${rang} 16%, #fff), ${och(rang)})`
-                  : `linear-gradient(180deg, ${rang}, ${quyuq(rang)})`,
-                boxShadow: locked
-                  ? `0 4px 10px -4px ${rang}88, inset 0 0 0 1px ${rang}44`
-                  : `0 8px 18px -6px ${rang}, 0 2px 4px rgb(0 0 0 / 0.12)`,
-                // Ochilmagan tugunda BELGI to'q qoladi — xiralik yuzada
-                // bo'lsin, mazmunda emas: shakl tanilib turishi kerak.
-                color: locked ? `color-mix(in srgb, ${rang} 72%, #2b3556)` : "#fff",
-                // Kengayuvchi halqa ("shu yerdasan") tugun rangida.
-                ...(st === "current" ? { "--az-pulse-rang": rang } as CSSProperties : {}),
-              }}
+              style={{ ...kir, top, left: `calc(50% + ${off}px)`, width: en, height: boy }}
               className={[
-                "az-yol-kir absolute -translate-x-1/2 rounded-full grid place-items-center",
-                "border-4 border-karta transition-transform duration-100",
-                locked ? "cursor-default" : "active:translate-y-1 cursor-pointer",
-                st === "current" ? "az-pulse" : "",
+                "az-yol-kir absolute -translate-x-1/2",
+                locked ? "cursor-default" : "az-orol-bos cursor-pointer",
               ].join(" ")}
             >
-              {/* Yuqori chetdagi yorug'lik — yuza silliq ekanining
-                  ishorasi. Belgidan OLDIN chiziladi, ya'ni uning
-                  ostida qoladi. */}
-              {!locked && (
-                <span aria-hidden className="absolute inset-x-1.5 top-1 h-1/2 rounded-full
-                                             bg-gradient-to-b from-white/40 to-transparent" />
-              )}
-              {/* Belgi chizig'i bu yerda QALINROQ (2.8): rangli gradient
-                  ustida 2.4 lik oq chiziq ingichka bo'lib, uzoqdan
-                  yo'qolib ketardi. */}
-              <span className="relative">
-                {st === "done"
-                  ? <Icon name="check" size={30} strokeWidth={3} />
-                  : <Icon name={L.ic} size={locked ? 24 : 30} strokeWidth={2.8} />}
-              </span>
+              <Orol rang={rang} holat={st} en={en}
+                belgi={st === "done"
+                  ? <Icon name="check" size={joriy ? 24 : 20} strokeWidth={3.2} />
+                  : <Icon name={L.ic} size={joriy ? 24 : locked ? 18 : 20} strokeWidth={2.6} />} />
             </button>
 
             {/* "Boshlash" pufagi tugun OSTIDA, markazi bilan tekislangan.
@@ -313,6 +314,95 @@ export function RoadMap({ units, unitIndex, progress, onStart }: Props) {
         );
       })}
     </div>
+  );
+}
+
+/**
+ * Bitta 3D orol.
+ *
+ * Uch qatlam, pastdan yuqoriga:
+ *
+ *   1. Suvdagi soya — orol ostida, u bilan birga suzmaydi. Aynan shu
+ *      soya orolni "turgan" emas, "havoda suzib turgan" qiladi.
+ *   2. Yon devor — tepa rangining to'q juftligi. Hajm shundan bilinadi.
+ *   3. Tepa yuza — ellips, chap-tepada yaltiroq. Kurs kartalaridagi
+ *      3D narsalarda ham yorug'lik shu tomondan tushadi.
+ *
+ * Tepada TANGA turadi — tugaganda belgi, joriy darsda dars belgisi.
+ * Hali oldindagi orolda tanga yo'q: belgi yuzaga "chizilgan" va xira.
+ * Tanga — mukofot tuyg'usi; u faqat qo'l yetgan joyda bo'lishi kerak.
+ */
+function Orol({ rang, holat, en, belgi }: {
+  rang: string; holat: "done" | "current" | "locked";
+  en: number; belgi: React.ReactNode;
+}) {
+  const joriy = holat === "current";
+  const oldinda = holat === "locked";
+  const tepa = oldinda ? tuman(rang, 60) : rang;
+  const yon = oldinda ? tuman(rang, 40) : quyuq(rang);
+  const tanga = Math.round(en * (joriy ? 0.44 : 0.4));
+
+  return (
+    <span className="relative block size-full">
+      {/* 1 — soya. Suzuvchi qatlamdan TASHQARIDA. */}
+      <svg aria-hidden viewBox="0 0 100 78" className="absolute inset-0 size-full overflow-visible">
+        <ellipse className={joriy ? "az-orol-soya" : ""} cx="50" cy="72" rx="32" ry="4.5"
+          fill="rgb(0 0 0 / 0.22)" />
+      </svg>
+
+      <span className={`absolute inset-0 block ${joriy ? "az-orol-suz" : ""}`}>
+        <svg aria-hidden viewBox="0 0 100 78" className="absolute inset-0 size-full overflow-visible">
+          {/* "Shu yerdasan" halqasi — ellips, orol shaklida. Doira halqa
+              enli orol atrofida begona ko'rinardi. */}
+          {joriy && (
+            <ellipse className="az-orol-halqa" cx="50" cy="33" rx="46" ry="22"
+              fill="none" stroke={rang} strokeWidth="3" />
+          )}
+          {/* 2 — yon devor */}
+          <ellipse cx="50" cy="50" rx="44" ry="20" fill={yon} />
+          <rect x="6" y="33" width="88" height="17" fill={yon} />
+          {/* Devordagi ikkita tosh chizig'i — yon tomon SILLIQ bo'lsa,
+              orol shunchaki qalin tanga bo'lib ko'rinardi. */}
+          {!oldinda && (
+            <path d="M18 50 q8 5 18 3 M60 55 q10 1 20 -5" stroke="rgb(0 0 0 / 0.18)"
+              strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          )}
+          {/* 3 — tepa yuza va yaltiroq */}
+          <ellipse cx="50" cy="33" rx="44" ry="20" fill={tepa} />
+          <ellipse cx="50" cy="33" rx="44" ry="20" fill="none"
+            stroke="rgb(255 255 255 / 0.28)" strokeWidth="1.5" />
+          {!oldinda && <ellipse cx="38" cy="26" rx="17" ry="5" fill="rgb(255 255 255 / 0.35)" />}
+          {/* Joriy orolda bayroq — "manzil shu yerda". */}
+          {joriy && (
+            <g>
+              <rect x="80" y="4" width="2.4" height="28" rx="1.2" fill="#fff" />
+              <path d="M82.4 5 h14 l-4 5 l4 5 h-14 z" fill="#ffd166" />
+            </g>
+          )}
+        </svg>
+
+        {/* Tanga yoki chizilgan belgi */}
+        {oldinda ? (
+          <span className="absolute left-1/2 grid -translate-x-1/2 -translate-y-1/2 place-items-center"
+            style={{ top: `${YUZA_Y * 100}%`, color: "rgb(255 255 255 / 0.85)" }}>
+            {belgi}
+          </span>
+        ) : (
+          <span
+            className="absolute left-1/2 grid -translate-x-1/2 place-items-center rounded-full bg-white"
+            style={{
+              width: tanga, height: tanga,
+              // Tanga yuzada TURADI: pastki cheti yuza markaziga tegadi.
+              top: `calc(${YUZA_Y * 100}% - ${tanga * 0.86}px)`,
+              color: holat === "done" ? TUGAGAN : rang,
+              boxShadow: `inset 0 -3px 0 color-mix(in srgb, ${rang} 30%, #fff), 0 3px 5px rgb(0 0 0 / 0.2)`,
+            }}
+          >
+            {belgi}
+          </span>
+        )}
+      </span>
+    </span>
   );
 }
 
@@ -373,9 +463,14 @@ function Karta({ nom, li, off, gap, onRight, locked, joriy, stars, pad, kir }: {
             ketardi; kartada esa ular o'z qatorida yotadi va tugun toza
             qoladi. */}
         {stars > 0 ? (
+          /* Uchala o'rin ham ko'rinadi, olinmaganlari xira. Faqat
+             olinganlar chizilsa, "ikki yulduz" bola uchun to'liq natija
+             bo'lib ko'rinardi — qaytib, uchinchisini olish sababi
+             ko'rinmay qolardi. */
           <div className={`mt-0.5 flex gap-px ${onRight ? "" : "justify-end"}`}>
-            {Array.from({ length: stars }, (_, i) => (
-              <Icon key={i} name="star" size={12} className="text-brand-gold" />
+            {Array.from({ length: Math.max(3, stars) }, (_, i) => (
+              <Icon key={i} name="star" size={12}
+                className={i < stars ? "text-brand-gold" : "text-ink-dim/35"} />
             ))}
           </div>
         ) : (
