@@ -1005,4 +1005,18 @@ export const ILOVA = {
     </>),
   },
 
+  /* Qum soat — faqat 3D rasm bilan (`public/belgi/e/qumSoat.webp`).
+     SVG chizmasi atayin sodda: u faqat rasm yuklanmay qolgan holatda
+     ko'rinadi va shunda ham "vaqt" ni tanitishi yetadi. */
+  qumSoat: {
+    rang: "sariq", jon: "az-chayqal", davom: "3s", emoji: ["⏳", "⌛"],
+    chiz: (y) => (<>
+      {soya(y, 10, 36, 0.22)}
+      <rect x="10" y="6" width="20" height="4" rx="2" fill={y.v} />
+      <rect x="10" y="30" width="20" height="4" rx="2" fill={y.v} />
+      <path d="M13 10h14c0 6-5 8-7 10 2 2 7 4 7 10H13c0-6 5-8 7-10-2-2-7-4-7-10z" fill="#eaf4fb" />
+      <path d="M15.5 26.5h9L20 22z" fill={y.t} />
+    </>),
+  },
+
 } satisfies Record<string, Belgi>;

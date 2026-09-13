@@ -37,7 +37,7 @@
  * alohida jadval yozish — lekin u albatta chizmalardan qolib ketardi:
  * yangi belgi qo'shilib, jadvalga yozilmay qolardi.
  */
-import { useId } from "react";
+import { useId, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { ILOVA } from "./hajmli/ilova";
 import { OLAM } from "./hajmli/olam";
@@ -159,6 +159,63 @@ const RASM = new Set<string>([
 ]);
 
 /**
+ * EMOJI TO'PLAMI — qolgan belgilarning 3D rasmi (`public/belgi/e/`).
+ *
+ * ─────────────── NEGA ENDI HAMMASI RASM ───────────────
+ *
+ * Yuqoridagi izohdagi hisob ("mashqdagi olma 20 piksel, farq
+ * ko'rinmaydi") kurs kartalari va dars yo'li 3D bo'lgunga qadar to'g'ri
+ * edi. Endi ekranda 3D narsalar yonida SVG olma yassi va "arzon"
+ * ko'rinib qoldi — farq aynan kichik o'lchamda ham bilinadi.
+ *
+ * Og'irlik muammosi ham hal bo'ldi: har rasm ~8 KB va FAQAT ekranda
+ * paydo bo'lganda yuklanadi (`loading="lazy"`). Service Worker ularni
+ * oldindan emas, ochilgan paytda keshlaydi — ya'ni ilova 150 ta rasmni
+ * birdan tortmaydi.
+ *
+ * ─────────────── NEGA ALOHIDA PAPKA ───────────────
+ *
+ * `public/belgi/uy.webp` — pastki paneldagi "Bosh" tugmasining belgisi,
+ * boshqa uslubda chizilgan. Emoji to'plamida ham `uy` (🏠) bor va bitta
+ * papkada biri ikkinchisini jimgina almashtirib yuborardi.
+ *
+ * SVG chizmalar O'CHIRILMADI: rasm yuklanmasa (internetsiz birinchi
+ * ochilish) `onError` o'sha chizmaga qaytadi.
+ *
+ * Rasmlar `.belgi/emoji/` dagi promptlar bilan bitta uslubda chizilgan
+ * va `kes8.py` bilan kesilgan.
+ */
+const EMOJI_RASM = new Set<string>([
+  "ajdar", "apelsin", "ari", "arslon", "asal", "asbob", "atirgul", "avtobus", "ayiq",
+  "ayiqcha", "banan", "baliq", "bayram", "bayroq", "belgiTogri", "bino", "bitiruv",
+  "boshoq", "boyoq", "bronza", "bulut", "chapga", "chochqa", "chumoli", "daraja",
+  "daraxt", "diagramma", "doira", "echki", "fil", "futbolka", "gilos", "goya", "gul",
+  "hayron", "ilon", "it", "jahli", "jirafa", "joja", "kema", "kepka", "kitob",
+  "kokDoira", "kometa", "koylak", "koznoynak", "kuch", "kulimsirash", "kumush",
+  "kubok", "kungaboqar", "kurtka", "kvadrat", "limon", "lola", "mashina", "maydon", "maymun", "medal",
+  "mushuk", "nihol", "nishon", "nok", "non", "ogohlantirish", "olmos", "olma", "olov",
+  "oltin", "ongga", "ordak", "ot", "otOchirgich", "oy", "oylash", "pastga", "paypoq",
+  "pechenye", "pishloq", "poyezd", "politsiya", "qarsak", "qayta", "qilich",
+  "qizilDoira", "qizilKitob", "qolBerish", "qongiroq", "qongiz", "qor", "qoy",
+  "qulupnay", "qumSoat", "qurbaqa", "qurt", "quyon", "quyosh", "quyoshYuzi", "raketa",
+  "romashka", "romb", "sabzi", "salom", "samolyot", "sariqDoira", "shaftoli", "shahar",
+  "shar", "sharf", "shim", "shlyapa", "sichqon", "sigir", "sovqotgan", "soyabon",
+  "suyak", "taksi", "tanga", "tarvuz", "tezYordam", "togri", "toj", "tolqin", "traktor",
+  "tovuq", "tulki", "uchburchak", "uxlayotgan", "uy", "uyalish", "uzum", "velosiped",
+  "vertolyot", "xafa", "xato", "xoroz", "xursand", "yelkanli", "yiglagan", "yomgir",
+  "yoqdi", "yoqmadi", "yukMashina", "yulduz", "yulduzcha", "yuqoriga", "yurak", "zebra",
+]);
+
+/** Rasm manzili — yoki `null`, belgi SVG bilan chizilsa. */
+const rasmManzili = (nom: string): string | null =>
+  RASM.has(nom) ? `/belgi/${nom}.webp`
+    : EMOJI_RASM.has(nom) ? `/belgi/e/${nom}.webp`
+      : null;
+
+/** Yuklanmay qolgan rasmlar — ular sahifa yopilgunicha SVG bo'lib chiziladi. */
+const BUZUQ = new Set<string>();
+
+/**
  * Bitta hajmli belgi.
  *
  * ─────────────── HARAKAT ATAYLAB O'CHIQ ───────────────
@@ -175,11 +232,16 @@ export function Hajmli({ nom, olcham = 24, jonli, className, nomi }: Props) {
   // bo'lib, React ularni bir-biriga mos kelmadi deb hisoblardi.
   const kalit = useId().replace(/:/g, "");
   const b = BELGILAR[nom] as Belgi;
+  const [buzuq, setBuzuq] = useState(() => BUZUQ.has(nom));
+  const manzil = buzuq ? null : rasmManzili(nom);
 
-  if (RASM.has(nom)) {
+  if (manzil) {
     return (
-      <img src={`/belgi/${nom}.webp`} width={olcham} height={olcham} alt={nomi ?? ""}
+      <img src={manzil} width={olcham} height={olcham} alt={nomi ?? ""}
         loading="lazy" decoding="async"
+        // Rasm kelmasa — SVG chizmasiga qaytamiz. Bo'sh katak yoki
+        // "singan rasm" belgisi bolaga savolni tushunarsiz qilardi.
+        onError={() => { BUZUQ.add(nom); setBuzuq(true); }}
         className={`hajmli hajmli-rasm${jonli && b.jon ? " jonli" : ""}`
           + (className ? " " + className : "")}
         data-nom={nom} style={{ "--h": b.jon, "--d": b.davom } as CSSProperties}
