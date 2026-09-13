@@ -113,19 +113,17 @@ function Sarlavha({ children, kech }: { children: React.ReactNode; kech: CSSProp
  * sanaladi: kartalar yuqoridan pastga navbat bilan chiqadi.
  */
 /**
- * Kurs belgisi — sinf kartasining chap tomonidagi plitka.
+ * Kurs belgisi — kartadagi 3D narsa.
  *
  * ─────────── IKKI KO'RINISH ───────────
  *
- * 3D RASM. `src/rasm/kurs/<ic>.webp` bor bo'lsa, plitkaning o'zi
- * shu rasm bo'ladi: kvadrat ham, belgi ham, yorug'lik ham unda
- * chizilgan. Kartaning o'z rangli kvadrati bu holda CHIZILMAYDI —
- * aks holda plitka plitka ustida turardi.
+ * 3D RASM. `src/rasm/kurs/<kurs id>.webp` bor bo'lsa — plitkasiz
+ * narsa (palitra, cho't, sirkul…), soyasi CSS'da (`.kurs-belgi`).
+ * Kartaning rangli kvadrati bu holda CHIZILMAYDI.
  *
- * ESKI KO'RINISH. Rasmi yo'q kurs (hozir — "Maktabgacha") avvalgidek
- * ishlaydi: rangli kvadrat, ustida oq chiziqli belgi va tepadan
- * tushgan yorug'lik. Ya'ni yangi rasm qo'shilmaguncha ham hech narsa
- * buzilmaydi.
+ * ESKI KO'RINISH. Rasmi yo'q kurs avvalgidek ishlaydi: rangli
+ * kvadrat, ustida oq chiziqli belgi va tepadan tushgan yorug'lik.
+ * Ya'ni yangi kurs rasmsiz qo'shilsa ham hech narsa buzilmaydi.
  *
  * "Tugadi" belgisi ikkalasida ham bir xil joyda — plitkaning o'ng
  * pastki burchagida, chetidan chiqib turadi.
@@ -133,17 +131,26 @@ function Sarlavha({ children, kech }: { children: React.ReactNode; kech: CSSProp
 function KursBelgi({ c, foiz, olcham }: {
   c: Course; foiz: number; olcham: "katta" | "kichik";
 }) {
-  const rasm = kursBelgi(c.ic);
+  const rasm = kursBelgi(c.id);
   const color = UNIT_COLORS[c.color];
-  const olchov = olcham === "katta"
-    ? "size-12 rounded-[16px] sm:size-14 sm:rounded-[18px]"
-    : "size-11 rounded-[15px] sm:size-12";
+  // 3D narsa plitkadan KATTAROQ turadi. Plitka o'z kvadratini to'liq
+  // to'ldiradi, narsa esa yo'q: palitra yoki sirkulning atrofida bo'sh
+  // joy bor va bir xil o'lchamda u plitkaning yarmicha bo'lib ko'rinardi.
+  const olchov = rasm
+    ? (olcham === "katta" ? "size-16 sm:size-[72px]" : "size-14 sm:size-16")
+    : olcham === "katta"
+      ? "size-12 rounded-[16px] sm:size-14 sm:rounded-[18px]"
+      : "size-11 rounded-[15px] sm:size-12";
 
   return (
     <span className={`relative grid shrink-0 place-items-center overflow-visible ${olchov}
                       ${rasm ? "" : `text-white ${color.bg}`}`}>
       {rasm ? (
-        <img src={rasm} alt="" className="size-full object-contain" />
+        /* `kurs-belgi` — soya va bosilgandagi qimirlash (`index.css`).
+           Soya rasmga kuydirilmagan: u yorug' va qorong'i temada
+           boshqacha bo'lishi kerak. */
+        <img src={rasm} alt="" loading="lazy" decoding="async"
+          className="kurs-belgi size-full object-contain" />
       ) : (
         <>
           <Icon name={c.ic} size={olcham === "katta" ? 27 : 25} />
