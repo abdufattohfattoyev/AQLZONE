@@ -1129,6 +1129,55 @@ def javob_normal(v: str) -> str:
     return re.sub(r"\s+", "", v)
 
 
+#: Sonli javobning ORTIDAN keladigan birlik.
+#:
+#: "15 sm²", "15sm", "15%" — uchalasining ham mag'zi 15. Bola
+#: birlikni yozadimi yoki yo'qmi, u BILADIGAN narsani o'zgartirmaydi.
+#:
+#: Faqat SON bilan boshlanadigan javobda ishlaydi: "ha", "kvadrat"
+#: kabi so'z-javoblarda harflarni kesish javobning o'zini yeb
+#: qo'yardi.
+#:
+#: Birlik HARF yoki belgi bilan boshlanishi shart, keyin raqam ham
+#: bo'lishi mumkin ("sm2", "m3"). Raqamdan boshlansa "152" ning
+#: oxiridagi "2" birlik deb kesilardi. Kvadrat belgisi bu yerga
+#: yetib kelganda allaqachon oddiy "2" ga aylangan bo'ladi —
+#: `javob_normal` dagi NFKC shunday qiladi.
+_BIRLIK = re.compile(r"^(-?\d+(?:\.\d+)?)(?:[a-z°%][a-z0-9°%]*)?$")
+
+
+def javob_ozagi(v: str) -> str:
+    """
+    Normallashtirilgan javobdan birlikni olib tashlaydi.
+
+    Birlik topilmasa — javob o'zgarmaydi.
+    """
+    m = _BIRLIK.match(v)
+    return m.group(1) if m else v
+
+
+def javob_teng(kiritilgan: str, togri: str) -> bool:
+    """
+    Ikki javob bir xilmi.
+
+    Avval to'liq solishtiriladi, keyin BIRLIKSIZ. Ya'ni javob
+    "15 sm²" bo'lsa, bola "15" deb yozsa ham to'g'ri hisoblanadi:
+    u masalani yechgan, birlikni yozmagani esa boshqa masala.
+
+    Teskarisi ham ishlaydi — javob "15" bo'lib, bola "15 sm²" desa
+    ham qabul qilinadi.
+
+    ─────────────── NEGA IKKI BOSQICH ───────────────
+
+    Birdaniga o'zakni solishtirish ham mumkin edi, lekin o'shanda
+    so'z-javoblar ("ha", "yo'q") bilan sonli javoblar bir xil
+    yo'ldan o'tardi va birinchi bosqichning ma'nosi yo'qolardi.
+    Bu ko'rinishda esa oddiy holat oddiy yo'ldan ketadi.
+    """
+    a, b = javob_normal(kiritilgan), javob_normal(togri)
+    return a == b or javob_ozagi(a) == javob_ozagi(b)
+
+
 class MasalaUrinish(models.Model):
     """
     Kim qaysi masalani yechdi.
@@ -1161,6 +1210,23 @@ class MasalaUrinish(models.Model):
     #: Ikkalasi ham kerak: biri o'lchov uchun, ikkinchisi ODAM uchun.
     yechdi = models.BooleanField(default=False)
 
+    #: Masala QACHON yechilgani.
+    #:
+    #: ─────────────── NEGA `created_at` YETMAYDI ───────────────
+    #:
+    #: `created_at` — BIRINCHI urinishning payti va u qator
+    #: yaralgandan keyin o'zgarmaydi. Ya'ni kecha urinib, bugun
+    #: topgan odamning yechimi "kechagi" bo'lib qolardi va
+    #: "bugun nechta odam yechdi" degan savolga berilgan javob
+    #: har kuni kamaytirib ko'rsatardi.
+    #:
+    #: Bo'sh bo'lishi MUMKIN: hali yecholmaganda ham, bu maydon
+    #: qo'shilishidan OLDIN yechilganlarda ham. Eskilari
+    #: migratsiyada `created_at` bilan to'ldiriladi — ular uchun
+    #: bu eng yaqin haqiqat, chunki o'sha paytdagi sanoqda
+    #: birinchi urinish va yechim deyarli har doim bir kunda edi.
+    yechdi_at = models.DateTimeField(null=True, blank=True, default=None)
+
     #: Shu odam necha marta javob yubordi.
     #:
     #: Statistikaga tushmaydi — u faqat YECHIM QACHON ochilishini hal
@@ -1191,6 +1257,13 @@ class MasalaUrinish(models.Model):
             models.UniqueConstraint(
                 fields=["masala", "profile"], name="masala_bir_odam_bir_urinish"
             )
+        ]
+        # Hisobot ikkala sana bo'yicha ham kesadi: "bugun kim urindi"
+        # va "bugun kim yechdi". Indekssiz ikkalasi ham butun jadvalni
+        # o'qirdi — u esa masalalar bo'limidagi eng tez o'sadigan jadval.
+        indexes = [
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["-yechdi_at"]),
         ]
 
 

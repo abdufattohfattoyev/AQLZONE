@@ -33,6 +33,7 @@ from . import masala as MS
 from . import reklama as R
 from . import views
 from . import masala_kanal as MK
+from . import models as MDL
 from .models import (
     Duel, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
     MasalaOvoz, MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul,
@@ -4132,6 +4133,62 @@ class MasalaBoshqaruvTest(TestCase):
 
 
 @override_settings(BOT_USERNAME="aqlzone_bot", KANAL="@aqlzone")
+class JavobTengTest(TestCase):
+    """
+    Javob solishtirish — BIRLIK bilan ham, birliksiz ham.
+
+    Diqqat qaratilgan joy — BOLA YOZGANINI QABUL QILISH. Masalada
+    "necha sm²?" deb so'ralgan bo'lsa, u "15" deb yozadi va bu
+    to'g'ri javob: birlikni takrorlamagani u bilmaydi degani emas.
+    Ilova esa buni "xato" deb qaytarsa, bola o'zining to'g'ri
+    yechganiga shubha qilardi — bu eng jahl chiqaradigan holat.
+    """
+
+    def test_birliksiz_javob_qabul_qilinadi(self):
+        self.assertTrue(MDL.javob_teng("15", "15 sm²"))
+
+    def test_birlik_bilan_ham_qabul_qilinadi(self):
+        self.assertTrue(MDL.javob_teng("15 sm²", "15"))
+
+    def test_birlik_yozilishi_ahamiyatsiz(self):
+        for x in ("15sm2", "15 SM²", "15 sm 2", "15sm²"):
+            with self.subTest(javob=x):
+                self.assertTrue(MDL.javob_teng(x, "15 sm²"))
+
+    def test_boshqa_son_qabul_qilinmaydi(self):
+        self.assertFalse(MDL.javob_teng("16", "15 sm²"))
+
+    def test_raqam_birlik_deb_kesilmaydi(self):
+        """"152" ning oxiridagi 2 birlik EMAS — u sonning bir qismi."""
+        self.assertFalse(MDL.javob_teng("152", "15"))
+        self.assertFalse(MDL.javob_teng("15", "152"))
+
+    def test_soz_javoblarga_tegilmaydi(self):
+        """Harf kesish qoidasi FAQAT sonli javobda ishlaydi."""
+        self.assertTrue(MDL.javob_teng("ha", "ha"))
+        self.assertFalse(MDL.javob_teng("yo'q", "ha"))
+        # "kvadrat" son bilan boshlanmaydi — hech narsa kesilmaydi.
+        self.assertFalse(MDL.javob_teng("kv", "kvadrat"))
+
+    def test_manfiy_va_kasr(self):
+        self.assertTrue(MDL.javob_teng("-3", "-3 sm"))
+        self.assertTrue(MDL.javob_teng("3.5", "3,5 kg"))
+
+    def test_bosh_javob_togri_emas(self):
+        self.assertFalse(MDL.javob_teng("", "15"))
+
+    def test_birlik_TURI_tekshirilmaydi(self):
+        """
+        ATAYLAB: "15 kg" va "15 sm" bir xil deb qabul qilinadi.
+
+        Birlik masalaning SHARTIDA aytilgan va bola uni tanlamaydi
+        — javobda esa u faqat takror. Birlik turini tekshirish
+        "15 sm" deb yozgan bolani "15 sm²" uchun xato qilardi va
+        bu matematikani emas, yozuvni tekshirish bo'lardi.
+        """
+        self.assertTrue(MDL.javob_teng("15 kg", "15 sm"))
+
+
 class MasalaKanalTest(TestCase):
     """
     Kanalga joylanadigan post.
@@ -4189,8 +4246,11 @@ class MasalaKanalTest(TestCase):
     def test_kanal_nomi_at_bilan_beriladi(self):
         # Sozlamada `@` yo'q, Telegram esa `@nom` kutadi. Aks holda
         # butun post "chat not found" bo'lib qaytardi.
+        # Nom SOZLAMADAN olinadi, qotirib yozilmaydi: boshqa kanal
+        # nomi bilan ishlagan dasturchida bu test hech qanday
+        # sababsiz yiqilardi.
         from core.kanal import kanal_nomi
-        self.assertEqual(kanal_nomi(), "@aqlzone")
+        self.assertEqual(kanal_nomi(), f"@{settings.KANAL}")
 
 
 @override_settings(BOT_USERNAME="aqlzone_bot", KANAL="aqlzone",

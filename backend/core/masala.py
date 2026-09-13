@@ -29,7 +29,7 @@ from django.db.models import F, Max
 from django.utils import timezone
 
 from .models import (
-    Masala, MasalaKorish, MasalaOvoz, MasalaUrinish, Profile, javob_normal,
+    Masala, MasalaKorish, MasalaOvoz, MasalaUrinish, Profile, javob_teng,
 )
 
 
@@ -335,10 +335,16 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
     yechimni QO'RIQLAYDI: u ochilmagan bo'lsa, javob ham, yechim ham
     umuman yuborilmaydi.
     """
-    togri = javob_normal(javob) == javob_normal(masala.javob)
+    togri = javob_teng(javob, masala.javob)
+    hozir = timezone.now()
     urinish, birinchi = MasalaUrinish.objects.get_or_create(
         masala=masala, profile=profile,
-        defaults={"togri": togri, "yechdi": togri, "soni": 1, "yechim_ochiq": togri},
+        defaults={
+            "togri": togri, "yechdi": togri, "soni": 1, "yechim_ochiq": togri,
+            # Birinchi urinishda topilsa, yechilgan payt ham shu.
+            # Topilmasa bo'sh qoladi va keyingi to'g'ri javobda yoziladi.
+            "yechdi_at": hozir if togri else None,
+        },
     )
 
     if birinchi:
@@ -375,7 +381,11 @@ def javob_ber(masala: Masala, profile: Profile, javob: str) -> dict:
     # uning mehnatini inkor qilish bo'lardi.
     if togri and not urinish.yechdi:
         urinish.yechdi = True
-        yangilanadi.append("yechdi")
+        # Payt SHU YERDA yoziladi, `created_at` da emas: hisobot
+        # "bugun kim yechdi" deb so'raydi, "kim qachon birinchi
+        # marta urinib ko'rdi" deb emas.
+        urinish.yechdi_at = hozir
+        yangilanadi += ["yechdi", "yechdi_at"]
         # Birinchi urinishda bu allaqachon oshirilgan, shuning uchun
         # faqat KEYINGI urinishlarda qo'shiladi.
         if not birinchi:
