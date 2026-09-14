@@ -38,8 +38,10 @@ from django.db.models import Count, F, Max, Q, Sum
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 
 from . import masala as MS
+from . import jonli as JL
 from . import reklama as R
 from .liga import DARAJALAR
 from .models import (
@@ -221,7 +223,12 @@ def bolim(joriy: str) -> dict:
     uni ko'rish uchun masalalar sahifasiga o'tib turish kerak
     bo'lmasligi lozim. Bitta indeksli sanoq so'rovi, sezilmaydi.
     """
-    return {"joriy_bolim": joriy, "navbat_soni": MS.navbat_soni()}
+    return {
+        "joriy_bolim": joriy,
+        "navbat_soni": MS.navbat_soni(),
+        # Chap menyudagi "Jonli" yonidagi son — hozir ishlayotganlar.
+        "jonli_soni": JL.soni(),
+    }
 
 
 def davr(request) -> int:
@@ -1366,3 +1373,48 @@ def _masala_javob(xabar: str, holat: str):
     return HttpResponseRedirect(
         f"/boshqaruv/masalalar?holat={quote(holat)}&xabar={quote(xabar)}"
     )
+
+
+# ------------------------------------------------------------------ jonli
+
+
+def jonli(request):
+    """
+    Hozir ishlayotganlar — test, dars, masala.
+
+    Sahifa O'ZI qayta yuklanmaydi: har 5 soniyada `jonli.json` so'raladi
+    va faqat ro'yxat almashadi. To'liq qayta yuklash har 5 soniyada
+    sahifani sakratib, o'qib bo'lmaydigan qilardi.
+    """
+    if not _yoniq():
+        raise Http404
+    if not kirganmi(request):
+        return kirish(request)
+    royxat = JL.royxat()
+    return render(request, "boshqaruv/jonli.html", bolim("jonli") | {
+        "royxat": royxat,
+        # Sanoqlar serverda ham — JS birinchi so'rovni yubormaguncha
+        # (yoki yashirin yorliqda umuman yubormasa) kartalar 0 turmasin.
+        "sanoq": {
+            "toplam": sum(1 for f in royxat if f["joy"] == "toplam"),
+            "blok": sum(1 for f in royxat if f["joy"] == "blok"),
+            "dars": sum(1 for f in royxat if f["joy"] in ("dars", "masala")),
+        },
+        "yangilangan": timezone.localtime(),
+        "eskirish": JL.ESKIRISH,
+    })
+
+
+@never_cache
+def jonli_json(request):
+    """
+    `jonli` sahifasining ma'lumoti. Kirmagan odamga 404 — sahifaning o'zi kabi.
+
+    `never_cache` MAJBURIY: sarlavhasiz GET javobni brauzer o'zi keshlab
+    qo'yadi va sahifa har 5 soniyada bir necha daqiqa oldingi ro'yxatni
+    ko'rsatib turardi — "jonli" sahifa uchun eng yomon xato.
+    """
+    from django.http import JsonResponse
+    if not _yoniq() or not kirganmi(request):
+        raise Http404
+    return JsonResponse({"royxat": JL.royxat(), "vaqt": timezone.localtime().strftime("%H:%M:%S")})

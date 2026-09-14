@@ -65,6 +65,7 @@ import { tovush } from "../lib/ovoz";
 import { yolDars } from "../lib/yollar";
 import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
+import { useFaollik } from "../lib/faollik";
 
 /** Bitta berilgan javob. `null` — ulgurilmadi. */
 interface Javob {
@@ -266,6 +267,16 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, onQayta, onExit }: 
     Math.max(0, Math.round((tugash.current - Date.now()) / 1000)));
 
   const S = blok.savollar[idx];
+
+  // Jonli panel uchun: qaysi test, nechanchi savol, nechtasi to'g'ri.
+  // Natija ekranida signal to'xtaydi — test tugagan.
+  useFaollik(tugadi ? null : {
+    joy: toplam ? "toplam" : "blok",
+    nom: toplam ? toplam.nom : bobNomi ? `${sinf}-sinf · ${bobNomi}` : `${sinf}-sinf · ${uzunlik}`,
+    savol: Math.min(idx + 1, blok.savollar.length),
+    jami: blok.savollar.length,
+    togri: javoblar.filter((x) => x.togri).length,
+  });
 
   /**
    * Testni yakunlaydi.

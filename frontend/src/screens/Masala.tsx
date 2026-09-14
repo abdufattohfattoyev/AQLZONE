@@ -29,6 +29,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Halqa } from "../components/Halqa";
 import { MasalaBaho } from "../components/MasalaBaho";
+import { useFaollik } from "../lib/faollik";
 import { MasalaMatn } from "../components/MasalaMatn";
 import { TangaHisob } from "../components/TangaHisob";
 import { TangaOqim } from "../components/TangaOqim";
@@ -154,6 +155,13 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
   const ochiqEdi = useRef(false);
 
   const { jamiTanga, tangaYech, oyinTugadi } = useProgress();
+
+  // Jonli panel uchun — masala ochiq va hali yechilmagan bo'lsa. Hook
+  // shartsiz chaqiriladi (React qoidasi), holat esa `m` kelguncha `null`.
+  useFaollik(m && m.holat === "tasdiq" && !natija?.togri ? {
+    joy: "masala",
+    nom: `#${m.raqam} · ${m.matn.replace(/\s+/g, " ").slice(0, 60)}`,
+  } : null);
 
   useEffect(() => {
     let bekor = false;

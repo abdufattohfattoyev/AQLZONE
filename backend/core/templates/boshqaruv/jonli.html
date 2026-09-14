@@ -1,0 +1,154 @@
+{% extends "boshqaruv/qobiq.html" %}
+{% block sarlavha %}Jonli{% endblock %}
+{% block sahifa_nomi %}Hozir ishlayapti{% endblock %}
+{% block sahifa_izoh %}
+  <span class="nuqta yoniq"></span>&nbsp; har 5 soniyada yangilanadi · oxirgi: <span id="vaqt">{{ yangilangan|date:"H:i:s" }}</span>
+{% endblock %}
+
+{% comment %}
+Kim hozir test, dars yoki masala ishlayapti — jonli.
+
+Sahifa O'ZI qayta yuklanmaydi (qobiqdagi `data-yangilan` o'chirilgan):
+har 5 soniyada faqat `jonli.json` so'raladi va ro'yxat almashadi.
+Birinchi chizish serverda — JS ishlamasa ham sahifa bo'sh qolmaydi.
+{% endcomment %}
+{% block yangilan %}{% endblock %}
+
+{% block ichki %}
+
+<div class="setka k4">
+  <div class="karta olchov yashil">
+    <div class="bosh"><span class="belgicha"><span class="nuqta yoniq"></span></span><span class="nom">Hozir ishlayapti</span></div>
+    <div class="son" id="s-jami">{{ royxat|length }}</div>
+    <div class="qosh">oxirgi {{ eskirish }} soniyada signal bergan</div>
+  </div>
+  <div class="karta olchov binafsha">
+    <div class="bosh"><span class="belgicha">📝</span><span class="nom">Test to'plami</span></div>
+    <div class="son" id="s-toplam">{{ sanoq.toplam }}</div>
+    <div class="qosh">hamma uchun bir xil test</div>
+  </div>
+  <div class="karta olchov moviy">
+    <div class="bosh"><span class="belgicha">⏱</span><span class="nom">Blok test</span></div>
+    <div class="son" id="s-blok">{{ sanoq.blok }}</div>
+    <div class="qosh">sinf yoki bob testi</div>
+  </div>
+  <div class="karta olchov sariq">
+    <div class="bosh"><span class="belgicha">▶</span><span class="nom">Dars va masala</span></div>
+    <div class="son" id="s-dars">{{ sanoq.dars }}</div>
+    <div class="qosh">yo'l xaritasi va masalalar</div>
+  </div>
+</div>
+
+<div class="bolim"><h2>Kim nima qilyapti</h2><p>oxirgi signal bergani tepada</p></div>
+
+<div id="royxat" class="jonli-royxat">
+  {% for f in royxat %}
+    <div class="karta jonli-qator">
+      <span class="harf onlayn">{{ f.bosh }}</span>
+      <div class="jonli-kim">
+        <b>{{ f.ism }}</b>{% if f.bola %} <span class="juda-xira">· {{ f.bola }}</span>{% endif %}
+        <div class="xira">{{ f.joyNomi }} · {{ f.nom }}</div>
+      </div>
+      <div class="jonli-holat">
+        {% if f.jami %}
+          <div class="jonli-son"><b>{{ f.savol }}</b> / {{ f.jami }} savol · <span style="color:var(--yashil)">{{ f.togri }} to'g'ri</span></div>
+          <div class="ust-chiziq"><span style="width:{{ f.foiz }}%"></span></div>
+        {% endif %}
+      </div>
+      <div class="jonli-vaqt"><b>{{ f.davom }} s</b>hozir</div>
+    </div>
+  {% empty %}
+    <div class="jadval-oram"><div class="bosh-holat">Hozir hech kim test yoki dars ishlamayapti.</div></div>
+  {% endfor %}
+</div>
+
+<style>
+  .jonli-royxat { display: grid; gap: 10px; }
+  .jonli-qator {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(160px, 260px) auto;
+    align-items: center; gap: 14px; padding: 13px 16px;
+    animation: jonli-kir 400ms ease-out;
+  }
+  .jonli-kim b { font-size: 14px; }
+  .jonli-kim .xira { font-size: 12.5px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .jonli-son { font-size: 12.5px; color: var(--xira); margin-bottom: 6px; }
+  .jonli-son b { color: var(--matn); font-size: 15px; }
+  .jonli-vaqt { text-align: right; font-size: 12px; color: var(--juda-xira); white-space: nowrap; }
+  .jonli-vaqt b { display: block; color: var(--matn); font-size: 13px; }
+  /* Yangi qator bir marta yorishadi — ro'yxatga kim qo'shilgani ko'rinsin. */
+  @keyframes jonli-kir { from { opacity: 0; transform: translateY(-6px); } }
+  @media (max-width: 640px) {
+    .jonli-qator { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .jonli-holat { grid-column: 1 / -1; }
+  }
+</style>
+{% endblock %}
+
+{% block skript %}
+<script>
+  (function () {
+    var royxat = document.getElementById("royxat");
+    var eski = new Set();
+
+    function q(s) {
+      return String(s).replace(/[&<>"]/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+      });
+    }
+    function davom(s) {
+      if (s < 60) return s + " s";
+      var d = Math.floor(s / 60);
+      return d < 60 ? d + " daq" : Math.floor(d / 60) + " soat " + (d % 60) + " daq";
+    }
+
+    function chiz(d) {
+      document.getElementById("vaqt").textContent = d.vaqt;
+      var r = d.royxat;
+      document.getElementById("s-jami").textContent = r.length;
+      document.getElementById("s-toplam").textContent = r.filter(function (x) { return x.joy === "toplam"; }).length;
+      document.getElementById("s-blok").textContent = r.filter(function (x) { return x.joy === "blok"; }).length;
+      document.getElementById("s-dars").textContent = r.filter(function (x) { return x.joy === "dars" || x.joy === "masala"; }).length;
+
+      if (!r.length) {
+        royxat.innerHTML = '<div class="jadval-oram"><div class="bosh-holat">Hozir hech kim test yoki dars ishlamayapti.</div></div>';
+        eski = new Set();
+        return;
+      }
+      var yangi = new Set();
+      royxat.innerHTML = r.map(function (f) {
+        // Kalit — ism va ish. Faqat YANGI kelgan qator animatsiya oladi,
+        // aks holda har 5 soniyada butun ro'yxat miltillab turardi.
+        var kalit = f.ism + "|" + f.joy + "|" + f.nom;
+        yangi.add(kalit);
+        var anim = eski.has(kalit) ? ' style="animation:none"' : "";
+        var holat = f.jami
+          ? '<div class="jonli-son"><b>' + f.savol + "</b> / " + f.jami + ' savol · <span style="color:var(--yashil)">' +
+            f.togri + " to'g'ri</span></div>" +
+            '<div class="ust-chiziq"><span style="width:' + f.foiz + '%"></span></div>'
+          : "";
+        return '<div class="karta jonli-qator"' + anim + ">" +
+          '<span class="harf onlayn">' + q(f.bosh) + "</span>" +
+          '<div class="jonli-kim"><b>' + q(f.ism) + "</b>" +
+            (f.bola ? ' <span class="juda-xira">· ' + q(f.bola) + "</span>" : "") +
+            '<div class="xira">' + q(f.joyNomi) + " · " + q(f.nom) + "</div></div>" +
+          '<div class="jonli-holat">' + holat + "</div>" +
+          '<div class="jonli-vaqt"><b>' + davom(f.davom) + "</b>" +
+            (f.oxirgi > 25 ? "signal " + f.oxirgi + " s oldin" : "hozir") + "</div>" +
+        "</div>";
+      }).join("");
+      eski = yangi;
+    }
+
+    function sora() {
+      if (document.hidden) return;
+      fetch("/boshqaruv/jonli.json", { credentials: "same-origin", cache: "no-store" })
+        .then(function (j) { return j.ok ? j.json() : null; })
+        .then(function (d) { if (d) chiz(d); })
+        .catch(function () {});
+    }
+    sora();
+    setInterval(sora, 5000);
+    document.addEventListener("visibilitychange", sora);
+  })();
+</script>
+{% endblock %}

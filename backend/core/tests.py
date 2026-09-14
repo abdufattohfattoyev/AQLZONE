@@ -6202,3 +6202,74 @@ class TestToplamTest(TestCase):
             y.assert_called_once()
         self.t.refresh_from_db()
         self.assertEqual(self.t.kanal_sanoq, "1:7")
+
+
+@override_settings(BOSHQARUV_YONIQ=True, ADMIN_TG=[ADMIN_ID])
+class JonliFaollikTest(TestCase):
+    """
+    Jonli sahifa — kim hozir nima ishlayapti.
+
+    Tekshiriladi: signal yoziladi, savol almashganda "qachondan beri"
+    buzilmaydi, eskirgan signal ro'yxatdan tushadi, tugash o'chiradi va
+    sahifa faqat adminga ochiladi.
+    """
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def signal(self, h, **d):
+        return self.client.post("/api/v1/faollik", d, content_type="application/json", **h)
+
+    def test_signal_royxatga_tushadi(self):
+        from . import jonli as JL
+        h = self.kir("dev-jonli-faol-000001")
+        self.assertEqual(self.signal(h, joy="toplam", nom="9-sinf · 1-blok", savol=3, jami=15, togri=2).status_code, 200)
+        r = JL.royxat()
+        self.assertEqual(len(r), 1)
+        self.assertEqual((r[0]["joy"], r[0]["savol"], r[0]["jami"], r[0]["togri"]), ("toplam", 3, 15, 2))
+        self.assertEqual(r[0]["foiz"], 20)
+
+    def test_savol_almashganda_boshlanish_saqlanadi(self):
+        from .models import Faollik
+        h = self.kir("dev-jonli-bosh-000001")
+        self.signal(h, joy="toplam", nom="9-sinf · 1-blok", savol=1, jami=15)
+        Faollik.objects.update(boshlandi=timezone.now() - timedelta(minutes=7))
+        self.signal(h, joy="toplam", nom="9-sinf · 1-blok", savol=5, jami=15)
+        f = Faollik.objects.get()
+        self.assertGreater((timezone.now() - f.boshlandi).total_seconds(), 400)
+        # Boshqa ish boshlansa — vaqt noldan.
+        self.signal(h, joy="dars", nom="Kvadrat tenglama", savol=1, jami=6)
+        f.refresh_from_db()
+        self.assertLess((timezone.now() - f.boshlandi).total_seconds(), 5)
+
+    def test_eskirgan_signal_tushib_ketadi(self):
+        from . import jonli as JL
+        from .models import Faollik
+        h = self.kir("dev-jonli-eski-000001")
+        self.signal(h, joy="blok", nom="9-sinf", savol=2, jami=10)
+        Faollik.objects.update(updated_at=timezone.now() - timedelta(seconds=JL.ESKIRISH + 5))
+        self.assertEqual(JL.royxat(), [])
+
+    def test_tugash_ochiradi(self):
+        from .models import Faollik
+        h = self.kir("dev-jonli-tugash-00001")
+        self.signal(h, joy="masala", nom="#12")
+        self.signal(h, joy="")
+        self.assertFalse(Faollik.objects.exists())
+
+    def test_notogri_joy_yozilmaydi(self):
+        from .models import Faollik
+        h = self.kir("dev-jonli-xato-000001")
+        self.signal(h, joy="boshqa", nom="x")
+        self.assertFalse(Faollik.objects.exists())
+
+    def test_sahifa_faqat_adminga(self):
+        self.assertNotContains(self.client.get("/boshqaruv/jonli"), "Kim nima qilyapti")
+        self.assertEqual(self.client.get("/boshqaruv/jonli.json").status_code, 404)
+        self.client.cookies[boshqaruv.COOKIE] = signing.dumps({"ok": True, "tg": ADMIN_ID}, salt=boshqaruv.TUZ)
+        self.signal(self.kir("dev-jonli-sahifa-00001"), joy="toplam", nom="10-sinf · 2-blok", savol=4, jami=15)
+        r = self.client.get("/boshqaruv/jonli")
+        self.assertContains(r, "10-sinf · 2-blok")
+        self.assertEqual(self.client.get("/boshqaruv/jonli.json").json()["royxat"][0]["savol"], 4)

@@ -35,6 +35,12 @@ keladi — har bir ko'rinish uni qo'shib beradi.
     <a class="{% if joriy_bolim == 'panel' %}faol{% endif %}" href="/boshqaruv">
       <span class="belgicha">◧</span> Umumiy panel
     </a>
+    {% comment %} Jonli — hozir kim test yoki dars ishlayapti. Son yashil:
+       bu "ish bor" emas, "odamlar shu yerda" degan xushxabar. {% endcomment %}
+    <a class="{% if joriy_bolim == 'jonli' %}faol{% endif %}" href="/boshqaruv/jonli">
+      <span class="belgicha"><span class="nuqta {% if jonli_soni %}yoniq{% endif %}"></span></span> Jonli
+      {% if jonli_soni %}<span class="sanoqcha" style="background:var(--yashil)">{{ jonli_soni }}</span>{% endif %}
+    </a>
     <a class="{% if joriy_bolim == 'masala' %}faol{% endif %}" href="/boshqaruv/masalalar/hisobot">
       <span class="belgicha">∑</span> Masalalar
     </a>

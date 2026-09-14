@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "../lib/icons";
 import { EmojiMatn } from "../lib/hajmli";
+import { useFaollik } from "../lib/faollik";
 import { QuestionView, sahnaBor } from "../components/QuestionView";
 import { Ogit } from "../components/Ogit";
 import { Rasm } from "../components/Rasm";
@@ -140,6 +141,16 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
   const boshlandi = useRef(performance.now());
 
   const A = savollar[idx];
+
+  // Jonli panel uchun. Takrorlash darsi ham "dars" — admin uchun farqi
+  // yo'q, ikkalasida ham bola savol yechyapti.
+  useFaollik(tugadi ? null : {
+    joy: "dars",
+    nom: `${kursMatn(unit.u)} · ${kursMatn(lesson.n).split(" · ")[0]}`,
+    savol: idx + 1,
+    jami: savollar.length,
+    togri: birinchidanTogri,
+  });
 
   /**
    * Chiqishni tasdiqlash oynasi ochiqmi.

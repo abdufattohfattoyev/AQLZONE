@@ -1453,3 +1453,50 @@ class TestIshlash(models.Model):
             models.UniqueConstraint(fields=["toplam", "profile"], name="toplam_bir_odam_bir_natija"),
         ]
         indexes = [models.Index(fields=["toplam", "togri"])]
+
+
+class Faollik(models.Model):
+    """
+    Hozir NIMA QILYAPTI — boshqaruv panelidagi "Jonli" sahifasi uchun.
+
+    ─────────────────────── NEGA ALOHIDA JADVAL ───────────────────────
+
+    "Onlayn" (`Session.last_seen`) faqat "ilova ochiq" deydi. Admin esa
+    ko'pincha boshqa narsani so'raydi: kim hozir test ishlayapti, qaysi
+    savolda turibdi, qiynalyaptimi. Buni natija jadvallaridan bilib
+    bo'lmaydi — ular faqat TUGAGAN ishni yozadi, yarim yo'ldagini emas.
+
+    ─────────────────────── BIR PROFIL — BIR QATOR ───────────────────────
+
+    Tarix saqlanmaydi, faqat HOZIRGI holat: har signal o'sha qatorni
+    ustidan yozadi. Jadval shuning uchun o'smaydi va "jonli" so'rovi
+    hech qachon sekinlashmaydi. Tarix kerak bo'lsa — u natija
+    jadvallarida (`LessonResult`, `TestIshlash`).
+
+    Qator o'chirilmaydi, ESKIRADI: `updated_at` 90 soniyadan eski bo'lsa
+    odam ishni tashlagan yoki ilovani yopgan hisoblanadi. O'chirishga
+    tayanish mumkin emas — ilovani yopgan telefon "chiqdim" deb
+    aytishga ulgurmaydi.
+    """
+
+    DARS = "dars"
+    BLOK = "blok"
+    TOPLAM = "toplam"
+    MASALA = "masala"
+    JOYLAR = [(DARS, "Dars"), (BLOK, "Blok test"), (TOPLAM, "Test to'plami"), (MASALA, "Masala")]
+
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, primary_key=True,
+                                   related_name="faollik")
+    joy = models.CharField(max_length=10, choices=JOYLAR)
+    #: Odam o'qiydigan nom: "9-sinf · 1-blok", "Kvadrat tenglama", "#12".
+    nom = models.CharField(max_length=120, default="", blank=True)
+    #: Nechanchi savolda (1 dan) va jami nechta. Masalada ikkalasi 0.
+    savol = models.SmallIntegerField(default=0)
+    jami = models.SmallIntegerField(default=0)
+    togri = models.SmallIntegerField(default=0)
+    #: Shu ish qachon boshlangan — "12 daqiqadan beri" shundan.
+    boshlandi = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        db_table = "faollik"

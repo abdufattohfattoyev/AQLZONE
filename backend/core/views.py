@@ -45,6 +45,7 @@ from . import liga as L
 from . import masala as M
 from . import masala_kanal as MK
 from . import test_toplam as TT
+from . import jonli as JL
 from . import onlayn as ON
 from . import ovoz as O
 from . import rasm as R
@@ -1915,3 +1916,29 @@ def toplam_kanal(request, pk: int):
         t.refresh_from_db(fields=["kanal_post_id", "kanal_yoq"])
         return Response({"holat": holat, "yuborilgan": True, "havola": TT.post_havolasi(t)})
     return Response({"holat": holat, "izoh": izoh, "yuborilgan": False}, status=400)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def faollik(request):
+    """
+    "Hozir shu ishni qilyapman" — boshqaruv panelidagi Jonli sahifa uchun.
+
+    `joy` bo'sh bo'lsa — ish tugadi, qator o'chiriladi. Javob bo'sh:
+    mijoz bu so'rovni fonda yuboradi va hech narsani kutmaydi.
+    """
+    profil = _profil_tanla(request)
+    d = request.data if hasattr(request.data, "get") else {}
+    joy = str(d.get("joy") or "")
+    if not joy:
+        JL.tozala(profil)
+        return Response({"ok": True})
+
+    def son(k: str) -> int:
+        try:
+            return int(d.get(k) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    JL.yoz(profil, joy, str(d.get("nom") or ""), son("savol"), son("jami"), son("togri"))
+    return Response({"ok": True})
