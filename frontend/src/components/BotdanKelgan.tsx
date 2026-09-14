@@ -29,6 +29,8 @@
  *
  * `masala_12`  — ulashilgan masala (`lib/ulash.ts`)
  * `masalalar`  — kanal postidagi «Boshqa masalalar» tugmasi
+ * `test_3`     — test to'plami posti (`core/test_toplam.py`)
+ * `testlar`    — to'plam postidagi «Boshqa testlar» tugmasi
  * boshqasi     — duel chaqiruvi, ya'ni eski xatti-harakat
  *
  * Belgi ATAYLAB `_` bilan: duel kodlari faqat harf va raqamdan
@@ -40,7 +42,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { boshParametri } from "../lib/qobiq";
 import { MASALA_BOSH, ROYXAT_PARAM } from "../lib/ulash";
-import { yolDuelKod, yolMasala, yolMasalalar } from "../lib/yollar";
+import { yolDuelKod, yolMasala, yolMasalalar, yolTestSinf, yolToplam } from "../lib/yollar";
 
 /** Ishlatilgan kod shu yerda qoladi — sessiya davomida. */
 const KALIT = "az_duel_kod";
@@ -54,6 +56,11 @@ const KALIT = "az_duel_kod";
  */
 function manzil(kod: string): string | null {
   if (kod === ROYXAT_PARAM) return yolMasalalar();
+  if (kod === "testlar") return yolTestSinf();
+  if (kod.startsWith("test_")) {
+    const raqam = Number(kod.slice("test_".length));
+    return Number.isInteger(raqam) && raqam > 0 ? yolToplam(raqam) : null;
+  }
   if (kod.startsWith(MASALA_BOSH)) {
     const raqam = Number(kod.slice(MASALA_BOSH.length));
     return Number.isInteger(raqam) && raqam > 0 ? yolMasala(raqam) : null;

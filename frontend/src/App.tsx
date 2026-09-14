@@ -48,6 +48,7 @@ const Testlar = lazy(() => import("./screens/Testlar").then((m) => ({ default: m
 const Hisobot = lazy(() => import("./screens/Hisobot").then((m) => ({ default: m.Hisobot })));
 const Formulalar = lazy(() => import("./screens/Formulalar").then((m) => ({ default: m.Formulalar })));
 const Qidiruv = lazy(() => import("./screens/Qidiruv").then((m) => ({ default: m.Qidiruv })));
+const ToplamSahifa = lazy(() => import("./screens/ToplamSahifa").then((m) => ({ default: m.ToplamSahifa })));
 const Masalalar = lazy(() => import("./screens/Masalalar").then((m) => ({ default: m.Masalalar })));
 const Masala = lazy(() => import("./screens/Masala").then((m) => ({ default: m.Masala })));
 const MasalaYangi = lazy(() => import("./screens/MasalaYangi").then((m) => ({ default: m.MasalaYangi })));
@@ -72,7 +73,7 @@ import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
   yolDuel, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
-  yolBosh, yolTestSinf,
+  yolBosh, yolTestSinf, yolToplam,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -115,6 +116,7 @@ function Yollar() {
       {/* Testlar kursdan tashqarida: o'lchamoqchi bo'lgan odamda
           faqat "nechanchi sinfman" degan savol bor. */}
       <Route path="/testlar" element={<TestSinfSahifasi />} />
+      <Route path="/toplam/:id" element={<ToplamSahifasi />} />
       <Route path="/profillar" element={<ProfilSahifasi />} />
       <Route path="/sozlamalar" element={<SozlamaSahifasi />} />
       {/* Botdagi «Saytga kirish» havolasi. Marshrut Tanishuv darvozasidan
@@ -216,9 +218,20 @@ function TestSinfSahifasi() {
   return (
     <TestSinf
       onSinf={(c) => nav(yolTestlar(c))}
+      onToplam={(id) => nav(yolToplam(id))}
       onBack={() => nav(yolBosh())}
     />
   );
+}
+
+/** Test to'plami — `/toplam/<id>`, kanal postidagi tugma shu yerga olib keladi. */
+function ToplamSahifasi() {
+  const nav = useNavigate();
+  const { id } = useParams();
+  useTema("bosh");
+  const raqam = Number(id);
+  if (!Number.isInteger(raqam) || raqam <= 0) return <Navigate to={yolTestSinf()} replace />;
+  return <ToplamSahifa id={raqam} onBack={() => nav(yolTestSinf())} />;
 }
 
 /**

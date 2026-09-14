@@ -679,6 +679,18 @@ def yangilikni_qayta_ishla(u: dict) -> str:
             bolimni_yubor(chat_id, til, f"/masalalar/{int(xom)}", "masalaBot")
             return f"{tg_id}: masala havolasi (#{int(xom)})"
 
+    # Test to'plami posti: `/start test_<id>` va `/start testlar`.
+    # `?start=` zaxira yo'li — sababi yuqoridagi masala izohida.
+    if matn.startswith("/start test_"):
+        xom = matn.split("test_", 1)[1].strip()[:12]
+        if xom.isdigit() and int(xom) > 0:
+            bolimni_yubor(chat_id, til, f"/toplam/{int(xom)}", "toplamBot")
+            return f"{tg_id}: test to'plami havolasi (#{int(xom)})"
+
+    if matn.startswith("/start testlar"):
+        bolimni_yubor(chat_id, til, "/testlar", "testlarBot")
+        return f"{tg_id}: testlar bo'limi"
+
     if matn.startswith("/start masalalar"):
         bolimni_yubor(chat_id, til, "/masalalar", "masalalarBot")
         return f"{tg_id}: masalalar bo'limi"

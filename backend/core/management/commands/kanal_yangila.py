@@ -42,7 +42,8 @@ from django.core.management.base import BaseCommand
 
 from core import masala_kanal as MK
 from core.kanal import kanal_nomi
-from core.models import Masala
+from core import test_toplam as TT
+from core.models import Masala, TestToplam
 
 #: Ikki chaqiruv orasidagi pauza (soniya) — Telegram limitidan uzoqda
 #: turish uchun (`kanal_tekshir` dagi bilan bir xil sabab).
@@ -88,6 +89,20 @@ class Command(BaseCommand):
         # O'zgarganlarini BAZADA ajratamiz — Telegramga behuda so'rov
         # yubormaslik uchun (`masala_kanal.yangila` dagi izohga qarang).
         ozgargan = [m for m in qs if MK.sanoq_kaliti(m) != m.kanal_sanoq][:CHEGARA]
+
+        # Test to'plamlarining postlari ham shu yurishda — ular ham
+        # "N kishi ishladi" qatorini olib yuradi (`core/test_toplam.py`).
+        # Aniq masala raqami berilganda to'plamlar olinmaydi.
+        if not o["id"] and not o["sinov"]:
+            for t in TestToplam.objects.filter(
+                kanal_at__isnull=False, kanal_post_id__isnull=False, kanal_yoq=False,
+            ):
+                if TT.sanoq_kaliti(t) == t.kanal_sanoq:
+                    continue
+                holat = TT.yangila(t)
+                self.stdout.write(f"  test #{t.raqam} → {holat}   {TT.sanoq_qatori(t)}")
+                time.sleep(PAUZA)
+
         if not ozgargan:
             self.stdout.write("o'zgargan post yo'q")
             return

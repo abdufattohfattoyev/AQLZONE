@@ -44,12 +44,13 @@ from . import kanal as K
 from . import liga as L
 from . import masala as M
 from . import masala_kanal as MK
+from . import test_toplam as TT
 from . import onlayn as ON
 from . import ovoz as O
 from . import rasm as R
 from .models import (
     BIZNING_KALIT, MAX_QIYMAT, Duel, Identity, LessonResult, LigaAzo, Masala,
-    MasalaUrinish, Profile, Progress, Pupil, Session,
+    MasalaUrinish, Profile, Progress, Pupil, Session, TestToplam,
 )
 from .serializers import (
     DeviceAuthSerializer,
@@ -1841,3 +1842,76 @@ def masalalarim(request):
         "kunlikChegara": Masala.KUNLIK_CHEGARA,
     })
 
+
+
+# ─────────────────────────────────────────────────────── test to'plamlari
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def toplamlar(request):
+    """
+    Faol to'plamlar. `?sinf=9` — faqat shu sinfniki.
+
+    Har birida shu odamning natijasi ham bor: ro'yxatda "ishlagansiz ·
+    12/15" ko'rinib tursin, aks holda bola qaysi blokni ishlaganini
+    eslab qolishi kerak bo'lardi.
+    """
+    profil = _profil_tanla(request)
+    qs = TestToplam.objects.filter(faol=True)
+    sinf = request.query_params.get("sinf")
+    if sinf and sinf.isdigit():
+        qs = qs.filter(sinf=int(sinf))
+    return Response({"royxat": [TT.toplam_json(t, profil) for t in qs]})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def toplam_korish(request, pk: int):
+    """Bitta to'plam. O'chirilgani ham ochiladi — kanal havolasi eskirmasin."""
+    profil = _profil_tanla(request)
+    t = TestToplam.objects.filter(pk=pk).first()
+    if t is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    javob = TT.toplam_json(t, profil)
+    if _admin_mi(profil):
+        javob["kanal"] = {
+            "yuborilgan": t.kanal_at is not None,
+            "havola": TT.post_havolasi(t) if t.kanal_at else "",
+            "yoq": t.kanal_yoq,
+        }
+    return Response(javob)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def toplam_natija(request, pk: int):
+    """Test tugadi — natija yoziladi, statistika qaytadi."""
+    profil = _profil_tanla(request)
+    t = TestToplam.objects.filter(pk=pk).first()
+    if t is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    try:
+        togri = int(request.data.get("togri"))
+        jami = int(request.data.get("jami"))
+        sekund = int(request.data.get("sekund") or 0)
+    except (TypeError, ValueError):
+        return Response({"detail": "togri va jami son bo'lishi kerak"}, status=400)
+    return Response(TT.ishladi(t, profil, togri, jami, sekund))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def toplam_kanal(request, pk: int):
+    """Kanalga joylash — faqat admin (`masala_kanal` view bilan bir xil qoida)."""
+    profil = _profil_tanla(request)
+    if not _admin_mi(profil):
+        return Response({"detail": "topilmadi"}, status=404)
+    t = TestToplam.objects.filter(pk=pk).first()
+    if t is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    qayta = bool(request.data.get("qayta")) if hasattr(request.data, "get") else False
+    holat, izoh = TT.yubor(t, qayta=qayta)
+    if holat in ("yuborildi", "takror"):
+        t.refresh_from_db(fields=["kanal_post_id", "kanal_yoq"])
+        return Response({"holat": holat, "yuborilgan": True, "havola": TT.post_havolasi(t)})
+    return Response({"holat": holat, "izoh": izoh, "yuborilgan": False}, status=400)

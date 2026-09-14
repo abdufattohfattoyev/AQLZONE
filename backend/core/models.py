@@ -1350,3 +1350,106 @@ class MasalaOvoz(models.Model):
                 fields=["masala", "profile"], name="masala_bir_odam_bir_ovoz"
             )
         ]
+
+
+class TestToplam(models.Model):
+    """
+    TEST TO'PLAMI — hamma uchun BIR XIL savollar.
+
+    ─────────────────────── NEGA ODDIY TESTDAN FARQI BOR ───────────────────────
+
+    Testlar bo'limidagi blok test har ochilishda YANGIDAN yig'iladi: sonlar
+    ham, savol tartibi ham har odamda boshqa (`frontend/src/lib/blok.ts`).
+    O'lchov uchun bu yaxshi — testni yodlab bo'lmaydi. Lekin natijani
+    solishtirib bo'lmaydi: "Ali 12 ta, men 9 ta topdim" degan gap
+    ma'nosiz, chunki ular BOSHQA-BOSHQA test yechgan.
+
+    To'plam aynan shu savolga javob: hamma bitta testni yechadi, ya'ni
+    "42 kishi ishladi, o'rtacha 9/15" degan qator HAQIQATNI aytadi. Kanal
+    posti ham shunga quriladi — obunachi son o'sib borishini ko'radi va
+    o'zini o'sha qatorga qo'shgisi keladi.
+
+    ─────────────────────── SAVOLLAR BAZADA EMAS ───────────────────────
+
+    Savollar serverda SAQLANMAYDI — faqat `urug`. Mijoz o'sha urug' bilan
+    generatorlarni yuritadi va har qurilmada aynan bir xil test chiqadi
+    (`frontend/src/lib/oyin/urug.ts`, kunlik maydon ham shunday ishlaydi).
+
+    Nega: savollar allaqachon yuzlab generator ichida yozilgan va ularni
+    ikkinchi marta — bazaga — ko'chirish ikki haqiqat manbaini yasardi.
+    Generator tuzatilsa, bazadagi nusxa eski xato bilan qolib ketardi.
+
+    Narxi: ball MIJOZDAN keladi va uni server tekshira olmaydi. Bu yerda
+    buning ahamiyati kichik — to'plam yulduz ham, tanga ham bermaydi, ya'ni
+    soxta ball bilan hech narsa yutib bo'lmaydi. Chegara baribir bor:
+    to'g'ri javoblar savollar sonidan oshmaydi (`test_toplam.ishladi`).
+    """
+
+    #: Ekranda ko'rinadigan raqam — `Masala.raqam` dagi sababdan.
+    raqam = models.IntegerField(unique=True)
+    #: 9, 10 yoki 11. Kurs kodi EMAS: to'plam bir sinfning ikkala fanini
+    #: (algebra va geometriya) aralashtiradi (`blok.sinfKurslari`).
+    sinf = models.SmallIntegerField()
+    nom = models.CharField(max_length=80)
+    #: Savollarni yasaydigan son. O'zgartirilsa — test BOSHQA bo'ladi va
+    #: eski natijalar bilan solishtirib bo'lmaydi.
+    urug = models.BigIntegerField()
+    savol_soni = models.SmallIntegerField(default=15)
+    daqiqa = models.SmallIntegerField(default=20)
+    #: O'chirilgan to'plam ro'yxatda ko'rinmaydi, lekin kanal postidagi
+    #: havola ochilaveradi — odamlarning suhbatida qolgan havola "topilmadi"
+    #: bo'lib qolmasin.
+    faol = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    #: Sanoqlar shu yerda — `Masala.urinish_soni` dagi sababdan: ro'yxat va
+    #: kanal posti har ochilishda `COUNT` qilmasin.
+    ishlagan_soni = models.IntegerField(default=0)
+    togri_jami = models.IntegerField(default=0)
+
+    # Kanal — `Masala` dagi maydonlarning aynan o'zi (`masala_kanal.py`).
+    kanal_at = models.DateTimeField(null=True, blank=True)
+    kanal_post_id = models.IntegerField(null=True, blank=True)
+    kanal_yoq = models.BooleanField(default=False)
+    kanal_tekshir_at = models.DateTimeField(null=True, blank=True)
+    kanal_sanoq = models.CharField(max_length=40, default="", blank=True)
+
+    class Meta:
+        db_table = "test_toplam"
+        ordering = ["sinf", "raqam"]
+
+    def __str__(self) -> str:
+        return f"#{self.raqam} {self.nom}"
+
+    @property
+    def ortacha(self) -> float:
+        """O'rtacha to'g'ri javoblar soni — bir o'nlik aniqlikda."""
+        if not self.ishlagan_soni:
+            return 0.0
+        return round(self.togri_jami / self.ishlagan_soni, 1)
+
+
+class TestIshlash(models.Model):
+    """
+    Kim qaysi to'plamni ishlagan — BIR ODAM, BIR QATOR.
+
+    Faqat BIRINCHI natija saqlanadi va sanoqqa kiradi. Ikkinchi urinishda
+    savollar AYNAN O'SHA (urug' bir xil), ya'ni javoblar allaqachon
+    ma'lum — uni hisobga olish o'rtachani yolg'on ko'tarardi.
+    Qayta ishlash taqiqlanmaydi: bola mashq qilaversin, faqat jadvalga
+    tushmaydi.
+    """
+
+    toplam = models.ForeignKey(TestToplam, on_delete=models.CASCADE, related_name="ishlashlar")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="test_ishlashlari")
+    togri = models.SmallIntegerField()
+    jami = models.SmallIntegerField()
+    sekund = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "test_ishlash"
+        constraints = [
+            models.UniqueConstraint(fields=["toplam", "profile"], name="toplam_bir_odam_bir_natija"),
+        ]
+        indexes = [models.Index(fields=["toplam", "togri"])]

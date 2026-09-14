@@ -56,4 +56,10 @@ urlpatterns = [
     path("masalalar/<int:pk>/kanal", views.masala_kanal, name="masala-kanal"),
     path("masalalar/<int:pk>/yechganlar", views.masala_yechganlar,
          name="masala-yechganlar"),
+
+    # Test to'plamlari — hamma uchun bir xil savollar (`core/test_toplam.py`).
+    path("toplamlar", views.toplamlar, name="toplamlar"),
+    path("toplamlar/<int:pk>", views.toplam_korish, name="toplam-korish"),
+    path("toplamlar/<int:pk>/natija", views.toplam_natija, name="toplam-natija"),
+    path("toplamlar/<int:pk>/kanal", views.toplam_kanal, name="toplam-kanal"),
 ]

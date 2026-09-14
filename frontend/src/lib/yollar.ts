@@ -43,6 +43,9 @@ export const yolKurslar = () => "/darslar";
  */
 export const yolTestSinf = () => "/testlar";
 
+/** Test to'plami — hamma uchun bir xil test (`lib/toplam.ts`). */
+export const yolToplam = (id: number) => `/toplam/${id}`;
+
 /** Hisob sozlamalari: ism, familiya, kirish usullari. */
 export const yolSozlama = () => "/sozlamalar";
 

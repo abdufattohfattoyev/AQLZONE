@@ -63,6 +63,8 @@ import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 import { tovush } from "../lib/ovoz";
 import { yolDars } from "../lib/yollar";
+import type { Statistika, Toplam } from "../lib/toplam";
+import { natijaYubor, toplamYasa } from "../lib/toplam";
 
 /** Bitta berilgan javob. `null` — ulgurilmadi. */
 interface Javob {
@@ -70,7 +72,17 @@ interface Javob {
   togri: boolean;
 }
 
-export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, onExit }: {
+export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, onExit }: {
+  /**
+   * Test to'plami — berilsa savollar URUG' bilan yasaladi (hamma uchun
+   * bir xil), natija serverga yoziladi va yakunda boshqalar bilan
+   * solishtiriladi (`lib/toplam.ts`).
+   *
+   * To'plamda "yarim qolgan test" SAQLANMAYDI: oddiy testning xotira
+   * kalitini egallab olsa, bola to'plamni tashlab oddiy testga
+   * qaytganda "davom etasizmi?" noto'g'ri testni taklif qilardi.
+   */
+  toplam?: Toplam;
   sinf: number;
   uzunlik: Uzunlik;
   qamrov: Qamrov;
@@ -103,15 +115,15 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, onExit }
    * yangisini yasashdan oldin "davom etasizmi?" so'raladi. Javob
    * berilgach bu qiymat ahamiyatsiz bo'lib qoladi (`tanlov`).
    */
-  const [yarim] = useState(joriyniOqi);
+  const [yarim] = useState(() => (toplam ? null : joriyniOqi()));
   const [tanlov, setTanlov] = useState<"sora" | "davom" | "yangi">(() => {
-    const bor = joriyniOqi() !== null;
+    const bor = !toplam && joriyniOqi() !== null;
     if (!bor) return "yangi";
     return davomEt ? "davom" : "sora";
   });
 
   const blok = useMemo(
-    () => blokYasa(sinf, uzunlik, qamrov),
+    () => (toplam ? toplamYasa(toplam) : blokYasa(sinf, uzunlik, qamrov)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sinf, uzunlik, qamrov, urinish],
   );
@@ -139,7 +151,7 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, onExit }
   return <Oyna key={`${uzunlik}-${urinish}-${davom ? "d" : "y"}`}
     blok={davom ? { savollar: davom.savollar, daqiqa: davom.daqiqa } : blok}
     davom={davom}
-    sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi}
+    sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam}
     onQayta={() => { joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
 }
@@ -213,7 +225,8 @@ function Bosh({ onExit }: { onExit: () => void }) {
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, davom, sinf, uzunlik, bobNomi, onQayta, onExit }: {
+function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, onQayta, onExit }: {
+  toplam?: Toplam;
   blok: Blok;
   /** Yarim qolgan testdan davom etilyaptimi. Yo'q bo'lsa — yangi test. */
   davom: Joriy | null;
@@ -228,6 +241,8 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, onQayta, onExit }: {
   const [tanlangan, setTanlangan] = useState<Answer | null>(null);
   const [tugadi, setTugadi] = useState(false);
   const [chiqishSorovi, setChiqishSorovi] = useState(false);
+  /** To'plam natijasi serverdan qaytgach — boshqalar bilan solishtirish. */
+  const [stat, setStat] = useState<(Statistika & { birinchi: boolean }) | null>(null);
 
   /**
    * Test qachon tugaydi — SOAT bo'yicha, sanoq bo'yicha emas.
@@ -299,11 +314,24 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, onQayta, onExit }: {
       durationMs: Date.now() - boshlandi.current,
     });
 
+    // To'plam — natija serverga. Javob kutib turilmaydi: natija ekrani
+    // darhol ochiladi, solishtirish kartasi kelishi bilan qo'shiladi.
+    // Internet bo'lmasa karta shunchaki chiqmaydi, ball esa baribir ko'rinadi.
+    if (toplam) {
+      natijaYubor(
+        toplam.id,
+        toliq.filter((x) => x.togri).length,
+        toliq.length,
+        Math.round((Date.now() - boshlandi.current) / 1000),
+      ).then(setStat).catch(() => {});
+      return;
+    }
+
     // Test tugadi — yarim qolgan nusxa endi keraksiz. Qoldirilsa,
     // keyingi safar tugallangan test "davom etasizmi?" bo'lib
     // qaytib chiqardi.
     joriyniOchir();
-  }, [blok.savollar.length, sinf, uzunlik, bobNomi]);
+  }, [blok.savollar.length, sinf, uzunlik, bobNomi, toplam]);
 
   /*
    * Har o'zgarishda yarim qolgan test yoziladi.
@@ -314,7 +342,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, onQayta, onExit }: {
    * Yagona ishonchli payt — javob berilgan zahoti.
    */
   useEffect(() => {
-    if (tugadi) return;
+    if (tugadi || toplam) return;
     joriyniSaqla({
       sinf, uzunlik, bobNomi,
       savollar: blok.savollar,
@@ -324,7 +352,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, onQayta, onExit }: {
       tugash: tugash.current,
       boshlandi: boshlandi.current,
     });
-  }, [idx, javoblar, tugadi, blok.savollar, blok.daqiqa, sinf, uzunlik, bobNomi]);
+  }, [idx, javoblar, tugadi, blok.savollar, blok.daqiqa, sinf, uzunlik, bobNomi, toplam]);
 
   /*
    * Soat.
@@ -396,7 +424,8 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, onQayta, onExit }: {
 
   if (tugadi) {
     return <>
-      <Natija blok={blok} javoblar={javoblar} onQayta={onQayta} onExit={onExit} />
+      <Natija blok={blok} javoblar={javoblar} toplam={toplam} stat={stat}
+        onQayta={onQayta} onExit={onExit} />
       {oyna}
     </>;
   }
@@ -507,9 +536,11 @@ interface Mavzu {
   ulgurmadi: number;
 }
 
-function Natija({ blok, javoblar, onQayta, onExit }: {
+function Natija({ blok, javoblar, toplam, stat, onQayta, onExit }: {
   blok: Blok;
   javoblar: Javob[];
+  toplam?: Toplam;
+  stat: (Statistika & { birinchi: boolean }) | null;
   onQayta: () => void;
   onExit: () => void;
 }) {
@@ -577,6 +608,8 @@ function Natija({ blok, javoblar, onQayta, onExit }: {
           {ulgurmadi > 0 && <Box v={ulgurmadi} l={t("blokUlgurmadi")} c="text-brand-orange-d" />}
         </div>
       </div>
+
+      {toplam && <Solishtirish toplam={toplam} stat={stat} />}
 
       {/* ---- mavzular bo'yicha tahlil ---- */}
       <h2 className="az-kirish mt-6 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
@@ -657,6 +690,58 @@ function Natija({ blok, javoblar, onQayta, onExit }: {
       {yechimda?.a.yechim && (
         <Yechim qadamlar={yechimda.a.yechim} javob={String(yechimda.a.answer)}
           onYop={() => setYechimda(null)} />
+      )}
+    </div>
+  );
+}
+
+/* ==================== to'plam: boshqalar bilan solishtirish ==================== */
+
+/**
+ * "Sen boshqalardan qanchalik yaxshisan" kartasi.
+ *
+ * O'RIN RAQAMI emas, FOIZ: "37-o'rin" 200 kishilik to'plamda xafa
+ * qiladi, "ishlaganlarning 80% idan yaxshiroq" esa xuddi shu natijani
+ * g'urur bilan aytadi (`core/test_toplam.statistika`).
+ *
+ * Qayta ishlaganda karta buni ochiq aytadi: jadvalga BIRINCHI natija
+ * kiradi va bola "nega 15/15 qilganim ko'rinmayapti" deb o'ylamasin.
+ */
+function Solishtirish({ toplam, stat }: {
+  toplam: Toplam;
+  stat: (Statistika & { birinchi: boolean }) | null;
+}) {
+  if (!stat) {
+    return (
+      <div className="az-kirish mt-3 rounded-clay bg-karta/70 p-4 text-center text-[12.5px] text-ink-dim shadow-clay-sm">
+        {t("toplamSolishtirilyapti")}
+      </div>
+    );
+  }
+  const m = stat.mening;
+  const yaxshi = m?.yaxshiroqFoiz;
+  return (
+    <div className="az-kirish mt-3 rounded-clay bg-[linear-gradient(135deg,var(--color-brand-purple),var(--color-brand-blue))]
+                    p-4 text-white shadow-clay">
+      <div className="flex items-center gap-3">
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/20">
+          <Icon name="trophy" size={24} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-display text-[16px] leading-tight">
+            {yaxshi === null || yaxshi === undefined
+              ? t("toplamBirinchiSiz")
+              : t("toplamYaxshiroq", { n: yaxshi })}
+          </div>
+          <div className="mt-0.5 text-[12px] text-white/85">
+            {t("toplamIshladi", { n: stat.ishlagan, o: stat.ortacha, s: toplam.savol })}
+          </div>
+        </div>
+      </div>
+      {!stat.birinchi && m && (
+        <div className="mt-3 rounded-xl bg-white/15 px-3 py-2 text-[12px] leading-snug">
+          {t("toplamQayta", { a: m.togri, b: m.jami })}
+        </div>
       )}
     </div>
   );

@@ -6097,3 +6097,108 @@ class MasalaFiltrTest(TestCase):
         d = self.royxat(holat="yechgan")
         self.assertTrue(d["masalalar"][0]["uringan"])
         self.assertTrue(d["masalalar"][0]["birinchiTogri"])
+
+
+class TestToplamTest(TestCase):
+    """
+    Test to'plami — hamma uchun bir xil test, kanal postida jonli sanoq.
+
+    Asosiy va'da: postdagi "N kishi ishladi · o'rtacha X" HALOL bo'lsin.
+    Shuning uchun tekshiriladi: qayta ishlash sanoqqa kirmaydi, soxta
+    katta ball qisqichga olinadi, foiz yolg'iz odamga yolg'on aytmaydi.
+    """
+
+    def setUp(self):
+        from .models import TestToplam
+        self.t = TestToplam.objects.get(raqam=1)   # migratsiya yaratgan
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def natija(self, h: dict, togri: int, jami: int = 15):
+        return self.client.post(f"/api/v1/toplamlar/{self.t.pk}/natija",
+                                {"togri": togri, "jami": jami, "sekund": 300},
+                                content_type="application/json", **h)
+
+    def test_boshlangich_toplamlar_bor(self):
+        from .models import TestToplam
+        sinflar = sorted(set(TestToplam.objects.values_list("sinf", flat=True)))
+        self.assertEqual(sinflar, [9, 10, 11])
+        self.assertEqual(TestToplam.objects.filter(sinf=9).count(), 3)
+
+    def test_royxat_sinf_boyicha(self):
+        h = self.kir("dev-toplam-royxat-0001")
+        r = self.client.get("/api/v1/toplamlar?sinf=10", **h)
+        self.assertEqual(r.status_code, 200)
+        royxat = r.json()["royxat"]
+        self.assertEqual(len(royxat), 3)
+        self.assertTrue(all(x["sinf"] == 10 for x in royxat))
+        self.assertIn("urug", royxat[0])
+
+    def test_faqat_birinchi_natija_sanaladi(self):
+        h = self.kir("dev-toplam-birinchi-0001")
+        r1 = self.natija(h, 10).json()
+        r2 = self.natija(h, 15).json()
+        self.assertTrue(r1["birinchi"])
+        self.assertFalse(r2["birinchi"])
+        self.t.refresh_from_db()
+        self.assertEqual(self.t.ishlagan_soni, 1)
+        self.assertEqual(self.t.togri_jami, 10)
+        self.assertEqual(r2["mening"]["togri"], 10)
+
+    def test_soxta_ball_qisqichga_olinadi(self):
+        h = self.kir("dev-toplam-soxta-00001")
+        r = self.natija(h, 999, jami=999).json()
+        self.assertEqual(r["mening"]["togri"], self.t.savol_soni)
+        self.assertEqual(r["mening"]["jami"], self.t.savol_soni)
+
+    def test_ortacha_va_foiz(self):
+        a = self.kir("dev-toplam-foiz-a0001")
+        b = self.kir("dev-toplam-foiz-b0001")
+        c = self.kir("dev-toplam-foiz-c0001")
+        yolgiz = self.natija(a, 6).json()
+        self.assertIsNone(yolgiz["mening"]["yaxshiroqFoiz"])   # solishtiradigan odam yo'q
+        self.natija(b, 9)
+        r = self.natija(c, 12).json()
+        self.assertEqual(r["ishlagan"], 3)
+        self.assertEqual(r["ortacha"], 9.0)
+        self.assertEqual(r["mening"]["yaxshiroqFoiz"], 100)    # ikkala boshqasidan yaxshi
+
+    def test_kanal_posti_sarlavhasi(self):
+        from . import test_toplam as TT
+        self.assertIn("Hali hech kim ishlamagan", TT.sarlavha(self.t))
+        h = self.kir("dev-toplam-post-000001")
+        self.natija(h, 12)
+        self.t.refresh_from_db()
+        self.assertIn("1 kishi ishladi", TT.sarlavha(self.t))
+        self.assertIn("o'rtacha 12 / 15", TT.sarlavha(self.t))
+
+    def test_muqova_rasm_yasaladi(self):
+        from . import test_toplam as TT
+        rasm = TT.muqova(self.t)
+        self.assertTrue(rasm.startswith(b"\xff\xd8"))   # JPEG
+
+    def test_admin_bolmagan_kanalga_yubora_olmaydi(self):
+        h = self.kir("dev-toplam-kanal-00001")
+        r = self.client.post(f"/api/v1/toplamlar/{self.t.pk}/kanal", {},
+                             content_type="application/json", **h)
+        self.assertEqual(r.status_code, 404)
+
+    @override_settings(KANAL="AqlZoneUz", BOT_TOKEN=BOT, BOT_USERNAME="aqlzone_bot")
+    def test_yangila_faqat_ozgarganda_telegramga_boradi(self):
+        from . import test_toplam as TT
+        self.t.kanal_at = timezone.now()
+        self.t.kanal_post_id = 55
+        self.t.kanal_sanoq = TT.sanoq_kaliti(self.t)
+        self.t.save()
+        with patch.object(TT.xabar, "sarlavhani_yangila", return_value="yangilandi") as y:
+            self.assertEqual(TT.yangila(self.t), "ozgarmagan")
+            y.assert_not_called()
+            self.natija(self.kir("dev-toplam-yangi-0001"), 7)
+            self.t.refresh_from_db()
+            self.assertEqual(TT.yangila(self.t), "yangilandi")
+            y.assert_called_once()
+        self.t.refresh_from_db()
+        self.assertEqual(self.t.kanal_sanoq, "1:7")

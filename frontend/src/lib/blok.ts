@@ -217,7 +217,15 @@ function manbalar(c: Course, units: Unit[], faqatUi?: number): Manba[] {
  * darsdan bittadan, so'ng ikkinchi aylana. Aks holda olti generatorli
  * dars butun testni egallab olardi.
  */
-export function blokYasa(sinf: number, uzunlik: Uzunlik, qamrov: Qamrov): Blok | null {
+export function blokYasa(
+  sinf: number, uzunlik: Uzunlik, qamrov: Qamrov,
+  /**
+   * O'lchamni qo'lda berish — test to'plami uchun (`lib/toplam.ts`).
+   * To'plamning savollar soni va vaqti serverda turadi va standart
+   * uzunliklarning hech biriga to'g'ri kelmasligi mumkin.
+   */
+  boshqa?: { savol: number; daqiqa: number },
+): Blok | null {
   const kurslar = sinfKurslari(sinf);
   if (!kurslar.length) return null;
 
@@ -243,7 +251,7 @@ export function blokYasa(sinf: number, uzunlik: Uzunlik, qamrov: Qamrov): Blok |
   }
 
   const navbat = aralash([...guruh.values()]).map((x) => aralash(x));
-  const kerak = OLCHAM[uzunlik].savol;
+  const kerak = boshqa?.savol ?? OLCHAM[uzunlik].savol;
   const tanlangan: Manba[] = [];
   for (let aylana = 0; tanlangan.length < kerak; aylana++) {
     let qoshildi = false;
@@ -286,7 +294,7 @@ export function blokYasa(sinf: number, uzunlik: Uzunlik, qamrov: Qamrov): Blok |
   // Vaqt savol soniga qarab qisqaradi: material yetmay 30 o'rniga 18
   // savol chiqqan bo'lsa, yarim soat berish testni imtihonga emas,
   // kutishga aylantirardi.
-  const olcham = OLCHAM[uzunlik];
+  const olcham = boshqa ?? OLCHAM[uzunlik];
   const daqiqa = Math.max(1, Math.round((savollar.length / olcham.savol) * olcham.daqiqa));
 
   return { savollar, daqiqa };

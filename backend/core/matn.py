@@ -159,6 +159,30 @@ XABAR: dict[str, dict[str, str]] = {
             "и откроется решение. Нажмите кнопку ниже."
         ),
     },
+    "toplamBot": {
+        "uz": (
+            "📝 <b>Test to‘plami sizni kutyapti</b>\n\n"
+            "Hamma bir xil savollarni yechadi — natijangiz boshqalar bilan "
+            "solishtiriladi. Boshlash uchun pastdagi tugmani bosing."
+        ),
+        "ru": (
+            "📝 <b>Вас ждёт тестовый сборник</b>\n\n"
+            "У всех одни и те же вопросы — ваш результат сравнят с остальными. "
+            "Нажмите кнопку ниже."
+        ),
+    },
+    "testlarBot": {
+        "uz": (
+            "📝 <b>Testlar bo‘limi</b>\n\n"
+            "Sinfingizni tanlang: bob testlari, to‘liq blok va hamma uchun "
+            "bir xil test to‘plamlari. Ochish uchun pastdagi tugmani bosing."
+        ),
+        "ru": (
+            "📝 <b>Раздел тестов</b>\n\n"
+            "Выберите класс: тесты по главам, полный блок и общие сборники. "
+            "Нажмите кнопку ниже."
+        ),
+    },
     "masalalarBot": {
         "uz": (
             "🧩 <b>Masalalar bo‘limi</b>\n\n"
