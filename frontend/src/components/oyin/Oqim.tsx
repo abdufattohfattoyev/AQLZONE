@@ -37,6 +37,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import { OyinSahna, Sanoq } from "./Sahna";
 import { HA, YOQ } from "../../lib/oyin/savollar";
+import { EmojiMatn, Hajmli } from "../../lib/hajmli";
 import { raqibBali, sanoqniYoz } from "../../lib/oyin/duel";
 import { t } from "../../lib/matn";
 import { tebrat } from "../../lib/qobiq";
@@ -344,7 +345,7 @@ export function Oqim({
               {savol.ost && (
                 <div className="mb-4 text-[19px] leading-relaxed whitespace-pre-line
                                 text-ink-soft sm:text-[22px]">
-                  {savol.ost}
+                  <EmojiMatn>{savol.ost}</EmojiMatn>
                 </div>
               )}
               {/* `key` bilan har savol qaytadan yasaladi — shunda paydo
@@ -353,7 +354,7 @@ export function Oqim({
                   o'zgarardi va tez o'yinda buni sezmay qolish oson. */}
               <div key={savol.matn}
                 className="az-xabar font-display text-[30px] leading-tight text-ink sm:text-[38px]">
-                {savol.matn}
+                <EmojiMatn>{savol.matn}</EmojiMatn>
               </div>
             </div>
           </div>
@@ -414,13 +415,17 @@ function Tugma({ qiymat, savol, javob, on }: {
                   ${ikkilik ? "flex-col gap-1 py-2.5" : ""}`}>
       {ikkilik ? (
         <>
-          <span className="text-[24px] leading-none">{qiymat}</span>
+          {/* 3D belgi — tizim emojisi har telefonda boshqacha chizilardi
+              (Windows'da yashil kvadrat, iPhone'da boshqa). Yaltiroq
+              belgining o'z soyasi bor, shuning uchun tugma yashil yoki
+              qizilga bo'yalganda ham fonga singib ketmaydi. */}
+          <Hajmli nom={qiymat === HA ? "togri" : "xato"} olcham={34} />
           <span className="text-[13px] leading-none">
             {qiymat === HA ? t("oyinTogri") : t("oyinXatoTugma")}
           </span>
         </>
       ) : (
-        qiymat
+        <EmojiMatn>{qiymat}</EmojiMatn>
       )}
     </button>
   );

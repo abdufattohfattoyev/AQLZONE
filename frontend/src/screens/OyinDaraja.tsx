@@ -27,7 +27,7 @@
  * katta esa bir daqiqada yuqoriga chiqadi.
  */
 import type { CSSProperties } from "react";
-import { EmojiBelgi } from "../lib/hajmli";
+import { EmojiBelgi, EmojiMatn } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { DARAJALAR } from "../lib/oyin/tur";
 import type { Daraja, Oyin } from "../lib/oyin/tur";
@@ -65,7 +65,7 @@ export function OyinDaraja({ oyin, onBack, onBoshla }: {
             keyin ko'rsatilgan qoidani hech kim o'qimaydi: soat yuradi
             va odam faqat birinchi savolga qaraydi. */}
         <p className="mx-auto mt-2 max-w-[330px] text-[13px] leading-snug text-ink-soft">
-          {t(oyin.qoida)}
+          <EmojiMatn>{t(oyin.qoida)}</EmojiMatn>
         </p>
       </div>
 

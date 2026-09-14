@@ -333,3 +333,41 @@ export function EmojiBelgi({ e, olcham = 24, jonli, className, nomi }: EmojiProp
 
 /** Shu emojining belgisi bormi — ro'yxat chizishdan oldin tekshirish uchun. */
 export const belgiBor = (e: string): boolean => e in EMOJI || sof(e) in EMOJI;
+
+/**
+ * Emoji: rasmli belgi, ixtiyoriy "rangli" belgisi va ZWJ zanjiri.
+ * `g` bayrog'i bor — `split` bilan birga ishlatiladi, qidirishda
+ * `lastIndex` holatiga tayanilmaydi.
+ */
+const EMOJI_QOLIP = /(\p{Extended_Pictographic}️?(?:‍\p{Extended_Pictographic}️?)*)/gu;
+
+/**
+ * Matn ichidagi emojilarni 3D belgiga almashtiradi.
+ *
+ * ─────────────── NEGA KERAK ───────────────
+ *
+ * `EmojiBelgi` bitta emojini oladi — kodda alohida turgan belgilar
+ * uchun yetadi. Lekin emoji ko'pincha MATN ICHIDA keladi: o'yin savoli
+ * ("🍋 + 🥕 = 30"), qoida ("to'g'ri bo'lsa ✅ bos"), "To'g'ri! 👏".
+ * Ular oddiy satr sifatida chiqib, 3D belgilar orasida tizimning yassi
+ * emojisi bo'lib qolardi — har telefonda boshqacha.
+ *
+ * O'lcham HARFGA bog'langan (`1.2em`): shu komponent 13px lik izohda
+ * ham, 38px lik savolda ham ishlatiladi va belgi har joyda matn bilan
+ * bir qatorda turishi kerak.
+ *
+ * Xaritada yo'q emoji o'zi bo'lib qoladi — eng yomon holatda matn
+ * avvalgidek chiqadi, buzilmaydi.
+ */
+export function EmojiMatn({ children }: { children: string }) {
+  const bolaklar = children.split(EMOJI_QOLIP);
+  if (bolaklar.length === 1) return <>{children}</>;
+  return (
+    <>
+      {bolaklar.map((b, i) =>
+        i % 2 === 1 && belgiBor(b)
+          ? <EmojiBelgi key={i} e={b} olcham={24} className="hajmli-matn" />
+          : b)}
+    </>
+  );
+}

@@ -35,7 +35,7 @@ import { Oqim } from "../components/oyin/Oqim";
 import { Konfetti } from "../components/Konfetti";
 import { Kutish } from "../components/Kutish";
 import { avatarBelgi } from "../lib/dokon";
-import { EmojiBelgi } from "../lib/hajmli";
+import { EmojiBelgi, EmojiMatn } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { useOrqaga, havolaniOch } from "../lib/qobiq";
@@ -1308,7 +1308,7 @@ function Natija({ yakun, xato, oyinId, onQayta, onYangi, onMashq, onChiq }: {
           className="tugma-3d az-yaltir mt-6 w-full rounded-3xl bg-brand-green py-3.5
                      font-display text-[17px] text-white
                      shadow-[0_5px_0_var(--color-brand-green-d)]">
-          {t("duelJavobBerish")}
+          <EmojiMatn>{t("duelJavobBerish")}</EmojiMatn>
         </button>
       )}
 

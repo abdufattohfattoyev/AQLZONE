@@ -1744,6 +1744,17 @@
   filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.22));
 }
 
+/* Matn ichidagi belgi (`EmojiMatn`). O'lcham harfdan olinadi va
+   `width`/`height` atributlaridan ustun turadi — shu belgi 13px lik
+   izohda ham, 38px lik savolda ham qatorga tushishi kerak. */
+.hajmli-matn {
+  display: inline-block;
+  width: 1.2em !important;
+  height: 1.2em !important;
+  vertical-align: -0.24em;
+  margin: 0 0.04em;
+}
+
 /* Kurs kartasidagi 3D narsa (`screens/Dashboard.tsx`).
    Plitkadan farqli, u karta ustida "suzadi" — shuning uchun soyasi
    pastroq va kengroq tushadi: narsa kartadan biroz ko'tarilgandek

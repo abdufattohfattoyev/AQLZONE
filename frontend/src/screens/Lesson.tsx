@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "../lib/icons";
+import { EmojiMatn } from "../lib/hajmli";
 import { QuestionView, sahnaBor } from "../components/QuestionView";
 import { Ogit } from "../components/Ogit";
 import { Rasm } from "../components/Rasm";
@@ -420,7 +421,7 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
           <span className={`az-xabar rounded-full px-4 py-2 font-display text-[15px] leading-none
                             text-white shadow-clay-sm
                             ${togriJavob ? "bg-brand-green" : "bg-brand-red"}`}>
-            {togriJavob ? t("togriJavob") : t("deyarli")}
+            <EmojiMatn>{togriJavob ? t("togriJavob") : t("deyarli")}</EmojiMatn>
           </span>
         ) : (
           /* Xato qilingan, javob esa hali berilmagan — aynan shu paytda

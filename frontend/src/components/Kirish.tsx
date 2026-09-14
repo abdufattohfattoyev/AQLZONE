@@ -22,6 +22,7 @@
  */
 import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
+import { EmojiMatn } from "../lib/hajmli";
 import { Logo } from "./Logo";
 import { botHavolasi, botNomi, miniAppda } from "../lib/api";
 import { havolaniOch, tgQobiqda } from "../lib/qobiq";
@@ -129,7 +130,7 @@ export function Kirish({ xabar, izoh, tugma, onKeyinroq, havola, tagIzoh }: Prop
             </a>
           ) : ichkarida ? (
             <p className="px-2 text-[13px] leading-snug text-ink-soft">
-              {t("tgMalumotKelmadi")}
+              <EmojiMatn>{t("tgMalumotKelmadi")}</EmojiMatn>
             </p>
           ) : (
             <p className="px-2 text-[13px] leading-snug text-ink-soft">
@@ -140,7 +141,7 @@ export function Kirish({ xabar, izoh, tugma, onKeyinroq, havola, tagIzoh }: Prop
 
         {bot ? (
           <p className="mt-3 px-2 text-[12px] leading-snug text-ink-dim">
-            {tagIzoh || t("botIzoh")}
+            <EmojiMatn>{tagIzoh || t("botIzoh")}</EmojiMatn>
           </p>
         ) : null}
 

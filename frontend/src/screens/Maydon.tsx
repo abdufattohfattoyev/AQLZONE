@@ -19,7 +19,7 @@
 import { useMemo, useState } from "react";
 import { Oqim } from "../components/oyin/Oqim";
 import { Konfetti } from "../components/Konfetti";
-import { EmojiBelgi } from "../lib/hajmli";
+import { EmojiBelgi, EmojiMatn } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { useOrqaga } from "../lib/qobiq";
 import { useProgress } from "../lib/progress";
@@ -158,7 +158,7 @@ function Tanishuv({ bosqich, orin, jami, onBoshla, onChiq }: {
         </span>
         <h1 className="mt-4 text-[26px] leading-tight">{t(bosqich.oyin.nom)}</h1>
         <p className="mt-2 max-w-[300px] text-[14px] leading-snug text-ink-soft">
-          {t(bosqich.oyin.qoida)}
+          <EmojiMatn>{t(bosqich.oyin.qoida)}</EmojiMatn>
         </p>
         <span className="mt-4 rounded-full bg-karta px-3.5 py-1.5 text-[12.5px] text-ink-soft shadow-clay-sm">
           {t("maydonVaqt", { n: BOSQICH_VAQT })}

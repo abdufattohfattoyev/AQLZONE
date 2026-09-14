@@ -44,6 +44,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
+import { EmojiMatn } from "../lib/hajmli";
 import { QuestionView, sahnaBor } from "../components/QuestionView";
 import { Chiqish } from "../components/Chiqish";
 import { Yechim } from "../components/Yechim";
@@ -485,7 +486,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, onQayta, onExit }: {
           ekani aytilmaydi va formulani o'zi tanlash — mashqning
           asosiy qismi. U faqat OXIRIDA, tahlilda ochiladi. */}
       <div className="mt-3 h-5 text-center text-[12px] text-ink-dim">
-        {tanlangan !== null && (togriJavob ? t("togriJavob") : t("blokXato"))}
+        {tanlangan !== null && <EmojiMatn>{togriJavob ? t("togriJavob") : t("blokXato")}</EmojiMatn>}
       </div>
 
       {oyna}
