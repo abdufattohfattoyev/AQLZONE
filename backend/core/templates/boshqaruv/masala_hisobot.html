@@ -1,630 +1,406 @@
 {% extends "boshqaruv/qobiq.html" %}
 {% block sarlavha %}Masalalar{% endblock %}
 {% block sahifa_nomi %}Masalalar{% endblock %}
-{% block sahifa_izoh %}
-  {{ yangilangan|date:"d.m.Y H:i" }} · {{ umumiy.tasdiq }} ta tasdiqlangan masala
-{% endblock %}
+{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }} · {{ umumiy.tasdiq }} ta tasdiqlangan masala{% endblock %}
 
 {% comment %}
-Masalalar bo'limining hisoboti.
+Masalalar bo'limining hisoboti — besh tab:
 
-Sahifa yuqoridan pastga BIR SAVOLDAN boshqasiga o'tadi:
+    Bugun       bo'lim bugun tirikmi va KIM yechdi   (har kuni)
+    O'sish      kunlik grafik va ko'rdi → yechdi voronkasi
+    Masalalar   qaysi masala ishlayapti, eng qiyin/oson
+    Odamlar     yechuvchilar va mualliflar
+    Oqim        so'nggi urinishlar
 
-    1. Bugun bo'lim tirikmi     → bugungi sonlar va KIM yechgani
-    2. O'sayaptimi              → kunlik grafik
-    3. Masalalar yaxshimi       → ko'rdi → urindi → yechdi voronkasi
-    4. Kim yechyapti            → yechuvchilar jadvali
-    5. Qaysi masala ishlayapti  → masalalar jadvali, eng qiyin/oson
-    6. Kim yozyapti             → mualliflar
-    7. Nima bo'lyapti           → so'nggi oqim
-
-Birinchi ikkitasi HAR KUNI qaraladi, qolgani haftada bir marta. Shuning
-uchun "bugun kim yechdi" ro'yxati eng tepada, aylantirmasdan turadi.
+Birinchi tab har kuni ochiladi, qolgani haftada bir marta.
 {% endcomment %}
 
 {% block asboblar %}
-  <div class="tanlagich">
+  <nav class="davr" aria-label="Davr">
     <a class="{% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
     <a class="{% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
     <a class="{% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
-  </div>
-  <a class="tugma" href="/boshqaruv/masalalar">Tasdiqlash navbati{% if umumiy.kutmoqda %} · {{ umumiy.kutmoqda }}{% endif %}</a>
+  </nav>
+{% endblock %}
+
+{% block tablar %}
+  <nav class="tablar" data-tablar role="tablist">
+    <a href="#bugun" role="tab">Bugun</a>
+    <a href="#osish" role="tab">O'sish</a>
+    <a href="#masalalar" role="tab">Masalalar</a>
+    <a href="#odamlar" role="tab">Odamlar</a>
+    <a href="#oqim" role="tab">Oqim</a>
+  </nav>
 {% endblock %}
 
 {% block ichki %}
 
-<nav class="yolchi">
-  <a href="#bugun">Bugun</a>
-  <a href="#osish">O'sish</a>
-  <a href="#voronka">Voronka</a>
-  <a href="#yechuvchilar">Yechuvchilar</a>
-  <a href="#masalalar">Masalalar</a>
-  <a href="#mualliflar">Mualliflar</a>
-  <a href="#oqim">Oqim</a>
-</nav>
+<!-- ═════════════════════════════════════════════════════════ BUGUN -->
+<section class="qism" data-qism="bugun" role="tabpanel">
 
-<!-- ═══════════════════════════════════════════════════════ 1. bugun -->
-<div class="bolim" id="bugun">
-  <h2>Bugun</h2>
-  <p>kecha bilan solishtirilgan · mahalliy vaqt bo'yicha</p>
-</div>
-
-<div class="setka k4">
-  <div class="karta olchov urgu">
-    <div class="bosh"><span class="belgicha">✓</span><span class="nom">Bugun yechgan odam</span></div>
-    <div class="son">{{ bugun.yechganlar }}</div>
-    <div class="qosh">
-      kecha {{ kechagi.yechganlar }}
-      {% if farq.yechganlar is None %}
-        <span class="ozgarish yoq">· solishtirib bo'lmaydi</span>
-      {% elif farq.yechganlar >= 0 %}
-        <span class="ozgarish osdi">· +{{ farq.yechganlar }}%</span>
-      {% else %}
-        <span class="ozgarish tushdi">· {{ farq.yechganlar }}%</span>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="karta olchov yashil">
-    <div class="bosh"><span class="belgicha">∑</span><span class="nom">Yechilgan masala</span></div>
-    <div class="son">{{ bugun.yechishlar }}</div>
-    <div class="qosh">
-      kecha {{ kechagi.yechishlar }}
-      {% if farq.yechishlar is None %}
-        <span class="ozgarish yoq">· solishtirib bo'lmaydi</span>
-      {% elif farq.yechishlar >= 0 %}
-        <span class="ozgarish osdi">· +{{ farq.yechishlar }}%</span>
-      {% else %}
-        <span class="ozgarish tushdi">· {{ farq.yechishlar }}%</span>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="karta olchov moviy">
-    <div class="bosh"><span class="belgicha">✎</span><span class="nom">Javob yozib ko'rgan</span></div>
-    <div class="son">{{ bugun.uringanlar }}</div>
-    <div class="qosh">{{ bugun.urinishlar }} ta yangi urinish</div>
-  </div>
-
-  <div class="karta olchov binafsha">
-    <div class="bosh"><span class="belgicha">◉</span><span class="nom">Masala ochgan</span></div>
-    <div class="son">{{ bugun.korganlar }}</div>
-    <div class="qosh">
-      {% if bugun.korganlar %}
-        ochganlarning {% widthratio bugun.uringanlar bugun.korganlar 100 %}% javob yozdi
-      {% else %}
-        bugun hech kim ochmadi
-      {% endif %}
-    </div>
-  </div>
-</div>
-
-<div class="setka k4" style="margin-top:14px">
-  <div class="karta olchov {% if bugun.navbat %}sariq{% endif %}">
-    <div class="bosh"><span class="belgicha">⏳</span><span class="nom">Tasdiqlash navbati</span></div>
-    <div class="son">{{ bugun.navbat }}</div>
-    <div class="qosh">
-      {% if bugun.navbat %}
-        <a href="/boshqaruv/masalalar">ko'rib chiqish →</a>
-      {% else %}navbat bo'sh{% endif %}
-    </div>
-  </div>
-  <div class="karta olchov">
-    <div class="bosh"><span class="belgicha">+</span><span class="nom">Bugun yozilgan masala</span></div>
-    <div class="son">{{ bugun.yangi }}</div>
-    <div class="qosh">{{ kunlar }} kunda {{ davr.yangi_masala }} ta</div>
-  </div>
-  <div class="karta olchov">
-    <div class="bosh"><span class="belgicha">◈</span><span class="nom">Kanalda turgan</span></div>
-    <div class="son">{{ umumiy.kanalda }}</div>
-    <div class="qosh">
-      {% if umumiy.kanal_yoq %}
-        <span class="belgi qizil">{{ umumiy.kanal_yoq }} ta post topilmadi</span>
-      {% else %}hammasi joyida{% endif %}
-    </div>
-  </div>
-  <div class="karta olchov {% if umumiy.tegilmagan %}sariq{% endif %}">
-    <div class="bosh"><span class="belgicha">◌</span><span class="nom">Hech kim urinmagan</span></div>
-    <div class="son">{{ umumiy.tegilmagan }}</div>
-    <div class="qosh">tasdiqlangan, lekin ko'rinmayapti</div>
-  </div>
-</div>
-
-<!-- ─────────────────────────────────── bugun aynan KIM yechdi ────── -->
-<div class="bolim">
-  <h2>Bugun kim yechdi</h2>
-  <p>
-    {% if bugungilar %}
-      {{ bugungilar|length }} ta yechim · oxirgisi birinchi
-    {% else %}bugun hali hech kim yechmadi{% endif %}
-  </p>
-</div>
-<div class="jadval-oram" data-jadval>
-  {% if bugungilar %}
-    <div class="jadval-tepa">
-      <input class="qidiruv" data-izla type="search" autocomplete="off"
-             placeholder="Ism yoki masala raqami bo'yicha qidirish…">
-      <span class="juda-xira" data-topildi style="font-size:12.5px"></span>
-    </div>
+  {% if bugun.navbat %}
+    <a class="xabar-quti navbat-havola" href="/boshqaruv/masalalar">
+      <span class="belgi asos">{{ bugun.navbat }}</span>
+      <span>ta masala tasdiqlashni kutyapti</span>
+      <b style="margin-left:auto">Ko'rib chiqish →</b>
+    </a>
   {% endif %}
-  <div class="jadval-siljish">
-    <table>
-      <thead><tr>
-        <th>Vaqt</th><th class="keng">Kim</th><th>Masala</th>
-        <th>Qanday</th><th class="raqam saralash">Javoblar</th>
-      </tr></thead>
-      <tbody>
-        {% for b in bugungilar %}
-          <tr data-qidiruv="{{ b.ism|lower }} {{ b.raqam }}">
-            <td class="juda-xira">{{ b.vaqt|date:"H:i" }}</td>
-            <td class="keng">
-              <span style="display:inline-flex;align-items:center;gap:8px">
-                <span class="harf">{{ b.bosh }}</span>{{ b.ism }}
-              </span>
-            </td>
-            <td>
-              {% if b.raqam %}<span class="belgi moviy">#{{ b.raqam }}</span>
-              {% else %}<span class="juda-xira">—</span>{% endif %}
-            </td>
-            <td>
-              {% comment %} Birinchi urinishda topgan bilan uchinchisida topgan
-                 bir xil emas: birinchisi masalani BILGAN, ikkinchisi
-                 esa yechim ochilgandan keyin ko'chirgan bo'lishi ham
-                 mumkin. Ikkalasini bir xil ko'rsatish statistikani
-                 yumshoq yolg'onga aylantirardi. {% endcomment %}
-              {% if b.birinchida %}
-                <span class="belgi yashil">birinchi urinishda</span>
-              {% else %}
-                <span class="belgi sariq">{{ b.urinish }}-urinishda</span>
-              {% endif %}
-            </td>
-            <td class="raqam" data-q="{{ b.urinish }}">{{ b.urinish }}</td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="5" class="bosh-holat">
-            Bugun hali hech kim masala yechmadi.
-          </td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
 
-<!-- ═══════════════════════════════════════════════════════ 2. o'sish -->
-<div class="bolim" id="osish">
-  <h2>Oxirgi {{ kunlar }} kun</h2>
-  <p>kuniga o'rtacha {{ davr.kunlik }} ta yechim</p>
-</div>
-
-<div class="setka k4">
-  <div class="karta olchov">
-    <div class="bosh"><span class="belgicha">∑</span><span class="nom">Yechimlar</span></div>
-    <div class="son">{{ davr.yechishlar }}</div>
-    <div class="qosh">{{ kunlar }} kun ichida</div>
-  </div>
-  <div class="karta olchov">
-    <div class="bosh"><span class="belgicha">◍</span><span class="nom">Yechgan odamlar</span></div>
-    <div class="son">{{ davr.yechganlar }}</div>
-    <div class="qosh">takrorsiz sanoq</div>
-  </div>
-  <div class="karta olchov">
-    <div class="bosh"><span class="belgicha">✎</span><span class="nom">Yangi urinishlar</span></div>
-    <div class="son">{{ davr.urinishlar }}</div>
-    <div class="qosh">birinchi marta javob yozilgan</div>
-  </div>
-  <div class="karta olchov {% if umumiy.qiyinlik >= 50 %}yashil{% elif umumiy.qiyinlik >= 25 %}sariq{% else %}qizil-urgu{% endif %}">
-    <div class="bosh"><span class="belgicha">◎</span><span class="nom">O'rtacha qiyinlik</span></div>
-    <div class="son">{{ umumiy.qiyinlik }}%</div>
-    <div class="qosh">birinchi urinishda topilgan ulushi</div>
-  </div>
-</div>
-
-<div class="karta" style="margin-top:14px">
-  <div class="karta-bosh">
-    <b>Kunlik yechimlar</b>
-    <span class="juda-xira">eng baland kun · {{ grafik.eng_yechish }} ta yechim</span>
-    <div class="izohlar" style="margin-left:auto">
-      <span><i style="background:linear-gradient(180deg,var(--asos),rgba(124,140,255,.25))"></i> yechimlar</span>
-      <span><i style="background:var(--yashil)"></i> yechgan odamlar</span>
+  <div class="olchovlar">
+    <div class="karta olchov">
+      <div class="nom">Yechgan odam</div>
+      <div class="son">{{ bugun.yechganlar }}{% include "boshqaruv/_farq.html" with f=farq.yechganlar %}</div>
+      <div class="ost">kecha {{ kechagi.yechganlar }}</div>
+    </div>
+    <div class="karta olchov">
+      <div class="nom">Yechilgan masala</div>
+      <div class="son">{{ bugun.yechishlar }}{% include "boshqaruv/_farq.html" with f=farq.yechishlar %}</div>
+      <div class="ost">kecha {{ kechagi.yechishlar }}</div>
+    </div>
+    <div class="karta olchov">
+      <div class="nom">Javob yozib ko'rgan</div>
+      <div class="son">{{ bugun.uringanlar }}</div>
+      <div class="ost">{{ bugun.urinishlar }} ta yangi urinish</div>
+    </div>
+    <div class="karta olchov">
+      <div class="nom">Masala ochgan</div>
+      <div class="son">{{ bugun.korganlar }}</div>
+      <div class="ost">{% if bugun.korganlar %}{% widthratio bugun.uringanlar bugun.korganlar 100 %}% javob yozdi{% else %}hech kim ochmadi{% endif %}</div>
     </div>
   </div>
-  <div class="grafik">
-    <div class="ustunlar">
-      {% for q in grafik.qator %}
-        <div class="ustun {% if q.dam %}dam{% endif %} {% if not q.yechish %}quruq{% endif %}"
-             title="{{ q.kun }} · {{ q.yechish }} ta yechim · {{ q.yechgan }} ta odam">
-          <i style="height:{{ q.balandlik }}%"></i>
+
+  <div class="bolim"><h2>Bugun kim yechdi</h2>
+    <p>{% if bugungilar %}{{ bugungilar|length }} ta yechim · oxirgisi birinchi{% else %}hali hech kim yechmadi{% endif %}</p>
+  </div>
+  <div class="jadval-quti" data-jadval>
+    {% if bugungilar %}
+      <div class="jadval-tepa">
+        <input class="qidiruv" data-izla type="search" autocomplete="off" placeholder="Ism yoki masala raqami…">
+        <span class="topildi" data-topildi></span>
+      </div>
+    {% endif %}
+    <div class="jadval-siljish">
+      <table class="kartochka">
+        <thead><tr><th class="keng">Kim</th><th>Masala</th><th>Qanday</th><th>Vaqt</th><th class="raqam saralash">Urinish</th></tr></thead>
+        <tbody>
+          {% for b in bugungilar %}
+            <tr data-qidiruv="{{ b.ism|lower }} {{ b.raqam }}">
+              <td class="keng bosh"><span class="odam"><span class="harf">{{ b.bosh }}</span><span>{{ b.ism }}</span></span></td>
+              <td>{% if b.raqam %}#{{ b.raqam }}{% else %}<span class="juda-xira">—</span>{% endif %}</td>
+              {% comment %} Birinchi urinishda topgan bilan uchinchisida topgan bir xil emas —
+                 ikkalasini bir xil ko'rsatish statistikani yumshoq yolg'onga aylantirardi. {% endcomment %}
+              <td>{% if b.birinchida %}<span class="belgi yashil">birinchi urinishda</span>{% else %}<span class="belgi oltin">{{ b.urinish }}-urinishda</span>{% endif %}</td>
+              <td class="juda-xira">{{ b.vaqt|date:"H:i" }}</td>
+              <td class="raqam" data-q="{{ b.urinish }}">{{ b.urinish }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="bosh-holat">Bugun hali hech kim masala yechmadi.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bolim"><h2>Holat</h2><p>ko'rib turish kerak bo'lgan sonlar</p></div>
+  <div class="olchovlar">
+    <div class="karta olchov {% if bugun.navbat %}diqqat{% endif %}">
+      <div class="nom">Tasdiqlash navbati</div>
+      <div class="son">{{ bugun.navbat }}</div>
+      <div class="ost">{% if bugun.navbat %}<a href="/boshqaruv/masalalar">ko'rib chiqish →</a>{% else %}navbat bo'sh{% endif %}</div>
+    </div>
+    <div class="karta olchov">
+      <div class="nom">Bugun yozilgan</div>
+      <div class="son">{{ bugun.yangi }}</div>
+      <div class="ost">{{ kunlar }} kunda {{ davr.yangi_masala }} ta</div>
+    </div>
+    <div class="karta olchov {% if umumiy.kanal_yoq %}yomon{% endif %}">
+      <div class="nom">Kanalda turgan</div>
+      <div class="son">{{ umumiy.kanalda }}</div>
+      <div class="ost">{% if umumiy.kanal_yoq %}{{ umumiy.kanal_yoq }} ta post topilmadi{% else %}hammasi joyida{% endif %}</div>
+    </div>
+    <div class="karta olchov {% if umumiy.tegilmagan %}diqqat{% endif %}">
+      <div class="nom">Hech kim urinmagan</div>
+      <div class="son">{{ umumiy.tegilmagan }}</div>
+      <div class="ost">tasdiqlangan, lekin ko'rinmayapti</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ O'SISH -->
+<section class="qism" data-qism="osish" role="tabpanel">
+
+  <div class="bolim"><h2>Oxirgi {{ kunlar }} kun</h2><p>kuniga o'rtacha {{ davr.kunlik }} ta yechim</p></div>
+  <div class="olchovlar">
+    <div class="karta olchov"><div class="nom">Yechimlar</div><div class="son">{{ davr.yechishlar }}</div><div class="ost">{{ kunlar }} kun ichida</div></div>
+    <div class="karta olchov"><div class="nom">Yechgan odamlar</div><div class="son">{{ davr.yechganlar }}</div><div class="ost">takrorsiz</div></div>
+    <div class="karta olchov"><div class="nom">Yangi urinishlar</div><div class="son">{{ davr.urinishlar }}</div><div class="ost">birinchi marta javob yozilgan</div></div>
+    <div class="karta olchov {% if umumiy.qiyinlik >= 50 %}yaxshi{% elif umumiy.qiyinlik >= 25 %}diqqat{% else %}yomon{% endif %}">
+      <div class="nom">O'rtacha yechiluvchanlik</div><div class="son">{{ umumiy.qiyinlik }}%</div><div class="ost">birinchi urinishda topilgani</div>
+    </div>
+  </div>
+
+  <div class="karta">
+    <div class="karta-bosh"><h3>Kunlik yechimlar</h3><span>eng baland kun — {{ grafik.eng_yechish }} ta</span></div>
+    <div class="afsona">
+      <span><i style="background:var(--asos)"></i> yechimlar</span>
+      <span><i class="chiziq" style="background:var(--yashil)"></i> yechgan odamlar</span>
+    </div>
+    <div class="grafik">
+      <div class="ustunlar">
+        {% for q in grafik.qator %}
+          <div class="ustun {% if q.dam %}dam{% endif %} {% if not q.yechish %}quruq{% endif %}" title="{{ q.kun }} · {{ q.yechish }} yechim · {{ q.yechgan }} odam">
+            <i style="height:{{ q.balandlik }}%"></i>
+          </div>
+        {% endfor %}
+      </div>
+      <svg class="qatlam" viewBox="0 0 1000 100" preserveAspectRatio="none">
+        <polyline points="{{ grafik.chiziq }}" fill="none" stroke="var(--yashil)" stroke-width="2"
+                  vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      </svg>
+    </div>
+    <div class="oq-belgilar">{% for b in grafik.belgilar %}<span>{{ b }}</span>{% endfor %}</div>
+  </div>
+
+  <div class="setka k2">
+    <div class="karta">
+      <div class="karta-bosh"><h3>Ko'rdi → yechdi</h3><span>bo'limning butun sog'ligi</span></div>
+      {% for q in voronka %}
+        <div class="bar">
+          <div class="bar-bosh"><span class="nom">{{ q.nom }}</span><span class="izoh">{{ q.izoh }}</span><b class="son">{{ q.son }}</b><span class="foiz">{{ q.foiz }}%</span></div>
+          <div class="chiziqcha"><span style="width:{{ q.foiz }}%"></span></div>
+          {% if q.tushdi %}<div class="yoqoldi">shu qadamda {{ q.tushdi }} ta yo'qoldi ({{ q.tushdi_foiz }}%)</div>{% endif %}
+        </div>
+      {% endfor %}
+      <details class="izoh"><summary>Qanday o'qiladi?</summary>
+        <p>«Ochgan → javob yozgan» past bo'lsa, masala matni qo'rqitayotgan bo'ladi. «Javob yozgan → yechgan» past bo'lsa, masala juda qiyin yoki sharti noaniq.</p>
+      </details>
+    </div>
+    <div class="karta">
+      <div class="karta-bosh"><h3>Umumiy sonlar</h3><span>butun tarix</span></div>
+      <div class="mini-setka">
+        <div class="mini"><div class="nom">Tasdiqlangan</div><div class="son">{{ umumiy.tasdiq }}</div></div>
+        <div class="mini"><div class="nom">Navbatda</div><div class="son">{{ umumiy.kutmoqda }}</div></div>
+        <div class="mini"><div class="nom">Rad etilgan</div><div class="son">{{ umumiy.rad }}</div></div>
+        <div class="mini"><div class="nom">Mualliflar</div><div class="son">{{ umumiy.mualliflar }}</div></div>
+        <div class="mini"><div class="nom">Yechgan odamlar</div><div class="son">{{ umumiy.yechuvchilar }}</div></div>
+        <div class="mini"><div class="nom">Urinib ko'rgan</div><div class="son">{{ umumiy.uringanlar }}</div></div>
+        <div class="mini"><div class="nom">Jami yechim</div><div class="son">{{ umumiy.yechdi }}</div></div>
+        <div class="mini"><div class="nom">Ovoz 👍 / 👎</div><div class="son">{{ umumiy.like }} <small class="juda-xira" style="font-size:14px">/ {{ umumiy.dislike }}</small></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════ MASALALAR -->
+<section class="qism" data-qism="masalalar" role="tabpanel">
+
+  <div class="bolim"><h2>Masalalar</h2><p>oxirgi {{ masalalar|length }} tasi · yangisi birinchi</p></div>
+  <div class="jadval-quti" data-jadval>
+    <div class="jadval-tepa">
+      <input class="qidiruv" data-izla type="search" autocomplete="off" placeholder="Raqam, muallif yoki matn…">
+      <button class="tugma" type="button" data-suzgi="tasdiq">Tasdiqlangan</button>
+      <button class="tugma" type="button" data-suzgi="kutmoqda">Navbatda</button>
+      <span class="topildi" data-topildi></span>
+    </div>
+    <div class="jadval-siljish">
+      <table class="kartochka">
+        <thead><tr>
+          <th class="keng">Masala</th><th>Holat</th><th class="raqam saralash">Ko'rdi</th><th class="raqam saralash">Urindi</th>
+          <th class="raqam saralash">Yechdi</th><th class="raqam saralash">Yechiluvchanlik</th><th class="raqam saralash">Ovoz</th>
+          <th>Muallif</th><th>Sinf</th><th>Sana</th>
+        </tr></thead>
+        <tbody>
+          {% for m in masalalar %}
+            <tr class="{{ m.holat }}" data-qidiruv="{{ m.qidiruv }}">
+              <td class="keng bosh">
+                <span class="juda-xira">{% if m.raqam %}#{{ m.raqam }}{% else %}—{% endif %}</span>
+                <span class="qirqilgan" title="{{ m.matn }}">{{ m.matn }}</span>
+              </td>
+              <td>
+                {% if m.holat == 'tasdiq' %}<span class="belgi yashil">tasdiq</span>
+                {% elif m.holat == 'kutmoqda' %}<span class="belgi asos">navbatda</span>
+                {% else %}<span class="belgi qizil">rad</span>{% endif %}
+                {% if m.kanal_yoq %}<span class="belgi qizil">post yo'q</span>{% elif m.kanalda %}<span class="belgi">kanalda</span>{% endif %}
+              </td>
+              <td class="raqam" data-q="{{ m.korish }}">{{ m.korish }}</td>
+              <td class="raqam" data-q="{{ m.urinish }}">{{ m.urinish }}{% if m.korish %} <span class="juda-xira">· {{ m.urinish_foiz }}%</span>{% endif %}</td>
+              <td class="raqam" data-q="{{ m.yechdi }}"><b>{{ m.yechdi }}</b></td>
+              <td class="raqam" data-q="{{ m.qiyinlik|default:0 }}">
+                {% if m.qiyinlik is None %}<span class="juda-xira">—</span>
+                {% elif m.qiyinlik >= 60 %}<span class="belgi yashil">{{ m.qiyinlik }}%</span>
+                {% elif m.qiyinlik >= 25 %}<span class="belgi oltin">{{ m.qiyinlik }}%</span>
+                {% else %}<span class="belgi qizil">{{ m.qiyinlik }}%</span>{% endif %}
+              </td>
+              <td class="raqam" data-q="{{ m.ovoz }}">{{ m.like }}<span class="juda-xira"> / {{ m.dislike }}</span></td>
+              <td>{{ m.muallif }}</td>
+              <td class="juda-xira">{{ m.sinf }}</td>
+              <td class="juda-xira">{{ m.sana|date:"d.m.y" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="10" class="bosh-holat">Hali birorta masala yozilmagan</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <details class="izoh"><summary>«Yechiluvchanlik» nima?</summary>
+    <p>Urinib ko'rganlarning qanchasi birinchi urinishdayoq topgani. Yashil — oson (60%+), oltin — o'rtacha, qizil — juda qiyin (25% dan kam).</p>
+  </details>
+
+  <div class="setka k3">
+    <div class="karta">
+      <div class="karta-bosh"><h3>Eng qiyin</h3><span>{{ qiyinlik_min }}+ urinishdan</span></div>
+      {% for m in qiyin %}
+        <div class="bar">
+          <div class="bar-bosh"><span class="nom">{% if m.raqam %}#{{ m.raqam }}{% else %}—{% endif %}</span><span class="izoh qirqilgan" style="max-width:60%">{{ m.matn }}</span><b class="son">{{ m.qiyinlik }}%</b></div>
+          <div class="chiziqcha qizil"><span style="width:{{ m.qiyinlik }}%"></span></div>
+        </div>
+      {% empty %}<div class="bosh-holat">Hali yetarli urinish yo'q</div>{% endfor %}
+    </div>
+    <div class="karta">
+      <div class="karta-bosh"><h3>Eng oson</h3><span>{{ qiyinlik_min }}+ urinishdan</span></div>
+      {% for m in oson %}
+        <div class="bar">
+          <div class="bar-bosh"><span class="nom">{% if m.raqam %}#{{ m.raqam }}{% else %}—{% endif %}</span><span class="izoh qirqilgan" style="max-width:60%">{{ m.matn }}</span><b class="son">{{ m.qiyinlik }}%</b></div>
+          <div class="chiziqcha yashil"><span style="width:{{ m.qiyinlik }}%"></span></div>
+        </div>
+      {% empty %}<div class="bosh-holat">Hali yetarli urinish yo'q</div>{% endfor %}
+    </div>
+    <div class="karta">
+      <div class="karta-bosh"><h3>Hech kim urinmagan</h3><span>kanalga joylash yetadi</span></div>
+      {% for m in tegilmagan %}
+        <div class="bar">
+          <div class="bar-bosh"><span class="nom">{% if m.raqam %}#{{ m.raqam }}{% else %}—{% endif %}</span><span class="izoh qirqilgan" style="max-width:55%">{{ m.matn }}</span><span class="son juda-xira" style="font-weight:500">{{ m.korish }} ko'rish</span></div>
+        </div>
+      {% empty %}<div class="bosh-holat">Hamma masalaga urinib ko'rilgan</div>{% endfor %}
+    </div>
+  </div>
+
+  {% if sinflar %}
+    <div class="bolim"><h2>Sinflar bo'yicha</h2><p>tasdiqlangan masalalar qaysi sinfga mo'ljallangan</p></div>
+    <div class="karta">
+      {% for s in sinflar %}
+        <div class="bar">
+          <div class="bar-bosh"><span class="nom">{{ s.nom }}</span><span class="izoh">{{ s.soni }} masala · {{ s.qiyinlik }}%</span><b class="son">{{ s.yechdi }}</b><span class="foiz">yechim</span></div>
+          <div class="chiziqcha"><span style="width:{{ s.ulush }}%"></span></div>
         </div>
       {% endfor %}
     </div>
-    {% comment %} Odamlar chizig'i ustunlar USTIDAN o'tadi: ikkalasi bir maydonda
-       turganda "ko'p yechildimi yoki ko'p odam yechdimi" degan farq
-       bir qarashda ko'rinadi. {% endcomment %}
-    <svg class="qatlam" viewBox="0 0 1000 100" preserveAspectRatio="none">
-      <polyline points="{{ grafik.chiziq }}" fill="none"
-                stroke="var(--yashil)" stroke-width="2"
-                vector-effect="non-scaling-stroke"
-                stroke-linejoin="round" stroke-linecap="round"></polyline>
-    </svg>
-  </div>
-  <div class="oq-belgilar">
-    {% for b in grafik.belgilar %}<span>{{ b }}</span>{% endfor %}
-  </div>
-</div>
+  {% endif %}
+</section>
 
-<!-- ══════════════════════════════════════════════════════ 3. voronka -->
-<div class="bolim" id="voronka">
-  <h2>Ko'rdi → yechdi</h2>
-  <p>masalalar bo'limining butun sog'ligi shu to'rt qatorda</p>
-</div>
+<!-- ═══════════════════════════════════════════════════════ ODAMLAR -->
+<section class="qism" data-qism="odamlar" role="tabpanel">
 
-<div class="setka k2">
-  <div class="karta">
-    {% for q in voronka %}
-      <div class="bosqich">
-        <div class="qator">
-          <span class="yozuv">{{ q.nom }}</span>
-          <span class="izoh">{{ q.izoh }}</span>
-          <span class="son">{{ q.son }}</span>
-          <span class="foiz">{{ q.foiz }}%</span>
-        </div>
-        <div class="chiziq"><span style="width:{{ q.foiz }}%"></span></div>
-        {% if q.tushdi %}
-          <div class="tushish" style="margin-top:5px">
-            shu qadamda {{ q.tushdi }} ta yo'qoldi ({{ q.tushdi_foiz }}%)
-          </div>
-        {% endif %}
-      </div>
-    {% endfor %}
-    <p class="izoh-matn">
-      «Ochgan → javob yozgan» past bo'lsa, masala matni qo'rqitayotgan
-      bo'ladi. «Javob yozgan → yechgan» past bo'lsa, masala juda qiyin
-      yoki sharti noaniq.
-    </p>
-  </div>
-
-  <div class="karta">
-    <div class="karta-bosh"><b>Umumiy sonlar</b><span class="juda-xira">butun tarix</span></div>
-    <div class="setka ichkari" style="gap:10px">
-      <div class="ichki-olchov">
-        <div class="nom">Tasdiqlangan</div>
-        <div class="katta">{{ umumiy.tasdiq }}</div>
-      </div>
-      <div class="ichki-olchov">
-        <div class="nom">Navbatda</div>
-        <div class="katta">{{ umumiy.kutmoqda }}</div>
-      </div>
-      <div class="ichki-olchov">
-        <div class="nom">Rad etilgan</div>
-        <div class="katta">{{ umumiy.rad }}</div>
-      </div>
-      <div class="ichki-olchov">
-        <div class="nom">Mualliflar</div>
-        <div class="katta">{{ umumiy.mualliflar }}</div>
-      </div>
-      <div class="ichki-olchov">
-        <div class="nom">Yechgan odamlar</div>
-        <div class="katta">{{ umumiy.yechuvchilar }}</div>
-      </div>
-      <div class="ichki-olchov">
-        <div class="nom">Urinib ko'rganlar</div>
-        <div class="katta">{{ umumiy.uringanlar }}</div>
-      </div>
-      <div class="ichki-olchov">
-        <div class="nom">Jami yechimlar</div>
-        <div class="katta">{{ umumiy.yechdi }}</div>
-      </div>
-      <div class="ichki-olchov">
-        <div class="nom">Ovozlar</div>
-        <div class="katta">{{ umumiy.like }}<span class="juda-xira" style="font-size:13px"> / {{ umumiy.dislike }}</span></div>
-      </div>
+  <div class="bolim"><h2>Kim yechyapti</h2><p>{{ yechuvchilar|length }} ta odam</p></div>
+  <div class="jadval-quti" data-jadval>
+    <div class="jadval-tepa">
+      <input class="qidiruv" data-izla type="search" autocomplete="off" placeholder="Ism bo'yicha qidirish…">
+      <span class="topildi" data-topildi></span>
+    </div>
+    <div class="jadval-siljish">
+      <table class="kartochka">
+        <thead><tr>
+          <th class="keng">Kim</th><th class="raqam saralash">Yechdi</th><th class="raqam saralash">Urindi</th>
+          <th class="raqam saralash">Birinchida</th><th class="raqam saralash">O'z kuchi</th>
+          <th class="raqam saralash">O'rtacha javob</th><th class="raqam saralash">Kunlar</th><th class="saralash">Oxirgi yechgani</th>
+        </tr></thead>
+        <tbody>
+          {% for o in yechuvchilar %}
+            <tr data-qidiruv="{{ o.qidiruv }}">
+              <td class="keng bosh"><span class="odam"><span class="harf">{{ o.bosh }}</span><span>{{ o.ism }}</span></span></td>
+              <td class="raqam" data-q="{{ o.yechdi }}"><b>{{ o.yechdi }}</b></td>
+              <td class="raqam" data-q="{{ o.masalalar }}">{{ o.masalalar }}</td>
+              <td class="raqam" data-q="{{ o.birinchida }}">{{ o.birinchida }}</td>
+              <td class="raqam" data-q="{{ o.foiz }}"><span class="issiq" data-f="{{ o.foiz }}" data-eng="70">{{ o.foiz }}%</span></td>
+              <td class="raqam" data-q="{{ o.ortacha }}">{{ o.ortacha }}</td>
+              <td class="raqam" data-q="{{ o.kun_soni }}">{{ o.kun_soni }}</td>
+              <td data-q="{{ o.oxirgi_kun|default:9999 }}">
+                {% if o.oxirgi_kun is None %}<span class="juda-xira">yechmagan</span>
+                {% elif o.oxirgi_kun == 0 %}<span class="belgi yashil">bugun</span>
+                {% else %}{{ o.oxirgi_kun }} kun oldin{% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="bosh-holat">Hali hech kim masalaga urinmagan</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
-</div>
+  <details class="izoh"><summary>«O'z kuchi» nima?</summary>
+    <p>Birinchi urinishdayoq topganlar ulushi. Maxrajda yechganlari emas, urinaganlari turadi — aks holda yecholmagan masalalar ko'rinmay qolardi.</p>
+  </details>
 
-<!-- ═══════════════════════════════════════════════ 4. yechuvchilar -->
-<div class="bolim" id="yechuvchilar">
-  <h2>Kim yechyapti</h2>
-  <p>{{ yechuvchilar|length }} ta odam · ustun nomini bosib saralang</p>
-</div>
-<div class="jadval-oram" data-jadval>
-  <div class="jadval-tepa">
-    <input class="qidiruv" data-izla type="search" autocomplete="off"
-           placeholder="Ism bo'yicha qidirish…">
-    <span class="juda-xira" data-topildi style="font-size:12.5px"></span>
-  </div>
-  <div class="jadval-siljish">
-    <table>
-      <thead><tr>
-        <th style="width:38px"></th>
-        <th class="keng">Kim</th>
-        <th class="raqam saralash">Yechdi</th>
-        <th class="raqam saralash">Urindi</th>
-        <th class="raqam saralash">Birinchida</th>
-        <th class="raqam saralash">O'z kuchi</th>
-        <th class="raqam saralash">O'rtacha javob</th>
-        <th class="raqam saralash">Kunlar</th>
-        <th class="saralash">Oxirgi yechgani</th>
-      </tr></thead>
-      <tbody>
-        {% for o in yechuvchilar %}
-          <tr data-qidiruv="{{ o.qidiruv }}">
-            <td><span class="harf">{{ o.bosh }}</span></td>
-            <td class="keng">{{ o.ism }}</td>
-            <td class="raqam" data-q="{{ o.yechdi }}"><b>{{ o.yechdi }}</b></td>
-            <td class="raqam" data-q="{{ o.masalalar }}">{{ o.masalalar }}</td>
-            <td class="raqam" data-q="{{ o.birinchida }}">{{ o.birinchida }}</td>
-            <td class="raqam" data-q="{{ o.foiz }}">
-              <span class="issiq" data-f="{{ o.foiz }}" data-eng="70">{{ o.foiz }}%</span>
-            </td>
-            <td class="raqam" data-q="{{ o.ortacha }}">{{ o.ortacha }}</td>
-            <td class="raqam" data-q="{{ o.kun_soni }}">{{ o.kun_soni }}</td>
-            <td data-q="{{ o.oxirgi_kun|default:9999 }}">
-              {% if o.oxirgi_kun is None %}<span class="juda-xira">yechmagan</span>
-              {% elif o.oxirgi_kun == 0 %}<span class="belgi yashil">bugun</span>
-              {% elif o.oxirgi_kun <= 7 %}<span class="belgi moviy">{{ o.oxirgi_kun }} kun oldin</span>
-              {% else %}<span class="juda-xira">{{ o.oxirgi_kun }} kun oldin</span>{% endif %}
-            </td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="9" class="bosh-holat">Hali hech kim masalaga urinmagan</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-<p class="izoh-matn">
-  «O'z kuchi» — birinchi urinishdayoq topganlar ulushi. Maxrajda
-  yechganlari emas, URINGANLARI turadi: aks holda yecholmagan
-  masalalar butunlay ko'rinmay qolardi.
-</p>
-
-<!-- ═════════════════════════════════════════════════ 5. masalalar -->
-<div class="bolim" id="masalalar">
-  <h2>Masalalar</h2>
-  <p>oxirgi {{ masalalar|length }} tasi · yangisi birinchi</p>
-</div>
-<div class="jadval-oram" data-jadval>
-  <div class="jadval-tepa">
-    <input class="qidiruv" data-izla type="search" autocomplete="off"
-           placeholder="Raqam, muallif yoki matn bo'yicha qidirish…">
-    <button class="tugma" data-suzgi="tasdiq">Faqat tasdiqlangan</button>
-    <button class="tugma" data-suzgi="kutmoqda">Navbatda</button>
-    <span class="juda-xira" data-topildi style="font-size:12.5px"></span>
-  </div>
-  <div class="jadval-siljish">
-    <table>
-      <thead><tr>
-        <th class="raqam saralash">#</th>
-        <th class="keng">Masala</th>
-        <th>Muallif</th>
-        <th>Sinf</th>
-        <th class="raqam saralash">Ko'rdi</th>
-        <th class="raqam saralash">Urindi</th>
-        <th class="raqam saralash">Yechdi</th>
-        <th class="raqam saralash">Qiyinlik</th>
-        <th class="raqam saralash">Ovoz</th>
-        <th>Holat</th>
-        <th>Sana</th>
-      </tr></thead>
-      <tbody>
-        {% for m in masalalar %}
-          <tr class="{{ m.holat }}" data-qidiruv="{{ m.qidiruv }}">
-            <td class="raqam" data-q="{{ m.raqam|default:0 }}">
-              {% if m.raqam %}#{{ m.raqam }}{% else %}<span class="juda-xira">—</span>{% endif %}
-            </td>
-            <td class="keng"><span class="qirqilgan" title="{{ m.matn }}">{{ m.matn }}</span></td>
-            <td>{{ m.muallif }}</td>
-            <td class="juda-xira">{{ m.sinf }}</td>
-            <td class="raqam" data-q="{{ m.korish }}">{{ m.korish }}</td>
-            <td class="raqam" data-q="{{ m.urinish }}">
-              {{ m.urinish }}
-              {% if m.korish %}<div class="ost">{{ m.urinish_foiz }}%</div>{% endif %}
-            </td>
-            <td class="raqam" data-q="{{ m.yechdi }}"><b>{{ m.yechdi }}</b></td>
-            <td class="raqam" data-q="{{ m.qiyinlik|default:0 }}">
-              {% if m.qiyinlik is None %}<span class="juda-xira">—</span>
-              {% elif m.qiyinlik >= 60 %}<span class="belgi yashil">{{ m.qiyinlik }}%</span>
-              {% elif m.qiyinlik >= 25 %}<span class="belgi sariq">{{ m.qiyinlik }}%</span>
-              {% else %}<span class="belgi qizil">{{ m.qiyinlik }}%</span>{% endif %}
-            </td>
-            <td class="raqam" data-q="{{ m.ovoz }}">
-              {{ m.like }}<span class="juda-xira"> / {{ m.dislike }}</span>
-            </td>
-            <td>
-              {% if m.holat == 'tasdiq' %}<span class="belgi yashil">tasdiq</span>
-              {% elif m.holat == 'kutmoqda' %}<span class="belgi sariq">navbat</span>
-              {% else %}<span class="belgi qizil">rad</span>{% endif %}
-              {% if m.kanalda %}<span class="belgi moviy">kanal</span>{% endif %}
-              {% if m.kanal_yoq %}<span class="belgi qizil">post yo'q</span>{% endif %}
-            </td>
-            <td class="juda-xira">{{ m.sana|date:"d.m.y" }}</td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="11" class="bosh-holat">Hali birorta masala yozilmagan</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div class="setka k3" style="margin-top:14px">
-  <div class="karta">
-    <div class="karta-bosh">
-      <b>Eng qiyin</b>
-      <span class="juda-xira">{{ qiyinlik_min }}+ urinishdan</span>
+  <div class="bolim"><h2>Kim yozyapti</h2><p>masala yozgan {{ mualliflar|length }} ta odam</p></div>
+  <div class="jadval-quti" data-jadval>
+    <div class="jadval-tepa">
+      <input class="qidiruv" data-izla type="search" autocomplete="off" placeholder="Muallif ismi…">
+      <span class="topildi" data-topildi></span>
     </div>
-    {% for m in qiyin %}
-      <div class="bosqich">
-        <div class="qator">
-          <span class="yozuv">{% if m.raqam %}#{{ m.raqam }}{% else %}—{% endif %}</span>
-          <span class="izoh qirqilgan" style="max-width:190px">{{ m.matn }}</span>
-          <span class="son">{{ m.qiyinlik }}%</span>
-        </div>
-        <div class="chiziq"><span style="width:{{ m.qiyinlik }}%;background:var(--qizil)"></span></div>
-      </div>
-    {% empty %}
-      <div class="bosh-holat">Hali yetarli urinish yig'ilmagan</div>
-    {% endfor %}
-  </div>
-
-  <div class="karta">
-    <div class="karta-bosh">
-      <b>Eng oson</b>
-      <span class="juda-xira">{{ qiyinlik_min }}+ urinishdan</span>
+    <div class="jadval-siljish">
+      <table class="kartochka">
+        <thead><tr>
+          <th class="keng">Muallif</th><th class="raqam saralash">Yozgan</th><th class="raqam saralash">Tasdiq</th>
+          <th class="raqam saralash">Rad</th><th class="raqam saralash">Navbat</th><th class="raqam saralash">Tasdiq ulushi</th>
+          <th class="raqam saralash">Yechilgan</th><th class="raqam saralash">Bir masalaga</th><th class="raqam saralash">Ovoz</th>
+        </tr></thead>
+        <tbody>
+          {% for a in mualliflar %}
+            <tr data-qidiruv="{{ a.qidiruv }}">
+              <td class="keng bosh"><span class="odam"><span class="harf">{{ a.bosh }}</span><span>{{ a.ism }}</span></span></td>
+              <td class="raqam" data-q="{{ a.jami }}"><b>{{ a.jami }}</b></td>
+              <td class="raqam" data-q="{{ a.tasdiq }}">{{ a.tasdiq }}</td>
+              <td class="raqam" data-q="{{ a.rad }}">{% if a.rad %}<span class="belgi qizil">{{ a.rad }}</span>{% else %}<span class="juda-xira">0</span>{% endif %}</td>
+              <td class="raqam" data-q="{{ a.navbat }}">{% if a.navbat %}<span class="belgi asos">{{ a.navbat }}</span>{% else %}<span class="juda-xira">0</span>{% endif %}</td>
+              <td class="raqam" data-q="{{ a.tasdiq_foiz }}"><span class="issiq" data-f="{{ a.tasdiq_foiz }}" data-eng="100">{{ a.tasdiq_foiz }}%</span></td>
+              <td class="raqam" data-q="{{ a.yechdi }}">{{ a.yechdi }}</td>
+              <td class="raqam" data-q="{{ a.bir_masalaga }}">{{ a.bir_masalaga }}</td>
+              <td class="raqam" data-q="{{ a.ovoz }}">{{ a.ovoz }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="9" class="bosh-holat">Hali hech kim masala yozmagan</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% for m in oson %}
-      <div class="bosqich">
-        <div class="qator">
-          <span class="yozuv">{% if m.raqam %}#{{ m.raqam }}{% else %}—{% endif %}</span>
-          <span class="izoh qirqilgan" style="max-width:190px">{{ m.matn }}</span>
-          <span class="son">{{ m.qiyinlik }}%</span>
-        </div>
-        <div class="chiziq"><span style="width:{{ m.qiyinlik }}%;background:var(--yashil)"></span></div>
-      </div>
-    {% empty %}
-      <div class="bosh-holat">Hali yetarli urinish yig'ilmagan</div>
-    {% endfor %}
   </div>
+  <details class="izoh"><summary>«Bir masalaga» nima?</summary>
+    <p>Muallifning bitta tasdiqlangan masalasini o'rtacha nechta odam yechgani. Yigirmata masala yozib hech biri yechilmasa, bu bittani yozib yuztaga yetkazgandan kam.</p>
+  </details>
+</section>
 
-  <div class="karta">
-    <div class="karta-bosh">
-      <b>Hech kim urinmagan</b>
-      <span class="juda-xira">tasdiqlangan, lekin ko'rinmayapti</span>
+<!-- ══════════════════════════════════════════════════════════ OQIM -->
+<section class="qism" data-qism="oqim" role="tabpanel">
+  <div class="bolim"><h2>So'nggi harakatlar</h2><p>oxirgi {{ oqim|length }} ta urinish</p></div>
+  <div class="jadval-quti">
+    <div class="jadval-siljish">
+      <table class="kartochka">
+        <thead><tr><th class="keng">Kim</th><th>Natija</th><th class="keng">Masala</th><th>Vaqt</th></tr></thead>
+        <tbody>
+          {% for u in oqim %}
+            <tr>
+              <td class="keng bosh"><span class="odam"><span class="harf">{{ u.bosh }}</span><span>{{ u.ism }}</span></span></td>
+              <td>
+                {% if u.togri %}<span class="belgi yashil">birinchi urinishda</span>
+                {% elif u.yechdi %}<span class="belgi oltin">{{ u.urinish }}-urinishda yechdi</span>
+                {% else %}<span class="belgi qizil">{{ u.urinish }} urinish · yecholmadi</span>{% endif %}
+              </td>
+              <td class="keng"><span class="juda-xira">{% if u.raqam %}#{{ u.raqam }}{% endif %}</span> <span class="qirqilgan" title="{{ u.matn }}">{{ u.matn }}</span></td>
+              <td class="juda-xira">{{ u.vaqt|date:"d.m H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="bosh-holat">Hali hech kim masalaga javob yozmagan</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% for m in tegilmagan %}
-      <div class="bosqich">
-        <div class="qator">
-          <span class="yozuv">{% if m.raqam %}#{{ m.raqam }}{% else %}—{% endif %}</span>
-          <span class="izoh qirqilgan" style="max-width:190px">{{ m.matn }}</span>
-          <span class="son juda-xira">{{ m.korish }} ko'rish</span>
-        </div>
-      </div>
-    {% empty %}
-      <div class="bosh-holat">Hamma masalaga urinib ko'rilgan</div>
-    {% endfor %}
-    <p class="izoh-matn">
-      Bu yerdagi masala bilan qilinadigan ish boshqacha: uni tuzatish
-      emas, KO'RINADIGAN qilish — kanalga joylash yetadi.
-    </p>
   </div>
-</div>
+</section>
 
-<!-- ═════════════════════════════════════════════════ 6. mualliflar -->
-<div class="bolim" id="mualliflar">
-  <h2>Kim yozyapti</h2>
-  <p>masala yozgan {{ mualliflar|length }} ta odam</p>
-</div>
-<div class="jadval-oram" data-jadval>
-  <div class="jadval-tepa">
-    <input class="qidiruv" data-izla type="search" autocomplete="off"
-           placeholder="Muallif ismi bo'yicha qidirish…">
-    <span class="juda-xira" data-topildi style="font-size:12.5px"></span>
-  </div>
-  <div class="jadval-siljish">
-    <table>
-      <thead><tr>
-        <th style="width:38px"></th>
-        <th class="keng">Muallif</th>
-        <th class="raqam saralash">Yozgan</th>
-        <th class="raqam saralash">Tasdiq</th>
-        <th class="raqam saralash">Rad</th>
-        <th class="raqam saralash">Navbat</th>
-        <th class="raqam saralash">Tasdiq ulushi</th>
-        <th class="raqam saralash">Yechilgan</th>
-        <th class="raqam saralash">Bir masalaga</th>
-        <th class="raqam saralash">Ovoz</th>
-      </tr></thead>
-      <tbody>
-        {% for a in mualliflar %}
-          <tr data-qidiruv="{{ a.qidiruv }}">
-            <td><span class="harf">{{ a.bosh }}</span></td>
-            <td class="keng">{{ a.ism }}</td>
-            <td class="raqam" data-q="{{ a.jami }}"><b>{{ a.jami }}</b></td>
-            <td class="raqam" data-q="{{ a.tasdiq }}">{{ a.tasdiq }}</td>
-            <td class="raqam" data-q="{{ a.rad }}">
-              {% if a.rad %}<span class="belgi qizil">{{ a.rad }}</span>{% else %}<span class="juda-xira">0</span>{% endif %}
-            </td>
-            <td class="raqam" data-q="{{ a.navbat }}">
-              {% if a.navbat %}<span class="belgi sariq">{{ a.navbat }}</span>{% else %}<span class="juda-xira">0</span>{% endif %}
-            </td>
-            <td class="raqam" data-q="{{ a.tasdiq_foiz }}">
-              <span class="issiq" data-f="{{ a.tasdiq_foiz }}" data-eng="100">{{ a.tasdiq_foiz }}%</span>
-            </td>
-            <td class="raqam" data-q="{{ a.yechdi }}">{{ a.yechdi }}</td>
-            <td class="raqam" data-q="{{ a.bir_masalaga }}">{{ a.bir_masalaga }}</td>
-            <td class="raqam" data-q="{{ a.ovoz }}">{{ a.ovoz }}</td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="10" class="bosh-holat">Hali hech kim masala yozmagan</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-<p class="izoh-matn">
-  «Bir masalaga» — muallifning bitta tasdiqlangan masalasini o'rtacha
-  nechta odam yechgani. Muallifning haqiqiy hissasi shu: yigirmata
-  masala yozib hech biri yechilmasa, bu bittani yozib yuztaga
-  yetkazgandan kam.
-</p>
-
-<!-- ════════════════════════════════════════════════════ sinflar -->
-{% if sinflar %}
-  <div class="bolim">
-    <h2>Sinflar bo'yicha</h2>
-    <p>tasdiqlangan masalalar qaysi sinfga mo'ljallangan</p>
-  </div>
-  <div class="karta">
-    {% for s in sinflar %}
-      <div class="bosqich">
-        <div class="qator">
-          <span class="yozuv">{{ s.nom }}</span>
-          <span class="izoh">{{ s.soni }} ta masala · qiyinlik {{ s.qiyinlik }}%</span>
-          <span class="son">{{ s.yechdi }}</span>
-          <span class="foiz">yechim</span>
-        </div>
-        <div class="chiziq"><span style="width:{{ s.ulush }}%"></span></div>
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
-
-<!-- ═══════════════════════════════════════════════════════ 7. oqim -->
-<div class="bolim" id="oqim">
-  <h2>So'nggi harakatlar</h2>
-  <p>oxirgi {{ oqim|length }} ta urinish</p>
-</div>
-<div class="jadval-oram">
-  <div class="jadval-siljish">
-    <table>
-      <thead><tr>
-        <th>Vaqt</th><th class="keng">Kim</th><th>Masala</th>
-        <th class="keng">Matn</th><th>Natija</th>
-      </tr></thead>
-      <tbody>
-        {% for u in oqim %}
-          <tr>
-            <td class="juda-xira">{{ u.vaqt|date:"d.m H:i" }}</td>
-            <td class="keng">
-              <span style="display:inline-flex;align-items:center;gap:8px">
-                <span class="harf">{{ u.bosh }}</span>{{ u.ism }}
-              </span>
-            </td>
-            <td>{% if u.raqam %}<span class="belgi moviy">#{{ u.raqam }}</span>{% else %}<span class="juda-xira">—</span>{% endif %}</td>
-            <td class="keng"><span class="qirqilgan" title="{{ u.matn }}">{{ u.matn }}</span></td>
-            <td>
-              {% if u.togri %}<span class="belgi yashil">birinchi urinishda</span>
-              {% elif u.yechdi %}<span class="belgi sariq">{{ u.urinish }}-urinishda yechdi</span>
-              {% else %}<span class="belgi qizil">{{ u.urinish }} urinish · yecholmadi</span>{% endif %}
-            </td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="5" class="bosh-holat">Hali hech kim masalaga javob yozmagan</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-
+<style>
+  .navbat-havola { color: var(--matn); }
+  .navbat-havola:hover { text-decoration: none; filter: brightness(.98); }
+  .navbat-havola b { color: var(--asos); }
+</style>
 {% endblock %}

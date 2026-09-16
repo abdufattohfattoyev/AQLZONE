@@ -1,0 +1,12 @@
+{% comment %} Bitta taqsimot kartasi: `nom` sarlavha, `qatorlar` — {nom, n, foiz} ro'yxati. {% endcomment %}
+<div class="karta">
+  <div class="karta-bosh"><h3>{{ nom }}</h3></div>
+  {% for r in qatorlar %}
+    <div class="bar">
+      <div class="bar-bosh"><span class="nom">{{ r.nom }}</span><b class="son">{{ r.n }}</b><span class="foiz">{{ r.foiz }}%</span></div>
+      <div class="chiziqcha"><span style="width:{{ r.foiz }}%"></span></div>
+    </div>
+  {% empty %}
+    <div class="bosh-holat">Hali javob yo'q.</div>
+  {% endfor %}
+</div>

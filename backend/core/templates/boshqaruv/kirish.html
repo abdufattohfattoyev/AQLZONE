@@ -5,63 +5,41 @@
 Bu sahifada KIRITADIGAN hech narsa yo'q — na forma, na maydon. U faqat
 yo'lni ko'rsatadi: botga /boshqaruv yozing.
 
-Parol maydoni ataylab olib tashlangan. Sabab `core/boshqaruv.py` ning
-boshida yozilgan: o'zgarmas sir bir marta sizib chiqsa panel ochiq
-qoladi, botdagi havola esa 10 daqiqada o'z-o'zidan o'ladi.
+Parol maydoni ataylab yo'q (`core/boshqaruv.py` boshida yozilgan):
+o'zgarmas sir bir marta sizib chiqsa panel ochiq qoladi, botdagi havola
+esa 10 daqiqada o'z-o'zidan o'ladi.
 {% endcomment %}
 
 {% block tana %}
-<div class="kirish-oram">
+<main class="kirish">
   <div class="karta kirish-karta">
-    <div class="nishon" style="width:44px;height:44px;border-radius:14px;font-size:16px">AZ</div>
-    <div style="font-size:18px;font-weight:750;margin-top:14px;letter-spacing:-.02em">Boshqaruv paneli</div>
-    <p class="izoh-matn" style="margin-top:4px">Bu sahifa faqat administrator uchun.</p>
+    <span class="brend-belgi" style="width:44px;height:44px;border-radius:12px;font-size:15px">AZ</span>
+    <h1 style="font-size:21px;margin-top:16px">Boshqaruv paneli</h1>
+    <p class="xira" style="margin:4px 0 0">Faqat administrator uchun.</p>
 
-    {% if xato %}
-      <div class="xato-quti">{{ xato }}</div>
+    {% if xato %}<div class="xabar-quti xato" style="margin:16px 0 0">{{ xato }}</div>{% endif %}
+
+    <ol class="kirish-qadam">
+      <li>Botga <b>/boshqaruv</b> deb yozing</li>
+      <li>Bot yuborgan havolani bosing — u 10 daqiqa amal qiladi</li>
+    </ol>
+
+    {% if bot %}
+      <a class="tugma asosiy" style="width:100%" href="https://t.me/{{ bot }}" target="_blank" rel="noopener">@{{ bot }} ni ochish</a>
     {% endif %}
 
-    <div class="usul">
-      <div style="font-size:13.5px;font-weight:650">Telegram orqali kiriladi</div>
-      <p class="izoh-matn" style="margin-top:4px">
-        Botga <b style="color:var(--matn)">/boshqaruv</b> yozing — u kirish
-        havolasini yuboradi. Havola 10 daqiqa amal qiladi.
-      </p>
-      {% if bot %}
-        <a class="asosiy-tugma" href="https://t.me/{{ bot }}" target="_blank" rel="noopener">
-          @{{ bot }} ni ochish
-        </a>
-      {% endif %}
-    </div>
-
-    <p class="izoh-matn" style="margin-top:14px">
-      Parol bilan kirish yo'li yo'q. Havola qisqa muddatli bo'lgani uchun
-      u yo'qolib qolsa ham begona odam foydalana olmaydi.
+    <p class="juda-xira kichik" style="margin:14px 0 0">
+      Parol bilan kirish yo'q: havola qisqa muddatli, yo'qolsa ham begona odam foydalana olmaydi.
     </p>
   </div>
-</div>
+</main>
 
 <style>
-  .kirish-oram { display: grid; place-items: center; min-height: 100dvh; padding: 22px; }
-  .kirish-karta { width: 100%; max-width: 360px; padding: 26px; }
-
-  .xato-quti {
-    margin-top: 14px; padding: 10px 12px; border-radius: var(--r-kichik);
-    background: rgba(251,113,133,.1); color: var(--qizil);
-    font-size: 13px; font-weight: 600;
-  }
-  .usul {
-    margin-top: 18px; padding: 14px;
-    border: 1px solid var(--chegara); border-radius: var(--r-kichik);
-    background: var(--fon-2);
-  }
-  .asosiy-tugma {
-    display: block; width: 100%; margin-top: 12px; padding: 11px;
-    border: 0; border-radius: 12px; cursor: pointer; text-align: center;
-    background: linear-gradient(140deg, var(--asos), var(--binafsha));
-    color: #fff; font: 600 14px/1 inherit; font-family: inherit;
-    box-shadow: 0 8px 20px -10px rgba(108,140,255,.9);
-  }
-  .asosiy-tugma:hover { filter: brightness(1.08); }
+  .kirish { display: grid; place-items: center; min-height: 100dvh; padding: 20px 16px; }
+  .kirish-karta { width: 100%; max-width: 380px; padding: 28px; }
+  .kirish-qadam { margin: 20px 0; padding: 0 0 0 20px; color: var(--xira); font-size: 14px; line-height: 1.6; }
+  .kirish-qadam li + li { margin-top: 6px; }
+  .kirish-qadam b { color: var(--matn); }
+  @media (max-width: 400px) { .kirish-karta { padding: 22px 18px; } }
 </style>
 {% endblock %}

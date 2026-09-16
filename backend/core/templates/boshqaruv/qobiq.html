@@ -1,80 +1,122 @@
 {% extends "boshqaruv/asos.html" %}
 
 {% comment %}
-Panelning ICHKI qobig'i: yon panel + tepa + kontent.
+Panelning ICHKI qobig'i: yon menyu + sahifa sarlavhasi + kontent.
 
-Kirish sahifasidan tashqari hamma sahifa shundan o'sadi. Sabab: bo'limlar
-ro'yxati ilgari to'rtta sahifada to'rt marta yozilgan edi va har biri
-boshqacha tartibda turardi. Yangi sahifa qo'shilganda uni qolganlariga
-qo'shish unutilardi — natijada masalalar sahifasidan duellarga o'tish
-mumkin edi, teskarisiga esa yo'q.
+Kirish sahifasidan tashqari hamma sahifa shundan o'sadi — bo'limlar
+ro'yxati bitta joyda, yangi sahifa qo'shilganda hamma joyda paydo bo'ladi.
+
+Menyu uch guruhga bo'lingan, chunki bo'limlar uch xil ish uchun ochiladi:
+  KUNDALIK   — har kuni qaraladigan: umumiy holat, jonli, tasdiqlash
+  HISOBOTLAR — haftada bir o'qiladigan chuqur sonlar
+  ALOQA      — odamlarga xabar yuborish
+Ilgari yettita havola bir tekis ro'yxatda turardi va qaysi biri "ish",
+qaysi biri "hisobot" ekanini nomidan taxmin qilish kerak edi.
 
 Sahifa to'ldiradigan joylar:
-
-    {% block sahifa_nomi %}   tepadagi sarlavha
+    {% block sahifa_nomi %}   sarlavha
     {% block sahifa_izoh %}   uning ostidagi qator (sana, son)
     {% block asboblar %}      o'ng tomondagi tanlagich va tugmalar
+    {% block tablar %}        tablar tasmasi (ixtiyoriy)
     {% block ichki %}         sahifaning o'zi
 
-`joriy_bolim` va `navbat_soni` kontekstga `boshqaruv.bolim()` dan
-keladi — har bir ko'rinish uni qo'shib beradi.
+`joriy_bolim`, `navbat_soni`, `jonli_soni` — `boshqaruv.bolim()` dan.
 {% endcomment %}
 
 {% block tana %}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-uy" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-jonli" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-tasdiq" viewBox="0 0 24 24"><path d="m9 11 3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></symbol>
+  <symbol id="i-masala" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></symbol>
+  <symbol id="i-duel" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
+  <symbol id="i-tahlil" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M8 17v-5M13 17V8M18 17V5"/></symbol>
+  <symbol id="i-elon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-chiqish" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-menyu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-yop" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-oy" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+</svg>
+
 <div class="qobiq">
 
-  <aside class="yon">
-    <div class="yon-bosh">
-      <div class="nishon">AZ</div>
-      <div>
-        <b>Aql Zone</b>
-        <span>boshqaruv</span>
-      </div>
+  <aside class="yon" id="menyu" aria-label="Bo'limlar">
+    <a class="brend" href="/boshqaruv">
+      <span class="brend-belgi">AZ</span>
+      <span><b>Aql Zone</b><span>Boshqaruv</span></span>
+    </a>
+
+    <div class="yon-guruh">
+      <div class="yon-sarlavha">Kundalik</div>
+      <a class="yon-havola {% if joriy_bolim == 'panel' %}faol{% endif %}" href="/boshqaruv">
+        <svg class="i"><use href="#i-uy"/></svg> Umumiy
+      </a>
+      <a class="yon-havola {% if joriy_bolim == 'jonli' %}faol{% endif %}" href="/boshqaruv/jonli">
+        <svg class="i"><use href="#i-jonli"/></svg> Jonli
+        {% if jonli_soni %}<span class="sanoq yashil">{{ jonli_soni }}</span>{% endif %}
+      </a>
+      {% comment %} Navbat soni HAR sahifada ko'rinadi: bu "hozir qilinadigan ish". {% endcomment %}
+      <a class="yon-havola {% if joriy_bolim == 'navbat' %}faol{% endif %}" href="/boshqaruv/masalalar">
+        <svg class="i"><use href="#i-tasdiq"/></svg> Tasdiqlash
+        {% if navbat_soni %}<span class="sanoq">{{ navbat_soni }}</span>{% endif %}
+      </a>
     </div>
 
-    <a class="{% if joriy_bolim == 'panel' %}faol{% endif %}" href="/boshqaruv">
-      <span class="belgicha">◧</span> Umumiy panel
-    </a>
-    {% comment %} Jonli — hozir kim test yoki dars ishlayapti. Son yashil:
-       bu "ish bor" emas, "odamlar shu yerda" degan xushxabar. {% endcomment %}
-    <a class="{% if joriy_bolim == 'jonli' %}faol{% endif %}" href="/boshqaruv/jonli">
-      <span class="belgicha"><span class="nuqta {% if jonli_soni %}yoniq{% endif %}"></span></span> Jonli
-      {% if jonli_soni %}<span class="sanoqcha" style="background:var(--yashil)">{{ jonli_soni }}</span>{% endif %}
-    </a>
-    {% comment %} Tahlil — kimlar keladi, nimaga kiradi, kim faol. {% endcomment %}
-    <a class="{% if joriy_bolim == 'tahlil' %}faol{% endif %}" href="/boshqaruv/tahlil">
-      <span class="belgicha">◔</span> Tahlil
-    </a>
-    <a class="{% if joriy_bolim == 'masala' %}faol{% endif %}" href="/boshqaruv/masalalar/hisobot">
-      <span class="belgicha">∑</span> Masalalar
-    </a>
-    {% comment %} Navbat soni HAR sahifada ko'rinadi: u "hozir qilinadigan ish"
-       va uni ko'rish uchun bo'lim ochib turish kerak bo'lmasligi lozim. {% endcomment %}
-    <a class="{% if joriy_bolim == 'navbat' %}faol{% endif %}" href="/boshqaruv/masalalar">
-      <span class="belgicha">✓</span> Tasdiqlash
-      {% if navbat_soni %}<span class="sanoqcha">{{ navbat_soni }}</span>{% endif %}
-    </a>
-    <a class="{% if joriy_bolim == 'duel' %}faol{% endif %}" href="/boshqaruv/duel">
-      <span class="belgicha">⚔</span> Duellar
-    </a>
-    <a class="{% if joriy_bolim == 'reklama' %}faol{% endif %}" href="/boshqaruv/reklama">
-      <span class="belgicha">✉</span> E'lonlar
-    </a>
+    <div class="yon-guruh">
+      <div class="yon-sarlavha">Hisobotlar</div>
+      <a class="yon-havola {% if joriy_bolim == 'masala' %}faol{% endif %}" href="/boshqaruv/masalalar/hisobot">
+        <svg class="i"><use href="#i-masala"/></svg> Masalalar
+      </a>
+      <a class="yon-havola {% if joriy_bolim == 'duel' %}faol{% endif %}" href="/boshqaruv/duel">
+        <svg class="i"><use href="#i-duel"/></svg> Duellar
+      </a>
+      <a class="yon-havola {% if joriy_bolim == 'tahlil' %}faol{% endif %}" href="/boshqaruv/tahlil">
+        <svg class="i"><use href="#i-tahlil"/></svg> Tahlil
+      </a>
+    </div>
 
-    <div class="ajratgich"></div>
-    <a class="chiqish" href="/boshqaruv/chiqish"><span class="belgicha">⏻</span> Chiqish</a>
+    <div class="yon-guruh">
+      <div class="yon-sarlavha">Aloqa</div>
+      <a class="yon-havola {% if joriy_bolim == 'reklama' %}faol{% endif %}" href="/boshqaruv/reklama">
+        <svg class="i"><use href="#i-elon"/></svg> E'lonlar
+      </a>
+    </div>
+
+    <div class="yon-past">
+      <button class="yon-havola" type="button" data-mavzu-tugma>
+        <svg class="i"><use href="#i-oy"/></svg> <span>Mavzu</span>
+      </button>
+      <a class="yon-havola" href="/boshqaruv/chiqish">
+        <svg class="i"><use href="#i-chiqish"/></svg> Chiqish
+      </a>
+    </div>
   </aside>
+  <div class="parda" data-menyu></div>
 
   <div class="asosiy">
-    <header class="tepa" {% block yangilan %}data-yangilan{% endblock %}>
-      <div>
-        <h1>{% block sahifa_nomi %}Boshqaruv{% endblock %}</h1>
-        <div class="vaqt">{% block sahifa_izoh %}{% endblock %}</div>
-      </div>
-      <div class="ong">{% block asboblar %}{% endblock %}</div>
-    </header>
+    <div class="mobil-tepa">
+      <button class="belgi-tugma" type="button" data-menyu aria-controls="menyu" aria-label="Menyu">
+        <svg class="i"><use href="#i-menyu"/></svg>
+      </button>
+      {% comment %} Django bitta blokni ikki marta chizolmaydi — sarlavha bu yerga
+         JS bilan ko'chiriladi (asos.html, "Menyu" qismi). {% endcomment %}
+      <b data-mobil-nomi>Aql Zone</b>
+      {% if navbat_soni and joriy_bolim != 'navbat' %}
+        <a class="belgi asos" href="/boshqaruv/masalalar" title="Tasdiqlash navbati">{{ navbat_soni }} navbatda</a>
+      {% endif %}
+    </div>
 
-    <main class="ichki">{% block ichki %}{% endblock %}</main>
+    <main class="ichki">
+      <header class="sahifa-bosh" {% block yangilan %}data-yangilan{% endblock %}>
+        <div>
+          <h1>{% block sahifa_nomi %}Boshqaruv{% endblock %}</h1>
+          <div class="izoh">{% block sahifa_izoh %}{% endblock %}</div>
+        </div>
+        <div class="asboblar">{% block asboblar %}{% endblock %}</div>
+      </header>
+      {% block tablar %}{% endblock %}
+      {% block ichki %}{% endblock %}
+    </main>
   </div>
 
 </div>

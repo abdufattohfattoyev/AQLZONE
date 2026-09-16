@@ -1,0 +1,1 @@
+{% comment %} O'tgan davrga nisbatan o'zgarish. `f` — foiz yoki None (oldin 0 edi). {% endcomment %}{% if f is None %}<span class="farq yoq">—</span>{% elif f >= 0 %}<span class="farq osdi">↑ {{ f }}%</span>{% else %}<span class="farq tushdi">↓ {{ f|stringformat:"d"|slice:"1:" }}%</span>{% endif %}

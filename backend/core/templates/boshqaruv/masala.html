@@ -1,182 +1,119 @@
 {% extends "boshqaruv/qobiq.html" %}
 {% block sarlavha %}Tasdiqlash{% endblock %}
-{% block sahifa_nomi %}Tasdiqlash navbati{% endblock %}
-{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }}{% endblock %}
+{% block sahifa_nomi %}Tasdiqlash{% endblock %}
+{% block sahifa_izoh %}
+  {% if holat == 'kutmoqda' %}Eng uzoq kutgani birinchi · javob va yechimni tekshiring
+  {% else %}Yangisi birinchi{% endif %}
+{% endblock %}
 
-{% comment %} Bu sahifada o'z-o'zidan yangilanish YO'Q: admin masala matnini
-   o'qib turganda sahifa ostidan almashsa, o'qigani yo'qoladi va
-   tasdiqlash tugmasi boshqa masalaniki bo'lib qolardi. {% endcomment %}
+{% comment %} O'z-o'zidan yangilanish YO'Q: admin masalani o'qib turganda sahifa
+   almashsa, tasdiqlash tugmasi boshqa masalaniki bo'lib qolardi. {% endcomment %}
 {% block yangilan %}{% endblock %}
 
 {% comment %}
-Tasdiqlash navbati.
-
-Sahifaning butun tartibi bitta ishga bo'ysunadi: MATEMATIKANI
-TEKSHIRISH. Shuning uchun masala, javob va yechim yonma-yon, ochib
-yopmasdan turadi — admin uchalasini bir qarashda solishtiradi va
-darhol qaror qiladi.
-
-Rad etish maydoni ham har qatorda OCHIQ turadi, alohida oynada emas:
-sababni yozish "qo'shimcha qadam" bo'lib qolmasligi kerak, aks holda
-admin sababsiz rad etish yo'lini qidiradi.
+Sahifa bitta ishga bo'ysunadi: MATEMATIKANI TEKSHIRISH. Masala chapda,
+javob va yechim o'ngda — ko'z bir marta chapdan o'ngga yuradi. Telefonda
+ustma-ust. Rad etish sababi maydoni ochiq turadi: sababni yozish
+"qo'shimcha qadam" bo'lib qolmasin.
 {% endcomment %}
 
 {% block asboblar %}
-  <div class="tanlagich">
-    <a class="{% if holat == 'kutmoqda' %}faol{% endif %}" href="?holat=kutmoqda">
-      Navbat{% if sanoq.kutmoqda %} · {{ sanoq.kutmoqda }}{% endif %}
-    </a>
-    <a class="{% if holat == 'tasdiq' %}faol{% endif %}" href="?holat=tasdiq">
-      Tasdiqlangan · {{ sanoq.tasdiq }}
-    </a>
-    <a class="{% if holat == 'rad' %}faol{% endif %}" href="?holat=rad">
-      Rad · {{ sanoq.rad }}
-    </a>
-  </div>
-  <a class="tugma" href="/boshqaruv/masalalar/hisobot">Hisobot</a>
+  <nav class="davr" aria-label="Holat">
+    <a class="{% if holat == 'kutmoqda' %}faol{% endif %}" href="?holat=kutmoqda">Navbat · {{ sanoq.kutmoqda }}</a>
+    <a class="{% if holat == 'tasdiq' %}faol{% endif %}" href="?holat=tasdiq">Tasdiqlangan · {{ sanoq.tasdiq }}</a>
+    <a class="{% if holat == 'rad' %}faol{% endif %}" href="?holat=rad">Rad · {{ sanoq.rad }}</a>
+  </nav>
 {% endblock %}
 
 {% block ichki %}
+<div class="oqim">
 
-  {% if xabar %}<div class="xabar">{{ xabar }}</div>{% endif %}
-
-  <div class="bolim">
-    <h2>
-      {% if holat == 'kutmoqda' %}Tasdiqlash navbati
-      {% elif holat == 'tasdiq' %}Tasdiqlangan masalalar
-      {% else %}Rad etilganlar{% endif %}
-    </h2>
-    <p>
-      {% if holat == 'kutmoqda' %}
-        Eng uzoq kutgani birinchi. Javob va yechimni tekshiring — xato masala
-        yo'q masaladan yomonroq.
-      {% else %}
-        Yangisi birinchi.
-      {% endif %}
-    </p>
-  </div>
+  {% if xabar %}<div class="xabar-quti {% if 'sabab' in xabar or 'topilmadi' in xabar %}xato{% endif %}">{{ xabar }}</div>{% endif %}
 
   {% if not royxat %}
-    <div class="jadval-oram"><div class="bosh-holat">
-      {% if holat == 'kutmoqda' %}Navbat bo'sh — hammasi ko'rilgan.
+    <div class="karta bosh-holat">
+      {% if holat == 'kutmoqda' %}Navbat bo'sh — hammasi ko'rib chiqilgan. 🎉
       {% else %}Bu yerda hali hech narsa yo'q.{% endif %}
-    </div></div>
+    </div>
   {% endif %}
 
-  <div class="setka" style="gap:14px">
-    {% for m in royxat %}
-      <div class="karta masala">
-        <div class="masala-bosh">
-          <span class="belgi">#{{ m.pk }}</span>
-          <span class="belgi moviy">{{ m.sinf }}-sinf kodi</span>
-          <span class="xira">{{ m.muallif.pupil.toliq_ism|default:m.muallif.name|default:"—" }}</span>
-          <span class="juda-xira">{{ m.created_at|date:"d.m.Y H:i" }}</span>
-          {% if m.holat == 'tasdiq' %}
-            <span class="belgi yashil">
-              {{ m.yechgan_soni }}/{{ m.urinish_soni }} yechdi · {{ m.qiyinlik }}%
-            </span>
-            <span class="belgi">👍 {{ m.like_soni }} · 👎 {{ m.dislike_soni }}</span>
-          {% endif %}
-        </div>
-
-        <div class="masala-tana">
-          <div class="qism">
-            <div class="qism-nom">Masala</div>
-            <div class="qism-matn">{{ m.matn|linebreaksbr }}</div>
-            {% comment %} Rasm matn bilan BIR USTUNDA turadi: u masalaning bir
-               qismi, alohida ilova emas. Tasdiqlashda admin matn va
-               chizmani birga o'qishi kerak — chizmasiz "ABC
-               uchburchakda..." degan matn tekshirib bo'lmaydigan
-               yarim masala. {% endcomment %}
-            {% if m.rasm %}
-              <a href="{{ m.rasm.url }}" target="_blank" rel="noopener">
-                <img class="masala-rasm" src="{{ m.rasm.url }}" alt="Masala rasmi">
-              </a>
-            {% endif %}
-          </div>
-          <div class="qism">
-            <div class="qism-nom">Javob</div>
-            <div class="qism-matn javob">{{ m.javob }}</div>
-            <div class="qism-nom" style="margin-top:12px">Yechim</div>
-            <div class="qism-matn">{{ m.yechim|linebreaksbr }}</div>
-          </div>
-        </div>
-
-        {% if m.holat == 'rad' and m.rad_sababi %}
-          <div class="sabab">Rad sababi: {{ m.rad_sababi }}</div>
-        {% endif %}
-
-        {% if m.holat != 'tasdiq' %}
-          <form method="post" class="amal">
-            {% csrf_token %}
-            <input type="hidden" name="id" value="{{ m.pk }}">
-            <input type="hidden" name="holat" value="{{ holat }}">
-            <button class="tugma yashil-tugma" name="amal" value="tasdiq">Tasdiqlash</button>
-            <input class="qidiruv sabab-maydon" name="sabab" maxlength="300"
-                   placeholder="Rad etish sababi — muallif shuni o'qiydi">
-            <button class="tugma qizil-tugma" name="amal" value="rad">Rad etish</button>
-          </form>
-        {% else %}
-          <form method="post" class="amal">
-            {% csrf_token %}
-            <input type="hidden" name="id" value="{{ m.pk }}">
-            <input type="hidden" name="holat" value="{{ holat }}">
-            <input class="qidiruv sabab-maydon" name="sabab" maxlength="300"
-                   placeholder="Olib tashlash sababi">
-            <button class="tugma qizil-tugma" name="amal" value="rad">Ro'yxatdan olish</button>
-          </form>
+  {% for m in royxat %}
+    <article class="karta masala">
+      <div class="masala-bosh">
+        <b>#{{ m.pk }}</b>
+        <span class="belgi">{{ m.sinf }}-sinf</span>
+        <span class="xira">{{ m.muallif.pupil.toliq_ism|default:m.muallif.name|default:"—" }}</span>
+        <span class="juda-xira">{{ m.created_at|date:"d.m.Y H:i" }}</span>
+        {% if m.holat == 'tasdiq' %}
+          <span class="belgi yashil" style="margin-left:auto">{{ m.yechgan_soni }}/{{ m.urinish_soni }} yechdi · {{ m.qiyinlik }}%</span>
+          <span class="belgi">👍 {{ m.like_soni }} · 👎 {{ m.dislike_soni }}</span>
         {% endif %}
       </div>
-    {% endfor %}
-  </div>
+
+      <div class="masala-tana">
+        <div class="qism-quti">
+          <div class="qism-nom">Masala</div>
+          <div class="qism-matn">{{ m.matn|linebreaksbr }}</div>
+          {% comment %} Rasm matn bilan bir ustunda: chizmasiz "ABC uchburchakda..."
+             tekshirib bo'lmaydigan yarim masala. {% endcomment %}
+          {% if m.rasm %}
+            <a href="{{ m.rasm.url }}" target="_blank" rel="noopener"><img class="masala-rasm" src="{{ m.rasm.url }}" alt="Masala rasmi"></a>
+          {% endif %}
+        </div>
+        <div class="qism-quti">
+          <div class="qism-nom">Javob</div>
+          <div class="qism-matn javob">{{ m.javob }}</div>
+          <div class="qism-nom" style="margin-top:14px">Yechim</div>
+          <div class="qism-matn">{{ m.yechim|linebreaksbr }}</div>
+        </div>
+      </div>
+
+      {% if m.holat == 'rad' and m.rad_sababi %}
+        <div class="xabar-quti xato" style="margin:0">Rad sababi: {{ m.rad_sababi }}</div>
+      {% endif %}
+
+      <form method="post" class="amal">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ m.pk }}">
+        <input type="hidden" name="holat" value="{{ holat }}">
+        {% if m.holat != 'tasdiq' %}
+          <button class="tugma yashil" name="amal" value="tasdiq">Tasdiqlash</button>
+          <input class="maydon sabab" name="sabab" maxlength="300" placeholder="Rad etish sababi — muallif shuni o'qiydi">
+          <button class="tugma xavfli" name="amal" value="rad">Rad etish</button>
+        {% else %}
+          <input class="maydon sabab" name="sabab" maxlength="300" placeholder="Olib tashlash sababi">
+          <button class="tugma xavfli" name="amal" value="rad">Ro'yxatdan olish</button>
+        {% endif %}
+      </form>
+    </article>
+  {% endfor %}
+</div>
 
 <style>
-  /* Uslub SHU SAHIFADA: `asos.html` boshqa uchta sahifa uchun ham
-     umumiy va faqat bu yerda kerak bo'lgan qoidalar u yerda turib
-     qolmasligi kerak. */
-  .xabar {
-    background: rgba(52,211,153,.12); color: var(--yashil);
-    border: 1px solid rgba(52,211,153,.3);
-    border-radius: var(--r-kichik); padding: 10px 14px; font-size: 13px;
-    margin-bottom: 4px;
-  }
+  .masala { display: grid; gap: 14px; }
+  .masala-bosh { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; font-size: 13px; }
+  .masala-bosh b { font-size: 15px; }
 
-  .masala { display: grid; gap: 12px; }
-  .masala-bosh { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 12.5px; }
+  .masala-tana { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  @media (max-width: 820px) { .masala-tana { grid-template-columns: minmax(0, 1fr); } }
 
-  /* Ikki ustun: chapda masala, o'ngda javob va yechim. Aynan shu
-     joylashuv tekshirishni tezlashtiradi — ko'z chapdan o'ngga bir
-     marta yuradi. Tor ekranda ustma-ust tushadi. */
-  .masala-tana { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 820px) { .masala-tana { grid-template-columns: 1fr; } }
+  .qism-quti { background: var(--yuza-2); border-radius: var(--r-kichik); padding: 14px 16px; min-width: 0; }
+  .qism-nom { color: var(--juda-xira); font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .qism-matn { font-size: 14.5px; line-height: 1.6; word-break: break-word; }
+  .qism-matn.javob { font-size: 19px; font-weight: 750; color: var(--asos); }
 
-  .qism { background: var(--fon-2); border-radius: var(--r-kichik); padding: 12px 14px; }
-  .qism-nom {
-    color: var(--juda-xira); font-size: 11px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px;
-  }
-  .qism-matn { font-size: 13.5px; line-height: 1.6; white-space: normal; word-break: break-word; }
-  .qism-matn.javob { font-size: 17px; font-weight: 700; color: var(--sariq); }
-
-  /* Rasm CHEGARALANGAN balandlikda: to'liq o'lchamda ko'rsatilsa,
-     bitta masala butun ekranni egallab, navbatdagi qolganlarini
-     surib yuborardi. To'liq ko'rish uchun bosiladi. */
+  /* Rasm cheklangan balandlikda: to'liq o'lchamda bitta masala butun
+     ekranni egallab, navbatdagilarni surib yuborardi. Bosilsa ochiladi. */
   .masala-rasm {
-    display: block; margin-top: 10px; max-width: 100%; max-height: 260px;
+    display: block; margin-top: 10px; max-width: 100%; max-height: 280px;
     border-radius: var(--r-kichik); border: 1px solid var(--chegara);
-    object-fit: contain; background: var(--fon);
+    object-fit: contain; background: var(--yuza);
   }
 
-  .sabab {
-    background: rgba(251,113,133,.10); color: var(--qizil);
-    border-radius: var(--r-kichik); padding: 9px 12px; font-size: 12.5px;
+  .amal { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0; }
+  .amal .sabab { flex: 1; min-width: 220px; width: auto; }
+  @media (max-width: 600px) {
+    .amal .tugma, .amal .sabab { flex: 1 1 100%; }
   }
-
-  .amal { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .sabab-maydon { flex: 1; min-width: 200px; }
-  .yashil-tugma { color: var(--yashil); border-color: rgba(52,211,153,.35); }
-  .yashil-tugma:hover { background: rgba(52,211,153,.12); color: var(--yashil); }
-  .qizil-tugma { color: var(--qizil); border-color: rgba(251,113,133,.35); }
-  .qizil-tugma:hover { background: rgba(251,113,133,.12); color: var(--qizil); }
 </style>
 {% endblock %}
