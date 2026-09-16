@@ -19,19 +19,25 @@
  * tushadi — ya'ni "nechta odam o'zi yecha oldi" degan son halol
  * qoladi, lekin o'rganish yo'li yopilmaydi.
  *
- * ─────────────── MUALLIF SHU YERDA ───────────────
+ * ─────────────── YECHISHDAN OLDIN — FAQAT SHART VA JAVOB ───────────────
  *
- * Masalani o'qigan odamning keyingi savoli deyarli har doim
- * bitta: "buni kim yozdi va yana nimalar yozgan?". Shuning uchun
- * muallif yozuvi masalaning O'Z ustida turadi va bosilsa uning
- * sahifasiga olib boradi.
+ * Ilgari yechishdan oldin ekranda o'n narsa bor edi: tanga hisobi,
+ * sinf yorlig'i, ulashish, muallif qatori, qiyinlik, foiz halqasi,
+ * ko'rishlar, ovozlar... Odam esa bu yerga MASALANI YECHISH uchun
+ * kelgan (`aqlzone-dizayn` skill, 3-band).
+ *
+ * Endi ekran ikki holatga bo'lingan:
+ *
+ *   yechilmagan   sarlavha · shart · javob · "Tekshirish"
+ *   yechilgan     natija · yechim · statistika va ovoz · muallif · keyingi
+ *
+ * Muallif, statistika va ovoz — masaladan KEYINGI savollar ("buni
+ * kim yozdi?", "boshqalar yechdimi?") va ular aynan o'shanda chiqadi.
  */
 import { useEffect, useRef, useState } from "react";
-import { Halqa } from "../components/Halqa";
 import { MasalaBaho } from "../components/MasalaBaho";
 import { useFaollik } from "../lib/faollik";
 import { MasalaMatn } from "../components/MasalaMatn";
-import { TangaHisob } from "../components/TangaHisob";
 import { TangaOqim } from "../components/TangaOqim";
 import { TangaSorov } from "../components/TangaSorov";
 import { Variantlar } from "../components/Variantlar";
@@ -41,7 +47,7 @@ import type { HajmliNom } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { qiyinlikNomi } from "../lib/masalaQiyin";
-import { sinfNomi, sinfRangi } from "../lib/masalaSinf";
+import { sinfNomi } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import type { JavobNatija, Masala as MasalaTur, Ovoz } from "../lib/masala";
 import { kelasiOvoz, sanoqniHisobla } from "../lib/masalaOvoz";
@@ -386,17 +392,13 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
         )}
-        <h1 className="min-w-0 flex-1 truncate font-display text-[17px] leading-none">
-          {t("masalaBitta")}
+        {/* Sarlavhada faqat raqam va sinf — oddiy matn, yorliq emas.
+            Tanga hisobi olib tashlandi: tanga sarflash oynasi
+            (`TangaSorov`) qancha borligini o'zi aytadi. */}
+        <h1 className="min-w-0 flex-1 truncate font-display text-[19px] leading-none">
+          {t("masalaShartSarlavha", { n: m.raqam })}
+          <span className="ml-2 text-[13px] text-ink-dim">{sinfNomi(m.sinf)}</span>
         </h1>
-        {/* Tanga aynan SHU ekranda sarflanadi va shu yerda topiladi —
-            oynadagi "65 dan 50 qoladi" degan gap sarlavhadagi shu
-            songa nisbatan o'qiladi. */}
-        <TangaHisob />
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] leading-none
-                          ${sinfRangi(m.sinf)}`}>
-          {sinfNomi(m.sinf)}
-        </span>
 
         {/* Ulashish FAQAT tasdiqlangan masalada: navbatda turgan yoki
             rad etilgan masalani havola bilan ochgan odam "topilmadi"
@@ -404,29 +406,12 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
         {m.holat === "tasdiq" && (
           <button type="button" onClick={() => void masalaniUlash(m.id, m.matn)}
             aria-label={t("masalaUlash")} title={t("masalaUlash")}
-            className="clay-press grid size-9 shrink-0 place-items-center rounded-2xl
-                       bg-karta text-ink-soft shadow-clay-sm">
-            <Icon name="send" size={16} />
+            className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl
+                       text-ink-soft">
+            <Icon name="send" size={18} />
           </button>
         )}
       </div>
-
-      {/* ---- muallif qatori ----
-          Karta emas, QATOR: muallif masalaning egasi, lekin
-          masalaning o'zi emas. Ilgari u to'liq karta bo'lib turardi
-          va shart bilan bir xil og'irlikda ko'rinardi — ekran esa
-          shartdan boshlanishi kerak. */}
-      <button type="button" onClick={() => onMuallif(m.muallif.id)}
-        className="clay-press mt-3 flex w-full items-center gap-2 text-left">
-        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-track">
-          <EmojiBelgi e={avatarBelgi(m.muallif.avatar)} olcham={16} />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-[12.5px] leading-tight">
-          {m.muallif.ism}
-        </span>
-        <span className="shrink-0 text-[11px] text-ink-dim">{t("masalaMuallifKor")}</span>
-        <Icon name="chevron" size={14} className="shrink-0 text-ink-dim" />
-      </button>
 
       {/* ---- masala kartasi: sarlavha, shart, chizma ----
           YECHILGANDAN KEYIN YIG'ILADI. Shart o'qilgan bo'ladi va
@@ -445,24 +430,15 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
             Yig'ilgan holatda shu qator BOSILADIGAN bo'ladi va o'ng
             chetda chevron paydo bo'ladi. Ochiq holatda esa u oddiy
             sarlavha bo'lib turadi: bosadigan narsa yo'q. */}
-        <summary className={`flex items-center gap-2 border-b border-track pb-2.5 ${
-          yechildi ? "cursor-pointer list-none" : "pointer-events-none list-none"}`}>
-          <span className="min-w-0 flex-1 truncate font-display text-[11.5px] tracking-widest
-                           text-brand-purple uppercase">
-            {t("masalaShartSarlavha", { n: m.raqam })}
-          </span>
-          {olchangan && !yechildi && (
-            <span className="shrink-0 text-[11px] text-ink-dim">
-              {t("masalaQiyinlik")}:{" "}
-              <b className={`font-display ${qiyin.rang}`}>{qiyin.nom}</b>
-            </span>
-          )}
+        <summary className={`items-center gap-2 group-open:border-b group-open:border-track group-open:pb-2.5 ${
+          yechildi ? "flex cursor-pointer list-none" : "hidden"}`}>
+          {/* Raqam yozilmaydi — u ekran sarlavhasida bor. */}
           {yechildi && (
             <>
-              <span className="shrink-0 text-[11px] text-ink-dim group-open:hidden">
+              <span className="min-w-0 flex-1 text-[13px] text-ink-soft group-open:hidden">
                 {t("masalaShartKor")}
               </span>
-              <span className="hidden shrink-0 text-[11px] text-ink-dim group-open:inline">
+              <span className="hidden min-w-0 flex-1 text-[13px] text-ink-soft group-open:inline">
                 {t("masalaShartYop")}
               </span>
               <Icon name="chevron" size={15}
@@ -472,7 +448,10 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           )}
         </summary>
 
-        <div className="mt-3">
+        {/* Yechilmagan holatda sarlavha qatori YO'Q — u ekran
+            sarlavhasini takrorlardi. Karta to'g'ridan-to'g'ri shartdan
+            boshlanadi. */}
+        <div className={yechildi ? "mt-3" : ""}>
           <MasalaMatn matn={m.matn} />
         </div>
 
@@ -492,56 +471,6 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           </figure>
         )}
       </details>
-
-      {/* ---- yechuvchilar statistikasi ----
-          Halqa + bitta gap. Ilgari bu yerda uchta raqamli katak
-          turardi ("Urinib ko'rdi / Yechdi / Yechish foizi") va ular
-          uch marta bir xil narsani boshqa shaklda aytardi.
-
-          Foiz — bo'limning "eng qiyin" ro'yxati quriladigan son
-          (`Masala.qiyinlik`): birinchi urinishda yecha olganlar
-          ulushi. Hech kim urinmagan bo'lsa halqa umuman chizilmaydi:
-          nol urinishdan foiz chiqmaydi va "0%" degan yozuv masalani
-          imkonsiz ko'rsatib qo'yardi. */}
-      {m.holat === "tasdiq" && (
-        <div className="shadow-ichki mt-2.5 flex items-center gap-3 rounded-clay bg-sahna
-                        px-3.5 py-2.5">
-          {olchangan ? (
-            <>
-              <Halqa foiz={foiz} rang={foiz >= 50 ? "stroke-brand-green" : "stroke-brand-orange"}>
-                <span className={`font-display text-[11px] ${
-                  foiz >= 50 ? "text-brand-green" : "text-brand-orange"}`}>
-                  {foiz}%
-                </span>
-              </Halqa>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[12.5px] leading-tight">
-                  {t("masalaYechganFoiz", { n: foiz })}
-                </span>
-                <span className="text-[11px] text-ink-dim">
-                  {t("masalaJamiUrinish", { n: uringanSoni, y: yechganSoni })}
-                </span>
-              </span>
-              <Korildi n={m.korishSoni} />
-            </>
-          ) : (
-            <>
-              <span className="grid size-11 shrink-0 place-items-center rounded-full
-                               bg-brand-purple/15">
-                <Hajmli nom="bayroq" olcham={20} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-display text-[13px] leading-tight
-                                 text-brand-purple">
-                  {t("masalaBirinchiBol")}
-                </span>
-                <span className="text-[11px] text-ink-dim">{t("masalaHechKim")}</span>
-              </span>
-              <Korildi n={m.korishSoni} />
-            </>
-          )}
-        </div>
-      )}
 
       {/* ---- kim urinib ko'rgan (faqat admin) ----
           Kanal qatori bilan bir xil ko'rinishda: ikkalasi ham ish
@@ -639,27 +568,12 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
 
       {/* ---- javob maydoni ----
           Yechim ochilgandan keyin ham qoladi: odam uni o'qib,
-          o'zini sinab ko'rish uchun yana yozishi mumkin. */}
-      {m.holat === "tasdiq" && (
-        <div className="mt-3">
-          {/* Bo'lim sarlavhasi — javob QANDAY berilishini bir qatorda
-              aytadi. Testda variantlar o'zi ko'rinib turadi, lekin
-              yozma turda bo'sh maydonning nima kutayotgani sarlavhasiz
-              bilinmasdi ("bu izohmi yoki javobmi?"). */}
-          <div className="mb-2 flex items-center gap-1.5 px-0.5">
-            <span aria-hidden className="size-2 rounded-full bg-brand-purple" />
-            <h2 className="min-w-0 flex-1 truncate text-[11.5px] tracking-wider
-                           text-ink-dim uppercase">
-              {t(test ? "masalaVariantTanla" : "masalaJavobSarlavha")}
-            </h2>
-            {test && (
-              <span className="shrink-0 rounded-full bg-brand-green/15 px-2 py-0.5
-                               text-[10.5px] leading-none text-brand-green">
-                {t("masalaTestBelgi")}
-              </span>
-            )}
-          </div>
+          o'zini sinab ko'rish uchun yana yozishi mumkin.
 
+          TO'G'RI javob berilgandan keyin esa yo'qoladi: ish tugagan,
+          maydon va "Tekshirish" tugmasi natija ustida ortiqcha turardi. */}
+      {m.holat === "tasdiq" && !natija?.togri && !(yechildi && !natija && m.birinchiTogri) && (
+        <div className="mt-3">
           {test ? (
             /* ---- test: variantlardan tanlanadi ---- */
             <Variantlar
@@ -670,7 +584,10 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               togriJavob={togriJavob}
             />
           ) : (
-            /* Javob maydoni BOTIQ — kartalar ko'tarilgan, yoziladigan
+            /* Sarlavhasiz: maydon ichidagi yozuv va qalam belgisi nima
+               kutilayotganini aytadi.
+
+               Javob maydoni BOTIQ — kartalar ko'tarilgan, yoziladigan
                joy esa yuzaga o'yilgan. Shu farq "bu yerga yozing"
                degan yagona ishora bo'lib turadi. */
             <label className="shadow-ichki flex items-center gap-2 rounded-clay bg-sahna
@@ -706,10 +623,12 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
                  o'rtada amal, o'ngda mukofot. Mukofot markazda,
                  yozuvning yonida turganda ular bitta uzun gap bo'lib
                  qo'shilib ketardi va tanga soni ko'zga tashlanmasdi. */
-              className="tugma-3d mt-2 flex w-full items-center gap-2 rounded-clay
-                         bg-brand-green px-3.5 py-3 font-display text-[15px] text-white
+              /* KO'K — ekranning asosiy amali. Ilgari yashil edi, ya'ni
+                 javob berilmasdan oldin "to'g'ri" rangida turardi. */
+              data-tahlil="Masala: tekshirish"
+              className="tugma-3d mt-2.5 flex min-h-12 w-full items-center gap-2 rounded-clay
+                         bg-brand-blue px-4 py-3 font-display text-[16px] text-white
                          shadow-clay disabled:opacity-50">
-              <Hajmli nom="togri" olcham={18} />
               <span className="min-w-0 flex-1 truncate text-left">
                 {yuborilmoqda ? t("yuklanyapti") : t("masalaTekshir")}
               </span>
@@ -729,7 +648,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               esa ogohlantirish — "shoshmang". Yechilgandan keyin
               kerak emas va yo'qoladi. */}
           {urinishim === 0 && (
-            <p className="mt-1.5 text-center text-[11px] text-ink-dim">
+            <p className="mt-2 text-center text-[12px] text-ink-dim">
               {t("masalaBirinchiIzoh")}
             </p>
           )}
@@ -760,7 +679,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
                 javob uchun berilgani shundagina ko'rinadi. */}
             {mukofotOlindi > 0 && (
               <span className="flex shrink-0 items-center gap-1 rounded-full bg-brand-gold/20
-                               px-2.5 py-1 text-[12px] font-display text-brand-gold">
+                               px-2.5 py-1 text-[12px] font-display text-brand-gold-d">
                 <Icon name="coin" size={13} />
                 {t("masalaTangaOldingiz", { n: mukofotOlindi })}
               </span>
@@ -776,9 +695,6 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               {t("masalaYanaUrin")}
             </p>
           )}
-          {natija.togri && mukofotOlindi > 0 && (
-            <p className="mt-1 text-[11.5px] text-ink-dim">{t("masalaTangaIzoh")}</p>
-          )}
 
           {/* Yechgan zahoti — ulashish uchun eng kuchli payt: odam
               hozirgina yenggan va buni ko'rsatgisi keladi. Xato
@@ -786,9 +702,9 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               emas, malomat bo'lib eshitilardi. */}
           {natija.togri && m.holat === "tasdiq" && (
             <button type="button" onClick={() => void masalaniUlash(m.id, m.matn)}
-              className="tugma-3d az-yaltir mt-2.5 flex w-full items-center justify-center gap-2
-                         rounded-clay bg-brand-blue py-2.5 font-display text-[14px] text-white
-                         shadow-[0_4px_0_var(--color-brand-blue-d)]">
+              /* Ikkinchi darajali: asosiy amal endi "keyingi masala". */
+              className="clay-press mt-2.5 flex min-h-11 w-full items-center justify-center gap-2
+                         rounded-clay bg-karta font-display text-[14px] text-brand-blue">
               <Icon name="send" size={16} />
               {t("masalaUlashTogri")}
             </button>
@@ -832,12 +748,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
                                  bg-karta p-4 shadow-clay-sm">
           <summary className="flex cursor-pointer list-none items-center gap-2
                               border-b border-track pb-2.5">
-            <span className="grid size-7 shrink-0 place-items-center rounded-xl
-                             bg-brand-purple/15">
-              <Hajmli nom="goya" olcham={16} />
-            </span>
-            <span className="shrink-0 font-display text-[12px] tracking-widest
-                             text-brand-purple uppercase">
+            <span className="shrink-0 font-display text-[14px]">
               {t("masalaYechim")}
             </span>
             {/* To'g'ri javob SARLAVHADA turadi: yechim yig'ilgan
@@ -874,9 +785,9 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
                 Endi bosilsa oyna ochiladi va o'sha yerda "nechta
                 yetmayapti" to'liq ko'rinadi. */}
             <button type="button" onClick={yechimSora} disabled={ochilmoqda}
-              className={`clay-press flex w-full items-center justify-center gap-2 rounded-clay
+              className={`clay-press flex min-h-11 w-full items-center justify-center gap-2 rounded-clay
                           py-3 text-[13.5px] shadow-clay-sm disabled:opacity-50 ${
-                bepul ? "bg-karta text-ink-soft" : "bg-karta text-brand-gold"}`}>
+                bepul ? "bg-karta text-ink-soft" : "bg-karta text-brand-gold-d"}`}>
               {!bepul && <Icon name="coin" size={15} />}
               {ochilmoqda
                 ? t("yuklanyapti")
@@ -890,20 +801,33 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               </p>
             )}
           </div>
-        ) : (
-          <p className="mt-3 text-center text-[12.5px] leading-snug text-ink-dim">
-            {t("masalaYechimYopiq")}
-          </p>
-        )
+        ) : null
+        /* Urinmagan odamga "yechim keyin ochiladi" yozuvi ham
+           ko'rsatilmaydi: tugma ostida allaqachon "birinchi urinish
+           hisobga olinadi" turibdi va ikkita izoh qatori ketma-ket
+           shovqin edi. */
       )}
 
       {/* ---- ovoz ----
           Sanoq bu yerdan YUQORIGA ko'chdi: u masalaning o'zi haqida
           va shart bilan birga o'qilishi kerak, ovoz esa masaladan
           keyingi fikr. */}
-      {m.holat === "tasdiq" && (
-        <div className="shadow-ichki mt-3 flex items-center gap-1.5 rounded-full bg-sahna
-                        p-1.5">
+      {/* ---- statistika va ovoz — FAQAT yechilgandan keyin ----
+          Ilgari foiz halqasi, "N kishi ochdi" va ovozlar shartning
+          OSTIDA, javob maydonidan oldin turardi: odam masalani emas,
+          raqamlarni o'qib boshlardi. Endi ular bitta ixcham qatorda,
+          masala tugagandan keyin. */}
+      {yechildi && m.holat === "tasdiq" && (
+        <div className="mt-3 flex items-center gap-2">
+          {olchangan && (
+            <span className="min-w-0 flex-1 text-[12.5px] leading-snug text-ink-dim">
+              {t("masalaJamiUrinish", { n: uringanSoni, y: yechganSoni })}
+              {" · "}
+              <b className={`font-display ${qiyin.rang}`}>{qiyin.nom}</b>
+            </span>
+          )}
+          <div className="shadow-ichki ml-auto flex shrink-0 items-center gap-1.5 rounded-full
+                          bg-sahna p-1.5">
           <OvozTugma
             belgi="yoqdi" son={sonlar.like} faol={ovozim === "like"} oz={m.meniki}
             on={() => void ovozBer("like")}
@@ -912,6 +836,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
             belgi="yoqmadi" son={sonlar.dislike} faol={ovozim === "dislike"} oz={m.meniki}
             on={() => void ovozBer("dislike")}
           />
+          </div>
         </div>
       )}
 
@@ -921,7 +846,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           savol keyin keladi. Yechib bo'lgandan keyin esa u boshqa
           savolga aylanadi — "yana nimalar yozgan?" — va aynan shu
           payt uni karta qilib ko'rsatish ma'noga ega. */}
-      {yechildi && muallifSoni > 1 && (
+      {yechildi && (
         <button type="button" onClick={() => onMuallif(m.muallif.id)}
           className="clay-press az-natija mt-3 flex w-full items-center gap-2.5 rounded-clay
                      border border-track bg-karta px-3.5 py-3 text-left shadow-clay-sm">
@@ -930,9 +855,11 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[13px] leading-tight">{m.muallif.ism}</span>
-            <span className="text-[11.5px] text-ink-dim">
-              {t("masalaMuallifJami", { n: muallifSoni })}
-            </span>
+            {muallifSoni > 1 && (
+              <span className="text-[12px] text-ink-dim">
+                {t("masalaMuallifJami", { n: muallifSoni })}
+              </span>
+            )}
           </span>
           <span className="flex shrink-0 items-center gap-0.5 text-[12px] text-brand-blue">
             {t("masalaBarchasi")}
@@ -951,23 +878,23 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
       {yechildi && keyingi && (
         <button type="button" onClick={() => onKeyingi(keyingi.id)}
           className="tugma-3d az-natija mt-3 flex w-full items-center gap-3 rounded-clay
-                     bg-brand-purple px-4 py-3.5 text-left text-white
-                     shadow-[0_5px_0_var(--color-brand-purple-d)]">
+                     bg-brand-blue px-4 py-3.5 text-left text-white
+                     shadow-[0_5px_0_var(--color-brand-blue-d)]">
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-1.5">
-              <span className="text-[10.5px] tracking-widest uppercase opacity-80">
+              <span className="text-[12px] opacity-85">
                 {t("masalaNavbatdagi")}
               </span>
               <span className="flex items-center gap-0.5 rounded-full bg-white/20 px-1.5
-                               py-0.5 text-[10.5px] leading-none">
-                <Icon name="coin" size={10} />
+                               py-0.5 text-[11px] leading-none">
+                <Icon name="coin" size={11} />
                 +{ENG_KATTA_MUKOFOT}
               </span>
             </span>
             <span className="mt-1 block truncate font-display text-[14px] leading-snug">
               {keyingi.matn}
             </span>
-            <span className="text-[11px] opacity-80">{sinfNomi(keyingi.sinf)}</span>
+            <span className="text-[12px] opacity-80">{sinfNomi(keyingi.sinf)}</span>
           </span>
           <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-white/20">
             <Icon name="chevron" size={18} />
@@ -1018,29 +945,6 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
 /* --------------------------------------------------------------- bo'laklar */
 
 /**
- * Nechta odam ochgan.
- *
- * Statistika qatorining O'NG chetida, foizdan ajratib turadi va bu
- * ataylab: foiz masalaning QIYINLIGI haqida, ko'rish esa uning
- * TAQDIRI haqida. Ikkalasi bir joyda bir gapdek o'qilardi.
- *
- * Nol bo'lsa umuman chiqmaydi: "0 kishi ochgan" degan yozuv
- * masalani tashlab ketilgandek ko'rsatadi, holbuki u hozirgina
- * ochilgan bo'lishi mumkin.
- */
-function Korildi({ n }: { n: number }) {
-  if (n <= 0) return null;
-  return (
-    <span title={t("masalaKorildiIzoh")}
-      className="flex shrink-0 flex-col items-center gap-0.5 border-l border-ink-dim/15
-                 pl-3 text-ink-dim">
-      <Hajmli nom="koz" olcham={14} />
-      <span className="font-display text-[12px] leading-none">{n}</span>
-    </span>
-  );
-}
-
-/**
  * Kim urinib ko'rgan — administrator uchun yig'iladigan ro'yxat.
  *
  * ─────────────── SO'ROV FAQAT OCHILGANDA KETADI ───────────────
@@ -1081,7 +985,7 @@ function Kimlar({ id }: { id: number }) {
         <Icon name="parent" size={15} className="shrink-0" />
         <span className="min-w-0 flex-1 text-left">{t("masalaKimlar")}</span>
         {holat === "tayyor" ? (
-          <span className="shrink-0 font-display text-[12px] text-brand-purple">
+          <span className="shrink-0 font-display text-[12px] text-brand-blue">
             {royxat.length}
           </span>
         ) : (
@@ -1137,7 +1041,7 @@ function OvozTugma(
       title={oz ? t("masalaOzOvoz") : undefined}
       className={`clay-press flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px]
                   disabled:opacity-45 ${
-        faol ? "bg-brand-purple text-white shadow-clay-sm" : "bg-karta text-ink-soft"}`}>
+        faol ? "bg-brand-blue text-white shadow-clay-sm" : "bg-karta text-ink-soft"}`}>
       <Hajmli nom={belgi} olcham={15} />
       <span className="tabular-nums">{son}</span>
     </button>
@@ -1147,7 +1051,8 @@ function OvozTugma(
 function Belgi({ rang, matn }: { rang: "gold" | "red"; matn: string }) {
   return (
     <p className={`mt-2.5 rounded-clay px-3.5 py-2.5 text-[12.5px] leading-snug ${
-      rang === "gold" ? "bg-brand-gold/15 text-brand-gold" : "bg-brand-red/15 text-brand-red"}`}>
+      // Kutish — neytral: oltin mukofot rangi, holat emas.
+      rang === "gold" ? "bg-track text-ink-soft" : "bg-brand-red/15 text-brand-red"}`}>
       {matn}
     </p>
   );

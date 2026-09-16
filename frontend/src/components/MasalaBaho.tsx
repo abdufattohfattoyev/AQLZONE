@@ -80,7 +80,7 @@ export function MasalaBaho({
         {/* ---- g'alaba ---- */}
         <div className="mt-2 flex flex-col items-center text-center">
           <span className="az-baho-medal relative grid size-20 place-items-center rounded-full
-                           bg-[radial-gradient(circle_at_35%_30%,#7ff0b0,var(--color-brand-green)_60%,var(--color-brand-green-d))]
+                           bg-brand-green
                            shadow-[0_10px_24px_-8px_var(--color-brand-green)]">
             <span aria-hidden className="az-baho-halqa absolute inset-0 rounded-full ring-4 ring-brand-green/60" />
             <Hajmli nom="bayram" olcham={44} jonli />
@@ -91,7 +91,7 @@ export function MasalaBaho({
           </p>
           {tanga > 0 && (
             <span className="az-baho-tanga mt-2.5 flex items-center gap-1.5 rounded-full bg-brand-gold/20 px-3 py-1
-                             font-display text-[15px] text-brand-gold">
+                             font-display text-[15px] text-brand-gold-d">
               <Icon name="coin" size={16} />+{tanga}
             </span>
           )}
@@ -121,8 +121,8 @@ export function MasalaBaho({
                   o'tishi kerak. Undan oldin u tinch turadi va bahodan
                   e'tiborni tortib olmaydi. */}
               <button type="button" onClick={() => onKeyingi(keyingi.id)}
-                className={`tugma-3d flex w-full items-center gap-3 rounded-3xl bg-brand-purple px-4 py-3.5
-                            text-left text-white shadow-[0_5px_0_var(--color-brand-purple-d)]
+                className={`tugma-3d flex w-full items-center gap-3 rounded-3xl bg-brand-blue px-4 py-3.5
+                            text-left text-white shadow-[0_5px_0_var(--color-brand-blue-d)]
                             ${baholandi || meniki || ovozim ? "az-yaltir az-baho-chaqir" : ""}`}>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-display text-[15px] leading-snug">{keyingi.matn}</span>
@@ -135,8 +135,8 @@ export function MasalaBaho({
             </>
           ) : (
             <button type="button" onClick={onRoyxat}
-              className="tugma-3d flex w-full items-center justify-center gap-2 rounded-3xl bg-brand-purple py-3.5
-                         font-display text-[15px] text-white shadow-[0_5px_0_var(--color-brand-purple-d)]">
+              className="tugma-3d flex w-full items-center justify-center gap-2 rounded-3xl bg-brand-blue py-3.5
+                         font-display text-[15px] text-white shadow-[0_5px_0_var(--color-brand-blue-d)]">
               {t("masalaBahoRoyxat")}
               <Icon name="chevron" size={18} />
             </button>
@@ -157,7 +157,7 @@ function BahoTugma({ belgi, matn, faol, rang, on }: {
 }) {
   const faolRang = rang === "green"
     ? "bg-brand-green text-white shadow-[0_4px_0_var(--color-brand-green-d)]"
-    : "bg-brand-red text-white shadow-[0_4px_0_#c2453a]";
+    : "bg-ink-soft text-white shadow-clay-sm";
   return (
     <button type="button" onClick={on} aria-pressed={faol}
       className={`tugma-3d flex flex-col items-center gap-1 rounded-2xl py-3 font-display text-[14px]

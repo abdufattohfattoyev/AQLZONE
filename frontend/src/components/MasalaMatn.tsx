@@ -92,8 +92,8 @@ export function MasalaMatn({ matn }: { matn: string }) {
               belgisi yo'q va uni faqat shu joy uchun qo'shish —
               to'plamni bitta ekran uchun kengaytirish bo'lardi. */}
           <span aria-hidden className="mt-px grid size-[19px] shrink-0 place-items-center
-                                       rounded-lg bg-brand-purple/15 text-[12px]
-                                       leading-none text-brand-purple">
+                                       rounded-lg bg-brand-blue/15 text-[12px]
+                                       leading-none text-brand-blue">
             ?
           </span>
           <span className="min-w-0 flex-1">{kop ? savol : <Sonli matn={savol} />}</span>
@@ -122,8 +122,8 @@ function Sonli({ matn }: { matn: string }) {
     if (boshi > 0 && SOZ.test(matn[boshi - 1])) continue;
     if (boshi > oxiri) bolaklar.push(matn.slice(oxiri, boshi));
     bolaklar.push(
-      <b key={boshi} className="rounded-md bg-brand-purple/12 px-1 py-px font-display
-                                text-[0.96em] text-brand-purple">
+      <b key={boshi} className="rounded-md bg-brand-blue/12 px-1 py-px font-display
+                                text-[0.96em] text-brand-blue">
         {m[0]}
       </b>,
     );

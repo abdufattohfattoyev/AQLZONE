@@ -81,13 +81,13 @@ export function Variantlar({
                         px-3 py-2.5 text-left text-[13.5px] leading-snug ${
               togri ? "border-brand-green bg-brand-green/15 text-brand-green"
               : xato ? "border-brand-red bg-brand-red/15 text-brand-red"
-              : tanlandi ? "az-variant-tanlandi border-brand-purple bg-brand-purple/15 text-brand-purple"
+              : tanlandi ? "az-variant-tanlandi border-brand-blue bg-brand-blue/15 text-brand-blue"
               : "shadow-ichki border-transparent bg-sahna text-ink"}`}>
             <span className={`grid size-7 shrink-0 place-items-center rounded-xl text-[12px]
                               leading-none font-display ${
               togri ? "bg-brand-green text-white"
               : xato ? "bg-brand-red text-white"
-              : tanlandi ? "bg-brand-purple text-white"
+              : tanlandi ? "bg-brand-blue text-white"
               : "bg-track text-ink-dim"}`}>
               {HARFLAR[i]}
             </span>
@@ -101,11 +101,11 @@ export function Variantlar({
               className={`grid size-[15px] shrink-0 place-items-center rounded-full border-2 ${
                 belgilangan
                   ? togri ? "border-brand-green" : xato ? "border-brand-red"
-                    : "border-brand-purple"
+                    : "border-brand-blue"
                   : "border-ink-dim/35"}`}>
               {belgilangan && (
                 <span className={`size-[7px] rounded-full ${
-                  togri ? "bg-brand-green" : xato ? "bg-brand-red" : "bg-brand-purple"}`} />
+                  togri ? "bg-brand-green" : xato ? "bg-brand-red" : "bg-brand-blue"}`} />
               )}
             </span>
           </button>

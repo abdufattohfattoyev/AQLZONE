@@ -42,6 +42,6 @@ export function nuqtaSoni(qiyinlik: number): number {
 export function qiyinlikNomi(qiyinlik: number): { nom: string; rang: string } {
   if (qiyinlik >= 75) return { nom: t("qiyinOson"), rang: "text-brand-green" };
   if (qiyinlik >= 45) return { nom: t("qiyinOrta"), rang: "text-brand-blue" };
-  if (qiyinlik >= 20) return { nom: t("qiyinQiyin"), rang: "text-brand-orange" };
-  return { nom: t("qiyinJuda"), rang: "text-brand-red" };
+  if (qiyinlik >= 20) return { nom: t("qiyinQiyin"), rang: "text-brand-gold-d" };
+  return { nom: t("qiyinJuda"), rang: "text-ink" };
 }
