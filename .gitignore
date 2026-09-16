@@ -42,7 +42,9 @@ media/
 # ko`nikmalar va ularning qulfi. Kod emas, ASBOB: har dasturchi o`zi
 # o`rnatadi va versiyasi mashinasiga bog`liq bo`ladi.
 .agents/
-.claude/skills/
+.claude/skills/*
+# Loyihaning O'Z ko'nikmasi — hammaga kerak, repoda turadi.
+!.claude/skills/aqlzone-dizayn/
 skills-lock.json
 
 # Ko`z bilan tekshirish uchun vaqtinchalik sahifalar.
