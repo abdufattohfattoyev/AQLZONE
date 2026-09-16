@@ -166,20 +166,24 @@ export function useTahlil(): void {
     // soniyada odam hali ham shu yerda bo'lsa — haqiqatan shu yerga kelgan.
     kirishBelgilandi = true;
     const vaqt = Date.now();
+    // Kirishning manzili UMUMLASHTIRILMAYDI (`/masalalar/17`, `:id`
+    // emas): panel shundan "qaysi kanal posti nechta odam olib keldi"
+    // ni sanaydi (`tahlil.kanal_statistikasi`).
+    const asl = () => location.pathname.slice(0, 80);
     if (yol !== "/") {
-      kirish = { vaqt, yol };
+      kirish = { vaqt, yol: asl() };
       qosh({ tur: "sahifa", yol });
       return;
     }
     const id = setTimeout(() => {
       if (kirish) return;
-      kirish = { vaqt, yol: yolniUmumlashtir(location.pathname) };
+      kirish = { vaqt, yol: asl() };
       if (location.pathname === "/") qosh({ tur: "sahifa", yol: "/" });
     }, 3500);
     return () => {
       // Marshrut o'zgardi — ya'ni "/" o'tkinchi edi: kirish yangi ekranga.
       clearTimeout(id);
-      if (!kirish) kirish = { vaqt, yol: yolniUmumlashtir(location.pathname) };
+      if (!kirish) kirish = { vaqt, yol: asl() };
     };
   }, [pathname]);
 

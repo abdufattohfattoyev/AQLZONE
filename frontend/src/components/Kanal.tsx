@@ -36,8 +36,20 @@ const TINCHLIK_KUN = 3;
 
 const KEYINROQ_KEY = "az_kanal_keyinroq";
 
-/** Ochiq dars — savol yechilayotgan payt. Bunda oyna chiqmaydi. */
-const darsdami = (yol: string): boolean => /^\/kurs\/[^/]+\/[^/]+\/[^/]+/.test(yol);
+/**
+ * Savol yechilayotgan ekran — bunda oyna chiqmaydi.
+ *
+ * Ilgari faqat DARS edi. Kanal postidan kelgan odam esa to'g'ridan-
+ * to'g'ri MASALA yoki TEST ekraniga tushadi va 2,5 soniyadan keyin
+ * shartni o'qiyotgan joyida "kanalga qo'shiling" oynasi chiqardi —
+ * odam kanaldan KELIB turibdi. Bu ekranlarda taklif keyinroq, yechib
+ * bo'lgandan keyin chiqadi (`components/EslatmaTaklif.tsx`).
+ */
+const darsdami = (yol: string): boolean =>
+  /^\/kurs\/[^/]+\/[^/]+\/[^/]+/.test(yol)
+  || /^\/masalalar\/\d+/.test(yol)
+  || /^\/toplam\//.test(yol)
+  || /^\/oyinlar\/[^/]+\/[^/]+/.test(yol);
 
 function tinchlikdami(): boolean {
   const x = Number(localStorage.getItem(KEYINROQ_KEY));

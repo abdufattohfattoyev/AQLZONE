@@ -1638,6 +1638,12 @@ const S = {
   eslatmaTaklifYoq: ["Keyinroq", "Позже"],
   eslatmaTaklifHa: ["Yaxshi! Ertaga yangi masala bilan yozamiz", "Отлично! Напишем завтра с новой задачей"],
   toplamBoshqaTestlar: ["Boshqa testlar", "Другие тесты"],
+  kanalTaklifMatn: [
+    "Har kuni kechqurun kanalda yangi masala chiqadi. Kanalga qo'shiling — o'tkazib yubormaysiz.",
+    "Каждый вечер в канале новая задача. Подпишитесь — не пропустите.",
+  ],
+  kanalTaklifTugma: ["Kanalga qo'shilish", "Подписаться"],
+  kanalTaklifRahmat: ["Rahmat! Ertaga kechqurun kanalda ko'rishamiz", "Спасибо! До завтрашнего вечера в канале"],
 
   /* ---------------- tanishuv anketasi ---------------- */
   anketaSarlavha: ["Keling, tanishamiz", "Давайте познакомимся"],

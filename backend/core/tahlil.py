@@ -266,6 +266,61 @@ def chiqish_nuqtalari(boshi) -> list[dict]:
     ]
 
 
+def kanal_statistikasi(boshi) -> dict:
+    """
+    KANAL QANCHA ODAM OLIB KELADI — post bo'yicha.
+
+    Uch savol:
+
+      a'zolar     Telegram hisoblaridan nechtasi kanalga a'zo
+      postlar     har post ilovaga nechta odam olib keldi va ular
+                  masalani yechdimi — qaysi post "ishladi", qaysi yo'q
+      soatlar     kanaldan kelish qaysi soatlarda — post vaqti (18:05)
+                  to'g'ri tanlanganmi
+
+    Post bo'yicha sanoq `kirish` hodisasining ASL manzilidan olinadi
+    (`/masalalar/17`) — ilova uni umumlashtirmay yuboradi.
+    """
+    from .models import Identity, Masala, MasalaUrinish, TestIshlash, TestToplam
+
+    tg_hisob = Identity.objects.filter(provider=Identity.TELEGRAM).values("pupil").distinct().count()
+    azo = Pupil.objects.filter(kanal_azo_at__isnull=False).count()
+
+    kanaldan = Hodisa.objects.filter(tur=Hodisa.KIRISH, nom="kanal", created_at__gte=boshi)
+    keldi: dict[str, set] = {}
+    soatlar = [0] * 24
+    for pid, yol, vaqt in kanaldan.values_list("pupil_id", "yol", "created_at").iterator():
+        keldi.setdefault(yol, set()).add(pid)
+        soatlar[timezone.localtime(vaqt).hour] += 1
+
+    postlar = []
+    for m in Masala.objects.filter(kanal_at__gte=boshi).order_by("-kanal_at")[:20]:
+        postlar.append({
+            "sana": m.kanal_at, "tur": "Masala", "nom": f"#{m.raqam}",
+            "keldi": len(keldi.get(f"/masalalar/{m.pk}", ())),
+            "urindi": MasalaUrinish.objects.filter(masala=m).count(),
+            "yechdi": m.yechdi_soni, "yoq": m.kanal_yoq,
+        })
+    for t in TestToplam.objects.filter(kanal_at__gte=boshi).order_by("-kanal_at")[:10]:
+        postlar.append({
+            "sana": t.kanal_at, "tur": "Test", "nom": t.nom,
+            "keldi": len(keldi.get(f"/toplam/{t.pk}", ())),
+            "urindi": TestIshlash.objects.filter(toplam=t).count(),
+            "yechdi": None, "yoq": False,
+        })
+    postlar.sort(key=lambda p: p["sana"], reverse=True)
+
+    eng = max(soatlar) or 1
+    return {
+        "azo": azo, "tg_hisob": tg_hisob,
+        "azo_foiz": round(100 * azo / tg_hisob) if tg_hisob else 0,
+        "kelgan_odam": len({p for s in keldi.values() for p in s}),
+        "postlar": postlar,
+        "soatlar": [{"soat": h, "n": n, "foiz": round(100 * n / eng)} for h, n in enumerate(soatlar)],
+        "soat_bor": any(soatlar),
+    }
+
+
 def statistika(kunlar: int = 30) -> dict:
     hozir = timezone.now()
     boshi = hozir - timedelta(days=kunlar)
@@ -358,6 +413,7 @@ def statistika(kunlar: int = 30) -> dict:
         "qaytish": qaytish(boshi, kunlar_boyicha),
         "manbalar": manbalar(boshi, kunlar_boyicha),
         "chiqishlar": chiqish_nuqtalari(boshi),
+        "kanal": kanal_statistikasi(boshi),
         "yozish_ruxsat": hisoblar.filter(yozish_ruxsat_at__isnull=False).count(),
         "hodisa_soni": hodisa.count(),
         "bosish_soni": hodisa.filter(tur=Hodisa.BOSISH).count(),

@@ -99,6 +99,59 @@ bo'lmaydi: bu yerdagi raqamlar aynan shuni ko'rsatadi.
   {% else %}<p class="izoh-matn">Hali ma'lumot yo'q — ilovaning yangi versiyasi ochilgandan keyin to'planadi.</p>{% endif %}
 </section>
 
+<div class="bolim"><h2>Telegram kanal</h2><p>a'zolar, har post olib kelgan odam va kelish soatlari</p></div>
+
+<div class="setka k4">
+  <div class="karta olchov">
+    <div class="nom">Kanalga a'zo</div>
+    <div class="son">{{ kanal.azo_foiz }}%</div>
+    <div class="qosh">{{ kanal.azo }} / {{ kanal.tg_hisob }} Telegram hisob</div>
+  </div>
+  <div class="karta olchov">
+    <div class="nom">Kanaldan kelgan odam</div>
+    <div class="son">{{ kanal.kelgan_odam }}</div>
+    <div class="qosh">shu davrda, post tugmasi orqali</div>
+  </div>
+</div>
+
+<div class="setka k2" style="margin-top:14px">
+  <section class="karta">
+    <h2>Postlar samarasi</h2>
+    {% if kanal.postlar %}
+      <table>
+        <thead><tr><th>Sana</th><th>Post</th><th class="raqam">Keldi</th><th class="raqam">Urindi</th><th class="raqam">Yechdi</th></tr></thead>
+        <tbody>
+        {% for p in kanal.postlar %}
+          <tr>
+            <td class="xira">{{ p.sana|date:"d.m H:i" }}</td>
+            <td>{{ p.tur }} {{ p.nom }}{% if p.yoq %} <span style="color:var(--qizil)">· o'chgan</span>{% endif %}</td>
+            <td class="raqam"><b>{{ p.keldi }}</b></td>
+            <td class="raqam">{{ p.urindi }}</td>
+            <td class="raqam">{% if p.yechdi is not None %}{{ p.yechdi }}{% else %}—{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <p class="izoh-matn" style="margin-top:10px">"Keldi" — shu post tugmasi orqali ilovaga kirgan odam. "Urindi" — kanaldan ham, ilovadan ham.</p>
+    {% else %}<p class="izoh-matn">Shu davrda post yo'q.</p>{% endif %}
+  </section>
+  <section class="karta">
+    <h2>Kanaldan qaysi soatda kelishadi</h2>
+    {% if kanal.soat_bor %}
+      <table><tbody>
+      {% for s in kanal.soatlar %}{% if s.n %}
+        <tr>
+          <td style="width:56px">{{ s.soat|stringformat:"02d" }}:00</td>
+          <td><div class="ust-chiziq"><span style="width:{{ s.foiz }}%"></span></div></td>
+          <td class="raqam">{{ s.n }}</td>
+        </tr>
+      {% endif %}{% endfor %}
+      </tbody></table>
+      <p class="izoh-matn" style="margin-top:10px">Post har kuni 18:05 da chiqadi. Eng uzun chiziq boshqa soatda bo'lsa — vaqtni o'shanga surish kerak.</p>
+    {% else %}<p class="izoh-matn">Hali ma'lumot yo'q.</p>{% endif %}
+  </section>
+</div>
+
 <div class="bolim"><h2>Qayerda chiqib ketadi</h2><p>har kungi oxirgi ochilgan ekran</p></div>
 
 <section class="karta">
