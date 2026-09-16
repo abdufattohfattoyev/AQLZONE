@@ -458,6 +458,102 @@ def kub_kesik(d):
               ("Hosil bo'lgan jismda nechta yoq bor?", BINAFSHA)])
 
 
+# ─────────────────────────────── olimpiada (qat'iy uch rang)
+#
+# Bu uchtasi yangi qoidada chizilgan: ko'k — asosiy, oltin — izlanayotgan
+# narsa, yashil — yordamchi. Binafsha va qizil ishlatilmaydi
+# (`aqlzone-dizayn` skill, 1-band).
+
+
+def kvadrat_uchburchak(d):
+    """Kvadrat ichidagi teng tomonli uchburchak: ∠DEC."""
+    s_, cx, cy = 280, MARKAZ - 110, 272
+    ax, ay = cx - s_ / 2, cy + s_ / 2
+    bx, by = cx + s_ / 2, cy + s_ / 2
+    ccx, ccy = cx + s_ / 2, cy - s_ / 2
+    dx, dy = cx - s_ / 2, cy - s_ / 2
+    ex, ey = cx, ay - s_ * math.sqrt(3) / 2
+
+    tortburchak(d, dx, dy, bx, by, OQ, INK, 5)
+    kopburchak(d, [(ax, ay), (bx, by), (ex, ey)], (222, 235, 255), KOK, 4)
+    chiziq(d, [(dx, dy), (ex, ey), (ccx, ccy)], SARIQ, 5)
+
+    # Izlanayotgan burchak — E dan YUQORIGA ochiladigan 150 gradus.
+    r = 30
+    d.pieslice([(ex - r) * S, (ey - r) * S, (ex + r) * S, (ey + r) * S],
+               start=195, end=345, fill=(255, 236, 190))
+    doira(d, ex, ey, 6, INK, INK, 1)
+
+    for nom, x, y in (("A", ax - 26, ay + 22), ("B", bx + 26, by + 22),
+                      ("C", ccx + 26, ccy - 22), ("D", dx - 26, dy - 22),
+                      ("E", ex, ey + 34)):
+        matn(d, (x, y), nom, 30, INK, True, True)
+
+    # Shart chizmaning o'ng tomonida — kvadrat ichida joy yo'q.
+    ox = MARKAZ + 205
+    matn(d, (ox, 190), "ABCD — kvadrat", 26, INK, True, True)
+    matn(d, (ox, 238), "AE = BE = AB", 26, KOK, True, True)
+    # `∠` belgisi hamma shriftda yo'q — so'z bilan yoziladi.
+    matn(d, (ox, 305), "DEC burchagi", 30, SARIQ, True, True)
+    matn(d, (ox, 350), "= ?", 40, SARIQ, True, True)
+    savol(d, [("E nuqta kvadrat ichida, ABE — teng tomonli", XIRA),
+              ("DEC burchagi necha gradus?", KOK)])
+
+
+def yetti_daraja(d):
+    """7 ning darajalari — oxirgi ikki raqam takrorlanadi."""
+    qatorlar = (("7¹", "07"), ("7²", "49"), ("7³", "343"), ("7⁴", "2401"))
+    k, bosh = 150, MARKAZ - 2 * 150 - 30
+    for i, (daraja, qiymat) in enumerate(qatorlar):
+        x = bosh + i * (k + 20)
+        tortburchak(d, x, 150, x + k, 250, OQ, INK, 4, 14)
+        matn(d, (x + k / 2, 118), daraja, 30, XIRA, True, True)
+        # Katakda faqat OXIRGI IKKI RAQAM — masala aynan shu haqida.
+        # To'liq qiymat ostida xira: u tekshirish uchun, o'qish uchun emas.
+        matn(d, (x + k / 2, 200), qiymat[-2:], 40, KOK, True, True)
+        matn(d, (x + k / 2, 282), f"= {int(qiymat)}", 24, XIRA, False, True)
+
+    # Tsikl strelkasi: 01 dan keyin yana 07 — takrorlanish shu.
+    oxirgi_x = bosh + 3 * (k + 20) + k / 2
+    # Qonuniyat AYTILMAYDI — faqat "keyin nima?" deb strelka qo'yiladi.
+    # Olimpiada masalasida takrorlanishni topish yechimning o'zi.
+    yoy(d, (oxirgi_x, 312), (bosh + k / 2, 312), -52, YASHIL, 5)
+    matn(d, (MARKAZ, 372), "keyin-chi?", 24, YASHIL, False, True)
+
+    matn(d, (MARKAZ, 432), "7²⁰²⁶  =  …  ? ?", 44, SARIQ, True, True)
+    savol(d, [("Kalkulyatorsiz", XIRA),
+              ("7²⁰²⁶ ning oxirgi ikki raqami qanday?", KOK)])
+
+
+def kocha_yol(d):
+    """4x4 ko'chalar: markaziy chorraha yopiq, eng qisqa yo'llar."""
+    k, x0, y0 = 80, MARKAZ - 160, 110
+    for i in range(5):
+        chiziq(d, [(x0, y0 + i * k), (x0 + 4 * k, y0 + i * k)], XIRA, 5)
+        chiziq(d, [(x0 + i * k, y0), (x0 + i * k, y0 + 4 * k)], XIRA, 5)
+
+    # Namuna yo'l — faqat o'ngga va yuqoriga.
+    yol = [(0, 0), (1, 0), (1, 1), (3, 1), (3, 3), (4, 3), (4, 4)]
+    chiziq(d, [(x0 + a * k, y0 + (4 - b) * k) for a, b in yol], KOK, 7)
+
+    # Yopiq chorraha — markaz.
+    mx, my = x0 + 2 * k, y0 + 2 * k
+    doira(d, mx, my, 22, (255, 236, 190), SARIQ, 5)
+    chiziq(d, [(mx - 11, my - 11), (mx + 11, my + 11)], INK, 5)
+    chiziq(d, [(mx + 11, my - 11), (mx - 11, my + 11)], INK, 5)
+
+    doira(d, x0, y0 + 4 * k, 16, YASHIL, INK, 3)
+    doira(d, x0 + 4 * k, y0, 16, YASHIL, INK, 3)
+    matn(d, (x0 - 40, y0 + 4 * k + 24), "A", 32, INK, True, True)
+    matn(d, (x0 + 4 * k + 40, y0 - 24), "B", 32, INK, True, True)
+
+    ox = x0 + 4 * k + 150
+    matn(d, (ox, 200), "faqat → va ↑", 26, KOK, True, True)
+    matn(d, (ox, 250), "markaz yopiq", 26, SARIQ, True, True)
+    savol(d, [("A dan B ga faqat o'ngga va yuqoriga yuriladi", XIRA),
+              ("Nechta xil eng qisqa yo'l bor?", KOK)])
+
+
 #: Chizma → masala. Kalit — masala matnining boshi: raqam har bazada
 #: boshqacha bo'lishi mumkin, matn esa masalaning o'zi.
 CHIZMALAR: dict[str, tuple] = {
@@ -476,6 +572,9 @@ CHIZMALAR: dict[str, tuple] = {
     "idish": (idish, "Sizda 5 litrli va 3 litrli idish"),
     "sharlar": (sharlar, "Qutida 4 ta qizil"),
     "kub_kesik": (kub_kesik, "Yog'och kubning bitta burchagi"),
+    "kvadrat_uchburchak": (kvadrat_uchburchak, "ABCD kvadratning ichida E nuqta"),
+    "yetti_daraja": (yetti_daraja, "7 sonining darajalarini yozib chiqamiz"),
+    "kocha_yol": (kocha_yol, "Shahar ko'chalari 4 x 4 to'r"),
 }
 
 
