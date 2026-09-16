@@ -97,6 +97,35 @@ def statistika(toplam: TestToplam, profile: Profile | None) -> dict:
     }
 
 
+def ishlaganlar(toplam: TestToplam, chegara: int = 300) -> list[dict]:
+    """
+    Kim bu to'plamni ishlagan — FAQAT administrator uchun ro'yxat.
+
+    Tartib: ENG YAXSHI NATIJA birinchi, teng bo'lsa — tezroq ishlagan.
+    Masaladagi ro'yxatdan (`masala.yechganlar`, oxirgisi birinchi) farqi
+    ataylab: testda admin avval "kim eng yaxshi ishladi?" deb qaraydi.
+
+    Faqat BIRINCHI urinish — jadvalda boshqasi yo'q (`TestIshlash` izohi).
+    """
+    qs = (
+        TestIshlash.objects.filter(toplam=toplam)
+        .select_related("profile__pupil")
+        .order_by("-togri", "sekund", "created_at")[:chegara]
+    )
+    return [
+        {
+            "profilId": i.profile_id,
+            "ism": i.profile.pupil.toliq_ism or i.profile.name,
+            "avatar": i.profile.avatar,
+            "togri": i.togri,
+            "jami": i.jami,
+            "sekund": i.sekund,
+            "sana": i.created_at,
+        }
+        for i in qs
+    ]
+
+
 def toplam_json(t: TestToplam, profile: Profile | None) -> dict:
     return {
         "id": t.pk,

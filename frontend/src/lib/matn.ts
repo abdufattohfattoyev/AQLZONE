@@ -605,6 +605,8 @@ const S = {
 
   /* --- admin: kim urinib ko'rgan --- */
   masalaKimlar: ["Kim urinib ko'rgan", "Кто пробовал"],
+  toplamKimIshlagan: ["Kim ishlagan", "Кто решал"],
+  toplamIshlaganYoq: ["Hali hech kim ishlamagan", "Ещё никто не решал"],
   masalaKimlarOch: ["Ro'yxatni ochish", "Открыть список"],
   masalaKimlarYoq: ["Hali hech kim urinmagan", "Ещё никто не пробовал"],
   masalaKimlarXato: ["Ro'yxat kelmadi", "Список не загрузился"],

@@ -69,5 +69,7 @@ urlpatterns = [
     path("toplamlar", views.toplamlar, name="toplamlar"),
     path("toplamlar/<int:pk>", views.toplam_korish, name="toplam-korish"),
     path("toplamlar/<int:pk>/natija", views.toplam_natija, name="toplam-natija"),
+    # Kim ishlagan — faqat admin.
+    path("toplamlar/<int:pk>/ishlaganlar", views.toplam_ishlaganlar, name="toplam-ishlaganlar"),
     path("toplamlar/<int:pk>/kanal", views.toplam_kanal, name="toplam-kanal"),
 ]

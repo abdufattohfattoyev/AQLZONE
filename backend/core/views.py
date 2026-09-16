@@ -1887,6 +1887,23 @@ def toplam_korish(request, pk: int):
     return Response(javob)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def toplam_ishlaganlar(request, pk: int):
+    """
+    Kim bu to'plamni ishlagan — FAQAT admin uchun.
+
+    Boshqaga 404 (`masala_yechganlar` dagi sabab): ro'yxatda bolalarning
+    ismi va natijasi bor, past ball esa hech kimga ko'rinmasligi kerak.
+    """
+    if not _admin_mi(_profil_tanla(request)):
+        return Response({"detail": "topilmadi"}, status=404)
+    t = TestToplam.objects.filter(pk=pk).first()
+    if t is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    return Response({"royxat": TT.ishlaganlar(t)})
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def toplam_natija(request, pk: int):

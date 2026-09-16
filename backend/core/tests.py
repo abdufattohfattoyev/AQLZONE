@@ -6443,3 +6443,30 @@ class KanalAloqaTest(TestCase):
         self.assertEqual(d["kelgan_odam"], 2)
         self.assertEqual(d["postlar"][0]["keldi"], 2)
         self.assertTrue(d["soat_bor"])
+
+
+class ToplamIshlaganlarTest(TestCase):
+    """Test to'plamini kim ishlagani — faqat admin, eng yaxshi natija tepada."""
+
+    def setUp(self):
+        self.t = MDL.TestToplam.objects.create(raqam=9001, sinf=9, nom="9-sinf", urug=1)
+        for ism, togri, sekund in (("Sekin", 12, 900), ("Tez", 12, 600), ("Past", 5, 300)):
+            pr = Pupil.objects.create(first_name=ism).asosiy_profil()
+            MDL.TestIshlash.objects.create(toplam=self.t, profile=pr, togri=togri, jami=15, sekund=sekund)
+
+    def kir(self):
+        r = self.client.post("/api/v1/auth/device", {"deviceId": "toplam-0123456789abcdef"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def test_admin_bolmaganga_404(self):
+        r = self.client.get(f"/api/v1/toplamlar/{self.t.pk}/ishlaganlar", **self.kir())
+        self.assertEqual(r.status_code, 404)
+
+    def test_adminga_tartib_bilan(self):
+        h = self.kir()
+        with patch.object(views, "_admin_mi", return_value=True):
+            r = self.client.get(f"/api/v1/toplamlar/{self.t.pk}/ishlaganlar", **h)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual([u["togri"] for u in r.json()["royxat"]], [12, 12, 5])
+        self.assertEqual([u["sekund"] for u in r.json()["royxat"]], [600, 900, 300])

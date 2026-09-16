@@ -17,7 +17,9 @@ import { Blok } from "./Blok";
 import { EslatmaTaklif } from "../components/EslatmaTaklif";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { bittasi, kanalgaYubor, type Toplam } from "../lib/toplam";
+import { bittasi, ishlaganlar, kanalgaYubor, type Ishlagan, type Toplam } from "../lib/toplam";
+import { avatarBelgi } from "../lib/dokon";
+import { EmojiBelgi } from "../lib/hajmli";
 import { havolaniOch, tebrat, useOrqaga } from "../lib/qobiq";
 
 export function ToplamSahifa({ id, onBack }: { id: number; onBack: () => void }) {
@@ -168,6 +170,69 @@ export function ToplamSahifa({ id, onBack }: { id: number; onBack: () => void })
           </div>
         </div>
       )}
+
+      {/* Admin belgisi — `kanal` maydoni faqat adminga keladi. */}
+      {x?.kanal && <Ishlaganlar id={x.id} savol={x.savol} />}
     </div>
+  );
+}
+
+/**
+ * Kim ishlagan — FAQAT ADMIN ko'radi (server boshqaga 404 qaytaradi).
+ *
+ * Masaladagi ro'yxatdan (`screens/Masala.tsx` → `Kimlar`) farqi: bu yerda
+ * u YOPIQ turmaydi va darhol yuklanadi. Test sahifasiga admin aynan shu
+ * ro'yxat uchun keladi — "kim qanday ishladi". Tartib: eng yaxshi natija
+ * tepada, teng bo'lsa tezroq ishlagan.
+ */
+function Ishlaganlar({ id, savol }: { id: number; savol: number }) {
+  const [royxat, setRoyxat] = useState<Ishlagan[] | null>(null);
+  const [xato, setXato] = useState(false);
+
+  useEffect(() => {
+    let bekor = false;
+    ishlaganlar(id)
+      .then((d) => { if (!bekor) setRoyxat(d.royxat); })
+      .catch(() => { if (!bekor) setXato(true); });
+    return () => { bekor = true; };
+  }, [id]);
+
+  const vaqt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+  return (
+    <section className="mt-4 rounded-clay bg-karta p-4 shadow-clay-sm">
+      <h2 className="flex items-center gap-2 font-display text-[15px]">
+        <Icon name="parent" size={16} className="text-ink-dim" />
+        {t("toplamKimIshlagan")}
+        {royxat && <span className="ml-auto text-[13px] text-ink-dim">{royxat.length}</span>}
+      </h2>
+
+      {xato && <p className="mt-3 text-[13px] text-ink-dim">{t("masalaKimlarXato")}</p>}
+      {!royxat && !xato && <p className="mt-3 text-[13px] text-ink-dim">{t("yuklanyapti")}</p>}
+      {royxat?.length === 0 && <p className="mt-3 text-[13px] text-ink-dim">{t("toplamIshlaganYoq")}</p>}
+
+      {royxat && royxat.length > 0 && (
+        <ol className="mt-3 divide-y divide-track">
+          {royxat.map((u, i) => {
+            // Yarmidan ko'pi to'g'ri — yashil, aks holda neytral: qizil
+            // yo'q, bu past natija emas, bolaning ishi.
+            const yaxshi = u.togri * 2 >= (u.jami || savol);
+            return (
+              <li key={u.profilId} className="flex items-center gap-2.5 py-2 text-[13px]">
+                <span className="w-5 shrink-0 text-right text-[12px] text-ink-dim">{i + 1}</span>
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-track">
+                  <EmojiBelgi e={avatarBelgi(u.avatar)} olcham={15} />
+                </span>
+                <span className="min-w-0 flex-1 truncate">{u.ism}</span>
+                <span className="shrink-0 text-[12px] text-ink-dim">{vaqt(u.sekund)}</span>
+                <b className={`w-12 shrink-0 text-right font-display ${yaxshi ? "text-brand-green" : "text-ink-soft"}`}>
+                  {u.togri}/{u.jami}
+                </b>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </section>
   );
 }

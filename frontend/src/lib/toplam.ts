@@ -52,6 +52,21 @@ export const natijaYubor = (id: number, togri: number, jami: number, sekund: num
     `/api/v1/toplamlar/${id}/natija`, bilanProfil({ togri, jami, sekund }),
   );
 
+/** To'plamni ishlagan bitta odam — faqat admin ro'yxatida. */
+export interface Ishlagan {
+  profilId: number;
+  ism: string;
+  avatar: string;
+  togri: number;
+  jami: number;
+  sekund: number;
+  sana: string;
+}
+
+/** Kim ishlagan — admin bo'lmaganga server 404 qaytaradi. */
+export const ishlaganlar = (id: number) =>
+  sorov<{ royxat: Ishlagan[] }>(`/api/v1/toplamlar/${id}/ishlaganlar${profilQuery()}`);
+
 export const kanalgaYubor = (id: number, qayta = false) =>
   sorov<{ holat: string; yuborilgan: boolean; havola?: string }>(
     `/api/v1/toplamlar/${id}/kanal`, bilanProfil({ qayta }),
