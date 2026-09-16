@@ -45,9 +45,9 @@ const SINFLAR = Array.from({ length: 12 }, (_, i) => i).filter(blokBormi);
 
 /** To'plam kartasining rangi — sinfga qarab, kanal postidagi muqova bilan bir xil. */
 const TOPLAM_RANG: Record<number, string> = {
-  9: "from-[#5b6cff] to-[#9b5cf6]",
-  10: "from-[#22b8cf] to-[#3b82f6]",
-  11: "from-[#ff9f43] to-[#ff6b6b]",
+  9: "from-brand-blue to-brand-blue-d",
+  10: "from-brand-blue to-brand-blue-d",
+  11: "from-brand-blue to-brand-blue-d",
 };
 
 interface Props {

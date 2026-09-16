@@ -337,6 +337,13 @@ def pupil_by_telegram(tg: dict) -> Pupil:
         username=username,
     )
     ismni_yangila(pupil, ism, familiya, username)
+    # Telegram Premium — to'lov qobiliyatining bilvosita belgisi
+    # (`Pupil.tg_premium` izohi). Faqat Mini App yuboradi, veb vidjet
+    # yubormaydi: shuning uchun bayroq faqat YOQILADI, o'chirilmaydi —
+    # vidjetdan kirgan premium odam "premium emas" bo'lib qolmasin.
+    if tg.get("is_premium") and not pupil.tg_premium:
+        pupil.tg_premium = True
+        pupil.save(update_fields=["tg_premium"])
     return pupil
 
 

@@ -730,6 +730,8 @@ export interface Hisob {
    * odamdan yana so'rash eng jahl chiqaradigan xatolardan.
    */
   tilTanlandi?: boolean;
+  /** Tanishuv anketasi ko'rsatilganmi (`components/Anketa.tsx`). */
+  anketa?: boolean;
 }
 
 /**

@@ -105,8 +105,10 @@ const PAD = 18;
  * darsniki. U ro'yxatda ham qatnashsa, tugagan dars tugamaganidan
  * farq qilmay qolardi.
  */
-const TUGUN = ["#8b5cf6", "#3b82f6", "#ff9f43", "#ff7a6b", "#22b8cf", "#f5b301"];
-const TUGAGAN = "#3fbf6f";
+// Qat'iy uch rang: tugunlar ko'k va oltinning SOYALARI bilan
+// almashadi — farq saqlanadi, lekin yo'l kamalakka aylanmaydi.
+const TUGUN = ["#3b6fe0", "#f5b301", "#2c56b8", "#d09400"];
+const TUGAGAN = "#22b06b";
 
 /** Rangning to'q juftligi — gradientning pastki chekkasi. */
 const quyuq = (r: string) => `color-mix(in srgb, ${r} 76%, #101a33)`;

@@ -6273,3 +6273,79 @@ class JonliFaollikTest(TestCase):
         r = self.client.get("/boshqaruv/jonli")
         self.assertContains(r, "10-sinf · 2-blok")
         self.assertEqual(self.client.get("/boshqaruv/jonli.json").json()["royxat"][0]["savol"], 4)
+
+
+@override_settings(BOSHQARUV_YONIQ=True, ADMIN_TG=[ADMIN_ID])
+class TahlilTest(TestCase):
+    """
+    Tahlil — hodisalar jurnali, tanishuv anketasi va panel sahifasi.
+
+    Asosiy talab: kuzatuv HECH QACHON ilovani sindirmasin. Buzuq qator
+    jimgina tashlanadi, javob esa doim 200.
+    """
+
+    def kir(self) -> dict:
+        r = self.client.post(
+            "/api/v1/auth/device", {"deviceId": "tahlil-0123456789abcdef", "platform": "web"},
+            content_type="application/json",
+        )
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def test_hodisalar_yoziladi_buzugi_tashlanadi(self):
+        h = self.kir()
+        r = self.client.post("/api/v1/hodisalar", {"hodisalar": [
+            {"tur": "sahifa", "yol": "/masalalar"},
+            {"tur": "bosish", "yol": "/masalalar", "nom": "Yechish", "oldin": 5},
+            {"tur": "bosish", "yol": "/"},            # nomsiz — tashlanadi
+            {"tur": "yolgon", "yol": "/"},            # begona tur
+            "satr",                                  # umuman obyekt emas
+        ]}, content_type="application/json",
+            HTTP_USER_AGENT="Mozilla/5.0 (Linux; Android 13)", **h)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["qabul"], 2)
+        self.assertEqual(MDL.Hodisa.objects.count(), 2)
+        self.assertEqual(MDL.Hodisa.objects.first().pupil.qurilma, "android")
+
+    def test_hodisalar_royxat_bolmasa_ham_200(self):
+        r = self.client.post("/api/v1/hodisalar", {"hodisalar": "x"},
+                             content_type="application/json", **self.kir())
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["qabul"], 0)
+
+    def test_anketa_saqlanadi_va_bir_marta_soraladi(self):
+        h = self.kir()
+        me = self.client.get("/api/v1/me", **h).json()
+        self.assertFalse(me["user"]["anketa"])
+        r = self.client.post("/api/v1/anketa",
+                             {"kim": "ota_ona", "sinf": 5, "viloyat": "samarqand"},
+                             content_type="application/json", **h)
+        self.assertTrue(r.json()["user"]["anketa"])
+        p = MDL.Pupil.objects.get()
+        self.assertEqual((p.kim, p.anketa_sinf, p.viloyat), ("ota_ona", 5, "samarqand"))
+
+    def test_anketani_otkazib_yuborish(self):
+        h = self.kir()
+        r = self.client.post("/api/v1/anketa", {"kim": "yolgon", "sinf": 99},
+                             content_type="application/json", **h)
+        self.assertTrue(r.json()["user"]["anketa"])
+        p = MDL.Pupil.objects.get()
+        self.assertEqual((p.kim, p.anketa_sinf), ("", -1))
+
+    def test_premium_telegramdan_olinadi(self):
+        p = A.pupil_by_telegram({"id": 777, "first_name": "Ali", "is_premium": True})
+        self.assertTrue(p.tg_premium)
+
+    def test_panel_sahifasi(self):
+        h = self.kir()
+        self.client.post("/api/v1/hodisalar", {"hodisalar": [
+            {"tur": "sahifa", "yol": "/testlar"},
+        ]}, content_type="application/json", **h)
+        self.client.post("/api/v1/anketa", {"kim": "oquvchi", "sinf": 7},
+                         content_type="application/json", **h)
+        kod = boshqaruv.havola_yasa(ADMIN_ID).rsplit("/", 1)[-1]
+        self.client.get(f"/boshqaruv/havola/{kod}")
+        r = self.client.get("/boshqaruv/tahlil")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "/testlar")
+        self.assertContains(r, "7-sinf")
+        self.assertContains(r, "O&#x27;quvchi")

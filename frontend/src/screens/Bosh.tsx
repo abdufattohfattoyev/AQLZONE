@@ -49,16 +49,13 @@ import { TilTugma } from "../components/TilTugma";
 import { YoruglikTugma } from "../components/YoruglikTugma";
 import { getHisob, joriyProfil, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
-import { COURSES, courseBySlug, lessonCount } from "../lib/curriculum";
+import { COURSES, courseBySlug } from "../lib/curriculum";
 import type { Course } from "../lib/curriculum";
-import { MAVZULAR } from "../lib/kichkintoy";
-import { OYINLAR } from "../lib/oyin";
 import { oxirgiKurs } from "../lib/oxirgi";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { keyingiDars } from "../lib/types";
-import type { Progress, UnitColor } from "../lib/types";
-import { UNIT_COLORS } from "../lib/types";
+import type { Progress } from "../lib/types";
 
 interface Props {
   progressOf: (c: Course) => Progress;
@@ -121,8 +118,6 @@ export function Bosh({
   }, []);
 
   const bola = joriyBola(hisob);
-  const jamiDars = COURSES.reduce((n, c) => n + lessonCount(c), 0);
-  const jamiYulduz = COURSES.reduce((n, c) => n + progressOf(c).stars, 0);
   const davom = davomJoyi(progressOf);
 
   return (
@@ -140,10 +135,9 @@ export function Bosh({
         <h1 className="sr-only">{t("shior")}</h1>
 
         <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
-          <span className="flex items-center gap-1.5">
-            <Belgi ic="star" matn={t("yulduzSoni", { n: jamiYulduz })} />
-            <Belgi ic="map" matn={t("darsSoni", { n: jamiDars })} />
-          </span>
+          {/* Yulduz va dars soni pillalari olib tashlandi: yangi odamga
+              "0 yulduz · 637 dars" hech narsa demaydi, qaytganga esa
+              yulduz kurs ichida ko'rinadi. */}
           <span className="flex min-w-0 items-center gap-1.5">
             {kopBola && (
               <Chip ic="parent" on={onProfillar}>{t("kimOynayapti")}</Chip>
@@ -177,13 +171,41 @@ export function Bosh({
         </div>
       </Reveal>
 
-      {/* ---- davom etish ---- */}
+      {/* ---- ASOSIY AMAL ----
+          Bosh sahifada har doim BITTA katta tugma bor va u "hozir
+          nima qilay?" degan savolga javob beradi:
+
+            qaytgan odam   → to'xtagan darsiga (yashil, "davom")
+            yangi odam     → sinf tanlash (ko'k, "boshlash")
+
+          Ilgari yangi odamga katta tugma yo'q edi — beshta teng eshik
+          va ulardan qaysi biri "boshlanish" ekanini o'zi topishi
+          kerak edi. */}
+      {!davom && (
+        <Reveal kech={70}>
+          <div className="az-kirish mt-2.5" style={kech(70)}>
+            <button type="button" onClick={onDarslar} data-tahlil="Bosh: boshlash"
+              className="tugma-3d flex w-full items-center gap-3 rounded-clay
+                         bg-brand-blue p-4 text-left text-white shadow-clay">
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[17px] leading-tight">
+                  {t("boshBoshla")}
+                </span>
+                <span className="mt-0.5 block text-[12.5px] leading-snug text-white/90">
+                  {t("boshBoshlaIzoh")}
+                </span>
+              </span>
+              <Icon name="chevron" size={20} className="shrink-0 text-white/90" />
+            </button>
+          </div>
+        </Reveal>
+      )}
       {davom && (
         <Reveal kech={70}>
           <div className="az-kirish mt-2.5" style={kech(70)}>
-            <button type="button"
+            <button type="button" data-tahlil="Bosh: davom etish"
               onClick={() => onDavom(davom.c, davom.ui, davom.li)}
-              className="tugma-3d az-yaltir flex w-full items-center gap-3 rounded-clay
+              className="tugma-3d flex w-full items-center gap-3 rounded-clay
                          bg-brand-green p-3.5 text-left text-white shadow-clay">
               <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/25">
                 <Icon name="check" size={20} />
@@ -210,47 +232,27 @@ export function Bosh({
           farzandining yoshiga birinchi to'g'ri kelgan joyda
           to'xtaydi. O'yinlar eng pastda, chunki u yosh bilan
           bog'liq emas va uni bola O'ZI qidiradi. */}
-      <p className="az-kirish mt-5 mb-1.5 ml-1 text-[11px] tracking-widest
-                    text-ink-soft uppercase" style={kech(100)}>
-        {t("boshBolimlar")}
-      </p>
+      <div className="mt-5 space-y-2.5">
+        <Eshik kech={110} ic="palette"
+          nom={t("kichkintoyQisqa")} izoh={t("boshKichkintoyIzoh")} on={onKichkintoy} />
 
-      <div className="space-y-2.5">
-        <Eshik kech={110} rang="gold" ic="palette"
-          nom={t("kichkintoyQisqa")} izoh={t("boshKichkintoyIzoh")}
-          son={t("boshMavzuSoni", { n: MAVZULAR.length })} on={onKichkintoy} />
+        <Eshik kech={140} ic="map"
+          nom={t("tabDarslar")} izoh={t("boshDarslarIzoh")} on={onDarslar} />
 
-        <Eshik kech={140} rang="green" ic="map"
-          nom={t("tabDarslar")} izoh={t("boshDarslarIzoh")}
-          son={t("darsSoni", { n: jamiDars })} on={onDarslar} />
+        <Eshik kech={170} ic="pencil"
+          nom={t("masalalar")} izoh={t("boshMasalalarIzoh")} on={onMasalalar} />
 
-        <Eshik kech={170} rang="purple" ic="pencil"
-          nom={t("masalalar")} izoh={t("boshMasalalarIzoh")}
-          son="" on={onMasalalar} />
+        <Eshik kech={200} ic="chart"
+          nom={t("testlar")} izoh={t("boshTestlarIzoh")} on={onTestlar} />
 
-        <Eshik kech={200} rang="blue" ic="chart"
-          nom={t("testlar")} izoh={t("boshTestlarIzoh")}
-          son={t("boshSinfOraliq", { a: 5, b: 11 })} on={onTestlar} />
-
-        <Eshik kech={230} rang="red" ic="puzzle"
-          nom={t("oyinlar")} izoh={t("boshOyinlarIzoh")}
-          son={t("boshOyinSoni", { n: OYINLAR.length })} on={onOyinlar} />
+        <Eshik kech={230} ic="puzzle"
+          nom={t("oyinlar")} izoh={t("boshOyinlarIzoh")} on={onOyinlar} />
       </div>
     </div>
   );
 }
 
 /* --------------------------------------------------------------- bo'laklar */
-
-function Belgi({ ic, matn }: { ic: IconName; matn: string }) {
-  return (
-    <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-karta/70 px-2.5
-                     py-1.5 text-[11.5px] text-ink-soft backdrop-blur-sm">
-      <Icon name={ic} size={14} className="text-brand-gold" />
-      {matn}
-    </span>
-  );
-}
 
 function Chip(
   { ic, on, children, rang, avatar }:
@@ -286,12 +288,11 @@ function Chip(
  * bo'sh eshikni ochish odamni ikkinchi marta qaytmaydigan qiladi.
  */
 function Eshik({
-  kech: ms, rang, ic, nom, izoh, son, on,
+  kech: ms, ic, nom, izoh, on,
 }: {
-  kech: number; rang: UnitColor; ic: IconName;
-  nom: string; izoh: string; son: string; on: () => void;
+  kech: number; ic: IconName;
+  nom: string; izoh: string; on: () => void;
 }) {
-  const r = UNIT_COLORS[rang];
   return (
     <Reveal kech={ms}>
       <div className="az-kirish" style={kech(ms)}>
@@ -305,8 +306,10 @@ function Eshik({
               tashlanishi kerak. Rang fonda yumshoq holda turadi —
               menyudagi qoida bilan bir xil (`components/Menyu.tsx`
               dagi `Satr`). */}
-          <span aria-hidden style={{ backgroundColor: `${r.road}1f` }}
-            className="az-eshik-quti grid size-[46px] shrink-0 place-items-center
+          {/* Belgi foni NEYTRAL: beshta eshik beshta rangda turganda
+              sahifa kamalakka aylanardi va hech biri ajralmasdi. */}
+          <span aria-hidden
+            className="az-eshik-quti bg-track grid size-[46px] shrink-0 place-items-center
                        rounded-[16px]">
             <img src={`/belgi/${ic}.webp`} width={34} height={34} alt=""
               className="az-eshik-belgi" decoding="async" loading="lazy" />
@@ -322,11 +325,6 @@ function Eshik({
               {izoh}
             </span>
           </span>
-          {son && (
-            <span className="shrink-0 rounded-full bg-track px-2 py-1 text-[11px] text-ink-dim">
-              {son}
-            </span>
-          )}
           <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
         </button>
       </div>

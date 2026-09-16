@@ -37,6 +37,7 @@ urlpatterns = [
     # faqat ro'yxatni so'raydi, o'zini qayta yuklamaydi.
     path("boshqaruv/jonli", boshqaruv.jonli, name="boshqaruv-jonli"),
     path("boshqaruv/jonli.json", boshqaruv.jonli_json, name="boshqaruv-jonli-json"),
+    path("boshqaruv/tahlil", boshqaruv.tahlil, name="boshqaruv-tahlil"),
     path("boshqaruv/masalalar", boshqaruv.masalalar, name="boshqaruv-masalalar"),
     # Masalalar hisoboti — tasdiqlash navbatidan ALOHIDA manzil.
     # Ikkalasi ikki xil ish: navbatda masala O'QILADI va qaror

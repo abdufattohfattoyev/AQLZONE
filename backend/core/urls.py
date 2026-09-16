@@ -34,6 +34,10 @@ urlpatterns = [
     path("tirik", views.tirik, name="tirik"),
     # Hozir nima qilyapti — boshqaruv panelidagi "Jonli" sahifa uchun.
     path("faollik", views.faollik, name="faollik"),
+    # Tahlil: sahifa ochilishi va tugma bosishlari (yig'ib yuboriladi).
+    path("hodisalar", views.hodisalar, name="hodisalar"),
+    # Ro'yxatdan keyingi uch savol: kim, sinf, viloyat.
+    path("anketa", views.anketa, name="anketa"),
     path("duel/royxat", views.duel_royxat, name="duel-royxat"),
     path("duel/<str:kod>", views.duel_korish, name="duel-korish"),
     path("duel/<str:kod>/qabul", views.duel_qabul, name="duel-qabul"),

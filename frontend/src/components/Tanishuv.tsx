@@ -25,6 +25,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sozlamalar } from "../screens/Sozlamalar";
+import { Anketa } from "./Anketa";
 import { Kirish } from "./Kirish";
 import { Kutish } from "./Kutish";
 import { TilTanlash } from "./TilTanlash";
@@ -36,7 +37,7 @@ import type { ReactNode } from "react";
 import { t } from "../lib/matn";
 
 /** Tekshiruv holati: hali bilmaymiz → sinov / ism so'raymiz / so'ramaymiz. */
-type Holat = "kutilyapti" | "sinov" | "ism" | "kerak-emas";
+type Holat = "kutilyapti" | "sinov" | "ism" | "anketa" | "kerak-emas";
 
 /**
  * Oxirgi safar kirgan bo'lganmi.
@@ -124,7 +125,11 @@ export function Tanishuv({ children }: { children: ReactNode }) {
         setTilKutilmoqda(false);
 
         royxatniBelgila(h.royxatdan);
-        if (h.royxatdan) return setHolat("kerak-emas");
+        // Ro'yxatdan o'tgan, lekin hali tanishilmagan — uch savol.
+        // Faqat RO'YXATDAN O'TGANGA: reklamadan kelib, hali ilovani
+        // sinab ko'rayotgan odamni anketa bilan kutib olish uni
+        // haydab yuboradi.
+        if (h.royxatdan) return setHolat(h.anketa === false ? "anketa" : "kerak-emas");
         // Telegram bog'langan, lekin ism-familiya to'liq emas — odam
         // ikki bosqich orasida qolib ketgan.
         return setHolat(h.telegram ? "ism" : "sinov");
@@ -167,9 +172,13 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   if (tilSoraladi) return <TilTanlash onTanlandi={() => setTilSoraladi(false)} />;
 
   if (holat === "ism") {
+    // Ism yozilgan zahoti — anketa. Serverdagi bayroq hali eski
+    // (`anketa: false`), shuning uchun holat to'g'ridan-to'g'ri o'tadi.
     return <Sozlamalar royxat boshlangich={hisob} onBack={() => setHolat("sinov")}
-      onTayyor={() => setHolat("kerak-emas")} />;
+      onTayyor={() => setHolat(hisob?.anketa === false ? "anketa" : "kerak-emas")} />;
   }
+
+  if (holat === "anketa") return <Anketa onTugadi={() => setHolat("kerak-emas")} />;
 
   // Mini App ichida taklif KO'RSATILMAYDI: u yerda kirish `initData`
   // orqali o'zi bo'ladi va odamni Telegram ichidan yana Telegram'ga

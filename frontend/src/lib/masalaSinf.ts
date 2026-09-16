@@ -127,7 +127,9 @@ export function sinfNomi(kod: number): string {
  * qidirib keladi.
  */
 export function sinfRangi(kod: number): string {
-  if (kod === OLIMPIADA) return "bg-brand-purple/15 text-brand-purple";
-  if (kod === KATTALAR) return "bg-brand-orange/15 text-brand-orange";
-  return "bg-brand-blue/15 text-brand-blue";
+  // Qat'iy uch rang: olimpiada — oltin (alohida "sovrin" kayfiyati),
+  // qolgani neytral. Maktab sinfi rangsiz, chunki u odatiy holat va
+  // ko'zni tortishi shart emas.
+  if (kod === OLIMPIADA) return "bg-brand-gold/15 text-brand-gold-d";
+  return "bg-track text-ink-soft";
 }

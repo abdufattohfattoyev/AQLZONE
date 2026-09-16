@@ -2,38 +2,34 @@
  * Ro'yxatdagi bitta masala kartasi.
  *
  * Uch ekranda ishlatiladi — ro'yxat, muallif sahifasi va "mening
- * masalalarim" — shuning uchun alohida komponent. Har birida
- * alohida yozilsa, ular albatta bir-biridan qolib ketardi: bittasiga
- * "qiyinlik" qo'shiladi, ikkinchisi eski holida qolardi.
+ * masalalarim" — shuning uchun alohida komponent.
  *
- * ─────────────── KARTANING UCH QAVATI ───────────────
+ * ─────────────── KARTADA FAQAT TANLASH UCHUN KERAKLISI ───────────────
  *
- *   tepa      sinf yorlig'i (botiq) va holat belgisi
- *   o'rta     masala matni, yonida rasm bo'lsa — kichik ko'rinishi
- *   botiq     qiyinlik nuqtalari va "Yechish" ishorasi
- *   past      muallif, yechilgan soni va ovozlar
+ * Ilgari bitta kartada o'n bir narsa bor edi: raqam, sinf, test
+ * belgisi, qiyinlik nuqtalari, holat, matn, rasm, "18/22 yechdi",
+ * ko'rishlar soni, tanga, "Yechish", muallif, like va dislike. Odam
+ * masalani YECHISH uchun kiradi, bu mayda belgilar esa ko'zni
+ * chalg'itib, matnning o'zini ko'mib qo'yardi.
  *
- * Ko'tarilgan karta ichida BOTIQ qatorlar bor: ikkalasi birga
- * kartaga chuqurlik beradi va ko'z avval matnga, keyin pastdagi
- * raqamlarga tushadi. Bitta tekis qutida esa hammasi bir xil
- * og'irlikda ko'rinardi.
+ * Endi kartada uch qavat:
  *
- * MATN QISQARTIRILADI (uch qator). Karta masalani O'QITISH uchun
- * emas, TANLASH uchun turibdi: to'liq matn ichkarida, klaviatura va
- * javob maydoni bilan birga ko'rinadi.
+ *   tepa   sinf va (bo'lsa) "yechgansiz" belgisi
+ *   o'rta  masala matni va chizmasi — kartaning ASOSIY qismi
+ *   past   muallif · mukofot · "Yechish"
+ *
+ * Raqam, qiyinlik, statistika va ovozlar masalaning O'Z ekranida
+ * qoldi — u yerda ular masalani tanlagandan keyin kerak bo'ladi.
  *
  * ─────────────── ICHIDA TUGMA YO'Q ───────────────
  *
- * "Yechish" ham, ovoz sonlari ham TUGMA EMAS — kartaning o'zi
- * bitta katta tugma va ichiga tugma joylash HTML'da ham
- * (`<button>` ichida `<button>`), ekran o'qigichda ham buziq
- * chiqadi. Ovoz masalaning o'z ekranida beriladi.
+ * Kartaning o'zi bitta katta tugma. Ichiga tugma joylash HTML'da ham
+ * (`<button>` ichida `<button>`), ekran o'qigichda ham buziq chiqadi.
  */
 import { avatarBelgi } from "../lib/dokon";
-import { EmojiBelgi, Hajmli } from "../lib/hajmli";
+import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { nuqtaSoni } from "../lib/masalaQiyin";
 import { sinfNomi, sinfRangi } from "../lib/masalaSinf";
 import { ENG_KATTA_MUKOFOT } from "../lib/masalaTanga";
 import type { Masala } from "../lib/masala";
@@ -46,196 +42,67 @@ interface Props {
 }
 
 export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
-  // Hech kim urinmagan bo'lsa foiz ma'nosiz (server 100 qaytaradi) —
-  // u yerda nuqta emas, "hali urinilmagan" yozuvi turadi.
-  const olchangan = m.urinishSoni > 0;
-  const nuqta = nuqtaSoni(m.qiyinlik);
-
-  const test = m.variantlar.length > 0;
+  const yechgan = m.uringan && m.birinchiTogri;
 
   return (
-    <button type="button" onClick={on}
-      className="clay-press block w-full rounded-clay border border-track bg-karta p-3.5
+    <button type="button" onClick={on} data-tahlil="Masala kartasi"
+      className="clay-press block w-full rounded-clay border border-track bg-karta p-4
                  text-left shadow-clay-sm">
-      {/* ---- tepa qator ---- */}
+      {/* ---- tepa: sinf va holat ---- */}
       <div className="flex items-center gap-2">
-        {/* Masala raqami — eng oldida.
-
-            Bu POZITSIYA emas, masalaning O'Z raqami: sahifa
-            almashganda ham, saralash o'zgarganda ham u o'zgarmaydi.
-            Shu sabab uni do'stiga aytsa bo'ladi ("7-masalani ko'rdingmi?")
-            va u masala ekranidagi, kanaldagi post bilan ham bir xil
-            bo'ladi. Sahifadagi o'rni (1, 2, 3…) esa har filtrda
-            boshqa masalani ko'rsatardi. */}
-        <span className="shrink-0 font-display text-[12px] leading-none text-ink-dim">
-          #{m.raqam}
-        </span>
-
-        {/* Toifa yorlig'i RANGLI: o'nta kartali sahifada ko'z avval
-            rangni ko'radi, yozuvni keyin o'qiydi. Kulrang yorliqlar
-            paytida "olimpiada" masalasini topish uchun har birining
-            yozuvini o'qishga to'g'ri kelardi. */}
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10.5px] leading-none
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] leading-none
                           ${sinfRangi(m.sinf)}`}>
           {sinfNomi(m.sinf)}
         </span>
 
-        {/* Test belgisi — masala TURI kartadanoq bilinsin: variant
-            tanlash bilan javob yozish ikki xil ish va odam ko'pincha
-            aynan bittasini qidiradi. */}
-        {test && (
-          <span className="shrink-0 rounded-full bg-brand-green/15 px-2 py-1 text-[10.5px]
-                           leading-none text-brand-green">
-            {t("masalaTestBelgi")}
-          </span>
-        )}
-
-        {/* Qiyinlik — sinf yorlig'ining YONIDA. U ham masalaning
-            "pasporti": qaysi sinf va qanchalik qiyin degan ikki savol
-            bitta qatorda javob topadi. */}
-        {olchangan && (
-          <span className="flex shrink-0 items-center gap-[3px]" aria-label={`${nuqta}/5`}>
-            {Array.from({ length: 5 }, (_, i) => (
-              <span key={i}
-                className={`size-[5px] rounded-full ${
-                  i < nuqta ? "bg-brand-purple" : "bg-ink-dim/30"}`} />
-            ))}
-          </span>
-        )}
-
-        {/* Holat yorlig'i FAQAT o'z masalasida chiqadi — boshqalarnikida
-            u har doim "tasdiq" bo'ladi va hech narsa aytmaydi. */}
+        {/* O'z masalasining holati — faqat muallifga kerak. */}
         {m.holat === "kutmoqda" && (
-          <Holat rang="gold" ic="clock">{t("masalaKutmoqda")}</Holat>
+          <span className="text-[11px] text-ink-dim">{t("masalaKutmoqda")}</span>
         )}
         {m.holat === "rad" && (
-          <Holat rang="red" ic="close">{t("masalaRad")}</Holat>
+          <span className="text-[11px] text-brand-red">{t("masalaRad")}</span>
         )}
 
-        {/* O'ng chetdagi belgi — odam bir masalani ikki marta ochib
-            o'tirmasin. To'g'ri va xato ATAYLAB ajratilgan: xato
-            qilgan masalaga qaytib kelish ma'noli, to'g'ri
-            yechilganiga esa deyarli yo'q. */}
-        <span className="ml-auto shrink-0">
-          {m.uringan
-            ? m.birinchiTogri
-              ? <Holat rang="green" ic="check">{t("masalaYechgansiz")}</Holat>
-              : <Holat rang="xira" ic="repeat">{t("masalaQaytaUrinish")}</Holat>
-            : <Holat rang="xira">{t("masalaYechilmagan")}</Holat>}
-        </span>
+        {/* Faqat YECHGANI belgilanadi. "Yechilmagan" yozuvi har
+            kartada turardi va hech narsa aytmasdi — odatiy holat
+            belgisiz bo'ladi. */}
+        {yechgan && (
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-[11.5px]
+                           text-brand-green">
+            <Icon name="check" size={13} />
+            {t("masalaYechgansiz")}
+          </span>
+        )}
       </div>
 
-      {/* ---- matn ----
-          QALIN va biroz zichroq: karta ichida bu YAGONA asosiy narsa,
-          qolgani esa uning atrofidagi belgilar. Ilgari matn oddiy
-          og'irlikda edi va yorliqlar bilan bir xil "ovozda" turardi. */}
-      <p className="mt-2.5 line-clamp-4 font-display text-[14.5px] leading-snug">{m.matn}</p>
+      {/* ---- matn ---- */}
+      <p className="mt-2.5 line-clamp-3 font-display text-[15px] leading-snug">{m.matn}</p>
 
-      {/* ---- chizma ----
-          Matnning OSTIDA va butun kenglikda, yonida emas.
-          Geometriya, shaxmat taxtasi yoki gugurt naqshi — bularning
-          hammasi CHIZMA bilan tushuniladi va 56 pikselli kichkina
-          kvadratchada ulardan hech narsa ko'rinmasdi. Rasm botiq
-          ramkada turadi: karta ko'tarilgan, chizma esa uning ichiga
-          o'yilgan oynadek. */}
       {m.rasm && (
-        <span className="shadow-ichki mt-2.5 block overflow-hidden rounded-2xl bg-sahna p-1.5">
-          <img src={m.rasm} alt="" loading="lazy"
-            className="max-h-56 w-full rounded-xl object-contain" />
-        </span>
+        <img src={m.rasm} alt="" loading="lazy"
+          className="mt-3 max-h-52 w-full rounded-2xl bg-sahna object-contain" />
       )}
 
-      {/* ---- botiq qator: holat va "yechish" ---- */}
-      <div className="shadow-ichki mt-2.5 flex items-center gap-2 rounded-2xl bg-sahna
-                      px-3 py-2">
-        <span className="min-w-0 truncate text-[11.5px] text-ink-dim">
-          {olchangan
-            ? t("masalaYechdi", { n: m.yechganSoni, jami: m.urinishSoni })
-            : t("masalaUrinilmagan")}
-        </span>
-        {/* Nechta odam ochgan. Urinishdan boshqa son va aynan shuning
-            uchun qo'shildi: hali hech kim URINMAGAN masala ham
-            o'nlab marta ochilgan bo'lishi mumkin — ya'ni u ko'rinyapti,
-            lekin qo'rqitmoqda. */}
-        {m.korishSoni > 0 && (
-          <span className="flex shrink-0 items-center gap-0.5 text-[11.5px] text-ink-dim">
-            <Hajmli nom="koz" olcham={13} />
-            {m.korishSoni}
-          </span>
-        )}
-        {/* Mukofot "Yechish" ning YONIDA turadi: tanga aynan shu
-            amal uchun berilishi shu qo'shnilikda o'qiladi. Faqat
-            hali yechmaganda ko'rinadi — ikkinchi marta to'g'ri
-            javob berganga tanga qayta berilmaydi. */}
-        {!m.uringan && (
-          <span className="ml-auto flex shrink-0 items-center gap-0.5 rounded-full
-                           bg-brand-gold/15 px-2 py-1 text-[11.5px] leading-none
-                           text-brand-gold">
-            <Icon name="coin" size={12} />
-            +{ENG_KATTA_MUKOFOT}
-          </span>
-        )}
-        <span className={`flex shrink-0 items-center gap-1 rounded-full bg-brand-purple/15
-                          px-2.5 py-1 text-[11.5px] leading-none text-brand-purple
-                          ${m.uringan ? "ml-auto" : ""}`}>
-          {t("masalaYechishTugma")}
-          <Icon name="chevron" size={13} />
-        </span>
-      </div>
-
-      {/* ---- past qator ----
-          "Nechta odam yechdi" endi bu yerda emas, yuqoridagi botiq
-          qatorda: u masalaning O'ZI haqidagi ma'lumot, muallifniki
-          emas. Muallif yozuvi yonida turganda ikkalasi bir gapdek
-          o'qilardi. */}
-      <div className="mt-2.5 flex min-w-0 items-center gap-1.5 text-[11px] text-ink-dim">
+      {/* ---- past: muallif · mukofot · yechish ---- */}
+      <div className="mt-3 flex min-w-0 items-center gap-2 text-[12px]">
         {muallifBilan && (
-          <span className="flex min-w-0 items-center gap-1.5">
-            <span className="grid size-[18px] shrink-0 place-items-center rounded-full
-                             bg-track text-[10px] leading-none">
-              <EmojiBelgi e={avatarBelgi(m.muallif.avatar)} olcham={13} />
-            </span>
+          <span className="flex min-w-0 items-center gap-1.5 text-ink-dim">
+            <EmojiBelgi e={avatarBelgi(m.muallif.avatar)} olcham={14} />
             <span className="truncate">{m.muallif.ism}</span>
           </span>
         )}
-
-        {/* Ovozlar — botiq tasmachada. Ular kartaning eng past
-            og'irlikdagi ma'lumoti va shu ko'rinishda ham shunday
-            o'qiladi. */}
-        <span className="shadow-ichki ml-auto flex shrink-0 items-center gap-1.5 rounded-full
-                         bg-sahna px-2 py-1 leading-none">
-          <span className="flex items-center gap-1">
-            <Hajmli nom="yoqdi" olcham={12} />{m.like}
-          </span>
-          <span aria-hidden className="h-2.5 w-px bg-ink-dim/25" />
-          <span className="flex items-center gap-1">
-            <Hajmli nom="yoqmadi" olcham={12} />{m.dislike}
+        <span className="ml-auto flex shrink-0 items-center gap-3">
+          {!m.uringan && (
+            <span className="flex items-center gap-1 text-brand-gold-d">
+              <Icon name="coin" size={13} />+{ENG_KATTA_MUKOFOT}
+            </span>
+          )}
+          <span className="flex items-center gap-0.5 font-display text-[13px] text-brand-blue">
+            {t("masalaYechishTugma")}
+            <Icon name="chevron" size={14} />
           </span>
         </span>
       </div>
     </button>
-  );
-}
-
-/** Tepa qatordagi kichik holat yorlig'i. */
-function Holat(
-  { rang, ic, children }:
-  { rang: "green" | "gold" | "red" | "xira"; ic?: "check" | "repeat" | "clock" | "close";
-    children: React.ReactNode },
-) {
-  const uslub = {
-    green: "bg-brand-green/15 text-brand-green",
-    gold: "bg-brand-gold/15 text-brand-gold",
-    red: "bg-brand-red/15 text-brand-red",
-    xira: "bg-track text-ink-dim",
-  }[rang];
-  return (
-    <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px]
-                      leading-none ${uslub}`}>
-      {ic
-        ? <Icon name={ic} size={11} />
-        : <span className="size-1.5 rounded-full bg-current opacity-60" />}
-      {children}
-    </span>
   );
 }

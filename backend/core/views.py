@@ -49,6 +49,7 @@ from . import jonli as JL
 from . import onlayn as ON
 from . import ovoz as O
 from . import rasm as R
+from . import tahlil as TH
 from .models import (
     BIZNING_KALIT, MAX_QIYMAT, Duel, Identity, LessonResult, LigaAzo, Masala,
     MasalaUrinish, Profile, Progress, Pupil, Session, TestToplam,
@@ -90,6 +91,9 @@ def _user_json(pupil: Pupil) -> dict:
         # Tilni foydalanuvchi O'ZI tanlaganmi. Qurilma xotirasi
         # yo'qolganda ilova shu bayroqqa qarab tilni qayta so'ramaydi.
         "tilTanlandi": pupil.til_tanlandi,
+        # Tanishuv anketasi ko'rsatilganmi (javob yoki o'tkazib yuborish).
+        # `false` bo'lsa ilova uch savolni bir marta so'raydi.
+        "anketa": pupil.anketa_at is not None,
         "profillar": [_profil_json(pr) for pr in pupil.profiles.all()],
     }
 
@@ -1916,6 +1920,28 @@ def toplam_kanal(request, pk: int):
         t.refresh_from_db(fields=["kanal_post_id", "kanal_yoq"])
         return Response({"holat": holat, "yuborilgan": True, "havola": TT.post_havolasi(t)})
     return Response({"holat": holat, "izoh": izoh, "yuborilgan": False}, status=400)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def hodisalar(request):
+    """
+    Tahlil hodisalari — ilova yig'ib, bir so'rovda yuboradi (`lib/tahlil.ts`).
+
+    Javob doim 200: bu kuzatuv, uning xatosi ilovaga ta'sir qilmasin.
+    """
+    d = request.data if hasattr(request.data, "get") else {}
+    n = TH.yoz(request.user, d.get("hodisalar"), request.META.get("HTTP_USER_AGENT", ""))
+    return Response({"qabul": n})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def anketa(request):
+    """Tanishuv anketasi: kim, sinf, viloyat. Hammasi ixtiyoriy."""
+    d = request.data if hasattr(request.data, "get") else {}
+    TH.anketa_yoz(request.user, d)
+    return Response({"user": _user_json(request.user)})
 
 
 @api_view(["POST"])

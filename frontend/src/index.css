@@ -31,22 +31,35 @@
   --font-display: 'Fredoka', system-ui, sans-serif;
   --font-sans: 'Baloo 2', system-ui, sans-serif;
 
-  /* brend ranglari — ikkala temada ham bir xil, brend shu bilan taniladi */
-  --color-brand-green: #48c97a;
-  --color-brand-green-d: #33a862;
-  --color-brand-orange: #ff9f43;
-  --color-brand-orange-d: #ef8620;
-  --color-brand-blue: #4fb8e0;
-  --color-brand-blue-d: #3792c9;
-  --color-brand-purple: #b07be8;
-  --color-brand-purple-d: #8f57cf;
-  --color-brand-red: #ff7a6b;
+  /* ─────────────── QAT'IY UCH RANG ───────────────
+
+     Ilovada faqat UCHTA rang bor va har birining bitta ma'nosi:
+
+       KO'K    asosiy — tugmalar, tanlangan holat, havolalar
+       YASHIL  to'g'ri / tugadi / davom etish
+       OLTIN   mukofot — tanga, yulduz, reyting
+
+     Qolgani neytral (oq, kulrang, siyoh). Qizil faqat XATO javob
+     uchun qoldi — u rang emas, ogohlantirish.
+
+     Ilgari oltita rang (yashil, to'q sariq, ko'k, binafsha, qizil,
+     oltin) teng huquqli edi va har bo'lim, har yorliq o'z rangini
+     olardi — ekran rang-barang bo'lib, qaysi narsa muhim ekani
+     yo'qolardi. Eski nomlar (`brand-purple`, `brand-orange`) o'chirilmadi:
+     ular yuzlab joyda ishlatiladi. Ular endi uchtadan biriga TENG —
+     binafsha → ko'k, to'q sariq → oltin. */
+  --color-brand-blue: #3b6fe0;
+  --color-brand-blue-d: #2c56b8;
+  --color-brand-green: #22b06b;
+  --color-brand-green-d: #1a8a53;
   --color-brand-gold: #f5b301;
-  /* Tanga tugmalari 3D bo'lib turadi (`shadow-[0_5px_0_...]`) va
-     buning uchun har brend rangining to'qroq juftligi kerak. Oltinda
-     u yo'q edi — sarflash tugmasi qo'shilgunga qadar oltin faqat
-     yozuv va belgi rangi bo'lib kelgan. */
   --color-brand-gold-d: #d09400;
+
+  --color-brand-purple: #3b6fe0;
+  --color-brand-purple-d: #2c56b8;
+  --color-brand-orange: #f5b301;
+  --color-brand-orange-d: #d09400;
+  --color-brand-red: #e5484d;
 
   /* --- temaga qarab o'zgaradigan tokenlar (standarti: bolalar) --- */
   --color-karta: #ffffff;            /* karta yuzasi */
@@ -133,7 +146,7 @@
    va yashil yumshoq nurlar — logoning o'z ranglari. Qorong'i kayfiyat
    "katta" temada (2–4-sinf) qoldi, u yerda u o'rinli. */
 :root[data-tema="bosh"] {
-  --az-body: #eef4ff;
+  --az-body: #f4f6fb;
 
   --color-karta: #ffffff;
   --color-track: rgb(26 40 90 / 0.1);
@@ -164,7 +177,7 @@
 
 /* ---------------- 1-sinf: quyoshli, yumshoq, katta ---------------- */
 :root[data-tema="bolalar"] {
-  --az-body: #8ed6ff;
+  --az-body: #eaf5ff;
   --color-karta: #ffffff;
   --color-track: rgb(0 0 0 / 0.08);
   --color-yol: rgb(90 75 50 / 0.13);
@@ -195,7 +208,7 @@
 
 /* ---------------- 2–4-sinf: chuqur ko'k, shishasimon ---------------- */
 :root[data-tema="katta"] {
-  --az-body: #0d1230;
+  --az-body: #141b34;
   --color-sahna: #1a2247;
   --color-karta: #232c52;
   --color-track: rgb(255 255 255 / 0.13);
@@ -242,211 +255,26 @@
 /* ============================================================
    ORQA FON (components/Fon.tsx)
 
-   Bitta fixed qatlam, ichida ikkala temaning qavatlari ham turadi.
-   Ko'rinadigani faqat joriy temaniki — qolgani `display: none`.
-   `--az-scroll` (0→1) sahifa aylanishi bilan yangilanadi va parallaks
-   shundan chiqadi: uzoqdagi qavat sekin, yaqindagisi tez siljiydi.
+   TEKIS RANG — va bu ataylab.
+
+   Ilgari bu yerda uch qavatli suzuvchi formulalar naqshi, aylanuvchi
+   nur va kengayuvchi halqalar bor edi. Chiroyli edi, lekin HAR
+   ekranda matn bilan raqobat qilardi: odam savolga javob berish uchun
+   kiradi, fon esa ko'zni tortib turardi. Telefonda esa naqsh
+   aylantirishni sekinlashtirardi (har kadrda qayta bo'yash).
+
+   Endi fon — faqat temaning `--az-body` rangi. Diqqat kartadagi
+   mazmunda qoladi.
    ============================================================ */
 
 .az-fon {
   position: fixed;
   inset: 0;
   z-index: -1;
-  overflow: hidden;
-  pointer-events: none;                      /* fon bosishga xalaqit bermaydi */
-  --az-scroll: 0;
-  transition: background 0.5s ease;
+  pointer-events: none;
+  background: var(--az-body);
+  transition: background 0.3s ease;
 }
-.az-fon > * { position: absolute; display: none; }
-
-/* Naqsh uchala temada ham ko'rinadi — g'oya bitta, rang boshqacha.
-   Bosh sahifadagi nur va halqalar esa faqat o'sha yerda. */
-.az-fon > .az-naqsh,
-.az-fon > .az-vinyet,
-:root[data-tema="bosh"] .az-fon > .az-nur,
-:root[data-tema="bosh"] .az-fon > .az-halqa { display: block; }
-
-/* ---------- bosh sahifa: yorug' tong, yumshoq nur va halqalar ---------- */
-
-:root[data-tema="bosh"] .az-fon {
-  background:
-    /* tepada oq yorug'lik — logo aynan shu yerda turadi va toza fonda kuchli chiqadi */
-    radial-gradient(78% 52% at 50% -4%, #ffffff 0%, transparent 64%),
-    radial-gradient(58% 46% at 10% 26%, #d4f1e2 0%, transparent 62%),   /* yashil */
-    radial-gradient(58% 46% at 92% 30%, #d8e3ff 0%, transparent 62%),   /* ko'k */
-    radial-gradient(70% 46% at 50% 104%, #efe6ff 0%, transparent 66%),  /* binafsha */
-    linear-gradient(180deg, #f3f7ff 0%, #e9f1ff 48%, #eaf7f1 100%);
-}
-
-/* Sekin aylanuvchi nur — sahnaga tushgan prozhektor kabi.
-   Yorug' fonda oltin rang yo'qoladi, shuning uchun brendning ko'k-yashili. */
-.az-nur {
-  top: 50%; left: 50%;
-  width: 190vmax; height: 190vmax;
-  margin: -95vmax 0 0 -95vmax;
-  background: conic-gradient(
-    from 0deg,
-    rgb(47 142 230 / 0.1) 0deg, transparent 42deg,
-    rgb(34 189 109 / 0.09) 130deg, transparent 190deg,
-    rgb(176 123 232 / 0.08) 268deg, transparent 320deg
-  );
-  animation: az-nur-aylan 44s linear infinite;
-}
-@keyframes az-nur-aylan { to { transform: rotate(360deg); } }
-
-/* Kengayib o'chadigan halqalar — ekran "nafas olayotgandek" ko'rinadi. */
-.az-halqa {
-  top: 50%; left: 50%;
-  width: 42vmin; height: 42vmin;
-  margin: -21vmin 0 0 -21vmin;
-  border-radius: 9999px;
-  border: 1px solid rgb(47 142 230 / 0.22);
-  animation: az-halqa-kengay 9s ease-out infinite;
-}
-.az-halqa-2 { animation-delay: 3s; }
-.az-halqa-3 { animation-delay: 6s; }
-
-@keyframes az-halqa-kengay {
-  0%   { transform: scale(0.35); opacity: 0; }
-  18%  { opacity: 0.75; }
-  100% { transform: scale(2.6); opacity: 0; }
-}
-
-/* Matematik belgilar naqshi — takrorlanadigan plitka, MASK sifatida.
-   Shakl bitta, rangni har bir tema o'zi beradi (scripts emas, bir marta
-   hisoblangan qiymat). O'zgartirish kerak bo'lsa SVG ni alohida chizib,
-   URL-kodlab qo'ying (< => %3C, # => %23). */
-:root {
-  --az-belgilar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 480'%3E%3Cg fill='none' stroke='%23fff' stroke-width='0.89' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(56.2 37.0) scale(1.917)'%3E%3Crect x='5' y='2.6' width='14' height='18.8' rx='2.2'/%3E%3Crect x='8' y='5.6' width='8' height='4' rx='1'/%3E%3Ccircle cx='9' cy='13' r='.9'/%3E%3Ccircle cx='12' cy='13' r='.9'/%3E%3Ccircle cx='15' cy='13' r='.9'/%3E%3Ccircle cx='9' cy='17' r='.9'/%3E%3Ccircle cx='12' cy='17' r='.9'/%3E%3Ccircle cx='15' cy='17' r='.9'/%3E%3C/g%3E%3Cg transform='translate(176.2 37.0) scale(1.917)'%3E%3Cpath d='M4.5 7.5h15'/%3E%3Cpath d='M9.5 7.5c0 4.5-.6 8-1.8 11'/%3E%3Cpath d='M15.5 7.5v8.5c0 1.8.9 2.6 2.2 2.6'/%3E%3C/g%3E%3Cg transform='translate(296.2 37.0) scale(1.917)'%3E%3Ccircle cx='7.6' cy='7.6' r='2.7'/%3E%3Ccircle cx='16.4' cy='16.4' r='2.7'/%3E%3Cpath d='M18.2 5.8L5.8 18.2'/%3E%3C/g%3E%3Cg transform='translate(416.2 37.0) scale(1.917)'%3E%3Cpath d='M12 5.2v13.6M5.2 12h13.6'/%3E%3C/g%3E%3Cg transform='translate(17.8 157.0) scale(1.917)'%3E%3Cpath d='M5 9.4h14M5 14.6h14'/%3E%3C/g%3E%3Cg transform='translate(137.8 157.0) scale(1.917)'%3E%3Cpath d='M3.2 12.6h3.1l3.4 7.8L15.9 3.6H21'/%3E%3C/g%3E%3Cg transform='translate(257.8 157.0) scale(1.917)'%3E%3Cpath d='M6.8 6.8l10.4 10.4M17.2 6.8L6.8 17.2'/%3E%3C/g%3E%3Cg transform='translate(377.8 157.0) scale(1.917)'%3E%3Cpath d='M5 12h14'/%3E%3Ccircle cx='12' cy='7.1' r='1.35'/%3E%3Ccircle cx='12' cy='16.9' r='1.35'/%3E%3C/g%3E%3Cg transform='translate(56.2 277.0) scale(1.917)'%3E%3Crect x='5' y='2.6' width='14' height='18.8' rx='2.2'/%3E%3Crect x='8' y='5.6' width='8' height='4' rx='1'/%3E%3Ccircle cx='9' cy='13' r='.9'/%3E%3Ccircle cx='12' cy='13' r='.9'/%3E%3Ccircle cx='15' cy='13' r='.9'/%3E%3Ccircle cx='9' cy='17' r='.9'/%3E%3Ccircle cx='12' cy='17' r='.9'/%3E%3Ccircle cx='15' cy='17' r='.9'/%3E%3C/g%3E%3Cg transform='translate(176.2 277.0) scale(1.917)'%3E%3Cpath d='M4.5 7.5h15'/%3E%3Cpath d='M9.5 7.5c0 4.5-.6 8-1.8 11'/%3E%3Cpath d='M15.5 7.5v8.5c0 1.8.9 2.6 2.2 2.6'/%3E%3C/g%3E%3Cg transform='translate(296.2 277.0) scale(1.917)'%3E%3Ccircle cx='7.6' cy='7.6' r='2.7'/%3E%3Ccircle cx='16.4' cy='16.4' r='2.7'/%3E%3Cpath d='M18.2 5.8L5.8 18.2'/%3E%3C/g%3E%3Cg transform='translate(416.2 277.0) scale(1.917)'%3E%3Cpath d='M12 5.2v13.6M5.2 12h13.6'/%3E%3C/g%3E%3Cg transform='translate(17.8 397.0) scale(1.917)'%3E%3Cpath d='M5 9.4h14M5 14.6h14'/%3E%3C/g%3E%3Cg transform='translate(137.8 397.0) scale(1.917)'%3E%3Cpath d='M3.2 12.6h3.1l3.4 7.8L15.9 3.6H21'/%3E%3C/g%3E%3Cg transform='translate(257.8 397.0) scale(1.917)'%3E%3Cpath d='M6.8 6.8l10.4 10.4M17.2 6.8L6.8 17.2'/%3E%3C/g%3E%3Cg transform='translate(377.8 397.0) scale(1.917)'%3E%3Cpath d='M5 12h14'/%3E%3Ccircle cx='12' cy='7.1' r='1.35'/%3E%3Ccircle cx='12' cy='16.9' r='1.35'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-}
-
-/* ============================================================
-   NAQSH QAVATLARI
-
-   Uchta qavat bir xil plitkani ishlatadi. Farqi: o'lchami, tezligi va
-   shaffofligi. Shu uchtasi birga chuqurlik beradi — yiriklari yaqinroq,
-   maydalari uzoqroq tuyuladi.
-
-   Rang MASK orqali: shakl bitta joyda turadi, `background` esa temaga
-   qarab o'zgaradi. Aks holda har bir tema uchun alohida SVG kerak bo'lardi.
-
-   Qavat ekrandan KATTAROQ va biroz burilgan. Burilish naqshni "jadval"
-   bo'lishdan qutqaradi; kattaroq bo'lishi esa burilganda burchaklar
-   ochilib qolmasligi uchun.
-   ============================================================ */
-.az-naqsh {
-  top: -25%; left: -25%;
-  width: 150%; height: 150%;
-  -webkit-mask-image: var(--az-belgilar);
-  mask-image: var(--az-belgilar);
-  -webkit-mask-repeat: repeat;
-  mask-repeat: repeat;
-  will-change: mask-position;
-}
-
-/* Yaqin qavat: yirik, to'q, tez */
-.az-naqsh-1 {
-  -webkit-mask-size: 340px 340px;
-  mask-size: 340px 340px;
-  opacity: 0.5;
-  transform: rotate(-7deg);
-  animation: az-naqsh-suz 90s linear infinite;
-  translate: 0 calc(var(--az-scroll) * -70px);
-}
-/* O'rta qavat */
-.az-naqsh-2 {
-  -webkit-mask-size: 220px 220px;
-  mask-size: 220px 220px;
-  opacity: 0.3;
-  transform: rotate(-7deg);
-  animation: az-naqsh-suz 150s linear infinite reverse;
-  translate: 0 calc(var(--az-scroll) * -38px);
-}
-/* Uzoq qavat: mayda, xira, sekin */
-.az-naqsh-3 {
-  -webkit-mask-size: 140px 140px;
-  mask-size: 140px 140px;
-  opacity: 0.16;
-  transform: rotate(-7deg);
-  animation: az-naqsh-suz 240s linear infinite;
-  translate: 0 calc(var(--az-scroll) * -16px);
-}
-
-/* Diqqat: `transform` EMAS, `mask-position`. Takrorlanadigan plitkada
-   faqat shu usul uzluksiz suriladi — transform butun qavatni joyidan
-   siljitib, chetida bo'sh joy ochib qo'yardi. Surish masofasi plitka
-   o'lchamiga KARRALI bo'lishi shart, aks holda halqa boshiga qaytganda
-   naqsh sakraydi. */
-@keyframes az-naqsh-suz {
-  to { -webkit-mask-position: 1360px -1020px; mask-position: 1360px -1020px; }
-}
-
-/* ============================================================
-   NAQSH TELEFONDA QIMIRLAMAYDI — va bu ataylab.
-
-   `mask-position` ni GPU jonlantira olmaydi: har kadrda brauzer
-   qatlamni QAYTADAN BO'YAYDI. Qatlam esa ekrandan 1,5 barobar katta va
-   ular uchta — ya'ni har kadrda taxminan olti ekranlik yuza qayta
-   chiziladi. Hech kim ekranga tegmasa ham, doimiy.
-
-   O'lchandi: shu uchta animatsiya yoniq turganda telefonda aylantirish
-   uchun kadr byudjetidan deyarli hech narsa qolmaydi va sahifa "qotib"
-   qoladi.
-
-   Nima yo'qoladi: 90–240 soniyada bir marta aylanadigan sekin siljish.
-   Uni deyarli hech kim sezmaydi. Naqshning O'ZI, uch qavatliligi,
-   chuqurlik hissi va aylantirishdagi parallaks (u `translate` orqali,
-   ya'ni GPU'da) — hammasi joyida qoladi.
-
-   Sichqonchali katta ekranda animatsiya qoladi: u yerda qayta bo'yash
-   narxi sezilmaydi va effekt o'rinli. */
-@media (hover: none), (max-width: 900px), (prefers-reduced-motion: reduce) {
-  .az-naqsh-1,
-  .az-naqsh-2,
-  .az-naqsh-3 {
-    animation: none;
-    /* `will-change` ham olib tashlanadi: animatsiya yo'q joyda u faqat
-       qo'shimcha qatlam va xotira — foydasi yo'q. */
-    will-change: auto;
-  }
-}
-
-/* Chetlarni so'ndiruvchi qatlam. Naqsh markazda kuchli, chekkalarda
-   yo'qoladi: shunda u matnga raqobat qilmaydi va ekran chetida kesilgan
-   belgilar ko'zga tashlanmaydi. */
-.az-vinyet {
-  inset: 0;
-  background: radial-gradient(120% 90% at 50% 40%,
-    transparent 0%, transparent 42%, var(--az-vinyet-rang) 100%);
-}
-
-/* --- temalar: bir xil naqsh, boshqa rang --- */
-
-:root[data-tema="bosh"] .az-fon {
-  background:
-    radial-gradient(78% 52% at 50% -6%, #ffffff 0%, transparent 62%),
-    radial-gradient(60% 46% at 8% 26%, #d9f2e6 0%, transparent 62%),
-    radial-gradient(60% 46% at 94% 30%, #dbe6ff 0%, transparent 62%),
-    linear-gradient(180deg, #f4f8ff 0%, #e9f1ff 52%, #eaf7f2 100%);
-  --az-vinyet-rang: rgb(210 226 250 / 0.55);
-}
-:root[data-tema="bosh"] .az-naqsh { background: #4d7fc4; }
-
-:root[data-tema="bolalar"] .az-fon {
-  background:
-    radial-gradient(70% 46% at 78% 2%, rgb(255 246 214 / 0.85) 0%, transparent 58%),
-    linear-gradient(180deg, #62b6e8 0%, #8ecdf0 38%, #b8e2f6 68%, #dcf1f4 100%);
-  --az-vinyet-rang: rgb(70 140 190 / 0.35);
-}
-:root[data-tema="bolalar"] .az-naqsh { background: #ffffff; }
-
-:root[data-tema="katta"] .az-fon {
-  background:
-    radial-gradient(70% 44% at 50% -8%, #2a3a63 0%, transparent 64%),
-    linear-gradient(180deg, #1b2740 0%, #222f4c 46%, #1a2440 100%);
-  --az-vinyet-rang: rgb(8 12 26 / 0.72);
-}
-:root[data-tema="katta"] .az-naqsh { background: #7ea6d8; }
 
 /* ============================================================
    YORUG'LIK: OQ va QORA — foydalanuvchining o'z tanlovi
@@ -469,7 +297,7 @@
 /* ---------- OQ ---------- */
 
 :root[data-tema][data-yoruglik="oq"] {
-  --az-body: #eef4ff;
+  --az-body: #f4f6fb;
 
   --color-karta: #ffffff;
   --color-sahna: #ffffff;
@@ -494,13 +322,6 @@
   --az-maqsad-1: #dfe8ff;
   --az-maqsad-2: #eef2ff;
 }
-:root[data-tema][data-yoruglik="oq"] .az-fon {
-  background:
-    radial-gradient(70% 44% at 50% -8%, #ffffff 0%, transparent 62%),
-    linear-gradient(180deg, #e8f0ff 0%, #eef4ff 46%, #e6eeff 100%);
-  --az-vinyet-rang: rgb(200 216 245 / 0.55);
-}
-:root[data-tema][data-yoruglik="oq"] .az-naqsh { background: #4d7fc4; }
 
 /* Qavariq chekka va panel soyasi — oq yuzada yumshoqroq bo'lishi kerak.
    Quyuq temadagi qiymatlar bu yerda dog' bo'lib ko'rinardi. */
@@ -521,7 +342,7 @@
 /* ---------- QORA ---------- */
 
 :root[data-tema][data-yoruglik="qora"] {
-  --az-body: #0d1230;
+  --az-body: #141b34;
 
   --color-karta: #232c52;
   --color-sahna: #1a2247;
@@ -547,13 +368,6 @@
   --az-maqsad-1: #3a2f66;
   --az-maqsad-2: #2a2350;
 }
-:root[data-tema][data-yoruglik="qora"] .az-fon {
-  background:
-    radial-gradient(70% 44% at 50% -8%, #2a3a63 0%, transparent 64%),
-    linear-gradient(180deg, #1b2740 0%, #222f4c 46%, #1a2440 100%);
-  --az-vinyet-rang: rgb(8 12 26 / 0.72);
-}
-:root[data-tema][data-yoruglik="qora"] .az-naqsh { background: #7ea6d8; }
 :root[data-tema][data-yoruglik="qora"] .az-qavariq::after {
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.14),
@@ -578,39 +392,6 @@
 :root[data-tema][data-yoruglik="qora"] .az-l-yozuv    { fill: #dfe8ff; }
 :root[data-tema][data-yoruglik="qora"] .az-l-shior    { fill: #9fb8f0; }
 :root[data-tema][data-yoruglik="qora"] .az-l-shior-s  { stroke: #9fb8f0; }
-
-/* Bosh sahifadagi aylanuvchi nur va halqalar — naqsh ustida qoladi,
-   ular brendning kirish eshigini kurs ekranlaridan ajratib turadi. */
-.az-nur {
-  top: 50%; left: 50%;
-  width: 190vmax; height: 190vmax;
-  margin: -95vmax 0 0 -95vmax;
-  background: conic-gradient(
-    from 0deg,
-    rgb(47 142 230 / 0.1) 0deg, transparent 42deg,
-    rgb(34 189 109 / 0.09) 130deg, transparent 190deg,
-    rgb(176 123 232 / 0.08) 268deg, transparent 320deg
-  );
-  animation: az-nur-aylan 44s linear infinite;
-}
-@keyframes az-nur-aylan { to { transform: rotate(360deg); } }
-
-.az-halqa {
-  top: 50%; left: 50%;
-  width: 42vmin; height: 42vmin;
-  margin: -21vmin 0 0 -21vmin;
-  border-radius: 9999px;
-  border: 1px solid rgb(47 142 230 / 0.22);
-  animation: az-halqa-kengay 9s ease-out infinite;
-}
-.az-halqa-2 { animation-delay: 3s; }
-.az-halqa-3 { animation-delay: 6s; }
-
-@keyframes az-halqa-kengay {
-  0%   { transform: scale(0.35); opacity: 0; }
-  18%  { opacity: 0.75; }
-  100% { transform: scale(2.6); opacity: 0; }
-}
 
 /* ============================================================
    MANZARA USTIDAGI YUZALAR
@@ -1459,7 +1240,7 @@
   .az-baho-fon, .az-baho-varaq, .az-baho-medal, .az-baho-halqa,
   .az-baho-tanga, .az-baho-tanlandi, .az-baho-chaqir { animation: none; }
   .az-pulse::after, .az-bob, .az-yaltir::before, .az-konfetti,
-  .az-nur, .az-halqa, .az-naqsh, .az-yur { animation: none; }
+  .az-yur { animation: none; }
   /* Yorug'lik yo'li harakatsiz holda "A" ustida oq dog' bo'lib qolmasin */
   .az-logo-yaltir { display: none; }
   .az-kirish, .az-yulduz, .az-tush, .az-katta, .az-belgi-kir { opacity: 1; animation: none; }

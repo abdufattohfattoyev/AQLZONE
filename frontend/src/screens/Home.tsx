@@ -487,7 +487,7 @@ function KunlikMaqsad({ kunlik, maqsad }: { kunlik: Kunlik; maqsad: number }) {
       <div className="flex items-start">
         <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-karta/60">
           <Icon name={bajarildi ? "trophy" : "flame"} size={22}
-            className={bajarildi ? "text-brand-gold" : "text-[#e2571f]"} />
+            className={bajarildi ? "text-brand-gold" : "text-ink-dim"} />
         </span>
         {/* Zanjir burchakda: maqsad bajarilgandan keyin ham ko'rinib
             turadi va bolani ertaga qaytishga undaydi. */}

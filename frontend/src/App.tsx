@@ -80,6 +80,7 @@ import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
 import { kursMatn } from "./lib/tarjima/kurs";
 import { useTirik } from "./lib/tirik";
+import { useTahlil } from "./lib/tahlil";
 
 export default function App() {
   // Panel `Routes` dan TASHQARIDA turadi va shu sabab marshrut
@@ -92,6 +93,9 @@ export default function App() {
   // ILOVA darajasida, ekranda emas: "onlayn" degani "ilova ochiq"
   // degani, "duel ekranida turibdi" degani emas (`lib/tirik.ts`).
   useTirik();
+  // Qaysi ekran ochildi, qaysi tugma bosildi — panelidagi "Tahlil"
+  // uchun (`lib/tahlil.ts`).
+  useTahlil();
 
   return (
     <>

@@ -46,12 +46,10 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { t } from "../lib/matn";
 import { MasalaKarta } from "../components/MasalaKarta";
-import { TangaHisob } from "../components/TangaHisob";
 import { SINFLAR } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import type { Holat, Masala, Tartib } from "../lib/masala";
@@ -101,7 +99,6 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
   const [royxat, setRoyxat] = useState<Masala[]>([]);
   const [sahifa, setSahifa] = useState(0);
   const [sahifalar, setSahifalar] = useState(1);
-  const [jami, setJami] = useState(0);
 
   /** Yechilganlik filtri — hammasi / yechilmagan / yechgan. */
   const [yechilganlik, setYechilganlik] = useState<Holat>("hammasi");
@@ -125,16 +122,15 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
    * baribir tasmaga sig'may, yonlamasiga surilardi — ya'ni
    * "8-sinf" ni topish uchun surish kerak bo'lardi.
    */
-  const [varaq, setVaraq] = useState<"tartib" | "sinf" | "holat" | null>(null);
+  const [varaq, setVaraq] = useState<"tartib" | "sinf" | null>(null);
 
   /** Tanlagichlarda ko'rinadigan joriy qiymatlar. */
   const joriyTartib = TARTIBLAR.find((x) => x.kod === tartib) ?? TARTIBLAR[0];
-  const joriyHolat = HOLATLAR.find((x) => x.kod === yechilganlik) ?? HOLATLAR[0];
   const sinfNomi = sinf === null
     ? t("masalaHammaSinf")
     : (SINFLAR.find((x) => x.kod === sinf)?.nom ?? t("masalaHammaSinf"));
 
-  const och = (v: "tartib" | "sinf" | "holat") => { tebrat("tanlov"); setVaraq(v); };
+  const och = (v: "tartib" | "sinf") => { tebrat("tanlov"); setVaraq(v); };
 
   /**
    * Ro'yxatni oladi — bitta SAHIFANI.
@@ -151,7 +147,6 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
       setRoyxat(d.masalalar);
       setSahifa(d.sahifa);
       setSahifalar(d.sahifalar);
-      setJami(d.jami);
       setHolat("tayyor");
       // Yangi sahifa BOSHIDAN ko'rinadi: aks holda odam o'rtada
       // qolib, "nima o'zgardi?" degan savol bilan qolardi.
@@ -200,18 +195,14 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
           </button>
         )}
 
-        {/* Sarlavha bloki — ikki qator. Shior nima uchun kerak:
-            bo'lim nomi ("Masalalar") uning nimaligini aytadi, lekin
-            nima uchun kerakligini aytmaydi. Birinchi marta kirgan
-            odam aynan shu ikkinchi savol bilan keladi. */}
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate font-display text-[19px] leading-tight">
-            {t("masalalar")}
-          </h1>
-          <p className="truncate text-[11px] leading-tight text-ink-dim">
-            {t("masalalarShior")}
-          </p>
-        </div>
+        {/* Faqat sarlavha. Shior va tanga hisobi olib tashlandi: odam
+            bu ekranga masala TANLASH uchun keladi va sarlavha qatoridagi
+            har bir qo'shimcha narsa undan diqqatni tortardi. Tanga
+            hisobi masalaning o'z ekranida qoladi — tanga o'sha yerda
+            ishlanadi. */}
+        <h1 className="min-w-0 flex-1 truncate font-display text-[20px] leading-tight">
+          {t("masalalar")}
+        </h1>
 
         {/* "Mening" — ikkinchi darajali amal va shunday ham
             ko'rinadi: yozuv, karta emas. */}
@@ -222,13 +213,6 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
           <Icon name="pencil" size={15} className="shrink-0" />
           <span className="hidden min-[400px]:inline">{t("masalaMenikilarQisqa")}</span>
         </button>
-
-        {/* Tanga hisobi — bo'limning butun iqtisodi shu songa
-            nisbatan o'lchanadi ("+10", "15 tanga"). Streak, XP va
-            liga ATAYLAB yo'q: ular boshqa ekranlarda o'z joyida
-            turadi va bu yerda to'rtta bir xil yorliq bo'lib,
-            hech biri o'qilmasdi. */}
-        <TangaHisob />
 
         {/* Asosiy amal — ro'yxatning ustida emas, YONIDA. Matni
             qisqa, chunki uning izohi keyingi ekranning o'zi. */}
@@ -247,13 +231,24 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
           Har biri yorliq (nima tanlanmoqda) va qiymat (nima
           tanlangan) ko'rsatadi. Yorliq shart: qiymatning o'zi
           ("Hammasi") qaysi filtrniki ekanini aytmaydi. */}
-      <div className="mt-3 flex gap-1.5">
-        <Tanlagich yorliq={t("masalaSaralash")} on={() => och("tartib")}
-          qiymat={<><EmojiBelgi e={joriyTartib.belgi} olcham={12} />{joriyTartib.nom()}</>} />
+      {/* IKKI boshqaruv, uchta emas. Sinf — eng ko'p ishlatiladigani,
+          u ochiq turadi. Saralash va yechilganlik bitta "Filtr"
+          varag'iga yig'ildi: ular kamdan-kam o'zgaradi va uchta bir
+          xil tanlagich qatori ekranni "sozlamalar paneli"ga
+          aylantirardi. O'zgartirilgan bo'lsa tugmada nuqta chiqadi —
+          ro'yxat nega boshqacha ekani yashirin qolmasin. */}
+      <div className="mt-3 flex gap-2">
         <Tanlagich yorliq={t("masalaSinfYorliq")} on={() => och("sinf")}
           qiymat={sinfNomi} />
-        <Tanlagich yorliq={t("masalaHolatYorliq")} on={() => och("holat")}
-          qiymat={joriyHolat.nom()} />
+        <button type="button" onClick={() => och("tartib")} aria-label={t("masalaSaralash")}
+          className="clay-press shadow-ichki relative flex shrink-0 items-center gap-1.5
+                     rounded-2xl bg-sahna px-3.5 text-[13px] text-ink-soft">
+          <Icon name="order" size={16} />
+          <span className="font-display">{joriyTartib.nom()}</span>
+          {(tartib !== "yangi" || teskari || yechilganlik !== "hammasi") && (
+            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-brand-blue" />
+          )}
+        </button>
       </div>
 
       {varaq === "tartib" && (
@@ -261,7 +256,7 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
           {TARTIBLAR.map((x) => (
             <Tanlov key={x.kod} faol={tartib === x.kod}
               on={() => { almashtir(x.kod); setVaraq(null); }}>
-              <EmojiBelgi e={x.belgi} olcham={14} />{x.nom()}
+              {x.nom()}
             </Tanlov>
           ))}
           {/* Yo'nalish SHU YERDA, chunki u saralashning bir qismi:
@@ -274,6 +269,13 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
               className={`transition-transform ${teskari ? "-rotate-90" : "rotate-90"}`} />
             {t(teskari ? "masalaEskidan" : "masalaYangidan")}
           </Tanlov>
+          <p className="mt-3 w-full text-[12px] text-ink-dim">{t("masalaHolatYorliq")}</p>
+          {HOLATLAR.map((x) => (
+            <Tanlov key={x.kod} faol={yechilganlik === x.kod}
+              on={() => { holatniTanla(x.kod); setVaraq(null); }}>
+              {x.nom()}
+            </Tanlov>
+          ))}
         </TanlovVaraq>
       )}
 
@@ -289,38 +291,6 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack }: Props) {
             </Tanlov>
           ))}
         </TanlovVaraq>
-      )}
-
-      {varaq === "holat" && (
-        <TanlovVaraq sarlavha={t("masalaHolatYorliq")} onYop={() => setVaraq(null)}>
-          {HOLATLAR.map((x) => (
-            <Tanlov key={x.kod} faol={yechilganlik === x.kod}
-              on={() => { holatniTanla(x.kod); setVaraq(null); }}>
-              {x.ic && <Icon name={x.ic} size={13} />}{x.nom()}
-            </Tanlov>
-          ))}
-        </TanlovVaraq>
-      )}
-
-      {/* ---- natija qatori ----
-          Son filtr qatoridan SHU YERGA ko'chdi. Sabab: u filtrning
-          bir bo'lagi emas, uning NATIJASI. Qator oxirida turganda u
-          "yana bitta tugma" bo'lib ko'rinardi va sonni o'qish uchun
-          tasmani surish kerak bo'lardi.
-
-          SARALASH NOMI BU YERDAN OLINDI. U tepada ham turardi va
-          bitta narsa ikki joyda ko'rinardi — odam "ikkalasi
-          boshqa-boshqa narsami?" deb o'ylardi. Yo'nalish tugmasi
-          ham shu yerda edi, endi u saralash varag'ining ichida:
-          yo'nalish saralashning bir qismi, alohida boshqaruv
-          emas. */}
-      {holat === "tayyor" && jami > 0 && (
-        <div className="mt-2.5 flex items-center gap-2 px-1 text-[12px]">
-          <span className="flex min-w-0 items-center gap-1.5 text-ink-soft">
-            <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-brand-green" />
-            <span className="truncate">{t("masalaTopildi", { n: jami })}</span>
-          </span>
-        </div>
       )}
 
       {/* ---- ro'yxat ---- */}

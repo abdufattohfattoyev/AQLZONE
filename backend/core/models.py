@@ -153,6 +153,39 @@ class Pupil(models.Model):
     #: Endi hisob bir marta javob bersa, ilova uni SERVERDAN oladi va
     #: boshqa so'ramaydi.
     til_tanlandi = models.BooleanField(default=False)
+
+    # ─────────────────────── TANISHUV ANKETASI ───────────────────────
+    #
+    # "Kim bu odam?" — ro'yxatdan o'tgandan keyin UCH savol bilan
+    # so'raladi (`components/Anketa.tsx`). Busiz panel faqat "nechta
+    # odam" deydi, lekin "kimlar" demaydi: o'quvchimi, ota-onami,
+    # ustozmi, qaysi sinf, qaysi viloyat. Mahsulot qarori (nimani
+    # pullik qilish, qayerga reklama berish) aynan shu savollarga
+    # suyanadi.
+    #
+    # Hammasi IXTIYORIY: anketada "o'tkazib yuborish" bor. Majburiy
+    # anketa yangi odamni birinchi daqiqada yo'qotadi.
+    KIMLAR = [("oquvchi", "O'quvchi"), ("ota_ona", "Ota-ona"), ("ustoz", "Ustoz")]
+    kim = models.CharField(max_length=10, choices=KIMLAR, default="", blank=True)
+    #: 0 — maktabgacha, 1..11 — sinf, -1 — javob berilmagan.
+    anketa_sinf = models.SmallIntegerField(default=-1)
+    viloyat = models.CharField(max_length=24, default="", blank=True)
+    #: Anketa ko'rsatildimi (javob bergan YOKI o'tkazib yuborgan).
+    #: Ikkinchi marta so'ralmasin.
+    anketa_at = models.DateTimeField(null=True, blank=True, default=None)
+
+    # ─────────────────────── TO'LOV QOBILIYATI BELGILARI ───────────────────────
+    #
+    # To'g'ridan-to'g'ri so'ralmaydi — "qancha pul to'lay olasiz?" degan
+    # savol odamni qo'rqitadi. O'rniga BILVOSITA belgilar yig'iladi:
+    #
+    #   tg_premium  Telegram Premium'ga pul to'laydi — ya'ni onlayn
+    #               obunaga to'lash odati BOR. Eng kuchli belgi.
+    #   qurilma     iPhone / Android / kompyuter — `Hodisa` dagi
+    #               brauzer satridan aniqlanadi.
+    tg_premium = models.BooleanField(default=False)
+    qurilma = models.CharField(max_length=12, default="", blank=True)
+
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -1500,3 +1533,47 @@ class Faollik(models.Model):
 
     class Meta:
         db_table = "faollik"
+
+
+class Hodisa(models.Model):
+    """
+    Foydalanuvchi NIMA QILDI — tahlil uchun hodisalar jurnali.
+
+    ─────────────────────── NEGA KERAK ───────────────────────
+
+    `Faollik` faqat HOZIRGI holatni saqlaydi, natija jadvallari esa
+    faqat TUGAGAN ishni. Mahsulot savollari boshqacha: "qaysi bo'limga
+    ko'p kirishadi?", "qaysi tugmani hech kim bosmaydi?", "kim eng faol
+    va nimada?". Bularga javob faqat tarixdan chiqadi.
+
+    ─────────────────────── IKKI TUR ───────────────────────
+
+        sahifa   ekran ochildi — `yol` da manzil ("/masalalar")
+        bosish   tugma bosildi — `nom` da tugma yozuvi
+
+    Ilova ularni YIG'IB, bir so'rovda yuboradi (`lib/tahlil.ts`) — har
+    bosishga alohida so'rov telefon internetini yeb qo'yardi.
+
+    ─────────────────────── JADVAL O'SADI ───────────────────────
+
+    Shuning uchun qator ixcham va eski yozuvlar vaqti-vaqti bilan
+    tozalanadi (`tahlil.tozala`, SAQLASH_KUN kun). Batafsil tarix
+    faqat so'nggi davr uchun kerak, eskisi yig'ma sonlarda qoladi.
+    """
+
+    SAHIFA = "sahifa"
+    BOSISH = "bosish"
+    TURLAR = [(SAHIFA, "Sahifa"), (BOSISH, "Bosish")]
+
+    pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="hodisalar")
+    tur = models.CharField(max_length=8, choices=TURLAR)
+    #: Manzil — `/kurs/:slug/...` kabi o'zgaruvchan qismlar mijozda
+    #: umumlashtiriladi, aks holda har masala alohida "sahifa" bo'lardi.
+    yol = models.CharField(max_length=80, default="", blank=True)
+    #: Tugma yozuvi (faqat `bosish` da).
+    nom = models.CharField(max_length=48, default="", blank=True)
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        db_table = "hodisa"
+        indexes = [models.Index(fields=["pupil", "created_at"])]

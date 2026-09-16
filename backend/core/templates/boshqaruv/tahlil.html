@@ -1,0 +1,160 @@
+{% extends "boshqaruv/qobiq.html" %}
+{% block sarlavha %}Tahlil{% endblock %}
+{% block sahifa_nomi %}Tahlil{% endblock %}
+{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }} · so'nggi {{ kunlar }} kun{% endblock %}
+
+{% comment %}
+Uch savol, uch qavat:
+
+  1. KIMLAR KELADI   anketa (kim, sinf, viloyat), qurilma, Telegram Premium
+  2. NIMAGA KIRADI   eng ko'p ochilgan sahifalar va bosilgan tugmalar
+  3. KIM FAOL        eng faol hisoblar va har birining sevimli bo'limi
+
+Premium ulushi — to'lov qobiliyatining bilvosita belgisi: onlayn
+obunaga allaqachon pul to'layotgan odamlar.
+{% endcomment %}
+
+{% block asboblar %}
+  <div class="tanlagich">
+    <a class="{% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
+    <a class="{% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
+    <a class="{% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
+  </div>
+{% endblock %}
+
+{% block ichki %}
+
+<div class="setka k4">
+  <div class="karta olchov">
+    <div class="nom">Jami hisob</div>
+    <div class="son">{{ jami }}</div>
+    <div class="qosh">shu davrda yangi: {{ yangi }}</div>
+  </div>
+  <div class="karta olchov">
+    <div class="nom">Faol hisob</div>
+    <div class="son">{{ faol_hisob }}</div>
+    <div class="qosh">{{ hodisa_soni }} hodisa · {{ bosish_soni }} bosish</div>
+  </div>
+  <div class="karta olchov">
+    <div class="nom">Anketani to'ldirgan</div>
+    <div class="son">{{ anketa_foiz }}%</div>
+    <div class="qosh">{{ anketali }} ta hisob</div>
+  </div>
+  <div class="karta olchov">
+    <div class="nom">Telegram Premium</div>
+    <div class="son">{{ premium_foiz }}%</div>
+    <div class="qosh">{{ premium }} ta · to'lov odati bor</div>
+  </div>
+</div>
+
+<div class="bolim"><h2>Kimlar keladi</h2><p>anketa javoblari va qurilma</p></div>
+
+<div class="setka k4">
+  <section class="karta">
+    <h2>Kim</h2>
+    {% for r in kim_taqsimot %}
+      <div class="xira" style="display:flex;justify-content:space-between;margin-top:8px"><span>{{ r.nom }}</span><b>{{ r.n }}</b></div>
+      <div class="ust-chiziq"><span style="width:{{ r.foiz }}%"></span></div>
+    {% empty %}<p class="izoh-matn">Hali javob yo'q.</p>{% endfor %}
+  </section>
+  <section class="karta">
+    <h2>Sinf</h2>
+    {% for r in sinf_taqsimot %}
+      <div class="xira" style="display:flex;justify-content:space-between;margin-top:8px"><span>{{ r.nom }}</span><b>{{ r.n }}</b></div>
+      <div class="ust-chiziq"><span style="width:{{ r.foiz }}%"></span></div>
+    {% empty %}<p class="izoh-matn">Hali javob yo'q.</p>{% endfor %}
+  </section>
+  <section class="karta">
+    <h2>Viloyat</h2>
+    {% for r in viloyat_taqsimot %}
+      <div class="xira" style="display:flex;justify-content:space-between;margin-top:8px"><span>{{ r.nom }}</span><b>{{ r.n }}</b></div>
+      <div class="ust-chiziq"><span style="width:{{ r.foiz }}%"></span></div>
+    {% empty %}<p class="izoh-matn">Hali javob yo'q.</p>{% endfor %}
+  </section>
+  <section class="karta">
+    <h2>Qurilma</h2>
+    {% for r in qurilma_taqsimot %}
+      <div class="xira" style="display:flex;justify-content:space-between;margin-top:8px"><span>{{ r.nom }}</span><b>{{ r.n }}</b></div>
+      <div class="ust-chiziq"><span style="width:{{ r.foiz }}%"></span></div>
+    {% empty %}<p class="izoh-matn">Hali ma'lumot yo'q.</p>{% endfor %}
+  </section>
+</div>
+
+<div class="bolim"><h2>Nimaga kiradi</h2><p>sahifalar va tugmalar — ko'pi tepada</p></div>
+
+<div class="setka k2">
+  <section class="karta">
+    <h2>Sahifalar</h2>
+    {% if sahifalar %}
+      <table><tbody>
+      {% for s in sahifalar %}
+        <tr>
+          <td>{{ s.yol }}<div class="ust-chiziq"><span style="width:{{ s.foiz }}%"></span></div></td>
+          <td class="raqam">{{ s.n }}</td>
+          <td class="raqam xira">{{ s.odam }} odam</td>
+        </tr>
+      {% endfor %}
+      </tbody></table>
+    {% else %}<p class="izoh-matn">Hali hodisa yo'q.</p>{% endif %}
+  </section>
+  <section class="karta">
+    <h2>Tugmalar</h2>
+    {% if tugmalar %}
+      <table><tbody>
+      {% for b in tugmalar %}
+        <tr>
+          <td>{{ b.nom }} <span class="juda-xira">· {{ b.yol }}</span></td>
+          <td class="raqam">{{ b.n }}</td>
+          <td class="raqam xira">{{ b.odam }} odam</td>
+        </tr>
+      {% endfor %}
+      </tbody></table>
+    {% else %}<p class="izoh-matn">Hali bosish yo'q.</p>{% endif %}
+  </section>
+</div>
+
+<div class="bolim"><h2>Kim eng faol</h2><p>hodisalar soni va sevimli bo'limi</p></div>
+
+<section class="karta">
+  {% if faollar %}
+    <table>
+      <thead><tr><th>Ism</th><th>Kim</th><th>Sinf</th><th>Viloyat</th><th>Sevimli</th><th class="raqam">Kun</th><th class="raqam">Hodisa</th></tr></thead>
+      <tbody>
+      {% for f in faollar %}
+        <tr>
+          <td>{{ f.ism }}{% if f.premium %} <span title="Telegram Premium">★</span>{% endif %}</td>
+          <td class="xira">{{ f.kim }}</td>
+          <td class="xira">{{ f.sinf }}</td>
+          <td class="xira">{{ f.viloyat }}</td>
+          <td class="xira">{{ f.sevimli }}</td>
+          <td class="raqam">{{ f.kun }}</td>
+          <td class="raqam">{{ f.n }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}<p class="izoh-matn">Hali faollik yo'q.</p>{% endif %}
+</section>
+
+<div class="bolim"><h2>Oxirgi ro'yxatdan o'tganlar</h2><p>anketa bilan</p></div>
+
+<section class="karta">
+  <table>
+    <thead><tr><th>Ism</th><th>Qachon</th><th>Kim</th><th>Sinf</th><th>Viloyat</th><th>Qurilma</th><th>Premium</th></tr></thead>
+    <tbody>
+    {% for o in oxirgilar %}
+      <tr>
+        <td>{{ o.ism }}</td>
+        <td class="xira">{{ o.vaqt|date:"d.m H:i" }}</td>
+        <td class="xira">{{ o.kim }}</td>
+        <td class="xira">{{ o.sinf }}</td>
+        <td class="xira">{{ o.viloyat }}</td>
+        <td class="xira">{{ o.qurilma }}</td>
+        <td>{% if o.premium %}★{% else %}<span class="juda-xira">—</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% endblock %}

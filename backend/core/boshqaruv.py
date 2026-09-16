@@ -1418,3 +1418,24 @@ def jonli_json(request):
     if not _yoniq() or not kirganmi(request):
         raise Http404
     return JsonResponse({"royxat": JL.royxat(), "vaqt": timezone.localtime().strftime("%H:%M:%S")})
+
+
+# ---------------------------------------------------------------- tahlil
+
+
+def tahlil(request):
+    """
+    Tahlil — kimlar keladi va nimada faol.
+
+    Uch savolga javob beradi: KIMLAR (anketa, qurilma, Premium), NIMAGA
+    kiradi (sahifalar va tugmalar) va KIM ENG FAOL (sevimli bo'limi bilan).
+    Eski batafsil hodisalar shu sahifa ochilganda tozalanadi — alohida
+    rejali vazifa kerak bo'lmasin.
+    """
+    if not _yoniq():
+        raise Http404
+    if not kirganmi(request):
+        return kirish(request)
+    from . import tahlil as TH
+    TH.tozala()
+    return render(request, "boshqaruv/tahlil.html", TH.statistika(davr(request)) | bolim("tahlil"))

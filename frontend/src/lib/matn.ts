@@ -1620,6 +1620,28 @@ const S = {
     "Отсюда 24 уже не получить — отмени ход",
   ],
 
+  boshBoshla: ["O'rganishni boshlash", "Начать обучение"],
+  boshBoshlaIzoh: ["Sinfingizni tanlang — darslar shu yerdan", "Выберите класс — уроки начинаются здесь"],
+
+  /* ---------------- tanishuv anketasi ---------------- */
+  anketaSarlavha: ["Keling, tanishamiz", "Давайте познакомимся"],
+  anketaIzoh: [
+    "3 ta savol — ilovani sizga moslaymiz",
+    "3 вопроса — настроим приложение под вас",
+  ],
+  anketaKim: ["Siz kimsiz?", "Кто вы?"],
+  anketaOquvchi: ["O'quvchi", "Ученик"],
+  anketaOtaOna: ["Ota-ona", "Родитель"],
+  anketaUstoz: ["Ustoz", "Учитель"],
+  anketaSinf: ["Qaysi sinf?", "Какой класс?"],
+  anketaSinfOta: ["Farzandingiz nechanchi sinfda?", "В каком классе ваш ребёнок?"],
+  anketaSinfUstoz: ["Qaysi sinfga dars berasiz?", "В каком классе преподаёте?"],
+  anketaMaktabgacha: ["Maktabgacha", "Дошкольник"],
+  anketaViloyat: ["Qayerdansiz?", "Откуда вы?"],
+  anketaTayyor: ["Boshlash", "Начать"],
+  anketaOtkaz: ["O'tkazib yuborish", "Пропустить"],
+  anketaQadam: ["{n} / 3", "{n} / 3"],
+
   /* ---------------- xotira o'yini ---------------- */
   xotiraPogona: ["{n}-pog'ona", "Ступень {n}"],
   xotiraEsla: ["Eslab qol…", "Запоминай…"],
