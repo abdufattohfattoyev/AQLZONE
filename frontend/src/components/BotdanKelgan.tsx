@@ -33,6 +33,9 @@
  * `testlar`    — to'plam postidagi «Boshqa testlar» tugmasi
  * boshqasi     — duel chaqiruvi, ya'ni eski xatti-harakat
  *
+ * Oxiridagi `-k` — kanal postidan kelgani (`masala_12-k`). Manzilga
+ * ta'sir qilmaydi, faqat tahlilda manba bo'ladi (`lib/tahlil.ts`).
+ *
  * Belgi ATAYLAB `_` bilan: duel kodlari faqat harf va raqamdan
  * iborat, ya'ni ikkalasi hech qachon adashmaydi. Eski havolalar
  * odamlarning suhbatlarida qolgan va ular avvalgidek ishlashi
@@ -42,6 +45,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { boshParametri } from "../lib/qobiq";
 import { MASALA_BOSH, ROYXAT_PARAM } from "../lib/ulash";
+import { kanalBelgisiz } from "../lib/tahlil";
 import { yolDuelKod, yolMasala, yolMasalalar, yolTestSinf, yolToplam } from "../lib/yollar";
 
 /** Ishlatilgan kod shu yerda qoladi — sessiya davomida. */
@@ -54,7 +58,8 @@ const KALIT = "az_duel_kod";
  * qiymat kelsa, manzilga qo'shilmaydi va odam oddiy duel yo'liga
  * tushmaydi — bunday kod umuman e'tiborsiz qoladi.
  */
-function manzil(kod: string): string | null {
+function manzil(xom: string): string | null {
+  const kod = kanalBelgisiz(xom);
   if (kod === ROYXAT_PARAM) return yolMasalalar();
   if (kod === "testlar") return yolTestSinf();
   if (kod.startsWith("test_")) {

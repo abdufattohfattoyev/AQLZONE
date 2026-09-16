@@ -1625,6 +1625,20 @@ const S = {
   boshBoshla: ["O'rganishni boshlash", "Начать обучение"],
   boshBoshlaIzoh: ["Sinfingizni tanlang — darslar shu yerdan", "Выберите класс — уроки начинаются здесь"],
 
+  /* ---------------- eslatma taklifi ---------------- */
+  eslatmaTaklifMasala: [
+    "Har kuni yangi masala chiqadi. Telegramda eslatib turaylikmi?",
+    "Каждый день новая задача. Напоминать вам в Telegram?",
+  ],
+  eslatmaTaklifTest: [
+    "Yangi test chiqqanda Telegramda xabar beraylikmi?",
+    "Сообщить в Telegram, когда выйдет новый тест?",
+  ],
+  eslatmaTaklifTugma: ["Ha, eslating", "Да, напоминать"],
+  eslatmaTaklifYoq: ["Keyinroq", "Позже"],
+  eslatmaTaklifHa: ["Yaxshi! Ertaga yangi masala bilan yozamiz", "Отлично! Напишем завтра с новой задачей"],
+  toplamBoshqaTestlar: ["Boshqa testlar", "Другие тесты"],
+
   /* ---------------- tanishuv anketasi ---------------- */
   anketaSarlavha: ["Keling, tanishamiz", "Давайте познакомимся"],
   anketaIzoh: [

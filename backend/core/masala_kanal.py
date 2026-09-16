@@ -86,6 +86,10 @@ def _bot() -> str:
     return (getattr(settings, "BOT_USERNAME", "") or "").lstrip("@")
 
 
+#: Kanal postidagi havolaning oxiri — manbani ajratadi.
+KANAL_BELGI = "-k"
+
+
 def havola(masala: Masala) -> str:
     """
     AYNAN shu masalani ochadigan manzil — BIR bosishda.
@@ -104,7 +108,11 @@ def havola(masala: Masala) -> str:
     yuboradi. Ya'ni eski havolalar ham ishlayveradi.
     """
     bot = _bot()
-    return f"https://t.me/{bot}?startapp=masala_{masala.pk}" if bot else ""
+    # `-k` — "kanaldan keldi" belgisi. Ilova uni manzilga qo'shmaydi,
+    # faqat tahlilga yozadi (`lib/tahlil.ts` → manba). Busiz kanal
+    # posti va do'st ulashgan havola bir xil ko'rinardi va "kanal
+    # qancha odam olib keladi" degan savolga javob yo'q edi.
+    return f"https://t.me/{bot}?startapp=masala_{masala.pk}{KANAL_BELGI}" if bot else ""
 
 
 def royxat_havolasi() -> str:

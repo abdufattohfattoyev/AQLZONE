@@ -16,6 +16,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.db.models import Count
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from .models import Hodisa, Pupil
@@ -26,6 +27,19 @@ MAX_BIR_YUBORISH = 60
 
 #: Batafsil hodisalar necha kun saqlanadi.
 SAQLASH_KUN = 120
+
+#: Odam ilovaga QAYERDAN kirdi. Ilova yuboradi (`lib/tahlil.ts` →
+#: `manbaniAniqla`), server faqat shu ro'yxatdagini qabul qiladi.
+MANBALAR = {
+    "kanal": "Kanal posti",
+    "ulashish": "Do'st ulashgan havola",
+    "eslatma": "Bot eslatmasi",
+    "duel": "Duel chaqiruvi",
+    "bot": "Botdan",
+    "telegram": "Telegram (to'g'ridan)",
+    "sayt": "Sayt",
+    "ilova": "Android ilova",
+}
 
 VILOYATLAR = [
     ("toshkent_sh", "Toshkent shahri"), ("toshkent", "Toshkent viloyati"),
@@ -61,11 +75,13 @@ def yoz(pupil: Pupil, kelgan, ua: str = "") -> int:
         if not isinstance(h, dict):
             continue
         tur = str(h.get("tur") or "")
-        if tur not in (Hodisa.SAHIFA, Hodisa.BOSISH):
+        if tur not in (Hodisa.KIRISH, Hodisa.SAHIFA, Hodisa.BOSISH):
             continue
         yol = str(h.get("yol") or "")[:80]
         nom = str(h.get("nom") or "").strip()[:48]
         if tur == Hodisa.BOSISH and not nom:
+            continue
+        if tur == Hodisa.KIRISH and nom not in MANBALAR:
             continue
         # Mijoz soati noto'g'ri bo'lishi mumkin — faqat "necha soniya
         # oldin" qabul qilinadi va u ham chegaralangan.
@@ -131,6 +147,125 @@ def _taqsimot(qs, maydon: str, nomlar: dict, jami: int) -> list[dict]:
     return natija
 
 
+def _kunlar_boyicha(qs) -> dict[int, set]:
+    """Har hisob qaysi KUNLARDA faol bo'lgan (Toshkent vaqti bilan)."""
+    # Kun bazada kesiladi va takrorlar o'sha yerda tashlanadi: bir
+    # kunda yuzta bosish qilgan odam Python'ga bitta qator bo'lib keladi.
+    natija: dict[int, set] = {}
+    for pid, kun in (
+        qs.annotate(kun=TruncDate("created_at")).values_list("pupil_id", "kun").distinct().iterator()
+    ):
+        natija.setdefault(pid, set()).add(kun)
+    return natija
+
+
+def qaytish(boshi, kunlar_boyicha: dict[int, set]) -> dict:
+    """
+    QAYTIB KELADIMI — mahsulotning eng muhim raqami.
+
+    Guruh: shu davrda BIRINCHI marta ko'ringan hisoblar (birinchi
+    hodisasi davr ichida). Har biri uchun:
+
+      ertasi     keyingi kalendar kunida qaytdimi
+      7 kun      2..7-kunlar oralig'ida kamida bir marta qaytdimi
+      har qachon birinchi kundan keyin umuman qaytdimi
+
+    Foiz faqat YETARLI VAQT o'tgan hisoblardan olinadi: kecha kelgan
+    odam "7 kunda qaytmadi" deb sanalsa, raqam yolg'on past chiqardi.
+    """
+    bugun = timezone.localdate()
+    bosh_kun = timezone.localtime(boshi).date()
+    guruh = {pid: min(k) for pid, k in kunlar_boyicha.items() if min(k) >= bosh_kun}
+
+    def ulush(shart, kerak_kun: int):
+        tayyor = [pid for pid, b in guruh.items() if (bugun - b).days >= kerak_kun]
+        qaytgan = sum(1 for pid in tayyor if shart(kunlar_boyicha[pid], guruh[pid]))
+        return {"n": qaytgan, "jami": len(tayyor),
+                "foiz": round(100 * qaytgan / len(tayyor)) if tayyor else None}
+
+    return {
+        "yangi": len(guruh),
+        "ertasi": ulush(lambda k, b: any((d - b).days == 1 for d in k), 1),
+        "hafta": ulush(lambda k, b: any(2 <= (d - b).days <= 7 for d in k), 7),
+        "umuman": ulush(lambda k, b: any(d > b for d in k), 1),
+    }
+
+
+def manbalar(boshi, kunlar_boyicha: dict[int, set]) -> list[dict]:
+    """
+    QAYERDAN kelganlar qanchalik QOLADI.
+
+    Har hisob BIRINCHI kirishidagi manbaga yoziladi. Keyin uch savol:
+
+      bir martalik   faqat bitta kun va bitta ekran — masalan kanaldan
+                     kelib, bitta masalani ochib, chiqib ketgan
+      ichkariga      boshqa ekranga ham o'tgan (masaladan keyin
+                     ro'yxatga, darsga...)
+      qaytgan        boshqa KUNI yana kirgan
+
+    "Kanal" qatorida bir martaliklar ko'p bo'lsa — kanal odam olib
+    kelyapti, lekin ilova uni ushlab qololmayapti.
+    """
+    birinchi: dict[int, str] = {}
+    for pid, nom in (
+        Hodisa.objects.filter(tur=Hodisa.KIRISH, created_at__gte=boshi)
+        .order_by("created_at").values_list("pupil_id", "nom").iterator()
+    ):
+        birinchi.setdefault(pid, nom)
+    if not birinchi:
+        return []
+
+    ekranlar: dict[int, set] = {}
+    for pid, yol in (
+        Hodisa.objects.filter(tur=Hodisa.SAHIFA, created_at__gte=boshi, pupil_id__in=list(birinchi))
+        .values_list("pupil_id", "yol").distinct().iterator()
+    ):
+        ekranlar.setdefault(pid, set()).add(yol)
+
+    guruh: dict[str, dict] = {}
+    for pid, manba in birinchi.items():
+        g = guruh.setdefault(manba, {"kod": manba, "nom": MANBALAR.get(manba, manba),
+                                     "odam": 0, "bir_martalik": 0, "ichkariga": 0, "qaytgan": 0})
+        g["odam"] += 1
+        kunlar = kunlar_boyicha.get(pid, set())
+        ekran = ekranlar.get(pid, set())
+        if len(kunlar) > 1:
+            g["qaytgan"] += 1
+        if len(ekran) > 1:
+            g["ichkariga"] += 1
+        if len(kunlar) <= 1 and len(ekran) <= 1:
+            g["bir_martalik"] += 1
+    natija = sorted(guruh.values(), key=lambda g: -g["odam"])
+    for g in natija:
+        for k in ("bir_martalik", "ichkariga", "qaytgan"):
+            g[k + "_foiz"] = round(100 * g[k] / g["odam"])
+    return natija
+
+
+def chiqish_nuqtalari(boshi) -> list[dict]:
+    """
+    Odamlar QAYSI EKRANDA ilovani tashlab ketadi.
+
+    Har hisobning har KUNIDAGI oxirgi ochilgan ekrani olinadi. Bitta
+    ekran ro'yxat tepasida bo'lsa — o'sha yerda keyingi qadam yo'q
+    yoki u odamni to'xtatib qo'yyapti.
+    """
+    oxirgi: dict[tuple, str] = {}
+    for pid, vaqt, yol in (
+        Hodisa.objects.filter(tur=Hodisa.SAHIFA, created_at__gte=boshi)
+        .order_by("created_at").values_list("pupil_id", "created_at", "yol").iterator()
+    ):
+        oxirgi[(pid, timezone.localtime(vaqt).date())] = yol
+    sanoq: dict[str, int] = {}
+    for yol in oxirgi.values():
+        sanoq[yol] = sanoq.get(yol, 0) + 1
+    jami = sum(sanoq.values()) or 1
+    return [
+        {"yol": y, "n": n, "foiz": round(100 * n / jami)}
+        for y, n in sorted(sanoq.items(), key=lambda x: -x[1])[:10]
+    ]
+
+
 def statistika(kunlar: int = 30) -> dict:
     hozir = timezone.now()
     boshi = hozir - timedelta(days=kunlar)
@@ -142,6 +277,10 @@ def statistika(kunlar: int = 30) -> dict:
 
     hodisa = Hodisa.objects.filter(created_at__gte=boshi)
     faol_hisob = hodisa.values("pupil").distinct().count()
+
+    # Qaytish uchun HAMMA tarix kerak: davr boshida kelgan odamning
+    # "birinchi kuni" davrdan oldin bo'lmaganini bilish uchun.
+    kunlar_boyicha = _kunlar_boyicha(Hodisa.objects.all())
 
     sahifalar = list(
         hodisa.filter(tur=Hodisa.SAHIFA).values("yol")
@@ -216,6 +355,10 @@ def statistika(kunlar: int = 30) -> dict:
         "tugmalar": tugmalar,
         "faollar": faollar,
         "oxirgilar": oxirgilar,
+        "qaytish": qaytish(boshi, kunlar_boyicha),
+        "manbalar": manbalar(boshi, kunlar_boyicha),
+        "chiqishlar": chiqish_nuqtalari(boshi),
+        "yozish_ruxsat": hisoblar.filter(yozish_ruxsat_at__isnull=False).count(),
         "hodisa_soni": hodisa.count(),
         "bosish_soni": hodisa.filter(tur=Hodisa.BOSISH).count(),
     }

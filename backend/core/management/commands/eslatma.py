@@ -37,12 +37,12 @@ import time
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.utils import timezone
 
 from core import xabar as X
 from core.matn import M, tilni_tanla
-from core.models import Identity, LessonResult, Pupil
+from core.models import Identity, LessonResult, MasalaUrinish, Pupil, TestIshlash
 
 #: Shu kundan beri umuman faol bo'lmaganlarga yozmaymiz.
 FAOL_KUN = 14
@@ -57,7 +57,35 @@ ZANJIR_CHEGARA = 60
 CHEKLOV = 5000
 
 
-def zanjir(profil_idlar: list[int], bugun) -> int:
+def mashq_vaqtlari(pupil_id: int, profil_idlar: list[int], boshi):
+    """
+    Shu hisobda MASHQ qilingan hamma paytlar — `boshi` dan beri.
+
+    ─────────────── NEGA FAQAT DARS EMAS ───────────────
+
+    Ilgari "faol" degani faqat "dars tugatgan" edi (`LessonResult`).
+    Kanaldagi masalani yechib ketgan odam esa bitta ham dars ochmaydi
+    — ya'ni u hech qachon "faol" bo'lmas va eslatma olmasdi. Aynan
+    qaytarish eng kerak bo'lgan odamlar ro'yxatdan tushib qolardi.
+
+    Endi masala urinishi, masala yechilishi va test to'plami ham
+    mashq hisoblanadi. Ilovani shunchaki ochish (`Hodisa`) HISOBLANMAYDI:
+    ochib yopgan odamga "bugun mashq qildingiz" deyish yolg'on bo'lardi.
+    """
+    vaqtlar = list(LessonResult.objects.filter(
+        profile_id__in=profil_idlar, created_at__gte=boshi,
+    ).values_list("created_at", flat=True))
+    for u in MasalaUrinish.objects.filter(profile_id__in=profil_idlar).filter(
+        Q(created_at__gte=boshi) | Q(yechdi_at__gte=boshi),
+    ).values_list("created_at", "yechdi_at"):
+        vaqtlar += [v for v in u if v and v >= boshi]
+    vaqtlar += list(TestIshlash.objects.filter(
+        profile_id__in=profil_idlar, created_at__gte=boshi,
+    ).values_list("created_at", flat=True))
+    return vaqtlar
+
+
+def zanjir(profil_idlar: list[int], bugun, pupil_id: int = 0) -> int:
     """
     Ketma-ket necha kun mashq qilingan (bugun hisobga olinmaydi).
 
@@ -66,10 +94,9 @@ def zanjir(profil_idlar: list[int], bugun) -> int:
     """
     kunlar = {
         timezone.localtime(v).date()
-        for v in LessonResult.objects.filter(
-            profile_id__in=profil_idlar,
-            created_at__gte=timezone.now() - timedelta(days=ZANJIR_CHEGARA),
-        ).values_list("created_at", flat=True)
+        for v in mashq_vaqtlari(
+            pupil_id, profil_idlar, timezone.now() - timedelta(days=ZANJIR_CHEGARA),
+        )
     }
     n = 0
     kun = bugun - timedelta(days=1)
@@ -164,9 +191,16 @@ class Command(BaseCommand):
         kun_raqami = bugun.toordinal()
         havola = X.ilova_havolasi()
 
-        # Bugun dars tugatgan profillar — ularga yozmaymiz.
+        # Bugun MASHQ qilgan profillar — ularga yozmaymiz. Dars ham,
+        # masala ham, test ham (`mashq_vaqtlari` izohi).
         bugungilar = set(
             LessonResult.objects.filter(created_at__date=bugun)
+            .values_list("profile_id", flat=True)
+        ) | set(
+            MasalaUrinish.objects.filter(Q(created_at__date=bugun) | Q(yechdi_at__date=bugun))
+            .values_list("profile_id", flat=True)
+        ) | set(
+            TestIshlash.objects.filter(created_at__date=bugun)
             .values_list("profile_id", flat=True)
         )
 
@@ -204,17 +238,14 @@ class Command(BaseCommand):
             if not qolganlar:
                 continue
 
-            # Yaqinda faol bo'lganmi?
+            # Yaqinda mashq qilganmi — dars, masala yoki test.
             idlar = [p.pk for p in profillar]
-            oxirgi = LessonResult.objects.filter(profile_id__in=idlar).aggregate(
-                oxirgi=Max("created_at")
-            )["oxirgi"]
-            if oxirgi is None or oxirgi < chegara:
+            if not mashq_vaqtlari(pupil.pk, idlar, chegara):
                 continue
 
             til = tilni_tanla(pupil.til)
             ism = ism_tanla(qolganlar[0], pupil, til)
-            matn = matn_yasa(ism, zanjir(idlar, bugun), kun_raqami, til)
+            matn = matn_yasa(ism, zanjir(idlar, bugun, pupil.pk), kun_raqami, til)
 
             if sinov:
                 self.stdout.write(f"  → {kirish.external_id} ({ism}):")
@@ -222,7 +253,10 @@ class Command(BaseCommand):
                 yuborildi += 1
             else:
                 holat, sabab = X.yubor(
-                    kirish.external_id, matn, tugma=M("tMashqQilish", til), havola=havola,
+                    kirish.external_id, matn, tugma=M("tMashqQilish", til),
+                    # `?manba=eslatma` — tahlilda "eslatmadan qaytdi" deb
+                    # sanalsin: eslatma odam qaytaradimi, shu bilan o'lchanadi.
+                    havola=X.manba_bilan(havola, "eslatma"),
                     # Eslatma tugmasi ilovani BOT ICHIDA ochadi: brauzerga
                     # chiqib ketgan odam u yerda qaytadan kirishi kerak
                     # bo'lardi va aynan o'sha qadamda ko'pchilik to'xtaydi.

@@ -674,7 +674,8 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     # bot bilan SUHBAT ochadi, ya'ni unga keyin eslatma yuborish
     # mumkin bo'ladi. `?startapp=` da suhbat ochilmaydi.
     if matn.startswith("/start masala_"):
-        xom = matn.split("masala_", 1)[1].strip()[:12]
+        # `-k` (kanal belgisi) raqamdan ajratiladi.
+        xom = matn.split("masala_", 1)[1].strip()[:12].split("-")[0]
         if xom.isdigit() and int(xom) > 0:
             bolimni_yubor(chat_id, til, f"/masalalar/{int(xom)}", "masalaBot")
             return f"{tg_id}: masala havolasi (#{int(xom)})"
@@ -682,7 +683,7 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     # Test to'plami posti: `/start test_<id>` va `/start testlar`.
     # `?start=` zaxira yo'li — sababi yuqoridagi masala izohida.
     if matn.startswith("/start test_"):
-        xom = matn.split("test_", 1)[1].strip()[:12]
+        xom = matn.split("test_", 1)[1].strip()[:12].split("-")[0]
         if xom.isdigit() and int(xom) > 0:
             bolimni_yubor(chat_id, til, f"/toplam/{int(xom)}", "toplamBot")
             return f"{tg_id}: test to'plami havolasi (#{int(xom)})"

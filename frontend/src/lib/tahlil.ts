@@ -18,6 +18,13 @@
  * navbatda turadi va har 15 soniyada yoki ilova fonga ketganda bitta
  * so'rov bilan jo'natiladi.
  *
+ * ─────────────── QAYERDAN KELDI ───────────────
+ *
+ * Ilova har ochilganda BITTA `kirish` hodisasi yuboriladi va unda
+ * manba bo'ladi: kanal posti, do'st ulashgan havola, bot eslatmasi...
+ * Panel shundan "kanaldan kelganlar qoladimi yoki bitta masala yechib
+ * ketadimi" degan savolga javob beradi.
+ *
  * Xato YUTILADI: kuzatuvning yiqilishi bolaning ishiga ta'sir
  * qilmasligi kerak. Yuborilmagan navbat yo'qoladi — bu qabul qilingan
  * narx.
@@ -25,9 +32,10 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { isSignedIn, sorov } from "./api";
+import { boshParametri, qobiq, tgda } from "./qobiq";
 
 interface Hodisa {
-  tur: "sahifa" | "bosish";
+  tur: "kirish" | "sahifa" | "bosish";
   yol: string;
   nom?: string;
   /** Qo'shilgan paytdagi vaqt — yuborishda "necha soniya oldin" ga aylanadi. */
@@ -35,9 +43,51 @@ interface Hodisa {
 }
 
 const YUBORISH_MS = 15_000;
+
+/** Shu ochilishda kirish hodisasi yozildimi. */
+let kirishBelgilandi = false;
 const MAX_NAVBAT = 60;
 
 let navbat: Hodisa[] = [];
+
+/** Kanal posti havolasining oxiri (`backend/core/masala_kanal.py`). */
+const KANAL_BELGI = "-k";
+
+/** `masala_12-k` → `masala_12`. */
+export const kanalBelgisiz = (kod: string): string =>
+  kod.endsWith(KANAL_BELGI) ? kod.slice(0, -KANAL_BELGI.length) : kod;
+
+/**
+ * Sahifa ochilgan paytdagi `?manba=` — bot eslatmasi tugmasi qo'yadi.
+ * Modul yuklanganda o'qiladi: marshrut almashgach so'rov qatori yo'qoladi.
+ */
+const URL_MANBA = (() => {
+  try { return new URLSearchParams(location.search).get("manba") ?? ""; } catch { return ""; }
+})();
+
+/** Kirish qachon bo'lgani va birinchi ekran — yuborilguncha shu yerda. */
+let kirish: { vaqt: number; yol: string } | null = null;
+
+/**
+ * Odam ilovaga QAYERDAN kirdi.
+ *
+ * Birinchi yuborishda aniqlanadi, ilova ochilganda EMAS: Telegram
+ * skripti kechikib yuklanishi mumkin va o'shanda `start_param` hali
+ * bo'sh bo'lib, kanaldan kelgan odam "to'g'ridan" deb yozilardi.
+ */
+function manbaniAniqla(): string {
+  if (URL_MANBA === "eslatma") return "eslatma";
+  const kod = boshParametri();
+  if (kod) {
+    if (kod.endsWith(KANAL_BELGI)) return "kanal";
+    // Postdagi "Boshqa masalalar / testlar" tugmalari ham kanalniki.
+    if (kod === "masalalar" || kod === "testlar") return "kanal";
+    if (kod.startsWith("masala_") || kod.startsWith("test_")) return "ulashish";
+    return "duel";
+  }
+  if (tgda()) return "telegram";
+  return qobiq() === "apk" ? "ilova" : "sayt";
+}
 
 /**
  * Manzilni umumlashtiradi: `/masalalar/17` → `/masalalar/:id`.
@@ -64,6 +114,10 @@ function qosh(h: Omit<Hodisa, "vaqt">) {
 function yubor() {
   if (!navbat.length || !isSignedIn()) return;
   const hozir = Date.now();
+  if (kirish) {
+    navbat.unshift({ tur: "kirish", yol: kirish.yol, nom: manbaniAniqla(), vaqt: kirish.vaqt });
+    kirish = null;
+  }
   const tana = {
     hodisalar: navbat.map(({ vaqt, ...h }) => ({
       ...h, oldin: Math.round((hozir - vaqt) / 1000),
@@ -97,7 +151,36 @@ export function useTahlil(): void {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    qosh({ tur: "sahifa", yol: yolniUmumlashtir(pathname) });
+    const yol = yolniUmumlashtir(pathname);
+    if (kirishBelgilandi) {
+      qosh({ tur: "sahifa", yol });
+      return;
+    }
+    // Birinchi ekran — kirishning "qo'nish joyi".
+    //
+    // Kanal havolasi bilan kelganda ilova AVVAL bosh sahifada ochiladi
+    // va bir lahzadan keyin masalaga o'tadi (`BotdanKelgan`). O'sha
+    // lahzalik "/" yozilsa, masala ochib chiqib ketgan odam "ikki ekran
+    // ko'rdi" bo'lib, panelda "ichkariga kirdi" deb sanalardi. Shuning
+    // uchun bosh sahifa qo'nish joyi bo'lsa, u KUTIB turadi: 3,5
+    // soniyada odam hali ham shu yerda bo'lsa — haqiqatan shu yerga kelgan.
+    kirishBelgilandi = true;
+    const vaqt = Date.now();
+    if (yol !== "/") {
+      kirish = { vaqt, yol };
+      qosh({ tur: "sahifa", yol });
+      return;
+    }
+    const id = setTimeout(() => {
+      if (kirish) return;
+      kirish = { vaqt, yol: yolniUmumlashtir(location.pathname) };
+      if (location.pathname === "/") qosh({ tur: "sahifa", yol: "/" });
+    }, 3500);
+    return () => {
+      // Marshrut o'zgardi — ya'ni "/" o'tkinchi edi: kirish yangi ekranga.
+      clearTimeout(id);
+      if (!kirish) kirish = { vaqt, yol: yolniUmumlashtir(location.pathname) };
+    };
   }, [pathname]);
 
   useEffect(() => {

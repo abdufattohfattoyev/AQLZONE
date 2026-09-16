@@ -14,6 +14,7 @@
  */
 import { useEffect, useState } from "react";
 import { Blok } from "./Blok";
+import { EslatmaTaklif } from "../components/EslatmaTaklif";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { bittasi, kanalgaYubor, type Toplam } from "../lib/toplam";
@@ -74,7 +75,7 @@ export function ToplamSahifa({ id, onBack }: { id: number; onBack: () => void })
       {x && (
         <div className="az-kirish mt-4 overflow-hidden rounded-[28px] bg-karta shadow-clay">
           {/* ---- sarlavha ---- */}
-          <div className="relative bg-[linear-gradient(135deg,var(--color-brand-purple),var(--color-brand-blue))]
+          <div className="relative bg-brand-blue
                           px-5 pt-6 pb-5 text-white">
             <span aria-hidden className="pointer-events-none absolute -right-3 -bottom-8 font-display
                                          text-[120px] leading-none text-white/15">{x.sinf}</span>
@@ -111,16 +112,41 @@ export function ToplamSahifa({ id, onBack }: { id: number; onBack: () => void })
             </div>
           </div>
 
-          <p className="mx-4 rounded-2xl bg-brand-gold/15 px-3.5 py-2.5 text-[12.5px] leading-snug text-ink-soft">
-            {t("toplamQoida")}
-          </p>
+          {/* Qoida faqat hali ishlamaganga kerak — ishlagan uni bilib bo'ldi. */}
+          {!x.mening && (
+            <p className="mx-4 rounded-2xl bg-track px-3.5 py-2.5 text-[12.5px] leading-snug text-ink-soft">
+              {t("toplamQoida")}
+            </p>
+          )}
 
           <div className="p-4">
-            <button type="button" onClick={() => { tebrat("tanlov"); setBoshlandi(true); }}
-              className="az-yaltir tugma-3d w-full rounded-3xl bg-brand-green py-3.5 font-display text-lg
-                         text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
-              {x.mening ? t("toplamQaytaIshlash") : t("toplamBoshlash")}
-            </button>
+            {/* ---- asosiy amal ----
+                Ishlamagan — "Boshlash" (ko'k, katta).
+                Ishlagan — "Boshqa testlar" katta, "Qayta ishlash" kichik.
+                Ilgari tugagan testdan keyin faqat "Qayta ishlash" qolardi:
+                kanaldan kelgan odam uchun bu berk ko'cha edi — keyingi
+                qadam yo'q, u shu yerda chiqib ketardi. */}
+            {x.mening ? (
+              <>
+                <button type="button" onClick={onBack} data-tahlil="Test: boshqa testlar"
+                  className="tugma-3d flex w-full items-center justify-center gap-2 rounded-3xl bg-brand-blue
+                             py-3.5 font-display text-lg text-white shadow-[0_6px_0_var(--color-brand-blue-d)]">
+                  {t("toplamBoshqaTestlar")}
+                  <Icon name="chevron" size={18} />
+                </button>
+                <button type="button" onClick={() => { tebrat("tanlov"); setBoshlandi(true); }}
+                  className="clay-press mt-2 min-h-11 w-full rounded-3xl text-[14px] text-ink-soft">
+                  {t("toplamQaytaIshlash")}
+                </button>
+                <EslatmaTaklif matn={t("eslatmaTaklifTest")} />
+              </>
+            ) : (
+              <button type="button" onClick={() => { tebrat("tanlov"); setBoshlandi(true); }}
+                className="tugma-3d w-full rounded-3xl bg-brand-blue py-3.5 font-display text-lg
+                           text-white shadow-[0_6px_0_var(--color-brand-blue-d)]">
+                {t("toplamBoshlash")}
+              </button>
+            )}
 
             {/* ---- admin: kanalga joylash ---- */}
             {x.kanal && (

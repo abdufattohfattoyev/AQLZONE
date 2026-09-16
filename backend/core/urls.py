@@ -38,6 +38,8 @@ urlpatterns = [
     path("hodisalar", views.hodisalar, name="hodisalar"),
     # Ro'yxatdan keyingi uch savol: kim, sinf, viloyat.
     path("anketa", views.anketa, name="anketa"),
+    # Mini App'da "eslatib turing" — bot endi yoza oladi.
+    path("yozish-ruxsat", views.yozish_ruxsat, name="yozish-ruxsat"),
     path("duel/royxat", views.duel_royxat, name="duel-royxat"),
     path("duel/<str:kod>", views.duel_korish, name="duel-korish"),
     path("duel/<str:kod>/qabul", views.duel_qabul, name="duel-qabul"),

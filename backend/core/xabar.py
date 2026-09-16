@@ -517,6 +517,18 @@ def bot_havolasi(qayerdan: str = "") -> str:
     return f"https://t.me/{bot}?start={qayerdan}" if qayerdan else f"https://t.me/{bot}"
 
 
+def manba_bilan(havola: str, manba: str) -> str:
+    """
+    Sayt manziliga `?manba=` qo'shadi — ilova uni tahlilga yozadi.
+
+    Faqat SAYT manzilida: `t.me/...` havolasiga begona parametr
+    qo'shilsa Telegram uni tushunmaydi.
+    """
+    if not havola or "t.me/" in havola:
+        return havola
+    return f"{havola}{'&' if '?' in havola else '?'}manba={manba}"
+
+
 def ilova_havolasi() -> str:
     """
     Ilovaning o'zi — eslatma tugmasi shu yerga olib boradi.

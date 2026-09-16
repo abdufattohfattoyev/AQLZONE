@@ -70,6 +70,8 @@ interface TgWebApp {
     selectionChanged(): void;
   };
   ready?(): void;
+  /** Bot foydalanuvchiga yozishi uchun ruxsat so'raydi (6.9+). */
+  requestWriteAccess?(cb?: (berdi: boolean) => void): void;
   expand?(): void;
   isVersionAtLeast?(v: string): boolean;
   setHeaderColor?(rang: string): void;

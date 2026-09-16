@@ -38,6 +38,7 @@ import { useEffect, useRef, useState } from "react";
 import { MasalaBaho } from "../components/MasalaBaho";
 import { useFaollik } from "../lib/faollik";
 import { MasalaMatn } from "../components/MasalaMatn";
+import { EslatmaTaklif } from "../components/EslatmaTaklif";
 import { TangaOqim } from "../components/TangaOqim";
 import { TangaSorov } from "../components/TangaSorov";
 import { Variantlar } from "../components/Variantlar";
@@ -714,6 +715,14 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
             </button>
           )}
         </div>
+      )}
+
+      {/* ---- eslatma taklifi ----
+          To'g'ri javobdan KEYIN — odam hozirgina yutgan. Kanaldan
+          kelgan odamni ertaga qaytarishning yagona yo'li shu
+          (`components/EslatmaTaklif.tsx`). */}
+      {natija?.togri && m.holat === "tasdiq" && (
+        <EslatmaTaklif matn={t("eslatmaTaklifMasala")} />
       )}
 
       {/* ---- "yechgansiz" belgisi ----

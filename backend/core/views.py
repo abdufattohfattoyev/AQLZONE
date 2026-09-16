@@ -1937,6 +1937,17 @@ def hodisalar(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+def yozish_ruxsat(request):
+    """Mini App'da bot yozishiga ruxsat berildi — birinchi payt saqlanadi."""
+    p: Pupil = request.user
+    if p.yozish_ruxsat_at is None:
+        p.yozish_ruxsat_at = timezone.now()
+        p.save(update_fields=["yozish_ruxsat_at"])
+    return Response({"ok": True})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def anketa(request):
     """Tanishuv anketasi: kim, sinf, viloyat. Hammasi ixtiyoriy."""
     d = request.data if hasattr(request.data, "get") else {}

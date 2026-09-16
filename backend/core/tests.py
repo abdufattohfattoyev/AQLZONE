@@ -477,7 +477,8 @@ class EslatmaTest(TestCase):
         self.assertEqual(tugma["text"], "Mashq qilish")
         # Ilova BOT ICHIDA ochiladi — brauzerga chiqarib yuboradigan
         # oddiy havola emas.
-        self.assertEqual(tugma["web_app"], {"url": "https://aql-zone.uz"})
+        # `?manba=eslatma` — tahlilda eslatmadan qaytganlar ajralsin.
+        self.assertEqual(tugma["web_app"], {"url": "https://aql-zone.uz?manba=eslatma"})
         self.assertNotIn("url", tugma)
 
     @patch("core.xabar._sorov", return_value=(True, 200, ""))
@@ -4421,7 +4422,8 @@ class MasalaKanalTest(TestCase):
     def test_havola_ilovani_shu_masalada_ochadi(self):
         m = self.masala_yasa()
         self.assertEqual(
-            MK.havola(m), f"https://t.me/aqlzone_bot?startapp=masala_{m.pk}",
+            # `-k` — kanaldan kelganini tahlilga bildiradi.
+            MK.havola(m), f"https://t.me/aqlzone_bot?startapp=masala_{m.pk}-k",
         )
 
     def test_sarlavhada_shart_va_sinf_bor(self):
@@ -6349,3 +6351,74 @@ class TahlilTest(TestCase):
         self.assertContains(r, "/testlar")
         self.assertContains(r, "7-sinf")
         self.assertContains(r, "O&#x27;quvchi")
+
+
+@override_settings(BOSHQARUV_YONIQ=True, ADMIN_TG=[ADMIN_ID])
+class UshlabQolishTest(TestCase):
+    """
+    Qaytish tahlili, manbalar va eslatmaning masala faolligini ko'rishi.
+    """
+
+    def test_kirish_manbasi_faqat_royxatdagisi(self):
+        p = Pupil.objects.create(first_name="A")
+        from . import tahlil as TH
+        n = TH.yoz(p, [
+            {"tur": "kirish", "nom": "kanal", "yol": "/masalalar/:id"},
+            {"tur": "kirish", "nom": "yolgon"},
+        ])
+        self.assertEqual(n, 1)
+
+    def test_qaytish_va_manba_hisoblanadi(self):
+        from . import tahlil as TH
+        hozir = timezone.now()
+        # Kanaldan kelib, bitta masala ochib ketgan.
+        bir = Pupil.objects.create(first_name="Bir")
+        # Kanaldan kelib, ertasi kuni qaytgan.
+        qaytgan = Pupil.objects.create(first_name="Qaytgan")
+        for p, kunlar in ((bir, [9]), (qaytgan, [9, 8])):
+            for k in kunlar:
+                vaqt = hozir - timedelta(days=k)
+                MDL.Hodisa.objects.create(pupil=p, tur="kirish", nom="kanal", created_at=vaqt)
+                MDL.Hodisa.objects.create(pupil=p, tur="sahifa", yol="/masalalar/:id", created_at=vaqt)
+        MDL.Hodisa.objects.create(pupil=qaytgan, tur="sahifa", yol="/masalalar",
+                                  created_at=hozir - timedelta(days=8))
+
+        d = TH.statistika(30)
+        self.assertEqual(d["qaytish"]["yangi"], 2)
+        self.assertEqual(d["qaytish"]["ertasi"]["n"], 1)
+        self.assertEqual(d["qaytish"]["ertasi"]["foiz"], 50)
+        kanal = d["manbalar"][0]
+        self.assertEqual((kanal["kod"], kanal["odam"], kanal["bir_martalik"], kanal["qaytgan"]),
+                         ("kanal", 2, 1, 1))
+        self.assertTrue(any(c["yol"] == "/masalalar/:id" for c in d["chiqishlar"]))
+
+        kod = boshqaruv.havola_yasa(ADMIN_ID).rsplit("/", 1)[-1]
+        self.client.get(f"/boshqaruv/havola/{kod}")
+        r = self.client.get("/boshqaruv/tahlil")
+        self.assertContains(r, "Qaytib keladimi")
+        self.assertContains(r, "Kanal posti")
+
+    def test_yozish_ruxsat_saqlanadi(self):
+        r = self.client.post("/api/v1/auth/device", {"deviceId": "ruxsat-0123456789abcdef"},
+                             content_type="application/json")
+        h = {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+        self.assertEqual(self.client.post("/api/v1/yozish-ruxsat", **h).status_code, 200)
+        self.assertIsNotNone(Pupil.objects.get().yozish_ruxsat_at)
+
+    @override_settings(BOT_TOKEN="x")
+    def test_eslatma_masala_yechganni_ham_faol_sanaydi(self):
+        """Faqat kanal masalasini yechgan (darssiz) odam ham eslatma oladi."""
+        p = Pupil.objects.create(first_name="Kanalchi")
+        Identity.objects.create(pupil=p, provider=Identity.TELEGRAM, external_id="9001")
+        muallif = Pupil.objects.create(first_name="M").asosiy_profil()
+        m = Masala.objects.create(muallif=muallif, matn="2+2", javob="4", yechim="4",
+                                  holat=Masala.TASDIQ)
+        MDL.MasalaUrinish.objects.create(masala=m, profile=p.asosiy_profil(), togri=True)
+        MDL.MasalaUrinish.objects.filter(profile=p.asosiy_profil()).update(
+            created_at=timezone.now() - timedelta(days=2))
+        chiqish = StringIO()
+        call_command("eslatma", "--sinov", stdout=chiqish)
+        self.assertIn("9001", chiqish.getvalue())
+
+    def test_bot_kanal_belgili_havolani_tushunadi(self):
+        self.assertEqual("12-k".split("-")[0], "12")

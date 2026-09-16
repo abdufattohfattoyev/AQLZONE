@@ -186,6 +186,15 @@ class Pupil(models.Model):
     tg_premium = models.BooleanField(default=False)
     qurilma = models.CharField(max_length=12, default="", blank=True)
 
+    #: Telegram Mini App ichida "botga menga yozishga ruxsat beraman"
+    #: bosilgan payt (`WebApp.requestWriteAccess`).
+    #:
+    #: Kanaldagi masala tugmasi Mini App'ni TO'G'RIDAN-TO'G'RI ochadi —
+    #: odam botni hech qachon /start qilmagan bo'ladi va bot unga
+    #: umuman yoza olmaydi. Ya'ni kunlik eslatma aynan kanaldan
+    #: kelganlarga yetib bormasdi. Shu ruxsat bu yo'lni ochadi.
+    yozish_ruxsat_at = models.DateTimeField(null=True, blank=True, default=None)
+
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -1548,6 +1557,8 @@ class Hodisa(models.Model):
 
     ─────────────────────── IKKI TUR ───────────────────────
 
+        kirish   ilova ochildi — `nom` da MANBA (kanal, ulashish,
+                 eslatma...), `yol` da birinchi ekran
         sahifa   ekran ochildi — `yol` da manzil ("/masalalar")
         bosish   tugma bosildi — `nom` da tugma yozuvi
 
@@ -1561,9 +1572,10 @@ class Hodisa(models.Model):
     faqat so'nggi davr uchun kerak, eskisi yig'ma sonlarda qoladi.
     """
 
+    KIRISH = "kirish"
     SAHIFA = "sahifa"
     BOSISH = "bosish"
-    TURLAR = [(SAHIFA, "Sahifa"), (BOSISH, "Bosish")]
+    TURLAR = [(KIRISH, "Kirish"), (SAHIFA, "Sahifa"), (BOSISH, "Bosish")]
 
     pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="hodisalar")
     tur = models.CharField(max_length=8, choices=TURLAR)

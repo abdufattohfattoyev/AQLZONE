@@ -119,7 +119,8 @@ def _bot() -> str:
 def havola(t: TestToplam) -> str:
     """AYNAN shu to'plamni ochadigan manzil (`masala_kanal.havola` dagi izoh)."""
     bot = _bot()
-    return f"https://t.me/{bot}?startapp={BOSH}{t.pk}" if bot else ""
+    # `-k` — kanaldan kelganini tahlilga bildiradi (`masala_kanal.KANAL_BELGI`).
+    return f"https://t.me/{bot}?startapp={BOSH}{t.pk}-k" if bot else ""
 
 
 def royxat_havolasi() -> str:
