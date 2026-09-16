@@ -221,36 +221,6 @@ def variantlar_qatori(masala: Masala) -> str:
     )
 
 
-def kechagi_qatori(masala: Masala) -> str:
-    """
-    Oldingi postga ishora — postlarni SERIYAGA aylantiradi.
-
-    Ilgari har kungi post yakka edi: kechagi masalani necha kishi
-    yechgani hech qayerda aytilmasdi va obunachi uchun "kecha
-    o'tkazib yubordim" degan tuyg'u ham yo'q edi. Endi yangi post
-    kechagisini eslatadi:
-
-        yechganlar bor     👏 Kechagi #16 masalani 9 kishi yechdi
-        hech kim yechmagan 🤔 Kechagi #16 masalani hali hech kim yechmadi
-
-    Raqam — kanaldagi o'sha postga HAVOLA: yechmagan odam bir bosishda
-    qaytib, urinib ko'radi. Kanalda bu eng arzon qaytish yo'li.
-    """
-    chegara = masala.kanal_at or timezone.now()
-    oldingi = (
-        Masala.objects.filter(kanal_at__lt=chegara, kanal_yoq=False, kanal_post_id__isnull=False)
-        .exclude(pk=masala.pk).order_by("-kanal_at").first()
-    )
-    if oldingi is None or oldingi.raqam is None:
-        return ""
-    manzil = post_havolasi(oldingi)
-    nom = f"#{oldingi.raqam}"
-    raqam = f'<a href="{html.escape(manzil)}">{nom}</a>' if manzil else nom
-    if oldingi.yechdi_soni:
-        return f"👏 Kechagi {raqam} masalani {oldingi.yechdi_soni} kishi yechdi"
-    return f"🤔 Kechagi {raqam} masalani hali hech kim yechmadi — sizchi?"
-
-
 def sarlavha(masala: Masala) -> str:
     """
     Rasm ostidagi yozuv.
@@ -301,12 +271,11 @@ def sarlavha(masala: Masala) -> str:
 
     variantlar = variantlar_qatori(masala)
     qiyinlik = qiyinlik_qatori(masala)
-    kechagi = kechagi_qatori(masala)
 
     # Matnga qolgan joy: variantlar allaqachon o'z ulushini oldi.
     # Busiz uzun shartli test masalasida sarlavha Telegram
     # chegarasidan oshib ketardi va xabar umuman ketmasdi.
-    joy = MATN_JOYI - len(variantlar) - len(kechagi)
+    joy = MATN_JOYI - len(variantlar)
     matn = masala.matn.strip()
     if len(matn) > joy:
         kesik = matn[:joy]
@@ -333,8 +302,6 @@ def sarlavha(masala: Masala) -> str:
     if variantlar:
         bolaklar.append(variantlar)
     bolaklar.append(qiyinlik)
-    if kechagi:
-        bolaklar.append(kechagi)
     bolaklar.append(f"#masala #{teg}")
 
     # Bo'laklar orasida BITTA bo'sh qator. Ilgari ular turli

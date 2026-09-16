@@ -6426,30 +6426,12 @@ class UshlabQolishTest(TestCase):
 
 @override_settings(BOT_USERNAME="aqlzone_bot", KANAL="@AqlZoneUz")
 class KanalAloqaTest(TestCase):
-    """Post seriyasi (kechagi masala) va panelning kanal bo'limi."""
+    """Panelning kanal bo'limi."""
 
     def masala(self, raqam, **o):
         muallif = Pupil.objects.create(first_name="M").asosiy_profil()
         return Masala.objects.create(muallif=muallif, matn="2+2=?", javob="4", yechim="4",
                                      holat=Masala.TASDIQ, raqam=raqam, **o)
-
-    def test_yangi_post_kechagisini_eslatadi(self):
-        kecha = self.masala(16, kanal_at=timezone.now() - timedelta(days=1),
-                            kanal_post_id=55, yechdi_soni=9)
-        bugun = self.masala(17)
-        qator = MK.kechagi_qatori(bugun)
-        self.assertIn("9 kishi yechdi", qator)
-        self.assertIn("#16", qator)
-        self.assertIn("<a href=", qator)
-        self.assertIn(qator, MK.sarlavha(bugun))
-        self.assertTrue(kecha.pk)
-
-    def test_hech_kim_yechmagan_kechagi(self):
-        self.masala(16, kanal_at=timezone.now() - timedelta(days=1), kanal_post_id=55)
-        self.assertIn("hech kim yechmadi", MK.kechagi_qatori(self.masala(17)))
-
-    def test_birinchi_postda_kechagi_yoq(self):
-        self.assertEqual(MK.kechagi_qatori(self.masala(1)), "")
 
     def test_kanal_statistikasi_post_boyicha(self):
         from . import tahlil as TH
