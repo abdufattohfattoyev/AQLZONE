@@ -414,12 +414,16 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
       </div>
 
       {/* ---- masala kartasi: sarlavha, shart, chizma ----
-          YECHILGANDAN KEYIN YIG'ILADI. Shart o'qilgan bo'ladi va
-          ekranning yarmini egallab turishi kerak emas — o'sha joyni
-          yechim egallaydi. Lekin butunlay olib tashlanmaydi: yechimni
-          o'qiyotgan odam "xo'sh, savol nima edi?" deb qaytishi juda
-          tez-tez uchraydi va u bir bosishda qaytishi kerak. */}
-      <details open={!yechildi}
+          HAR DOIM OCHIQ OCHILADI. Ilgari yechilgan masalada shart
+          yig'ilib turardi — lekin masalaga qaytgan odamning birinchi
+          savoli "savol nima edi?" va u shartni qidirib, qo'shimcha
+          bosishga majbur bo'lardi. Yechim shartdan KEYIN o'qiladi,
+          ya'ni tartib ham tabiiy.
+
+          Yechilgandan keyin yig'ish imkoni qoladi: uzun shartni
+          yopib, yechimga tez o'tish uchun. `open` o'zgarmas qiymat —
+          React uni qayta yozmaydi va foydalanuvchi yopgani saqlanadi. */}
+      <details open
         className="az-natija group mt-2.5 rounded-clay border border-track bg-karta p-4
                    shadow-clay-sm">
         {/* Kartaning sarlavha qatori. Chapda masala raqami — odam

@@ -576,7 +576,9 @@ const S = {
   ],
   masalaBirinchiBol: ["Birinchi bo'ling", "Будьте первым"],
   masalaShartKor: ["Shartni ko'rish", "Показать условие"],
-  masalaShartYop: ["Yopish", "Свернуть"],
+  // Ochiq shartning sarlavhasi. "Yopish" edi — ochilgan zahoti
+  // kartaning birinchi so'zi buyruq bo'lib, chalkash o'qilardi.
+  masalaShartYop: ["Shart", "Условие"],
   masalaYechgandingiz: ["Bu masalani yechgansiz", "Вы решили эту задачу"],
   masalaYechimOchilgan: ["Yechim ochilgan", "Решение открыто"],
   masalaMuallifJami: [
