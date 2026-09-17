@@ -73,12 +73,16 @@ function bolimOl(): Bolim {
   try { return localStorage.getItem(BOLIM_KALIT) === "jamoaviy" ? "jamoaviy" : "yakka"; } catch { return "yakka"; }
 }
 
-export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onDuel, onJamoa }: {
+export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onShaharcha, onJadval, onDuel, onJamoa }: {
   onBack: () => void;
   onOyin: (id: string) => void;
   onMaydon: () => void;
   /** Kunlik son — Wordle uslubidagi jumboq. */
   onKunlikSon: () => void;
+  /** Tulki shaharchasi — tangaga bino, kunlik hosil. */
+  onShaharcha: () => void;
+  /** Daraja va haftalik jadval. */
+  onJadval: () => void;
   /** Do'st bilan bellashuv — jamoaviy bo'limda. */
   onDuel: () => void;
   /** Jamoaviy o'yin — xona ochish ekrani. */
@@ -151,6 +155,20 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onDuel, onJamoa
               yorliq="" />
           </div>
 
+          {/* Tulki shaharchasi — tangani sarflaydigan joy va har kuni qaytish sababi. */}
+          <button type="button" onClick={onShaharcha} data-tahlil="O'yinlar: shaharcha"
+            className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay bg-brand-orange p-3
+                       text-left text-white shadow-clay">
+            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
+              <EmojiBelgi e="🦊" olcham={28} jonli />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-display text-[15px] leading-tight">{t("shTitul")}</span>
+              <span className="block text-[11.5px] opacity-90">{t("shIzoh")}</span>
+            </span>
+            <span className="text-[22px]">🏠🌳🏪</span>
+          </button>
+
           <h2 className="az-kirish mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
             {t("maydonMashq")}
           </h2>
@@ -171,6 +189,18 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onDuel, onJamoa
       ) : (
         <>
           <p className="az-kirish mt-3 ml-1.5 text-[12.5px] leading-snug text-ink-soft">{t("jamoaviyIzoh")}</p>
+          {/* Daraja va haftalik jadval — "dadamdan o'tib ketdim". */}
+          <button type="button" onClick={onJadval} data-tahlil="O'yinlar: haftalik jadval"
+            className="az-kirish clay-press mt-3 flex w-full items-center gap-3 rounded-clay bg-karta p-3 text-left shadow-clay-sm">
+            <span className="grid size-10 shrink-0 place-items-center rounded-[14px] bg-brand-gold/20">
+              <EmojiBelgi e="🏆" olcham={24} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-display text-[14.5px] leading-tight">{t("tjJadval")}</span>
+              <span className="block text-[11.5px] text-ink-soft">{t("tjMeningDaraja")} · {t("tjBirga")}</span>
+            </span>
+            <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+          </button>
           <div className="mt-3 grid grid-cols-2 items-stretch gap-2.5 lg:grid-cols-4">
             <DuelKarta onOch={onDuel} />
             {(Object.keys(XONA_OYINLAR) as XonaOyin[]).map((k, i) => {

@@ -7033,3 +7033,83 @@ class XonaTest(TestCase):
         korinish = self.client.get(f"/api/v1/xona/{kod}", **c).json()
         self.assertIsNone(korinish["men"])
         self.assertIsNone(korinish["oyinHolat"])
+
+
+class TajribaShaharchaTest(TestCase):
+    """Tajriba, haftalik jadval va Tulki shaharchasi (2026-09-17)."""
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def post(self, url, data, kim):
+        return self.client.post(url, data, content_type="application/json", **kim)
+
+    def setUp(self):
+        self.a = self.kir("dev-shahar-aaaa1111bbbb")
+        self.b = self.kir("dev-shahar-cccc2222dddd")
+        self.c = self.kir("dev-shahar-eeee3333ffff")
+
+    def birga_oyna(self, ochko_a=120, ochko_b=40):
+        from . import tajriba as TJ
+        kod = self.post("/api/v1/xona", {"oyin": "kartalar", "daraja": 1}, self.a).json()["kod"]
+        self.post(f"/api/v1/xona/{kod}/kir", {"daraja": 1}, self.b)
+        xona = Xona.objects.get(kod=kod)
+        az = list(xona.azolar.order_by("pk"))
+        return TJ.yoz(xona, {str(az[0].pk): {"ochko": ochko_a, "golib": True},
+                             str(az[1].pk): {"ochko": ochko_b, "golib": False}})
+
+    def test_tajriba_va_jadval(self):
+        ro = self.birga_oyna()
+        birinchi = next(iter(ro.values()))
+        self.assertEqual(birinchi["oldin"]["daraja"], 0)
+        self.assertEqual(birinchi["keyin"]["daraja"], 1)
+        r = self.client.get("/api/v1/xona/tajriba?tur=birga", **self.b).json()
+        self.assertEqual(r["tajriba"]["ochko"], 40)
+        self.assertEqual([q["ochko"] for q in r["jadval"]["qatorlar"]], [120, 40])
+        self.assertEqual(r["jadval"]["men"]["joy"], 2)
+        # Birga o'ynamagan C "birga" jadvalida bo'sh.
+        r = self.client.get("/api/v1/xona/tajriba?tur=birga", **self.c).json()
+        self.assertEqual(r["jadval"]["qatorlar"], [])
+
+    def test_qurish_va_oshirish(self):
+        r = self.client.get("/api/v1/shaharcha", **self.a).json()
+        self.assertEqual(r["binolar"], {"4": {"tur": "uy", "daraja": 1}})
+        r = self.post("/api/v1/shaharcha/qur", {"joy": 0, "tur": "bog"}, self.a)
+        self.assertEqual(r.json()["narx"], 20)
+        self.assertEqual(self.post("/api/v1/shaharcha/qur", {"joy": 0, "tur": "park"}, self.a).status_code, 409)
+        self.assertEqual(self.post("/api/v1/shaharcha/qur", {"joy": 9, "tur": "park"}, self.a).status_code, 400)
+        self.assertEqual(self.post("/api/v1/shaharcha/oshir", {"joy": 0}, self.a).json()["narx"], 30)
+        self.assertEqual(self.post("/api/v1/shaharcha/oshir", {"joy": 0}, self.a).json()["narx"], 60)
+        self.assertEqual(self.post("/api/v1/shaharcha/oshir", {"joy": 0}, self.a).status_code, 409)
+
+    def test_hosil_kuniga_bir_marta(self):
+        self.post("/api/v1/shaharcha/qur", {"joy": 0, "tur": "bog"}, self.a)
+        r = self.client.get("/api/v1/shaharcha", **self.a).json()
+        jami = sum(x["miqdor"] for x in r["hosil"])
+        self.assertEqual(jami, 5)
+        r = self.post("/api/v1/shaharcha/hosil", {"javob": jami}, self.a).json()
+        self.assertEqual((r["togri"], r["tanga"]), (True, 10))
+        self.assertFalse(r["hosilMumkin"])
+        self.assertEqual(self.post("/api/v1/shaharcha/hosil", {"javob": jami}, self.a).status_code, 409)
+
+    def test_notogri_hosil_bir_barobar(self):
+        r = self.post("/api/v1/shaharcha/hosil", {"javob": 99}, self.a).json()
+        self.assertEqual((r["togri"], r["tanga"]), (False, 2))
+
+    def test_mehmon_faqat_sherikka(self):
+        self.birga_oyna()
+        from .models import XonaNatija
+        idlar = list(XonaNatija.objects.order_by("pk").values_list("profile_id", flat=True))
+        a_id, b_id = idlar
+        # Notanish C ko'ra olmaydi.
+        self.assertEqual(self.client.get(f"/api/v1/shaharcha/{b_id}", **self.c).status_code, 404)
+        self.assertEqual(self.post(f"/api/v1/shaharcha/{b_id}/yoqdi", {}, self.c).status_code, 400)
+        r = self.client.get(f"/api/v1/shaharcha/{b_id}", **self.a)
+        self.assertEqual(r.status_code, 200)
+        self.assertNotIn("hosil", r.json())
+        self.assertEqual(self.post(f"/api/v1/shaharcha/{b_id}/yoqdi", {}, self.a).json()["yurak"], 1)
+        self.assertEqual(self.post(f"/api/v1/shaharcha/{b_id}/yoqdi", {}, self.a).json()["yurak"], 1)
+        q = self.client.get("/api/v1/shaharcha", **self.a).json()["qoshnilar"]
+        self.assertEqual([(x["profil"], x["yoqdim"]) for x in q], [(b_id, True)])

@@ -133,6 +133,16 @@ def xona_chiq(request, kod: str):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+def xona_tajriba(request):
+    """Mening darajam va haftalik jadval (`?tur=hammasi|birga`)."""
+    from . import tajriba as TJ
+    profil = _profil_tanla(request)
+    tur = "birga" if request.query_params.get("tur") == "birga" else "hammasi"
+    return Response({"tajriba": TJ.meniki(profil), "jadval": TJ.haftalik(profil, tur)})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def karta_kolleksiya(request):
     """Son kartalari kolleksiyasi — {kalit: soni}."""
     return Response({"kolleksiya": X.kolleksiya(_profil_tanla(request))})

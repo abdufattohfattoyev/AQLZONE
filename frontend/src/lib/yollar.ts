@@ -106,6 +106,12 @@ export const yolMaydon = () => "/oyinlar/maydon";
 /** Kunlik son — Wordle uslubidagi kunlik jumboq. */
 export const yolKunlikSon = () => "/oyinlar/kunlik-son";
 
+/** Tulki shaharchasi; `pid` bilan — sherikning shaharchasiga mehmonga. */
+export const yolShaharcha = (pid?: number) => (pid ? `/oyinlar/shaharcha/${pid}` : "/oyinlar/shaharcha");
+
+/** Jamoaviy o'yinlar: daraja va haftalik jadval. */
+export const yolJadval = () => "/oyinlar/jadval";
+
 /** Do'st bilan bellashuv — chaqiruv yasash. */
 export const yolDuel = () => "/oyinlar/duel";
 

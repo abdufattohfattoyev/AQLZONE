@@ -3,6 +3,7 @@ from django.urls import path
 
 from . import views
 from . import xona_views
+from . import shaharcha_views
 
 urlpatterns = [
     path("auth/telegram", views.auth_telegram, name="auth-telegram"),
@@ -48,8 +49,16 @@ urlpatterns = [
     path("duel/taklif/<int:pk>/javob", views.duel_taklif_javob, name="duel-taklif-javob"),
     path("duel/sozlama", views.duel_sozlama, name="duel-sozlama"),
     # Jamoaviy o'yin xonalari: Son kartalari, Hisob Royale, Son kodlari.
+    # Tulki shaharchasi.
+    path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),
+    path("shaharcha/qur", shaharcha_views.shaharcha_qur, name="shaharcha-qur"),
+    path("shaharcha/oshir", shaharcha_views.shaharcha_oshir, name="shaharcha-oshir"),
+    path("shaharcha/hosil", shaharcha_views.shaharcha_hosil, name="shaharcha-hosil"),
+    path("shaharcha/<int:pid>", shaharcha_views.shaharcha_mehmon, name="shaharcha-mehmon"),
+    path("shaharcha/<int:pid>/yoqdi", shaharcha_views.shaharcha_yoqdi, name="shaharcha-yoqdi"),
     path("xona", xona_views.xona_yarat, name="xona-yarat"),
     path("xona/kolleksiya", xona_views.karta_kolleksiya, name="karta-kolleksiya"),
+    path("xona/tajriba", xona_views.xona_tajriba, name="xona-tajriba"),
     path("xona/<str:kod>", xona_views.xona_holat, name="xona-holat"),
     path("xona/<str:kod>/kir", xona_views.xona_kir, name="xona-kir"),
     path("xona/<str:kod>/tayyor", xona_views.xona_tayyor, name="xona-tayyor"),

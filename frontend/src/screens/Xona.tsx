@@ -25,6 +25,7 @@ import { Royale } from "../components/xona/Royale";
 import { Kodlar } from "../components/xona/Kodlar";
 import { Seyf, SeyfYakun } from "../components/xona/Seyf";
 import { Orgatish, orgatildimi } from "../components/xona/Orgatish";
+import { DarajaChiziq } from "../components/xona/Tajriba";
 import { avatarBelgi } from "../lib/dokon";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
@@ -39,6 +40,7 @@ import {
   XonaXato, xonaAmal, xonaChiq, xonaGap, xonaKir, xonaOl, xonaRobot, xonaTayyor, xonaYana, xonaYarat,
 } from "../lib/api";
 import type { XonaHolat, XonaOyin } from "../lib/api";
+import { botNomi } from "../lib/api";
 import { XONA_OYINLAR } from "../lib/xonaOyinlar";
 
 
@@ -621,6 +623,21 @@ function Natija({ xona, onYangi, onXato, onChiq }: {
   const goliblar = qatorlar.filter((q) => q.n.golib);
   const maglublar = qatorlar.filter((q) => q.n.golib === false);
   const sovga = xona.men !== null ? xona.sovgalar?.[String(xona.men)] : undefined;
+  const tajriba = xona.men !== null ? xona.tajriba?.[String(xona.men)] : undefined;
+
+  // Natija kartasi Telegramga: g'olib bo'lsa maqtanadi, bo'lmasa chaqiradi.
+  // Havola — shu xona: do'st bossa keyingi raundga shu yerga keladi.
+  const ulash = async () => {
+    if (!men) return;
+    const oyin = t(XONA_OYINLAR[xona.oyin].nom);
+    const matn = t(men.golib ? "tjUlashGolib" : "tjUlashOddiy", { oyin, n: men.ochko });
+    let havola = xona.havola;
+    if (!havola) {
+      const bot = await botNomi();
+      havola = bot ? `https://t.me/${bot}` : location.origin;
+    }
+    havolaniOch(`https://t.me/share/url?url=${encodeURIComponent(havola)}&text=${encodeURIComponent(matn)}`);
+  };
 
   const Qator = ({ q }: { q: (typeof qatorlar)[number] }) => (
     <div className={`flex items-center gap-2.5 rounded-clay px-3 py-2.5 ${
@@ -676,6 +693,13 @@ function Natija({ xona, onYangi, onXato, onChiq }: {
       )}
       {durang && <div className="mt-6 space-y-1.5">{qatorlar.map((q) => <Qator key={q.a.id} q={q} />)}</div>}
 
+      {/* Tajriba — mag'lub ham oldinga siljiydi. */}
+      {tajriba && (
+        <div className="mt-5">
+          <DarajaChiziq oldin={tajriba.oldin} keyin={tajriba.keyin} qoshildi={tajriba.qoshildi} />
+        </div>
+      )}
+
       {/* Seyf: kim xoin edi va kim nimani yolg'on aytgan — o'yinning eng qiziq lahzasi. */}
       {xona.oyin === "seyf" && <SeyfYakun xona={xona} />}
 
@@ -685,6 +709,13 @@ function Natija({ xona, onYangi, onXato, onChiq }: {
                    text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
         {t("xonaYana")}
       </button>
+      {men && (
+        <button type="button" onClick={ulash} data-tahlil={`Jamoa: natija ulashish (${xona.oyin})`}
+          className="clay-press mt-3 flex w-full items-center justify-center gap-2 rounded-3xl bg-karta py-3.5
+                     font-display text-[15px] text-brand-blue shadow-clay-sm">
+          <Icon name="send" size={18} /> {t("tjUlash")}
+        </button>
+      )}
       <button type="button" onClick={onChiq} className="mt-3 w-full py-2 text-[13.5px] font-semibold text-ink-dim">
         {t("xonaOyinlarga")}
       </button>

@@ -1337,6 +1337,37 @@ export interface XonaHolat {
   oyinHolat: unknown;
   natija: Record<string, XonaNatijaQator> | null;
   sovgalar?: Record<string, string>;
+  /** Tugaganda: har a'zo uchun tajriba oldin/keyin (`core/tajriba.py`). */
+  tajriba?: Record<string, { oldin: TajribaDaraja; keyin: TajribaDaraja; qoshildi: number }>;
+}
+
+export interface TajribaDaraja { daraja: number; ochko: number; oldingi: number; keyingi: number | null }
+export interface MeningTajribam extends TajribaDaraja { oyinlar: number; galabalar: number; xoinTopdi: number }
+export interface JadvalQator { joy: number; ism: string; avatar: string; ochko: number; oyinlar: number; galaba: number; menmi: boolean }
+export interface XonaTajribaJavob {
+  tajriba: MeningTajribam;
+  jadval: { qatorlar: JadvalQator[]; men: { joy: number; ochko: number } | null; haftaBoshi: string };
+}
+
+export type BinoTur = "uy" | "bog" | "dokon" | "maktab" | "kutubxona" | "park" | "fabrika" | "minora" | "rasadxona";
+export interface Bino { tur: BinoTur; daraja: number }
+export interface ShaharchaHolat {
+  binolar: Record<string, Bino>;
+  yurak: number;
+  hosilMumkin: boolean;
+  hosil?: { tur: BinoTur; miqdor: number }[];
+  narxlar?: Record<BinoTur, number>;
+  daromadlar?: Record<BinoTur, number[]>;
+  qoshnilar?: { profil: number; ism: string; avatar: string; binolar: number; yurak: number; yoqdim: boolean }[];
+  // mehmonda
+  ism?: string;
+  avatar?: string;
+  yoqdim?: boolean;
+  // amaldan keyin
+  narx?: number;
+  jami?: number;
+  togri?: boolean;
+  tanga?: number;
 }
 
 /** Xona so'rovining xatosi — sabab kaliti bilan (`boshlangan`, `tola`, `navbat_emas` …). */
@@ -1352,7 +1383,7 @@ export class XonaXato extends Error {
 
 async function xonaSorov<T>(url: string, body?: unknown): Promise<T> {
   if (!token && !(await signIn())) throw new XonaXato(401, "kirish");
-  const r = await fetch(body === undefined ? `${url}${profilQuery()}` : url, {
+  const r = await fetch(body === undefined ? `${url}${profilQuery(url.includes("?") ? "&" : "?")}` : url, {
     method: body === undefined ? "GET" : "POST",
     headers: {
       ...(body === undefined ? {} : { "Content-Type": "application/json" }),
@@ -1381,6 +1412,14 @@ export const xonaAmal = (kod: string, amal: Record<string, unknown>) =>
   xonaSorov<XonaHolat>(xu(kod, "/amal"), { amal });
 export const xonaGap = (kod: string, kalit: string) => xonaSorov<XonaHolat>(xu(kod, "/gap"), { kalit });
 export const xonaYana = (kod: string) => xonaSorov<XonaHolat>(xu(kod, "/yana"), {});
+export const xonaTajriba = (tur: "hammasi" | "birga") =>
+  xonaSorov<XonaTajribaJavob>(`/api/v1/xona/tajriba?tur=${tur}`);
+export const shaharchaOl = () => xonaSorov<ShaharchaHolat>("/api/v1/shaharcha");
+export const shaharchaQur = (joy: number, tur: BinoTur) => xonaSorov<ShaharchaHolat>("/api/v1/shaharcha/qur", { joy, tur });
+export const shaharchaOshir = (joy: number) => xonaSorov<ShaharchaHolat>("/api/v1/shaharcha/oshir", { joy });
+export const shaharchaHosil = (javob: number) => xonaSorov<ShaharchaHolat>("/api/v1/shaharcha/hosil", { javob });
+export const shaharchaMehmon = (pid: number) => xonaSorov<ShaharchaHolat>(`/api/v1/shaharcha/${pid}`);
+export const shaharchaYoqdi = (pid: number) => xonaSorov<ShaharchaHolat>(`/api/v1/shaharcha/${pid}/yoqdi`, {});
 export const xonaChiq = (kod: string) => xonaSorov<{ chiqdi: boolean }>(xu(kod, "/chiq"), {});
 export async function kartaKolleksiya(): Promise<Record<string, number>> {
   try {

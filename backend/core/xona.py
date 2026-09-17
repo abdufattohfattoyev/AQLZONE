@@ -290,6 +290,11 @@ def _tugat(xona: Xona) -> None:
                 sovgalar[str(azo.pk)] = kalit
         xona.davlat = {**xona.davlat, "sovgalar": sovgalar}
 
+    # Tajriba va haftalik jadval — hamma o'yinda. Natija ekrani "oldin/keyin"
+    # ni shu yerdan oladi va daraja oshganini ko'rsatadi.
+    from . import tajriba as TJ
+    xona.davlat = {**xona.davlat, "tajriba": TJ.yoz(xona, MODULLAR[xona.oyin].natija(xona.davlat))}
+
 
 @transaction.atomic
 def tick(xona: Xona, azo: XonaAzo | None = None) -> Xona:
@@ -458,6 +463,7 @@ def korinish(xona: Xona, azo: XonaAzo | None) -> dict:
     if xona.holat == Xona.TUGADI and xona.davlat:
         javob["natija"] = m.natija(xona.davlat)
         javob["sovgalar"] = xona.davlat.get("sovgalar", {})
+        javob["tajriba"] = xona.davlat.get("tajriba", {})
     return javob
 
 

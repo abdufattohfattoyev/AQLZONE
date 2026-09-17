@@ -1045,6 +1045,75 @@ class XonaAzo(models.Model):
         ordering = ["joy", "pk"]
 
 
+class OyinchiTajriba(models.Model):
+    """
+    Jamoaviy o'yinlardagi O'SIB BORUVCHI daraja — hech qachon tushmaydi.
+
+    Reyting tushishi bolani qaytarmaydi, aksincha: "1240 → 1228" bolaga
+    "orqaga ketdim" deb o'qiladi (`duel-reyting-elo` qarori). Tajriba esa
+    faqat qo'shiladi — mag'lub bo'lgan o'yin ham ozgina oshiradi. Shu sabab
+    har o'yin "keyingi darajaga yana 40" degan aniq maqsad qoldiradi.
+    """
+
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="tajriba")
+    ochko = models.IntegerField(default=0)
+    oyinlar = models.IntegerField(default=0)
+    galabalar = models.IntegerField(default=0)
+    #: Seyfda xoinni to'g'ri topgan marta — "detektiv" hisobi.
+    xoin_topdi = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "oyinchi_tajriba"
+
+
+class XonaNatija(models.Model):
+    """Bitta odamning bitta jamoaviy o'yin natijasi — haftalik jadval shundan."""
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="xona_natijalari")
+    xona = models.ForeignKey(Xona, on_delete=models.SET_NULL, null=True, blank=True, related_name="natijalar")
+    oyin = models.CharField(max_length=12)
+    ochko = models.IntegerField(default=0)
+    golib = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "xona_natija"
+        indexes = [models.Index(fields=["-created_at"]), models.Index(fields=["profile", "-created_at"])]
+
+
+class Shaharcha(models.Model):
+    """
+    TULKI SHAHARCHASI — tangaga qurilgan kichik shahar.
+
+    Tanga ilovada allaqachon bor, lekin unga sarflanadigan joy kam edi.
+    Shaharcha tangaga MA'NO beradi va har kuni qaytish sababini yaratadi:
+    binolar kuniga bir marta hosil beradi. Hosilni bola O'ZI hisoblaydi
+    (binolar daromadi yig'indisi) — to'g'ri topsa ikki barobar.
+    """
+
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="shaharcha")
+    #: {"4": {"tur": "uy", "daraja": 1}, ...} — 9 ta joy (0..8).
+    binolar = models.JSONField(default=dict, blank=True)
+    hosil_kun = models.DateField(null=True, blank=True)
+    yurak = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "shaharcha"
+
+
+class ShaharchaYoqdi(models.Model):
+    """Mehmon bosgan ❤️ — kuniga bir marta, bir shaharchaga."""
+
+    kimdan = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="+")
+    kimga = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="+")
+    kun = models.DateField()
+
+    class Meta:
+        db_table = "shaharcha_yoqdi"
+        constraints = [models.UniqueConstraint(fields=["kimdan", "kimga", "kun"], name="shaharcha_yoqdi_kuniga")]
+
+
 class KartaKolleksiya(models.Model):
     """
     Son kartalari kolleksiyasi — g'alabadan keladigan maxsus kartalar.
