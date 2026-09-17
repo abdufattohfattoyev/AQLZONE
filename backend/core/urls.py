@@ -2,6 +2,7 @@
 from django.urls import path
 
 from . import views
+from . import xona_views
 
 urlpatterns = [
     path("auth/telegram", views.auth_telegram, name="auth-telegram"),
@@ -41,6 +42,22 @@ urlpatterns = [
     # Mini App'da "eslatib turing" — bot endi yoza oladi.
     path("yozish-ruxsat", views.yozish_ruxsat, name="yozish-ruxsat"),
     path("duel/royxat", views.duel_royxat, name="duel-royxat"),
+    # Do'stlar, jonli taklif va sozlama — `duel/<kod>` dan OLDIN.
+    path("duel/dostlar", views.duel_dostlar, name="duel-dostlar"),
+    path("duel/taklif", views.duel_taklif, name="duel-taklif"),
+    path("duel/taklif/<int:pk>/javob", views.duel_taklif_javob, name="duel-taklif-javob"),
+    path("duel/sozlama", views.duel_sozlama, name="duel-sozlama"),
+    # Jamoaviy o'yin xonalari: Son kartalari, Hisob Royale, Son kodlari.
+    path("xona", xona_views.xona_yarat, name="xona-yarat"),
+    path("xona/kolleksiya", xona_views.karta_kolleksiya, name="karta-kolleksiya"),
+    path("xona/<str:kod>", xona_views.xona_holat, name="xona-holat"),
+    path("xona/<str:kod>/kir", xona_views.xona_kir, name="xona-kir"),
+    path("xona/<str:kod>/tayyor", xona_views.xona_tayyor, name="xona-tayyor"),
+    path("xona/<str:kod>/robot", xona_views.xona_robot, name="xona-robot"),
+    path("xona/<str:kod>/amal", xona_views.xona_amal, name="xona-amal"),
+    path("xona/<str:kod>/gap", xona_views.xona_gap, name="xona-gap"),
+    path("xona/<str:kod>/yana", xona_views.xona_yana, name="xona-yana"),
+    path("xona/<str:kod>/chiq", xona_views.xona_chiq, name="xona-chiq"),
     path("duel/<str:kod>", views.duel_korish, name="duel-korish"),
     path("duel/<str:kod>/qabul", views.duel_qabul, name="duel-qabul"),
     path("duel/<str:kod>/tayyor", views.duel_tayyor, name="duel-tayyor"),

@@ -9,6 +9,7 @@ import { XatoUshlagich } from "./components/XatoUshlagich";
 import { BotdanKelgan } from "./components/BotdanKelgan";
 import { Tanishuv } from "./components/Tanishuv";
 import { Kanal } from "./components/Kanal";
+import { DuelTaklifOyna } from "./components/DuelTaklifOyna";
 import { ProgressProvider } from "./lib/progress";
 import { t } from "./lib/matn";
 import { tilniUlash } from "./lib/til";
@@ -83,6 +84,9 @@ createRoot(document.getElementById("root")!).render(
                 o'tmagan odamga reklama ko'rsatilmaydi — u avval
                 ilovaga kirib olsin. */}
             <Kanal />
+            {/* Do'stdan jonli bellashuv taklifi — faqat bosh sahifa,
+                o'yinlar va kurs xaritasida chiqadi, savol ustida emas. */}
+            <DuelTaklifOyna />
           </Tanishuv>
           <Holat />
         </ProgressProvider>

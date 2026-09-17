@@ -109,6 +109,11 @@ export const yolDuel = () => "/oyinlar/duel";
 /** Chaqiruv havolasi. ATAYLAB qisqa (`/duel/<kod>`): u Telegramda
  *  ulashiladi va uzun manzil xabarni ikki qatorga bo'lib yuboradi. */
 export const yolDuelKod = (kod: string) => `/duel/${kod}`;
+
+/** Jamoaviy o'yin — xona ochish yoki kod bilan kirish. */
+export const yolJamoa = (oyin: string) => `/oyinlar/jamoa/${oyin}`;
+/** Xona — kutish, o'yin va natija. Kod ATAYLAB qisqa: uni og'zaki aytishadi. */
+export const yolXona = (kod: string) => `/xona/${kod}`;
 /** Bitta o'yinning daraja tanlash ekrani. */
 export const yolOyin = (id: string) => `/oyinlar/${id}`;
 /** O'yinning o'zi — daraja bilan. */

@@ -35,9 +35,9 @@ from . import views
 from . import masala_kanal as MK
 from . import models as MDL
 from .models import (
-    Duel, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
+    Duel, DuelTaklif, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
     MasalaOvoz, MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul,
-    Session,
+    Session, Xona,
 )
 
 BOT = "123456:TEST_TOKEN_FAQAT_SINOV_UCHUN"
@@ -2564,11 +2564,11 @@ class DuelYanaTest(TestCase):
         self.assertEqual(r.status_code, 409)
 
         h = self.client.get(f"/api/v1/duel/{kod}/holat", **self.a).json()["hisob"]
-        self.assertEqual(h, {"men": 1, "raqib": 1, "durang": 1, "jami": 3})
+        self.assertEqual(h, {"men": 1, "raqib": 1, "durang": 1, "jami": 3, "zanjir": 1, "bugun": True, "xavf": False})
 
         # Ikkinchi tomonda hisob TESKARI ko'rinadi.
         h = self.client.get(f"/api/v1/duel/{kod}/holat", **self.b).json()["hisob"]
-        self.assertEqual(h, {"men": 1, "raqib": 1, "durang": 1, "jami": 3})
+        self.assertEqual(h, {"men": 1, "raqib": 1, "durang": 1, "jami": 3, "zanjir": 1, "bugun": True, "xavf": False})
 
     def test_natija_javobida_hisob_keladi(self):
         self.oyna(a_ball=30, b_ball=20)
@@ -2579,7 +2579,7 @@ class DuelYanaTest(TestCase):
                          content_type="application/json", **self.b)
         # Ikkinchi tomon tugatdi — hisob shu duel bilan birga keladi.
         hisob = self.natija(kod, self.b, 50).json()["hisob"]
-        self.assertEqual(hisob, {"men": 1, "raqib": 1, "durang": 0, "jami": 2})
+        self.assertEqual(hisob, {"men": 1, "raqib": 1, "durang": 0, "jami": 2, "zanjir": 1, "bugun": True, "xavf": False})
 
     def test_tugamagan_duel_hisobga_kirmaydi(self):
         self.client.post("/api/v1/duel", {}, content_type="application/json", **self.a)
@@ -2595,7 +2595,7 @@ class DuelYanaTest(TestCase):
         self.natija(kod, self.a, 30)
 
         hisob = self.client.get(f"/api/v1/duel/{kod}", **self.b).json()["hisob"]
-        self.assertEqual(hisob, {"men": 0, "raqib": 1, "durang": 0, "jami": 1})
+        self.assertEqual(hisob, {"men": 0, "raqib": 1, "durang": 0, "jami": 1, "zanjir": 1, "bugun": True, "xavf": False})
 
 
 class JoyNomiTest(TestCase):
@@ -6500,3 +6500,412 @@ class AnketaKengTest(TestCase):
 
     def test_notogri_bosqich_yozilmaydi(self):
         self.assertEqual(self.yubor(kim="talaba", sinf=107).anketa_sinf, -1)
+
+
+
+class DuelAdolatTaklifTest(TestCase):
+    """
+    Duelni yoshdan qat'iy nazar adolatli va qaytadigan qilish (2026-09-17):
+
+      - har kimga o'z darajasi;
+      - "Sizning navbatingiz" ro'yxati va juftlik zanjiri;
+      - onlayn do'stga jonli taklif — faqat tanishdan, chegaralar bilan.
+    """
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post(
+            "/api/v1/auth/device",
+            {"deviceId": device, "platform": "web"},
+            content_type="application/json",
+        )
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def setUp(self):
+        self.a = self.kir("dev-adolat-aaaa1111bbbb")
+        self.b = self.kir("dev-adolat-cccc2222dddd")
+
+    def post(self, url, data, kim):
+        return self.client.post(url, data, content_type="application/json", **kim)
+
+    def profil(self, kim: dict) -> Profile:
+        r = self.post("/api/v1/duel", {}, kim)
+        return Duel.objects.get(kod=r.json()["kod"]).chaqirgan
+
+    def tanishtir(self):
+        """A chaqiradi, B havola bilan qabul qiladi — tugagan duel."""
+        kod = self.post("/api/v1/duel", {"daraja": 3}, self.a).json()["kod"]
+        self.post(f"/api/v1/duel/{kod}/natija", {"ball": 10, "xato": 0, "sanoq": [10]}, self.a)
+        self.post(f"/api/v1/duel/{kod}/qabul", {"daraja": 1}, self.b)
+        self.post(f"/api/v1/duel/{kod}/natija", {"ball": 12, "xato": 0, "sanoq": [12]}, self.b)
+        return Duel.objects.get(kod=kod)
+
+    # ------------------------------------------------------ o'z darajasi
+
+    def test_har_kimga_oz_darajasi(self):
+        d = self.tanishtir()
+        self.assertEqual(d.chaqirgan_daraja, 3)
+        self.assertEqual(d.qabul_daraja, 1)
+        self.assertEqual(d.golib, "qabul")
+
+    def test_notogri_daraja_standartga_tushadi(self):
+        r = self.post("/api/v1/duel", {"daraja": 9}, self.a)
+        self.assertEqual(r.json()["menDaraja"], 2)
+
+    def test_boshlangan_duelda_daraja_ozgarmaydi(self):
+        kod = self.post("/api/v1/duel", {"daraja": 1}, self.a).json()["kod"]
+        self.post(f"/api/v1/duel/{kod}/tayyor", {}, self.a)
+        self.post(f"/api/v1/duel/{kod}/tayyor", {"daraja": 2}, self.b)
+        # O'yin boshlangach "osonga tushish" mumkin emas.
+        self.post(f"/api/v1/duel/{kod}/tayyor", {"daraja": 1}, self.b)
+        d = Duel.objects.get(kod=kod)
+        self.assertIsNotNone(d.boshlanadi)
+        self.assertEqual(d.qabul_daraja, 2)
+
+    def test_raqib_darajasi_korinadi(self):
+        kod = self.post("/api/v1/duel", {"daraja": 3}, self.a).json()["kod"]
+        self.post(f"/api/v1/duel/{kod}/natija", {"ball": 5, "xato": 0, "sanoq": [5]}, self.a)
+        r = self.post(f"/api/v1/duel/{kod}/qabul", {"daraja": 1}, self.b).json()
+        self.assertEqual(r["raqibDaraja"], 3)
+        self.assertEqual(r["menDaraja"], 1)
+
+    # ------------------------------------------------------ zanjir
+
+    def test_juftlik_zanjiri(self):
+        bugun = timezone.localdate()
+        kunlar = {bugun - timedelta(days=1), bugun - timedelta(days=2), bugun - timedelta(days=4)}
+        z = D.juft_zanjir(kunlar)
+        self.assertEqual(z, {"zanjir": 2, "bugun": False, "xavf": True})
+        z = D.juft_zanjir(kunlar | {bugun})
+        self.assertEqual(z, {"zanjir": 3, "bugun": True, "xavf": False})
+        self.assertEqual(D.juft_zanjir({bugun - timedelta(days=3)})["zanjir"], 0)
+
+    # ------------------------------------------------------ navbat
+
+    def test_navbat_royxati(self):
+        self.tanishtir()
+        pa, pb = self.profil(self.a), self.profil(self.b)
+        # A yangi chaqiruvni B ga yuboradi va o'ynab qo'yadi.
+        with patch.object(D, "chaqiruv_xabari", return_value=True), \
+                patch("core.onlayn.chaqirsa_boladimi", return_value=True):
+            kod = self.post("/api/v1/duel", {"kimga": pb.pk}, self.a).json()["kod"]
+        self.assertEqual(Duel.objects.get(kod=kod).kimga_id, pb.pk)
+        self.post(f"/api/v1/duel/{kod}/natija", {"ball": 7, "xato": 0, "sanoq": [7]}, self.a)
+
+        self.assertEqual(D.navbat_soni(pb), 1)
+        dostlar = self.client.get("/api/v1/duel/dostlar", **self.b).json()["dostlar"]
+        self.assertEqual(dostlar[0]["profil"], pa.pk)
+        self.assertEqual(dostlar[0]["navbat"], "men")
+        self.assertEqual(dostlar[0]["kod"], kod)
+        self.assertEqual(dostlar[0]["hisob"]["zanjir"], 1)
+
+        a_dostlar = self.client.get("/api/v1/duel/dostlar", **self.a).json()["dostlar"]
+        self.assertEqual(a_dostlar[0]["navbat"], "u")
+
+    # ------------------------------------------------------ jonli taklif
+
+    def taklif(self, kimga: Profile, kim=None):
+        return self.post("/api/v1/duel/taklif", {"kimga": kimga.pk, "daraja": 2}, kim or self.a)
+
+    def test_notanishga_taklif_yuborilmaydi(self):
+        pb = self.profil(self.b)
+        r = self.taklif(pb)
+        self.assertEqual(r.status_code, 409)
+        self.assertEqual(r.json()["sabab"], "notanish")
+
+    def test_taklif_qabul_qilinsa_oyin_boshlanadi(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        r = self.taklif(pb)
+        self.assertEqual(r.status_code, 201, r.content)
+        kod = r.json()["kod"]
+
+        kelgan = self.client.get("/api/v1/duel/taklif", **self.b).json()["taklif"]
+        self.assertEqual(kelgan["kod"], kod)
+        self.assertLessEqual(kelgan["qolgan"], DuelTaklif.MUDDAT_SONIYA)
+
+        j = self.post(f"/api/v1/duel/taklif/{kelgan['id']}/javob", {"qabul": True, "daraja": 1}, self.b)
+        self.assertEqual(j.status_code, 200, j.content)
+        d = Duel.objects.get(kod=kod)
+        self.assertIsNotNone(d.boshlanadi)
+        self.assertEqual(d.qabul_daraja, 1)
+        self.assertEqual(self.client.get(f"/api/v1/duel/{kod}/holat", **self.a).json()["taklif"]["holat"], "qabul")
+
+    def test_soatiga_bitta_taklif(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        t = self.taklif(pb).json()
+        tid = DuelTaklif.objects.get(duel__kod=t["kod"]).pk
+        self.post(f"/api/v1/duel/taklif/{tid}/javob", {"qabul": False}, self.b)
+        r = self.taklif(pb)
+        self.assertEqual(r.json()["sabab"], "soatiga")
+
+    def test_ikki_marta_rad_etsa_bugun_boshqa_kelmaydi(self):
+        self.tanishtir()
+        pa, pb = self.profil(self.a), self.profil(self.b)
+        for _ in range(2):
+            DuelTaklif.objects.create(
+                duel=Duel.objects.filter(chaqirgan=pa).first(), kimdan=pa, kimga=pb,
+                holat=DuelTaklif.RAD, javob_at=timezone.now(),
+                created_at=timezone.now() - timedelta(hours=2),
+            )
+        self.assertEqual(D.taklif_mumkinmi(pa, pb), (False, "bugun_rad"))
+
+    def test_meni_chaqirmasin(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        r = self.post("/api/v1/duel/sozlama", {"yopiq": True}, self.b)
+        self.assertTrue(r.json()["yopiq"])
+        self.assertEqual(self.taklif(pb).json()["sabab"], "yopiq")
+
+    def test_oflayn_dostga_taklif_yuborilmaydi(self):
+        self.tanishtir()
+        pa, pb = self.profil(self.a), self.profil(self.b)
+        Session.objects.filter(pupil=pb.pupil).update(last_seen=timezone.now() - timedelta(hours=3))
+        self.assertEqual(D.taklif_mumkinmi(pa, pb), (False, "oflayn"))
+
+    def test_muddati_otgan_taklif_qabul_qilinmaydi(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        kod = self.taklif(pb).json()["kod"]
+        t = DuelTaklif.objects.get(duel__kod=kod)
+        DuelTaklif.objects.filter(pk=t.pk).update(
+            created_at=timezone.now() - timedelta(seconds=DuelTaklif.MUDDAT_SONIYA + 5))
+        self.assertIsNone(self.client.get("/api/v1/duel/taklif", **self.b).json()["taklif"])
+        r = self.post(f"/api/v1/duel/taklif/{t.pk}/javob", {"qabul": True}, self.b)
+        self.assertEqual(r.status_code, 410)
+
+    def test_chaqirgan_ketgan_bolsa_taklif_korinmaydi(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        kod = self.taklif(pb).json()["kod"]
+        Duel.objects.filter(kod=kod).update(
+            chaqirgan_belgi=timezone.now() - timedelta(seconds=Duel.BELGI_SONIYA + 5))
+        self.assertIsNone(self.client.get("/api/v1/duel/taklif", **self.b).json()["taklif"])
+
+    def test_begona_taklifga_javob_bera_olmaydi(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        kod = self.taklif(pb).json()["kod"]
+        c = self.kir("dev-adolat-eeee3333ffff")
+        t = DuelTaklif.objects.get(duel__kod=kod)
+        self.assertEqual(self.post(f"/api/v1/duel/taklif/{t.pk}/javob", {"qabul": True}, c).status_code, 403)
+
+
+class XonaTest(TestCase):
+    """
+    Jamoaviy o'yin xonalari — hayot sikli (2026-09-17).
+
+    Hamma "Tayyorman" bossa o'yin o'zi boshlanadi, bo'sh joyga robot,
+    mag'lub ham ochko oladi, "yana" o'sha xonada.
+    """
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def post(self, url, data, kim):
+        return self.client.post(url, data, content_type="application/json", **kim)
+
+    def setUp(self):
+        self.a = self.kir("dev-xona-aaaa1111bbbb")
+        self.b = self.kir("dev-xona-cccc2222dddd")
+
+    def ochish(self, oyin, kim=None):
+        r = self.post("/api/v1/xona", {"oyin": oyin, "daraja": 1}, kim or self.a)
+        self.assertEqual(r.status_code, 201, r.content)
+        return r.json()["kod"]
+
+    def test_hamma_tayyor_bolsa_boshlanadi(self):
+        kod = self.ochish("kartalar")
+        self.post(f"/api/v1/xona/{kod}/kir", {"daraja": 3}, self.b)
+        r = self.post(f"/api/v1/xona/{kod}/tayyor", {"tayyor": True}, self.a).json()
+        self.assertEqual(r["holat"], "kutish")          # B hali tayyor emas
+        r = self.post(f"/api/v1/xona/{kod}/tayyor", {"tayyor": True}, self.b).json()
+        self.assertEqual(r["holat"], "oyin")
+        self.assertIsNotNone(r["oyinHolat"])
+
+    def test_notogri_oyin(self):
+        r = self.post("/api/v1/xona", {"oyin": "shaxmat"}, self.a)
+        self.assertEqual(r.status_code, 400)
+
+    def test_kartalar_toliq(self):
+        """Robot bilan o'ynab, raqib qo'li yashirinligini va tugashini tekshiradi."""
+        kod = self.ochish("kartalar")
+        self.post(f"/api/v1/xona/{kod}/robot", {}, self.a)
+        r = self.post(f"/api/v1/xona/{kod}/tayyor", {"tayyor": True}, self.a).json()
+        self.assertEqual(r["holat"], "oyin")
+        men = str(r["men"])
+        oh = r["oyinHolat"]
+        self.assertEqual(oh["navbat"], men)
+        self.assertIn("qol", oh["oyinchilar"][men])
+        raqib = next(k for k in oh["oyinchilar"] if k != men)
+        self.assertNotIn("qol", oh["oyinchilar"][raqib])
+
+        # To'g'ri yechimni topib yuramiz (qo'l har doim yechimli).
+        import itertools
+        from . import oyin_kartalar as K
+        xona = Xona.objects.get(kod=kod)
+        o = xona.davlat["oyinchilar"][men]
+        topildi = None
+        sonlar = [i for i, k in enumerate(o["qol"]) if k["t"] == "son"]
+        amallar = [i for i, k in enumerate(o["qol"]) if k["t"] == "amal"]
+        for s in sonlar:
+            for n in (1, 2, 3):
+                for p in itertools.permutations(amallar, n):
+                    if K.hisobla(o["qol"], [s, *p])[0] == o["nishon"]:
+                        topildi = [s, *p]
+                        break
+        self.assertIsNotNone(topildi)
+        r = self.post(f"/api/v1/xona/{kod}/amal", {"amal": {"tur": "yur", "kartalar": topildi}}, self.a)
+        self.assertEqual(r.status_code, 200, r.content)
+        oh = r.json()["oyinHolat"]
+        self.assertEqual(oh["oxirgi"]["zarba"], 25)
+        self.assertEqual(oh["oyinchilar"][raqib]["jon"], 75)
+        # Navbat robotda — ikkinchi yurish rad etiladi.
+        r = self.post(f"/api/v1/xona/{kod}/amal", {"amal": {"tur": "yur", "kartalar": topildi}}, self.a)
+        self.assertEqual(r.json()["sabab"], "navbat_emas")
+
+    def test_kartalar_hisob(self):
+        from . import oyin_kartalar as K
+        qol = [{"t": "son", "v": 7}, {"t": "amal", "a": "*", "v": 8}, {"t": "amal", "a": "-", "v": 6},
+               {"t": "amal", "a": "/", "v": 4}, {"t": "son", "v": 3}]
+        self.assertEqual(K.hisobla(qol, [0, 1, 2]), (50, ""))
+        self.assertEqual(K.hisobla(qol, [0, 3])[1], "bolinmaydi")
+        self.assertEqual(K.hisobla(qol, [1, 0])[1], "tartib")
+        self.assertEqual(K.ifoda(qol, [0, 1, 2]), "7 ×8 −6")
+        self.assertEqual([K.zarba(x) for x in (0, 2, 5, 10, 11)], [25, 15, 8, 3, 0])
+
+    def test_kartalar_goliba_kolleksiya(self):
+        import random
+        from . import oyin_kartalar as K
+        kod = self.ochish("kartalar")
+        self.post(f"/api/v1/xona/{kod}/robot", {}, self.a)
+        self.post(f"/api/v1/xona/{kod}/tayyor", {"tayyor": True}, self.a)
+        xona = Xona.objects.get(kod=kod)
+        men = next(k for k, o in xona.davlat["oyinchilar"].items() if not o["robot"])
+        robot = next(k for k in xona.davlat["oyinchilar"] if k != men)
+        xona.davlat["oyinchilar"][robot]["jon"] = 0
+        K._keyingi(xona.davlat, 0, random.Random())
+        self.assertTrue(xona.davlat["tugadi"])
+        xona.save()
+        from . import xona as X
+        X.tick(xona)
+        xona.refresh_from_db()
+        # tick tugashni o'zi yozmaydi (o'zgarish tick'da emas) — amal/tick orqali:
+        X._tugat(xona)
+        xona.save()
+        r = self.client.get(f"/api/v1/xona/{kod}", **self.a).json()
+        self.assertTrue(r["natija"][men]["golib"])
+        self.assertEqual(r["natija"][robot]["ochko"], 10)          # mag'lub ham oladi
+        self.assertEqual(sum(self.client.get("/api/v1/xona/kolleksiya", **self.a)
+                             .json()["kolleksiya"].values()), 1)
+
+    def test_royale(self):
+        import random
+        from . import oyin_royale as R
+        rng = random.Random(1)
+        d = R.boshla([{"id": 1, "daraja": 1, "robot": False}, {"id": 2, "daraja": 3, "robot": False}],
+                     1000.0, rng)
+        s = d["oyinchilar"]["1"]["savol"]
+        self.assertIn(s["javob"], s["variantlar"])
+        self.assertEqual(len(set(s["variantlar"])), 4)
+        # Uchta to'g'ri — hujum.
+        for _ in range(3):
+            self.assertEqual(R.amal(d, 1, {"tur": "javob", "javob": d["oyinchilar"]["1"]["savol"]["javob"]},
+                                    1001.0, rng), "")
+        self.assertEqual(d["oyinchilar"]["1"]["hujum"], 1)
+        self.assertEqual(d["oyinchilar"]["2"]["jazo"], R.HUJUM_SONIYA)
+        # Ikkinchi o'yinchi javob bermaydi — yuraklari vaqt bilan ketadi.
+        hozir = 1001.0
+        for _ in range(3):
+            hozir = d["oyinchilar"]["2"]["muddat"] + 2
+            d["oyinchilar"]["1"]["muddat"] = hozir + 100
+            R.tick(d, hozir, rng, set())
+        self.assertTrue(d["tugadi"])
+        n = R.natija(d)
+        self.assertEqual((n["1"]["joy"], n["2"]["joy"]), (1, 2))
+        self.assertGreater(n["2"]["ochko"], 0)
+        # Javob kaliti ko'rinishga chiqmaydi.
+        d2 = R.boshla([{"id": 5, "daraja": 2, "robot": False}, {"id": 6, "daraja": 2, "robot": True}], 0, rng)
+        self.assertNotIn("javob", R.korinish(d2, 5, 0)["oyinchilar"]["5"]["savol"])
+        self.assertNotIn("savol", R.korinish(d2, 5, 0)["oyinchilar"]["6"])
+
+    def test_kodlar(self):
+        import random
+        from . import oyin_kodlar as KD
+        rng = random.Random(3)
+        azolar = [{"id": i, "daraja": d, "robot": False} for i, d in ((1, 1), (2, 3), (3, 2), (4, 2))]
+        d = KD.boshla(azolar, 0, rng)
+        self.assertEqual(d["jamoalar"], {"1": "kok", "2": "qizil", "3": "kok", "4": "qizil"})
+        self.assertEqual(d["sardorlar"], {"kok": "1", "qizil": "2"})
+        self.assertEqual(sum(1 for k in d["kartalar"] if k["rang"] == "kok"), 5)
+        # Ifoda har darajada o'sha qiymatni beradi.
+        for k in d["kartalar"]:
+            for ifd in k["ifodalar"].values():
+                self.assertEqual(eval(ifd.replace("×", "*").replace("÷", "//").replace("−", "-")), k["qiymat"])
+        # Rang faqat sardorga ko'rinadi.
+        self.assertIsNotNone(KD.korinish(d, 1, 0)["kartalar"][0]["rang"])
+        self.assertIsNone(KD.korinish(d, 3, 0)["kartalar"][0]["rang"])
+        # Sardor bo'lmagan maslahat bera olmaydi; sardor beradi.
+        self.assertEqual(KD.amal(d, 3, {"tur": "maslahat", "son": 12, "soni": 2}, 1, rng), "ruxsat_yoq")
+        kok = next(i for i, k in enumerate(d["kartalar"]) if k["rang"] == "kok")
+        self.assertEqual(KD.amal(d, 1, {"tur": "maslahat", "son": d["kartalar"][kok]["qiymat"], "soni": 1}, 1, rng), "")
+        self.assertEqual(KD.amal(d, 1, {"tur": "och", "i": kok}, 2, rng), "ruxsat_yoq")   # sardor ochmaydi
+        self.assertEqual(KD.amal(d, 3, {"tur": "och", "i": kok}, 2, rng), "")
+        self.assertEqual(d["qolgan_ochish"], 1)
+        # Bomba — jamoa darhol yutqazadi.
+        bomba = next(i for i, k in enumerate(d["kartalar"]) if k["rang"] == "bomba")
+        self.assertEqual(KD.amal(d, 3, {"tur": "och", "i": bomba}, 3, rng), "")
+        self.assertEqual((d["tugadi"], d["golib"], d["sabab"]), (True, "qizil", "bomba"))
+
+    def test_kodlar_robotlar_bilan_tugaydi(self):
+        import random
+        from . import oyin_kodlar as KD
+        rng = random.Random(7)
+        azolar = [{"id": i, "daraja": 2, "robot": i != 1} for i in range(1, 5)]
+        d = KD.boshla(azolar, 0, rng)
+        hozir = 0.0
+        for _ in range(400):
+            if d["tugadi"]:
+                break
+            hozir += 20
+            KD.tick(d, hozir, rng, set())
+        self.assertTrue(d["tugadi"])
+
+    def test_yana_va_chiqish(self):
+        kod = self.ochish("royale")
+        self.post(f"/api/v1/xona/{kod}/kir", {}, self.b)
+        self.post(f"/api/v1/xona/{kod}/tayyor", {}, self.a)
+        self.post(f"/api/v1/xona/{kod}/tayyor", {}, self.b)
+        xona = Xona.objects.get(kod=kod)
+        self.assertEqual(xona.holat, "oyin")
+        # Tugamagan o'yinda "yana" yo'q.
+        self.assertEqual(self.post(f"/api/v1/xona/{kod}/yana", {}, self.a).status_code, 409)
+        Xona.objects.filter(pk=xona.pk).update(holat="tugadi")
+        r = self.post(f"/api/v1/xona/{kod}/yana", {}, self.b).json()
+        self.assertEqual((r["holat"], r["raund"]), ("kutish", 2))
+        tayyorlar = {a["id"]: a["tayyor"] for a in r["azolar"]}
+        self.assertEqual(sorted(tayyorlar.values()), [False, True])
+
+    def test_boshlangan_xonaga_kirib_bolmaydi(self):
+        kod = self.ochish("kartalar")
+        self.post(f"/api/v1/xona/{kod}/robot", {}, self.a)
+        self.post(f"/api/v1/xona/{kod}/tayyor", {}, self.a)
+        r = self.post(f"/api/v1/xona/{kod}/kir", {}, self.b)
+        self.assertEqual(r.json()["sabab"], "boshlangan")
+
+    def test_robot_egasidan_boshqaga_yoq_va_gap(self):
+        kod = self.ochish("kodlar")
+        self.post(f"/api/v1/xona/{kod}/kir", {}, self.b)
+        self.assertEqual(self.post(f"/api/v1/xona/{kod}/robot", {}, self.b).status_code, 403)
+        self.assertEqual(self.post(f"/api/v1/xona/{kod}/gap", {"kalit": "salom dunyo"}, self.b).status_code, 400)
+        r = self.post(f"/api/v1/xona/{kod}/gap", {"kalit": "tekshir"}, self.b).json()
+        self.assertEqual(r["gaplar"][-1]["kalit"], "tekshir")
+        self.assertEqual(self.post(f"/api/v1/xona/{kod}/gap", {"kalit": "zor"}, self.b).status_code, 429)
+        # Begona odam amal qila olmaydi, lekin xonani ko'radi.
+        c = self.kir("dev-xona-eeee3333ffff")
+        self.assertEqual(self.post(f"/api/v1/xona/{kod}/tayyor", {}, c).status_code, 403)
+        korinish = self.client.get(f"/api/v1/xona/{kod}", **c).json()
+        self.assertIsNone(korinish["men"])
+        self.assertIsNone(korinish["oyinHolat"])

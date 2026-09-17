@@ -934,6 +934,24 @@ export interface DuelHisob {
   raqib: number;
   durang: number;
   jami: number;
+  /**
+   * JUFTLIK ZANJIRI — ketma-ket necha kun birga o'ynaldi ("🔥 12 kun").
+   * Eski server bu maydonlarni bermaydi, shuning uchun ixtiyoriy.
+   */
+  zanjir?: number;
+  /** Bugun allaqachon o'ynaldimi. */
+  bugun?: boolean;
+  /** Zanjir bor, lekin bugun o'ynalmagan — yarim tunda uziladi. */
+  xavf?: boolean;
+}
+
+/** Duel darajasi: 1 — oson, 2 — o'rta, 3 — qiyin. */
+export type DuelDaraja = 1 | 2 | 3;
+
+/** Jonli taklifning chaqirgan tomondagi holati. `otdi` — javobsiz, muddati tugadi. */
+export interface DuelTaklifHolati {
+  holat: "kutyapti" | "qabul" | "rad" | "otdi";
+  qolgan: number;
 }
 
 export interface DuelHolat {
@@ -974,12 +992,24 @@ export interface DuelHolat {
   raqibSanoq?: number[];
   /** Shu raqib bilan umumiy hisob. Raqib hali noma'lum bo'lsa — `null`. */
   hisob?: DuelHisob | null;
+  /**
+   * HAR KIMGA O'Z DARAJASI — mening savollarim shu darajada yasaladi.
+   * Eski serverda yo'q: o'shanda umumiy `daraja` olinadi.
+   */
+  menDaraja?: number;
+  /** Raqibning darajasi. Raqib hali qo'shilmagan bo'lsa — `null`. */
+  raqibDaraja?: number | null;
+  /** Jonli taklif bilan chaqirilgan bo'lsa — do'sti nima dedi. */
+  taklif?: DuelTaklifHolati | null;
 }
 
 /** Jonli duel holati — har 2 soniyada so'raladi. */
 export interface DuelJonli {
   holat: string;
   menTayyor: boolean;
+  menDaraja?: number;
+  raqibDaraja?: number | null;
+  taklif?: DuelTaklifHolati | null;
   /** Boshlanishga necha soniya qoldi. `null` — hali ikkalasi tayyor emas. */
   boshlanishSoniya: number | null;
   golib: string;
@@ -1074,6 +1104,8 @@ export interface DuelShart {
   oyin: string;
   savollar: number;
   vaqt: number;
+  /** Chaqirganning O'Z darajasi — raqib o'zinikini alohida tanlaydi. */
+  daraja?: DuelDaraja;
 }
 
 /**
@@ -1165,8 +1197,8 @@ export async function duelKorish(kod: string): Promise<DuelHolat | null> {
 }
 
 /** Chaqiruvni qabul qiladi — o'ynash uchun urug' va raqib sanog'i. */
-export const duelQabul = (kod: string): Promise<DuelHolat> =>
-  duelPost<DuelHolat>(`/api/v1/duel/${encodeURIComponent(kod)}/qabul`);
+export const duelQabul = (kod: string, daraja?: DuelDaraja): Promise<DuelHolat> =>
+  duelPost<DuelHolat>(`/api/v1/duel/${encodeURIComponent(kod)}/qabul`, daraja ? { daraja } : {});
 
 /** Natijani yuboradi. Chaqirgan uchun `DuelHolat`, qabul qilgan uchun `DuelNatija`. */
 export const duelNatija = <T>(
@@ -1175,8 +1207,183 @@ export const duelNatija = <T>(
   duelPost<T>(`/api/v1/duel/${encodeURIComponent(kod)}/natija`, { ball, xato, sanoq });
 
 /** "Men tayyorman" — ikkalasi bosgach o'yin boshlanadi. */
-export const duelTayyor = (kod: string): Promise<DuelHolat & DuelJonli> =>
-  duelPost<DuelHolat & DuelJonli>(`/api/v1/duel/${encodeURIComponent(kod)}/tayyor`);
+export const duelTayyor = (kod: string, daraja?: DuelDaraja): Promise<DuelHolat & DuelJonli> =>
+  duelPost<DuelHolat & DuelJonli>(
+    `/api/v1/duel/${encodeURIComponent(kod)}/tayyor`, daraja ? { daraja } : {});
+
+/* ---------------- do'stlar, navbat va jonli taklif ---------------- */
+
+/** Kim bilan o'ynaganman — "Sizning navbatingiz" ro'yxatining qatori. */
+export interface DuelDost {
+  profil: number;
+  ism: string;
+  avatar: string;
+  onlayn: boolean;
+  hisob: DuelHisob;
+  /** `men` — u o'ynab qo'ygan, javob menda; `u` — men kutyapman; bo'sh — hech kim. */
+  navbat: "men" | "u" | "";
+  /** Ochiq chaqiruv kodi (navbat bo'lsa). */
+  kod: string;
+  /** Hozir jonli taklif yuborsa bo'ladimi (tanish, onlayn, chegaradan o'tadi). */
+  jonli: boolean;
+}
+
+async function duelGet<T>(url: string): Promise<T | null> {
+  if (!token && !(await signIn())) return null;
+  try {
+    const r = await fetch(`${url}${profilQuery()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as T;
+  } catch { return null; }
+}
+
+/** Do'stlar ro'yxati. Xato bo'lsa bo'sh — duel ekrani busiz ham ishlaydi. */
+export async function duelDostlar(): Promise<DuelDost[]> {
+  const d = await duelGet<{ dostlar: DuelDost[] }>("/api/v1/duel/dostlar");
+  return d?.dostlar ?? [];
+}
+
+/** Menga kelgan jonli taklif. */
+export interface KelganTaklif {
+  id: number;
+  kod: string;
+  kimdan: string;
+  avatar: string;
+  oyin: string;
+  savollar: number;
+  vaqt: number;
+  raqibDaraja: number;
+  /** Necha soniyadan keyin yopiladi (server hisobi). */
+  qolgan: number;
+  hisob: DuelHisob | null;
+}
+
+export interface TaklifHolati {
+  taklif: KelganTaklif | null;
+  /** Menga yuborilgan va javob berilmagan chaqiruvlar soni. */
+  navbat: number;
+  /** "Meni jonli bellashuvga chaqirmasin" yoqilganmi. */
+  yopiq: boolean;
+}
+
+/**
+ * Kelgan taklif va navbat soni. Ilova buni faqat ruxsat etilgan
+ * ekranlarda so'raydi (`components/DuelTaklifOyna.tsx`).
+ */
+export const duelTaklifOl = (): Promise<TaklifHolati | null> =>
+  duelGet<TaklifHolati>("/api/v1/duel/taklif");
+
+/**
+ * Onlayn do'stga jonli taklif. Rad etilsa `DuelXato.sabab` da kalit keladi:
+ * `notanish` | `oflayn` | `soatiga` | `bugun_rad` | `yopiq` | `band`.
+ */
+export const duelTaklifYubor = (kimga: number, shart: DuelShart): Promise<DuelHolat> =>
+  duelPost<DuelHolat>("/api/v1/duel/taklif", { ...shart, kimga });
+
+/** Taklifga javob. Qabul qilinsa duel kodi qaytadi. */
+export const duelTaklifJavob = (
+  id: number, qabul: boolean, daraja?: DuelDaraja,
+): Promise<{ kod: string; qabul: boolean }> =>
+  duelPost(`/api/v1/duel/taklif/${id}/javob`, { qabul, ...(daraja ? { daraja } : {}) });
+
+/* ================= JAMOAVIY O'YINLAR — xonalar ================= */
+
+export type XonaOyin = "kartalar" | "royale" | "kodlar";
+
+export interface XonaAzo {
+  id: number;
+  ism: string;
+  avatar: string;
+  robot: boolean;
+  daraja: number;
+  tayyor: boolean;
+  chiqdi: boolean;
+  egasi: boolean;
+  /** Oxirgi belgisi yangi — ekran oldida. */
+  shuYerda: boolean;
+}
+
+export interface XonaGap { azo: number; kalit: string; vaqt: number }
+
+export interface XonaNatijaQator { golib: boolean | null; ochko: number; joy?: number; jamoa?: string }
+
+/**
+ * Xona holati. `oyinHolat` o'yin turiga qarab har xil — uni o'yin
+ * komponenti o'z turiga keltiradi (`components/xona/*`).
+ */
+export interface XonaHolat {
+  kod: string;
+  oyin: XonaOyin;
+  holat: "kutish" | "oyin" | "tugadi";
+  raund: number;
+  min: number;
+  max: number;
+  robotGacha: number;
+  azolar: XonaAzo[];
+  /** Mening a'zo raqamim. `null` — hali kirmaganman. */
+  men: number | null;
+  egasimi: boolean;
+  gaplar: XonaGap[];
+  havola: string;
+  oyinHolat: unknown;
+  natija: Record<string, XonaNatijaQator> | null;
+  sovgalar?: Record<string, string>;
+}
+
+/** Xona so'rovining xatosi — sabab kaliti bilan (`boshlangan`, `tola`, `navbat_emas` …). */
+export class XonaXato extends Error {
+  kod: number;
+  sabab: string;
+  constructor(kod: number, sabab: string) {
+    super(sabab);
+    this.kod = kod;
+    this.sabab = sabab;
+  }
+}
+
+async function xonaSorov<T>(url: string, body?: unknown): Promise<T> {
+  if (!token && !(await signIn())) throw new XonaXato(401, "kirish");
+  const r = await fetch(body === undefined ? `${url}${profilQuery()}` : url, {
+    method: body === undefined ? "GET" : "POST",
+    headers: {
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      Authorization: `Bearer ${token}`,
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(bilanProfil(body as Record<string, unknown>)) }),
+  });
+  if (!r.ok) {
+    let sabab = "";
+    try { sabab = ((await r.json()) as { sabab?: string }).sabab ?? ""; } catch { /* bo'sh */ }
+    throw new XonaXato(r.status, sabab);
+  }
+  return r.json() as Promise<T>;
+}
+
+const xu = (kod: string, qism = "") => `/api/v1/xona/${encodeURIComponent(kod)}${qism}`;
+
+export const xonaYarat = (oyin: XonaOyin, daraja: number) =>
+  xonaSorov<XonaHolat>("/api/v1/xona", { oyin, daraja });
+export const xonaOl = (kod: string) => xonaSorov<XonaHolat>(xu(kod));
+export const xonaKir = (kod: string, daraja: number) => xonaSorov<XonaHolat>(xu(kod, "/kir"), { daraja });
+export const xonaTayyor = (kod: string, tayyor: boolean, daraja: number) =>
+  xonaSorov<XonaHolat>(xu(kod, "/tayyor"), { tayyor, daraja });
+export const xonaRobot = (kod: string) => xonaSorov<XonaHolat>(xu(kod, "/robot"), {});
+export const xonaAmal = (kod: string, amal: Record<string, unknown>) =>
+  xonaSorov<XonaHolat>(xu(kod, "/amal"), { amal });
+export const xonaGap = (kod: string, kalit: string) => xonaSorov<XonaHolat>(xu(kod, "/gap"), { kalit });
+export const xonaYana = (kod: string) => xonaSorov<XonaHolat>(xu(kod, "/yana"), {});
+export const xonaChiq = (kod: string) => xonaSorov<{ chiqdi: boolean }>(xu(kod, "/chiq"), {});
+export async function kartaKolleksiya(): Promise<Record<string, number>> {
+  try {
+    return (await xonaSorov<{ kolleksiya: Record<string, number> }>("/api/v1/xona/kolleksiya")).kolleksiya;
+  } catch { return {}; }
+}
+
+/** "Meni jonli bellashuvga chaqirmasin". */
+export const duelSozlama = (yopiq: boolean): Promise<{ yopiq: boolean }> =>
+  duelPost("/api/v1/duel/sozlama", { yopiq });
 
 /** Jonli holat. So'rovning o'zi "men shu yerdaman" belgisini ham qo'yadi. */
 export async function duelHolat(kod: string): Promise<DuelJonli | null> {

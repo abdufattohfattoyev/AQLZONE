@@ -11,6 +11,15 @@ import { oyinById } from "./index";
 import { urugBilan } from "./urug";
 import type { Daraja, OqimSavol } from "./tur";
 
+/**
+ * HAR KIMGA O'Z DARAJASI — serverdan kelgan sonni darajaga aylantiradi.
+ * Taklif qilish va eslab qolish `duelDaraja.ts` da (u sof emas).
+ */
+
+/** Serverdan kelgan sonni darajaga aylantiradi (noto'g'ri bo'lsa — 2). */
+export const darajaSon = (n: number | null | undefined): Daraja =>
+  n === 1 || n === 3 ? n : 2;
+
 /** Standart davomiylik — chaqiruvda vaqt ko'rsatilmagan bo'lsa. */
 export const DUEL_VAQT = 60;
 

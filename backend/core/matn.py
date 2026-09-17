@@ -207,6 +207,18 @@ XABAR: dict[str, dict[str, str]] = {
             "Нажмите кнопку ниже."
         ),
     },
+    "xonaChaqiruvBot": {
+        "uz": (
+            "🎲 <b>Sizni jamoaviy o'yinga chaqirishdi!</b>\n\n"
+            "Xona tayyor — hamma yig'ilib, «Tayyorman» bossa o'yin boshlanadi. "
+            "Kirish uchun pastdagi tugmani bosing."
+        ),
+        "ru": (
+            "🎲 <b>Вас позвали в командную игру!</b>\n\n"
+            "Комната готова — когда все нажмут «Готов», игра начнётся. "
+            "Нажмите кнопку ниже."
+        ),
+    },
     "darslarHaqida": {
         "uz": (
             "🎓 <b>Darslar</b>\n\n"

@@ -40,7 +40,11 @@
  * odam o'yinni biladi va uni faqat bitta narsa qiziqtiradi — o'z
  * natijasi.
  */
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
+import { duelTaklifOl } from "../lib/api";
+import type { XonaOyin } from "../lib/api";
+import { XONA_OYINLAR } from "../lib/xonaOyinlar";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { OYINLAR } from "../lib/oyin";
@@ -52,16 +56,39 @@ import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import { useOrqaga } from "../lib/qobiq";
 
-export function Oyinlar({ onBack, onOyin, onMaydon, onDuel }: {
+/**
+ * ──────────── IKKI BO'LIM: YAKKA VA JAMOAVIY (2026-09-17) ────────────
+ *
+ * Jamoaviy o'yinlar (Son kartalari, Hisob Royale, Son kodlari) qo'shilgach
+ * bitta ro'yxat yana "o'nta teng karta — o'nta qaror" ga aylanardi. Odam
+ * bu yerga ikki xil kayfiyatda keladi: yolg'iz mashq qilgani yoki kimdir
+ * bilan o'ynagani. Tab aynan shu birinchi savolni so'raydi, qolgan tanlov
+ * esa kichrayadi. Tanlangan tab eslab qolinadi.
+ */
+type Bolim = "yakka" | "jamoaviy";
+const BOLIM_KALIT = "az-oyin-bolim";
+
+function bolimOl(): Bolim {
+  try { return localStorage.getItem(BOLIM_KALIT) === "jamoaviy" ? "jamoaviy" : "yakka"; } catch { return "yakka"; }
+}
+
+export function Oyinlar({ onBack, onOyin, onMaydon, onDuel, onJamoa }: {
   onBack: () => void;
   onOyin: (id: string) => void;
   onMaydon: () => void;
-  /** Do'st bilan bellashuv — maydon bilan yonma-yon turadi. */
+  /** Do'st bilan bellashuv — jamoaviy bo'limda. */
   onDuel: () => void;
+  /** Jamoaviy o'yin — xona ochish ekrani. */
+  onJamoa: (oyin: XonaOyin) => void;
 }) {
   const ozStrelka = useOrqaga(onBack);
   // Bugun o'ynalganmi — karta shunga qarab ikki xil gapiradi.
   const bugun = maydonNatija();
+  const [bolim, setBolim] = useState<Bolim>(bolimOl);
+  const tanla = (b: Bolim) => {
+    setBolim(b);
+    try { localStorage.setItem(BOLIM_KALIT, b); } catch { /* jim */ }
+  };
 
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-10 sm:max-w-[700px] lg:max-w-[1020px]">
@@ -92,38 +119,61 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onDuel }: {
         </span>
       </div>
 
-      {/* ---- ikkita chorlov, YONMA-YON ----
-
-          Ilgari ular ustma-ust ikkita keng tugma edi va ikkalasi
-          birga ekranning yarmini egallardi — pastdagi o'yin ro'yxati
-          esa umuman ko'rinmasdi, ya'ni odam sahifaning yarmini
-          bilmay qolardi.
-
-          Yonma-yon turgani mazmunan ham to'g'ri: ikkalasi ham
-          "bugun bir marta" turidagi taklif va ular bir-birining
-          MUQOBILI — yolg'iz o'ynaysizmi yoki do'st bilanmi.
-          Ustma-ust turganda esa ular ketma-ketlikdek o'qilardi. */}
-      <div className="mt-4 grid grid-cols-2 items-stretch gap-2.5">
-        <MaydonKarta bugun={bugun} onOch={onMaydon} />
-        <DuelKarta onOch={onDuel} />
-      </div>
-
-      <h2 className="az-kirish mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
-        {t("maydonMashq")}
-      </h2>
-      <p className="az-kirish mb-2.5 ml-1.5 text-[12px] leading-snug text-ink-soft/85">
-        {t("maydonMashqIzoh")}
-      </p>
-
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-        {OYINLAR.map((o, i) => (
-          <Karta key={o.id} o={o} i={i} onOch={() => onOyin(o.id)} />
+      {/* ---- Yakka / Jamoaviy ----
+          Ilgari maydon va duel yonma-yon turardi ("yolg'iz yoki do'st
+          bilan"). Jamoaviy o'yinlar qo'shilgach bu savol tabga aylandi:
+          yakkada maydon va mashq, jamoaviyda duel va xona o'yinlari. */}
+      <div role="tablist" className="az-kirish mt-4 flex rounded-full bg-track p-1">
+        {(["yakka", "jamoaviy"] as Bolim[]).map((b) => (
+          <button key={b} type="button" role="tab" aria-selected={bolim === b} onClick={() => tanla(b)}
+            data-tahlil={`O'yinlar: ${b}`}
+            className={`flex-1 rounded-full py-2.5 font-display text-[14.5px] transition-colors ${
+              bolim === b ? "bg-karta text-ink shadow-clay-sm" : "text-ink-soft"}`}>
+            {t(b === "yakka" ? "oyinYakka" : "oyinJamoaviy")}
+          </button>
         ))}
       </div>
 
-      <p className="az-kirish mt-5 text-center text-[11.5px] leading-snug text-ink-soft/80">
-        {t("oyinlarTagi")}
-      </p>
+      {bolim === "yakka" ? (
+        <>
+          <div className="mt-4 grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2">
+            <MaydonKarta bugun={bugun} onOch={onMaydon} />
+          </div>
+
+          <h2 className="az-kirish mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
+            {t("maydonMashq")}
+          </h2>
+          <p className="az-kirish mb-2.5 ml-1.5 text-[12px] leading-snug text-ink-soft/85">
+            {t("maydonMashqIzoh")}
+          </p>
+
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+            {OYINLAR.map((o, i) => (
+              <Karta key={o.id} o={o} i={i} onOch={() => onOyin(o.id)} />
+            ))}
+          </div>
+
+          <p className="az-kirish mt-5 text-center text-[11.5px] leading-snug text-ink-soft/80">
+            {t("oyinlarTagi")}
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="az-kirish mt-3 ml-1.5 text-[12.5px] leading-snug text-ink-soft">{t("jamoaviyIzoh")}</p>
+          <div className="mt-3 grid grid-cols-2 items-stretch gap-2.5 lg:grid-cols-4">
+            <DuelKarta onOch={onDuel} />
+            {(Object.keys(XONA_OYINLAR) as XonaOyin[]).map((k, i) => {
+              const m = XONA_OYINLAR[k];
+              return (
+                <Chorlov key={k} onOch={() => onJamoa(k)} kech={120 + i * 40}
+                  rang="bg-karta text-ink shadow-clay-sm" quti="bg-brand-blue/15"
+                  belgi={m.emoji} nom={t(m.nom)} izoh={t(m.izoh)}
+                  yorliq={t("xonaKishi", { min: m.min, max: m.max })} yorliqRang="bg-track text-ink-soft" />
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -170,12 +220,22 @@ function MaydonKarta({ bugun, onOch }: {
  * ketma-ketlikdek o'qilardi.
  */
 function DuelKarta({ onOch }: { onOch: () => void }) {
+  // "Sizni 2 kishi kutyapti" — do'st o'ynab qo'ygan va javob kutyapti.
+  // Kartadagi yagona yorliq shu: bu odatiy holat emas, qaytish sababi.
+  const [navbat, setNavbat] = useState(0);
+  useEffect(() => {
+    let bekor = false;
+    duelTaklifOl().then((h) => { if (!bekor && h) setNavbat(h.navbat); });
+    return () => { bekor = true; };
+  }, []);
+
   return (
     <Chorlov
       onOch={onOch} kech={90}
       rang="bg-brand-orange text-white shadow-clay" quti="bg-white/20"
       belgi="⚔️" oq jonli halqa
-      nom={t("duel")} izoh={t("duelIzoh")} yorliq=""
+      nom={t("duel")} izoh={t("duelIzoh")}
+      yorliq={navbat > 0 ? t("duelKutyaptiBelgi", { n: navbat }) : ""}
     />
   );
 }
@@ -192,11 +252,13 @@ function DuelKarta({ onOch }: { onOch: () => void }) {
  * bittasida bor va usiz ikkinchisi pastroq bo'lib qolardi.
  */
 function Chorlov({
-  onOch, kech: ms, rang, quti, belgi, oq, jonli, halqa, nom, izoh, yorliq,
+  onOch, kech: ms, rang, quti, belgi, oq, jonli, halqa, nom, izoh, yorliq, yorliqRang = "bg-white/25",
 }: {
   onOch: () => void; kech: number; rang: string; quti: string;
   belgi: string; oq?: boolean; jonli?: boolean; halqa?: boolean;
   nom: string; izoh: string; yorliq: string;
+  /** Yorliq foni — oq kartada shaffof oq ko'rinmaydi. */
+  yorliqRang?: string;
 }) {
   return (
     <button type="button" onClick={onOch}
@@ -212,8 +274,8 @@ function Chorlov({
           cho'zib, ro'yxatni ekrandan tushirib yuborardi. */}
       <span className="line-clamp-2 text-[11px] leading-snug opacity-85">{izoh}</span>
       {yorliq && (
-        <span className="mt-auto rounded-full bg-white/25 px-2 py-0.5 text-[10px]
-                         whitespace-nowrap">
+        <span className={`mt-auto rounded-full ${yorliqRang} px-2 py-0.5 text-[10px]
+                         whitespace-nowrap`}>
           {yorliq}
         </span>
       )}

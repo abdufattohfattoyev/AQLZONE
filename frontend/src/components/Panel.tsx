@@ -77,6 +77,8 @@ const YOPIQ = [
   // "qayerdaman?" degan savolni faqat kuchaytirardi.
   /^\/oyinlar\/duel$/,
   /^\/duel\//,
+  // Jamoaviy o'yin xonasi — o'yinda soat yuradi va boshqalar kutib turadi.
+  /^\/xona\//,
   // Kichkintoylar albomi — 2–5 yosh. Bo'lim ichida pastdagi besh
   // tugma faqat chalg'itadi: bu yoshdagi bola ularni bexosdan bosadi
   // va o'zi ochgan rasmlardan chiqib ketadi. Bo'limning KIRISH ekrani

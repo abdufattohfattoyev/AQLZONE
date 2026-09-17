@@ -364,6 +364,10 @@ class Profile(models.Model):
     name = models.CharField(max_length=40, default="", blank=True)
     #: Tulki bezagi va rang — mijoz tanlagan qiymat, server uni talqin qilmaydi.
     avatar = models.CharField(max_length=40, default="", blank=True)
+    #: "Meni jonli bellashuvga chaqirmasin" — sozlamalardagi tugma.
+    #: Oddiy chaqiruv (havola, bot xabari) bunga tegmaydi: u ekranni
+    #: to'sib chiqmaydi va istalgan payt ochiladi.
+    taklif_yopiq = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -693,7 +697,30 @@ class Duel(models.Model):
 
     urug = models.BigIntegerField()
     oyin = models.CharField(max_length=16)
+    #: ESKI umumiy daraja — endi har tomonniki alohida (pastda). Maydon
+    #: o'chirilmadi: u chaqirganning darajasi bilan bir xil yoziladi va
+    #: eski ilova versiyalari hali shuni o'qiydi.
     daraja = models.SmallIntegerField(default=2)
+
+    #: HAR KIMGA O'Z DARAJASI (2026-09-17).
+    #:
+    #: Ilgari ikkalasiga bir xil `daraja=2` berilardi va 6 yoshli bola
+    #: dadasi bilan bir xil savolni yechib, doim yutqazardi — ikkinchi
+    #: marta esa o'ynamasdi. Endi har o'yinchi savolni O'Z darajasida
+    #: yechadi (Prodigy usuli). Urug' bitta, daraja har xil: har kim o'z
+    #: darajasidagi savollar ketma-ketligini oladi.
+    chaqirgan_daraja = models.SmallIntegerField(default=2)
+    qabul_daraja = models.SmallIntegerField(default=2)
+
+    #: Kimga chaqiruv yuborilgan (ro'yxatdan yoki jonli taklif bilan).
+    #:
+    #: Havola bilan yasalgan chaqiruvda bo'sh — uni istalgan odam ochadi.
+    #: To'ldirilgan bo'lsa "Sizning navbatingiz" ro'yxatida AYNAN shu
+    #: odamga ko'rinadi: busiz u chaqiruvni faqat bot xabaridan topardi.
+    kimga = models.ForeignKey(
+        "Profile", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="kelgan_duellar",
+    )
 
     #: Duel shartlari — chaqirgan odam tanlaydi, ikkalasiga bir xil.
     #:
@@ -872,6 +899,157 @@ class Duel(models.Model):
         if self.chaqirgan_xato != self.qabul_xato:
             return "chaqirgan" if self.chaqirgan_xato < self.qabul_xato else "qabul"
         return "durang"
+
+
+class DuelTaklif(models.Model):
+    """
+    JONLI TAKLIF — hozir ilovada turgan do'stni o'yinga chaqirish.
+
+    Bot xabari emas, EKRANDAGI oyna: do'st bosh sahifada yoki darsni
+    tugatib turgan bo'lsa, unga "Aziz sizni chaqiryapti · 12 s" chiqadi.
+
+    ─────────────────── UCH SHART (2026-09-17) ───────────────────
+
+      1. Ekranda chiqadi, savol yechayotganda emas, `MUDDAT_SONIYA`
+         dan keyin o'zi yopiladi (mijoz qaysi ekranda ko'rsatishni
+         o'zi biladi — `DuelTaklifOyna.tsx`).
+      2. Faqat TANISHdan: oldin bir-biri bilan duel o'ynaganlar
+         (`duel.tanishmi`). Notanish katta odam bolani chaqira olmaydi.
+      3. Chegara: bir juftlikka soatiga bitta taklif, kuniga ikki marta
+         rad etgan odamga o'sha kuni boshqa taklif kelmaydi, va
+         `Profile.taklif_yopiq`.
+
+    Nega alohida jadval, `Duel` ichida emas: rad etish va muddati
+    o'tish CHEGARA uchun sanaladi, duel esa rad etilgandan keyin ham
+    oddiy chaqiruv bo'lib yashashda davom etadi.
+    """
+
+    KUTYAPTI, QABUL, RAD = "kutyapti", "qabul", "rad"
+    HOLATLAR = [(KUTYAPTI, "kutyapti"), (QABUL, "qabul"), (RAD, "rad")]
+
+    #: Taklif shuncha soniyadan keyin o'z-o'zidan yopiladi.
+    MUDDAT_SONIYA = 15
+
+    duel = models.ForeignKey(Duel, on_delete=models.CASCADE, related_name="takliflar")
+    kimdan = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="yuborgan_takliflar")
+    kimga = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="kelgan_takliflar")
+    holat = models.CharField(max_length=10, choices=HOLATLAR, default=KUTYAPTI)
+    created_at = models.DateTimeField(default=timezone.now)
+    javob_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "duel_taklif"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["kimga", "-created_at"]),
+            models.Index(fields=["kimdan", "kimga", "-created_at"]),
+        ]
+
+    @property
+    def muddati_otdimi(self) -> bool:
+        return (timezone.now() - self.created_at).total_seconds() > self.MUDDAT_SONIYA
+
+    @property
+    def qolgan_soniya(self) -> int:
+        otdi = (timezone.now() - self.created_at).total_seconds()
+        return max(0, int(self.MUDDAT_SONIYA - otdi))
+
+
+# ============================================================ jamoaviy o'yinlar
+
+
+class Xona(models.Model):
+    """
+    JAMOAVIY O'YIN XONASI — Son kartalari, Hisob Royale, Son kodlari.
+
+    ─────────────────── NEGA XONA KODI ───────────────────
+
+    Bir vaqtda 4–30 kishini tasodifan yig'ib bo'lmaydi: auditoriya
+    kichik. Kahoot usuli ishlaydi — oila, sinf yoki do'stlar bitta joyda
+    turib "4827" kodi bilan kiradi. Bo'sh joylarga robot qo'shiladi
+    (ochiq belgilangan).
+
+    ─────────────────── NEGA HOLAT JSON'DA ───────────────────
+
+    Uchta o'yinning holati butunlay boshqacha: kartalar qo'li, yuraklar,
+    16 kartalik taxta. Har biriga alohida jadval yasash uchta migratsiya
+    va o'nlab ustun bo'lardi, holat esa baribir faqat BIR xonaga tegishli
+    va doim butunligicha o'qiladi. Qoidalar serverda (`core/oyin_*.py`),
+    mijoz faqat o'ziga ruxsat berilgan ko'rinishni oladi — masalan Son
+    kodlarida kartalar rangini faqat sardor ko'radi.
+    """
+
+    KARTALAR, ROYALE, KODLAR = "kartalar", "royale", "kodlar"
+    OYINLAR = [(KARTALAR, "Son kartalari"), (ROYALE, "Hisob Royale"), (KODLAR, "Son kodlari")]
+
+    KUTISH, OYIN, TUGADI = "kutish", "oyin", "tugadi"
+    HOLATLAR = [(KUTISH, "kutish"), (OYIN, "oyin"), (TUGADI, "tugadi")]
+
+    kod = models.CharField(max_length=8, db_index=True)
+    oyin = models.CharField(max_length=12, choices=OYINLAR)
+    holat = models.CharField(max_length=8, choices=HOLATLAR, default=KUTISH)
+    egasi = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, related_name="xonalar")
+    #: O'yin holati — qoidalar moduli yozadi va o'qiydi.
+    davlat = models.JSONField(default=dict, blank=True)
+    #: Tayyor gaplar ("Tekshirib ko'ring") — oxirgi bir nechtasi.
+    gaplar = models.JSONField(default=list, blank=True)
+    #: Nechanchi o'yin — "yana o'ynaymiz" har safar oshiradi.
+    raund = models.SmallIntegerField(default=1)
+    created_at = models.DateTimeField(default=timezone.now)
+    boshlandi_at = models.DateTimeField(null=True, blank=True)
+    tugadi_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "xona"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["kod", "-created_at"])]
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"xona {self.kod} · {self.oyin}"
+
+
+class XonaAzo(models.Model):
+    """Xonadagi o'yinchi — odam yoki robot."""
+
+    xona = models.ForeignKey(Xona, on_delete=models.CASCADE, related_name="azolar")
+    #: Robotda bo'sh.
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True,
+                                related_name="xona_azoliklari")
+    robot = models.BooleanField(default=False)
+    ism = models.CharField(max_length=40, default="")
+    avatar = models.CharField(max_length=40, default="", blank=True)
+    #: Har kimga o'z darajasi — savol va kartalar shu darajada yasaladi.
+    daraja = models.SmallIntegerField(default=2)
+    tayyor = models.BooleanField(default=False)
+    #: "Men shu yerdaman" — har so'rovda yangilanadi.
+    belgi = models.DateTimeField(default=timezone.now)
+    #: Kirish tartibi — jamoaga bo'lish va sardor navbati shundan.
+    joy = models.SmallIntegerField(default=0)
+    chiqdi = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "xona_azo"
+        ordering = ["joy", "pk"]
+
+
+class KartaKolleksiya(models.Model):
+    """
+    Son kartalari kolleksiyasi — g'alabadan keladigan maxsus kartalar.
+
+    Kolleksiya o'yinni oylab ushlab turadigan narsa: "keyingi g'alabada
+    qaysi karta chiqadi?" Har o'yin boshida kolleksiyadan bitta maxsus
+    karta qo'lga tushadi.
+    """
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="kartalar")
+    kalit = models.CharField(max_length=16)
+    soni = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "karta_kolleksiya"
+        constraints = [
+            models.UniqueConstraint(fields=["profile", "kalit"], name="karta_kolleksiya_yagona"),
+        ]
 
 
 # =================================================================== masalalar

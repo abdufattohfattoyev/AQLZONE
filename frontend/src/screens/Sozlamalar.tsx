@@ -24,7 +24,9 @@ import { avatarBelgi } from "../lib/dokon";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
-import { botHavolasi, botNomi, chiqish, getHisob, hisobniSaqla, miniAppda } from "../lib/api";
+import {
+  botHavolasi, botNomi, chiqish, duelSozlama, duelTaklifOl, getHisob, hisobniSaqla, miniAppda,
+} from "../lib/api";
 import { turniUnut } from "../lib/tur";
 import { ovozYoniqmi, ovozniYoq } from "../lib/ovoz";
 import { tozala } from "../lib/nom";
@@ -450,6 +452,8 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
             </div>
           )}
 
+          <TaklifSozlama />
+
           {/* ---- chiqish ----
               Mini App ichida KO'RSATILMAYDI. U yerda sessiya Telegram'ning
               o'zinikidan kelib chiqadi: chiqqan zahoti ilova `initData`
@@ -487,6 +491,52 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
           )}
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * "Meni jonli bellashuvga chaqirmasin".
+ *
+ * Do'stlar ilovada turgan bolani ekrandagi oyna bilan chaqira oladi
+ * (`components/DuelTaklifOyna.tsx`). Ba'zi ota-ona buni istamaydi —
+ * masalan bola ilovani faqat dars uchun ochadi. Oddiy chaqiruv (havola,
+ * bot xabari) bunga tegmaydi: u ekranni to'sib chiqmaydi.
+ *
+ * Holat serverdan kelguncha karta chizilmaydi: noto'g'ri yozuvli tugma
+ * bir lahza ko'rinib, keyin almashsa, odam nimani bosganini bilmay qolardi.
+ */
+function TaklifSozlama() {
+  const [yopiq, setYopiq] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let bekor = false;
+    duelTaklifOl().then((h) => { if (!bekor && h) setYopiq(h.yopiq); });
+    return () => { bekor = true; };
+  }, []);
+
+  if (yopiq === null) return null;
+
+  const almashtir = () => {
+    const yangi = !yopiq;
+    setYopiq(yangi);
+    tebrat("tanlov");
+    duelSozlama(yangi).catch(() => setYopiq(!yangi));
+  };
+
+  return (
+    <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
+      style={{ "--az-kech": "97ms" } as React.CSSProperties}>
+      <div className="font-display text-[14px]">{t("duelTaklifSozlama")}</div>
+      <p className="mt-1 text-[12px] leading-snug text-ink-dim">{t("duelTaklifSozlamaIzoh")}</p>
+      <button type="button" onClick={almashtir} aria-pressed={!yopiq}
+        data-tahlil="Sozlama: duel takliflari"
+        className="clay-press mt-3 flex w-full items-center justify-center gap-2 rounded-3xl
+                   bg-track py-2.5 font-display text-[14px] text-ink-soft">
+        <Icon name={yopiq ? "check" : "times"} size={17}
+          className={yopiq ? "text-brand-green-d" : "text-ink-dim"} />
+        {yopiq ? t("duelTaklifYoqish") : t("duelTaklifOchirish")}
+      </button>
     </div>
   );
 }

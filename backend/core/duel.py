@@ -39,7 +39,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import Duel, Identity, Profile
+from .models import Duel, DuelTaklif, Identity, Profile
 from . import xabar as X
 from .vazifalar import fonda, telegram_xabar
 
@@ -107,8 +107,23 @@ def shartlarni_tozala(oyin: str, savollar, vaqt) -> tuple[str, int, int]:
     )
 
 
+def daraja_tozala(x) -> int | None:
+    """
+    Mijozdan kelgan daraja: 1, 2 yoki 3. Boshqasi — `None`.
+
+    `None` "o'zgartirma" degani, standartga tushirish emas: eski ilova
+    darajani umuman yubormaydi va o'shanda allaqachon yozilgani (yoki
+    modeldagi standart 2) qolishi kerak.
+    """
+    try:
+        n = int(x)
+    except (TypeError, ValueError):
+        return None
+    return n if n in DARAJALAR else None
+
+
 def yangi_duel(profile: Profile, oyin: str = "", savollar: int = 0,
-               vaqt: int = 0) -> Duel:
+               vaqt: int = 0, daraja=None, kimga: Profile | None = None) -> Duel:
     """
     Yangi chaqiruv boshlaydi (hali o'ynalmagan).
 
@@ -117,16 +132,22 @@ def yangi_duel(profile: Profile, oyin: str = "", savollar: int = 0,
     o'zi kuchli o'yinni tanlab oladi" degan xavotir bilan. Amalda esa
     duel do'st bilan o'ynaladi: kim kim bilan o'ynashini o'zi
     kelishadi, va tanlov imkoniyati o'yinni QIZIQARLIROQ qiladi.
+
+    DARAJA esa shart emas — u faqat chaqirganning O'ZINIKI. Raqib o'z
+    darajasini chaqiruvni ochganda tanlaydi (`Duel.chaqirgan_daraja`).
     """
     oyin, savollar, vaqt = shartlarni_tozala(oyin, savollar, vaqt)
+    d = daraja_tozala(daraja) or 2
     return Duel.objects.create(
         kod=kod_yasa(),
         urug=secrets.randbelow(2_000_000_000) + 1,
         oyin=oyin,
-        daraja=2,
+        daraja=d,
+        chaqirgan_daraja=d,
         savollar_soni=savollar,
         vaqt=vaqt,
         chaqirgan=profile,
+        kimga=kimga,
     )
 
 
@@ -380,8 +401,30 @@ def belgi_qoy(duel: Duel, chaqirganmi: bool) -> None:
     Duel.objects.filter(pk=duel.pk).update(**{maydon: timezone.now()})
 
 
+def daraja_qoy(duel: Duel, chaqirganmi: bool, daraja) -> None:
+    """
+    O'yinchining o'z darajasini yozadi — faqat o'yin BOSHLANMAGAN bo'lsa.
+
+    Boshlangandan keyin o'zgartirish mumkin bo'lsa, qiyin savolda
+    qiynalgan odam o'yin o'rtasida "oson" ga tushib, ballini osonroq
+    yig'ib olardi.
+    """
+    d = daraja_tozala(daraja)
+    if d is None:
+        return
+    if chaqirganmi:
+        if duel.chaqirgan_tugatdi or duel.boshlanadi is not None:
+            return
+        duel.chaqirgan_daraja = d
+        duel.daraja = d
+    else:
+        if duel.qabul_tugatdi or duel.boshlanadi is not None:
+            return
+        duel.qabul_daraja = d
+
+
 @transaction.atomic
-def tayyorlash(duel: Duel, profile: Profile, chaqirganmi: bool) -> Duel:
+def tayyorlash(duel: Duel, profile: Profile, chaqirganmi: bool, daraja=None) -> Duel:
     """
     "Men tayyorman" — va ikkalasi tayyor bo'lsa o'yinni boshlaydi.
 
@@ -395,6 +438,10 @@ def tayyorlash(duel: Duel, profile: Profile, chaqirganmi: bool) -> Duel:
     ham "men birinchiman" deb boshlanish vaqtini ikki marta yozardi.
     """
     d = Duel.objects.select_for_update().get(pk=duel.pk)
+
+    # Daraja "tayyorman" bilan BIRGA keladi: tayyorlik — bu o'yinchining
+    # oxirgi qarori, undan keyin sanoq boshlanadi va daraja qotadi.
+    daraja_qoy(d, chaqirganmi, daraja)
 
     if chaqirganmi:
         d.chaqirgan_tayyor = True
@@ -410,6 +457,7 @@ def tayyorlash(duel: Duel, profile: Profile, chaqirganmi: bool) -> Duel:
     d.save(update_fields=[
         "chaqirgan_tayyor", "chaqirgan_belgi",
         "qabul", "qabul_tayyor", "qabul_belgi", "boshlanadi",
+        "daraja", "chaqirgan_daraja", "qabul_daraja",
     ])
     return d
 
@@ -453,9 +501,16 @@ def raqib_holati(duel: Duel, chaqirganmi: bool) -> dict:
     """Raqib haqidagi jonli ma'lumot — so'rov javobiga qo'shiladi."""
     if chaqirganmi:
         raqib = duel.qabul
+        # Jonli taklif bilan chaqirilgan, lekin hali qo'shilmagan odamning
+        # ismi ham ko'rinsin: lobbida "Do'stingiz kutilmoqda" emas,
+        # "Aziz kutilmoqda" turishi kerak.
+        nom = korinadigan_ism(raqib) if raqib else (
+            korinadigan_ism(duel.kimga) if duel.kimga_id else ""
+        )
         return {
             "raqibBor": raqib is not None,
-            "raqibNom": korinadigan_ism(raqib) if raqib else "",
+            "raqibNom": nom,
+            "raqibDaraja": duel.qabul_daraja if raqib else None,
             "raqibTayyor": duel.qabul_tayyor,
             "raqibBall": duel.qabul_ball,
             "raqibTugadi": duel.qabul_tugatdi,
@@ -464,6 +519,7 @@ def raqib_holati(duel: Duel, chaqirganmi: bool) -> dict:
     return {
         "raqibBor": True,
         "raqibNom": korinadigan_ism(duel.chaqirgan),
+        "raqibDaraja": duel.chaqirgan_daraja,
         "raqibTayyor": duel.chaqirgan_tayyor,
         "raqibBall": duel.chaqirgan_ball,
         "raqibTugadi": duel.chaqirgan_tugatdi,
@@ -501,15 +557,53 @@ def juft_hisob(men: Profile | None, raqib: Profile | None) -> dict | None:
     ).exclude(golib="")
 
     hisob = {"men": 0, "raqib": 0, "durang": 0, "jami": 0}
-    for chaqirgan_id, golib in qs.values_list("chaqirgan_id", "golib"):
+    kunlar = set()
+    for chaqirgan_id, golib, tugadi, yasaldi in qs.values_list(
+        "chaqirgan_id", "golib", "tugadi_at", "created_at",
+    ):
         hisob["jami"] += 1
+        kunlar.add(timezone.localtime(tugadi or yasaldi).date())
         if golib == "durang":
             hisob["durang"] += 1
         elif (golib == "chaqirgan") == (chaqirgan_id == men.pk):
             hisob["men"] += 1
         else:
             hisob["raqib"] += 1
-    return hisob
+    return hisob | juft_zanjir(kunlar)
+
+
+def juft_zanjir(kunlar: set) -> dict:
+    """
+    JUFTLIK ZANJIRI — "Aziz bilan 🔥 12 kun".
+
+    ─────────────────── NEGA KERAK ───────────────────
+
+    Snapchat va Duolingo'dagi do'st zanjiri: ikki kishi har kuni kamida
+    bitta duel o'ynasa son o'sadi. Yolg'iz zanjirdan KUCHLIROQ, chunki
+    uzilsa ikkinchi odam ham yo'qotadi — ya'ni har kim nafaqat o'zi
+    uchun, balki do'sti uchun ham qaytadi.
+
+    ─────────────────── QOIDA ───────────────────
+
+    Zanjir bugun YOKI kecha tugagan duel bilan tirik. Kecha o'ynab,
+    bugun hali o'ynamagan juftlik — `xavf`: zanjir hali bor, lekin
+    yarim tunda uziladi. Ro'yxatda aynan shu juftlik tepaga chiqadi.
+
+    Saqlanmaydi, duellardan sanaladi (`juft_hisob` bilan bir sabab).
+    """
+    bugun = timezone.localdate()
+    kecha = bugun - timedelta(days=1)
+    if bugun in kunlar:
+        kun = bugun
+    elif kecha in kunlar:
+        kun = kecha
+    else:
+        return {"zanjir": 0, "bugun": False, "xavf": False}
+    n = 0
+    while kun in kunlar:
+        n += 1
+        kun -= timedelta(days=1)
+    return {"zanjir": n, "bugun": bugun in kunlar, "xavf": bugun not in kunlar}
 
 
 # ------------------------------------------------------------ qayta bellashuv
@@ -532,6 +626,11 @@ def qayta_duel(oldingi: Duel) -> Duel:
         urug=secrets.randbelow(2_000_000_000) + 1,
         oyin=oldingi.oyin,
         daraja=oldingi.daraja,
+        # Har kimning darajasi o'zida qoladi: "yana o'ynaymiz" degan odam
+        # o'sha sharoitda davom etmoqchi.
+        chaqirgan_daraja=oldingi.chaqirgan_daraja,
+        qabul_daraja=oldingi.qabul_daraja,
+        kimga=oldingi.kimga,
         savollar_soni=oldingi.savollar_soni,
         vaqt=oldingi.vaqt,
         chaqirgan=oldingi.chaqirgan,
@@ -616,3 +715,268 @@ def yana_holati(duel: Duel, chaqirganmi: bool) -> dict:
         "raqibYana": duel.qabul_yana if chaqirganmi else duel.chaqirgan_yana,
         "keyingiKod": duel.keyingi.kod if duel.keyingi_id else "",
     }
+
+
+# ------------------------------------------------------------ do'stlar
+
+
+def _onlaynmi(profil: Profile) -> bool:
+    """Profil egasi AYNI HOZIR ilovadami (`boshqaruv.ONLAYN_DAQIQA`)."""
+    from .boshqaruv import ONLAYN_DAQIQA
+    chegara = timezone.now() - timedelta(minutes=ONLAYN_DAQIQA)
+    return profil.pupil.sessions.filter(last_seen__gte=chegara).exists()
+
+
+def tanishmi(a: Profile, b: Profile) -> bool:
+    """
+    Ikki o'yinchi TANISHmi — ya'ni bir-biri bilan duel o'ynaganmi.
+
+    Jonli taklifning ikkinchi sharti shu (`DuelTaklif`). "Do'st havolasi
+    orqali kelgan" ham shu yerga tushadi: havolani ochib qabul qilgan
+    odam `qabul` bo'lib yoziladi. Faqat YUBORILGAN, lekin javob
+    berilmagan chaqiruv tanishlik emas — aks holda notanish odam bir
+    marta chaqiruv yuborib, keyin jonli taklif huquqini olardi.
+    """
+    if a.pk == b.pk:
+        return False
+    return Duel.objects.filter(
+        Q(chaqirgan=a, qabul=b) | Q(chaqirgan=b, qabul=a),
+    ).exists()
+
+
+def _ochiq_chaqiruv(chaqirgan: Profile, raqib: Profile) -> Duel | None:
+    """`chaqirgan` o'ynab qo'ygan va `raqib` hali javob bermagan chaqiruv."""
+    muddat = timezone.now() - timedelta(hours=Duel.MUDDAT_SOAT)
+    return (
+        Duel.objects
+        .filter(
+            Q(kimga=raqib) | Q(qabul=raqib),
+            chaqirgan=chaqirgan, chaqirgan_tugatdi=True, qabul_tugatdi=False,
+            boshlanadi__isnull=True, created_at__gte=muddat,
+        )
+        .order_by("-created_at").first()
+    )
+
+
+def navbat_soni(profil: Profile) -> int:
+    """Menga yuborilgan va hali javob berilmagan chaqiruvlar soni."""
+    muddat = timezone.now() - timedelta(hours=Duel.MUDDAT_SOAT)
+    return (
+        Duel.objects
+        .filter(
+            Q(qabul__isnull=True) | Q(qabul=profil),
+            kimga=profil, chaqirgan_tugatdi=True, qabul_tugatdi=False,
+            boshlanadi__isnull=True, created_at__gte=muddat,
+        )
+        .exclude(chaqirgan=profil)
+        .count()
+    )
+
+
+#: Do'stlar ro'yxatida ko'pi bilan nechta odam.
+MAX_DOST = 20
+
+
+def dostlar(men: Profile) -> list[dict]:
+    """
+    "SIZNING NAVBATINGIZ" — kim bilan o'ynaganim va hozir kimning navbati.
+
+    Trivia Crack / Words With Friends usuli: duel onlayn bo'lishi shart
+    emas, har kim o'z vaqtida o'ynaydi. Ilova ochilganda esa "Aziz sizni
+    kutyapti" turadi va bu qaytishning eng aniq sababi.
+
+    Tartib qaror bo'yicha, alifbo bo'yicha emas:
+      1. navbat MENDA      — kimdir javob kutyapti;
+      2. zanjir XAVFDA     — bugun o'ynalmasa yarim tunda uziladi;
+      3. hozir ONLAYN      — jonli o'ynash mumkin;
+      4. qolgani oxirgi o'yin bo'yicha.
+    """
+    qs = (
+        Duel.objects
+        .select_related("chaqirgan__pupil", "qabul__pupil", "kimga__pupil")
+        .filter(Q(chaqirgan=men) | Q(qabul=men) | Q(kimga=men))
+        .order_by("-created_at")[:300]
+    )
+
+    sheriklar: dict[int, tuple[Profile, object]] = {}
+    for d in qs:
+        if d.chaqirgan_id == men.pk:
+            sherik = d.qabul or d.kimga
+        else:
+            sherik = d.chaqirgan
+        if sherik is None or sherik.pk == men.pk or sherik.pk in sheriklar:
+            continue
+        sheriklar[sherik.pk] = (sherik, d.created_at)
+        if len(sheriklar) >= MAX_DOST:
+            break
+
+    ro = []
+    for sherik, oxirgi in sheriklar.values():
+        hisob = juft_hisob(men, sherik) or {}
+        menga = _ochiq_chaqiruv(sherik, men)
+        unga = None if menga else _ochiq_chaqiruv(men, sherik)
+        ochiq = menga or unga
+        onlayn = _onlaynmi(sherik)
+        mumkin, _ = taklif_mumkinmi(men, sherik, onlayn=onlayn)
+        ro.append({
+            "profil": sherik.pk,
+            "ism": korinadigan_ism(sherik),
+            "avatar": sherik.avatar,
+            "onlayn": onlayn,
+            "hisob": hisob,
+            # "men" — sherik o'ynab qo'ygan, javob menda; "u" — aksincha.
+            "navbat": "men" if menga else "u" if unga else "",
+            "kod": ochiq.kod if ochiq else "",
+            "jonli": mumkin,
+            "oxirgi": oxirgi,
+        })
+
+    ro.sort(key=lambda x: (
+        x["navbat"] != "men",
+        not x["hisob"].get("xavf"),
+        not x["onlayn"],
+        -x["oxirgi"].timestamp(),
+    ))
+    return ro
+
+
+# ------------------------------------------------------------ jonli taklif
+
+
+#: Bir juftlikka shuncha daqiqada bitta taklif.
+TAKLIF_ORALIQ_DAQIQA = 60
+
+#: Bir kunda shuncha marta rad etgan odamga boshqa taklif kelmaydi.
+TAKLIF_RAD_CHEGARA = 2
+
+
+def taklif_mumkinmi(kimdan: Profile, kimga: Profile,
+                    onlayn: bool | None = None) -> tuple[bool, str]:
+    """
+    Jonli taklif yuborsa bo'ladimi — va bo'lmasa NEGA.
+
+    Sabab mijozga qisqa kalit so'z bo'lib ketadi. Tartib arzon
+    tekshiruvdan qimmatiga.
+
+    "Bir juftlikka soatiga bitta" — umumiy "bir odamga soatiga bitta"
+    emas. Umumiy chegara ikkinchi do'stni ham to'sib qo'yardi: Aziz
+    chaqirgani uchun Malika bir soat chaqira olmasdi. Bezdirishdan esa
+    kunlik rad chegarasi va "band" tekshiruvi himoya qiladi.
+    """
+    if kimdan.pk == kimga.pk:
+        return False, "ozingiz"
+    if kimga.taklif_yopiq:
+        return False, "yopiq"
+    if not tanishmi(kimdan, kimga):
+        return False, "notanish"
+    if onlayn is None:
+        onlayn = _onlaynmi(kimga)
+    if not onlayn:
+        return False, "oflayn"
+
+    hozir = timezone.now()
+    if DuelTaklif.objects.filter(
+        kimdan=kimdan, kimga=kimga,
+        created_at__gte=hozir - timedelta(minutes=TAKLIF_ORALIQ_DAQIQA),
+    ).exists():
+        return False, "soatiga"
+
+    kun_boshi = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+    rad = DuelTaklif.objects.filter(
+        kimga=kimga, holat=DuelTaklif.RAD, javob_at__gte=kun_boshi,
+    ).count()
+    if rad >= TAKLIF_RAD_CHEGARA:
+        return False, "bugun_rad"
+
+    # Ekranda bir vaqtda bitta oyna: ikkinchisi birinchisini yopib
+    # qo'yardi va odam kim chaqirganini ham ko'rmay qolardi.
+    if _faol_taklif(kimga) is not None:
+        return False, "band"
+    return True, ""
+
+
+def _faol_taklif(kimga: Profile) -> DuelTaklif | None:
+    chegara = timezone.now() - timedelta(seconds=DuelTaklif.MUDDAT_SONIYA)
+    return (
+        DuelTaklif.objects
+        .select_related("duel", "kimdan")
+        .filter(kimga=kimga, holat=DuelTaklif.KUTYAPTI, created_at__gte=chegara)
+        .order_by("-created_at").first()
+    )
+
+
+@transaction.atomic
+def taklif_yubor(kimdan: Profile, kimga: Profile, oyin: str = "", savollar: int = 0,
+                 vaqt: int = 0, daraja=None) -> tuple[DuelTaklif | None, str]:
+    """
+    Jonli taklif yasaydi: duel + taklif.
+
+    Chaqirgan odam DARHOL tayyor deb belgilanadi — u "Jonli chaqirish"
+    ni bosib, lobbida kutib turibdi. Do'sti qabul qilishi bilan sanoq
+    boshlanadi va hech kim "tayyorman" ni ikkinchi marta bosmaydi.
+    """
+    mumkin, sabab = taklif_mumkinmi(kimdan, kimga)
+    if not mumkin:
+        return None, sabab
+    d = yangi_duel(kimdan, oyin=oyin, savollar=savollar, vaqt=vaqt,
+                   daraja=daraja, kimga=kimga)
+    d.chaqirgan_tayyor = True
+    d.chaqirgan_belgi = timezone.now()
+    d.save(update_fields=["chaqirgan_tayyor", "chaqirgan_belgi"])
+    return DuelTaklif.objects.create(duel=d, kimdan=kimdan, kimga=kimga), ""
+
+
+def kelgan_taklif(profil: Profile) -> DuelTaklif | None:
+    """
+    Menga hozir ko'rsatiladigan taklif.
+
+    Chaqirgan odam lobbidan KETGAN bo'lsa taklif ko'rsatilmaydi: qabul
+    qilgan bola bo'sh lobbiga tushib, hech kim kelmasligini kutib qolardi.
+    """
+    t = _faol_taklif(profil)
+    if t is None or not t.duel.belgisi_yangimi(chaqirgan=True):
+        return None
+    return t
+
+
+def taklif_holati(duel: Duel) -> dict | None:
+    """Chaqirgan odamning lobbisi uchun — do'sti nima dedi."""
+    t = duel.takliflar.order_by("-created_at").first()
+    if t is None:
+        return None
+    holat = t.holat
+    if holat == DuelTaklif.KUTYAPTI and t.muddati_otdimi:
+        holat = "otdi"
+    return {"holat": holat, "qolgan": t.qolgan_soniya}
+
+
+@transaction.atomic
+def taklif_javob(taklif: DuelTaklif, profil: Profile, qabul: bool,
+                 daraja=None) -> tuple[Duel | None, str]:
+    """
+    Taklifga javob. `qabul` bo'lsa — duelga qo'shadi va sanoq boshlanadi.
+
+    Muddati o'tgan taklifni qabul qilib bo'lmaydi: chaqirgan odam 15
+    soniyadan keyin "kelmadi" deb o'zi o'ynashga o'tgan bo'lishi mumkin.
+    Rad etish esa muddatdan keyin ham yoziladi — u chegara uchun sanaladi.
+    """
+    t = DuelTaklif.objects.select_for_update().get(pk=taklif.pk)
+    if t.kimga_id != profil.pk:
+        return None, "begona"
+    if t.holat != DuelTaklif.KUTYAPTI:
+        return None, "javob_berilgan"
+
+    t.javob_at = timezone.now()
+    if not qabul:
+        t.holat = DuelTaklif.RAD
+        t.save(update_fields=["holat", "javob_at"])
+        return t.duel, ""
+
+    if t.muddati_otdimi:
+        return None, "muddati_otdi"
+    if not t.duel.belgisi_yangimi(chaqirgan=True) or t.duel.qabul_id not in (None, profil.pk):
+        return None, "ketdi"
+
+    t.holat = DuelTaklif.QABUL
+    t.save(update_fields=["holat", "javob_at"])
+    return tayyorlash(t.duel, profil, chaqirganmi=False, daraja=daraja), ""

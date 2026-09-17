@@ -662,6 +662,14 @@ def yangilikni_qayta_ishla(u: dict) -> str:
             bolimni_yubor(chat_id, til, f"/duel/{kod}", "duelChaqiruvBot")
             return f"{tg_id}: chaqiruv havolasi ({kod})"
 
+    # Jamoaviy o'yin xonasi: `/start xona_<kod>` — "Do'stlarni chaqirish"
+    # tugmasi yuboradigan havola. Kod faqat raqam.
+    if matn.startswith("/start xona_"):
+        kod = matn.split("xona_", 1)[1].strip()[:8]
+        if kod.isdigit():
+            bolimni_yubor(chat_id, til, f"/xona/{kod}", "xonaChaqiruvBot")
+            return f"{tg_id}: xona havolasi ({kod})"
+
     # Kanaldagi post tugmasi: `/start masala_<id>` va `/start masalalar`.
     #
     # NEGA `?startapp=` EMAS. U bir bosishda ilovani ochadi, lekin

@@ -51,7 +51,7 @@ from . import ovoz as O
 from . import rasm as R
 from . import tahlil as TH
 from .models import (
-    BIZNING_KALIT, MAX_QIYMAT, Duel, Identity, LessonResult, LigaAzo, Masala,
+    BIZNING_KALIT, MAX_QIYMAT, Duel, DuelTaklif, Identity, LessonResult, LigaAzo, Masala,
     MasalaUrinish, Profile, Progress, Pupil, Session, TestToplam,
 )
 from .serializers import (
@@ -1010,8 +1010,12 @@ def _duel_json(d, ozim: bool = False, men=None) -> dict:
         "ozim": ozim,
         "havola": D.havola(d.kod),
         "menTayyor": (d.chaqirgan_tayyor if ozim else d.qabul_tayyor),
+        # Har kimga o'z darajasi — savollar SHU daraja bilan yasaladi.
+        "menDaraja": d.chaqirgan_daraja if ozim else d.qabul_daraja,
         "boshlanishSoniya": D.boshlanishga_qolgan(d),
         "hisob": D.juft_hisob(men, d.qabul if ozim else d.chaqirgan),
+        # Jonli taklif bilan chaqirilgan bo'lsa — do'sti nima dedi.
+        "taklif": D.taklif_holati(d) if ozim else None,
         **D.raqib_holati(d, chaqirganmi=ozim),
     }
 
@@ -1034,21 +1038,23 @@ def duel_boshla(request):
             {"detail": "kunlik chegara", "chegara": D.KUNLIK_CHEGARA},
             status=status.HTTP_429_TOO_MANY_REQUESTS,
         )
+    # Onlayn ro'yxatdan yoki do'stlardan tanlangan odamga chaqiruv
+    # YUBORILADI va duelda `kimga` bo'lib yoziladi — shunda u "Sizning
+    # navbatingiz" ro'yxatida aynan o'sha odamga ko'rinadi.
+    kimga = _butun(request.data.get("kimga"))
+    raqib = Profile.objects.filter(pk=kimga).first() if kimga else None
+    if raqib is not None and (raqib.pk == profil.pk or not ON.chaqirsa_boladimi(raqib)):
+        raqib = None
+
     d = D.yangi_duel(
         profil,
         oyin=str(request.data.get("oyin") or ""),
         savollar=_butun(request.data.get("savollar")),
         vaqt=_butun(request.data.get("vaqt")),
+        daraja=request.data.get("daraja"),
+        kimga=raqib,
     )
-
-    # Onlayn ro'yxatdan tanlangan odamga chaqiruv YUBORILADI.
-    # Havolani qo'lda ulashish ham qoladi — bu qo'shimcha yo'l.
-    kimga = _butun(request.data.get("kimga"))
-    yuborildi = False
-    if kimga:
-        raqib = Profile.objects.filter(pk=kimga).first()
-        if raqib is not None and raqib.pk != profil.pk and ON.chaqirsa_boladimi(raqib):
-            yuborildi = D.chaqiruv_xabari(d, raqib)
+    yuborildi = D.chaqiruv_xabari(d, raqib) if raqib is not None else False
     return Response(
         {**_duel_json(d, ozim=True), "urug": d.urug, "yuborildi": yuborildi},
         status=201,
@@ -1149,6 +1155,11 @@ def duel_qabul(request, kod: str):
         return Response({"detail": "allaqachon oynalgan"}, status=409)
     if holat == "muddati_otdi":
         return Response({"detail": "muddati otdi"}, status=410)
+
+    # Qabul qilgan odamning O'Z darajasi — chaqiruvni ochganda tanlangan.
+    if D.daraja_tozala(request.data.get("daraja")) is not None:
+        D.daraja_qoy(d, False, request.data.get("daraja"))
+        d.save(update_fields=["qabul_daraja"])
 
     return Response({
         **_duel_json(d, men=profil),
@@ -1287,7 +1298,7 @@ def duel_tayyor(request, kod: str):
     if not chaqirganmi and d.qabul_id not in (None, profil.pk):
         return Response({"detail": "band"}, status=409)
 
-    d = D.tayyorlash(d, profil, chaqirganmi)
+    d = D.tayyorlash(d, profil, chaqirganmi, daraja=request.data.get("daraja"))
     return Response(_duel_json(d, ozim=chaqirganmi))
 
 
@@ -1323,7 +1334,9 @@ def duel_holat(request, kod: str):
     return Response({
         "holat": d.holat,
         "menTayyor": (d.chaqirgan_tayyor if chaqirganmi else d.qabul_tayyor),
+        "menDaraja": d.chaqirgan_daraja if chaqirganmi else d.qabul_daraja,
         "boshlanishSoniya": D.boshlanishga_qolgan(d),
+        "taklif": D.taklif_holati(d) if chaqirganmi else None,
         "golib": d.golib,
         "meniki": d.chaqirgan_ball if chaqirganmi else d.qabul_ball,
         # Umumiy hisob FAQAT duel tugagach sanaladi: bu so'rov har 2
@@ -1402,6 +1415,93 @@ def duel_yana(request, kod: str):
 
     d = D.yana_soradi(d, chaqirganmi)
     return Response(D.yana_holati(d, chaqirganmi))
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def duel_dostlar(request):
+    """
+    "Sizning navbatingiz" — kim bilan o'ynaganim, hisob, zanjir va
+    kimning navbati (`duel.dostlar`).
+    """
+    profil = _profil_tanla(request)
+    return Response({"dostlar": D.dostlar(profil)})
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def duel_taklif(request):
+    """
+    Jonli taklif.
+
+      GET   menga hozir kelgan taklif (yoki `null`), navbatdagi
+            chaqiruvlar soni va "meni chaqirmasin" sozlamasi. Mijoz buni
+            faqat RUXSAT ETILGAN ekranlarda so'raydi (bosh sahifa,
+            o'yinlar, kurs xaritasi) — savol yechayotganda emas.
+      POST  do'stga jonli taklif yuborish. Rad etilsa sababi qaytadi
+            (`duel.taklif_mumkinmi`).
+    """
+    profil = _profil_tanla(request)
+
+    if request.method == "GET":
+        t = D.kelgan_taklif(profil)
+        return Response({
+            "taklif": None if t is None else {
+                "id": t.pk,
+                "kod": t.duel.kod,
+                "kimdan": D.korinadigan_ism(t.kimdan),
+                "avatar": t.kimdan.avatar,
+                "oyin": t.duel.oyin,
+                "savollar": t.duel.savollar_soni,
+                "vaqt": t.duel.vaqt,
+                "raqibDaraja": t.duel.chaqirgan_daraja,
+                "qolgan": t.qolgan_soniya,
+                "hisob": D.juft_hisob(profil, t.kimdan),
+            },
+            "navbat": D.navbat_soni(profil),
+            "yopiq": profil.taklif_yopiq,
+        })
+
+    kimga = Profile.objects.filter(pk=_butun(request.data.get("kimga"))).first()
+    if kimga is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    t, sabab = D.taklif_yubor(
+        profil, kimga,
+        oyin=str(request.data.get("oyin") or ""),
+        savollar=_butun(request.data.get("savollar")),
+        vaqt=_butun(request.data.get("vaqt")),
+        daraja=request.data.get("daraja"),
+    )
+    if t is None:
+        return Response({"detail": sabab, "sabab": sabab}, status=409)
+    return Response({**_duel_json(t.duel, ozim=True, men=profil), "urug": t.duel.urug},
+                    status=201)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_taklif_javob(request, pk: int):
+    """Taklifga javob: `qabul` true bo'lsa duel kodi qaytadi."""
+    t = DuelTaklif.objects.filter(pk=pk).first()
+    if t is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    profil = _profil_tanla(request)
+    qabul = bool(request.data.get("qabul"))
+    d, sabab = D.taklif_javob(t, profil, qabul, daraja=request.data.get("daraja"))
+    if d is None:
+        kod = 403 if sabab == "begona" else 410
+        return Response({"detail": sabab, "sabab": sabab}, status=kod)
+    return Response({"kod": d.kod, "qabul": qabul})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_sozlama(request):
+    """"Meni jonli bellashuvga chaqirmasin" — sozlamalardagi tugma."""
+    profil = _profil_tanla(request)
+    profil.taklif_yopiq = bool(request.data.get("yopiq"))
+    profil.save(update_fields=["taklif_yopiq"])
+    return Response({"yopiq": profil.taklif_yopiq})
 
 
 # ----------------------------------------------------------------- masalalar
