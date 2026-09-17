@@ -47,7 +47,7 @@ import { useNavigate } from "react-router-dom";
 import { boshParametri } from "../lib/qobiq";
 import { MASALA_BOSH, ROYXAT_PARAM } from "../lib/ulash";
 import { kanalBelgisiz } from "../lib/tahlil";
-import { yolDuelKod, yolMasala, yolMasalalar, yolTestSinf, yolToplam, yolXona } from "../lib/yollar";
+import { yolDuelKod, yolMasala, yolMasalalar, yolTestSinf, yolToplam, yolXona, yolKunlikSon } from "../lib/yollar";
 
 /** Ishlatilgan kod shu yerda qoladi — sessiya davomida. */
 const KALIT = "az_duel_kod";
@@ -63,6 +63,8 @@ function manzil(xom: string): string | null {
   const kod = kanalBelgisiz(xom);
   if (kod === ROYXAT_PARAM) return yolMasalalar();
   if (kod === "testlar") return yolTestSinf();
+  // Kunlik son natijasi ulashilganda keladigan havola.
+  if (kod === "kunlik") return yolKunlikSon();
   if (kod.startsWith("test_")) {
     const raqam = Number(kod.slice("test_".length));
     return Number.isInteger(raqam) && raqam > 0 ? yolToplam(raqam) : null;

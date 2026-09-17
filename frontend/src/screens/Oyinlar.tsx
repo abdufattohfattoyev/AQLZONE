@@ -45,6 +45,7 @@ import type { CSSProperties } from "react";
 import { duelTaklifOl } from "../lib/api";
 import type { XonaOyin } from "../lib/api";
 import { XONA_OYINLAR } from "../lib/xonaOyinlar";
+import { kunlikSonBugun } from "./KunlikSon";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { OYINLAR } from "../lib/oyin";
@@ -72,10 +73,12 @@ function bolimOl(): Bolim {
   try { return localStorage.getItem(BOLIM_KALIT) === "jamoaviy" ? "jamoaviy" : "yakka"; } catch { return "yakka"; }
 }
 
-export function Oyinlar({ onBack, onOyin, onMaydon, onDuel, onJamoa }: {
+export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onDuel, onJamoa }: {
   onBack: () => void;
   onOyin: (id: string) => void;
   onMaydon: () => void;
+  /** Kunlik son — Wordle uslubidagi jumboq. */
+  onKunlikSon: () => void;
   /** Do'st bilan bellashuv — jamoaviy bo'limda. */
   onDuel: () => void;
   /** Jamoaviy o'yin — xona ochish ekrani. */
@@ -136,8 +139,16 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onDuel, onJamoa }: {
 
       {bolim === "yakka" ? (
         <>
-          <div className="mt-4 grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2">
+          <div className="mt-4 grid grid-cols-2 items-stretch gap-2.5">
             <MaydonKarta bugun={bugun} onOch={onMaydon} />
+            {/* Kunlik son — maydon bilan yonma-yon: ikkalasi ham "bugun bir marta". */}
+            <Chorlov onOch={onKunlikSon} kech={60}
+              rang={kunlikSonBugun() ? "bg-karta text-ink shadow-clay-sm" : "bg-brand-blue text-white shadow-clay"}
+              quti={kunlikSonBugun() ? "bg-brand-green/15" : "bg-white/20"}
+              belgi={kunlikSonBugun() ? "✅" : "🔢"}
+              nom={t("kunlikSon")}
+              izoh={kunlikSonBugun() ? t("kunlikSonYechildi") : t("kunlikSonIzoh")}
+              yorliq="" />
           </div>
 
           <h2 className="az-kirish mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">

@@ -63,6 +63,16 @@ function qadamlar(oyin: XonaOyin): Qadam[] {
         misol: <div className="w-full max-w-[220px] space-y-2"><JonMisol nom={t("duelRaqib")} jon={75} /><JonMisol nom={t("xonaSiz")} jon={100} /></div> },
     ];
   }
+  if (oyin === "seyf") {
+    return [
+      { emoji: "🔐", sarlavha: "orgS1T", matn: "orgS1M",
+        misol: <div className="flex flex-wrap justify-center gap-1.5 text-[14px]"><Chip>A = 7</Chip><Chip>B = A + 3</Chip><Chip>Kod = A × B</Chip></div> },
+      { emoji: "🎭", sarlavha: "orgS2T", matn: "orgS2M",
+        misol: <div className="flex items-center gap-2 text-[14px]"><Chip>B = A + 3</Chip><span className="text-[22px]">→</span><Chip rang="bg-ink text-karta">B = A + 4</Chip></div> },
+      { emoji: "🕵️", sarlavha: "orgS3T", matn: "orgS3M",
+        misol: <div className="flex flex-wrap justify-center gap-1.5 text-[14px]"><Chip>7 × 11 = 77</Chip><Chip rang="bg-brand-gold text-white">Kod — juft</Chip></div> },
+    ];
+  }
   if (oyin === "royale") {
     return [
       { emoji: "❤️", sarlavha: "orgR1T", matn: "orgR1M", misol: <div className="text-[34px]">❤️❤️<span className="opacity-30">🤍</span></div> },
@@ -152,6 +162,37 @@ function Sinov({ oyin, onBajarildi }: { oyin: XonaOyin; onBajarildi: () => void 
     );
   }
 
+  if (oyin === "seyf") {
+    // A = 5, B = A + 2, Kod = A × B, "Kod — toq". Aziz "B = A + 3" deydi:
+    // 5 × 8 = 40 — juft, "toq" bo'lagiga zid. Xoin — Aziz.
+    const aytilgan = [
+      { kim: "Malika", matn: "A = 5" },
+      { kim: "Aziz", matn: "B = A + 3" },
+      { kim: "Jasur", matn: "Kod = A × B" },
+      { kim: "Dilnoza", matn: "Kod — toq son" },
+    ];
+    return (
+      <div className="w-full">
+        <div className="space-y-1 rounded-2xl bg-karta p-3 text-left shadow-clay-sm">
+          {aytilgan.map((x) => (
+            <div key={x.kim} className="flex gap-2 text-[14px]">
+              <span className="w-16 shrink-0 text-ink-soft">{x.kim}</span>
+              <span className="font-display">{x.matn}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {aytilgan.map((x) => (
+            <button key={x.kim} type="button" disabled={holat !== ""}
+              onClick={() => (x.kim === "Aziz" ? togri() : xato())}
+              className="clay-press rounded-2xl bg-karta py-2.5 font-display text-[15px] shadow-clay-sm">{x.kim}</button>
+          ))}
+        </div>
+        {holat && <SinovNatija holat={holat} />}
+      </div>
+    );
+  }
+
   // Son kodlari: "12 · 2" — to'g'ri kartalar 0 va 2.
   const kartalar = ["3 × 4", "2 × 7", "7 + 5", "20 − 9"];
   const TOGRI = [0, 2];
@@ -227,7 +268,7 @@ export function Orgatish({ oyin, onYop }: { oyin: XonaOyin; onYop: () => void })
           <div className="az-kirish mt-4 flex min-h-[300px] flex-col items-center text-center">
             <h2 className="text-[19px] leading-tight">{t("orgSinab")}</h2>
             <p className="mt-1 mb-3 text-[13px] text-ink-soft">
-              {t(oyin === "kartalar" ? "orgK4M" : oyin === "royale" ? "orgR4M" : "orgD4M")}
+              {t(oyin === "kartalar" ? "orgK4M" : oyin === "royale" ? "orgR4M" : oyin === "seyf" ? "orgS4M" : "orgD4M")}
             </p>
             <Sinov oyin={oyin} onBajarildi={() => setBajarildi(true)} />
           </div>

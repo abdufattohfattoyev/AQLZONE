@@ -1290,7 +1290,7 @@ export const duelTaklifJavob = (
 
 /* ================= JAMOAVIY O'YINLAR — xonalar ================= */
 
-export type XonaOyin = "kartalar" | "royale" | "kodlar";
+export type XonaOyin = "kartalar" | "royale" | "kodlar" | "seyf";
 
 export interface XonaAzo {
   id: number;

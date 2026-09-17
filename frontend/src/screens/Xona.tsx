@@ -23,6 +23,7 @@ import { Konfetti } from "../components/Konfetti";
 import { Kartalar } from "../components/xona/Kartalar";
 import { Royale } from "../components/xona/Royale";
 import { Kodlar } from "../components/xona/Kodlar";
+import { Seyf, SeyfYakun } from "../components/xona/Seyf";
 import { Orgatish, orgatildimi } from "../components/xona/Orgatish";
 import { avatarBelgi } from "../lib/dokon";
 import { EmojiBelgi } from "../lib/hajmli";
@@ -333,6 +334,8 @@ export function XonaSahifa({ kod, onChiq, onXona }: {
     ekran = <Kartalar xona={xona} amal={amal} />;
   } else if (xona.oyin === "royale") {
     ekran = <Royale xona={xona} amal={amal} />;
+  } else if (xona.oyin === "seyf") {
+    ekran = <Seyf xona={xona} amal={amal} gap={(k) => xonaGap(kod, k).then(yangila).catch(xatoKorsat)} />;
   } else {
     ekran = <Kodlar xona={xona} amal={amal} gap={(k) => xonaGap(kod, k).then(yangila).catch(xatoKorsat)} />;
   }
@@ -672,6 +675,9 @@ function Natija({ xona, onYangi, onXato, onChiq }: {
         </>
       )}
       {durang && <div className="mt-6 space-y-1.5">{qatorlar.map((q) => <Qator key={q.a.id} q={q} />)}</div>}
+
+      {/* Seyf: kim xoin edi va kim nimani yolg'on aytgan — o'yinning eng qiziq lahzasi. */}
+      {xona.oyin === "seyf" && <SeyfYakun xona={xona} />}
 
       <button type="button" data-tahlil="Jamoa: yana o'ynash"
         onClick={() => xonaYana(xona.kod).then(onYangi).catch(onXato)}

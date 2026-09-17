@@ -6888,6 +6888,101 @@ class XonaTest(TestCase):
         tayyorlar = {a["id"]: a["tayyor"] for a in r["azolar"]}
         self.assertEqual(sorted(tayyorlar.values()), [False, True])
 
+    def test_seyf_toliq(self):
+        """Bo'laklar haqiqat, xoinda yolg'on variantlar, kod topilsa hisobchilar yutadi."""
+        import random
+        from . import oyin_seyf as S
+        rng = random.Random(5)
+        azolar = [{"id": i, "daraja": 2, "robot": False} for i in range(1, 6)]
+        d = S.boshla(azolar, 0.0, rng)
+        j = d["jumboq"]
+        self.assertEqual(j["kod"], j["A"] * j["B"])
+        turlar = [b["tur"] for b in d["bolaklar"].values()]
+        self.assertTrue({"a", "b", "kod"} <= set(turlar))
+        xoin = d["xoin"]
+        self.assertIn(xoin, d["odamlar"])                      # 3+ odam — xoin odam
+        self.assertGreaterEqual(len(d["bolaklar"][xoin]["variantlar"]), 2)
+        halol = next(k for k in d["bolaklar"] if k != xoin)
+        self.assertEqual(len(d["bolaklar"][halol]["variantlar"]), 1)
+        # Xoin variantlaridan faqat bittasi haqiqat.
+        self.assertEqual(d["bolaklar"][xoin]["variantlar"].count(d["bolaklar"][xoin]["matn"]), 1)
+        # Boshqalar xoinni va bo'laklarni ko'rmaydi.
+        k = S.korinish(d, int(halol), 1)
+        self.assertEqual(k["rol"], "hisobchi")
+        self.assertIsNone(k["sirKod"])
+        self.assertNotIn("yakun", k)
+        self.assertEqual(S.korinish(d, int(xoin), 1)["sirKod"], j["kod"])
+
+        # Aytmasdan ovozga o'tib bo'lmaydi.
+        self.assertEqual(S.amal(d, int(halol), {"tur": "ovozga"}, 1, rng), "aytmadingiz")
+        for kk in d["odamlar"]:
+            self.assertEqual(S.amal(d, int(kk), {"tur": "ayt", "i": 1 if kk == xoin else 0}, 2, rng), "")
+            S.amal(d, int(kk), {"tur": "ovozga"}, 3, rng)
+        self.assertEqual(d["bosqich"], "ovoz")
+        self.assertEqual(len(d["aytilgan"]), 5)
+        for kk in d["odamlar"]:
+            S.amal(d, int(kk), {"tur": "ovoz", "kod": j["kod"], "xoin": xoin if kk != xoin else halol}, 4, rng)
+        self.assertTrue(d["tugadi"])
+        self.assertEqual((d["yakun"]["golib"], d["yakun"]["xoinTopildi"]), ("hisobchilar", True))
+        n = S.natija(d)
+        self.assertEqual(n[halol]["ochko"], 45)                # 30 + xoin topdi 10 + kod 5
+        self.assertEqual((n[xoin]["golib"], n[xoin]["ochko"]), (False, 10))
+
+    def test_seyf_har_yolgon_fosh_qilinadi(self):
+        """
+        Xoinning har bir yolg'oni kamida bitta boshqa bo'lak bilan zid kelishi
+        shart — aks holda o'yin matematikaga emas, omadga aylanadi.
+        """
+        import random
+        from . import oyin_seyf as S
+        for urug in range(300):
+            rng = random.Random(urug)
+            n = 4 + urug % 5
+            d = S.boshla([{"id": i, "daraja": 1 + urug % 3, "robot": False} for i in range(1, n + 1)], 0.0, rng)
+            j = d["jumboq"]
+            xoin = d["bolaklar"][d["xoin"]]
+            turlar = [b["tur"] for b in d["bolaklar"].values()]
+            self.assertEqual(sorted(set(turlar)), sorted(turlar), f"takror tur: {urug}")
+            self.assertTrue({"a", "b", "kod"} <= set(turlar), urug)
+            self.assertGreaterEqual(len(xoin["variantlar"]), 2, urug)
+            tekshiruvlar = [t for t in turlar if t in S.TEKSHIRUV]
+            yolgon_dunyo = dict(S.asosiy_yolgonlar(xoin["tur"], j))
+            for matn in xoin["variantlar"][1:]:
+                self.assertNotEqual(matn, xoin["matn"])
+                if xoin["tur"] in S.ASOSIY:
+                    soxta = yolgon_dunyo[matn]
+                    self.assertTrue(any(S.fosh_qiladimi(t, j, soxta) for t in tekshiruvlar),
+                                    f"urug {urug}: {matn} fosh qilinmaydi")
+
+    def test_seyf_bitta_odam_robotlar_bilan(self):
+        """Bitta bola ham o'ynay oladi: xoin — robot, o'yin vaqt bilan tugaydi."""
+        import random
+        from . import oyin_seyf as S
+        rng = random.Random(9)
+        azolar = [{"id": 1, "daraja": 1, "robot": False}] + [
+            {"id": i, "daraja": 1, "robot": True} for i in (2, 3, 4)]
+        d = S.boshla(azolar, 0.0, rng)
+        self.assertIn(d["xoin"], d["robotlar"])
+        self.assertEqual(d["jumboq"]["kod"], d["jumboq"]["A"] + d["jumboq"]["B"])
+        hozir = 0.0
+        for _ in range(60):
+            if d["tugadi"]:
+                break
+            hozir += 10
+            S.tick(d, hozir, rng, set())
+        self.assertTrue(d["tugadi"])
+        # Robot-xoin yolg'on aytgan.
+        xoin_aytgani = next(x["matn"] for x in d["aytilgan"] if x["azo"] == d["xoin"])
+        self.assertNotEqual(xoin_aytgani, d["bolaklar"][d["xoin"]]["matn"])
+
+    def test_seyf_xonada(self):
+        kod = self.ochish("seyf")
+        self.post(f"/api/v1/xona/{kod}/robot", {}, self.a)
+        r = self.post(f"/api/v1/xona/{kod}/tayyor", {}, self.a).json()
+        self.assertEqual(r["holat"], "oyin")
+        self.assertEqual(r["oyinHolat"]["bosqich"], "muhokama")
+        self.assertTrue(r["oyinHolat"]["bolak"])
+
     def test_ochiq_xona_soat_bilan_boshlanadi(self):
         """Kanal havolasi: soat kelganda tayyorlar bilan, yetmagan joyga robot."""
         r = self.post("/api/v1/xona", {"oyin": "kodlar", "ochiq": True, "daqiqa": 2}, self.a).json()

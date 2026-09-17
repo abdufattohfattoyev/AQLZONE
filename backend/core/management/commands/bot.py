@@ -696,6 +696,11 @@ def yangilikni_qayta_ishla(u: dict) -> str:
             bolimni_yubor(chat_id, til, f"/toplam/{int(xom)}", "toplamBot")
             return f"{tg_id}: test to'plami havolasi (#{int(xom)})"
 
+    # Kunlik son natijasi ulashilganda: `/start kunlik`.
+    if matn.startswith("/start kunlik"):
+        bolimni_yubor(chat_id, til, "/oyinlar/kunlik-son", "kunlikSonBot")
+        return f"{tg_id}: kunlik son havolasi"
+
     if matn.startswith("/start testlar"):
         bolimni_yubor(chat_id, til, "/testlar", "testlarBot")
         return f"{tg_id}: testlar bo'limi"

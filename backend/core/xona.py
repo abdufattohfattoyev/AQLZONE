@@ -42,9 +42,10 @@ from django.utils import timezone
 from . import oyin_kartalar as KARTALAR
 from . import oyin_kodlar as KODLAR
 from . import oyin_royale as ROYALE
+from . import oyin_seyf as SEYF
 from .models import KartaKolleksiya, Profile, Xona, XonaAzo
 
-MODULLAR = {Xona.KARTALAR: KARTALAR, Xona.ROYALE: ROYALE, Xona.KODLAR: KODLAR}
+MODULLAR = {Xona.KARTALAR: KARTALAR, Xona.ROYALE: ROYALE, Xona.KODLAR: KODLAR, Xona.SEYF: SEYF}
 
 #: Xona kodi shuncha soatdan keyin eskiradi va kod qayta ishlatilishi mumkin.
 XONA_SOAT = 6

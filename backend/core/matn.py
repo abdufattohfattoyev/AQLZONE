@@ -207,6 +207,18 @@ XABAR: dict[str, dict[str, str]] = {
             "Нажмите кнопку ниже."
         ),
     },
+    "kunlikSonBot": {
+        "uz": (
+            "🔢 <b>Kunlik son</b>\n\n"
+            "Yashirin tenglikni 6 urinishda toping — har kuni yangi jumboq. "
+            "Boshlash uchun pastdagi tugmani bosing."
+        ),
+        "ru": (
+            "🔢 <b>Число дня</b>\n\n"
+            "Найдите скрытое равенство за 6 попыток — каждый день новое. "
+            "Нажмите кнопку ниже."
+        ),
+    },
     "xonaChaqiruvBot": {
         "uz": (
             "🎲 <b>Sizni jamoaviy o'yinga chaqirishdi!</b>\n\n"

@@ -40,6 +40,7 @@ const Sozlamalar = lazy(() => import("./screens/Sozlamalar").then((m) => ({ defa
 const KodKirish = lazy(() => import("./screens/KodKirish").then((m) => ({ default: m.KodKirish })));
 const Oyinlar = lazy(() => import("./screens/Oyinlar").then((m) => ({ default: m.Oyinlar })));
 const Maydon = lazy(() => import("./screens/Maydon").then((m) => ({ default: m.Maydon })));
+const KunlikSon = lazy(() => import("./screens/KunlikSon").then((m) => ({ default: m.KunlikSon })));
 const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel })));
 const DuelQabul = lazy(() => import("./screens/Duel").then((m) => ({ default: m.DuelQabul })));
 const JamoaOchish = lazy(() => import("./screens/Xona").then((m) => ({ default: m.JamoaOchish })));
@@ -73,7 +74,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolJamoa, yolXona, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
+  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolBosh, yolTestSinf, yolToplam,
 } from "./lib/yollar";
@@ -148,6 +149,7 @@ function Yollar() {
       {/* Maydon `:id` dan OLDIN: aks holda "maydon" o'yin id'si
           deb qabul qilinib, "topilmadi" sahifasi chiqardi. */}
       <Route path="/oyinlar/maydon" element={<MaydonSahifasi />} />
+      <Route path="/oyinlar/kunlik-son" element={<KunlikSonSahifasi />} />
       <Route path="/oyinlar/duel" element={<DuelSahifasi />} />
       <Route path="/duel/:kod" element={<DuelQabulSahifasi />} />
       {/* Jamoaviy o'yinlar. `jamoa/<oyin>` `:id/:daraja` dan OLDIN turadi. */}
@@ -597,6 +599,7 @@ function OyinlarSahifasi() {
       onBack={() => nav(yolKurslar())}
       onOyin={(id) => nav(yolOyin(id))}
       onMaydon={() => nav(yolMaydon())}
+      onKunlikSon={() => nav(yolKunlikSon())}
       onDuel={() => nav(yolDuel())}
       onJamoa={(oyin) => nav(yolJamoa(oyin))}
     />
@@ -608,7 +611,7 @@ function JamoaOchishSahifasi() {
   const nav = useNavigate();
   const { oyin } = useParams();
   useTema("bosh");
-  if (oyin !== "kartalar" && oyin !== "royale" && oyin !== "kodlar") {
+  if (oyin !== "kartalar" && oyin !== "royale" && oyin !== "kodlar" && oyin !== "seyf") {
     return <NotFound nima={t("oyinlar")} qaytish={{ matn: t("oyinlarBolim"), yol: yolOyinlar() }} />;
   }
   return <JamoaOchish oyin={oyin} onXona={(kod) => nav(yolXona(kod), { replace: true })}
@@ -623,6 +626,12 @@ function XonaSahifasi() {
   // `key` — boshqa xonaga o'tilganda holat butunlay qaytadan boshlansin.
   return <XonaSahifa key={kod} kod={kod ?? ""} onChiq={() => nav(yolOyinlar())}
     onXona={(k) => nav(yolXona(k), { replace: true })} />;
+}
+
+function KunlikSonSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <KunlikSon onChiq={() => nav(yolOyinlar())} />;
 }
 
 function MaydonSahifasi() {

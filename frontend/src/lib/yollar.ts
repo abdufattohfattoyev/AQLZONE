@@ -103,6 +103,9 @@ export const yolOyinlar = () => "/oyinlar";
 /** Bugungi maydon — kunlik uch bosqich. */
 export const yolMaydon = () => "/oyinlar/maydon";
 
+/** Kunlik son — Wordle uslubidagi kunlik jumboq. */
+export const yolKunlikSon = () => "/oyinlar/kunlik-son";
+
 /** Do'st bilan bellashuv — chaqiruv yasash. */
 export const yolDuel = () => "/oyinlar/duel";
 

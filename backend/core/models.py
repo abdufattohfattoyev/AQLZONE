@@ -979,8 +979,9 @@ class Xona(models.Model):
     kodlarida kartalar rangini faqat sardor ko'radi.
     """
 
-    KARTALAR, ROYALE, KODLAR = "kartalar", "royale", "kodlar"
-    OYINLAR = [(KARTALAR, "Son kartalari"), (ROYALE, "Hisob Royale"), (KODLAR, "Son kodlari")]
+    KARTALAR, ROYALE, KODLAR, SEYF = "kartalar", "royale", "kodlar", "seyf"
+    OYINLAR = [(KARTALAR, "Son kartalari"), (ROYALE, "Hisob Royale"), (KODLAR, "Son kodlari"),
+               (SEYF, "Seyf")]
 
     KUTISH, OYIN, TUGADI = "kutish", "oyin", "tugadi"
     HOLATLAR = [(KUTISH, "kutish"), (OYIN, "oyin"), (TUGADI, "tugadi")]

@@ -16,4 +16,5 @@ export const XONA_OYINLAR: Record<XonaOyin, {
   kartalar: { emoji: "🃏", nom: "oyinKartalar", izoh: "oyinKartalarIzoh", qoida: "oyinKartalarQoida", min: 2, max: 2 },
   royale: { emoji: "👑", nom: "oyinRoyale", izoh: "oyinRoyaleIzoh", qoida: "oyinRoyaleQoida", min: 2, max: 30 },
   kodlar: { emoji: "🔢", nom: "oyinKodlar", izoh: "oyinKodlarIzoh", qoida: "oyinKodlarQoida", min: 4, max: 8 },
+  seyf: { emoji: "🔐", nom: "oyinSeyf", izoh: "oyinSeyfIzoh", qoida: "oyinSeyfQoida", min: 4, max: 8 },
 };

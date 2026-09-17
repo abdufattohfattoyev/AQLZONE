@@ -72,6 +72,8 @@ const YOPIQ = [
   // Bugungi maydon — u ham o'yin, ustiga kuniga bitta urinish. Bu
   // yerda bexosdan bosilgan tugma butun kunni yo'qotardi.
   /^\/oyinlar\/maydon$/,
+  // Kunlik son — o'z klaviaturasi pastda, panel uni yopib qo'yardi.
+  /^\/oyinlar\/kunlik-son$/,
   // Duel — u ham o'yin. Chaqiruv havolasi (`/duel/<kod>`) esa
   // umuman ilova ichidan emas, Telegramdan ochiladi: u yerda panel
   // "qayerdaman?" degan savolni faqat kuchaytirardi.
