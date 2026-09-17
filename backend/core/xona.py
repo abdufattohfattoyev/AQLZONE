@@ -104,11 +104,24 @@ def _faol_azolar(xona: Xona) -> list[XonaAzo]:
     return [a for a in xona.azolar.all() if not a.chiqdi]
 
 
+#: Ochiq xonada tanlash mumkin bo'lgan kutish vaqtlari (daqiqa).
+OCHIQ_DAQIQALAR = (1, 2, 5)
+
+
 @transaction.atomic
-def yarat(profil: Profile, oyin: str, daraja: int = 2) -> Xona:
+def yarat(profil: Profile, oyin: str, daraja: int = 2, ochiq: bool = False, daqiqa=2) -> Xona:
     if oyin not in MODULLAR:
         raise XonaXato("oyin_yoq", 400)
-    xona = Xona.objects.create(kod=kod_yasa(), oyin=oyin, egasi=profil)
+    try:
+        daqiqa = int(daqiqa)
+    except (TypeError, ValueError):
+        daqiqa = 2
+    if daqiqa not in OCHIQ_DAQIQALAR:
+        daqiqa = 2
+    xona = Xona.objects.create(
+        kod=kod_yasa(), oyin=oyin, egasi=profil, ochiq=bool(ochiq), kutish_soniya=daqiqa * 60,
+        boshlanish=timezone.now() + timedelta(minutes=daqiqa) if ochiq else None,
+    )
     XonaAzo.objects.create(xona=xona, profile=profil, ism=_ism(profil), avatar=profil.avatar,
                            daraja=_daraja(daraja), joy=0)
     return xona
@@ -192,11 +205,57 @@ def robot_qosh(xona: Xona, azo: XonaAzo) -> None:
 
 
 def _boshlashga_urin(xona: Xona) -> bool:
-    """Hamma tayyor va odam yetarli — o'yin o'zi boshlanadi."""
+    """
+    Hamma tayyor va odam yetarli — o'yin o'zi boshlanadi.
+
+    Ochiq xona SOAT bilan boshlanadi (`_ochiq_vaqti_keldi`), bu yerda esa
+    faqat xona to'lib, hamma tayyor bo'lsa — kutishning ma'nosi qolmaydi.
+    """
     if xona.holat != Xona.KUTISH:
         return False
     m = MODULLAR[xona.oyin]
     faol = _faol_azolar(xona)
+    if xona.ochiq and len(faol) < m.MAX:
+        return False
+    return _boshla(xona, faol)
+
+
+def _ochiq_vaqti_keldi(xona: Xona) -> None:
+    """
+    Ochiq xonaning soati keldi: tayyor odamlar bilan boshlanadi.
+
+    Tayyor bo'lmaganlar xonadan chiqariladi — ular kanal postini ochib,
+    boshqa ishga o'tib ketgan odamlar. Yetmagan joyga robot qo'shiladi,
+    shunda bitta tayyor odam ham o'yinsiz qolmaydi. Hech kim tayyor
+    bo'lmasa xona yopiladi (`davlat.sabab = "hech_kim"`).
+    """
+    xona.azolar.filter(robot=False, tayyor=False).delete()
+    faol = _faol_azolar(xona)
+    odamlar = [a for a in faol if not a.robot]
+    if not odamlar:
+        xona.holat = Xona.TUGADI
+        xona.tugadi_at = timezone.now()
+        xona.davlat = {"sabab": "hech_kim"}
+        xona.save(update_fields=["holat", "tugadi_at", "davlat"])
+        return
+    if xona.egasi_id not in {a.profile_id for a in odamlar}:
+        xona.egasi_id = odamlar[0].profile_id
+        xona.save(update_fields=["egasi"])
+    m = MODULLAR[xona.oyin]
+    kerak = max(0, m.MIN - len(faol))
+    if kerak:
+        daraja = round(sum(a.daraja for a in odamlar) / len(odamlar))
+        joy = max((a.joy for a in xona.azolar.all()), default=-1) + 1
+        bor = {a.ism for a in faol}
+        ismlar = [i for i in ROBOT_ISMLAR if i not in bor]
+        for n in range(kerak):
+            XonaAzo.objects.create(xona=xona, robot=True, tayyor=True, daraja=daraja, joy=joy + n,
+                                   ism=ismlar[n % len(ismlar)])
+    _boshla(xona, _faol_azolar(xona))
+
+
+def _boshla(xona: Xona, faol: list[XonaAzo]) -> bool:
+    m = MODULLAR[xona.oyin]
     if len(faol) < m.MIN or not all(a.tayyor for a in faol) or not any(not a.robot for a in faol):
         return False
     rng = random.Random()
@@ -238,6 +297,10 @@ def tick(xona: Xona, azo: XonaAzo | None = None) -> Xona:
     hozir_dt = timezone.now()
     if azo is not None:
         XonaAzo.objects.filter(pk=azo.pk).update(belgi=hozir_dt)
+
+    if xona.holat == Xona.KUTISH and xona.ochiq and xona.boshlanish and hozir_dt >= xona.boshlanish:
+        _ochiq_vaqti_keldi(xona)
+        return xona
 
     if xona.holat == Xona.KUTISH:
         eski = hozir_dt - timedelta(seconds=KUTISH_KETDI)
@@ -327,6 +390,10 @@ def yana(xona: Xona, azo: XonaAzo) -> None:
     xona.gaplar = []
     xona.raund = xona.raund + 1
     xona.boshlandi_at = xona.tugadi_at = None
+    if xona.ochiq:
+        # Ochiq xonada soat qaytadan qo'yiladi — post kanalda turibdi va
+        # yangi odamlar ham kirib ulgursin.
+        xona.boshlanish = timezone.now() + timedelta(seconds=xona.kutish_soniya)
     xona.save()
     _egani_tekshir(xona)
 
@@ -371,9 +438,20 @@ def korinish(xona: Xona, azo: XonaAzo | None) -> dict:
         "egasimi": bool(azo and azo.profile_id == xona.egasi_id),
         "gaplar": [g for g in xona.gaplar if hozir - g["vaqt"] < 20],
         "havola": f"https://t.me/{bot}?start=xona_{xona.kod}" if bot else "",
+        "ochiq": xona.ochiq,
+        "kutishSoniya": xona.kutish_soniya,
+        # Ochiq xona boshlanishiga necha soniya qoldi.
+        "boshlanishSoniya": (
+            max(0, int((xona.boshlanish - hozir_dt).total_seconds()))
+            if xona.ochiq and xona.boshlanish and xona.holat == Xona.KUTISH else None
+        ),
+        # Ochiq xonada hech kim tayyor bo'lmay yopildi.
+        "bekor": xona.holat == Xona.TUGADI and (xona.davlat or {}).get("sabab") == "hech_kim",
         "oyinHolat": None,
         "natija": None,
     }
+    if javob["bekor"]:
+        return javob
     if azo is not None and xona.davlat and xona.holat in (Xona.OYIN, Xona.TUGADI):
         javob["oyinHolat"] = m.korinish(xona.davlat, azo.pk, hozir)
     if xona.holat == Xona.TUGADI and xona.davlat:

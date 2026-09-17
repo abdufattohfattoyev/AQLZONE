@@ -995,6 +995,18 @@ class Xona(models.Model):
     gaplar = models.JSONField(default=list, blank=True)
     #: Nechanchi o'yin — "yana o'ynaymiz" har safar oshiradi.
     raund = models.SmallIntegerField(default=1)
+
+    #: OCHIQ XONA — kanalga tashlanadigan havola (2026-09-17).
+    #:
+    #: Oddiy xonada o'yin HAMMA tayyor bo'lganda boshlanadi: bu do'stlar
+    #: uchun to'g'ri, lekin kanalda kim kirishini hech kim bilmaydi va bitta
+    #: kirib chiqib ketgan odam butun xonani kutdirib qo'yardi. Ochiq xonada
+    #: esa soat bor: `boshlanish` kelganda TAYYOR bo'lganlar bilan o'yin
+    #: boshlanadi, tayyor bo'lmaganlar chetda qoladi, yetmagan joyga robot.
+    ochiq = models.BooleanField(default=False)
+    boshlanish = models.DateTimeField(null=True, blank=True)
+    #: Kutish davomiyligi — "yana o'ynaymiz" da soat shuncha qaytadan qo'yiladi.
+    kutish_soniya = models.SmallIntegerField(default=120)
     created_at = models.DateTimeField(default=timezone.now)
     boshlandi_at = models.DateTimeField(null=True, blank=True)
     tugadi_at = models.DateTimeField(null=True, blank=True)

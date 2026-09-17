@@ -1327,6 +1327,13 @@ export interface XonaHolat {
   egasimi: boolean;
   gaplar: XonaGap[];
   havola: string;
+  /** Ochiq xona — kanal havolasi, soat bilan boshlanadi. */
+  ochiq?: boolean;
+  kutishSoniya?: number;
+  /** Ochiq xona boshlanishiga necha soniya qoldi (faqat kutishda). */
+  boshlanishSoniya?: number | null;
+  /** Ochiq xonada hech kim tayyor bo'lmay yopildi. */
+  bekor?: boolean;
   oyinHolat: unknown;
   natija: Record<string, XonaNatijaQator> | null;
   sovgalar?: Record<string, string>;
@@ -1363,8 +1370,8 @@ async function xonaSorov<T>(url: string, body?: unknown): Promise<T> {
 
 const xu = (kod: string, qism = "") => `/api/v1/xona/${encodeURIComponent(kod)}${qism}`;
 
-export const xonaYarat = (oyin: XonaOyin, daraja: number) =>
-  xonaSorov<XonaHolat>("/api/v1/xona", { oyin, daraja });
+export const xonaYarat = (oyin: XonaOyin, daraja: number, ochiq = false, daqiqa = 2) =>
+  xonaSorov<XonaHolat>("/api/v1/xona", { oyin, daraja, ...(ochiq ? { ochiq, daqiqa } : {}) });
 export const xonaOl = (kod: string) => xonaSorov<XonaHolat>(xu(kod));
 export const xonaKir = (kod: string, daraja: number) => xonaSorov<XonaHolat>(xu(kod, "/kir"), { daraja });
 export const xonaTayyor = (kod: string, tayyor: boolean, daraja: number) =>

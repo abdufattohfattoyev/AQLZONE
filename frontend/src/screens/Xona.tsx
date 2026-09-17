@@ -109,6 +109,15 @@ export function JamoaOchish({ oyin, onXona, onChiq }: {
       .catch((e) => { setXato(xatoMatni(e)); setBand(false); });
   };
 
+  // Kanal havolasi — soat bilan boshlanadigan ochiq xona.
+  const [daqiqa, setDaqiqa] = useState(2);
+  const kanalUchun = () => {
+    setBand(true); setXato("");
+    xonaYarat(oyin, daraja, true, daqiqa)
+      .then((x) => onXona(x.kod))
+      .catch((e) => { setXato(xatoMatni(e)); setBand(false); });
+  };
+
   const kir = () => {
     const toza = kod.replace(/\D/g, "");
     if (toza.length < 4) return;
@@ -147,6 +156,29 @@ export function JamoaOchish({ oyin, onXona, onChiq }: {
         {t("xonaOchish")}
       </button>
 
+      {/* Kanal havolasi Son kartalarida yo'q: u ikki kishilik, kanaldan
+          esa o'nlab odam keladi va bittadan boshqasi tashqarida qolardi. */}
+      {meta.max > 2 && (
+        <div className="mt-4 rounded-clay bg-karta p-4 shadow-clay-sm">
+          <div className="font-display text-[14px]">📣 {t("xonaKanal")}</div>
+          <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">{t("xonaKanalIzoh")}</p>
+          <div className="mt-3 flex gap-1.5" role="group" aria-label={t("xonaKanal")}>
+            {[1, 2, 5].map((n) => (
+              <button key={n} type="button" onClick={() => setDaqiqa(n)} aria-pressed={daqiqa === n}
+                className={`clay-press flex-1 rounded-2xl py-2 font-display text-[13.5px] ${
+                  daqiqa === n ? "bg-brand-blue text-white" : "bg-track text-ink-soft"}`}>
+                {t("xonaKanalDaqiqa", { n })}
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={kanalUchun} disabled={band} data-tahlil={`Jamoa: kanal havolasi (${oyin})`}
+            className="clay-press mt-2.5 w-full rounded-3xl bg-track py-3 font-display text-[15px] text-ink
+                       disabled:opacity-60">
+            {t("xonaKanalYarat")}
+          </button>
+        </div>
+      )}
+
       <div className="mt-6 rounded-clay bg-karta p-4 shadow-clay-sm">
         <div className="font-display text-[14px]">{t("xonaKodBilan")}</div>
         <div className="mt-2.5 flex gap-2">
@@ -181,7 +213,12 @@ export function JamoaOchish({ oyin, onXona, onChiq }: {
 const oraliq = (x: XonaHolat | null) =>
   !x ? 2000 : x.holat === "oyin" ? (x.oyin === "royale" ? 1000 : 1500) : x.holat === "kutish" ? 2000 : 3000;
 
-export function XonaSahifa({ kod, onChiq }: { kod: string; onChiq: () => void }) {
+export function XonaSahifa({ kod, onChiq, onXona }: {
+  kod: string;
+  onChiq: () => void;
+  /** Boshqa xonaga o'tish — bekor bo'lgan ochiq xonani qayta ochganda. */
+  onXona?: (kod: string) => void;
+}) {
   useOrqaga(onChiq);
   const [xona, setXona] = useState<XonaHolat | null>(null);
   const [topilmadi, setTopilmadi] = useState(false);
@@ -246,7 +283,30 @@ export function XonaSahifa({ kod, onChiq }: { kod: string; onChiq: () => void })
   if (!xona) return <Kutish />;
 
   let ekran;
-  if (xona.men === null) {
+  if (xona.bekor) {
+    // Ochiq xona: soat keldi, lekin hech kim tayyor emas edi.
+    ekran = (
+      <div className="mx-auto grid min-h-ekran max-w-[430px] place-items-center px-4 text-center">
+        <div>
+          <EmojiBelgi e="⏰" olcham={52} className="mx-auto" />
+          <h1 className="mt-3 text-[21px]">{t("xonaBekor")}</h1>
+          <p className="mt-1 text-[13px] text-ink-soft">{t("xonaBekorIzoh")}</p>
+          {onXona && (
+            <button type="button" data-tahlil="Jamoa: ochiq xonani qayta ochish"
+              onClick={() => xonaYarat(xona.oyin, saqlanganDaraja(), true, Math.round((xona.kutishSoniya ?? 120) / 60))
+                .then((x) => onXona(x.kod)).catch(xatoKorsat)}
+              className="tugma-3d mt-6 w-full rounded-3xl bg-brand-green py-3.5 font-display text-[16px]
+                         text-white shadow-[0_5px_0_var(--color-brand-green-d)]">
+              {t("xonaQaytaOchish")}
+            </button>
+          )}
+          <button type="button" onClick={onChiq} className="mt-3 w-full py-2 text-[13.5px] font-semibold text-ink-dim">
+            {t("xonaOyinlarga")}
+          </button>
+        </div>
+      </div>
+    );
+  } else if (xona.men === null) {
     ekran = <Qoshilish xona={xona} onQoshildi={yangila} onXato={xatoKorsat} onChiq={onChiq} />;
   } else if (xona.holat === "kutish") {
     ekran = <Lobbi xona={xona} onYangi={yangila} onXato={xatoKorsat} onChiq={chiq} />;
@@ -312,6 +372,52 @@ function Qoshilish({ xona, onQoshildi, onXato, onChiq }: {
 
 /* ---------------------------------------------------- kutish */
 
+/**
+ * Ochiq xona soati va kanal uchun tayyor post.
+ *
+ * Soat so'rovlar orasida mahalliy kamayadi, har javobda serverdagi
+ * qiymatga qaytadi. Post matni tayyor: admin uni nusxalab kanalga
+ * tashlaydi — havola, o'yin nomi va vaqt ichida.
+ */
+function OchiqSoat({ xona }: { xona: XonaHolat }) {
+  const [qolgan, setQolgan] = useState(xona.boshlanishSoniya ?? 0);
+  const [nusxa, setNusxa] = useState(false);
+  useEffect(() => {
+    setQolgan(xona.boshlanishSoniya ?? 0);
+    const id = setInterval(() => setQolgan((n) => Math.max(0, n - 1)), 1000);
+    return () => clearInterval(id);
+  }, [xona.boshlanishSoniya]);
+
+  const daqiqa = Math.max(1, Math.round(qolgan / 60));
+  const post = t("xonaPostMatn", {
+    oyin: t(XONA_OYINLAR[xona.oyin].nom), n: daqiqa, havola: xona.havola || xona.kod,
+  });
+  const vaqt = `${Math.floor(qolgan / 60)}:${String(qolgan % 60).padStart(2, "0")}`;
+
+  return (
+    <div className="mt-4 rounded-clay bg-brand-blue p-4 text-center text-white shadow-clay">
+      <div className="text-[12.5px] text-white/85">{t("xonaBoshlanadi")}</div>
+      <div className="font-display text-[46px] leading-none tabular-nums">{vaqt}</div>
+      {xona.havola && (
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <button type="button" data-tahlil="Jamoa: kanal matnini nusxalash"
+            onClick={() => navigator.clipboard?.writeText(post)
+              .then(() => { setNusxa(true); setTimeout(() => setNusxa(false), 2000); }).catch(() => {})}
+            className="clay-press flex-1 rounded-full bg-white/20 px-4 py-2.5 text-[13.5px]">
+            {nusxa ? t("xonaNusxalandi") : t("xonaPostNusxa")}
+          </button>
+          <button type="button" data-tahlil="Jamoa: kanalga ulashish"
+            onClick={() => havolaniOch(`https://t.me/share/url?url=${encodeURIComponent(xona.havola)}`
+              + `&text=${encodeURIComponent(post)}`)}
+            className="clay-press flex-1 rounded-full bg-white px-4 py-2.5 text-[13.5px] text-brand-blue-d">
+            {t("xonaKanalgaUlash")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Lobbi({ xona, onYangi, onXato, onChiq }: {
   xona: XonaHolat; onYangi: (x: XonaHolat) => void; onXato: (e: unknown) => void; onChiq: () => void;
 }) {
@@ -335,9 +441,11 @@ function Lobbi({ xona, onYangi, onXato, onChiq }: {
         <EmojiBelgi e={meta.emoji} olcham={34} />
         <div className="min-w-0 flex-1">
           <h1 className="text-[19px] leading-tight">{t(meta.nom)}</h1>
-          <p className="text-[12px] text-ink-soft">{t("xonaKutishIzoh")}</p>
+          <p className="text-[12px] text-ink-soft">{t(xona.ochiq ? "xonaOchiqIzoh" : "xonaKutishIzoh")}</p>
         </div>
       </div>
+
+      {xona.ochiq && <OchiqSoat xona={xona} />}
 
       {/* Kod — katta: uni ovoz chiqarib aytishadi va qo'shni partadan o'qishadi. */}
       <div className="mt-4 rounded-clay bg-karta p-4 text-center shadow-clay-sm">
@@ -383,7 +491,9 @@ function Lobbi({ xona, onYangi, onXato, onChiq }: {
       </div>
 
       <p className="mt-3 text-center text-[13px] text-ink-soft">
-        {kerak > 0 ? t("xonaKishiKerak", { n: kerak }) : t("xonaHammaKutilmoqda")}
+        {/* Ochiq xonada bo'sh joyni soat kelganda robot o'zi to'ldiradi. */}
+        {xona.ochiq ? t("xonaOchiqIzoh")
+          : kerak > 0 ? t("xonaKishiKerak", { n: kerak }) : t("xonaHammaKutilmoqda")}
       </p>
 
       {xona.egasimi && faol.length < xona.robotGacha && (

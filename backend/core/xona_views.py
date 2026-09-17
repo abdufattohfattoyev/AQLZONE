@@ -32,7 +32,8 @@ def _xona_va_azo(request, kod: str):
 def xona_yarat(request):
     try:
         xona = X.yarat(_profil_tanla(request), str(request.data.get("oyin") or ""),
-                       request.data.get("daraja"))
+                       request.data.get("daraja"), ochiq=bool(request.data.get("ochiq")),
+                       daqiqa=request.data.get("daqiqa") or 2)
     except X.XonaXato as e:
         return _xato(e)
     return Response(X.korinish(xona, X.azo_ol(xona, xona.egasi)), status=201)
@@ -49,6 +50,10 @@ def xona_holat(request, kod: str):
     if xato:
         return xato
     xona = X.tick(xona, azo)
+    # Ochiq xona soati kelganda tayyor bo'lmagan a'zo chiqariladi — endi
+    # u a'zo emas va o'yin holatini ko'rmasligi kerak.
+    if azo is not None:
+        azo = X.azo_ol(xona, azo.profile)
     return Response(X.korinish(xona, azo))
 
 

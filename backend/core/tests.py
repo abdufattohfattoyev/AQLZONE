@@ -6888,6 +6888,35 @@ class XonaTest(TestCase):
         tayyorlar = {a["id"]: a["tayyor"] for a in r["azolar"]}
         self.assertEqual(sorted(tayyorlar.values()), [False, True])
 
+    def test_ochiq_xona_soat_bilan_boshlanadi(self):
+        """Kanal havolasi: soat kelganda tayyorlar bilan, yetmagan joyga robot."""
+        r = self.post("/api/v1/xona", {"oyin": "kodlar", "ochiq": True, "daqiqa": 2}, self.a).json()
+        kod = r["kod"]
+        self.assertTrue(r["ochiq"])
+        self.assertGreater(r["boshlanishSoniya"], 100)
+        self.post(f"/api/v1/xona/{kod}/kir", {}, self.b)
+        # Hamma tayyor, lekin xona to'lmagan — soatsiz boshlanmaydi.
+        self.post(f"/api/v1/xona/{kod}/tayyor", {}, self.a)
+        self.assertEqual(Xona.objects.get(kod=kod).holat, "kutish")
+        Xona.objects.filter(kod=kod).update(boshlanish=timezone.now() - timedelta(seconds=1))
+        # B tayyor emas — u chiqariladi, A esa robotlar bilan o'ynaydi.
+        r = self.client.get(f"/api/v1/xona/{kod}", **self.b).json()
+        self.assertIsNone(r["men"])
+        r = self.client.get(f"/api/v1/xona/{kod}", **self.a).json()
+        self.assertEqual(r["holat"], "oyin")
+        self.assertEqual(len(r["azolar"]), 4)
+        self.assertEqual(sum(1 for a in r["azolar"] if a["robot"]), 3)
+        # "Yana" — soat qaytadan qo'yiladi.
+        Xona.objects.filter(kod=kod).update(holat="tugadi")
+        r = self.post(f"/api/v1/xona/{kod}/yana", {}, self.a).json()
+        self.assertGreater(r["boshlanishSoniya"], 100)
+
+    def test_ochiq_xonada_hech_kim_tayyor_bolmasa(self):
+        kod = self.post("/api/v1/xona", {"oyin": "royale", "ochiq": True}, self.a).json()["kod"]
+        Xona.objects.filter(kod=kod).update(boshlanish=timezone.now() - timedelta(seconds=1))
+        r = self.client.get(f"/api/v1/xona/{kod}", **self.b).json()
+        self.assertEqual((r["holat"], r["bekor"]), ("tugadi", True))
+
     def test_boshlangan_xonaga_kirib_bolmaydi(self):
         kod = self.ochish("kartalar")
         self.post(f"/api/v1/xona/{kod}/robot", {}, self.a)

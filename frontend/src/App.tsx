@@ -621,7 +621,8 @@ function XonaSahifasi() {
   const { kod } = useParams();
   useTema("bosh");
   // `key` — boshqa xonaga o'tilganda holat butunlay qaytadan boshlansin.
-  return <XonaSahifa key={kod} kod={kod ?? ""} onChiq={() => nav(yolOyinlar())} />;
+  return <XonaSahifa key={kod} kod={kod ?? ""} onChiq={() => nav(yolOyinlar())}
+    onXona={(k) => nav(yolXona(k), { replace: true })} />;
 }
 
 function MaydonSahifasi() {
