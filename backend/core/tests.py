@@ -6350,7 +6350,7 @@ class TahlilTest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "/testlar")
         self.assertContains(r, "7-sinf")
-        self.assertContains(r, "O&#x27;quvchi")
+        self.assertContains(r, "Maktab o&#x27;quvchisi")
 
 
 @override_settings(BOSHQARUV_YONIQ=True, ADMIN_TG=[ADMIN_ID])
@@ -6470,3 +6470,33 @@ class ToplamIshlaganlarTest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual([u["togri"] for u in r.json()["royxat"]], [12, 12, 5])
         self.assertEqual([u["sekund"] for u in r.json()["royxat"]], [600, 900, 300])
+
+
+class AnketaKengTest(TestCase):
+    """Anketa faqat maktab emas: talaba, o'qituvchi, kattalar."""
+
+    def kir(self):
+        r = self.client.post("/api/v1/auth/device", {"deviceId": "anketa-keng-0123456789ab"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def yubor(self, **d):
+        self.client.post("/api/v1/anketa", d, content_type="application/json", **self.kir())
+        return Pupil.objects.get()
+
+    def test_talaba_kursi(self):
+        p = self.yubor(kim="talaba", sinf=103)
+        self.assertEqual((p.kim, p.anketa_sinf), ("talaba", 103))
+        from . import tahlil as TH
+        self.assertEqual(TH.bosqich_nomi(p.anketa_sinf), "3-kurs (bakalavr)")
+
+    def test_otm_oqituvchisi(self):
+        p = self.yubor(kim="ustoz", sinf=120)
+        self.assertEqual((p.kim, p.anketa_sinf), ("ustoz", 120))
+
+    def test_kattalar_bosqichsiz(self):
+        p = self.yubor(kim="kattalar", viloyat="navoiy")
+        self.assertEqual((p.kim, p.anketa_sinf, p.viloyat), ("kattalar", -1, "navoiy"))
+
+    def test_notogri_bosqich_yozilmaydi(self):
+        self.assertEqual(self.yubor(kim="talaba", sinf=107).anketa_sinf, -1)

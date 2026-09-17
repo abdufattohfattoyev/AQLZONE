@@ -50,7 +50,49 @@ VILOYATLAR = [
     ("qoraqalpogiston", "Qoraqalpog'iston"), ("chet_el", "Chet el"),
 ]
 VILOYAT_NOMI = dict(VILOYATLAR)
-KIM_NOMI = dict(Pupil.KIMLAR)
+#: Kim — FAQAT MAKTAB EMAS.
+#:
+#: Ilgari uch javob bor edi (o'quvchi, ota-ona, ustoz) va hammasi maktabga
+#: qaratilgan edi. Aslida ilovaga talabalar ham, o'quv markazi
+#: o'qituvchilari ham, shunchaki matematika yoqadigan kattalar ham keladi —
+#: ular "o'quvchi" ni bosib, tahlilni buzardi.
+#:
+#: Qiymatlar `Pupil.kim` ga yoziladi (10 belgigacha). Ro'yxat shu yerda,
+#: modelda emas: yangi turni qo'shish migratsiya talab qilmasin.
+KIM_NOMI = {
+    "oquvchi": "Maktab o'quvchisi",
+    "talaba": "Talaba",
+    "ota_ona": "Ota-ona",
+    "ustoz": "O'qituvchi",
+    "kattalar": "Boshqa (kattalar)",
+}
+
+#: `Pupil.anketa_sinf` — BOSQICH. Nomi tarixiy ("sinf"), lekin endi u
+#: har bir turning o'z bosqichini saqlaydi:
+#:
+#:      0          maktabgacha
+#:      1..11      maktab sinfi (o'quvchi, ota-ona)
+#:    101..104     bakalavr kursi (talaba)
+#:    105          magistratura
+#:    130..132     maktab o'qituvchisi: boshlang'ich / 5–9 / 10–11
+#:    120          OTM o'qituvchisi
+#:    121          o'quv markazi yoki repetitor
+#:     -1          javob yo'q (kattalarda so'ralmaydi)
+BOSQICHLAR = {
+    0: "Maktabgacha",
+    **{s: f"{s}-sinf" for s in range(1, 12)},
+    **{100 + k: f"{k}-kurs (bakalavr)" for k in range(1, 5)},
+    105: "Magistratura",
+    130: "O'qituvchi · 1–4-sinf",
+    131: "O'qituvchi · 5–9-sinf",
+    132: "O'qituvchi · 10–11-sinf",
+    120: "O'qituvchi · OTM",
+    121: "O'qituvchi · o'quv markazi",
+}
+
+
+def bosqich_nomi(kod: int) -> str:
+    return BOSQICHLAR.get(kod, "—")
 
 
 def qurilma_ol(ua: str) -> str:
@@ -113,7 +155,7 @@ def anketa_yoz(pupil: Pupil, d: dict) -> None:
         pupil.kim = kim
     try:
         sinf = int(d.get("sinf"))
-        if 0 <= sinf <= 11:
+        if sinf in BOSQICHLAR:
             pupil.anketa_sinf = sinf
     except (TypeError, ValueError):
         pass
@@ -140,9 +182,7 @@ def _taqsimot(qs, maydon: str, nomlar: dict, jami: int) -> list[dict]:
     natija = []
     for r in qator:
         k = r[maydon]
-        nom = nomlar.get(k, k) if nomlar else (
-            "Maktabgacha" if k == 0 else f"{k}-sinf"
-        )
+        nom = nomlar.get(k, k) if nomlar else bosqich_nomi(k)
         natija.append({"nom": nom, "n": r["n"], "foiz": round(100 * r["n"] / jami) if jami else 0})
     return natija
 
@@ -366,10 +406,7 @@ def statistika(kunlar: int = 30) -> dict:
         p = kimlar.get(f["pupil"])
         f["ism"] = (p.toliq_ism if p else "") or f"hisob #{f['pupil']}"
         f["kim"] = KIM_NOMI.get(p.kim, "—") if p else "—"
-        f["sinf"] = (
-            "—" if not p or p.anketa_sinf < 0
-            else ("Maktabgacha" if p.anketa_sinf == 0 else f"{p.anketa_sinf}-sinf")
-        )
+        f["sinf"] = bosqich_nomi(p.anketa_sinf) if p else "—"
         f["viloyat"] = VILOYAT_NOMI.get(p.viloyat, "—") if p else "—"
         f["premium"] = bool(p and p.tg_premium)
         f["sevimli"] = sevimli.get(f["pupil"], "—")
@@ -381,7 +418,7 @@ def statistika(kunlar: int = 30) -> dict:
             "ism": p.toliq_ism or f"hisob #{p.pk}",
             "vaqt": p.created_at,
             "kim": KIM_NOMI.get(p.kim, "—"),
-            "sinf": "—" if p.anketa_sinf < 0 else ("Maktabgacha" if p.anketa_sinf == 0 else f"{p.anketa_sinf}-sinf"),
+            "sinf": bosqich_nomi(p.anketa_sinf),
             "viloyat": VILOYAT_NOMI.get(p.viloyat, "—"),
             "premium": p.tg_premium,
             "qurilma": p.qurilma or "—",
