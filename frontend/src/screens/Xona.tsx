@@ -23,6 +23,7 @@ import { Konfetti } from "../components/Konfetti";
 import { Kartalar } from "../components/xona/Kartalar";
 import { Royale } from "../components/xona/Royale";
 import { Kodlar } from "../components/xona/Kodlar";
+import { Orgatish, orgatildimi } from "../components/xona/Orgatish";
 import { avatarBelgi } from "../lib/dokon";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
@@ -101,6 +102,7 @@ export function JamoaOchish({ oyin, onXona, onChiq }: {
   const [kod, setKod] = useState("");
   const [band, setBand] = useState(false);
   const [xato, setXato] = useState("");
+  const [orgat, setOrgat] = useState(() => !orgatildimi(oyin));
 
   const och = () => {
     setBand(true); setXato("");
@@ -139,10 +141,15 @@ export function JamoaOchish({ oyin, onXona, onChiq }: {
         </p>
       </div>
 
-      <details className="mt-5 rounded-clay bg-karta px-4 py-3 shadow-clay-sm">
-        <summary className="cursor-pointer font-display text-[14px]">{t("xonaQoida")}</summary>
-        <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{t(meta.qoida)}</p>
-      </details>
+      {/* Qoida matn bo'lib emas, rasmli qadamlar va sinov bo'lib
+          ko'rsatiladi. Birinchi kirishda o'zi ochiladi. */}
+      <button type="button" onClick={() => setOrgat(true)} data-tahlil={`O'rgatish ochildi (${oyin})`}
+        className="clay-press mt-5 flex w-full items-center gap-3 rounded-clay bg-karta px-4 py-3 text-left shadow-clay-sm">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-blue/15 font-display
+                         text-[17px] text-brand-blue">?</span>
+        <span className="font-display text-[14.5px]">{t("orgQanday")}</span>
+      </button>
+      {orgat && <Orgatish oyin={oyin} onYop={() => setOrgat(false)} />}
 
       <h2 className="mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
         {t("duelDarajaSarlavha")}
@@ -223,6 +230,10 @@ export function XonaSahifa({ kod, onChiq, onXona }: {
   const [xona, setXona] = useState<XonaHolat | null>(null);
   const [topilmadi, setTopilmadi] = useState(false);
   const [xato, setXato] = useState("");
+  // O'rgatish — havola orqali to'g'ridan-to'g'ri xonaga kelgan odam o'yinni
+  // hali ko'rmagan. Kutish paytida (o'yin boshlanishidan oldin) o'zi ochiladi.
+  const [orgat, setOrgat] = useState(false);
+  const orgatTekshirildi = useRef(false);
   const xonaRef = useRef<XonaHolat | null>(null);
   xonaRef.current = xona;
 
@@ -262,6 +273,12 @@ export function XonaSahifa({ kod, onChiq, onXona }: {
       throw e;
     }
   }, [kod, yangila]);
+
+  useEffect(() => {
+    if (!xona || orgatTekshirildi.current) return;
+    orgatTekshirildi.current = true;
+    if (xona.holat === "kutish" && !orgatildimi(xona.oyin)) setOrgat(true);
+  }, [xona]);
 
   const chiq = () => { void xonaChiq(kod).catch(() => {}); onChiq(); };
 
@@ -309,7 +326,7 @@ export function XonaSahifa({ kod, onChiq, onXona }: {
   } else if (xona.men === null) {
     ekran = <Qoshilish xona={xona} onQoshildi={yangila} onXato={xatoKorsat} onChiq={onChiq} />;
   } else if (xona.holat === "kutish") {
-    ekran = <Lobbi xona={xona} onYangi={yangila} onXato={xatoKorsat} onChiq={chiq} />;
+    ekran = <Lobbi xona={xona} onYangi={yangila} onXato={xatoKorsat} onChiq={chiq} onQoida={() => setOrgat(true)} />;
   } else if (xona.holat === "tugadi") {
     ekran = <Natija xona={xona} onYangi={yangila} onXato={xatoKorsat} onChiq={chiq} />;
   } else if (xona.oyin === "kartalar") {
@@ -323,6 +340,8 @@ export function XonaSahifa({ kod, onChiq, onXona }: {
   return (
     <>
       {ekran}
+      {/* O'yin boshlanib qolsa oyna o'zi yopiladi — o'yin ustida turmasin. */}
+      {orgat && xona.holat === "kutish" && <Orgatish oyin={xona.oyin} onYop={() => setOrgat(false)} />}
       {xato && (
         <div role="alert" className="fixed inset-x-0 bottom-6 z-50 mx-auto w-fit max-w-[90vw] rounded-full
                                      bg-ink px-4 py-2.5 text-center text-[13.5px] text-white shadow-clay">
@@ -418,8 +437,10 @@ function OchiqSoat({ xona }: { xona: XonaHolat }) {
   );
 }
 
-function Lobbi({ xona, onYangi, onXato, onChiq }: {
+function Lobbi({ xona, onYangi, onXato, onChiq, onQoida }: {
   xona: XonaHolat; onYangi: (x: XonaHolat) => void; onXato: (e: unknown) => void; onChiq: () => void;
+  /** "?" — o'rgatishni qayta ochish. */
+  onQoida?: () => void;
 }) {
   const meta = XONA_OYINLAR[xona.oyin];
   const men = xona.azolar.find((a) => a.id === xona.men);
@@ -443,6 +464,13 @@ function Lobbi({ xona, onYangi, onXato, onChiq }: {
           <h1 className="text-[19px] leading-tight">{t(meta.nom)}</h1>
           <p className="text-[12px] text-ink-soft">{t(xona.ochiq ? "xonaOchiqIzoh" : "xonaKutishIzoh")}</p>
         </div>
+        {onQoida && (
+          <button type="button" onClick={onQoida} aria-label={t("orgQanday")} title={t("orgQanday")}
+            className="clay-press grid size-11 shrink-0 place-items-center rounded-full bg-karta font-display
+                       text-[18px] text-brand-blue shadow-clay-sm">
+            ?
+          </button>
+        )}
       </div>
 
       {xona.ochiq && <OchiqSoat xona={xona} />}
