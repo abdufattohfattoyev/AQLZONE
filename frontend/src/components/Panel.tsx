@@ -74,6 +74,8 @@ const YOPIQ = [
   /^\/oyinlar\/maydon$/,
   // Kunlik son — o'z klaviaturasi pastda, panel uni yopib qo'yardi.
   /^\/oyinlar\/kunlik-son$/,
+  // Karvon yo'li — o'z menyusi bilan to'liq ekran.
+  /^\/oyinlar\/karvon$/,
   // Duel — u ham o'yin. Chaqiruv havolasi (`/duel/<kod>`) esa
   // umuman ilova ichidan emas, Telegramdan ochiladi: u yerda panel
   // "qayerdaman?" degan savolni faqat kuchaytirardi.

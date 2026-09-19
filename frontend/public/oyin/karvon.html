@@ -1,0 +1,1591 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#120F0D">
+<title>Karvon yo'li</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap">
+<style>
+:root{
+  --fon:#120F0D; --s1:#1D1815; --s2:#2B231E; --s3:#383432; --chiz:#3D322B;
+  --matn:#F9F4EE; --xira:#A89B91;
+  --terra:#D96528; --terra-d:#9E4514; --terra-y:#FFB695;
+  --lapis:#0D5C75; --lapis-d:#083B4B; --lapis-y:#90CFEC;
+  --oltin:#E5A93C; --oltin-y:#FABC4D;
+  --zumrad:#1B8A5A; --anor:#C83535;
+  --r:8px; --r-md:12px; --r-lg:16px; --r-xl:24px;
+  --shr:"Plus Jakarta Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;padding-inline:16px;background:#0A0806;color:var(--matn);font-family:var(--shr);font-weight:500;
+  -webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:left}
+button:focus-visible{outline:2px solid var(--terra);outline-offset:2px;border-radius:var(--r)}
+h1,h2,h3,p{margin:0}
+.ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;line-height:1;letter-spacing:normal;
+  text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:"liga";font-feature-settings:"liga"}
+.tnum{font-variant-numeric:tabular-nums}
+
+.ilova{max-width:440px;margin:0 auto;padding-block:14px 24px}
+.belgi-yoz{margin:0 0 10px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.22em;color:#6B5F57;text-transform:uppercase}
+.qobiq{position:relative;border-radius:var(--r-xl);background:var(--fon);overflow:hidden;
+  box-shadow:0 30px 70px rgba(0,0,0,.7),inset 0 0 0 1px rgba(217,101,40,.18)}
+.varaq{height:min(780px,calc(100dvh - 56px));min-height:480px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.varaq::-webkit-scrollbar{display:none}
+.ich{padding:12px 16px 18px;display:grid;gap:14px}
+
+/* ---- ustki panel ---- */
+.tepa{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 16px;
+  background:rgba(18,15,13,.82);backdrop-filter:blur(12px);box-shadow:0 1px 0 rgba(61,50,43,.7)}
+.nishon{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:19px;
+  background:radial-gradient(circle at 30% 25%,#2B3A63,#101A33);box-shadow:0 0 0 1.5px var(--oltin)}
+.tepa .nom{flex:1;min-width:0}
+.tepa .nom small{display:block;font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--oltin);text-transform:uppercase}
+.tepa .nom b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hisob{display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:99px;font-size:12.5px;font-weight:700;
+  background:var(--s2);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.hisob .ms{font-size:16px}
+.hisob.tanga{color:var(--oltin-y)} .hisob.suv{color:var(--lapis-y)}
+.hisob.bump{animation:bump .5s}
+@keyframes bump{40%{transform:scale(1.2)}}
+.avatar{width:36px;height:36px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:17px;font-weight:800;
+  background:linear-gradient(150deg,#6B4B3A,#3A2A20);box-shadow:0 0 0 2px var(--chiz)}
+
+/* ---- umumiy qismlar ---- */
+.plita{background:var(--s1);border:1px solid var(--chiz);border-radius:var(--r-lg);padding:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.sarlavha{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.sarlavha .ms{font-size:20px;color:var(--terra)}
+.sarlavha .ong{margin-left:auto;font-size:12px;font-weight:700;color:var(--xira)}
+.yorliq{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--xira);text-transform:uppercase}
+.izohcha{font-size:13px;font-weight:400;line-height:1.45;color:var(--xira)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;font-size:11.5px;font-weight:700;
+  background:var(--s2);color:var(--matn)}
+.chip.oltin{background:rgba(229,169,60,.16);color:var(--oltin-y)}
+.chip.lapis{background:rgba(13,92,117,.35);color:var(--lapis-y)}
+.chip.terra{background:rgba(217,101,40,.18);color:var(--terra-y)}
+.chip.zumrad{background:rgba(27,138,90,.2);color:#7BD6A6}
+
+.tugma{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px 16px;border-radius:var(--r);
+  font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff;background:var(--terra);box-shadow:0 4px 0 var(--terra-d);
+  transition:transform .08s,box-shadow .08s}
+.tugma:active{transform:translateY(3px);box-shadow:0 1px 0 var(--terra-d)}
+.tugma.lapis{background:var(--lapis);box-shadow:0 4px 0 var(--lapis-d)}
+.tugma.arvoh{background:transparent;color:var(--matn);box-shadow:inset 0 0 0 1px var(--chiz);font-weight:700}
+.tugma[disabled]{opacity:.45}
+.kichik-tugma{padding:9px 14px;border-radius:var(--r);font-size:12.5px;font-weight:700;background:var(--terra-y);color:#571E00;
+  display:inline-flex;align-items:center;gap:6px;box-shadow:0 3px 0 rgba(158,69,20,.6)}
+.kichik-tugma:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(158,69,20,.6)}
+.kichik-tugma.oq{background:var(--s2);color:var(--xira);box-shadow:none}
+
+.tanlagich{display:flex;gap:4px;padding:4px;border-radius:99px;background:var(--s1);border:1px solid var(--chiz)}
+.tanlagich button{flex:1;padding:10px 4px;border-radius:99px;text-align:center;font-size:13px;font-weight:700;color:var(--xira)}
+.tanlagich button.faol{background:var(--terra);color:#fff;box-shadow:0 2px 8px rgba(217,101,40,.45)}
+
+/* ---- pastki menyu ---- */
+.menyu{position:sticky;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(3,1fr);
+  background:rgba(18,15,13,.92);backdrop-filter:blur(12px);box-shadow:0 -1px 0 rgba(61,50,43,.8);
+  padding:8px 4px calc(8px + env(safe-area-inset-bottom,0px))}
+.menyu button{display:grid;justify-items:center;gap:3px;padding:4px 0;font-size:10px;font-weight:700;color:var(--xira)}
+.menyu .ms{font-size:22px}
+.menyu button.faol{color:var(--terra)}
+
+/* ---- xarita ---- */
+.holat{display:flex;align-items:center;gap:10px}
+.holat .doira{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:rgba(217,101,40,.15);color:var(--terra-y)}
+.xarita-quti{position:relative;border-radius:var(--r-xl);overflow:hidden;border:1px solid var(--chiz);
+  background:#E9D5AC;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+.xarita-quti svg{display:block;width:100%;height:auto}
+.xarita-ust{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(90% 70% at 50% 40%,transparent 40%,rgba(30,18,8,.45) 100%)}
+.tepa-chiziq{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:6px;padding:9px 11px;
+  background:linear-gradient(rgba(12,9,7,.85),rgba(12,9,7,0));font-size:10px;font-weight:800;letter-spacing:.1em;color:#E8D3A8}
+.oyna-belgi{position:absolute;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;pointer-events:none}
+.oyna-belgi .doira{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:19px;
+  background:var(--terra);box-shadow:0 6px 16px rgba(0,0,0,.5),0 0 0 3px rgba(255,182,149,.35)}
+.oyna-belgi .doira.qulf{background:rgba(30,22,16,.85);color:var(--xira);box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.oyna-belgi .doira.bajarildi{background:var(--zumrad)}
+.oyna-belgi small{padding:3px 8px;border-radius:99px;font-size:9.5px;font-weight:800;white-space:nowrap;
+  background:rgba(18,15,13,.86);color:#F2E4CE}
+.dost-belgi{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  font-size:13px;font-weight:800;background:linear-gradient(150deg,#4A5A7E,#26304C);box-shadow:0 0 0 2px var(--lapis-y),0 4px 10px rgba(0,0,0,.5)}
+.dost-belgi i{position:absolute;right:-5px;bottom:-5px;width:16px;height:16px;border-radius:50%;background:var(--lapis-y);
+  color:#00212E;font-size:10px;display:grid;place-items:center;font-style:normal}
+.marshrut{display:flex;align-items:center;gap:10px}
+.qadam{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px}
+
+/* ---- o'yin ---- */
+.sahna{position:relative;height:clamp(160px,30dvh,230px);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--chiz)}
+.sahna>svg.fon{position:absolute;inset:0;width:100%;height:100%}
+.tosiq-rasm{display:block;line-height:0}
+.sahna .ustki{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap}
+.sahna .pastki{position:absolute;top:44px;left:8px;right:8px;display:flex;gap:6px;align-items:flex-end;justify-content:space-between}
+.tosiq-yorliq{padding:8px 12px;border-radius:var(--r);background:rgba(18,15,13,.8);backdrop-filter:blur(8px)}
+.tosiq-yorliq small{display:block;font-size:10.5px;font-weight:700;color:var(--xira)}
+.tosiq-yorliq b{font-size:17px;font-weight:800}
+.tosiq-yorliq b em{font-style:normal;color:var(--oltin-y)}
+.qulf{background:#100E0C;border:1px solid var(--chiz);border-radius:var(--r-md);padding:14px 10px;display:flex;align-items:center;
+  justify-content:center;gap:8px;flex-wrap:wrap;min-height:74px}
+.katak{min-width:52px;padding:10px 12px;border-radius:var(--r);text-align:center;font-size:24px;font-weight:800;
+  background:var(--s2);color:var(--terra-y)}
+.katak.amal{background:var(--lapis-d);color:var(--lapis-y)}
+.katak.natija{background:rgba(229,169,60,.2);color:var(--oltin-y);min-width:64px}
+.katak.bosh{color:var(--xira);font-size:13px;font-weight:600;background:transparent;box-shadow:inset 0 0 0 1px var(--chiz)}
+.qulf.xato{box-shadow:0 0 0 1px var(--anor);animation:silk .4s}
+.qulf.togri{box-shadow:0 0 0 1px var(--zumrad)}
+@keyframes silk{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.tekshiruv{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;font-weight:600;line-height:1.4;color:var(--lapis-y)}
+.tekshiruv.xato{color:var(--anor)} .tekshiruv.togri{color:#7BD6A6}
+.toshlar{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:7px}
+.tosh{padding:11px 4px 8px;border-radius:var(--r);text-align:center;background:var(--s2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);transition:transform .1s}
+.tosh b{display:block;font-size:22px;font-weight:800}
+.tosh small{display:block;margin-top:2px;font-size:9px;font-weight:700;color:var(--xira)}
+.tosh:active{transform:translateY(2px)}
+.tosh.ishlatildi{box-shadow:inset 0 0 0 1px var(--terra);color:var(--terra-y)}
+.tosh.ishlatildi b{color:var(--terra-y)}
+.tosh.maslahat{box-shadow:0 0 0 2px var(--oltin),0 0 18px rgba(229,169,60,.5)}
+.amallar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.amal-t{height:52px;border-radius:var(--r);display:grid;place-items:center;font-size:22px;font-weight:700;color:var(--lapis-y);
+  background:rgba(13,92,117,.28);box-shadow:inset 0 0 0 1px rgba(13,92,117,.5)}
+.amal-t.faol{background:var(--lapis);color:#fff}
+.ikki{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.yordam{display:flex;gap:9px;align-items:center;padding:10px;border-radius:var(--r);background:var(--s1);border:1px solid var(--chiz)}
+.yordam .ik{width:34px;height:34px;border-radius:var(--r);display:grid;place-items:center;flex:none}
+.yordam b{display:block;font-size:12.5px;font-weight:700}
+.yordam small{font-size:10.5px;color:var(--xira)}
+
+/* ---- ro'yxatlar ---- */
+.qator{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:var(--r-md);background:var(--s1);
+  border:1px solid var(--chiz);width:100%}
+.qator .ik{width:38px;height:38px;border-radius:var(--r);flex:none;display:grid;place-items:center;background:var(--s2);font-size:19px}
+.qator b{display:block;font-size:13.5px;font-weight:700}
+.qator small{display:block;font-size:11.5px;line-height:1.4;color:var(--xira)}
+.qator .ong{margin-left:auto;text-align:right;flex:none}
+.qator.men{border-color:var(--terra);background:rgba(217,101,40,.12)}
+.qator.qulf{opacity:.55}
+.chiziqcha{height:6px;border-radius:99px;background:var(--s2);overflow:hidden}
+.chiziqcha b{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--terra),var(--oltin));transition:width .6s}
+.statlar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.statlar div{padding:10px 4px;border-radius:var(--r-md);background:var(--s2)}
+.statlar b{display:block;font-size:16px;font-weight:800}
+.statlar small{font-size:10px;color:var(--xira)}
+.rasmli{border-radius:var(--r-md);overflow:hidden;border:1px solid var(--chiz);background:var(--s1)}
+.rasmli .rasm{position:relative;height:104px;display:grid;place-items:center;font-size:40px;
+  background:linear-gradient(160deg,#3A2A20,#191310)}
+.rasmli .ichi{padding:11px 12px;display:grid;gap:8px}
+
+/* ---- modal ---- */
+.qoplama{position:absolute;inset:0;z-index:9;display:grid;place-items:center;padding:20px;background:rgba(8,6,5,.78);backdrop-filter:blur(4px)}
+.modal{width:100%;max-width:330px;border-radius:var(--r-xl);padding:22px 18px;display:grid;gap:14px;text-align:center;
+  background:var(--s1);border:1px solid var(--chiz);box-shadow:0 20px 50px rgba(0,0,0,.7),0 8px 24px rgba(217,101,40,.2)}
+.modal h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.medal{width:110px;height:110px;justify-self:center;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 28%,#F7DFA6,#C08A2E 58%,#6F4E14);box-shadow:0 10px 26px rgba(0,0,0,.5)}
+.yulduz-qator{font-size:30px;letter-spacing:6px;color:var(--oltin)}
+.yulduz-qator span{display:inline-block;animation:kir .5s both}
+.yulduz-qator span.bosh{color:var(--s3)}
+@keyframes kir{from{transform:translateY(20px) scale(.7);opacity:0}}
+.tanga-uch{position:fixed;z-index:20;font-size:20px;pointer-events:none;left:0;top:0;
+  transition:left .7s cubic-bezier(.5,-.3,.6,1),top .7s cubic-bezier(.3,.6,.4,1),transform .7s}
+/* ---- xarita ustidagi belgilar ---- */
+.bulut{position:absolute;top:8%;left:-30%;width:46%;height:34%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(60,40,16,.28),transparent 72%);animation:suz 46s linear infinite}
+.bulut.b2{top:46%;width:60%;height:30%;animation-duration:70s;animation-delay:-20s;opacity:.7}
+@keyframes suz{to{transform:translateX(320%)}}
+.karvon-nuqta{position:absolute;transform:translate(-50%,-72%);display:grid;justify-items:center;gap:2px;pointer-events:none;z-index:3}
+.karvon-nuqta .tuyacha{font-size:27px;filter:drop-shadow(0 4px 6px rgba(60,30,10,.5));animation:tebran 1.5s ease-in-out infinite alternate}
+.karvon-nuqta .soya{position:absolute;bottom:14px;width:26px;height:7px;border-radius:50%;background:rgba(60,35,12,.35)}
+.karvon-nuqta small{padding:3px 9px;border-radius:99px;font-size:9.5px;font-weight:800;white-space:nowrap;
+  background:var(--terra);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.45)}
+@keyframes tebran{to{transform:translateY(-4px) rotate(3deg)}}
+.xarita-chip{position:absolute;transform:translate(-50%,-140%);display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;
+  font-size:9.5px;font-weight:800;white-space:nowrap;background:rgba(18,15,13,.86);color:#EFE2CB;box-shadow:0 3px 10px rgba(0,0,0,.4)}
+.xarita-chip .ms{font-size:13px}
+.xarita-chip.qulf{padding:5px;color:var(--xira);opacity:.85} .xarita-chip.bajarildi{color:#7BD6A6}
+.dost-nuqta{position:absolute;transform:translate(-50%,-150%);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  font-size:12px;font-weight:800;background:linear-gradient(150deg,#4A5A7E,#26304C);
+  box-shadow:0 0 0 2px var(--lapis-y),0 4px 10px rgba(0,0,0,.45);z-index:2}
+.dost-nuqta i{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;background:var(--lapis-y)}
+
+/* ---- sahna qatlamlari ---- */
+.sahna .qat{position:absolute;left:0;right:0;background-repeat:repeat-x;background-size:auto 100%;animation:qatsur linear infinite}
+.sahna .q1{bottom:52px;height:46px;animation-duration:26s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='46'%3E%3Cpath d='M0 46V26q40-18 80-4t80-6 80 8 60-4v26z' fill='%23000' opacity='.28'/%3E%3C/svg%3E")}
+.sahna .q2{bottom:26px;height:40px;animation-duration:14s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='40'%3E%3Cpath d='M0 40V22q34-14 68-2t68-6 64 8 60-6v24z' fill='%23000' opacity='.22'/%3E%3C/svg%3E")}
+.sahna .q3{bottom:0;height:30px;animation-duration:7s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='30'%3E%3Cpath d='M0 30V14q30-10 56 0t56-4 50 6 38-4v18z' fill='%23000' opacity='.3'/%3E%3C/svg%3E")}
+@keyframes qatsur{to{background-position-x:-300px}}
+.sahna.toxta .qat,.sahna.toxta .karvon i{animation-play-state:paused}
+.sahna .karvon{position:absolute;left:4%;bottom:14px;display:flex;align-items:flex-end;transform:scaleX(-1);z-index:2}
+.sahna .karvon i{font-style:normal;font-size:30px;filter:drop-shadow(0 5px 6px rgba(0,0,0,.5));animation:tebran .55s ease-in-out infinite alternate}
+.sahna .karvon i:nth-child(2){font-size:26px;animation-delay:.18s}
+.sahna .karvon i:nth-child(3){font-size:24px;animation-delay:.36s}
+.tosiq-rasm{position:absolute;right:8%;bottom:14px;z-index:2;animation:kel 1.2s cubic-bezier(.2,.8,.2,1) both}
+.tosiq-rasm.ketdi{animation:ket .5s forwards}
+@keyframes kel{from{transform:translateX(220px);opacity:0}}
+@keyframes ket{to{transform:scale(.4) translateY(30px);opacity:0}}
+.sahna.silkin{animation:silk .42s}
+.boron-quti{position:relative;width:150px;height:92px}
+.boron-quti s{position:absolute;border-radius:50%;text-decoration:none;filter:blur(9px);background:rgba(168,142,104,.85);
+  animation:shamol 3.2s ease-in-out infinite}
+@keyframes shamol{50%{transform:translateX(-14px) scale(1.1)}}
+
+/* ---- yangi maydon turlari ---- */
+.katak.tanlov{background:rgba(217,101,40,.18);color:var(--terra-y);box-shadow:inset 0 0 0 1px var(--terra)}
+.tarozi{display:flex;align-items:center;gap:10px;width:100%;justify-content:center}
+.tarozi .kosa{display:flex;align-items:center;gap:6px;padding:10px 14px;border-radius:var(--r);font-size:19px;font-weight:800;
+  background:var(--s2);transition:transform .35s}
+.tarozi .kosa b{font-weight:800}
+.tarozi .kosa b.tanlangan{color:var(--terra-y)} .tarozi .kosa b.bosh{color:var(--xira)}
+.tarozi .dastak{width:34px;height:4px;border-radius:4px;background:var(--oltin);flex:none}
+.yuk{display:grid;justify-items:center;gap:3px;min-width:56px;padding:9px 6px;border-radius:var(--r);background:var(--s2);font-size:26px}
+.yuk small{font-size:10px;font-weight:700;color:var(--xira)}
+.yuk.yoq{background:rgba(217,101,40,.14);box-shadow:inset 0 0 0 1px var(--terra);color:var(--terra-y)}
+.yuk.yoq .ms{font-size:26px}
+.taymer{width:100%;height:4px;border-radius:4px;background:var(--s2);overflow:hidden}
+.taymer b{display:block;height:100%;background:var(--terra);animation:kamay 3.4s linear forwards}
+@keyframes kamay{from{width:100%}to{width:0}}
+.yol-qator{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border-radius:var(--r);background:var(--s2);font-size:13.5px;font-weight:700}
+.yol-qator .ms{color:var(--lapis-y)}
+.yol-qator .ong{margin-left:auto;color:var(--oltin-y)}
+.yol-qator.tanlangan{box-shadow:inset 0 0 0 2px var(--terra);color:var(--terra-y)}
+.tanlovlar{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px}
+.tanlov-t{display:grid;justify-items:center;gap:2px;padding:10px 4px;border-radius:var(--r);background:var(--s2)}
+.tanlov-t b{font-size:26px;font-weight:400}
+.tanlov-t small{font-size:10.5px;font-weight:700;color:var(--xira)}
+.tanlov-t.tanlangan{box-shadow:inset 0 0 0 2px var(--terra)}
+.tanlov-t.tanlangan small{color:var(--terra-y)}
+
+.tahlil{display:grid;gap:7px;padding:12px;border-radius:var(--r-md);background:var(--s2);text-align:left}
+.tahlil-qator{display:flex;align-items:center;font-size:13px;font-weight:600;color:var(--xira)}
+.tahlil-qator b{margin-left:auto;font-size:14px;font-weight:800;color:var(--matn);font-variant-numeric:tabular-nums}
+.segmentlar{display:flex;gap:3px;height:8px;margin:2px 0}
+.segmentlar .seg{border-radius:99px;background:var(--s3)}
+.segmentlar .seg.tugadi{background:linear-gradient(90deg,var(--terra),var(--oltin))}
+.segmentlar .seg.hozir{background:var(--terra-y);animation:bump 1.6s infinite}
+.sinov-qator{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r);background:var(--s2);font-size:13px;font-weight:700}
+.sinov-qator b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;background:var(--terra);color:#fff}
+.sinov-qator .chip{margin-left:auto}
+.ogoh{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:var(--r);background:rgba(200,53,53,.12);
+  box-shadow:inset 0 0 0 1px rgba(200,53,53,.35)}
+.ogoh .ms{font-size:19px;color:#FF9A8A}
+.ogoh b{display:block;font-size:12.5px} .ogoh small{font-size:11px;color:var(--xira);line-height:1.4}
+.ogoh.yaxshi{background:rgba(27,138,90,.14);box-shadow:inset 0 0 0 1px rgba(27,138,90,.4)}
+.ogoh.yaxshi .ms{color:#7BD6A6}
+.tuman-dog{position:absolute;transform:translate(-50%,-50%);width:74px;height:60px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(28,20,12,.72),rgba(28,20,12,.35) 60%,transparent 78%);filter:blur(4px);z-index:1}
+.daraja-karta{display:flex;align-items:center;gap:14px;width:100%;padding:16px;border-radius:var(--r-lg);
+  background:var(--s1);border:1px solid var(--chiz);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 0 #0B0908;transition:transform .08s}
+.daraja-karta:active{transform:translateY(3px);box-shadow:0 1px 0 #0B0908}
+.daraja-karta:hover{border-color:rgba(217,101,40,.55)}
+.daraja-karta .ik{width:52px;height:52px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:28px;background:var(--s2)}
+.daraja-karta b{display:block;font-size:16px;font-weight:800;margin-top:2px}
+.daraja-karta small{display:block;font-size:12px;color:var(--xira);margin-top:2px}
+.daraja-karta .misol{display:inline-block;margin-top:8px;padding:4px 10px;border-radius:var(--r);font-size:13px;font-weight:800;
+  background:var(--lapis-d);color:var(--lapis-y);font-variant-numeric:tabular-nums}
+.karvon-nuqta.libosli small{background:linear-gradient(180deg,#F3D79C,#D2A24E);color:#2A1B06;box-shadow:0 0 0 2px #FFF1C9,0 3px 10px rgba(0,0,0,.45)}
+.karvon-nuqta .bayroq{position:absolute;top:-16px;left:58%;width:3px;height:22px;background:#6B4A22}
+.karvon-nuqta .bayroq::after{content:"";position:absolute;left:3px;top:0;width:14px;height:10px;background:#E5A93C;
+  clip-path:polygon(0 0,100% 20%,70% 55%,100% 100%,0 100%);animation:hilpira 1.4s ease-in-out infinite alternate;transform-origin:left}
+@keyframes hilpira{to{transform:skewY(8deg) scaleX(.85)}}
+.karvon-nuqta .fonus-nur{position:absolute;top:-6px;width:70px;height:70px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,196,102,.55),transparent 65%);animation:lip 2.4s ease-in-out infinite}
+@keyframes lip{50%{opacity:.55;transform:scale(1.12)}}
+.sahna.fonusli .karvon i{filter:drop-shadow(0 0 10px rgba(255,190,90,.9)) drop-shadow(0 5px 6px rgba(0,0,0,.5))}
+.sahna.fonusli::after{content:"";position:absolute;left:0;bottom:0;width:55%;height:60%;pointer-events:none;z-index:1;
+  background:radial-gradient(60% 70% at 20% 90%,rgba(255,190,90,.35),transparent 70%);animation:lip 2.8s ease-in-out infinite}
+/* ---- qo'lda chizilgan sahna ---- */
+.sahna .fon .p1{animation:par 46s linear infinite}
+.sahna .fon .p2{animation:par 22s linear infinite}
+.sahna .fon .p3{animation:par 8s linear infinite}
+@keyframes par{to{transform:translateX(-360px)}}
+.sahna .fon .iz{animation:izlar .9s linear infinite}
+@keyframes izlar{to{stroke-dashoffset:-24}}
+.sahna .fon .oyoq{transform-box:fill-box;transform-origin:50% 0;animation:qadam .62s ease-in-out infinite alternate}
+.sahna .fon .oyoq.b{animation-direction:alternate-reverse}
+@keyframes qadam{from{transform:rotate(-13deg)}to{transform:rotate(13deg)}}
+.sahna .fon .tana{animation:chayqal .31s ease-in-out infinite alternate}
+@keyframes chayqal{to{transform:translateY(-1.4px)}}
+.sahna.toxta .fon .p1,.sahna.toxta .fon .p2,.sahna.toxta .fon .p3,.sahna.toxta .fon .iz,
+.sahna.toxta .fon .oyoq,.sahna.toxta .fon .tana{animation-play-state:paused}
+.sahna.toxta .fon .oyoq{animation:none;transform:none}
+.sahna .fon .lipil{animation:lipil 2.4s ease-in-out infinite}
+@keyframes lipil{50%{opacity:.55}}
+.tosiq-g{animation:kel2 1.3s cubic-bezier(.2,.8,.2,1) both}
+@keyframes kel2{from{transform:translateX(170px);opacity:0}}
+.tosiq-g .tushadi{transform-box:fill-box;transform-origin:center;animation:tush 3.2s ease-in infinite}
+@keyframes tush{0%,55%{transform:none;opacity:1}100%{transform:translate(2px,26px) rotate(160deg);opacity:0}}
+.tosiq-g .tebran-arqon{transform-box:fill-box;transform-origin:50% 0;animation:arqon 2.6s ease-in-out infinite alternate}
+@keyframes arqon{to{transform:rotate(9deg)}}
+.tosiq-g .yangi{opacity:0;transition:opacity .5s .1s}
+.tosiq-g.koprik.yechildi .yangi{opacity:1}
+.tosiq-g.koprik.yechildi .tushadi{display:none}
+.tosiq-g .chang{animation:chang 3s ease-in-out infinite alternate}
+@keyframes chang{to{transform:translate(-8px,-4px) scale(1.15)}}
+.tosiq-g.tosh.yechildi .bolder{transform-box:fill-box;transform-origin:center;animation:sochil .9s ease-out forwards}
+@keyframes sochil{to{transform:translate(var(--dx),var(--dy)) rotate(200deg);opacity:0}}
+.tosiq-g.tosh.yechildi .chang{animation:none;opacity:0;transition:opacity .6s}
+.tosiq-g .girdob{transform-box:fill-box;transform-origin:center;animation:girdob 3.4s ease-in-out infinite alternate}
+@keyframes girdob{to{transform:translateX(-18px) scale(1.12) rotate(6deg)}}
+.tosiq-g .shamol-chiz{animation:shamolchiz 1.1s linear infinite}
+@keyframes shamolchiz{to{stroke-dashoffset:72}}
+.tosiq-g.boron.yechildi{animation:tarqal 1s ease-out forwards}
+@keyframes tarqal{to{transform:translateX(90px) scaleX(1.3);opacity:0}}
+.tosiq-g .shlagbaum{transform-box:fill-box;transform-origin:0 50%;transition:transform .7s cubic-bezier(.3,1.4,.5,1)}
+.tosiq-g.tarozi.yechildi .shlagbaum{transform:rotate(-72deg)}
+.tosiq-g.ketma.yechildi .yozuv path,.tosiq-g.ketma.yechildi .yozuv circle{stroke:#FABC4D;fill:#FABC4D;filter:drop-shadow(0 0 3px #FABC4D)}
+.tosiq-g .bayroq-q{transform-box:fill-box;transform-origin:0 50%;animation:hilpira 1.2s ease-in-out infinite alternate}
+.tosiq-g.qaroqchi.yechildi,.tosiq-g.xotira.yechildi,.tosiq-g.yol.yechildi{animation:ket2 .9s .3s ease-in forwards}
+@keyframes ket2{to{transform:translateX(-40px);opacity:0}}
+.tosiq-yol.otib{animation:otib 3.2s linear forwards}
+@keyframes otib{to{transform:translateX(-470px)}}
+.tosiq-yol.uzoqdan .tosiq-g{animation:yaqinlash 1.9s cubic-bezier(.25,.6,.35,1) both}
+@keyframes yaqinlash{from{transform:translateX(330px)}to{transform:none}}
+.yol-banner{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:3;width:min(86%,300px);
+  display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:var(--r-md);
+  background:rgba(18,15,13,.82);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px rgba(229,169,60,.35);animation:kir .35s both}
+.yol-banner .ms{color:var(--oltin-y);font-size:22px}
+.yol-banner b{display:block;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.yol-banner small{display:block;font-size:11px;color:var(--xira);margin-bottom:5px}
+#varaq.yolda .ich>:nth-child(n+3){opacity:.35;pointer-events:none;transition:opacity .3s}
+.tosiq-yol .tosiq-g.boron.yechildi{animation:tarqal 1s ease-out forwards}
+.tosiq-yol .tosiq-g.qaroqchi.yechildi,.tosiq-yol .tosiq-g.xotira.yechildi,.tosiq-yol .tosiq-g.yol.yechildi{animation:ket2 .9s .3s ease-in forwards}
+.katak.farq{font-size:15px;min-width:40px;background:rgba(229,169,60,.18);color:var(--oltin-y)}
+.namuna{padding:8px 11px;border-radius:var(--r);background:var(--s2);text-align:left}
+.namuna summary{display:flex;gap:8px;align-items:center;cursor:pointer;list-style:none}
+.namuna summary::-webkit-details-marker{display:none}
+.namuna summary::after{content:"expand_more";font-family:"Material Symbols Outlined";margin-left:auto;color:var(--xira);font-size:18px;transition:transform .2s}
+.namuna[open] summary::after{transform:rotate(180deg)}
+.namuna small{margin-top:6px}
+.namuna .ms{color:var(--oltin-y);font-size:19px}
+.namuna b{display:block;font-size:12.5px} .namuna small{display:block;font-size:11.5px;line-height:1.45;color:var(--xira)}
+.qulf.ketma-qator{gap:4px;flex-wrap:nowrap;padding:12px 6px}
+.qulf.ketma-qator .katak{min-width:0;flex:1 1 0;padding:9px 2px;font-size:19px}
+.qulf.ketma-qator .katak.amal{flex:0 0 auto;min-width:16px;padding:9px 3px;font-size:14px;background:transparent;color:var(--lapis-y)}
+.qulf.ketma-qator .katak.farq{min-width:26px;background:rgba(229,169,60,.18);color:var(--oltin-y);font-size:12px;border-radius:6px}
+/* ---- tugmalar doim ko'rinadi: pastga mahkamlangan panel ---- */
+.amal-panel{position:sticky;bottom:0;z-index:4;display:grid;gap:8px;margin:0 -16px -18px;
+  padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(18,15,13,0),#120F0D 22%)}
+.amal-panel .tugma{padding:13px 14px;font-size:15.5px}
+.amal-panel .yordam{padding:8px 10px}
+.amal-panel .yordam .ik{width:30px;height:30px}
+/* ---- telefon: kichik ekranlarda ixchamroq ---- */
+@media (max-width:480px){
+  .ilova{padding-block:8px 12px}
+  .belgi-yoz{display:none}
+  .varaq{height:calc(100dvh - 20px)}
+  .ich{padding:10px 12px 18px;gap:10px}
+  .amal-panel{margin:0 -12px -18px;padding-inline:12px}
+  .plita{padding:12px}
+  .katak{font-size:21px;padding:8px 10px;min-width:44px}
+  .tosh{padding:9px 2px 7px}
+  .tosh b{font-size:20px}
+}
+.mukofot-karta{display:none}
+@media (min-height:940px){.mukofot-karta{display:flex}}
+@media (max-height:760px){
+  .amallar .amal-t{height:44px}
+  .sahna{height:150px}
+}
+html,body{background:#120F0D}
+body.ichki{padding-inline:0}
+body.ichki .ilova{max-width:560px;padding-block:0}
+body.ichki .qobiq{border-radius:0;box-shadow:none;min-height:100dvh}
+body.ichki .varaq{height:100dvh!important;min-height:0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+<div class="ilova">
+  <div class="qobiq" id="qobiq"></div>
+</div>
+
+<script>
+(function(){
+/* ================= MA'LUMOT ================= */
+const SHAHAR=[
+ {nom:"Toshkent",art:{nom:"Qadimgi sug'd tangasi",joy:"Toshkent vohasi",bonus:"Hisob-kitobda +5% tanga",ik:"tanga"}},
+ {nom:"Samarqand",art:{nom:"Mirzo Ulug'bek usturlobi",joy:"Registon darvozasida",bonus:"Qadam tezligi ×1.5",ik:"astro"},
+  sovga:"Yangi tuya — qo'lda 6 ta karta"},
+ {nom:"Buxoro",art:{nom:"Ibn Sino tib qonunlari",joy:"Buxoro sharif",bonus:"Suv sarfini 50% kamaytiradi",ik:"kitob"},
+  sovga:"Katta mesh — 4 ta suv"},
+ {nom:"Xiva",art:{nom:"Al-Xorazmiy al-jabr lavhasi",joy:"Ichan qal'a",bonus:"Mavsum kubogi va unvon",ik:"lavha"},
+  sovga:"Mavsum tugadi"}];
+const D=[null,
+ {nom:"1–4 sinf",min:1,max:9,amallar:["+","−"],chegara:20},
+ {nom:"5–8 sinf",min:2,max:12,amallar:["+","−","×"],chegara:80},
+ {nom:"9–11 sinf",min:3,max:20,amallar:["+","−","×","÷"],chegara:300}];
+const TUR={
+ boron:{nom:"Qum bo'roni",olch:"Energiya",ish:"Kartalarni qo'shib aniq energiyani yig'ing",cta:"Yo'lni ochish (bo'ronni to'xtatish)"},
+ tosh:{nom:"Tosh ko'chkisi",olch:"Tosh kuchi",ish:"Amallar bilan tosh kuchiga teng ifoda tuzing",cta:"Yo'lni ochish (toshni parchalash)"},
+ koprik:{nom:"Buzilgan ko'prik",olch:"Yetishmagan son",ish:"Tenglikdagi noma'lum sonni toping",cta:"Yo'lni ochish (ko'prikni tiklash)"}};
+const MADAN=["Mis","Granit","Ohaktosh","Marmar","Feruza","Lazurit","Nefrit"];
+const DOSTLAR=[];
+const TOP=[["Nigora",54],["Jasur",47],["Kamola",41],["Ali",33],["Sardor",29],["Malika",26],["Bekzod",22],["Dilnoza",18],["Otabek",14]];
+const BUFF={
+ donishmand:{nom:"Donishmand maslahati",ik:"neurology",izoh:"Keyingi 3 bekatda qiyin misollar 1 ta soddaroq kartaga kamayadi.",narx:120},
+ sahro:{nom:"Sahro himoyasi",ik:"shield",izoh:"Har to'siqda bitta xato kechiriladi — yulduz kamaymaydi. Ikkinchi xato odatdagidek hisoblanadi.",narx:90}};
+const USKUNA={
+ tuya:{nom:"Nodir oq tuya (Baqtriya)",ik:"🐫",tasir:"+1 qop sig'im",izoh:"Kuchli ikki o'rkachli tuya: karvon 3 o'rniga 4 qop yuk ko'taradi.",narx:500},
+ libos:{nom:"Qoraxoniy karvonboshi libosi",ik:"🧥",tasir:"Xaritada oltin bayroq",izoh:"Zardo'zi chopon: xaritada karvoningiz oltin bayroq va hoshiya bilan ajralib turadi. Do'stlaringiz ham ko'radi.",narx:350},
+ fonus:{nom:"Yorituvchi mis fonus",ik:"🏮",tasir:"Tunda yo'lni yoritadi",izoh:"Kechqurun o'ynaganda tuyalar ustida fonuslar yonadi va qum yo'li yorishadi.",narx:200},
+ kompas:{nom:"Munajjim kompasi",ik:"🧭",tasir:"Tumandan +1 bekat",izoh:"Tuman ostidagi yana bitta bekatni oldindan ko'rsatadi — nima kutayotganini bilasiz.",narx:220}};
+const BEKAT_KM=[110,95,95,90,95,85,150,150,150];
+const BEKAT_NOM=["Chirchiq quyi","Zomin daryosi","Jizzax dashti","Zarafshon vodiysi","Kattaqo'rg'on","Karmana cho'li","Qorako'l vohasi","Sandiqli qumligi","Xiva darvozasi"];
+const JAMI_KM=BEKAT_KM.reduce((a,b)=>a+b,0);
+const bosibKm=()=>BEKAT_KM.slice(0,S.bekat).reduce((a,b)=>a+b,0);
+const km=n=>n.toLocaleString("ru-RU")+" km";
+const OBHAVO=[
+ {k:"quyoshli",nom:"Quyoshli",ik:"wb_sunny",izoh:"Oddiy sharoit, karvon tinch yuradi"},
+ {k:"issiq",nom:"Jazirama issiq",ik:"local_fire_department",izoh:"Bekat oxirida qo'shimcha 1 mesh suv ketadi"},
+ {k:"shamol",nom:"Shamolli",ik:"air",izoh:"Karvon sekin yuradi, ammo salqin"},
+ {k:"boron",nom:"Bo'ron xavfi",ik:"storm",izoh:"Birinchi sinov albatta qum bo'roni bo'ladi"},
+ {k:"salqin",nom:"Salqin kecha",ik:"nights_stay",izoh:"Har bir ochilgan to'siqdan +2 tanga"}];
+const obHavo=b=>OBHAVO[(b*7+new Date().getDate())%OBHAVO.length];
+const MOLLAR={ipak:{nom:"Ipak",ik:"🧵"},tuz:{nom:"Tuz",ik:"🧂"},laal:{nom:"Laal",ik:"💎"},choy:{nom:"Choy",ik:"🫖"}};
+const NARX={ipak:[40,58,72,96],tuz:[26,20,32,48],laal:[112,88,124,155],choy:[30,46,36,64]};
+const BUYURTMA=[null,
+ {tur:"ipak",soni:2,mukofot:170,kim:"Registon ustaxonasi"},
+ {tur:"tuz",soni:2,mukofot:130,kim:"Buxoro oshxonasi"},
+ {tur:"laal",soni:1,mukofot:260,kim:"Xiva zargari"}];
+const sigim=()=>3+(S.uskuna.includes("tuya")?1:0);
+const bor=k=>S.uskuna.includes(k);
+function narxi(k,sh){const t=((new Date().getDate()*7+sh*13+k.length*5)%31)/100;return Math.round(NARX[k][sh]*(.85+t))}
+const KUNLIK=[{id:"bekat",nom:"Ikki bekat bosib o'ting",maqsad:2,mukofot:150,ik:"hiking"},
+ {id:"xatosiz",nom:"Uchta sinovni xatosiz yeching",maqsad:3,mukofot:120,ik:"verified"},
+ {id:"yulduz",nom:"Olti yulduz yig'ing",maqsad:6,mukofot:200,ik:"star"}];
+const bugunKun=()=>new Date().toISOString().slice(0,10);
+function kunlikOl(){
+  const k=bugunKun();
+  if(!S.kunlik||S.kunlik.kun!==k){const t=KUNLIK[new Date().getDate()%KUNLIK.length];S.kunlik={kun:k,id:t.id,joriy:0,olindi:false};saqla()}
+  const t=KUNLIK.find(x=>x.id===S.kunlik.id)||KUNLIK[0];
+  return{...t,...S.kunlik};
+}
+function kunlikQosh(id,x){const k=kunlikOl();if(k.id!==id||k.olindi)return;
+  S.kunlik.joriy=Math.min(k.maqsad,S.kunlik.joriy+x);saqla()}
+let AC=null;
+function ovoz(tur){
+  if(!S.ovoz)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    const t=AC.currentTime;
+    const nota=(f,d,v,tip,kech)=>{const o=AC.createOscillator(),g=AC.createGain();
+      o.type=tip||"sine";o.frequency.value=f;const b=t+(kech||0);
+      g.gain.setValueAtTime(v,b);g.gain.exponentialRampToValueAtTime(.001,b+d);
+      o.connect(g);g.connect(AC.destination);o.start(b);o.stop(b+d)};
+    if(tur==="yutuq"){nota(523,.14,.16);nota(784,.24,.14,null,.11)}
+    else if(tur==="katta"){nota(392,.18,.15);nota(523,.18,.15,null,.14);nota(659,.42,.15,null,.28)}
+    else if(tur==="xato")nota(170,.26,.14,"square");
+    else if(tur==="tanga")nota(1046,.12,.1);
+    else if(tur==="bos")nota(320,.05,.07,"triangle");
+    else if(tur==="parcha")nota(90,.3,.16,"sawtooth");
+  }catch(e){}
+}
+const P=new URLSearchParams(location.search);
+const ICHKI=P.get("ichki")==="1",PID=(P.get("pid")||"0").replace(/[^0-9a-z]/gi,""),BOT=(P.get("bot")||"").replace(/[^0-9a-z_]/gi,"");
+if(ICHKI)document.body.classList.add("ichki");
+const ota=(xabar)=>{try{window.parent.postMessage(Object.assign({karvon:1},xabar),location.origin)}catch(e){}};
+const KALIT="karvon-yoli-p"+PID;
+const r=(a,b)=>a+Math.floor(Math.random()*(b-a+1)), tanla=a=>a[Math.floor(Math.random()*a.length)];
+const titra=n=>{try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}};
+const soat=()=>{const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
+const tun=()=>{const h=new Date().getHours();return h>=19||h<6};
+
+let S; try{S=JSON.parse(localStorage.getItem(KALIT))}catch(e){}
+if(!S||typeof S.bekat!=="number")S=boshlangich();
+else{const bosh=boshlangich();S=Object.assign({},bosh,S);
+  if(!Array.isArray(S.yuk))S.yuk=[];
+  if(!S.buyurtma||typeof S.buyurtma!=="object")S.buyurtma={};
+  if(!S.birga||typeof S.birga!=="object")S.birga=bosh.birga;
+  if(typeof S.ovoz!=="boolean")S.ovoz=true;
+  if(!S.buff||typeof S.buff!=="object")S.buff={};
+  if(!Array.isArray(S.uskuna))S.uskuna=bosh.uskuna;}
+function boshlangich(){return{ism:(P.get("ism")||"Sayyoh").slice(0,24),tag:"",daraja:2,bekat:0,tanga:150,suv:3,maxSuv:3,qol:5,
+  yulduz:{},art:[],buff:{},uskuna:[],ulov:null,oazis:true,tab:"xarita",yuk:[],buyurtma:{},kunlik:null,ovoz:true,darajaTanlandi:false,
+  birga:{dost:"Nigora",bekat:0,navbat:"men"},saqlandi:Date.now()}}
+function saqla(){S.saqlandi=Date.now();try{localStorage.setItem(KALIT,JSON.stringify(S))}catch(e){}}
+
+const qobiq=document.getElementById("qobiq");
+const $=s=>qobiq.querySelector(s);
+let J=null,idSon=0,ekran="tab",bozorFiltr="hammasi";
+
+const yulduzJami=()=>Object.values(S.yulduz).reduce((a,b)=>a+(b||0),0);
+const buffFaol=k=>(S.buff[k]||0)>0;
+
+/* ================= UMUMIY ================= */
+function tepa(){
+  return '<header class="tepa">'+
+    (ICHKI?'<button class="nishon" data-amal="chiqish" aria-label="O\'yinlardan chiqish"><span class="ms" style="font-size:20px;color:#F9F4EE">close</span></button>':'<span class="nishon">🌙</span>')+
+    '<span class="nom"><small>Aql Zone</small><b>Karvon yo\'li</b></span>'+
+    '<span class="hisob tanga" id="hTanga"><span class="ms">toll</span><span class="tnum">'+S.tanga.toLocaleString("ru-RU")+'</span></span>'+
+    '<span class="hisob suv" id="hSuv"><span class="ms">water_drop</span><span class="tnum">'+S.suv+'/'+S.maxSuv+'</span></span>'+
+    '<button class="hisob" data-amal="ovoz" aria-label="Ovoz"><span class="ms">'+(S.ovoz?"volume_up":"volume_off")+'</span></button>'+
+    '<button class="avatar" data-amal="tab-sayyoh" aria-label="Sayyoh profili">'+S.ism[0]+'</button></header>';
+}
+function menyu(){
+  const t=[["xarita","explore","Xarita"],["bozor","storefront","Bozor"],["sayyoh","account_circle","Sayyoh"]];
+  return '<nav class="menyu">'+t.map(x=>'<button class="'+(S.tab===x[0]?"faol":"")+'" data-amal="tab-'+x[0]+'"><span class="ms">'+x[1]+'</span>'+x[2]+'</button>').join("")+'</nav>';
+}
+function chiz(ich,menyusiz){
+  qobiq.innerHTML=tepa()+'<div class="varaq" id="varaq"><div class="ich">'+ich+'</div>'+(menyusiz?"":menyu())+'</div>';
+}
+function bump(sel){const e=$(sel);if(!e)return;e.classList.remove("bump");void e.offsetWidth;e.classList.add("bump")}
+function hisobYangila(){const t=$("#hTanga span.tnum"),s=$("#hSuv span.tnum");
+  if(t)t.textContent=S.tanga.toLocaleString("ru-RU");if(s)s.textContent=S.suv+"/"+S.maxSuv}
+
+/* ================= XARITA ================= */
+const YOL_D="M300 208 C276 198 252 190 228 182 C206 175 190 176 170 182 C146 189 126 188 108 176 C88 163 78 142 86 120 C94 98 116 86 142 84 C164 82 180 86 192 74 C204 62 200 48 188 40";
+const SHAHAR_ULUSH=[0,.335,.67,1];
+let yolEl=null,yolUz=0;
+
+function nuqta(u){
+  if(!yolEl)return{x:0,y:0};
+  const p=yolEl.getPointAtLength(Math.max(0,Math.min(1,u))*yolUz);
+  return{x:p.x/360*100,y:p.y/240*100};
+}
+const bekatUlush=b=>(b+1)/12*(1/1)*0+((b+1+Math.floor((b+1)/3)*0)/12);
+const ulushBekat=b=>{const c=Math.floor(b/3);return (b+1+c)/12};
+const ulushim=()=>S.bekat>=9?1:(S.bekat%3===0?SHAHAR_ULUSH[S.bekat/3]:ulushBekat(S.bekat-1));
+
+function xaritaSvg(){
+  let s='<svg viewBox="0 0 360 240" role="img" aria-label="Ipak yo\'li xaritasi">'+
+  '<defs>'+
+    '<filter id="don"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="4" seed="7"/>'+
+      '<feColorMatrix type="matrix" values="0 0 0 0 .36 0 0 0 0 .26 0 0 0 0 .13 0 0 0 .22 0"/></filter>'+
+    '<radialGradient id="vin" cx=".5" cy=".45" r=".78"><stop offset=".55" stop-color="#000" stop-opacity="0"/>'+
+      '<stop offset="1" stop-color="#2A1608" stop-opacity=".55"/></radialGradient>'+
+    '<linearGradient id="suv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7FB0BE"/><stop offset="1" stop-color="#5E93A6"/></linearGradient>'+
+  '</defs>'+
+  '<rect width="360" height="240" fill="#E6D0A4"/>'+
+  '<path d="M0 0h360v96c-60 12-96-10-150 4S60 122 0 104Z" fill="#DCC292" opacity=".75"/>'+
+  '<path d="M0 240h360v-70c-70-14-112 10-176 2S54 140 0 152Z" fill="#DFC79B" opacity=".7"/>';
+  /* tog' tizmalari — qalam shtrixi uslubida */
+  const tog=(x,y,n,k)=>{let d="";for(let i=0;i<n;i++){const a=x+i*k,b=y-(i%3)*3;
+    d+='<path d="M'+a+' '+b+'l7-9 7 9" fill="none" stroke="#8A6438" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>'}return d};
+  s+=tog(18,40,9,15)+tog(150,26,10,15)+tog(56,70,6,14)+tog(250,60,7,13)+tog(120,206,8,16);
+  /* qumtepa chiziqlari */
+  for(let i=0;i<7;i++){const y=112+i*17;
+    s+='<path d="M0 '+y+'q46 -8 92 -2t92 -6 92 2 84 -4" fill="none" stroke="#B9935C" stroke-width="1" opacity=".45"/>'}
+  /* daryo va voha */
+  s+='<path d="M-6 182q64 -20 128 -6t120 -16 124 2" fill="none" stroke="url(#suv)" stroke-width="5" opacity=".85"/>';
+  s+='<ellipse cx="150" cy="202" rx="30" ry="11" fill="#78AEBD" opacity=".75"/>';
+  s+='<g opacity=".9"><path d="M134 196v-9M142 194v-10M128 197v-7" stroke="#4E7A3A" stroke-width="2" stroke-linecap="round"/>'+
+     '<circle cx="134" cy="186" r="4" fill="#4E7A3A"/><circle cx="142" cy="183" r="4.5" fill="#57893F"/><circle cx="128" cy="189" r="3.5" fill="#4E7A3A"/></g>';
+  s+='<text x="150" y="222" text-anchor="middle" font-size="7.5" font-weight="700" fill="#7A5A37" letter-spacing="2.4">ZARAFSHON VOHASI</text>';
+  /* yo'l */
+  s+='<path d="'+YOL_D+'" fill="none" stroke="#B08A4E" stroke-width="8" stroke-linecap="round" opacity=".45"/>';
+  s+='<path id="yolChiziq" d="'+YOL_D+'" fill="none" stroke="#8C6A34" stroke-width="2.6" stroke-dasharray="2 9" stroke-linecap="round"/>';
+  s+='<path id="yolBosib" d="'+YOL_D+'" fill="none" stroke="#E5A93C" stroke-width="3.4" stroke-linecap="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>';
+  s+='<g id="nuqtalar"></g>';
+  s+='<rect width="360" height="240" filter="url(#don)" opacity=".5" style="mix-blend-mode:multiply"/>';
+  s+='<rect width="360" height="240" fill="url(#vin)"/>';
+  return s+'</svg>';
+}
+function shaharChiz(x,y,nom,ochiq,tepaga){
+  const o=ochiq?1:.45,lx=Math.max(46,Math.min(314,x))-x,ly=tepaga?-24:24;
+  return '<g opacity="'+o+'" transform="translate('+x+','+y+')">'+
+    '<ellipse cx="0" cy="9" rx="17" ry="4" fill="#8A6438" opacity=".35"/>'+
+    '<rect x="-14" y="-4" width="28" height="13" rx="2" fill="#E3CFA6" stroke="#8A6438" stroke-width="1"/>'+
+    '<rect x="-17" y="-9" width="5" height="18" rx="2" fill="#E3CFA6" stroke="#8A6438" stroke-width="1"/>'+
+    '<rect x="12" y="-9" width="5" height="18" rx="2" fill="#E3CFA6" stroke="#8A6438" stroke-width="1"/>'+
+    '<path d="M-9 -4a9 9 0 0 1 18 0z" fill="#2F8E96" stroke="#1C5F66" stroke-width="1"/>'+
+    '<path d="M0 -16v3" stroke="#B9873C" stroke-width="1.6"/><circle cx="0" cy="-17" r="1.6" fill="#E5A93C"/>'+
+    '<path d="M-3 3h6v6h-6z" fill="#1C5F66" opacity=".7"/>'+
+    '<text x="'+lx+'" y="'+ly+'" text-anchor="middle" font-size="8.5" font-weight="800" letter-spacing="1.8" fill="#5E421F" style="paint-order:stroke;stroke:#E9D6AC;stroke-width:3">'+nom+'</text></g>';
+}
+function xaritaNuqtalar(){
+  const g=$("#nuqtalar");if(!g||!yolEl)return;
+  let h="";
+  SHAHAR.forEach((sh,i)=>{const p=yolEl.getPointAtLength(SHAHAR_ULUSH[i]*yolUz);
+    h+=shaharChiz(p.x,p.y-6,sh.nom.toUpperCase(),S.bekat>=i*3,i===0||i===2)});
+  for(let b=0;b<9;b++){const p=yolEl.getPointAtLength(ulushBekat(b)*yolUz),yu=S.yulduz[b],hoz=b===S.bekat;
+    if(hoz)h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="11" fill="none" stroke="#D96528" stroke-width="2" opacity=".6"><animate attributeName="r" values="9;17;9" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".6;0;.6" dur="2.4s" repeatCount="indefinite"/></circle>';
+    h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(hoz?7:5.5)+'" fill="'+(yu!=null?"#E5A93C":hoz?"#D96528":"#C6A877")+'" stroke="#6B4A22" stroke-width="1.4"/>';
+    if(yu!=null)h+='<text x="'+p.x+'" y="'+(p.y+2.6)+'" text-anchor="middle" font-size="6.5" font-weight="800" fill="#5E421F">'+yu+'</text>'}
+  g.innerHTML=h;
+  const bos=$("#yolBosib");if(bos)bos.setAttribute("stroke-dashoffset",String(1-ulushim()));
+}
+function belgilarniJoyla(animatsiya){
+  const men=$("#karvonBelgi");if(!men||!yolEl)return;
+  const u=ulushim();
+  const qoy=v=>{const p=nuqta(v);men.style.left=p.x+"%";men.style.top=p.y+"%"};
+  if(animatsiya!=null&&animatsiya!==u){
+    let t=0;const bosh=animatsiya,farq=u-animatsiya;
+    const qadam=()=>{t+=1/70;const v=t>=1?u:bosh+farq*(t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2);qoy(v);if(t<1)requestAnimationFrame(qadam)};
+    qadam();
+  }else qoy(u);
+  qobiq.querySelectorAll("[data-ulush]").forEach(el=>{const p=nuqta(+el.dataset.ulush);el.style.left=p.x+"%";el.style.top=p.y+"%"});
+}
+function xarita(oldingiUlush){
+  const shNo=Math.min(3,Math.floor(S.bekat/3)+1),qoldi=3-(S.bekat%3);
+  let ustki='<div class="karvon-nuqta'+(bor("libos")?" libosli":"")+'" id="karvonBelgi"><span class="soya"></span>'+
+    (bor("libos")?'<span class="bayroq"></span>':'')+(bor("fonus")&&tun()?'<span class="fonus-nur"></span>':'')+'<span class="tuyacha">🐫</span>'+
+    '<small>'+(S.bekat>=9?"Yo'l tugadi":(S.bekat+1)+"-bekat")+'</small></div>';
+  if(S.bekat<8)ustki+='<div class="xarita-chip qulf" data-ulush="'+ulushBekat(S.bekat+1)+'" title="Qulflangan"><span class="ms">lock</span></div>';
+  if(S.bekat>0)ustki+='<div class="xarita-chip bajarildi" data-ulush="'+ulushBekat(S.bekat-1)+'"><span class="ms">check_circle</span>'+(S.yulduz[S.bekat-1]||0)+'★</div>';
+  const korish=S.bekat+(bor("kompas")?2:1);
+  DOSTLAR.forEach(d=>{if(d.b<=korish)ustki+='<div class="dost-nuqta" data-ulush="'+ulushBekat(d.b)+'">'+d.ism[0]+'<i></i></div>'});
+  for(let f=korish+1;f<9;f++)ustki+='<span class="tuman-dog" data-ulush="'+ulushBekat(f)+'"></span>';
+  const obh=obHavo(S.bekat),kun=kunlikOl();
+
+  chiz(
+   '<div class="plita holat">'+
+     '<span class="doira"><span class="ms">'+(tun()?"dark_mode":"light_mode")+'</span></span>'+
+     '<span style="flex:1"><span class="yorliq">'+(tun()?"Tun fonusi":"Kunduzgi yo'l")+'</span><b style="display:block;font-size:14px">Toshkent: '+soat()+'</b></span>'+
+     '<span class="chip lapis"><span class="ms" style="font-size:15px">water_drop</span>'+S.suv+'/'+S.maxSuv+'</span>'+
+     '<span class="chip oltin"><span class="ms" style="font-size:15px">toll</span>'+S.tanga.toLocaleString("ru-RU")+'</span>'+
+   '</div>'+
+   '<div class="plita qator" style="border-color:rgba(229,169,60,.35)">'+
+     '<span class="ik" style="background:rgba(229,169,60,.14);color:var(--oltin-y)"><span class="ms">'+obh.ik+'</span></span>'+
+     '<span><b>'+obh.nom+'</b><small>'+obh.izoh+'</small></span>'+
+     '<span class="ong chip">Ob-havo</span></div>'+
+   '<div class="xarita-quti">'+xaritaSvg()+
+     '<span class="bulut b1"></span><span class="bulut b2"></span>'+
+     '<div class="xarita-ust"></div>'+ustki+
+     '<div class="tepa-chiziq"><span class="ms" style="font-size:14px;color:var(--oltin)">explore</span>Asturlob navigatsiyasi'+
+       '<span style="margin-left:auto;font-weight:700;letter-spacing:0">'+Math.round(ulushim()*100)+'%</span></div>'+
+   '</div>'+
+   '<div class="plita qadam">'+
+     '<span class="ms" style="color:var(--terra);font-size:22px">near_me</span>'+
+     '<span><span class="yorliq">Hozirgi marshrut holati</span><b style="display:block;font-size:14px;line-height:1.35">'+
+       (S.bekat>=9?"Ipak yo'li bosib o'tildi":SHAHAR[shNo].nom+" shahrigacha "+qoldi+" bekat · "+km(JAMI_KM-bosibKm())+" qoldi")+'</b>'+
+       (S.bekat<9?'<small class="izohcha">Keyingi bekat: '+BEKAT_NOM[S.bekat]+' · '+km(BEKAT_KM[S.bekat])+'</small>':"")+'</span>'+
+     '<span class="chip">'+S.qol+'-karta tuyasi</span></div>'+
+   (S.oazis?'<div class="plita qator" style="border-color:rgba(13,92,117,.6)">'+
+     '<span class="ik" style="background:rgba(13,92,117,.35);color:var(--lapis-y)"><span class="ms">card_giftcard</span></span>'+
+     '<span><b style="font-size:15px">Noyob oazis topildi!</b><small>Kutilmagan manba: +1 suv va +250 tanga</small></span>'+
+     '<span class="ong"><button class="kichik-tugma" data-amal="oazis">Olish</button></span></div>':"")+
+   '<div class="plita" style="display:grid;gap:9px">'+
+     '<div class="sarlavha"><span class="ms">'+kun.ik+'</span>Kunlik topshiriq'+
+       '<span class="ong chip '+(kun.olindi?"zumrad":"oltin")+'">'+(kun.olindi?"Olindi":"+"+kun.mukofot+" tanga")+'</span></div>'+
+     '<b style="font-size:14px">'+kun.nom+'</b>'+
+     '<div class="chiziqcha"><b style="width:'+(kun.joriy/kun.maqsad*100)+'%"></b></div>'+
+     '<div style="display:flex;align-items:center;gap:8px"><span class="izohcha">'+kun.joriy+' / '+kun.maqsad+'</span>'+
+       (kun.joriy>=kun.maqsad&&!kun.olindi?'<button class="kichik-tugma" style="margin-left:auto" data-amal="kunlik-ol">Mukofotni olish</button>'
+         :'<span class="izohcha" style="margin-left:auto">Ertaga yangisi beriladi</span>')+'</div></div>'+
+   (S.yuk.length?'<div class="plita" style="display:grid;gap:8px">'+
+     '<div class="sarlavha"><span class="ms">inventory</span>Karvondagi yuk<span class="ong chip">'+S.yuk.length+'/'+sigim()+' qop</span></div>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+S.yuk.map(y=>'<span class="chip">'+MOLLAR[y.tur].ik+' '+MOLLAR[y.tur].nom+' \u00b7 '+y.narx+'</span>').join("")+'</div>'+
+     '<p class="izohcha">Keyingi shahar bozorida sotib foyda oling</p></div>':"")+
+   '<div class="plita" style="display:grid;gap:10px">'+
+     '<div class="sarlavha"><span class="ms">group</span>Do\'stlarni chaqiring</div>'+
+     '<p class="izohcha">Karvon yo\'lini do\'stingizga yuboring — kim Xivaga birinchi yetib borarkin?</p>'+
+     '<button class="qator" data-amal="chaqiriq" style="background:var(--s2)"><span class="ms" style="color:var(--lapis-y)">send</span>'+
+       '<span><b>«Men '+(S.bekat+1)+'-bekatdaman, sen-chi?»</b><small>Telegramga chaqiriq yuborish</small></span></button></div>'+
+   (S.bekat>=9
+     ? '<button class="tugma lapis" data-amal="qayta"><span class="ms">restart_alt</span>Yangi mavsumni boshlash</button>'
+     : '<button class="tugma" data-amal="bosh"><span class="ms">hiking</span>Yo\'lga chiqish</button>')+
+   '<p class="izohcha" style="text-align:center;display:flex;gap:6px;justify-content:center;align-items:center">'+
+     '<span class="ms" style="font-size:15px">history</span>Ertaga aynan shu bekatdan davom etasiz (avto-saqlangan)</p>'
+  );
+  yolEl=$("#yolChiziq");yolUz=yolEl?yolEl.getTotalLength():0;
+  xaritaNuqtalar();belgilarniJoyla(oldingiUlush);
+}
+
+/* ================= TO'SIQLAR ================= */
+const YUKLAR=[["🏺","Ko'za"],["🧵","Ipak"],["🧂","Tuz"],["🫖","Choy"],["💎","Laal"],["📜","Qo'lyozma"],["🪔","Chiroq"],["🧿","Muhr"]];
+const NAVBAT=["tosh","xotira","boron","yol","koprik","tarozi","ketma"];
+const TIP={
+ tosh:{nom:"Tosh ko'chkisi",xil:"Hisob",olch:"Tosh kuchi",ish:"Amallar bilan tosh kuchiga teng ifoda tuzing",cta:"Toshni parchalash"},
+ boron:{nom:"Qum bo'roni",xil:"Hisob",olch:"Energiya",ish:"Kartalarni qo'shib aniq energiyani yig'ing",cta:"Bo'ronni to'xtatish"},
+ koprik:{nom:"Buzilgan ko'prik",xil:"Hisob",olch:"Noma'lum son",ish:"Tenglikdagi yetishmagan sonni toping",cta:"Ko'prikni tiklash"},
+ tarozi:{nom:"Bojxona tarozisi",xil:"Mantiq",olch:"Muvozanat",ish:"Tarozi teng bo'lishi uchun kerakli toshni qo'ying",cta:"Tarozini tenglashtirish"},
+ ketma:{nom:"Qadimgi yozuv",xil:"Mantiq",olch:"Keyingi son",ish:"Har son oldingisidan bir xil miqdorga katta. Shu farqni toping va qatordagi keyingi sonni tanlang",cta:"Yozuvni o'qish"},
+ xotira:{nom:"Yuk ro'yxati",xil:"Xotira",olch:"Yo'qolgan yuk",ish:"Yuklarni eslab qoling — qaysi biri yo'qolganini toping",cta:"Yukni aniqlash"},
+ yol:{nom:"Yo'l ayrimi",xil:"Qaror",olch:"Eng qisqa yo'l",ish:"Uch yo'ldan eng qisqasini tanlang",cta:"Yo'lni tanlash"},
+ qaroqchi:{nom:"Qaroqchilar kamini",xil:"Boss",olch:"Boj miqdori",ish:"Qaroqchilar boj so'rayapti — aniq miqdorni tuzing, aks holda yuk ketadi",cta:"Bojni to'lash"}};
+const mathmi=t=>TIP[t].xil==="Hisob"||t==="qaroqchi";
+
+function vazifa(){
+  const d=D[S.daraja],q=J.qol,soda=buffFaol("donishmand");
+  J.tur=NAVBAT[(S.bekat*3+J.tosiq)%NAVBAT.length];
+  const obh=obHavo(S.bekat);
+  if(obh.k==="boron"&&J.tosiq===0)J.tur="boron";
+  if(S.bekat%3===2&&J.tosiq===2)J.tur="qaroqchi";
+  const aral=()=>q.map((_,i)=>i).sort(()=>Math.random()-.5);
+  J.variant=null;J.yechim=[];
+  if(J.tur==="boron"){
+    const tan=aral().slice(0,S.daraja===1||soda?2:r(2,3));
+    J.maqsad=tan.reduce((n,i)=>n+q[i].v,0);J.yechim=tan.map(i=>q[i].id);
+  }else if(J.tur==="tosh"||J.tur==="qaroqchi"){
+    const boss=J.tur==="qaroqchi";
+    for(let u=0;u<120;u++){
+      const k=boss?Math.min(3,q.length):((S.daraja===3&&!soda)?3:(S.daraja===2&&Math.random()<.35&&!soda?3:2));
+      const tan=aral().slice(0,k),a=[];
+      tan.forEach((i,j)=>{if(j)a.push(tanla(d.amallar));a.push(q[i].v)});
+      const x=hisobla(a);
+      if(Number.isInteger(x)&&x>0&&x<=d.chegara&&(u>60||a.some(v=>v==="×"||v==="÷"||v==="−"))){
+        J.maqsad=x;J.yechim=tan.map(i=>q[i].id);return}}
+    const tan=aral().slice(0,2);J.maqsad=q[tan[0]].v+q[tan[1]].v;J.yechim=tan.map(i=>q[i].id);
+  }else if(J.tur==="koprik"){
+    const c=q[aral()[0]];
+    let op=tanla(d.amallar.filter(o=>o!=="÷"||c.v%2===0||c.v%3===0));
+    if(op==="−"&&c.v<3)op="+";
+    if(op==="÷"){const k=[2,3,4].filter(x=>c.v%x===0)[0];if(k)J.yoz="? ÷ "+k+" = "+(c.v/k);else op="+"}
+    if(op==="+"){const k=r(1,S.daraja===1?9:25);J.yoz="? + "+k+" = "+(c.v+k)}
+    else if(op==="−"){const k=r(1,c.v-1);J.yoz="? − "+k+" = "+(c.v-k)}
+    else if(op==="×"){const k=r(2,S.daraja===2?6:9);J.yoz="? × "+k+" = "+(c.v*k)}
+    J.maqsad=c.v;J.yechim=[c.id];
+  }else if(J.tur==="tarozi"){
+    const c=q[aral()[0]],x=r(2,d.max),y=r(1,d.max);
+    J.variant={chap:[x,y],ong:Math.max(1,x+y-c.v)};
+    J.maqsad=x+y-J.variant.ong;J.yechim=[(q.find(k=>k.v===J.maqsad)||c).id];
+    if(!q.some(k=>k.v===J.maqsad)){J.maqsad=c.v;J.variant.ong=Math.max(1,x+y-c.v);J.variant.chap=[J.variant.ong+c.v-y,y]}
+  }else if(J.tur==="ketma"){
+    /* Javob — qo'ldagi karta. Qator undan orqaga qarab quriladi, shuning uchun
+       sonlar doim musbat: kichik javob bo'lsa, qator kamayib boruvchi bo'ladi. */
+    const c=q[aral()[0]],kmax=S.daraja===1?4:9;
+    let k;
+    if(c.v>=5&&Math.random()<.6){k=r(1,Math.min(kmax,Math.floor((c.v-1)/4)));
+      J.variant={qator:[c.v-4*k,c.v-3*k,c.v-2*k,c.v-k],qadam:k}}
+    else{k=r(1,S.daraja===1?3:kmax);J.variant={qator:[c.v+4*k,c.v+3*k,c.v+2*k,c.v+k],qadam:-k}}
+    J.maqsad=c.v;J.yechim=[c.id];
+  }else if(J.tur==="xotira"){
+    const y=YUKLAR.slice().sort(()=>Math.random()-.5).slice(0,S.daraja===1?4:5);
+    J.variant={yuklar:y,yoq:r(0,y.length-1),korsat:true};
+    J.maqsad=J.variant.yoq;
+    setTimeout(()=>{if(J&&J.variant&&J.variant.korsat){J.variant.korsat=false;if(ekran==="oyin")oyinChiz()}},S.daraja===1?4000:3200);
+  }else{
+    const yollar=[0,1,2].map(()=>({a:r(4,S.daraja===1?9:20),b:r(3,S.daraja===1?9:20),nom:tanla(["Cho'l yo'li","Tog' yo'li","Daryo yo'li","Karvonsaroy yo'li"])}));
+    yollar.forEach(y=>y.jami=y.a+y.b);
+    const eng=Math.min(...yollar.map(y=>y.jami));
+    if(yollar.filter(y=>y.jami===eng).length>1)yollar[0].a=Math.max(1,yollar[0].a-2);
+    yollar.forEach(y=>y.jami=y.a+y.b);
+    J.variant={yollar};J.maqsad=yollar.indexOf(yollar.slice().sort((x,y)=>x.jami-y.jami)[0]);
+  }
+}
+
+/* ================= SAHNA (qo'lda chizilgan, 360×200) =================
+ * Hammasi bitta SVG ichida: osmon, uzoq tog'lar, uch qatlam qumtepa
+ * (parallaks), yo'l, karvon va to'siq. Shunda o'lchamlar bir-biriga mos
+ * keladi va qatlamlar chetida to'rtburchak "tikuv" qolmaydi — har qatlam
+ * boshi va oxiri bir xil balandlikda tugaydi va ikki nusxada suriladi.
+ */
+/* Tuya — bir o'rkachli (dromedar), o'ngga qarab yuradi.
+ * Mahalliy koordinata: tuyoqlar y=0 da, bo'yi ~90, eni ~120; s bilan kichraytiriladi.
+ * Tartib: uzoqdagi oyoqlar → gavda → yaqindagi oyoqlar, shunda chuqurlik seziladi. */
+function tuyaG(x,s,kech,tn){
+  const tan=tn?"#4A3C58":"#C58B52",soya=tn?"#33293F":"#9C6B3D",och=tn?"#5E4E70":"#DDA96E",
+        uzoq=tn?"#2E2539":"#8E5E34",tuyoq=tn?"#1E1826":"#4A3322";
+  const oyoq=(x0,rang,sinf,old)=>'<g class="oyoq '+sinf+'" style="animation-delay:'+kech+'s">'+
+    '<path d="M'+(x0-3.4)+' -40 L'+(x0+3.4)+' -40 L'+(x0+2.6)+' -20 Q'+(x0+4.4)+' -16.5 '+(x0+2.6)+' -13 L'+(x0+2.2)+' -3 '+
+    'L'+(x0-2.2)+' -3 L'+(x0-2.6)+' -13 Q'+(x0-4.4)+' -16.5 '+(x0-2.6)+' -20 Z" fill="'+rang+'"/>'+
+    '<path d="M'+(x0-3.2)+' -3 h'+(old?7.2:6.8)+' l.6 3 h-8.2 z" fill="'+tuyoq+'"/></g>';
+  return '<g transform="translate('+x+',174) scale('+s+')">'+
+    '<ellipse cx="10" cy="1.5" rx="52" ry="4.5" fill="rgba(0,0,0,.2)"/>'+
+    oyoq(-23,uzoq,"b",0)+oyoq(21,uzoq,"a",1)+
+    '<g class="tana" style="animation-delay:'+kech+'s">'+
+      '<path d="M-40 -56 q-7 6 -6 19" stroke="'+soya+'" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
+      '<path d="M-46 -37 l-2 4 l4 -1 z" fill="'+tuyoq+'"/>'+
+      /* gavda, o'rkach, bo'yin va bosh — bitta chiziq */
+      '<path d="M-40 -58 C-38 -72 -28 -84 -10 -87 C4 -89 14 -78 18 -67 C22 -62 28 -60 34 -58 C42 -56 46 -62 50 -70 '+
+        'C53 -76 56 -80 60 -81 C64 -82 70 -80 72 -77 C74 -74 74 -71 71 -70 C68 -69 65 -70 62 -70 '+
+        'C58 -68 55 -62 52 -56 C48 -48 40 -44 32 -42 C26 -40 22 -36 20 -34 C8 -30 -20 -30 -32 -34 C-38 -36 -42 -44 -41 -52 Z" fill="'+tan+'"/>'+
+      /* soya: qorin, bo'yin osti, son */
+      '<path d="M20 -34 C8 -30 -20 -30 -32 -34 C-24 -38 8 -38 20 -34 Z" fill="'+soya+'" opacity=".8"/>'+
+      '<path d="M52 -56 C48 -48 40 -44 32 -42 C38 -47 44 -52 48 -60 Z" fill="'+soya+'" opacity=".7"/>'+
+      '<path d="M-41 -52 C-42 -44 -38 -36 -32 -34 C-36 -40 -37 -46 -34 -54 Z" fill="'+soya+'" opacity=".6"/>'+
+      /* yorug'lik: o'rkach va bo'yin ustida */
+      '<path d="M-28 -80 C-18 -88 2 -90 12 -76 C2 -84 -14 -84 -28 -80 Z" fill="'+och+'" opacity=".7"/>'+
+      '<path d="M34 -58 C42 -56 46 -62 50 -70 C47 -64 42 -59 34 -58 Z" fill="'+och+'" opacity=".6"/>'+
+      /* bosh tafsilotlari */
+      '<path d="M60.5 -80.5 l-2.4 -5.6 l4.8 3.6 z" fill="'+soya+'"/>'+
+      '<circle cx="66" cy="-77.2" r="1.3" fill="#1A1208"/><path d="M64.2 -79 q2 -1.4 3.8 0" stroke="#1A1208" stroke-width=".7" fill="none"/>'+
+      '<path d="M71.6 -73.5 q-1.4 .6 -1.6 1.8" stroke="#1A1208" stroke-width=".8" fill="none"/>'+
+      '<path d="M63 -70.2 q3 1.2 7 .4" stroke="'+soya+'" stroke-width="1" fill="none"/>'+
+      /* jilov */
+      '<path d="M60 -76 L70 -72 M62 -71 L60 -78" stroke="#7A2E14" stroke-width="1.2" fill="none"/>'+
+      /* egar-ko'rpa va yuk */
+      '<path d="M-26 -79 C-16 -92 6 -92 15 -76 L17 -58 L-29 -58 Z" fill="'+(tn?"#6A2A18":"#B8481C")+'"/>'+
+      '<path d="M-27 -66 H16 M-25 -72 C-14 -80 4 -80 14 -71" stroke="#0D5C75" stroke-width="2.4" fill="none"/>'+
+      '<path d="M-27 -61 H17" stroke="#E5A93C" stroke-width="1.4"/>'+
+      '<path d="M-26 -58 l2 4 l2 -4 l2 4 l2 -4 l2 4 l2 -4 l2 4 l2 -4 l2 4 l2 -4 l2 4 l2 -4 l2 4 l2 -4 l2 4 l2 -4 l2 4 l2 -4 l2 4 l2 -4 l2 4 l2 -4" stroke="#E5A93C" stroke-width="1" fill="none"/>'+
+      '<rect x="-24" y="-60" width="15" height="17" rx="4" fill="#6B3F20"/><path d="M-24 -54 h15" stroke="#4A2A14" stroke-width="1.2"/>'+
+      '<rect x="-5" y="-60" width="15" height="17" rx="4" fill="#7A4A26"/><path d="M-5 -54 h15" stroke="#4A2A14" stroke-width="1.2"/>'+
+      '<path d="M-10 -92 v-6 M-13 -98 h6" stroke="#E5A93C" stroke-width="1.6" stroke-linecap="round"/>'+
+    '</g>'+
+    oyoq(-15,tan,"a",0)+oyoq(27,tan,"b",1)+
+  '</g>';
+}
+
+/* Karvonboshi — salla, soqol, chopon; bir qo'li bilan tuya arqonini, bir qo'li bilan tayoqni ushlaydi. */
+function yetakchiG(x,tn,fonus){
+  const teri=tn?"#8E6A52":"#C98F62",chopon=tn?"#173E4E":"#1D5C73",chopon2=tn?"#10303D":"#15485A",
+        salla=tn?"#BFB6A2":"#F4EBD6",etik=tn?"#1A120C":"#3A2718";
+  return '<g transform="translate('+x+',174) scale(1.3)">'+
+    '<ellipse cx="1" cy="1" rx="11" ry="2.2" fill="rgba(0,0,0,.22)"/>'+
+    /* oyoqlar: shim va etik */
+    '<g class="oyoq a"><path d="M-3.4 -11 h3.4 l.2 9 h-3.8 z" fill="#3B2F28"/><path d="M-3.8 -3 h4.6 l1.6 3 h-6.4 z" fill="'+etik+'"/></g>'+
+    '<g class="oyoq b"><path d="M0.6 -11 h3.4 l-.2 9 h-3.6 z" fill="#2E251F"/><path d="M0.2 -3 h4.4 l1.8 3 h-6.4 z" fill="'+etik+'"/></g>'+
+    '<g class="tana">'+
+      /* orqa qo'l — arqonni ushlab, orqaga cho'zilgan */
+      '<path d="M-3.5 -29 C-7 -27 -10 -24 -11.5 -21 L-9 -19.6 C-7.6 -22.4 -5 -25 -2 -26.4 Z" fill="'+chopon2+'"/>'+
+      '<circle cx="-11" cy="-20.2" r="1.9" fill="'+teri+'"/>'+
+      /* chopon */
+      '<path d="M-5.6 -31.5 C-7.6 -24 -9 -16 -10 -9 L9.6 -9 C8.4 -16 7.4 -24 5.6 -31.5 Z" fill="'+chopon+'"/>'+
+      '<path d="M-2 -31 L-3 -9 M2.4 -31 L3.6 -9" stroke="#E5A93C" stroke-width=".8" opacity=".75"/>'+
+      '<path d="M-6.8 -26 L-8.6 -12 M6.6 -26 L8.2 -12" stroke="#D96528" stroke-width=".7" opacity=".6"/>'+
+      '<path d="M.3 -31 L.8 -9" stroke="'+chopon2+'" stroke-width="1.2"/>'+
+      '<path d="M-7.4 -20.4 H7.2 L7 -18.2 H-7.6 Z" fill="#D96528"/><path d="M5 -18.2 l1.2 5 l1.4 -.4 l-.8 -4.6" fill="#D96528"/>'+
+      /* bo'yin va bosh */
+      '<rect x="-1.4" y="-33.6" width="3.2" height="3" fill="'+teri+'"/>'+
+      '<circle cx="0.6" cy="-36.6" r="4.3" fill="'+teri+'"/>'+
+      '<path d="M4.6 -37 l1.6 1.4 l-1.6 .4 z" fill="'+teri+'"/>'+
+      '<circle cx="2.6" cy="-37.6" r=".6" fill="#1A1208"/>'+
+      /* soqol */
+      '<path d="M-2.6 -35 C-2.4 -31 1 -29.6 3.6 -31 C5 -32 5 -34 4.4 -35 C2.6 -34 0 -34 -2.6 -35 Z" fill="'+(tn?"#4A3A30":"#5A4636")+'"/>'+
+      /* salla */
+      '<path d="M-4.4 -38.4 C-4.6 -43.6 5.8 -43.6 5.6 -38.4 C3 -39.6 -1.8 -39.6 -4.4 -38.4 Z" fill="'+salla+'"/>'+
+      '<path d="M-4 -40.2 C-1 -41.6 3 -41.6 5.2 -40.2 M-3.6 -42 C-1 -43 2.6 -43 4.6 -41.8" stroke="rgba(120,100,70,.45)" stroke-width=".6" fill="none"/>'+
+      '<path d="M-4.2 -38.8 C-6 -37 -6.2 -34 -5.4 -32" stroke="'+salla+'" stroke-width="1.6" fill="none" stroke-linecap="round"/>'+
+      /* old qo'l va tayoq */
+      '<path d="M9.8 -34 L12.6 0" stroke="#6B4A22" stroke-width="1.5" stroke-linecap="round"/>'+
+      '<path d="M4.2 -29 C6.6 -27.6 8.4 -25.6 9.6 -23 L11.4 -24 C10 -27 7.6 -29.6 5 -30.6 Z" fill="'+chopon2+'"/>'+
+      '<circle cx="10.6" cy="-23.4" r="1.9" fill="'+teri+'"/>'+
+      (fonus?'<path d="M9.9 -34 q3 1 3.4 4" stroke="#8C6A40" stroke-width=".7" fill="none"/>'+
+        '<circle cx="13.4" cy="-27.6" r="14" fill="url(#sNur)" class="lipil"/>'+
+        '<path d="M11.8 -30 h3.2 l.6 1.2 v3.4 l-.6 1 h-3.2 l-.6 -1 v-3.4 z" fill="#F5C45A" stroke="#8C6A34" stroke-width=".5"/>':'')+
+    '</g>'+
+  '</g>';
+}
+function tosiqMarkup(tur,tn){
+  return '<g class="tosiq-yol"><g id="tosiqRasm" class="tosiq-g '+tur+'"><g transform="translate(360 174) scale(1.2) translate(-360 -174)">'+tosiqSvg(tur,tn)+'</g></g></g>';
+}
+function sahnaSvg(){
+  const tn=tun(),fonus=tn&&bor("fonus");
+  const osmon=tn?["#0A1026","#1B2547","#3B3A60"]:["#5F9CCB","#A9CFE2","#F3D6A2"];
+  const tog=tn?"#20243F":"#C7A47E",q1=tn?"#2A2946":"#D8AB6D",q2=tn?"#332E4E":"#E4B876",
+        yol=tn?"#3E3854":"#EDCB8E",q3=tn?"#2B2640":"#D19A58";
+  const dune1="M0 136 C40 124 80 124 120 132 C160 140 200 126 240 128 C280 130 320 140 360 136 V200 H0Z";
+  const dune2="M0 154 C30 144 70 142 110 150 C150 158 190 146 230 148 C270 150 320 160 360 154 V200 H0Z";
+  const dune2t="M0 154 C30 144 70 142 110 150 C150 158 190 146 230 148 C270 150 320 160 360 154";
+  const ikki=(ichi)=>'<g>'+ichi+'</g><g transform="translate(360 0)">'+ichi+'</g>';
+  let tosh3="";
+  for(let i=0;i<7;i++){const x=20+i*52;tosh3+='<ellipse cx="'+x+'" cy="194" rx="'+(3+i%3)+'" ry="2" fill="'+(tn?"#1F1B2C":"#B98A52")+'"/>'+
+    '<path d="M'+(x+18)+' 196 l2 -7 l2 7 M'+(x+22)+' 196 l3 -5" stroke="'+(tn?"#2F3A36":"#8C8A4E")+'" stroke-width="1.2" fill="none"/>'}
+  let s='<svg class="fon" viewBox="0 0 360 200" preserveAspectRatio="xMidYMax slice" aria-hidden="true">'+
+   '<defs>'+
+     '<linearGradient id="sOsmon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+osmon[0]+'"/><stop offset=".6" stop-color="'+osmon[1]+'"/><stop offset="1" stop-color="'+osmon[2]+'"/></linearGradient>'+
+     '<radialGradient id="sQuyosh"><stop offset="0" stop-color="'+(tn?"#F2E9CF":"#FFF4CC")+'" stop-opacity=".55"/><stop offset="1" stop-color="'+(tn?"#F2E9CF":"#FFE3A0")+'" stop-opacity="0"/></radialGradient>'+
+     '<linearGradient id="sTuman" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+osmon[2]+'" stop-opacity="0"/><stop offset="1" stop-color="'+osmon[2]+'" stop-opacity=".7"/></linearGradient>'+
+     '<linearGradient id="sJar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A3220"/><stop offset=".5" stop-color="#22160C"/><stop offset="1" stop-color="#0B0705"/></linearGradient>'+
+     '<linearGradient id="sQum" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C9A06A" stop-opacity="0"/><stop offset=".35" stop-color="#C39A64" stop-opacity=".75"/><stop offset="1" stop-color="#A57C4C" stop-opacity=".95"/></linearGradient>'+
+     '<radialGradient id="sNur"><stop offset="0" stop-color="#FFC866" stop-opacity=".75"/><stop offset="1" stop-color="#FFC866" stop-opacity="0"/></radialGradient>'+
+     '<radialGradient id="sOlov"><stop offset="0" stop-color="#FF9A3C" stop-opacity=".8"/><stop offset="1" stop-color="#FF6A1C" stop-opacity="0"/></radialGradient>'+
+     '<radialGradient id="sVin" cx=".5" cy=".45" r=".75"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>'+
+     '<filter id="sXira" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>'+
+     '<filter id="sDon"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="3" seed="3"/>'+
+       '<feColorMatrix type="matrix" values="0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .18 0 0 0 .35 0"/></filter>'+
+   '</defs>'+
+   '<rect width="360" height="200" fill="url(#sOsmon)"/>';
+  if(tn)for(let i=0;i<26;i++)s+='<circle cx="'+r(4,356)+'" cy="'+r(4,86)+'" r="'+(Math.random()<.3?1.2:.7)+'" fill="#fff" opacity="'+(Math.random()*.6+.3).toFixed(2)+'"/>';
+  s+='<circle cx="292" cy="46" r="60" fill="url(#sQuyosh)"/>'+
+     '<circle cx="292" cy="46" r="'+(tn?13:18)+'" fill="'+(tn?"#F2E9CF":"#FFF1C2")+'"/>'+
+     (tn?'<circle cx="288" cy="43" r="2.5" fill="#DCD2B6"/><circle cx="296" cy="50" r="1.8" fill="#DCD2B6"/>':'');
+  s+='<path d="M0 122 L24 106 L46 114 L76 92 L102 108 L130 96 L158 112 L188 90 L218 106 L248 94 L280 110 L308 98 L336 108 L360 100 V200 H0Z" fill="'+tog+'" opacity=".75"/>'+
+     '<rect y="96" width="360" height="50" fill="url(#sTuman)"/>';
+  s+='<g class="p1">'+ikki('<path d="'+dune1+'" fill="'+q1+'"/>')+'</g>';
+  s+='<g class="p2">'+ikki('<path d="'+dune2+'" fill="'+q2+'"/><path d="'+dune2t+'" fill="none" stroke="'+(tn?"#4A4368":"#F2D59C")+'" stroke-width="1.5" opacity=".7"/>')+'</g>';
+  s+='<path d="M0 172 C90 167 270 167 360 172 V200 H0Z" fill="'+yol+'"/>'+
+     '<path class="iz" d="M0 184 H360" stroke="'+(tn?"rgba(0,0,0,.25)":"rgba(120,80,40,.28)")+'" stroke-width="1.5" stroke-dasharray="3 9"/>';
+  s+=tosiqMarkup(J.tur,tn);
+  s+='<g id="karvonG">'+tuyaG(40,.58,.3,tn)+tuyaG(114,.66,.15,tn);
+  s+='<path d="M82 132 Q85 140 88 137" stroke="#8C6A40" stroke-width="1" fill="none"/>'+
+     '<path d="M161 127 Q163 142 168 148" stroke="#8C6A40" stroke-width="1.1" fill="none"/>';
+  s+=yetakchiG(182,tn,fonus)+'</g>';
+  s+='<g class="p3">'+ikki(tosh3)+'</g>';
+  if(tn)s+='<rect y="92" width="360" height="108" fill="#0A1026" opacity=".32"/>';
+  if(fonus)s+='<circle cx="199" cy="138" r="32" fill="url(#sNur)" class="lipil"/><circle cx="114" cy="137" r="26" fill="url(#sNur)" class="lipil" style="animation-delay:.7s"/>';
+  s+='<rect width="360" height="200" filter="url(#sDon)" opacity=".28" style="mix-blend-mode:multiply"/>'+
+     '<rect width="360" height="200" fill="url(#sVin)"/>';
+  return s+'</svg>';
+}
+function tosiqSvg(t,tn){
+  const taxta=(x,y,a,sinf)=>'<rect class="'+(sinf||"")+'" x="'+x+'" y="'+y+'" width="5.5" height="3.2" rx=".6" fill="#8A6038" stroke="#5B3D22" stroke-width=".5"'+(a?' transform="rotate('+a+' '+(x+2.7)+' '+(y+1.6)+')"':'')+'/>';
+  if(t==="koprik"){
+    let g='<path d="M224 170 C229 181 231 192 235 200 L319 200 C323 191 326 181 332 170 Z" fill="url(#sJar)"/>'+
+      '<path d="M224 170 C229 181 231 192 235 200 M332 170 C326 181 323 191 319 200" stroke="#7A5434" stroke-width="2" fill="none"/>'+
+      '<path d="M232 182 h10 M318 186 h-9 M236 192 h7" stroke="#5A3B22" stroke-width="1"/>'+
+      '<path d="M238 197 C258 193 292 199 316 196" stroke="#4F8FA3" stroke-width="3" fill="none" opacity=".85"/>'+
+      '<rect x="218" y="145" width="4" height="27" rx="1" fill="#5B3D22"/><rect x="226" y="149" width="3.5" height="23" rx="1" fill="#4A321C"/>'+
+      '<rect x="330" y="145" width="4" height="27" rx="1" fill="#5B3D22"/><rect x="322" y="149" width="3.5" height="23" rx="1" fill="#4A321C"/>'+
+      '<path d="M220 146 Q242 160 262 162" stroke="#9A7646" stroke-width="1.5" fill="none"/>'+
+      '<path d="M332 146 Q312 160 294 162" stroke="#9A7646" stroke-width="1.5" fill="none"/>'+
+      '<path d="M262 162 q3 9 -1 17" stroke="#9A7646" stroke-width="1.3" fill="none" class="tebran-arqon"/>'+
+      '<path d="M294 162 q-3 8 1 15" stroke="#9A7646" stroke-width="1.3" fill="none" class="tebran-arqon" style="animation-delay:.6s"/>';
+    for(let i=0;i<6;i++)g+=taxta(226+i*6,169+i*.7);
+    g+=taxta(262,172,62)+taxta(259,178,84);
+    for(let i=0;i<5;i++)g+=taxta(302+i*6,172-i*.5);
+    g+=taxta(296,175,-68);
+    g+='<g class="tushadi">'+taxta(276,182,30)+'</g>';
+    let yangi="";for(let i=0;i<6;i++)yangi+=taxta(263+i*6,173.5);
+    return g+'<g class="yangi">'+yangi+'</g>';
+  }
+  if(t==="tosh"){
+    const b=(d,f,yuz,dx,dy)=>'<g class="bolder" style="--dx:'+dx+'px;--dy:'+dy+'px"><path d="'+d+'" fill="'+f+'"/><path d="'+yuz+'" fill="rgba(255,255,255,.13)"/></g>';
+    return '<path d="M298 172 L316 118 L338 102 L360 94 V172 Z" fill="'+(tn?"#3A3046":"#7A5B3E")+'"/>'+
+      '<path d="M316 118 L338 102 L334 128 Z M322 150 L340 132 L346 160 Z" fill="rgba(0,0,0,.18)"/>'+
+      '<circle class="chang" cx="262" cy="138" r="18" fill="rgba(205,175,135,.45)" filter="url(#sXira)"/>'+
+      '<circle class="chang" cx="296" cy="146" r="14" fill="rgba(205,175,135,.4)" filter="url(#sXira)" style="animation-delay:1s"/>'+
+      b("M230 172 L234 155 L249 149 L262 157 L264 172 Z","#6C6178","M234 155 L249 149 L251 161 Z",-60,-50)+
+      b("M256 172 L260 147 L279 139 L296 149 L298 172 Z","#5E5469","M260 147 L279 139 L281 156 Z",10,-80)+
+      b("M288 172 L292 159 L306 155 L314 165 L312 172 Z","#6C6178","M292 159 L306 155 L305 164 Z",70,-40)+
+      b("M265 149 L271 137 L285 135 L290 145 L280 149 Z","#7A6F88","M271 137 L285 135 L282 143 Z",-20,-100)+
+      '<circle cx="246" cy="171" r="2" fill="#5E5469"/><circle cx="302" cy="171" r="1.6" fill="#5E5469"/><circle cx="224" cy="172" r="1.4" fill="#6C6178"/>';
+  }
+  if(t==="boron"){
+    return '<rect x="190" y="50" width="200" height="130" fill="url(#sQum)" filter="url(#sXira)"/>'+
+      '<ellipse class="girdob" cx="276" cy="118" rx="46" ry="26" fill="rgba(190,150,100,.75)" filter="url(#sXira)"/>'+
+      '<ellipse class="girdob" cx="316" cy="96" rx="40" ry="22" fill="rgba(170,130,85,.8)" filter="url(#sXira)" style="animation-delay:.8s"/>'+
+      '<ellipse class="girdob" cx="248" cy="150" rx="36" ry="18" fill="rgba(210,175,125,.7)" filter="url(#sXira)" style="animation-delay:1.6s"/>'+
+      '<path class="shamol-chiz" d="M210 100 H330 M226 124 H350 M204 142 H300 M240 80 H350 M218 160 H340" stroke="rgba(245,220,170,.7)" stroke-width="1.4" stroke-dasharray="14 22" stroke-linecap="round"/>';
+  }
+  if(t==="tarozi"){
+    let yol="";for(let i=0;i<6;i++)yol+='<rect x="'+(226+i*10)+'" y="158" width="10" height="4" fill="'+(i%2?"#F2E6CC":"#C83535")+'"/>';
+    return '<rect x="292" y="132" width="48" height="40" fill="'+(tn?"#4A3626":"#8A6038")+'"/>'+
+      '<path d="M286 132 L346 132 L342 122 L290 122 Z" fill="#F2E6CC"/>'+
+      '<path d="M290 122 h8 l-2 10 h-8 z M306 122 h8 l-2 10 h-8 z M322 122 h8 l-2 10 h-8 z M338 122 h4 l-2 10 h-6 z" fill="#C24E1C"/>'+
+      '<rect x="308" y="142" width="14" height="12" fill="#1B120B"/><rect x="298" y="156" width="10" height="16" fill="#2A1B10"/>'+
+      '<rect x="236" y="154" width="42" height="4" fill="#6B4A22"/><rect x="240" y="158" width="3" height="14" fill="#5B3D22"/><rect x="271" y="158" width="3" height="14" fill="#5B3D22"/>'+
+      '<path d="M257 154 V126" stroke="#8C6A34" stroke-width="2.5"/><path d="M239 128 L275 128" stroke="#D6A548" stroke-width="2.5" class="shayin"/>'+
+      '<path d="M239 128 l-6 12 h12 z M275 128 l-6 12 h12 z" fill="none" stroke="#B9873C" stroke-width="1"/>'+
+      '<path d="M232 140 q7 5 14 0 z M268 140 q7 5 14 0 z" fill="#D6A548"/>'+
+      '<rect x="222" y="150" width="5" height="22" fill="#4A321C"/><g class="shlagbaum">'+yol+'</g>';
+  }
+  if(t==="xotira"){
+    return '<path d="M278 172 L306 126 L336 172 Z" fill="'+(tn?"#5E5140":"#DCC69E")+'"/><path d="M306 126 L292 172 H300 Z" fill="#B0452A" opacity=".8"/>'+
+      '<path d="M306 150 L298 172 H314 Z" fill="#1E140C"/><path d="M306 126 v-10 l10 4 l-10 4" fill="#0D5C75"/>'+
+      '<rect x="228" y="150" width="20" height="22" rx="1.5" fill="#7A5230"/><path d="M228 150 L248 172 M248 150 L228 172" stroke="#5A3B20" stroke-width="1.5"/>'+
+      '<rect x="250" y="158" width="16" height="14" rx="1.5" fill="#8E6238"/><path d="M250 165 h16" stroke="#5A3B20" stroke-width="1.5"/>'+
+      '<path d="M266 172 c-2 -10 2 -16 7 -16 c5 0 9 6 7 16 z" fill="#CDB083"/><path d="M270 157 l3 -3 l3 3" stroke="#8A6A40" stroke-width="1.2" fill="none"/>'+
+      '<g transform="translate(348,172)"><path d="M-5 -26 L5 -26 L7 -8 L-7 -8 Z" fill="#6B2E1A"/><circle cx="0" cy="-30" r="3.6" fill="#C88F62"/>'+
+      '<path d="M-4.5 -31 a4.5 4 0 0 1 9 0 z" fill="#F2E6CC"/><rect x="-11" y="-22" width="7" height="9" rx="1" fill="#EBDDBF"/>'+
+      '<rect x="-4" y="-8" width="3" height="8" fill="#3B2A1E"/><rect x="1" y="-8" width="3" height="8" fill="#3B2A1E"/></g>';
+  }
+  if(t==="ketma"){
+    return '<rect x="312" y="118" width="12" height="54" fill="'+(tn?"#4B4458":"#B9A887")+'"/><path d="M310 118 h16 v-6 h-16 z" fill="'+(tn?"#57506A":"#CDBB98")+'"/>'+
+      '<rect x="336" y="136" width="12" height="36" fill="'+(tn?"#4B4458":"#B9A887")+'"/><path d="M336 136 l4 -6 l3 4 l5 -3 v5 z" fill="'+(tn?"#57506A":"#CDBB98")+'"/>'+
+      '<path d="M242 172 V128 a19 19 0 0 1 38 0 V172 Z" fill="'+(tn?"#56506A":"#8A8196")+'"/>'+
+      '<path d="M246 172 V130 a15 15 0 0 1 30 0 V172" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1"/>'+
+      '<g class="yozuv"><path d="M251 134 h20 M251 144 h14 M251 154 h20 M251 164 h10" stroke="#D9CDE6" stroke-width="2" stroke-linecap="round"/>'+
+      '<circle cx="270" cy="144" r="2" fill="#D9CDE6"/><path d="M265 164 l3 -5 l3 5 z" fill="#D9CDE6"/></g>'+
+      '<rect x="238" y="170" width="46" height="4" rx="1" fill="#5E5469"/>';
+  }
+  if(t==="yol"){
+    return '<path d="M232 170 C262 160 300 150 360 146 V156 C310 160 276 168 246 174 Z" fill="'+(tn?"#4A4262":"#E8C487")+'"/>'+
+      '<path d="M232 172 C272 176 316 184 360 190 V200 C318 194 276 186 240 178 Z" fill="'+(tn?"#4A4262":"#E8C487")+'"/>'+
+      '<rect x="250" y="122" width="4" height="50" fill="#5B3D22"/>'+
+      '<path d="M254 126 h30 l6 5 l-6 5 h-30 z" fill="#C24E1C"/><path d="M254 139 h26 l6 5 l-6 5 h-26 z" fill="#D6A548"/><path d="M250 152 h-26 l-6 5 l6 5 h26 z" fill="#1D6B84"/>'+
+      '<path d="M262 131 h14 M260 144 h14 M232 157 h12" stroke="rgba(255,255,255,.6)" stroke-width="1.4" stroke-linecap="round"/>';
+  }
+  /* qaroqchi */
+  const otliq=(x)=>'<g transform="translate('+x+',140)"><ellipse cx="0" cy="-8" rx="10" ry="5" fill="#1B1210"/>'+
+    '<path d="M8 -11 l6 -7 l3 2 l-5 7 z" fill="#1B1210"/><path d="M-7 -4 l-1 9 M-3 -4 l0 9 M4 -4 l1 9 M7 -4 l2 9" stroke="#1B1210" stroke-width="2"/>'+
+    '<path d="M-3 -12 l2 -12 l4 0 l1 12 z" fill="#1B1210"/><circle cx="0.5" cy="-26" r="3" fill="#1B1210"/></g>';
+  return '<path d="M196 152 C236 132 300 128 360 140 V172 H196 Z" fill="'+(tn?"#241C2C":"#A3683F")+'"/>'+
+    otliq(252)+otliq(284)+otliq(316)+
+    '<path d="M340 134 V104" stroke="#1B1210" stroke-width="2"/><path class="bayroq-q" d="M340 104 h18 l-5 6 l5 6 h-18 z" fill="#1B1210"/><path d="M340 110 h14" stroke="#C83535" stroke-width="1.5"/>'+
+    '<circle cx="236" cy="164" r="22" fill="url(#sOlov)" class="lipil"/><path d="M232 168 l4 -10 l4 10 z" fill="#FFB04A"/>';
+}
+
+/* ================= O'YIN EKRANI ================= */
+function yolTahlili(){
+  const b=S.bekat,turlar=[0,1,2].map(i=>TIP[NAVBAT[(b*3+i)%NAVBAT.length]]);
+  const suvKam=S.suv<1,tangaKam=S.tanga<40,buffYoq=!Object.keys(S.buff).some(k=>S.buff[k]>0);
+  const ogoh=[];
+  if(suvKam)ogoh.push(["water_drop","Mesh bo'sh","Aylanib o'tish ishlamaydi — bozordan suv to'ldiring"]);
+  else if(S.suv===1)ogoh.push(["water_drop","Meshda 1 suv qoldi","Faqat bitta to'siqni chetlab o'ta olasiz"]);
+  if(tangaKam)ogoh.push(["toll","Tanga kam","Maslahat 5 tanga turadi, zaxira qoldiring"]);
+  if(buffYoq)ogoh.push(["shield","Kuchaytirgich yo'q","Bozorda sahro himoyasi va donishmand maslahati bor"]);
+  const obh=obHavo(b),kun=kunlikOl();
+  const segment=BEKAT_KM.map((k,i)=>'<span class="seg '+(i<b?"tugadi":i===b?"hozir":"")+'" style="flex:'+k+'"></span>').join("");
+  modal(
+   '<span class="chip terra" style="justify-self:center">'+(b+1)+'-bekat · '+D[S.daraja].nom+'</span>'+
+   '<h2>'+BEKAT_NOM[b]+'</h2>'+
+   '<p class="izohcha">'+SHAHAR[Math.floor(b/3)].nom+" — "+SHAHAR[Math.floor(b/3)+1].nom+' yo\'nalishi</p>'+
+   '<div class="tahlil">'+
+     '<div class="tahlil-qator"><span>Bu bosqich</span><b>'+km(BEKAT_KM[b])+'</b></div>'+
+     '<div class="segmentlar">'+segment+'</div>'+
+     '<div class="tahlil-qator"><span>Bosib o\'tilgan</span><b>'+km(bosibKm())+' / '+km(JAMI_KM)+'</b></div>'+
+     '<div class="tahlil-qator"><span>Qolgan masofa</span><b>'+km(JAMI_KM-bosibKm())+'</b></div>'+
+     '<div class="tahlil-qator"><span>Yig\'ilgan yulduz</span><b>'+yulduzJami()+' / 27 ★</b></div>'+
+     '<div class="tahlil-qator"><span>Ob-havo</span><b>'+obh.nom+'</b></div>'+
+     '<div class="tahlil-qator"><span>Kunlik topshiriq</span><b>'+kun.joriy+' / '+kun.maqsad+'</b></div>'+
+   '</div>'+
+   '<div class="ogoh '+(obh.k==="quyoshli"||obh.k==="salqin"?"yaxshi":"")+'"><span class="ms">'+obh.ik+'</span>'+
+     '<span><b>'+obh.nom+'</b><small>'+obh.izoh+'</small></span></div>'+
+   '<div style="text-align:left;display:grid;gap:6px">'+
+     '<span class="yorliq">Yo\'lda uchraydigan sinovlar</span>'+
+     turlar.map((t,i)=>'<div class="sinov-qator"><b>'+(i+1)+'</b><span>'+t.nom+'</span><span class="chip">'+t.xil+'</span></div>').join("")+
+   '</div>'+
+   '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+
+     '<span class="chip lapis">💧 '+S.suv+'/'+S.maxSuv+'</span><span class="chip">🃏 '+S.qol+' karta</span>'+
+     '<span class="chip oltin">🪙 '+S.tanga.toLocaleString("ru-RU")+'</span></div>'+
+   (ogoh.length?'<div style="display:grid;gap:6px;text-align:left">'+ogoh.map(o=>
+     '<div class="ogoh"><span class="ms">'+o[0]+'</span><span><b>'+o[1]+'</b><small>'+o[2]+'</small></span></div>').join("")+'</div>'
+     :'<div class="ogoh yaxshi"><span class="ms">check_circle</span><span><b>Karvon to\'liq tayyor</b><small>Suv, kartalar va tanga yetarli</small></span></div>')+
+   '<button class="tugma" data-amal="bosh-tasdiq"><span class="ms">hiking</span>Karvonni yo\'lga chiqarish</button>'+
+   (ogoh.length?'<button class="tugma arvoh" data-amal="bozor-ochish"><span class="ms">storefront</span>Avval bozorga kirish</button>':
+     '<button class="tugma arvoh" data-amal="modal-yop">Keyinroq</button>'));
+}
+function bekatBosh(){
+  J={yangiSahna:true,tezlik:12,yolda:false,tosiq:0,qol:[],tokens:[],xato:0,yulduz:[],tanga0:S.tanga,maslahat:null,amal:null,tanlov:null};
+  for(let i=0;i<S.qol;i++)J.qol.push(yangiKarta());
+  ekran="oyin";keyingi();
+}
+function keyingi(){vazifa();J.tokens=[];J.xato=0;J.kechirildi=false;J.maslahat=null;J.amal=null;J.tanlov=null;oyinChiz()}
+function joriy(){
+  if(J.tur==="koprik"||J.tur==="tarozi"||J.tur==="ketma")return J.tokens.length?J.tokens[0].v:null;
+  const x=hisobla(J.tokens.map(t=>t.n?t.v:t.o));return Number.isFinite(x)?x:null;
+}
+function maydon(){
+  const t=J.tur,v=J.variant,j=joriy();
+  if(t==="koprik")return '<div class="qulf" id="qulf">'+J.yoz.split(" ").map(x=>
+    '<span class="katak'+("+−×÷=".includes(x)?" amal":"")+(x==="?"?" tanlov":"")+'">'+(x==="?"?(J.tokens.length?J.tokens[0].v:"?"):x)+'</span>').join("")+'</div>';
+  if(t==="tarozi"){
+    const ong=v.ong,men=J.tokens.length?J.tokens[0].v:0,chap=v.chap[0]+v.chap[1];
+    const og=Math.max(-10,Math.min(10,(ong+men-chap)*2));
+    return '<div class="qulf" id="qulf" style="flex-direction:column;gap:12px">'+
+      '<div class="tarozi"><span class="kosa" style="transform:translateY('+(-og)+'px)">'+v.chap.map(x=>'<b>'+x+'</b>').join("+")+'</span>'+
+      '<span class="dastak"></span>'+
+      '<span class="kosa" style="transform:translateY('+og+'px)"><b>'+ong+'</b>+'+(men?'<b class="tanlangan">'+men+'</b>':'<b class="bosh">?</b>')+'</span></div>'+
+      '<small class="izohcha">'+(men?(chap===ong+men?"Tarozi teng!":"Hozircha teng emas"):"Qaysi tosh mos keladi?")+'</small></div>';
+  }
+  if(t==="ketma"){
+    /* Bir marta xato qilinsa, sonlar orasidagi farq ko'rsatiladi — bola qoidani ko'radi. */
+    const farq=J.xato>=1?'<span class="katak amal farq">'+(v.qadam>0?"+":"−")+Math.abs(v.qadam)+'</span>':'<span class="katak amal">›</span>';
+    return '<div class="qulf ketma-qator" id="qulf">'+v.qator.map(x=>'<span class="katak">'+x+'</span>').join(farq)+farq+
+      '<span class="katak '+(J.tokens.length?"natija":"tanlov")+'">'+(J.tokens.length?J.tokens[0].v:"?")+'</span></div>'+
+      '<details class="namuna"'+(J.xato>=1?" open":"")+'><summary><span class="ms">school</span><b>Qanday yechiladi?</b></summary>'+
+      '<small>2 › 5 › 8 › 11 › ? — har safar +3, demak keyingisi 14. Kamayishi ham mumkin: 20 › 16 › 12 › 8 › ? — har safar −4, javob 4.</small></details>';
+  }
+  if(t==="xotira")return '<div class="qulf" id="qulf" style="gap:10px">'+(v.korsat
+    ? v.yuklar.map(y=>'<span class="yuk">'+y[0]+'<small>'+y[1]+'</small></span>').join("")+'<div class="taymer"><b></b></div>'
+    : v.yuklar.map((y,i)=>i===v.yoq?'<span class="yuk yoq"><span class="ms">help</span><small>?</small></span>':'<span class="yuk">'+y[0]+'<small>'+y[1]+'</small></span>').join(""))+'</div>';
+  if(t==="yol")return '<div class="qulf" id="qulf" style="flex-direction:column;gap:8px">'+v.yollar.map((y,i)=>
+    '<button class="yol-qator'+(J.tanlov===i?" tanlangan":"")+'" data-tanlov="'+i+'"><span class="ms">alt_route</span>'+
+    '<b>'+y.nom+'</b><span class="ong tnum">'+y.a+' + '+y.b+' km</span></button>').join("")+'</div>';
+  return '<div class="qulf" id="qulf">'+(J.tokens.length
+    ? J.tokens.map(x=>x.n?'<span class="katak">'+x.v+'</span>':'<span class="katak amal">'+x.o+'</span>').join("")+
+      '<span class="katak amal">=</span><span class="katak natija">'+(j==null?"?":j)+'</span>'
+    : '<span class="katak bosh">Pastdagi raqam toshlarini bosing</span>')+'</div>';
+}
+function oyinChiz(natija){
+  const eskiSahna=(!J.yangiSahna&&$("#sahna"))||null;
+  const t=TIP[J.tur],v=J.variant,ishl=new Set(J.tokens.filter(x=>x.n).map(x=>x.id)),j=joriy();
+  const shNo=Math.min(3,Math.floor(S.bekat/3)+1),narx=J.xato>=2?0:5;
+  const kartaKerak=J.tur!=="xotira"&&J.tur!=="yol";
+  const olchov=J.tur==="tosh"||J.tur==="boron"||J.tur==="qaroqchi"?J.maqsad:J.tur==="xotira"?(v&&v.korsat?"eslab qoling":"?"):"?";
+  const izohMatn=natija==="togri"?"Tekshiruv: to'siq ochildi!":
+    natija==="xato"?("Tekshiruv: "+(mathmi(J.tur)?"natija "+j+" chiqdi, kerak "+J.maqsad:"bu javob to'g'ri kelmadi")):t.ish;
+  chiz(
+   '<div class="sarlavha" style="gap:10px"><button class="ik" data-amal="ortga" style="width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--s2)"><span class="ms">arrow_back</span></button>'+
+     '<span style="font-size:18px;font-weight:800;letter-spacing:-.02em">'+t.nom+'</span>'+
+     '<span class="ong chip">'+(S.bekat+1)+'-bekat · '+(J.tosiq+1)+'/3</span></div>'+
+   '<div class="sahna'+(bor("fonus")&&tun()?" fonusli":"")+'" id="sahna">'+sahnaSvg()+
+     '<div class="ustki"><span class="chip"><span class="ms" style="font-size:14px">speed</span><span id="tezlik">'+(J.tezlik?J.tezlik+" km/soat":"karvon to'xtadi")+'</span></span>'+
+       '<span class="chip">'+SHAHAR[shNo-1].nom+' — '+SHAHAR[shNo].nom+'</span>'+
+       '<span class="chip lapis"><span class="ms" style="font-size:14px">water_drop</span>'+S.suv+'/'+S.maxSuv+'</span></div>'+
+     '<div class="pastki"><span class="tosiq-yorliq"><small>'+t.xil+' sinovi</small><b>'+t.olch+': <em>'+olchov+'</em></b></span>'+
+       '<span class="chip oltin"><span class="ms" style="font-size:14px">star</span>+'+(3-Math.min(J.xato,2))+'</span></div>'+
+   '</div>'+
+   '<div class="plita qator mukofot-karta" style="border-color:'+(J.xato?"var(--chiz)":"rgba(229,169,60,.45)")+'">'+
+     '<span class="ik" style="background:rgba(229,169,60,.16);color:var(--oltin-y)"><span class="ms">military_tech</span></span>'+
+     '<span><b>1-urinishda ochish mukofoti</b><small>3 yulduz va 7 tanga'+(buffFaol("sahro")?" \u00b7 sahro himoyasi faol":"")+'</small></span>'+
+     '<span class="ong chip '+(J.xato?"":"zumrad")+'">'+(J.xato?"Yo'qoldi":"Faol")+'</span></div>'+
+   '<div class="plita" style="display:grid;gap:10px">'+
+     '<div class="sarlavha"><span class="yorliq">'+(mathmi(J.tur)?"Matematik qulf maydoni":t.xil+" sinovi maydoni")+'</span>'+
+       (kartaKerak?'<span class="ong"><button class="chip" data-amal="tozala"><span class="ms" style="font-size:14px">refresh</span>Qaytarish</button></span>':"")+'</div>'+
+     maydon()+
+     '<div class="tekshiruv'+(natija==="xato"?" xato":natija==="togri"?" togri":"")+'"><span class="ms" style="font-size:16px">'+
+       (natija==="togri"?"verified":natija==="xato"?"error":"info")+'</span><span>'+izohMatn+'</span></div></div>'+
+   (J.tur==="xotira"&&!v.korsat?'<div><div class="sarlavha" style="margin-bottom:8px"><span class="yorliq">Qaysi yuk yo\'qoldi?</span></div>'+
+     '<div class="tanlovlar">'+v.yuklar.map((y,i)=>'<button class="tanlov-t'+(J.tanlov===i?" tanlangan":"")+'" data-tanlov="'+i+'">'+
+       '<b>'+y[0]+'</b><small>'+y[1]+'</small></button>').join("")+'</div></div>':"")+
+   (kartaKerak?'<div><div class="sarlavha" style="margin-bottom:8px"><span class="yorliq">Qo\'ldagi raqam toshlari</span>'+
+     '<span class="ong">Keraklisini bosing</span></div><div class="toshlar" style="--n:'+J.qol.length+'">'+
+     J.qol.map(k=>'<button class="tosh'+(ishl.has(k.id)?" ishlatildi":"")+(J.maslahat===k.id?" maslahat":"")+'" data-karta="'+k.id+'">'+
+       '<b>'+k.v+'</b><small>'+(ishl.has(k.id)?"Qo'yildi":k.mad)+'</small></button>').join("")+'</div></div>':"")+
+   (J.tur==="tosh"?'<div><div class="sarlavha" style="margin-bottom:8px"><span class="yorliq">Hisob amallari</span>'+
+     '<span class="ong">× va ÷ birinchi bajariladi</span></div><div class="amallar">'+
+     ["+","−","×","÷"].map(o=>'<button class="amal-t'+(J.amal===o?" faol":"")+'"'+(D[S.daraja].amallar.includes(o)?"":" disabled style=opacity:.3")+' data-op="'+o+'">'+o+'</button>').join("")+'</div></div>':"")+
+   '<div class="amal-panel">'+(J.tur==="xotira"&&v.korsat?'<button class="tugma arvoh" disabled><span class="ms">visibility</span>Yuklarni eslab qoling…</button>'
+     :'<button class="tugma" data-amal="tekshir"><span class="ms">bolt</span>'+t.cta+'</button>')+
+   '<div class="ikki">'+
+     '<button class="yordam" data-amal="maslahat"'+(S.tanga<narx||J.tur==="xotira"?" disabled":"")+'>'+
+       '<span class="ik" style="background:rgba(229,169,60,.16);color:var(--oltin-y)"><span class="ms">lightbulb</span></span>'+
+       '<span><b>Maslahat olish</b><small>'+(narx?narx+" tanga":"bepul")+'</small></span></button>'+
+     '<button class="yordam" data-amal="suv"'+(S.suv<1?" disabled":"")+'>'+
+       '<span class="ik" style="background:rgba(13,92,117,.3);color:var(--lapis-y)"><span class="ms">water_drop</span></span>'+
+       '<span><b>Aylanib o\'tish</b><small>1 mesh suv (yulduzsiz)</small></span></button></div></div>', true);
+  if(eskiSahna){
+    const yangi=$("#sahna");
+    ["ustki","pastki"].forEach(k=>{const e=eskiSahna.querySelector("."+k),n=yangi.querySelector("."+k);if(e&&n)e.replaceWith(n)});
+    yangi.replaceWith(eskiSahna);
+  }else{
+    J.yangiSahna=false;
+    const s=$("#sahna");if(s)setTimeout(()=>{s.classList.add("toxta");tezlikYur()},1500);
+  }
+  if(J.yolda)$("#varaq")?.classList.add("yolda");
+}
+let tezlikId=null;
+function tezlikYur(){
+  clearInterval(tezlikId);
+  tezlikId=setInterval(()=>{J.tezlik=Math.max(0,(J.tezlik||0)-3);const e=$("#tezlik");
+    if(e)e.textContent=J.tezlik?J.tezlik+" km/soat":"karvon to'xtadi";if(!J.tezlik)clearInterval(tezlikId)},260);
+}
+function kartaBos(id){
+  if(J.yolda)return;
+  const k=J.qol.find(x=>x.id===id);if(!k||J.tokens.some(t=>t.id===id))return;
+  const ox=J.tokens[J.tokens.length-1];
+  if(["koprik","tarozi","ketma"].includes(J.tur))J.tokens=[{n:1,id,v:k.v}];
+  else if(J.tur==="boron"){if(ox)J.tokens.push({o:"+"});J.tokens.push({n:1,id,v:k.v})}
+  else{if(ox&&ox.n){if(!J.amal)return eslat("Avval amal tanlang: + − × ÷");J.tokens.push({o:J.amal});J.amal=null}
+    J.tokens.push({n:1,id,v:k.v})}
+  if(J.maslahat===id)J.maslahat=null;
+  titra(8);oyinChiz();
+}
+function eslat(m){const e=qobiq.querySelector(".tekshiruv");if(e){e.className="tekshiruv xato";e.lastElementChild.textContent=m}}
+function amalBos(o){if(J.tur!=="tosh")return;J.amal=J.amal===o?null:o;oyinChiz()}
+function tanlovBos(i){J.tanlov=i;titra(8);oyinChiz()}
+function tekshir(){
+  if(J.yolda)return;
+  if(J.tur==="xotira"||J.tur==="yol"){
+    if(J.tanlov==null)return eslat("Avval variantni tanlang");
+    if(J.tanlov===J.maqsad)return otdi(3-Math.min(J.xato,2));
+  }else{
+    if(!J.tokens.length)return eslat("Avval raqam toshlarini tanlang");
+    const q=joriy();
+    if(q==null)return eslat("Ifodani oxirigacha tuzing");
+    if(q===J.maqsad)return otdi(3-Math.min(J.xato,2));
+  }
+  if(buffFaol("sahro")&&!J.kechirildi){J.kechirildi=true;
+    setTimeout(()=>{const e=qobiq.querySelector(".tekshiruv span:last-child");if(e)e.textContent+=" \u2014 sahro himoyasi bu xatoni kechirdi"},30)}
+  else J.xato++;
+  titra([30,60,30]);ovoz("xato");
+  if(J.tur==="qaroqchi"&&J.xato===2&&!J.jarima){
+    J.jarima=true;
+    if(S.yuk.length){const y=S.yuk.pop();saqla();
+      setTimeout(()=>modal('<h2>Yuk tortib olindi</h2><p class="izohcha">Qaroqchilar '+MOLLAR[y.tur].nom+' yukini olib ketdi. Urinish hali ham bor.</p>'+
+        '<button class="tugma" data-amal="modal-yop">Davom etish</button>'),400)}
+    else if(S.tanga>=40){S.tanga-=40;saqla();hisobYangila();
+      setTimeout(()=>modal('<h2>Boj olindi</h2><p class="izohcha">Qaroqchilar 40 tanga boj oldi. Sinov davom etadi.</p>'+
+        '<button class="tugma" data-amal="modal-yop">Davom etish</button>'),400)}
+  }
+  oyinChiz("xato");
+  const s=$("#sahna");if(s){s.classList.add("silkin");setTimeout(()=>s.classList.remove("silkin"),420)}
+}
+function hisobla(a){
+  if(!a.length||typeof a[a.length-1]!=="number")return null;
+  const s=[a[0]],op=[];
+  for(let i=1;i<a.length;i+=2){const o=a[i],n=a[i+1];
+    if(o==="×")s[s.length-1]*=n;
+    else if(o==="÷"){if(!n||s[s.length-1]%n)return NaN;s[s.length-1]/=n}
+    else{op.push(o);s.push(n)}}
+  let x=s[0];op.forEach((o,j)=>{x=o==="+"?x+s[j+1]:x-s[j+1]});return x;
+}
+function yangiKarta(){const d=D[S.daraja];return{id:++idSon,v:r(d.min,d.max),mad:tanla(MADAN)}}
+function tangaUch(n){
+  const a=$("#qulf"),b=$("#hTanga");if(!a||!b)return;
+  const q=a.getBoundingClientRect(),w=b.getBoundingClientRect();
+  for(let i=0;i<Math.min(n,6);i++){const t=document.createElement("span");t.className="tanga-uch";t.textContent="🪙";
+    t.style.left=(q.left+q.width/2+r(-24,24))+"px";t.style.top=(q.top+16)+"px";document.body.appendChild(t);
+    setTimeout(()=>{t.style.left=(w.left+8)+"px";t.style.top=(w.top+2)+"px";t.style.transform="scale(.5)"},60+i*80);
+    setTimeout(()=>{t.remove();bump("#hTanga")},800+i*80)}
+}
+function otdi(yu){
+  J.yulduz.push(yu);
+  let tanga=yu?5+(yu===3?2:0):0;
+  if(tanga&&J.tur==="qaroqchi")tanga*=3;
+  if(tanga&&obHavo(S.bekat).k==="salqin")tanga+=2;
+  if(yu===3)kunlikQosh("xatosiz",1);
+  if(yu)kunlikQosh("yulduz",yu);
+  ovoz(yu?"yutuq":"bos");
+  if(yu&&(J.tur==="tosh"||J.tur==="qaroqchi"))ovoz("parcha");
+  S.tanga+=tanga;saqla();titra(yu?[15,40,15]:12);
+  oyinChiz("togri");hisobYangila();
+  const rasm=$("#tosiqRasm");if(rasm)rasm.classList.add("yechildi");
+  if(tanga)tangaUch(tanga);
+  const ishl=new Set(J.tokens.filter(t=>t.n).map(t=>t.id));
+  J.yolda=true;
+  setTimeout(()=>yolgaTush(ishl),900);
+}
+const YOL_GAPLAR=["Qumtepalar oshib o'tilmoqda","Karvon quduq yonida suv ichdi","Uzoqda boshqa karvon ko'rindi",
+  "Shamol izlarni ko'mib ketyapti","Tuyalar bir maromda qadam tashlayapti","Ufqda yangi manzil ko'rinmoqda"];
+function yolgaTush(ishl){
+  const sahna=$("#sahna"),varaq=$("#varaq");
+  if(!sahna)return;
+  varaq&&varaq.classList.add("yolda");
+  const oxirgi=J.tosiq>=2,jami=Math.round(BEKAT_KM[S.bekat]/3),vaqt=oxirgi?2600:3600;
+  sahna.classList.remove("toxta");
+  const eski=sahna.querySelector(".tosiq-yol");if(eski)eski.classList.add("otib");
+  const b=document.createElement("div");b.className="yol-banner";
+  b.innerHTML='<span class="ms">route</span><span style="flex:1"><b id="yolKm">'+jami+' km</b><small id="yolGap">'+
+    (oxirgi?"Bekatga yetib borilmoqda":tanla(YOL_GAPLAR))+'</small><span class="chiziqcha"><b id="yolChiz" style="width:0"></b></span></span>';
+  sahna.appendChild(b);
+  const bosh=performance.now();
+  const qadam=t=>{const u=Math.min(1,(t-bosh)/vaqt),km=$("#yolKm"),ch=$("#yolChiz"),tz=$("#tezlik");
+    J.tezlik=Math.round(Math.min(12,u*40));
+    if(km)km.textContent=Math.max(0,Math.round(jami*(1-u)))+" km";
+    if(ch)ch.style.width=(u*100)+"%";
+    if(tz)tz.textContent=J.tezlik+" km/soat";
+    if(u<1&&J.yolda)requestAnimationFrame(qadam)};
+  requestAnimationFrame(qadam);
+  ovoz("bos");
+  if(oxirgi){setTimeout(()=>{J.tosiq++;J.yolda=false;bekatTugadi()},vaqt);return}
+  /* keyingi to'siq uzoqdan yaqinlashadi */
+  setTimeout(()=>{
+    J.tosiq++;
+    J.qol=J.qol.filter(k=>!ishl.has(k.id));
+    while(J.qol.length<S.qol)J.qol.push(yangiKarta());
+    vazifa();J.tokens=[];J.xato=0;J.kechirildi=false;J.maslahat=null;J.amal=null;J.tanlov=null;
+    const karvon=sahna.querySelector("#karvonG");
+    const vaqtinchalik=document.createElementNS("http://www.w3.org/2000/svg","g");
+    vaqtinchalik.innerHTML=tosiqMarkup(J.tur,tun());
+    const yangi=vaqtinchalik.firstElementChild;yangi.classList.add("uzoqdan");
+    karvon.parentNode.insertBefore(yangi,karvon);
+  },vaqt-1900);
+  setTimeout(()=>{
+    sahna.querySelectorAll(".tosiq-yol.otib").forEach(e=>e.remove());
+    b.remove();J.yolda=false;J.tezlik=12;
+    oyinChiz();
+    $("#varaq")?.classList.remove("yolda");
+    setTimeout(()=>{sahna.classList.add("toxta");tezlikYur()},250);
+  },vaqt);
+}
+function suvBilan(){if(S.suv<1||J.yolda)return;S.suv--;saqla();hisobYangila();J.tokens=[];J.tanlov=J.maqsad;otdi(0)}
+function maslahat(){
+  const narx=J.xato>=2?0:5;if(S.tanga<narx||J.tur==="xotira")return;
+  if(J.tur==="yol"){S.tanga-=narx;saqla();J.tanlov=J.maqsad;oyinChiz();hisobYangila();return}
+  const ishl=new Set(J.tokens.filter(t=>t.n).map(t=>t.id));
+  const id=(J.yechim||[]).find(i=>!ishl.has(i));
+  if(id==null)return eslat("Tanlaganlarni qaytaring va boshqatdan urinib ko'ring");
+  S.tanga-=narx;saqla();J.maslahat=id;oyinChiz();hisobYangila();
+}
+function bekatTugadi(){
+  const o=Math.round(J.yulduz.reduce((a,b)=>a+b,0)/3);
+  S.yulduz[S.bekat]=o;const shaharga=S.bekat%3===2;
+  const oldin=ulushim();
+  const obh=obHavo(S.bekat);
+  S.bekat++;S.suv=Math.min(S.maxSuv,S.suv+1);
+  if(obh.k==="issiq")S.suv=Math.max(0,S.suv-1);
+  for(const k in S.buff)if(S.buff[k]>0)S.buff[k]--;
+  kunlikQosh("bekat",1);
+  saqla();ekran="tab";S.tab="xarita";xarita(oldin);ovoz("katta");
+  modal('<div class="yulduz-qator">'+[0,1,2].map(i=>'<span class="'+(i<o?"":"bosh")+'" style="animation-delay:'+i*.14+'s">★</span>').join("")+'</div>'+
+    '<h2>'+(shaharga?SHAHAR[S.bekat/3].nom+" ko'rindi":S.bekat+"-bekat bosib o'tildi")+'</h2>'+
+    '<p class="izohcha">Yo\'lda '+(S.tanga-J.tanga0)+' tanga yig\'ildi. Mesh bittaga to\'ldirildi.</p>'+
+    '<button class="tugma" data-amal="'+(shaharga?"shahar":"karvonsaroy")+'">'+(shaharga?"Shaharga kirish":"Karvonsaroyda to'xtash")+'</button>');
+}
+const SAROY=[
+ ["Qari savdogar","Qumdagi izlarni o'qishni bilsang, yo'l seni aldamaydi, bolam.","Karvonsaroy o'chog'ida choy qaynayapti."],
+ ["Karvonsaroy egasi","Kecha bu yerdan buxorolik savdogarlar o'tdi — ular yo'l qisqaroq ekan deyishdi.","Tuyalar suv ichib, yuk qayta bog'landi."],
+ ["Yosh sarbon","Tunda yulduzlarga qarab yursang, adashmaysan. Faqat sovuqqa chidashing kerak.","Tungi shamol tinchidi."]];
+function karvonsaroy(){
+  const g=SAROY[S.bekat%SAROY.length];
+  modal('<span class="chip terra" style="justify-self:center"><span class="ms" style="font-size:15px">hotel</span>Karvonsaroy</span>'+
+   '<h2>'+g[0]+'</h2><p class="izohcha" style="font-style:italic">«'+g[1]+'»</p>'+
+   '<p class="izohcha">'+g[2]+' Yo\'lni qachon davom ettiramiz?</p>'+
+   '<button class="qator" data-amal="saroy-tun" style="text-align:left"><span class="ik"><span class="ms">nights_stay</span></span>'+
+     '<span><b>Tunda yo\'lga chiqish</b><small>Salqinda tez yuriladi: +30 tanga, 1 mesh suv ketadi</small></span></button>'+
+   '<button class="qator" data-amal="saroy-tong" style="text-align:left"><span class="ik"><span class="ms">wb_twilight</span></span>'+
+     '<span><b>Tongda yo\'lga chiqish</b><small>Quduqdan suv olinadi: mesh to\'ladi</small></span></button>');
+}
+function modal(ich){
+  const q=document.createElement("div");q.className="qoplama";q.innerHTML='<div class="modal">'+ich+'</div>';
+  qobiq.appendChild(q);
+}
+function artRasm(ik){
+  if(ik==="kitob")return '<svg width="58" height="58" viewBox="0 0 62 62"><path d="M8 12h20a6 6 0 0 1 6 6v34a6 6 0 0 0-6-4H8z" fill="#7A5A2E"/><path d="M54 12H34a6 6 0 0 0-6 6v34a6 6 0 0 1 6-4h20z" fill="#9A7238"/><path d="M28 18v34" stroke="#4A3318" stroke-width="3"/></svg>';
+  if(ik==="tanga")return '<svg width="58" height="58" viewBox="0 0 62 62"><circle cx="31" cy="31" r="24" fill="#B98B33"/><circle cx="31" cy="31" r="17" fill="none" stroke="#6F4E14" stroke-width="3"/><path d="M31 18v26M22 26h18" stroke="#6F4E14" stroke-width="3"/></svg>';
+  if(ik==="lavha")return '<svg width="58" height="58" viewBox="0 0 62 62"><rect x="10" y="8" width="42" height="46" rx="6" fill="#8A6A3A"/><path d="M18 20h26M18 30h26M18 40h18" stroke="#E7D2A6" stroke-width="3" stroke-linecap="round"/></svg>';
+  return '<svg width="66" height="66" viewBox="0 0 70 70"><circle cx="35" cy="35" r="27" fill="none" stroke="#6F4E14" stroke-width="3"/><circle cx="35" cy="35" r="18" fill="none" stroke="#6F4E14" stroke-width="2"/><path d="M35 5v60M5 35h60M14 14l42 42M56 14 14 56" stroke="#6F4E14" stroke-width="2"/><circle cx="35" cy="35" r="4" fill="#6F4E14"/></svg>';
+}
+function shahar(){
+  const n=Math.min(3,Math.floor(S.bekat/3)),sh=SHAHAR[n];
+  if(n===1&&S.qol<6)S.qol=6;
+  if(n===2&&S.maxSuv<4){S.maxSuv=4;S.suv=4}
+  if(!S.art.includes(sh.art.nom))S.art.push(sh.art.nom);
+  S.tanga+=50;saqla();ekran="tab";S.tab="xarita";xarita();
+  modal('<span class="chip terra" style="justify-self:center">'+sh.art.joy+'</span>'+
+    '<h2>Tabriklaymiz!</h2><p class="izohcha">'+sh.nom+'ga yetib keldik</p>'+
+    '<div class="medal">'+artRasm(sh.art.ik)+'</div>'+
+    '<div><b style="font-size:15px">'+sh.nom+' artefakti:<br>'+sh.art.nom+'</b>'+
+      '<p class="izohcha" style="margin-top:4px">Bonus: '+sh.art.bonus+' · Artefaktlar xazinasiga qo\'shildi</p></div>'+
+    '<div style="display:flex;justify-content:center;gap:12px"><span class="chip oltin">🪙 '+S.tanga.toLocaleString("ru-RU")+'</span><span class="chip lapis">💧 '+S.suv+'</span></div>'+
+    (sh.sovga?'<p class="izohcha">'+sh.sovga+'</p>':"")+
+    '<button class="tugma" data-amal="bozor-ochish"><span class="ms">storefront</span>Bozorga kirish</button>'+
+    '<button class="tugma arvoh" data-amal="modal-yop">Yo\'lni davom ettirish</button>');
+}
+
+/* ================= BOZOR ================= */
+function bozor(){
+  const shNo=Math.min(3,Math.floor(S.bekat/3)),sh=SHAHAR[shNo];
+  const faolBuff=Object.keys(S.buff).filter(k=>S.buff[k]>0);
+  const buffKarta=k=>{const b=BUFF[k],bor=buffFaol(k);
+    return '<div class="plita" style="display:grid;gap:10px;'+(bor?"border-color:rgba(13,92,117,.6)":"")+'">'+
+      '<div class="qator" style="background:none;border:0;padding:0">'+
+        '<span class="ik" style="color:var(--terra-y)"><span class="ms">'+b.ik+'</span></span>'+
+        '<span><b>'+b.nom+(bor?' <span class="chip lapis" style="margin-left:4px">Faol</span>':"")+'</b><small>'+b.izoh+'</small></span></div>'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+        '<span class="chip oltin"><span class="ms" style="font-size:15px">toll</span>'+b.narx+' tanga</span>'+
+        '<span style="margin-left:auto">'+(bor
+          ? '<span class="chip zumrad"><span class="ms" style="font-size:15px">check</span>Faollashtirilgan · '+S.buff[k]+' bekat</span>'
+          : '<button class="kichik-tugma" data-sotib="'+k+'"'+(S.tanga<b.narx?" disabled style=opacity:.45":"")+'><span class="ms" style="font-size:15px">shopping_bag</span>Sotib olish</button>')+'</span></div></div>'};
+  const uskunaKarta=k=>{const u=USKUNA[k],olingan=S.uskuna.includes(k);
+    return '<div class="rasmli"><div class="rasm">'+u.ik+(olingan?'<span class="chip zumrad" style="position:absolute;top:8px;right:8px"><span class="ms" style="font-size:14px">check</span>Faol</span>':"")+
+      '<span class="chip" style="position:absolute;left:8px;bottom:8px">'+u.tasir+'</span></div>'+
+      '<div class="ichi"><b style="font-size:14px">'+u.nom+'</b><p class="izohcha">'+u.izoh+'</p>'+
+      '<div style="display:flex;align-items:center;gap:10px"><span class="chip oltin">🪙 '+u.narx+' tanga</span>'+
+      '<span style="margin-left:auto">'+(olingan
+        ? '<span class="chip zumrad">Sizda bor</span>'
+        : '<button class="kichik-tugma" data-sotib-u="'+k+'"'+(S.tanga<u.narx?" disabled style=opacity:.45":"")+'>Sotib olish</button>')+'</span></div></div></div>'};
+
+  chiz(
+   '<div class="plita" style="display:grid;gap:10px">'+
+     '<div class="sarlavha"><span class="ms">storefront</span><span style="color:var(--oltin-y)">'+sh.nom.toUpperCase()+' BOZORI</span>'+
+       '<span class="ong chip zumrad">Bozor ochiq</span></div>'+
+     '<p class="izohcha">Shaharga xush kelibsiz! Tanga evaziga karvonni kuchaytiring va afsonaviy uskunalar bilan bezating.</p>'+
+     (faolBuff.length?'<div class="qator" style="background:var(--s2);border:0"><span class="ms" style="color:var(--lapis-y)">shield</span>'+
+        '<span style="flex:1"><b>'+BUFF[faolBuff[0]].nom+' faol</b><div class="chiziqcha" style="margin-top:6px"><b style="width:'+(S.buff[faolBuff[0]]/3*100)+'%"></b></div></span>'+
+        '<span class="ong chip">'+S.buff[faolBuff[0]]+' bekat qoldi</span></div>':"")+
+   '</div>'+
+   '<div class="tanlagich">'+[["hammasi","Barchasi"],["buff","Kuchaytirgichlar"],["uskuna","Uskunalar"]].map(x=>
+     '<button class="'+(bozorFiltr===x[0]?"faol":"")+'" data-filtr="'+x[0]+'">'+x[1]+'</button>').join("")+'</div>'+
+   (bozorFiltr!=="uskuna"?'<div class="sarlavha"><span class="ms">bolt</span>Vaqtinchalik kuchaytirgichlar<span class="ong">3 bekat davomida</span></div>'+
+     Object.keys(BUFF).map(buffKarta).join(""):"")+
+   (bozorFiltr!=="buff"?savdoBolimi(shNo)+
+     '<div class="sarlavha"><span class="ms">auto_awesome</span>Karvon kastomizatsiyasi<span class="ong">Doimiy uskunalar</span></div>'+
+     '<div style="display:grid;gap:10px">'+Object.keys(USKUNA).map(uskunaKarta).join("")+'</div>':"")
+  );
+}
+
+function savdoBolimi(shNo){
+  if(S.daraja===1)return '<div class="plita qator" style="border-style:dashed"><span class="ik"><span class="ms">lock</span></span>'+
+    '<span><b>Savdo 5-sinfdan ochiladi</b><small>Hozircha to\'siqlar va yulduzlarga e\'tibor bering</small></span></div>';
+  const topshir=shNo>=1&&!S.buyurtma[shNo]?BUYURTMA[shNo]:null;
+  const keyingi=shNo+1<=3&&!S.buyurtma[shNo+1]?BUYURTMA[shNo+1]:null;
+  const soni=k=>S.yuk.filter(y=>y.tur===k).length;
+  const toliq=S.yuk.length>=sigim();
+  let h='<div class="sarlavha"><span class="ms">local_mall</span>Savdo yuki<span class="ong chip '+(toliq?"terra":"")+'">'+S.yuk.length+'/'+sigim()+' qop</span></div>'+
+    '<p class="izohcha">Tuya faqat '+sigim()+' qop ko\'taradi — qaysi yukni olishni o\'ylab tanlang. Narxlar har kuni o\'zgaradi.</p>';
+  if(topshir){const bor=soni(topshir.tur),tayyor=bor>=topshir.soni;
+    h+='<div class="plita" style="display:grid;gap:8px;border-color:'+(tayyor?"rgba(27,138,90,.6)":"var(--chiz)")+'">'+
+      '<div class="sarlavha"><span class="ms">assignment</span>'+topshir.kim+'<span class="ong chip oltin">+'+topshir.mukofot+' tanga</span></div>'+
+      '<p class="izohcha">'+topshir.soni+' qop '+MOLLAR[topshir.tur].nom+' so\'rayapti. Sizda: '+bor+' qop.</p>'+
+      (tayyor?'<button class="tugma" data-amal="buyurtma-top"><span class="ms">task_alt</span>Buyurtmani topshirish</button>'
+        :'<div class="chiziqcha"><b style="width:'+(bor/topshir.soni*100)+'%"></b></div>')+'</div>'}
+  if(keyingi)h+='<div class="qator" style="background:var(--s2);border:0"><span class="ik"><span class="ms">flag</span></span>'+
+    '<span><b>Keyingi shaharda buyurtma</b><small>'+SHAHAR[shNo+1].nom+': '+keyingi.kim+' '+keyingi.soni+' qop '+MOLLAR[keyingi.tur].nom+
+    ' so\'raydi — '+keyingi.mukofot+' tanga. Shu yerdan olib keting.</small></span></div>';
+  h+='<div style="display:grid;gap:8px">'+Object.keys(MOLLAR).map(k=>{
+    const n=narxi(k,shNo),asos=NARX[k][shNo],bor=soni(k);
+    const olingan=bor?S.yuk.find(y=>y.tur===k).narx:0,foyda=n-olingan;
+    const trend=n>asos?'<span style="color:#7BD6A6">▲</span>':n<asos?'<span style="color:#FF9A8A">▼</span>':'';
+    return '<div class="qator"><span class="ik" style="font-size:22px">'+MOLLAR[k].ik+'</span>'+
+      '<span><b>'+MOLLAR[k].nom+(bor?' <span class="chip" style="margin-left:4px">'+bor+' qop</span>':'')+'</b>'+
+      '<small>Bugun: '+n+' tanga '+trend+(bor?' · olingan: '+olingan:'')+'</small></span>'+
+      '<span class="ong" style="display:grid;gap:5px">'+
+        (bor?'<button class="kichik-tugma'+(foyda>=0?'':' oq')+'" data-sot="'+k+'">'+(foyda>=0?'+':'')+foyda+' sotish</button>':'')+
+        '<button class="kichik-tugma'+(toliq||S.tanga<n?' oq':'')+'" data-ol="'+k+'">'+n+' olish</button>'+
+      '</span></div>'}).join("")+'</div>';
+  return h;
+}
+/* ================= BELLASHUV ================= */
+function bellashuv(){
+  const men=S.bekat;
+  const qatorlar=[{ism:S.ism,b:men,men:1}].concat(DOSTLAR).sort((a,b)=>b.b-a.b);
+  chiz(
+   '<div class="plita" style="display:grid;gap:10px">'+
+     '<div class="sarlavha"><span class="ms">swords</span>Telegram do\'stlar poygasi<span class="ong">Bu hafta</span></div>'+
+     '<p class="izohcha">Kim oldin Xivaga yetib boradi? Har bekat — bitta qadam. Do\'stlar faqat siz bilan o\'ynaganlar ro\'yxatidan chiqadi.</p>'+
+   '</div>'+
+   '<div style="display:grid;gap:8px">'+qatorlar.map((q,i)=>
+     '<div class="qator'+(q.men?" men":"")+'"><span class="ik">'+(q.men?"🧭":q.ism[0])+'</span>'+
+       '<span style="flex:1"><b>'+(q.men?"Siz":q.ism)+'</b><div class="chiziqcha" style="margin-top:6px"><b style="width:'+(q.b/9*100)+'%"></b></div></span>'+
+       '<span class="ong chip">'+q.b+'/9 bekat</span></div>').join("")+'</div>'+
+   '<div class="plita" style="display:grid;gap:10px">'+
+     '<div class="sarlavha"><span class="ms">diversity_3</span>Birga karvon<span class="ong chip '+(S.birga.navbat==="men"?"terra":"")+'">'+
+       (S.birga.navbat==="men"?"Navbat sizda":"Navbat "+S.birga.dost+"da")+'</span></div>'+
+     '<p class="izohcha">'+S.birga.dost+' bilan bitta karvonni navbatma-navbat surasiz. Oila yoki sinf uchun: har kim o\'z bekatini yechadi.</p>'+
+     '<div class="chiziqcha"><b style="width:'+(S.birga.bekat/9*100)+'%"></b></div>'+
+     '<span class="izohcha">Umumiy karvon: '+S.birga.bekat+'/9 bekat</span>'+
+     (S.birga.navbat==="men"
+       ? '<button class="tugma lapis" data-amal="birga-men"><span class="ms">hiking</span>Mening navbatimni yechish</button>'
+       : '<button class="tugma arvoh" data-amal="birga-dost"><span class="ms">forward_to_inbox</span>'+S.birga.dost+'ga eslatma yuborish</button>')+
+   '</div>'+
+   '<div class="plita" style="display:grid;gap:10px">'+
+     '<div class="sarlavha"><span class="ms">emoji_events</span>Haftalik sovrin</div>'+
+     '<p class="izohcha">Hafta oxirida eng ko\'p bekat bosib o\'tgan uchtalikka oltin tanga va profil nishoni beriladi.</p>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip oltin">🥇 500 tanga</span><span class="chip">🥈 300 tanga</span><span class="chip">🥉 150 tanga</span></div>'+
+   '</div>'+
+   '<button class="tugma lapis" data-amal="chaqiriq"><span class="ms">send</span>Do\'stni poygaga chaqirish</button>'
+  );
+}
+
+/* ================= REYTING ================= */
+function reyting(){
+  const men=yulduzJami();
+  const royxat=TOP.concat([[S.ism,men,1]]).sort((a,b)=>b[1]-a[1]);
+  const medal=["military_tech","workspace_premium","workspace_premium"];
+  chiz(
+   '<div class="plita" style="display:grid;gap:8px">'+
+     '<div class="sarlavha"><span class="ms">military_tech</span>Haftalik reyting<span class="ong">Dushanbadan beri</span></div>'+
+     '<p class="izohcha">Hisob yulduzlar bo\'yicha yuritiladi. Har dushanba noldan boshlanadi — yangi kelgan ham birinchi bo\'la oladi.</p>'+
+   '</div>'+
+   '<div style="display:grid;gap:7px">'+royxat.map((q,i)=>
+     '<div class="qator'+(q[2]?" men":"")+'"><span class="ik" style="font-weight:800;'+(i<3?"color:var(--oltin-y)":"")+'">'+
+       (i<3?'<span class="ms">'+medal[i]+'</span>':i+1)+'</span>'+
+       '<span><b>'+(q[2]?"Siz":q[0])+'</b><small>'+(i<3?"Sovrin zonasi":"Yuqoriga intiling")+'</small></span>'+
+       '<span class="ong"><b class="tnum" style="color:var(--oltin-y)">'+q[1]+' ★</b></span></div>').join("")+'</div>'+
+   '<p class="izohcha" style="text-align:center">Namuna ma\'lumot — server ulanganda haqiqiy o\'yinchilar chiqadi</p>'
+  );
+}
+
+/* ================= SAYYOH ================= */
+function sayyoh(){
+  const topilgan=S.art.length;
+  const art=SHAHAR.map((sh,i)=>{const bor=S.art.includes(sh.art.nom),keyin=Math.max(0,i*3-S.bekat);
+    return '<div class="qator'+(bor?"":" qulf")+'" style="'+(bor?"border-color:rgba(217,101,40,.5)":"")+'">'+
+      '<span class="ik">'+(bor?'<span style="font-size:22px">🏺</span>':'<span class="ms">lock</span>')+'</span>'+
+      '<span><b style="'+(bor?"color:var(--terra-y)":"")+'">'+sh.art.nom+'</b><small>'+sh.art.joy+' · '+sh.art.bonus+'</small></span>'+
+      '<span class="ong chip '+(bor?"zumrad":"")+'">'+(bor?"Topilgan":keyin?keyin+" bekat":"Yaqin")+'</span></div>'});
+  chiz(
+   '<div class="plita" style="display:grid;gap:12px">'+
+     '<div style="display:flex;gap:12px;align-items:center">'+
+       '<span class="avatar" style="width:56px;height:56px;font-size:22px">'+S.ism[0]+'</span>'+
+       '<span style="flex:1"><b style="font-size:18px;letter-spacing:-.02em">'+S.ism+'</b>'+
+         '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">'+
+         '<button class="chip terra" data-amal="daraja-almash">'+D[S.daraja].nom+'<span class="ms" style="font-size:14px">edit</span></button></div></span></div>'+
+     '<div style="display:flex;gap:8px;align-items:center;color:var(--oltin-y);font-size:13px;font-weight:700">'+
+       '<span class="ms" style="font-size:18px">'+(tun()?"dark_mode":"wb_sunny")+'</span>Yosh karvonboshi · Toshkent '+soat()+'</div>'+
+     '<div class="statlar"><div><b class="tnum">'+yulduzJami()+'</b><small>Yulduzlar</small></div>'+
+       '<div><b class="tnum">'+S.bekat+'/9</b><small>Bekatlar</small></div>'+
+       '<div><b class="tnum">'+S.tanga.toLocaleString("ru-RU")+'</b><small>Tangalar</small></div>'+
+       '<div><b class="tnum">'+S.suv+'/'+S.maxSuv+'</b><small>Suv meshob</small></div></div>'+
+   '</div>'+
+
+   '<div class="sarlavha"><span class="ms">inventory_2</span>Artefaktlar xazinasi<span class="ong chip">'+topilgan+' / 4 topildi</span></div>'+
+   '<p class="izohcha">Buyuk Ipak yo\'li shaharlaridagi arifmetik sinovlardan qolgan qadimiy durdonalar.</p>'+
+   '<div style="display:grid;gap:8px">'+art.join("")+'</div>'+
+
+   '<div class="sarlavha"><span class="ms">sailing</span>Mening karvonim<span class="ong"><button class="chip terra" data-amal="tab-bozor">Bozorga o\'tish ›</button></span></div>'+
+   '<div class="plita" style="display:grid;gap:10px">'+
+     '<div style="display:flex;gap:12px;align-items:center"><span style="font-size:38px">'+(bor("tuya")?"🐫":"🐪")+'</span>'+
+       '<span style="flex:1"><b style="font-size:15px">'+(bor("tuya")?"Nodir oq tuya (Baqtriya)":"Oddiy karvon tuyasi")+'</b>'+
+       '<p class="izohcha">Sig\'im: '+sigim()+' qop yuk</p></span></div>'+
+     '<div style="display:grid;gap:6px">'+Object.keys(USKUNA).filter(k=>k!=="tuya").map(k=>
+       '<div class="yordam" style="'+(bor(k)?"":"opacity:.5")+'"><span class="ik" style="background:var(--s2)">'+USKUNA[k].ik+'</span>'+
+       '<span style="flex:1"><b>'+USKUNA[k].nom.split("(")[0]+'</b><small>'+USKUNA[k].tasir+'</small></span>'+
+       '<span class="chip '+(bor(k)?"zumrad":"")+'">'+(bor(k)?"Faol":USKUNA[k].narx+" tanga")+'</span></div>').join("")+'</div>'+
+   '</div>'
+  );
+}
+
+const DARAJA_KARTA=[null,
+ {ik:"🌱",sarlavha:"Boshlovchi karvonboshi",misol:"7 + 5 · 12 − 4",izoh:"Qo'shish va ayirish, 20 gacha"},
+ {ik:"🐪",sarlavha:"Tajribali sarbon",misol:"6 × 8 · 45 − 17",izoh:"Ko'paytirish qo'shiladi, 80 gacha"},
+ {ik:"🧭",sarlavha:"Ustoz munajjim",misol:"144 ÷ 12 · 3 × 17 − 8",izoh:"Bo'lish va uch qismli ifodalar"}];
+function darajaTanlash(){
+  qobiq.innerHTML='<div class="varaq"><div class="ich" style="padding-top:28px">'+
+   '<div style="text-align:center;display:grid;gap:10px;justify-items:center">'+
+     '<span class="nishon" style="width:64px;height:64px;font-size:32px">🐫</span>'+
+     '<span class="yorliq" style="color:var(--oltin)">Karvon yo\'li</span>'+
+     '<h1 style="font-size:26px;font-weight:800;letter-spacing:-.02em;text-wrap:balance">Karvonboshi, qaysi sinfdasiz?</h1>'+
+     '<p class="izohcha" style="max-width:300px">Sinovlar sizning darajangizga moslanadi. Hamma bir xil yo\'ldan yuradi — faqat sonlar farq qiladi.</p>'+
+   '</div>'+
+   [1,2,3].map(n=>{const k=DARAJA_KARTA[n];
+     return '<button class="daraja-karta" data-daraja-tanla="'+n+'">'+
+       '<span class="ik">'+k.ik+'</span>'+
+       '<span style="flex:1;min-width:0"><span class="yorliq">'+D[n].nom+'</span>'+
+         '<b>'+k.sarlavha+'</b><small>'+k.izoh+'</small>'+
+         '<span class="misol">'+k.misol+'</span></span>'+
+       '<span class="ms" style="color:var(--terra)">chevron_right</span></button>'}).join("")+
+   '<p class="izohcha" style="text-align:center;display:flex;gap:6px;justify-content:center;align-items:center">'+
+     '<span class="ms" style="font-size:15px">info</span>Keyin Sayyoh bo\'limida o\'zgartirish mumkin</p>'+
+  '</div></div>';
+}
+/* ================= BOSHQARUV ================= */
+function korsat(){
+  if(!S.darajaTanlandi)return darajaTanlash();
+  if(ekran==="oyin")return oyinChiz();
+  if(S.tab==="bozor")return bozor();
+  if(S.tab==="bellashuv"||S.tab==="reyting")S.tab="xarita";
+  if(S.tab==="sayyoh")return sayyoh();
+  xarita();
+}
+qobiq.addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.karta){ovoz("bos");return kartaBos(+b.dataset.karta)}
+  if(b.dataset.op)return amalBos(b.dataset.op);
+  if(b.dataset.tanlov!==undefined)return tanlovBos(+b.dataset.tanlov);
+  if(b.dataset.darajaTanla){S.daraja=+b.dataset.darajaTanla;S.darajaTanlandi=true;S.tab="xarita";ekran="tab";saqla();ovoz("yutuq");return xarita()}
+  if(b.dataset.daraja){S.daraja=+b.dataset.daraja;saqla();return xarita()}
+  if(b.dataset.filtr){bozorFiltr=b.dataset.filtr;return bozor()}
+  if(b.dataset.sotib){const k=b.dataset.sotib,x=BUFF[k];
+    if(S.tanga<x.narx)return;S.tanga-=x.narx;S.buff[k]=3;saqla();return bozor()}
+  if(b.dataset.sotibU){const k=b.dataset.sotibU,u=USKUNA[k];
+    if(S.tanga<u.narx)return;S.tanga-=u.narx;S.uskuna.push(k);saqla();return bozor()}
+  if(b.dataset.ol){const k=b.dataset.ol,sn=Math.min(3,Math.floor(S.bekat/3)),n=narxi(k,sn);
+    if(S.yuk.length>=sigim())return modal('<h2>Tuya to\'la</h2><p class="izohcha">Karvon '+sigim()+' qopdan ortiq ko\'tarolmaydi. Avval biror yukni soting yoki buyurtmani topshiring.</p><button class="tugma" data-amal="modal-yop">Tushunarli</button>');
+    if(S.tanga<n)return;S.tanga-=n;S.yuk.push({tur:k,narx:n,shahar:sn});saqla();ovoz("tanga");return bozor()}
+  if(b.dataset.sot){const k=b.dataset.sot,sn=Math.min(3,Math.floor(S.bekat/3)),n=narxi(k,sn);
+    const i=S.yuk.findIndex(y=>y.tur===k);if(i<0)return;S.yuk.splice(i,1);S.tanga+=n;saqla();ovoz("tanga");return bozor()}
+  if(b.dataset.kiy){S.ulov=b.dataset.kiy;saqla();return bozor()}
+  const a=b.dataset.amal||"";
+  if(a.startsWith("tab-")){ekran="tab";S.tab=a.slice(4);saqla();return korsat()}
+  if(a==="bosh")return yolTahlili();
+  if(a==="bosh-tasdiq"){b.closest(".qoplama").remove();return bekatBosh()}
+  if(a==="ortga"){ekran="tab";S.tab="xarita";return xarita()}
+  if(a==="tekshir")return tekshir();
+  if(a==="tozala"){J.tokens=[];J.amal=null;return oyinChiz()}
+  if(a==="suv")return suvBilan();
+  if(a==="maslahat")return maslahat();
+  if(a==="daraja-almash"){S.darajaTanlandi=false;saqla();return darajaTanlash()}
+  if(a==="ovoz"){S.ovoz=!S.ovoz;saqla();ovoz("bos");return korsat()}
+  if(a==="kunlik-ol"){const k=kunlikOl();if(k.joriy>=k.maqsad&&!k.olindi){S.tanga+=k.mukofot;S.kunlik.olindi=true;saqla();ovoz("tanga")}return xarita()}
+  if(a==="karvonsaroy"){b.closest(".qoplama").remove();return karvonsaroy()}
+  if(a==="saroy-tun"){b.closest(".qoplama").remove();S.tanga+=30;S.suv=Math.max(0,S.suv-1);saqla();ovoz("tanga");return xarita()}
+  if(a==="saroy-tong"){b.closest(".qoplama").remove();S.suv=S.maxSuv;saqla();return xarita()}
+  if(a==="birga-men"){S.birga.bekat=Math.min(9,S.birga.bekat+1);S.birga.navbat="dost";saqla();ovoz("yutuq");return bellashuv()}
+  if(a==="birga-dost"){S.birga.bekat=Math.min(9,S.birga.bekat+1);S.birga.navbat="men";saqla();
+    modal('<h2>'+S.birga.dost+' navbatini yechdi</h2><p class="izohcha">Umumiy karvon '+S.birga.bekat+'-bekatga yetdi. Endi navbat sizda.</p>'+
+      '<button class="tugma" data-amal="modal-yop">Yaxshi</button>');return bellashuv()}
+  if(a==="buyurtma-top"){const sn=Math.min(3,Math.floor(S.bekat/3)),bu=BUYURTMA[sn];
+    if(!bu||S.buyurtma[sn])return;
+    for(let x=0;x<bu.soni;x++){const i=S.yuk.findIndex(y=>y.tur===bu.tur);if(i<0)return;S.yuk.splice(i,1)}
+    S.buyurtma[sn]=true;S.tanga+=bu.mukofot;saqla();ovoz("katta");
+    modal('<h2>Buyurtma topshirildi</h2><p class="izohcha">'+bu.kim+' mamnun. +'+bu.mukofot+' tanga.</p><button class="tugma" data-amal="modal-yop">Ajoyib</button>');
+    return bozor()}
+  if(a==="oazis"){S.oazis=false;S.tanga+=250;S.suv=Math.min(S.maxSuv,S.suv+1);saqla();return xarita()}
+  if(a==="shahar"){b.closest(".qoplama").remove();return shahar()}
+  if(a==="xarita-yop"){b.closest(".qoplama").remove();ekran="tab";S.tab="xarita";return xarita()}
+  if(a==="modal-yop")return b.closest(".qoplama").remove();
+  if(a==="bozor-ochish"){b.closest(".qoplama").remove();S.tab="bozor";return bozor()}
+  if(a==="chaqiriq"){
+    const havola=BOT?"https://t.me/"+BOT+"?start=karvon":location.origin+"/oyinlar/karvon";
+    const matn="\ud83d\udc2b Men Karvon yo'lida "+(S.bekat+1)+"-bekatdaman! Sen ham Ipak yo'li bo'ylab yo'lga chiq — kim Xivaga birinchi yetib borarkin?";
+    const url="https://t.me/share/url?url="+encodeURIComponent(havola)+"&text="+encodeURIComponent(matn);
+    if(ICHKI)ota({tur:"ulash",url});else window.open(url,"_blank");
+    return;
+  }
+  if(a==="chiqish")return ota({tur:"chiqish"});
+  if(a==="qayta"){const d=S.daraja,i=S.ism,t=S.tag;S=boshlangich();S.daraja=d;S.ism=i;S.tag=t;saqla();return xarita()}
+});
+document.addEventListener("keydown",e=>{
+  if(ekran!=="oyin"||!J)return;
+  if(e.key==="Enter")tekshir();
+  else if(["+","-","*","/"].includes(e.key))amalBos({"+":"+","-":"−","*":"×","/":"÷"}[e.key]);
+});
+korsat();
+})();
+</script>
+</body>
+</html>

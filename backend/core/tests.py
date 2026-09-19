@@ -731,6 +731,13 @@ class BotTest(TestCase):
         self.assertIn("/oyinlar/kunlik-son", json.dumps(self.yuborilgan))
         cache.delete("kanal_azo:555")
 
+    @override_settings(MINI_APP_URL="https://aql-zone.uz")
+    def test_karvon_havolasi(self):
+        """Ulashilgan "Karvon yo'li" havolasi o'yinning o'zini ochadi."""
+        self.bot.yangilikni_qayta_ishla(self.xabar("/start karvon"))
+        self.assertIn("https://aql-zone.uz/oyinlar/karvon", json.dumps(self.yuborilgan))
+        self.assertIn("Karvon yo'li", self.matnlar())
+
     @override_settings(SAYT_URL="https://aql-zone.uz")
     def test_start_kirish_havolasini_yuboradi(self):
         self.bot.yangilikni_qayta_ishla(self.xabar("/start"))

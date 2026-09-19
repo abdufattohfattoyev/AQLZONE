@@ -503,6 +503,16 @@ XABAR: dict[str, dict[str, str]] = {
             "случится. Напишите /start, когда захотите."
         ),
     },
+    "karvonBot": {
+        "uz": (
+            "🐫 <b>Karvon yo'li</b>\n\n"
+            "Ipak yo'li bo'ylab sarguzasht: to'siqlarni yechib, Toshkentdan Xivaga yeting!"
+        ),
+        "ru": (
+            "🐫 <b>Путь каравана</b>\n\n"
+            "Приключение по Шёлковому пути: решайте препятствия и дойдите из Ташкента до Хивы!"
+        ),
+    },
     #: Majburiy kanal a'zoligi (`KANAL_MAJBURIY`).
     "kanalShart": {
         "uz": (

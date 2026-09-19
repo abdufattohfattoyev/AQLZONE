@@ -73,7 +73,7 @@ function bolimOl(): Bolim {
   try { return localStorage.getItem(BOLIM_KALIT) === "jamoaviy" ? "jamoaviy" : "yakka"; } catch { return "yakka"; }
 }
 
-export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onShaharcha, onJadval, onDuel, onJamoa }: {
+export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onShaharcha, onKarvon, onJadval, onDuel, onJamoa }: {
   onBack: () => void;
   onOyin: (id: string) => void;
   onMaydon: () => void;
@@ -81,6 +81,8 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onShaharcha, on
   onKunlikSon: () => void;
   /** Tulki shaharchasi — tangaga bino, kunlik hosil. */
   onShaharcha: () => void;
+  /** Karvon yo'li — Ipak yo'li bo'ylab sarguzasht. */
+  onKarvon: () => void;
   /** Daraja va haftalik jadval. */
   onJadval: () => void;
   /** Do'st bilan bellashuv — jamoaviy bo'limda. */
@@ -154,6 +156,22 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onShaharcha, on
               izoh={kunlikSonBugun() ? t("kunlikSonYechildi") : t("kunlikSonIzoh")}
               yorliq="" />
           </div>
+
+          {/* Karvon yo'li — eng katta yakka o'yin: xarita, to'siqlar, bozor. */}
+          <button type="button" onClick={onKarvon} data-tahlil="O'yinlar: karvon yo'li"
+            className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay p-3 text-left text-white shadow-clay"
+            style={{ background: "linear-gradient(120deg,#2B1D14,#6B3A1C 55%,#D96528)" }}>
+            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/15">
+              <EmojiBelgi e="🐫" olcham={28} jonli />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
+                {t("karvonTitul")}
+                <span className="rounded-full bg-[#E5A93C] px-2 py-0.5 text-[10px] text-[#2A1B06]">{t("karvonYangi")}</span>
+              </span>
+              <span className="block text-[11.5px] leading-snug opacity-90">{t("karvonIzoh")}</span>
+            </span>
+          </button>
 
           {/* Tulki shaharchasi — tangani sarflaydigan joy va har kuni qaytish sababi. */}
           <button type="button" onClick={onShaharcha} data-tahlil="O'yinlar: shaharcha"

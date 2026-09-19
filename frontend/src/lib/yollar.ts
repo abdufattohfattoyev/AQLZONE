@@ -109,6 +109,9 @@ export const yolKunlikSon = () => "/oyinlar/kunlik-son";
 /** Tulki shaharchasi; `pid` bilan — sherikning shaharchasiga mehmonga. */
 export const yolShaharcha = (pid?: number) => (pid ? `/oyinlar/shaharcha/${pid}` : "/oyinlar/shaharcha");
 
+/** Karvon yo'li — Ipak yo'li bo'ylab sarguzasht. */
+export const yolKarvon = () => "/oyinlar/karvon";
+
 /** Jamoaviy o'yinlar: daraja va haftalik jadval. */
 export const yolJadval = () => "/oyinlar/jadval";
 

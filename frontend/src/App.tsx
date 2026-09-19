@@ -45,6 +45,7 @@ const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel 
 const DuelQabul = lazy(() => import("./screens/Duel").then((m) => ({ default: m.DuelQabul })));
 const JamoaOchish = lazy(() => import("./screens/Xona").then((m) => ({ default: m.JamoaOchish })));
 const Shaharcha = lazy(() => import("./screens/Shaharcha").then((m) => ({ default: m.Shaharcha })));
+const KarvonYoli = lazy(() => import("./screens/KarvonYoli").then((m) => ({ default: m.KarvonYoli })));
 const Jadval = lazy(() => import("./screens/Jadval").then((m) => ({ default: m.Jadval })));
 const XonaSahifa = lazy(() => import("./screens/Xona").then((m) => ({ default: m.XonaSahifa })));
 const OyinDaraja = lazy(() => import("./screens/OyinDaraja").then((m) => ({ default: m.OyinDaraja })));
@@ -76,7 +77,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolShaharcha, yolJadval, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
+  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolBosh, yolTestSinf, yolToplam,
 } from "./lib/yollar";
@@ -155,6 +156,7 @@ function Yollar() {
       <Route path="/oyinlar/shaharcha" element={<ShaharchaSahifasi />} />
       <Route path="/oyinlar/shaharcha/:pid" element={<ShaharchaSahifasi />} />
       <Route path="/oyinlar/jadval" element={<JadvalSahifasi />} />
+      <Route path="/oyinlar/karvon" element={<KarvonSahifasi />} />
       <Route path="/oyinlar/duel" element={<DuelSahifasi />} />
       <Route path="/duel/:kod" element={<DuelQabulSahifasi />} />
       {/* Jamoaviy o'yinlar. `jamoa/<oyin>` `:id/:daraja` dan OLDIN turadi. */}
@@ -606,6 +608,7 @@ function OyinlarSahifasi() {
       onMaydon={() => nav(yolMaydon())}
       onKunlikSon={() => nav(yolKunlikSon())}
       onShaharcha={() => nav(yolShaharcha())}
+      onKarvon={() => nav(yolKarvon())}
       onJadval={() => nav(yolJadval())}
       onDuel={() => nav(yolDuel())}
       onJamoa={(oyin) => nav(yolJamoa(oyin))}
@@ -644,6 +647,11 @@ function ShaharchaSahifasi() {
   return <Shaharcha key={pid ?? "men"} pid={n !== undefined && Number.isFinite(n) ? n : undefined}
     onChiq={() => nav(pid ? yolShaharcha() : yolOyinlar())}
     onMehmon={(p) => nav(yolShaharcha(p))} />;
+}
+
+function KarvonSahifasi() {
+  const nav = useNavigate();
+  return <KarvonYoli onChiq={() => nav(yolOyinlar())} />;
 }
 
 function JadvalSahifasi() {

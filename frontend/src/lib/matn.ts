@@ -2001,6 +2001,9 @@ const S = {
   tjUlashOddiy: ["🎲 {oyin} o'ynadim: +{n} ochko. Sen ham qo'shil!", "🎲 Сыграл в «{oyin}»: +{n} очков. Присоединяйся!"],
 
   /* ---------------- tulki shaharchasi ---------------- */
+  karvonTitul: ["Karvon yo'li", "Путь каравана"],
+  karvonIzoh: ["Ipak yo'li bo'ylab sarguzasht: to'siqlarni yechib Xivaga yeting", "Приключение по Шёлковому пути: решайте препятствия и дойдите до Хивы"],
+  karvonYangi: ["Yangi", "Новое"],
   shTitul: ["Tulki shaharchasi", "Городок Лиса"],
   shIzoh: ["Bino qur, har kuni hosil yig'", "Строй дома, собирай урожай"],
   shHosilBor: ["Hosil tayyor!", "Урожай готов!"],
