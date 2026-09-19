@@ -1943,6 +1943,14 @@ class KanalTest(TestCase):
         with patch.object(K, "_sorov", self._javob({"ok": False, "error_code": 400})):
             self.assertFalse(K.korsatilsinmi(self.pupil))
 
+    def test_kanalga_hech_kirmagan_azo_emas(self):
+        """Telegram bunday odam uchun 400 PARTICIPANT_ID_INVALID qaytaradi — bu "a'zo emas"."""
+        from core import kanal as K
+        javob = {"ok": False, "error_code": 400, "description": "Bad Request: PARTICIPANT_ID_INVALID"}
+        with patch.object(K, "_sorov", self._javob(javob)):
+            self.assertIs(K.azo_mi("777"), False)
+            self.assertTrue(K.korsatilsinmi(self.pupil))
+
     @override_settings(KANAL="")
     def test_kanal_sozlanmagan(self):
         from core import kanal as K

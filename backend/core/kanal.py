@@ -45,6 +45,12 @@ KUTISH = 4
 AZO = {"creator", "administrator", "member"}
 
 
+def _hech_kirmagan(tavsif: str) -> bool:
+    """Telegram xatosi "bu odam kanalda hech qachon bo'lmagan" degani."""
+    t = tavsif.upper()
+    return "PARTICIPANT_ID_INVALID" in t or "USER NOT FOUND" in t
+
+
 def kanal_nomi() -> str:
     """`@nom` ko'rinishida. Sozlanmagan bo'lsa bo'sh satr."""
     nom = (getattr(settings, "KANAL", "") or "").strip()
@@ -73,12 +79,19 @@ def _sorov(usul: str, **payload) -> dict:
         with urllib.request.urlopen(so_rov, timeout=KUTISH) as r:
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
+        try:
+            tavsif = str(json.loads(e.read()).get("description") or "")
+        except Exception:                        # noqa: BLE001
+            tavsif = ""
+        if _hech_kirmagan(tavsif):
+            # Kanalga umuman kirmagan odam — bu xato emas, javob.
+            return {"ok": False, "error_code": e.code, "description": tavsif}
         # Eng ko'p uchraydigan sabab — bot kanalda ADMIN emas. Buni
         # ko'rinadigan qilib yozamiz: aks holda imkoniyat jimgina
         # ishlamay turadi va nega ekani ma'lum bo'lmaydi.
         log.warning(
-            "kanal: %s → HTTP %s. Bot @%s kanalida administrator ekanini tekshiring.",
-            usul, e.code, kanal_nomi().lstrip("@"),
+            "kanal: %s → HTTP %s %s. Bot @%s kanalida administrator ekanini tekshiring.",
+            usul, e.code, tavsif, kanal_nomi().lstrip("@"),
         )
     except Exception as e:                       # tarmoq uzilishi va h.k.
         log.warning("kanal: %s → %s", usul, e)
@@ -99,6 +112,12 @@ def azo_mi(tg_id: str) -> bool | None:
 
     javob = _sorov("getChatMember", chat_id=nom, user_id=int(tg_id))
     if not javob.get("ok"):
+        # Kanalga hech qachon kirmagan odam uchun Telegram "a'zo emas"
+        # deb emas, 400 PARTICIPANT_ID_INVALID bilan javob beradi. Buni
+        # "bilib bo'lmadi" deb o'tkazsak, aynan qo'shilmaganlar tekshiruvdan
+        # sirg'alib o'tib ketardi (serverda ular yarmidan ko'p chiqdi).
+        if _hech_kirmagan(str(javob.get("description") or "")):
+            return False
         return None
 
     natija = javob.get("result") or {}
