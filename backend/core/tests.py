@@ -7189,3 +7189,29 @@ class TajribaShaharchaTest(TestCase):
         self.assertEqual(self.post(f"/api/v1/shaharcha/{b_id}/yoqdi", {}, self.a).json()["yurak"], 1)
         q = self.client.get("/api/v1/shaharcha", **self.a).json()["qoshnilar"]
         self.assertEqual([(x["profil"], x["yoqdim"]) for x in q], [(b_id, True)])
+
+
+class KarvonRoyxatTest(TestCase):
+    """Karvon yo'li — kim qaysi bekatda; taxallus, chegara, tartib."""
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def test_holat_va_royxat(self):
+        a, b = self.kir("dev-karvon-aaaa1111bbbb"), self.kir("dev-karvon-cccc2222dddd")
+        self.client.post("/api/v1/karvon/holat", {"bekat": 3, "yulduz": 8, "daraja": 2},
+                         content_type="application/json", **a)
+        self.client.post("/api/v1/karvon/holat", {"bekat": 99, "yulduz": -5, "daraja": 7},
+                         content_type="application/json", **b)
+        r = self.client.get("/api/v1/karvon/royxat", **a).json()
+        self.assertEqual(r["jami"], 2)
+        self.assertEqual(r["onlayn"], 2)
+        # Chegara: 99 → 9, -5 → 0; eng uzoqqa borgan birinchi.
+        self.assertEqual([(q["bekat"], q["yulduz"]) for q in r["qatorlar"]], [(9, 0), (3, 8)])
+        self.assertTrue(r["qatorlar"][1]["men"])
+        self.assertEqual(r["men"]["bekat"], 3)
+
+    def test_tokensiz(self):
+        self.assertEqual(self.client.get("/api/v1/karvon/royxat").status_code, 401)

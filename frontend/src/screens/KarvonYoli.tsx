@@ -10,15 +10,19 @@
  *     aka-uka bitta telefonda bir-birining karvonini surib yubormaydi),
  *     ism va ulashish uchun bot nomi;
  *   - o'yindan kelgan xabarlar: "chiqish" va "ulashish" (Telegram
- *     ichida havolani ilova ochishi kerak — ramka o'zi ocholmaydi).
+ *     ichida havolani ilova ochishi kerak — ramka o'zi ocholmaydi);
+ *   - "kim qayerda": o'yin joriy bekatini yuboradi, ilova uni serverga
+ *     yozadi va hammaga ochiq ro'yxatni qaytaradi (avatar belgisi bilan).
  */
-import { useEffect, useMemo, useState } from "react";
-import { botNomi, joriyProfil } from "../lib/api";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { botNomi, joriyProfil, karvonHolat, karvonRoyxat } from "../lib/api";
+import { avatarBelgi } from "../lib/dokon";
 import { havolaniOch, tgWebApp, useOrqaga } from "../lib/qobiq";
 
 export function KarvonYoli({ onChiq }: { onChiq: () => void }) {
   useOrqaga(onChiq);
   const [bot, setBot] = useState<string | null>(null);
+  const ramka = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     let bekor = false;
@@ -32,6 +36,14 @@ export function KarvonYoli({ onChiq }: { onChiq: () => void }) {
       if (e.data.tur === "chiqish") onChiq();
       else if (e.data.tur === "ulash" && typeof e.data.url === "string"
                && e.data.url.startsWith("https://t.me/share/url")) havolaniOch(e.data.url);
+      else if (e.data.tur === "holat") {
+        void karvonHolat(Number(e.data.bekat) || 0, Number(e.data.yulduz) || 0, Number(e.data.daraja) || 2).catch(() => {});
+      } else if (e.data.tur === "royxat-sora") {
+        karvonRoyxat().then((r) => {
+          const qatorlar = r.qatorlar.map((q) => ({ ...q, belgi: avatarBelgi(q.avatar) }));
+          ramka.current?.contentWindow?.postMessage({ karvon: 1, tur: "royxat", ...r, qatorlar }, location.origin);
+        }).catch(() => {});
+      }
     };
     window.addEventListener("message", qabul);
     return () => window.removeEventListener("message", qabul);
@@ -48,6 +60,7 @@ export function KarvonYoli({ onChiq }: { onChiq: () => void }) {
     <div className="fixed inset-0 z-[60] bg-[#120F0D]">
       {manzil && (
         <iframe
+          ref={ramka}
           src={manzil}
           title="Karvon yo'li"
           className="block h-full w-full border-0"

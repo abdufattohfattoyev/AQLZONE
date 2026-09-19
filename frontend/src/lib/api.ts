@@ -1423,6 +1423,13 @@ export const shaharchaHosil = (javob: number) => xonaSorov<ShaharchaHolat>("/api
 export const shaharchaMehmon = (pid: number) => xonaSorov<ShaharchaHolat>(`/api/v1/shaharcha/${pid}`);
 export const shaharchaYoqdi = (pid: number) => xonaSorov<ShaharchaHolat>(`/api/v1/shaharcha/${pid}/yoqdi`, {});
 export const xonaChiq = (kod: string) => xonaSorov<{ chiqdi: boolean }>(xu(kod, "/chiq"), {});
+
+/* ================= KARVON YO'LI — kim qaysi bekatda ================= */
+export interface KarvonQator { id: number; ism: string; avatar: string; bekat: number; yulduz: number; daraja: number; onlayn: boolean; men: boolean }
+export interface KarvonRoyxat { qatorlar: KarvonQator[]; jami: number; onlayn: number; men: { joy?: number; bekat: number; yulduz: number } | null }
+export const karvonHolat = (bekat: number, yulduz: number, daraja: number) =>
+  xonaSorov<{ ok: boolean }>("/api/v1/karvon/holat", { bekat, yulduz, daraja });
+export const karvonRoyxat = () => xonaSorov<KarvonRoyxat>("/api/v1/karvon/royxat");
 export async function kartaKolleksiya(): Promise<Record<string, number>> {
   try {
     return (await xonaSorov<{ kolleksiya: Record<string, number> }>("/api/v1/xona/kolleksiya")).kolleksiya;

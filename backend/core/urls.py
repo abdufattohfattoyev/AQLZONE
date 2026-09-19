@@ -4,6 +4,7 @@ from django.urls import path
 from . import views
 from . import xona_views
 from . import shaharcha_views
+from . import karvon_views
 
 urlpatterns = [
     path("auth/telegram", views.auth_telegram, name="auth-telegram"),
@@ -50,6 +51,9 @@ urlpatterns = [
     path("duel/sozlama", views.duel_sozlama, name="duel-sozlama"),
     # Jamoaviy o'yin xonalari: Son kartalari, Hisob Royale, Son kodlari.
     # Tulki shaharchasi.
+    # Karvon yo'li — kim qaysi bekatda (hammaga ochiq ro'yxat).
+    path("karvon/holat", karvon_views.karvon_holat, name="karvon-holat"),
+    path("karvon/royxat", karvon_views.karvon_royxat, name="karvon-royxat"),
     path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),
     path("shaharcha/qur", shaharcha_views.shaharcha_qur, name="shaharcha-qur"),
     path("shaharcha/oshir", shaharcha_views.shaharcha_oshir, name="shaharcha-oshir"),

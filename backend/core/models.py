@@ -1114,6 +1114,26 @@ class ShaharchaYoqdi(models.Model):
         constraints = [models.UniqueConstraint(fields=["kimdan", "kimga", "kun"], name="shaharcha_yoqdi_kuniga")]
 
 
+class KarvonHolat(models.Model):
+    """
+    Karvon yo'li — o'yinchining joriy joyi (hammaga ochiq ro'yxat uchun).
+
+    O'yin holatining o'zi qurilmada turadi; server faqat "kim qayerda"
+    ekanini biladi: bekat, yulduz va oxirgi faollik. Ro'yxatda haqiqiy
+    ism emas, taxallus ko'rsatiladi (`duel.korinadigan_ism`).
+    """
+
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="karvon")
+    bekat = models.SmallIntegerField(default=0)
+    yulduz = models.SmallIntegerField(default=0)
+    daraja = models.SmallIntegerField(default=2)
+    faol_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "karvon_holat"
+        indexes = [models.Index(fields=["-bekat", "-yulduz"])]
+
+
 class KartaKolleksiya(models.Model):
     """
     Son kartalari kolleksiyasi — g'alabadan keladigan maxsus kartalar.
