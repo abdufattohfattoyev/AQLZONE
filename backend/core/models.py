@@ -1128,6 +1128,10 @@ class KarvonHolat(models.Model):
     yulduz = models.SmallIntegerField(default=0)
     daraja = models.SmallIntegerField(default=2)
     faol_at = models.DateTimeField(default=timezone.now)
+    #: Har bekat yulduzi — {"0": 3, "1": 2}. Faqat server yozadi (`core/karvon.py`).
+    yulduzlar = models.JSONField(default=dict, blank=True)
+    #: Hozirgi bekat: qo'l, to'siq va uning javobi. Javob mijozga yuborilmaydi.
+    joriy = models.JSONField(null=True, blank=True)
 
     class Meta:
         db_table = "karvon_holat"

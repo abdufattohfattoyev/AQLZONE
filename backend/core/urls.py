@@ -54,6 +54,13 @@ urlpatterns = [
     # Karvon yo'li — kim qaysi bekatda (hammaga ochiq ro'yxat).
     path("karvon/holat", karvon_views.karvon_holat, name="karvon-holat"),
     path("karvon/royxat", karvon_views.karvon_royxat, name="karvon-royxat"),
+    # Javobni server tekshiradi — bekat va yulduzni faqat server yozadi.
+    path("karvon/men", karvon_views.karvon_men, name="karvon-men"),
+    path("karvon/bekat", karvon_views.karvon_bekat, name="karvon-bekat"),
+    path("karvon/javob", karvon_views.karvon_javob, name="karvon-javob"),
+    path("karvon/otkaz", karvon_views.karvon_otkaz, name="karvon-otkaz"),
+    path("karvon/maslahat", karvon_views.karvon_maslahat, name="karvon-maslahat"),
+    path("karvon/qayta", karvon_views.karvon_qayta, name="karvon-qayta"),
     path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),
     path("shaharcha/qur", shaharcha_views.shaharcha_qur, name="shaharcha-qur"),
     path("shaharcha/oshir", shaharcha_views.shaharcha_oshir, name="shaharcha-oshir"),

@@ -1430,6 +1430,9 @@ export interface KarvonRoyxat { qatorlar: KarvonQator[]; jami: number; onlayn: n
 export const karvonHolat = (bekat: number, yulduz: number, daraja: number) =>
   xonaSorov<{ ok: boolean }>("/api/v1/karvon/holat", { bekat, yulduz, daraja });
 export const karvonRoyxat = () => xonaSorov<KarvonRoyxat>("/api/v1/karvon/royxat");
+/** O'yin ichidan kelgan so'rov — faqat `karvon/` yo'llari (javobni server tekshiradi). */
+export const karvonSorov = (yol: string, body?: unknown) =>
+  xonaSorov<unknown>(`/api/v1/karvon/${yol}`, body);
 export async function kartaKolleksiya(): Promise<Record<string, number>> {
   try {
     return (await xonaSorov<{ kolleksiya: Record<string, number> }>("/api/v1/xona/kolleksiya")).kolleksiya;

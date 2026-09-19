@@ -15,9 +15,12 @@
  *     yozadi va hammaga ochiq ro'yxatni qaytaradi (avatar belgisi bilan).
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { botNomi, joriyProfil, karvonHolat, karvonRoyxat } from "../lib/api";
+import { botNomi, joriyProfil, karvonHolat, karvonRoyxat, karvonSorov } from "../lib/api";
 import { avatarBelgi } from "../lib/dokon";
 import { havolaniOch, tgWebApp, useOrqaga } from "../lib/qobiq";
+
+/** O'yin so'rashi mumkin bo'lgan yo'llar. GET — `men`, qolgani POST. */
+const RUXSAT = new Set(["men", "bekat", "javob", "otkaz", "maslahat", "qayta"]);
 
 export function KarvonYoli({ onChiq }: { onChiq: () => void }) {
   useOrqaga(onChiq);
@@ -38,6 +41,14 @@ export function KarvonYoli({ onChiq }: { onChiq: () => void }) {
                && e.data.url.startsWith("https://t.me/share/url")) havolaniOch(e.data.url);
       else if (e.data.tur === "holat") {
         void karvonHolat(Number(e.data.bekat) || 0, Number(e.data.yulduz) || 0, Number(e.data.daraja) || 2).catch(() => {});
+      } else if (e.data.tur === "api" && typeof e.data.yol === "string" && RUXSAT.has(e.data.yol)) {
+        // To'siq, javob, maslahat — o'yin tokenni bilmaydi, so'rovni ilova yuboradi.
+        const id = e.data.id;
+        const javob = (xabar: Record<string, unknown>) =>
+          ramka.current?.contentWindow?.postMessage({ karvon: 1, tur: "api-javob", id, ...xabar }, location.origin);
+        karvonSorov(e.data.yol, e.data.body)
+          .then((data) => javob({ ok: true, data }))
+          .catch((x: { sabab?: string }) => javob({ ok: false, sabab: x?.sabab || "aloqa" }));
       } else if (e.data.tur === "royxat-sora") {
         karvonRoyxat().then((r) => {
           const qatorlar = r.qatorlar.map((q) => ({ ...q, belgi: avatarBelgi(q.avatar) }));

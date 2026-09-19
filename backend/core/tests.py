@@ -7192,26 +7192,147 @@ class TajribaShaharchaTest(TestCase):
 
 
 class KarvonRoyxatTest(TestCase):
-    """Karvon yo'li — kim qaysi bekatda; taxallus, chegara, tartib."""
+    """Karvon yo'li — kim qaysi bekatda; bekatni faqat server yozadi."""
 
     def kir(self, device: str) -> dict:
         r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
                              content_type="application/json")
         return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
 
-    def test_holat_va_royxat(self):
-        a, b = self.kir("dev-karvon-aaaa1111bbbb"), self.kir("dev-karvon-cccc2222dddd")
-        self.client.post("/api/v1/karvon/holat", {"bekat": 3, "yulduz": 8, "daraja": 2},
-                         content_type="application/json", **a)
-        self.client.post("/api/v1/karvon/holat", {"bekat": 99, "yulduz": -5, "daraja": 7},
-                         content_type="application/json", **b)
+    def post(self, url, data, kim):
+        return self.client.post(url, data, content_type="application/json", **kim)
+
+    def test_holat_bekatni_qabul_qilmaydi(self):
+        """O'yin o'zini Xivaga "yetkazolmaydi": /holat faqat faollik belgisi."""
+        a = self.kir("dev-karvon-aaaa1111bbbb")
+        self.post("/api/v1/karvon/holat", {"bekat": 9, "yulduz": 27, "daraja": 3}, a)
         r = self.client.get("/api/v1/karvon/royxat", **a).json()
-        self.assertEqual(r["jami"], 2)
-        self.assertEqual(r["onlayn"], 2)
-        # Chegara: 99 → 9, -5 → 0; eng uzoqqa borgan birinchi.
-        self.assertEqual([(q["bekat"], q["yulduz"]) for q in r["qatorlar"]], [(9, 0), (3, 8)])
+        self.assertEqual((r["qatorlar"][0]["bekat"], r["qatorlar"][0]["yulduz"]), (0, 0))
+        self.assertEqual(r["onlayn"], 1)
+
+    def test_royxat_tartibi(self):
+        a, b = self.kir("dev-karvon-aaaa1111bbbb"), self.kir("dev-karvon-cccc2222dddd")
+        self.post("/api/v1/karvon/holat", {"daraja": 2}, a)
+        self.post("/api/v1/karvon/holat", {"daraja": 2}, b)
+        MDL.KarvonHolat.objects.filter(pk=MDL.KarvonHolat.objects.order_by("pk").last().pk).update(bekat=5, yulduz=12)
+        r = self.client.get("/api/v1/karvon/royxat", **a).json()
+        self.assertEqual([q["bekat"] for q in r["qatorlar"]], [5, 0])
         self.assertTrue(r["qatorlar"][1]["men"])
-        self.assertEqual(r["men"]["bekat"], 3)
 
     def test_tokensiz(self):
         self.assertEqual(self.client.get("/api/v1/karvon/royxat").status_code, 401)
+
+
+class KarvonServerTest(TestCase):
+    """To'siqni server yaratadi, javobni server tekshiradi."""
+
+    def kir(self, device="dev-karvon-server-0001") -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def post(self, url, data, kim):
+        return self.client.post(url, data, content_type="application/json", **kim)
+
+    def joriy(self):
+        return MDL.KarvonHolat.objects.get().joriy
+
+    def togri_javob(self):
+        v = self.joriy()["vazifa"]
+        if v["tur"] in ("xotira", "yol"):
+            return {"tanlov": v["maqsad"]}
+        from core import karvon as KV
+        qol = {k["id"]: k["v"] for k in self.joriy()["qol"]}
+        ids = v["yechim"]
+        if len(ids) == 1:
+            return {"tokens": ids}
+        # Yechimdagi toshlar uchun amallarni qidiramiz (ko'pi bilan 3 tosh).
+        import itertools
+        amallar = ["+", "−", "×", "÷"] if v["tur"] != "boron" else ["+"]
+        for ops in itertools.product(amallar, repeat=len(ids) - 1):
+            a = [qol[ids[0]]]
+            t = [ids[0]]
+            for o, i in zip(ops, ids[1:]):
+                a += [o, qol[i]]
+                t += [o, i]
+            if KV.hisobla(a) == v["maqsad"]:
+                return {"tokens": t}
+        raise AssertionError("yechim topilmadi")
+
+    def test_har_toiqning_yechimi_bor(self):
+        """Uchala darajada 600 ta to'siq — hammasi yechiladi."""
+        from core import karvon as KV
+        import random as R
+        rng = R.Random(7)
+        for daraja in (1, 2, 3):
+            for n in range(200):
+                j = {"daraja": daraja, "tosiq": n % 3, "qol": [], "id_son": 0, "soda": False}
+                j["qol"] = [KV._karta(j, rng) for _ in range(5)]
+                v = KV._vazifa(j, n % 9, rng)
+                if v["tur"] in ("xotira", "yol"):
+                    continue
+                qol = {k["id"]: k["v"] for k in j["qol"]}
+                self.assertTrue(all(i in qol for i in v["yechim"]), v)
+                if v["tur"] in ("koprik", "tarozi", "ketma"):
+                    self.assertEqual(qol[v["yechim"][0]], v["maqsad"], v)
+                if v["tur"] == "ketma":
+                    self.assertTrue(all(x > 0 for x in v["variant"]["qator"]), v)
+                if v["tur"] == "tarozi":
+                    ch, ong = v["variant"]["chap"], v["variant"]["ong"]
+                    self.assertEqual(sum(ch), ong + v["maqsad"])
+                    self.assertTrue(min(ch) > 0)
+
+    def test_javob_kaliti_chiqmaydi(self):
+        from core import karvon as KV
+        for tur, v in [("koprik", {"tur": "koprik", "maqsad": 6, "yechim": [1], "yoz": "? × 3 = 18"}),
+                       ("tarozi", {"tur": "tarozi", "maqsad": 8, "yechim": [2], "variant": {"chap": [7, 5], "ong": 4}}),
+                       ("ketma", {"tur": "ketma", "maqsad": 16, "yechim": [3], "variant": {"qator": [4, 7, 10, 13]}, "qadam": 3}),
+                       ("yol", {"tur": "yol", "maqsad": 2, "variant": {"yollar": []}})]:
+            o = KV._ochiq(v)
+            self.assertNotIn("maqsad", o, tur)
+            self.assertNotIn("yechim", o, tur)
+            self.assertNotIn("qadam", o, tur)
+
+    def test_bekat_oqimi_va_soxta_javob(self):
+        h = self.kir()
+        r = self.post("/api/v1/karvon/bekat", {"daraja": 2, "qol": 5}, h).json()
+        self.assertEqual((r["bekat"], r["tosiq"]), (0, 0))
+        # Qayta so'rasa — o'sha to'siq (to'xtagan joyidan).
+        self.assertEqual(self.post("/api/v1/karvon/bekat", {"daraja": 2}, h).json()["vazifa"], r["vazifa"])
+        # Qo'lda yo'q tosh — rad.
+        if r["vazifa"]["tur"] not in ("xotira", "yol"):
+            self.assertEqual(self.post("/api/v1/karvon/javob", {"tokens": [999]}, h).status_code, 400)
+        yulduzlar = []
+        for _ in range(3):
+            j = self.post("/api/v1/karvon/javob", self.togri_javob(), h).json()
+            self.assertTrue(j["togri"], j)
+            yulduzlar.append(j["yulduz"])
+        self.assertEqual(j["bekat_tugadi"]["yangi_bekat"], 1)
+        m = self.client.get("/api/v1/karvon/men", **h).json()
+        self.assertEqual((m["bekat"], m["yulduz"], m["yulduzlar"]), (1, 3, {"0": 3}))
+
+    def test_xato_yulduzni_kamaytiradi(self):
+        h = self.kir()
+        self.post("/api/v1/karvon/bekat", {"daraja": 2}, h)
+        v = self.joriy()["vazifa"]
+        notogri = {"tanlov": (v["maqsad"] + 1) % 3} if v["tur"] in ("xotira", "yol") else None
+        if notogri is None:
+            qol = self.joriy()["qol"]
+            k = next(k for k in qol if k["v"] != v["maqsad"])
+            notogri = {"tokens": [k["id"]]}
+        j = self.post("/api/v1/karvon/javob", notogri, h).json()
+        self.assertFalse(j["togri"])
+        self.assertEqual(self.post("/api/v1/karvon/javob", self.togri_javob(), h).json()["yulduz"], 2)
+
+    def test_otkaz_cheklangan(self):
+        h = self.kir()
+        self.post("/api/v1/karvon/bekat", {"daraja": 1}, h)
+        self.assertEqual(self.post("/api/v1/karvon/otkaz", {}, h).json()["yulduz"], 0)
+        self.post("/api/v1/karvon/otkaz", {}, h)
+        self.assertEqual(self.post("/api/v1/karvon/otkaz", {}, h).status_code, 409)
+
+    def test_orgatish_ikki_tosh(self):
+        h = self.kir()
+        r = self.post("/api/v1/karvon/bekat", {"daraja": 1, "yetak": True}, h).json()
+        self.assertTrue(r["vazifa"]["yetak"])
+        self.assertEqual(len(r["vazifa"]["yechim"]), 2)

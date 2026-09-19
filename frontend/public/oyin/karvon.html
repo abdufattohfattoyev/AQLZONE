@@ -1082,9 +1082,11 @@ function yolTahlili(){
      '<button class="tugma arvoh" data-amal="modal-yop">Keyinroq</button>'));
 }
 function bekatBosh(){
-  J={yangiSahna:true,tezlik:12,yolda:false,tosiq:0,qol:[],tokens:[],xato:0,yulduz:[],tanga0:S.tanga,maslahat:null,amal:null,tanlov:null};
-  for(let i=0;i<S.qol;i++)J.qol.push(yangiKarta());
-  ekran="oyin";keyingi();
+  if(J&&J.yuklanmoqda)return;
+  J={yangiSahna:true,tezlik:12,yolda:false,tosiq:0,qol:[],tokens:[],xato:0,yulduz:[],tanga0:S.tanga,maslahat:null,amal:null,tanlov:null,yuklanmoqda:true};
+  api("bekat",{daraja:S.daraja,qol:S.qol,soda:buffFaol("donishmand"),sahro:buffFaol("sahro"),yetak:!S.orgatilgan.tosh})
+    .then(r=>{J.yuklanmoqda=false;S.bekat=r.bekat;saqla();vazifaQoy(r);ekran="oyin";oyinChiz();setTimeout(darsniKorsat,1700)})
+    .catch(x=>{J.yuklanmoqda=false;modal('<h2>Boshlab bo\'lmadi</h2><p class="izohcha">'+aloqaXato(x)+'</p><button class="tugma" data-amal="modal-yop">Yopish</button>')});
 }
 function keyingi(){vazifa();J.tokens=[];J.xato=0;J.kechirildi=false;J.maslahat=null;J.amal=null;J.tanlov=null;oyinChiz();setTimeout(darsniKorsat,1700)}
 function joriy(){
@@ -1203,19 +1205,28 @@ function eslat(m){const e=qobiq.querySelector(".tekshiruv");if(e){e.className="t
 function amalBos(o){if(J.tur!=="tosh")return;J.amal=J.amal===o?null:o;oyinChiz()}
 function tanlovBos(i){J.tanlov=i;titra(8);oyinChiz()}
 function tekshir(){
-  if(J.yolda)return;
+  if(J.yolda||J.kutish)return;
+  let body;
   if(J.tur==="xotira"||J.tur==="yol"){
     if(J.tanlov==null)return eslat("Avval variantni tanlang");
-    if(J.tanlov===J.maqsad)return otdi(3-Math.min(J.xato,2));
+    body={tanlov:J.tanlov};
   }else{
     if(!J.tokens.length)return eslat("Avval raqam toshlarini tanlang");
-    const q=joriy();
-    if(q==null)return eslat("Ifodani oxirigacha tuzing");
-    if(q===J.maqsad)return otdi(3-Math.min(J.xato,2));
+    if(joriy()==null)return eslat("Ifodani oxirigacha tuzing");
+    body={tokens:J.tokens.map(t=>t.n?t.id:t.o)};
   }
-  if(buffFaol("sahro")&&!J.kechirildi){J.kechirildi=true;
+  J.kutish=true;
+  api("javob",body).then(r=>{
+    J.kutish=false;
+    if(r.togri){J.serverJavob=r;return otdi(r.yulduz)}
+    notogri(r);
+  }).catch(x=>{J.kutish=false;eslat(aloqaXato(x))});
+}
+function notogri(r){
+  if(r.qadam!=null&&J.variant)J.variant.qadam=r.qadam;
+  if(r.kechirildi){J.kechirildi=true;
     setTimeout(()=>{const e=qobiq.querySelector(".tekshiruv span:last-child");if(e)e.textContent+=" \u2014 sahro himoyasi bu xatoni kechirdi"},30)}
-  else J.xato++;
+  else J.xato=r.xato;
   titra([30,60,30]);ovoz("xato");
   if(J.tur==="qaroqchi"&&J.xato===2&&!J.jarima){
     J.jarima=true;
@@ -1291,10 +1302,7 @@ function yolgaTush(ishl){
   if(oxirgi){setTimeout(()=>{J.tosiq++;J.yolda=false;bekatTugadi()},vaqt);return}
   /* keyingi to'siq uzoqdan yaqinlashadi */
   setTimeout(()=>{
-    J.tosiq++;
-    J.qol=J.qol.filter(k=>!ishl.has(k.id));
-    while(J.qol.length<S.qol)J.qol.push(yangiKarta());
-    vazifa();J.tokens=[];J.xato=0;J.kechirildi=false;J.maslahat=null;J.amal=null;J.tanlov=null;
+    vazifaQoy(J.serverJavob.keyingi);
     const karvon=sahna.querySelector("#karvonG");
     const vaqtinchalik=document.createElementNS("http://www.w3.org/2000/svg","g");
     vaqtinchalik.innerHTML=tosiqMarkup(J.tur,tun());
@@ -1309,21 +1317,29 @@ function yolgaTush(ishl){
     setTimeout(()=>{sahna.classList.add("toxta");tezlikYur()},250);
   },vaqt);
 }
-function suvBilan(){if(S.suv<1||J.yolda)return;S.suv--;saqla();hisobYangila();J.tokens=[];J.tanlov=J.maqsad;otdi(0)}
+function suvBilan(){
+  if(S.suv<1||J.yolda||J.kutish)return;
+  J.kutish=true;
+  api("otkaz",{}).then(r=>{J.kutish=false;S.suv--;saqla();hisobYangila();J.tokens=[];J.serverJavob=r;otdi(0)})
+    .catch(x=>{J.kutish=false;eslat(aloqaXato(x))});
+}
 function maslahat(){
   const narx=J.xato>=2?0:5;if(S.tanga<narx||J.tur==="xotira")return;
-  if(J.tur==="yol"){S.tanga-=narx;saqla();J.tanlov=J.maqsad;oyinChiz();hisobYangila();return}
-  const ishl=new Set(J.tokens.filter(t=>t.n).map(t=>t.id));
-  const id=(J.yechim||[]).find(i=>!ishl.has(i));
-  if(id==null)return eslat("Tanlaganlarni qaytaring va boshqatdan urinib ko'ring");
-  S.tanga-=narx;saqla();J.maslahat=id;oyinChiz();hisobYangila();
+  if(J.kutish)return;J.kutish=true;
+  api("maslahat",{ishlatilgan:J.tokens.filter(t=>t.n).map(t=>t.id)}).then(r=>{
+    J.kutish=false;
+    if(J.tur==="yol")J.tanlov=r.tanlov;
+    else{if(r.karta==null)return eslat("Tanlaganlarni qaytaring va boshqatdan urinib ko'ring");J.maslahat=r.karta}
+    S.tanga-=narx;saqla();oyinChiz();hisobYangila();
+  }).catch(x=>{J.kutish=false;eslat(aloqaXato(x))});
 }
 function bekatTugadi(){
-  const o=Math.round(J.yulduz.reduce((a,b)=>a+b,0)/3);
+  const bt=J.serverJavob&&J.serverJavob.bekat_tugadi;
+  const o=bt?bt.yulduz:Math.round(J.yulduz.reduce((a,b)=>a+b,0)/3);
   S.yulduz[S.bekat]=o;const shaharga=S.bekat%3===2;
   const oldin=ulushim();
   const obh=obHavo(S.bekat);
-  S.bekat++;S.suv=Math.min(S.maxSuv,S.suv+1);
+  S.bekat=bt?bt.yangi_bekat:S.bekat+1;S.suv=Math.min(S.maxSuv,S.suv+1);
   if(obh.k==="issiq")S.suv=Math.max(0,S.suv-1);
   for(const k in S.buff)if(S.buff[k]>0)S.buff[k]--;
   kunlikQosh("bekat",1);
@@ -1641,6 +1657,38 @@ function qollanma(){
         '<p>'+d.qoida+'</p><p class="q-misol">'+d.misol+'</p></details>'}).join("")+'</div>'+
     '<button class="tugma arvoh" data-amal="modal-yop">Yopish</button>');
 }
+/* ================= SERVER BILAN ALOQA ================= */
+let rpcId=0;const rpcKut={};
+function api(yol,body){
+  return new Promise((ok,xato)=>{
+    if(!ICHKI)return xato({sabab:"ilova"});
+    const id=++rpcId;rpcKut[id]={ok,xato};
+    ota({tur:"api",id,yol,body});
+    setTimeout(()=>{if(rpcKut[id]){delete rpcKut[id];xato({sabab:"aloqa"})}},15000);
+  });
+}
+window.addEventListener("message",e=>{
+  if(e.origin!==location.origin||!e.data||e.data.karvon!==1||e.data.tur!=="api-javob")return;
+  const k=rpcKut[e.data.id];if(!k)return;delete rpcKut[e.data.id];
+  e.data.ok?k.ok(e.data.data):k.xato({sabab:e.data.sabab});
+});
+function aloqaXato(x){
+  const s=x&&x.sabab;
+  if(s==="ilova")return "O'yinni Aql Zone ilovasi ichida oching";
+  if(s==="otkaz_limit")return "Bu bekatda ikki marta aylanib o'tildi \u2014 bittasini yeching";
+  if(s==="tugagan")return "Ipak yo'li bosib o'tilgan \u2014 yangi mavsumni boshlang";
+  return "Aloqa yo'q \u2014 internetni tekshirib, qayta urinib ko'ring";
+}
+/* Server bergan to'siqni o'yin holatiga qo'yadi. */
+function vazifaQoy(r){
+  J.qol=r.qol;J.tosiq=r.tosiq;
+  const v=r.vazifa;
+  J.tur=v.tur;J.maqsad=v.maqsad;J.yoz=v.yoz;
+  J.variant=v.variant?JSON.parse(JSON.stringify(v.variant)):null;
+  J.yechim=v.yechim||[];J.yetak=!!v.yetak;J.darsKorildi=false;
+  J.tokens=[];J.xato=0;J.kechirildi=false;J.maslahat=null;J.amal=null;J.tanlov=null;J.jarima=false;
+  if(J.tur==="xotira"){J.variant.korsat=true;if(S.orgatilgan.xotira)xotiraYashir()}
+}
 /* ================= KARVONLAR — kim qaysi bekatda ================= */
 let ROYXAT=null,royxatVaqt=0,oxirgiYuborish="";
 function holatYubor(majbur){
@@ -1776,6 +1824,7 @@ qobiq.addEventListener("click",e=>{
     return;
   }
   if(a==="chiqish")return ota({tur:"chiqish"});
+  if(a==="qayta"&&ICHKI&&!b.dataset.tasdiq){b.dataset.tasdiq="1";api("qayta",{}).then(()=>b.click()).catch(x=>{delete b.dataset.tasdiq;modal('<h2>Bo\'lmadi</h2><p class="izohcha">'+aloqaXato(x)+'</p><button class="tugma" data-amal="modal-yop">Yopish</button>')});return}
   if(a==="qayta"){const d=S.daraja,i=S.ism,t=S.tag;S=boshlangich();S.daraja=d;S.ism=i;S.tag=t;saqla();return xarita()}
 });
 document.addEventListener("keydown",e=>{
@@ -1783,7 +1832,13 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Enter")tekshir();
   else if(["+","-","*","/"].includes(e.key))amalBos({"+":"+","-":"−","*":"×","/":"÷"}[e.key]);
 });
-korsat();holatYubor(true);setInterval(()=>holatYubor(true),120000);
+korsat();holatYubor(true);
+api("men").then(r=>{
+  const o=S.bekat;S.bekat=r.bekat;
+  for(const k in r.yulduzlar)S.yulduz[k]=r.yulduzlar[k];
+  for(const k in S.yulduz)if(+k>=r.bekat)delete S.yulduz[k];
+  saqla();if(o!==r.bekat&&ekran==="tab"&&!qobiq.querySelector(".qoplama"))korsat();
+}).catch(()=>{});setInterval(()=>holatYubor(true),120000);
 })();
 </script>
 </body>

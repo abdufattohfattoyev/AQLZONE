@@ -14,6 +14,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from . import karvon as KV
 from .duel import korinadigan_ism
 from .models import KarvonHolat
 from .views import _profil_tanla
@@ -33,15 +34,77 @@ def _son(x, eng_kam: int, eng_kop: int) -> int:
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def karvon_holat(request):
-    """O'yin joriy joyini yuboradi: {bekat, yulduz, daraja}."""
+    """
+    "O'yin ochiq" belgisi (daraja va faollik).
+
+    Bekat va yulduz bu yerdan QABUL QILINMAYDI — ularni faqat server
+    yozadi, javob tekshirilgandan keyin (`core/karvon.py`).
+    """
     profil = _profil_tanla(request)
-    KarvonHolat.objects.update_or_create(profile=profil, defaults={
-        "bekat": _son(request.data.get("bekat"), 0, 9),
-        "yulduz": _son(request.data.get("yulduz"), 0, 27),
-        "daraja": _son(request.data.get("daraja"), 1, 3),
-        "faol_at": timezone.now(),
-    })
+    h, _ = KarvonHolat.objects.get_or_create(profile=profil)
+    h.daraja = _son(request.data.get("daraja"), 1, 3)
+    h.faol_at = timezone.now()
+    h.save(update_fields=["daraja", "faol_at"])
     return Response({"ok": True})
+
+
+def _xato(e: KV.KarvonXato) -> Response:
+    return Response({"detail": e.sabab, "sabab": e.sabab}, status=e.kod)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def karvon_men(request):
+    return Response(KV.men(_profil_tanla(request)))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def karvon_bekat(request):
+    d = request.data
+    try:
+        return Response(KV.bekat_bosh(_profil_tanla(request), _son(d.get("daraja"), 1, 3),
+                                      _son(d.get("qol"), 5, 7), bool(d.get("soda")),
+                                      bool(d.get("sahro")), bool(d.get("yetak"))))
+    except KV.KarvonXato as e:
+        return _xato(e)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def karvon_javob(request):
+    try:
+        return Response(KV.javob(_profil_tanla(request), request.data.get("tokens"),
+                                 request.data.get("tanlov")))
+    except KV.KarvonXato as e:
+        return _xato(e)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def karvon_otkaz(request):
+    try:
+        return Response(KV.otkaz(_profil_tanla(request)))
+    except KV.KarvonXato as e:
+        return _xato(e)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def karvon_maslahat(request):
+    try:
+        return Response(KV.maslahat(_profil_tanla(request), request.data.get("ishlatilgan")))
+    except KV.KarvonXato as e:
+        return _xato(e)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def karvon_qayta(request):
+    try:
+        return Response(KV.qayta(_profil_tanla(request)))
+    except KV.KarvonXato as e:
+        return _xato(e)
 
 
 @api_view(["GET"])
