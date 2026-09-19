@@ -394,6 +394,34 @@ h1,h2,h3,p{margin:0}
   .amallar .amal-t{height:44px}
   .sahna{height:150px}
 }
+/* ---- o'rgatish ---- */
+.kirish-ekran{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:36px 22px!important;text-align:center}
+.kirish-ekran h1{font-size:26px;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+.kirish-rasm{width:120px;height:120px;border-radius:36px;display:grid;place-items:center;font-size:62px;
+  background:radial-gradient(circle at 35% 30%,#3A2A1E,#1D1815);box-shadow:inset 0 0 0 1.5px rgba(229,169,60,.4),0 16px 40px rgba(0,0,0,.5);animation:kir .5s both}
+.nuqtalar{display:flex;gap:6px}
+.nuqtalar span{width:8px;height:8px;border-radius:99px;background:var(--s3);transition:width .3s}
+.nuqtalar span.faol{width:26px;background:var(--terra)} .nuqtalar span.otgan{background:var(--oltin)}
+.kirish-past{width:100%;display:grid;gap:10px;margin-top:10px}
+.dars-rasm{font-size:48px;line-height:1}
+.dars-misol{display:grid;gap:4px;padding:10px 12px;border-radius:var(--r-md);background:var(--s2)}
+.dars-misol b{font-size:15px;color:var(--oltin-y);font-variant-numeric:tabular-nums}
+.dars-qadam{margin:0;padding-left:22px;text-align:left;display:grid;gap:5px;font-size:13.5px;color:var(--matn)}
+.dars-qadam li::marker{color:var(--terra);font-weight:800}
+.yetak-banner{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:var(--r-md);
+  background:rgba(229,169,60,.14);box-shadow:inset 0 0 0 1.5px rgba(229,169,60,.55);font-size:13.5px;font-weight:700;animation:kir .35s both}
+.yetak-banner b{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--oltin);color:#2A1B06;font-weight:800}
+.yetak{position:relative;z-index:1;animation:yetak 1.1s ease-in-out infinite}
+@keyframes yetak{0%,100%{box-shadow:0 0 0 2px var(--oltin),0 0 0 0 rgba(229,169,60,.6)}50%{box-shadow:0 0 0 2px var(--oltin),0 0 0 10px rgba(229,169,60,0)}}
+.orgatish-karta{text-align:left}
+.qollanma{display:grid;gap:8px;text-align:left;max-height:48dvh;overflow:auto}
+.qollanma details{padding:10px 12px;border-radius:var(--r-md);background:var(--s2)}
+.qollanma summary{display:flex;align-items:center;gap:9px;cursor:pointer;list-style:none;font-size:14px}
+.qollanma summary::-webkit-details-marker{display:none}
+.qollanma summary .chip{margin-left:auto;font-size:10.5px;padding:3px 8px}
+.qollanma .q-ik{font-size:20px}
+.qollanma p{margin:8px 0 0;font-size:12.5px;line-height:1.45;color:var(--xira)}
+.qollanma .q-misol{color:var(--oltin-y);font-weight:700}
 html,body{background:#120F0D}
 body.ichki{padding-inline:0}
 body.ichki .ilova{max-width:560px;padding-block:0}
@@ -506,9 +534,10 @@ else{const bosh=boshlangich();S=Object.assign({},bosh,S);
   if(!S.birga||typeof S.birga!=="object")S.birga=bosh.birga;
   if(typeof S.ovoz!=="boolean")S.ovoz=true;
   if(!S.buff||typeof S.buff!=="object")S.buff={};
+  if(!S.orgatilgan||typeof S.orgatilgan!=="object")S.orgatilgan={};
   if(!Array.isArray(S.uskuna))S.uskuna=bosh.uskuna;}
 function boshlangich(){return{ism:(P.get("ism")||"Sayyoh").slice(0,24),tag:"",daraja:2,bekat:0,tanga:150,suv:3,maxSuv:3,qol:5,
-  yulduz:{},art:[],buff:{},uskuna:[],ulov:null,oazis:true,tab:"xarita",yuk:[],buyurtma:{},kunlik:null,ovoz:true,darajaTanlandi:false,
+  yulduz:{},art:[],buff:{},uskuna:[],ulov:null,oazis:true,tab:"xarita",yuk:[],buyurtma:{},kunlik:null,ovoz:true,darajaTanlandi:false,kirishKorildi:false,orgatilgan:{},
   birga:{dost:"Nigora",bekat:0,navbat:"men"},saqlandi:Date.now()}}
 function saqla(){S.saqlandi=Date.now();try{localStorage.setItem(KALIT,JSON.stringify(S))}catch(e){}}
 
@@ -652,6 +681,11 @@ function xarita(oldingiUlush){
      '<div class="tepa-chiziq"><span class="ms" style="font-size:14px;color:var(--oltin)">explore</span>Asturlob navigatsiyasi'+
        '<span style="margin-left:auto;font-weight:700;letter-spacing:0">'+Math.round(ulushim()*100)+'%</span></div>'+
    '</div>'+
+   (orgatildi()<8?'<button class="plita qator orgatish-karta" data-amal="qollanma">'+
+     '<span class="ik" style="background:rgba(217,101,40,.15);color:var(--terra-y)"><span class="ms">school</span></span>'+
+     '<span style="flex:1"><b>O\'rganish yo\'li \u00b7 '+orgatildi()+'/8</b><small>Har to\'siqni bir marta to\'g\'ri yeching \u2014 qoidalar qo\'llanmada</small>'+
+     '<span class="chiziqcha" style="display:block;margin-top:6px"><b style="width:'+(orgatildi()/8*100)+'%"></b></span></span>'+
+     '<span class="ms" style="color:var(--xira)">chevron_right</span></button>':'')+
    '<div class="plita qadam">'+
      '<span class="ms" style="color:var(--terra);font-size:22px">near_me</span>'+
      '<span><span class="yorliq">Hozirgi marshrut holati</span><b style="display:block;font-size:14px;line-height:1.35">'+
@@ -709,6 +743,13 @@ function vazifa(){
   const obh=obHavo(S.bekat);
   if(obh.k==="boron"&&J.tosiq===0)J.tur="boron";
   if(S.bekat%3===2&&J.tosiq===2)J.tur="qaroqchi";
+  J.yetak=false;J.darsKorildi=false;
+  if(!S.orgatilgan.tosh&&S.bekat===0&&J.tosiq===0){
+    /* Birinchi to'siq — qo'l ushlab o'rgatish: ikki tosh va "+". */
+    J.tur="tosh";J.yetak=true;
+    const tar=q.map((_,i)=>i).sort((x,y)=>q[x].v-q[y].v),a=q[tar[0]],b=q[tar[1]];
+    J.maqsad=a.v+b.v;J.yechim=[a.id,b.id];return;
+  }
   const aral=()=>q.map((_,i)=>i).sort(()=>Math.random()-.5);
   J.variant=null;J.yechim=[];
   if(J.tur==="boron"){
@@ -751,7 +792,7 @@ function vazifa(){
     const y=YUKLAR.slice().sort(()=>Math.random()-.5).slice(0,S.daraja===1?4:5);
     J.variant={yuklar:y,yoq:r(0,y.length-1),korsat:true};
     J.maqsad=J.variant.yoq;
-    setTimeout(()=>{if(J&&J.variant&&J.variant.korsat){J.variant.korsat=false;if(ekran==="oyin")oyinChiz()}},S.daraja===1?4000:3200);
+    if(S.orgatilgan.xotira)xotiraYashir();
   }else{
     const yollar=[0,1,2].map(()=>({a:r(4,S.daraja===1?9:20),b:r(3,S.daraja===1?9:20),nom:tanla(["Cho'l yo'li","Tog' yo'li","Daryo yo'li","Karvonsaroy yo'li"])}));
     yollar.forEach(y=>y.jami=y.a+y.b);
@@ -1040,7 +1081,7 @@ function bekatBosh(){
   for(let i=0;i<S.qol;i++)J.qol.push(yangiKarta());
   ekran="oyin";keyingi();
 }
-function keyingi(){vazifa();J.tokens=[];J.xato=0;J.kechirildi=false;J.maslahat=null;J.amal=null;J.tanlov=null;oyinChiz()}
+function keyingi(){vazifa();J.tokens=[];J.xato=0;J.kechirildi=false;J.maslahat=null;J.amal=null;J.tanlov=null;oyinChiz();setTimeout(darsniKorsat,1700)}
 function joriy(){
   if(J.tur==="koprik"||J.tur==="tarozi"||J.tur==="ketma")return J.tokens.length?J.tokens[0].v:null;
   const x=hisobla(J.tokens.map(t=>t.n?t.v:t.o));return Number.isFinite(x)?x:null;
@@ -1103,6 +1144,7 @@ function oyinChiz(natija){
    '<div class="plita" style="display:grid;gap:10px">'+
      '<div class="sarlavha"><span class="yorliq">'+(mathmi(J.tur)?"Matematik qulf maydoni":t.xil+" sinovi maydoni")+'</span>'+
        (kartaKerak?'<span class="ong"><button class="chip" data-amal="tozala"><span class="ms" style="font-size:14px">refresh</span>Qaytarish</button></span>':"")+'</div>'+
+     (yetakQadam()?'<div class="yetak-banner"><b>'+(yetakQadam().n||"!")+'</b><span>'+yetakQadam().matn+'</span></div>':'')+
      maydon()+
      '<div class="tekshiruv'+(natija==="xato"?" xato":natija==="togri"?" togri":"")+'"><span class="ms" style="font-size:16px">'+
        (natija==="togri"?"verified":natija==="xato"?"error":"info")+'</span><span>'+izohMatn+'</span></div></div>'+
@@ -1111,13 +1153,13 @@ function oyinChiz(natija){
        '<b>'+y[0]+'</b><small>'+y[1]+'</small></button>').join("")+'</div></div>':"")+
    (kartaKerak?'<div><div class="sarlavha" style="margin-bottom:8px"><span class="yorliq">Qo\'ldagi raqam toshlari</span>'+
      '<span class="ong">Keraklisini bosing</span></div><div class="toshlar" style="--n:'+J.qol.length+'">'+
-     J.qol.map(k=>'<button class="tosh'+(ishl.has(k.id)?" ishlatildi":"")+(J.maslahat===k.id?" maslahat":"")+'" data-karta="'+k.id+'">'+
+     J.qol.map(k=>'<button class="tosh'+(ishl.has(k.id)?" ishlatildi":"")+(J.maslahat===k.id?" maslahat":"")+(yetakQadam()&&yetakQadam().karta===k.id?" yetak":"")+'" data-karta="'+k.id+'">'+
        '<b>'+k.v+'</b><small>'+(ishl.has(k.id)?"Qo'yildi":k.mad)+'</small></button>').join("")+'</div></div>':"")+
    (J.tur==="tosh"?'<div><div class="sarlavha" style="margin-bottom:8px"><span class="yorliq">Hisob amallari</span>'+
      '<span class="ong">× va ÷ birinchi bajariladi</span></div><div class="amallar">'+
-     ["+","−","×","÷"].map(o=>'<button class="amal-t'+(J.amal===o?" faol":"")+'"'+(D[S.daraja].amallar.includes(o)?"":" disabled style=opacity:.3")+' data-op="'+o+'">'+o+'</button>').join("")+'</div></div>':"")+
+     ["+","−","×","÷"].map(o=>'<button class="amal-t'+(J.amal===o?" faol":"")+(yetakQadam()&&yetakQadam().op===o?" yetak":"")+'"'+(D[S.daraja].amallar.includes(o)?"":" disabled style=opacity:.3")+' data-op="'+o+'">'+o+'</button>').join("")+'</div></div>':"")+
    '<div class="amal-panel">'+(J.tur==="xotira"&&v.korsat?'<button class="tugma arvoh" disabled><span class="ms">visibility</span>Yuklarni eslab qoling…</button>'
-     :'<button class="tugma" data-amal="tekshir"><span class="ms">bolt</span>'+t.cta+'</button>')+
+     :'<button class="tugma'+(yetakQadam()&&yetakQadam().cta?" yetak":"")+'" data-amal="tekshir"><span class="ms">bolt</span>'+t.cta+'</button>')+
    '<div class="ikki">'+
      '<button class="yordam" data-amal="maslahat"'+(S.tanga<narx||J.tur==="xotira"?" disabled":"")+'>'+
        '<span class="ik" style="background:rgba(229,169,60,.16);color:var(--oltin-y)"><span class="ms">lightbulb</span></span>'+
@@ -1202,6 +1244,8 @@ function tangaUch(n){
 }
 function otdi(yu){
   J.yulduz.push(yu);
+  if(yu&&!S.orgatilgan[J.tur]){S.orgatilgan[J.tur]=true;J.yangiOrgandi=true}
+  J.yetak=false;
   let tanga=yu?5+(yu===3?2:0):0;
   if(tanga&&J.tur==="qaroqchi")tanga*=3;
   if(tanga&&obHavo(S.bekat).k==="salqin")tanga+=2;
@@ -1255,7 +1299,7 @@ function yolgaTush(ishl){
   setTimeout(()=>{
     sahna.querySelectorAll(".tosiq-yol.otib").forEach(e=>e.remove());
     b.remove();J.yolda=false;J.tezlik=12;
-    oyinChiz();
+    oyinChiz();setTimeout(darsniKorsat,400);
     $("#varaq")?.classList.remove("yolda");
     setTimeout(()=>{sahna.classList.add("toxta");tezlikYur()},250);
   },vaqt);
@@ -1472,6 +1516,9 @@ function sayyoh(){
        '<div><b class="tnum">'+S.suv+'/'+S.maxSuv+'</b><small>Suv meshob</small></div></div>'+
    '</div>'+
 
+   '<button class="plita qator" data-amal="qollanma"><span class="ik"><span class="ms">menu_book</span></span>'+
+     '<span style="flex:1"><b>Karvonboshi qo\'llanmasi</b><small>8 xil to\'siq qoidasi va misoli \u00b7 '+orgatildi()+'/8 o\'rganildi</small></span>'+
+     '<span class="ms" style="color:var(--xira)">chevron_right</span></button>'+
    '<div class="sarlavha"><span class="ms">inventory_2</span>Artefaktlar xazinasi<span class="ong chip">'+topilgan+' / 4 topildi</span></div>'+
    '<p class="izohcha">Buyuk Ipak yo\'li shaharlaridagi arifmetik sinovlardan qolgan qadimiy durdonalar.</p>'+
    '<div style="display:grid;gap:8px">'+art.join("")+'</div>'+
@@ -1512,9 +1559,87 @@ function darajaTanlash(){
      '<span class="ms" style="font-size:15px">info</span>Keyin Sayyoh bo\'limida o\'zgartirish mumkin</p>'+
   '</div></div>';
 }
+/* ================= O'RGATISH ================= */
+const TARTIB_ORG=["tosh","boron","koprik","tarozi","ketma","xotira","yol","qaroqchi"];
+const DARS={
+ tosh:{ik:"🪨",qoida:"Qo'ldagi raqam toshlari va amallardan (+ − × ÷) tosh kuchiga teng ifoda tuzing.",
+   misol:"Tosh kuchi 24 → 6 × 4 = 24",qadam:["Raqam toshini bosing","Amalni tanlang","Ikkinchi toshni bosing","«Toshni parchalash» ni bosing"]},
+ boron:{ik:"🌪️",qoida:"Kartalarni bosing — ular o'zi qo'shiladi. Yig'indi aynan energiyaga teng bo'lishi kerak.",
+   misol:"Energiya 15 → 7 + 8 = 15",qadam:["Birinchi toshni bosing","Yig'indi yetguncha yana toshlar qo'shing","«Bo'ronni to'xtatish» ni bosing"]},
+ koprik:{ik:"🌉",qoida:"Tenglikdagi «?» o'rniga qaysi son mos kelishini toping va o'sha toshni bosing.",
+   misol:"? × 3 = 18 → javob 6",qadam:["Tenglikni o'qing","Mos sonni hisoblang","O'sha toshni bosing va tiklang"]},
+ tarozi:{ik:"⚖️",qoida:"Ikki palla teng bo'lishi kerak. O'ng pallaga qaysi tosh qo'yilsa, yig'indilar tenglashadi?",
+   misol:"7 + 5 = 4 + ? → javob 8",qadam:["Chap pallani qo'shing","O'ng palladagi songa qancha yetmasligini toping","O'sha toshni qo'ying"]},
+ ketma:{ik:"📜",qoida:"Toshdagi har son oldingisidan bir xil miqdorga farq qiladi. Farqni toping va keyingi sonni tanlang.",
+   misol:"4 › 7 › 10 › 13 › ? → har safar +3, javob 16",qadam:["Qo'shni ikki son farqini toping","Oxirgi songa shu farqni qo'shing","Javob toshini bosing"]},
+ xotira:{ik:"📦",qoida:"Yuklar bir necha soniya ko'rsatiladi — eslab qoling. Keyin qaysi biri yo'qolganini tanlang.",
+   misol:"🏺 🧵 🧂 🫖 → 🧵 yo'qoldi",qadam:["Yuklarni diqqat bilan eslab qoling","Yo'qolganini tanlang","«Yukni aniqlash» ni bosing"]},
+ yol:{ik:"🔀",qoida:"Har yo'l ikki qismdan iborat. Qismlarni qo'shib, eng qisqa yo'lni tanlang.",
+   misol:"12+9=21 · 8+15=23 · 10+7=17 → 17 km eng qisqa",qadam:["Har yo'lni qo'shing","Eng kichigini tanlang","«Yo'lni tanlash» ni bosing"]},
+ qaroqchi:{ik:"🏴",qoida:"Boss sinovi: uch toshdan boj miqdoriga teng ifoda tuzing. Ikki marta xato qilinsa, yukdan biri yoki 40 tanga ketadi.",
+   misol:"Boj 30 → 4 × 6 + 6 = 30",qadam:["Uchta toshni tanlang","Amallar bilan boj miqdorini tuzing","«Bojni to'lash» ni bosing"]}};
+const KIRISH=[
+ {ik:"🐫",sarlavha:"Xush kelibsiz, karvonboshi!",matn:"Vazifangiz — karvonni Toshkentdan Samarqand va Buxoro orqali Xivaga olib borish. Jami 9 bekat, 1 020 km yo'l."},
+ {ik:"🗺️",sarlavha:"Bekatlar va to'siqlar",matn:"Har bekatda 3 ta to'siq bor. Yechsangiz, karvon yo'lni davom ettiradi. Har uchinchi bekatdan keyin — shahar."},
+ {ik:"🪨",sarlavha:"Raqam toshlari",matn:"Pastdagi toshlar — sizning sonlaringiz. Ularni bosib ifoda tuzasiz. Ishlatilgan tosh ketadi, o'rniga yangisi keladi."},
+ {ik:"⭐",sarlavha:"Yulduz, maslahat va suv",matn:"Birinchi urinishda yechsangiz — 3 yulduz. Qiyin bo'lsa 💡 maslahat oling yoki 💧 suv bilan aylanib o'ting."},
+ {ik:"🏛️",sarlavha:"Shahar, bozor va artefaktlar",matn:"Shaharlarda qadimiy artefakt topasiz, bozorda tuya va uskunalar olasiz. Birinchi to'siqda o'zim yo'l ko'rsataman!"}];
+const orgatildi=()=>TARTIB_ORG.filter(k=>S.orgatilgan[k]).length;
+
+function kirish(i){
+  const k=KIRISH[i],oxiri=i===KIRISH.length-1;
+  qobiq.innerHTML='<div class="varaq"><div class="ich kirish-ekran">'+
+    '<div class="kirish-rasm">'+k.ik+'</div>'+
+    '<div class="nuqtalar">'+KIRISH.map((_,j)=>'<span class="'+(j===i?"faol":j<i?"otgan":"")+'"></span>').join("")+'</div>'+
+    '<h1>'+k.sarlavha+'</h1><p class="izohcha" style="font-size:15px;text-align:center">'+k.matn+'</p>'+
+    '<div class="kirish-past"><button class="tugma" data-amal="kirish-keyingi" data-i="'+i+'">'+
+      (oxiri?'<span class="ms">hiking</span>Boshlash':'Keyingisi<span class="ms">arrow_forward</span>')+'</button>'+
+      (oxiri?'':'<button class="tugma arvoh" data-amal="kirish-otkaz">O\'tkazib yuborish</button>')+'</div>'+
+  '</div></div>';
+}
+
+/* Yangi to'siq turi birinchi uchraganda — dars. U to'g'ri yechilguncha har safar chiqadi. */
+function darsKerak(){return J&&!J.yetak&&!S.orgatilgan[J.tur]&&!J.darsKorildi}
+function darsniKorsat(){
+  if(!darsKerak()||ekran!=="oyin")return;
+  J.darsKorildi=true;
+  const d=DARS[J.tur],t=TIP[J.tur];
+  modal('<span class="chip terra" style="justify-self:center">Yangi to\'siq · '+(orgatildi()+1)+'/8</span>'+
+    '<div class="dars-rasm">'+d.ik+'</div><h2>'+t.nom+'</h2>'+
+    '<p class="izohcha" style="font-size:14px">'+d.qoida+'</p>'+
+    '<div class="dars-misol"><span class="yorliq">Misol</span><b>'+d.misol+'</b></div>'+
+    '<ol class="dars-qadam">'+d.qadam.map(x=>'<li>'+x+'</li>').join("")+'</ol>'+
+    '<button class="tugma" data-amal="dars-tushundim"><span class="ms">check</span>Tushundim, boshladik</button>');
+}
+function xotiraYashir(){
+  setTimeout(()=>{if(J&&J.tur==="xotira"&&J.variant&&J.variant.korsat){J.variant.korsat=false;if(ekran==="oyin")oyinChiz()}},S.daraja===1?4500:3600);
+}
+
+/* Birinchi to'siq: qaysi qadamda turibdi va nima yonib turishi kerak. */
+function yetakQadam(){
+  if(!J||!J.yetak)return null;
+  const [a,b]=J.yechim,tk=J.tokens;
+  if(!tk.length)return{n:1,matn:"Shu yonib turgan toshni bosing",karta:a};
+  if(tk[0].id!==a||tk.length>3||(tk[2]&&tk[2].id!==b)||(tk[1]&&tk[1].o!=="+"))return{n:0,matn:"Boshqa tosh tanlandi — «Qaytarish» ni bosib qaytadan urinib ko'ring"};
+  if(tk.length===1&&J.amal!=="+")return{n:2,matn:"Endi «+» amalini tanlang",op:"+"};
+  if(tk.length===1)return{n:3,matn:"Ikkinchi yonib turgan toshni bosing",karta:b};
+  return{n:4,matn:"Zo'r! Endi «Toshni parchalash» tugmasini bosing",cta:1};
+}
+
+function qollanma(){
+  modal('<span class="chip terra" style="justify-self:center">O\'rganish yo\'li · '+orgatildi()+'/8</span>'+
+    '<h2>Karvonboshi qo\'llanmasi</h2>'+
+    '<div class="chiziqcha"><b style="width:'+(orgatildi()/8*100)+'%"></b></div>'+
+    '<div class="qollanma">'+TARTIB_ORG.map(k=>{const d=DARS[k],ok=S.orgatilgan[k];
+      return '<details'+(ok?"":" open")+'><summary><span class="q-ik">'+d.ik+'</span><b>'+TIP[k].nom+'</b>'+
+        '<span class="chip '+(ok?"zumrad":"")+'">'+(ok?"✓ O'rganildi":"Hali oldinda")+'</span></summary>'+
+        '<p>'+d.qoida+'</p><p class="q-misol">'+d.misol+'</p></details>'}).join("")+'</div>'+
+    '<button class="tugma arvoh" data-amal="modal-yop">Yopish</button>');
+}
 /* ================= BOSHQARUV ================= */
 function korsat(){
   if(!S.darajaTanlandi)return darajaTanlash();
+  if(!S.kirishKorildi)return kirish(0);
   if(ekran==="oyin")return oyinChiz();
   if(S.tab==="bozor")return bozor();
   if(S.tab==="bellashuv"||S.tab==="reyting")S.tab="xarita";
@@ -1526,7 +1651,7 @@ qobiq.addEventListener("click",e=>{
   if(b.dataset.karta){ovoz("bos");return kartaBos(+b.dataset.karta)}
   if(b.dataset.op)return amalBos(b.dataset.op);
   if(b.dataset.tanlov!==undefined)return tanlovBos(+b.dataset.tanlov);
-  if(b.dataset.darajaTanla){S.daraja=+b.dataset.darajaTanla;S.darajaTanlandi=true;S.tab="xarita";ekran="tab";saqla();ovoz("yutuq");return xarita()}
+  if(b.dataset.darajaTanla){S.daraja=+b.dataset.darajaTanla;S.darajaTanlandi=true;S.tab="xarita";ekran="tab";saqla();ovoz("yutuq");return S.kirishKorildi?xarita():kirish(0)}
   if(b.dataset.daraja){S.daraja=+b.dataset.daraja;saqla();return xarita()}
   if(b.dataset.filtr){bozorFiltr=b.dataset.filtr;return bozor()}
   if(b.dataset.sotib){const k=b.dataset.sotib,x=BUFF[k];
@@ -1549,6 +1674,10 @@ qobiq.addEventListener("click",e=>{
   if(a==="suv")return suvBilan();
   if(a==="maslahat")return maslahat();
   if(a==="daraja-almash"){S.darajaTanlandi=false;saqla();return darajaTanlash()}
+  if(a==="kirish-keyingi"){const i=+b.dataset.i;if(i+1<KIRISH.length)return kirish(i+1);S.kirishKorildi=true;saqla();return xarita()}
+  if(a==="kirish-otkaz"){S.kirishKorildi=true;saqla();return xarita()}
+  if(a==="dars-tushundim"){b.closest(".qoplama").remove();if(J&&J.tur==="xotira"&&J.variant&&J.variant.korsat){oyinChiz();xotiraYashir()}return}
+  if(a==="qollanma")return qollanma();
   if(a==="ovoz"){S.ovoz=!S.ovoz;saqla();ovoz("bos");return korsat()}
   if(a==="kunlik-ol"){const k=kunlikOl();if(k.joriy>=k.maqsad&&!k.olindi){S.tanga+=k.mukofot;S.kunlik.olindi=true;saqla();ovoz("tanga")}return xarita()}
   if(a==="karvonsaroy"){b.closest(".qoplama").remove();return karvonsaroy()}
