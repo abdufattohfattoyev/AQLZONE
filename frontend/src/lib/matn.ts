@@ -1309,6 +1309,10 @@ const S = {
   kanal4: ["Yangiliklar", "Новости"],
   kanal4Izoh: ["ilovadagi o'zgarishlardan xabardor bo'lasiz", "будете в курсе изменений"],
   kanalOchish: ["Telegramda ochish", "Открыть в Telegram"],
+  kanalMajburiyIzoh: ["Ilovadan foydalanish uchun kanalga a'zo bo'ling, keyin «A'zo bo'ldim» ni bosing.", "Чтобы пользоваться приложением, подпишитесь на канал и нажмите «Я подписался»."],
+  kanalAzoBoldim: ["A'zo bo'ldim", "Я подписался"],
+  kanalTekshirilmoqda: ["Tekshirilmoqda…", "Проверяем…"],
+  kanalHaliYoq: ["Hali a'zo emassiz. Kanalga qo'shiling va qayta bosing.", "Вы ещё не подписаны. Подпишитесь и нажмите снова."],
 
   /* ---------------- holat / xato ---------------- */
   internetYoq: [

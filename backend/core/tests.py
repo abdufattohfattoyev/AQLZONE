@@ -699,6 +699,38 @@ class BotTest(TestCase):
 
     # --- testlar ---
 
+    @override_settings(KANAL="@aqlzone", KANAL_MAJBURIY=True, BOT_TOKEN="x", ADMIN_TG=[],
+                       MINI_APP_URL="https://aql-zone.uz", SAYT_URL="https://aql-zone.uz")
+    def test_kanal_majburiy_darvoza(self):
+        """A'zo bo'lmagan — kanal sharti; "A'zo bo'ldim" dan keyin kutilgan buyruq bajariladi."""
+        from django.core.cache import cache
+        from core import kanal as K
+        cache.delete("kanal_azo:555")
+        with patch.object(K, "_sorov", lambda u, **k: {"ok": True, "result": {"status": "left"}}):
+            self.bot.yangilikni_qayta_ishla(self.xabar("/start kunlik"))
+        self.assertEqual(len(self.yuborilgan), 1)
+        tugmalar = self.yuborilgan[0]["reply_markup"]["inline_keyboard"]
+        self.assertEqual(tugmalar[0][0]["url"], "https://t.me/aqlzone")
+        self.assertEqual(tugmalar[1][0]["callback_data"], "kanal_tekshir")
+
+        # Hali a'zo emas — ogohlantirish, hech narsa ochilmaydi.
+        self.yuborilgan.clear()
+        tugma = {"id": "q1", "from": {"id": 555}, "data": "kanal_tekshir",
+                 "message": {"message_id": 9, "chat": {"id": 555}}}
+        with patch.object(K, "_sorov", lambda u, **k: {"ok": True, "result": {"status": "left"}}):
+            self.bot.yangilikni_qayta_ishla({"callback_query": tugma})
+        self.assertEqual([x["usul"] for x in self.yuborilgan], ["answerCallbackQuery"])
+        self.assertTrue(self.yuborilgan[0].get("show_alert"))
+
+        # A'zo bo'ldi — xabar o'chadi va "/start kunlik" bajariladi.
+        self.yuborilgan.clear()
+        with patch.object(K, "_sorov", lambda u, **k: {"ok": True, "result": {"status": "member"}}):
+            self.bot.yangilikni_qayta_ishla({"callback_query": tugma})
+        usullar = [x["usul"] for x in self.yuborilgan]
+        self.assertIn("deleteMessage", usullar)
+        self.assertIn("/oyinlar/kunlik-son", json.dumps(self.yuborilgan))
+        cache.delete("kanal_azo:555")
+
     @override_settings(SAYT_URL="https://aql-zone.uz")
     def test_start_kirish_havolasini_yuboradi(self):
         self.bot.yangilikni_qayta_ishla(self.xabar("/start"))
@@ -1938,7 +1970,36 @@ class KanalTest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json(), {
             "korsat": True, "kanal": "@AqlZoneUz", "havola": "https://t.me/AqlZoneUz",
+            "majburiy": False,
         })
+
+    @override_settings(KANAL_MAJBURIY=True)
+    def test_majburiy_rejimda_kunda_qayta_tekshiriladi(self):
+        """Qo'shilib, darrov chiqib ketgan odam ertasiga yana so'raladi."""
+        from core import kanal as K
+        self.pupil.kanal_azo_at = timezone.now() - timedelta(hours=30)
+        self.pupil.save()
+        with patch.object(K, "_sorov", self._javob({"ok": True, "result": {"status": "left"}})):
+            self.assertTrue(K.korsatilsinmi(self.pupil))
+        self.pupil.refresh_from_db()
+        self.assertIsNone(self.pupil.kanal_azo_at)
+
+    @override_settings(KANAL_MAJBURIY=True)
+    def test_bot_darvozasi(self):
+        from django.core.cache import cache
+        from core import kanal as K
+        cache.delete("kanal_azo:777")
+        with patch.object(K, "_sorov", self._javob({"ok": True, "result": {"status": "left"}})):
+            self.assertFalse(K.bot_otkazadimi("777"))
+        with patch.object(K, "_sorov", self._javob({})):
+            self.assertTrue(K.bot_otkazadimi("777"))      # bilib bo'lmadi — o'tkaziladi
+        with patch.object(K, "_sorov", self._javob({"ok": True, "result": {"status": "member"}})):
+            self.assertTrue(K.bot_otkazadimi("777"))
+        def portlaydi(*a, **k):
+            raise AssertionError("a'zo keshlangan — so'rov ketmasligi kerak")
+        with patch.object(K, "_sorov", portlaydi):
+            self.assertTrue(K.bot_otkazadimi("777"))
+        cache.delete("kanal_azo:777")
 
     def test_endpoint_tokensiz(self):
         self.assertEqual(self.client.get("/api/v1/kanal").status_code, 401)

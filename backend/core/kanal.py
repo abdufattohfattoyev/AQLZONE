@@ -23,6 +23,7 @@ import logging
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import timedelta
 
 from django.conf import settings
 from django.utils import timezone
@@ -110,15 +111,26 @@ def azo_mi(tg_id: str) -> bool | None:
     return False                                  # left, kicked
 
 
+def majburiymi() -> bool:
+    return bool(getattr(settings, "KANAL_MAJBURIY", False)) and bool(kanal_nomi())
+
+
+#: Majburiy rejimda eslab qolingan a'zolik shuncha vaqtdan keyin qayta
+#: tekshiriladi: odam qo'shilib, darrov chiqib ketishi mumkin.
+QAYTA_TEKSHIRISH = timedelta(hours=24)
+
+
 def korsatilsinmi(pupil) -> bool:
     """
     Shu hisobga "kanalga qo'shiling" oynasi ko'rsatilsinmi.
 
     Yon ta'siri bor va u ataylab: a'zoligi tasdiqlansa, sana hisobga
-    yoziladi va keyingi safar Telegram umuman so'ralmaydi.
+    yoziladi va keyingi safar Telegram umuman so'ralmaydi. Majburiy
+    rejimda esa sutkada bir marta qayta so'raladi.
     """
     if pupil.kanal_azo_at is not None:
-        return False
+        if not majburiymi() or timezone.now() - pupil.kanal_azo_at < QAYTA_TEKSHIRISH:
+            return False
     if not kanal_nomi():
         return False
 
@@ -135,4 +147,30 @@ def korsatilsinmi(pupil) -> bool:
         return False
     if natija is None:
         return False                              # shubhada — bezovta qilmaymiz
+    if pupil.kanal_azo_at is not None:
+        # Kanaldan chiqib ketgan — belgi olib tashlanadi.
+        pupil.kanal_azo_at = None
+        pupil.save(update_fields=["kanal_azo_at"])
     return True
+
+
+def bot_otkazadimi(tg_id: str) -> bool:
+    """
+    Bot shu odamga ilovani ochib bersinmi (majburiy rejim).
+
+    A'zolik keshda 12 soat saqlanadi — bot har xabarda Telegram'ga
+    so'rov yubormasin. "A'zo emas" javobi keshlanmaydi: odam qo'shilib,
+    darrov "tekshirish" ni bosadi.
+    """
+    if not majburiymi() or not tg_id:
+        return True
+    from django.core.cache import cache
+    kalit = f"kanal_azo:{tg_id}"
+    if cache.get(kalit):
+        return True
+    natija = azo_mi(tg_id)
+    if natija is None:
+        return True                               # bilib bo'lmadi — o'tkazamiz
+    if natija:
+        cache.set(kalit, 1, 12 * 3600)
+    return natija

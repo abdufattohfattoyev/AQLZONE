@@ -503,6 +503,31 @@ XABAR: dict[str, dict[str, str]] = {
             "случится. Напишите /start, когда захотите."
         ),
     },
+    #: Majburiy kanal a'zoligi (`KANAL_MAJBURIY`).
+    "kanalShart": {
+        "uz": (
+            "📢 <b>Aql Zone'dan foydalanish uchun kanalimizga a'zo bo'ling</b>\n\n"
+            "Kanalda har kuni yangi masalalar, testlar va o'yin yangiliklari chiqadi.\n\n"
+            "1. «Kanalga o'tish» tugmasini bosing va a'zo bo'ling\n"
+            "2. Qaytib «✅ A'zo bo'ldim» tugmasini bosing"
+        ),
+        "ru": (
+            "📢 <b>Чтобы пользоваться Aql Zone, подпишитесь на наш канал</b>\n\n"
+            "В канале каждый день новые задачи, тесты и новости игр.\n\n"
+            "1. Нажмите «Перейти в канал» и подпишитесь\n"
+            "2. Вернитесь и нажмите «✅ Я подписался»"
+        ),
+    },
+    "tKanalgaOtish": {"uz": "📢 Kanalga o'tish", "ru": "📢 Перейти в канал"},
+    "tAzoBoldim": {"uz": "✅ A'zo bo'ldim", "ru": "✅ Я подписался"},
+    "kanalHaliYoq": {
+        "uz": "Siz hali kanalga a'zo emassiz. Avval a'zo bo'ling, keyin qayta bosing.",
+        "ru": "Вы ещё не подписаны. Сначала подпишитесь, затем нажмите снова.",
+    },
+    "kanalRahmat": {
+        "uz": "Rahmat! A'zolik tasdiqlandi ✅",
+        "ru": "Спасибо! Подписка подтверждена ✅",
+    },
 }
 
 

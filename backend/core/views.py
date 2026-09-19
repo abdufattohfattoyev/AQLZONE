@@ -906,6 +906,8 @@ def kanal(request):
         "korsat": K.korsatilsinmi(request.user),
         "kanal": K.kanal_nomi(),
         "havola": K.havola(),
+        # Majburiy rejimda mijoz "Keyinroq" tugmasini ko'rsatmaydi.
+        "majburiy": K.majburiymi(),
     })
 
 

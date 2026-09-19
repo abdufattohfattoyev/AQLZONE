@@ -19,6 +19,11 @@
  * Odam "Telegramda ochish" ni bossa, kanal yangi oynada ochiladi va
  * ilovaga qaytganda A'ZOLIK QAYTA TEKSHIRILADI: qo'shilgan bo'lsa oyna
  * boshqa hech qachon chiqmaydi.
+ *
+ * MAJBURIY REJIM (server `majburiy: true` desa): oyna darhol chiqadi,
+ * "Keyinroq", yopish tugmasi va fonga bosish ishlamaydi. O'rniga
+ * "A'zo bo'ldim" turadi — u serverdan qayta so'raydi va a'zo bo'lsagina
+ * yopiladi. Ilovaga qaytganda ham o'zi tekshiradi.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -58,8 +63,9 @@ function tinchlikdami(): boolean {
 }
 
 export function Kanal() {
-  const [holat, setHolat] = useState<{ kanal: string; havola: string } | null>(null);
+  const [holat, setHolat] = useState<{ kanal: string; havola: string; majburiy: boolean } | null>(null);
   const [ochiq, setOchiq] = useState(false);
+  const [tekshiruv, setTekshiruv] = useState<"" | "jarayon" | "yoq">("");
   const { pathname } = useLocation();
 
   // Bir marta so'raymiz. `pathname` o'zgarganda qayta so'ralmasligi
@@ -69,12 +75,13 @@ export function Kanal() {
   const tekshir = useCallback(async () => {
     const h = await getKanal();
     if (!h || !h.korsat || !h.havola) return false;
-    setHolat({ kanal: h.kanal, havola: h.havola });
+    setHolat({ kanal: h.kanal, havola: h.havola, majburiy: Boolean(h.majburiy) });
     return true;
   }, []);
 
   useEffect(() => {
-    if (tinchlikdami()) return;
+    // Majburiy rejimda "Keyinroq" tinchligi hisobga olinmaydi — server
+    // javobi keyin qaror qiladi (majburiy bo'lmasa oyna chiqmaydi).
 
     // Bayroq TAYMER ICHIDA qo'yiladi, effekt boshida emas. React qat'iy
     // rejimda (dev) effektni ikki marta ishga tushiradi va oradagi
@@ -82,11 +89,14 @@ export function Kanal() {
     // chaqiruv "so'ralib bo'lgan" deb qaytib ketardi va oyna hech qachon
     // chiqmasdi. Bu yerda ikkinchi taymer qayta qo'yiladi, so'rov esa
     // baribir bir marta ketadi.
-    const t = setTimeout(() => {
+    const t = setTimeout(async () => {
       if (sorabBolindi.current) return;
       sorabBolindi.current = true;
-      void tekshir();
-    }, KECHIKISH);
+      const h = await getKanal();
+      if (!h || !h.korsat || !h.havola) return;
+      if (!h.majburiy && tinchlikdami()) return;
+      setHolat({ kanal: h.kanal, havola: h.havola, majburiy: Boolean(h.majburiy) });
+    }, 600);
     return () => clearTimeout(t);
   }, [tekshir]);
 
@@ -94,11 +104,30 @@ export function Kanal() {
   // dars tugaguncha kutib turadi, keyin o'zi chiqadi.
   useEffect(() => {
     if (!holat || ochiq) return;
-    if (darsdami(pathname)) return;
-    setOchiq(true);
+    if (!holat.majburiy && darsdami(pathname)) return;
+    // Oddiy rejimda ilova bir necha soniya ko'rinsin, keyin oyna.
+    const id = setTimeout(() => setOchiq(true), holat.majburiy ? 0 : KECHIKISH);
+    return () => clearTimeout(id);
   }, [holat, ochiq, pathname]);
 
+  /* Majburiy rejim: "A'zo bo'ldim" — serverdan qayta so'raladi. */
+  const qaytaTekshir = useCallback(async () => {
+    setTekshiruv("jarayon");
+    const h = await getKanal();
+    if (h && !h.korsat) { setOchiq(false); setHolat(null); setTekshiruv(""); return; }
+    setTekshiruv("yoq");
+  }, []);
+
+  // Majburiy rejimda kanaldan qaytganda o'zi tekshiradi.
+  useEffect(() => {
+    if (!ochiq || !holat?.majburiy) return;
+    const qaytdi = () => { void qaytaTekshir(); };
+    window.addEventListener("focus", qaytdi);
+    return () => window.removeEventListener("focus", qaytdi);
+  }, [ochiq, holat, qaytaTekshir]);
+
   const yop = (keyinroq: boolean) => {
+    if (holat?.majburiy) return;
     setOchiq(false);
     setHolat(null);
     if (keyinroq) {
@@ -111,6 +140,7 @@ export function Kanal() {
     // u yerda brauzerni ochadi va odam ilovadan butunlay chiqib ketadi —
     // qaytish uchun u botni qaytadan topishi kerak bo'lardi.
     havolaniOch(holat!.havola);
+    if (holat!.majburiy) { setTekshiruv(""); return; }
     setOchiq(false);
     // Odam qaytganda a'zoligini qayta so'raymiz: qo'shilgan bo'lsa
     // server buni eslab qoladi va oyna boshqa chiqmaydi. Qo'shilmagan
@@ -124,6 +154,7 @@ export function Kanal() {
   };
 
   if (!ochiq || !holat) return null;
+  const majburiy = holat.majburiy;
 
   return (
     <div
@@ -140,7 +171,7 @@ export function Kanal() {
         className="az-kanal w-full max-w-[380px] rounded-clay bg-karta p-6 text-center shadow-clay"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
+        {!majburiy && <button
           type="button"
           onClick={() => yop(true)}
           aria-label={t("yopish")}
@@ -148,7 +179,7 @@ export function Kanal() {
                      rounded-full text-ink-dim hover:bg-track"
         >
           <Icon name="times" size={16} />
-        </button>
+        </button>}
 
         <span className="mx-auto grid size-16 place-items-center rounded-3xl bg-brand-blue text-white
                          shadow-[0_8px_0_var(--color-brand-blue-d)]">
@@ -159,7 +190,7 @@ export function Kanal() {
           {t("kanalSarlavha")}
         </h2>
         <p className="mt-1.5 text-[13.5px] leading-snug text-ink-dim">
-          {t("kanalIzoh")}
+          {t(majburiy ? "kanalMajburiyIzoh" : "kanalIzoh")}
         </p>
 
         <ul className="mt-5 space-y-3 text-left">
@@ -181,13 +212,32 @@ export function Kanal() {
           {t("kanalOchish")}
         </button>
 
-        <button
-          type="button"
-          onClick={() => yop(true)}
-          className="mt-3 w-full py-1.5 text-[13.5px] font-semibold text-ink-dim"
-        >
-          {t("keyinroq")}
-        </button>
+        {majburiy ? (
+          <>
+            <button
+              type="button"
+              onClick={() => void qaytaTekshir()}
+              disabled={tekshiruv === "jarayon"}
+              data-tahlil="Kanal: a'zo bo'ldim"
+              className="clay-press mt-3 flex h-[50px] w-full items-center justify-center gap-2 rounded-3xl
+                         bg-brand-green font-display text-[15px] text-white disabled:opacity-60"
+            >
+              <Icon name="check" size={17} />
+              {tekshiruv === "jarayon" ? t("kanalTekshirilmoqda") : t("kanalAzoBoldim")}
+            </button>
+            {tekshiruv === "yoq" && (
+              <p role="alert" className="mt-2.5 text-[13px] font-semibold text-red-500">{t("kanalHaliYoq")}</p>
+            )}
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => yop(true)}
+            className="mt-3 w-full py-1.5 text-[13.5px] font-semibold text-ink-dim"
+          >
+            {t("keyinroq")}
+          </button>
+        )}
       </div>
     </div>
   );

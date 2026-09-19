@@ -897,6 +897,8 @@ export interface KanalHolat {
   /** `@AqlZoneUz`. Sozlanmagan bo'lsa bo'sh. */
   kanal: string;
   havola: string;
+  /** Majburiy rejim: "Keyinroq" yo'q, a'zo bo'lmaguncha oyna yopilmaydi. */
+  majburiy?: boolean;
 }
 
 /**

@@ -267,6 +267,12 @@ SESSION_TTL_DAYS = int(env("SESSION_TTL_DAYS", "180"))
 # admin so'ray oladi. Batafsil — `core/kanal.py`.
 KANAL = env("KANAL", "")
 
+# Kanal a'zoligi MAJBURIY: a'zo bo'lmagan odamga bot ilovani ochmaydi,
+# ilovada esa "Keyinroq" tugmasisiz oyna chiqadi. Tekshirib bo'lmasa
+# (bot admin emas, Telegram jim) — baribir o'tkaziladi: bitta xato
+# sozlama hamma foydalanuvchini qulflab qo'ymasligi kerak.
+KANAL_MAJBURIY = env_bool("KANAL_MAJBURIY", False)
+
 # Boshqaruv panelining (/boshqaruv) administratorlari — Telegram id'lari,
 # vergul bilan.
 #

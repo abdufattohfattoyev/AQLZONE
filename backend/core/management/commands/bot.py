@@ -601,8 +601,58 @@ def tugma_javobi(q: dict) -> str:
                 text=M("xabarYopildi", til))
         return f"{tg_id}: xabarlar o'chirildi"
 
+    if data == "kanal_tekshir":
+        return kanal_tekshir_tugmasi(q, tg_id, til)
+
     api("answerCallbackQuery", callback_query_id=q.get("id"))
     return f"{tg_id}: noma'lum tugma ({data[:32]})"
+
+
+# ------------------------------------------------ majburiy kanal a'zoligi
+
+def kanal_shartini_yubor(chat_id: int, tg_id: str, til: str, matn: str) -> str:
+    """
+    A'zo bo'lmagan odamga "kanalga a'zo bo'ling" xabari.
+
+    U yozgan buyruq (masalan `/start duel_ab12`) eslab qolinadi: a'zolik
+    tasdiqlangach xuddi shu buyruq bajariladi va odam kelgan joyiga
+    tushadi, qaytadan havolani izlamaydi.
+    """
+    from django.core.cache import cache
+    from core import kanal as K
+    cache.set(f"kanal_kutilgan:{tg_id}", matn or "/start", 3600)
+    api("sendMessage", chat_id=chat_id, text=M("kanalShart", til), parse_mode="HTML",
+        reply_markup={"inline_keyboard": [
+            [tugma_yasa(M("tKanalgaOtish", til), KOK, url=K.havola())],
+            [tugma_yasa(M("tAzoBoldim", til), YASHIL, callback_data="kanal_tekshir")],
+        ]})
+    return f"{tg_id}: kanal sharti ko'rsatildi"
+
+
+def kanal_tekshir_tugmasi(q: dict, tg_id: str, til: str) -> str:
+    """ "A'zo bo'ldim" — Telegram'dan KESHSIZ qayta so'raladi. """
+    from django.core.cache import cache
+    from core import kanal as K
+    natija = K.azo_mi(tg_id)
+    if natija is False:
+        api("answerCallbackQuery", callback_query_id=q.get("id"),
+            text=M("kanalHaliYoq", til), show_alert=True)
+        return f"{tg_id}: hali a'zo emas"
+    api("answerCallbackQuery", callback_query_id=q.get("id"), text=M("kanalRahmat", til))
+    cache.set(f"kanal_azo:{tg_id}", 1, 12 * 3600)
+    Pupil.objects.filter(
+        identities__provider=Identity.TELEGRAM, identities__external_id=tg_id,
+    ).update(kanal_azo_at=timezone.now())
+    xabar = q.get("message") or {}
+    if xabar.get("message_id"):
+        api("deleteMessage", chat_id=xabar["chat"]["id"], message_id=xabar["message_id"])
+    kutilgan = cache.get(f"kanal_kutilgan:{tg_id}") or "/start"
+    cache.delete(f"kanal_kutilgan:{tg_id}")
+    return yangilikni_qayta_ishla({"message": {
+        "chat": {"id": (xabar.get("chat") or {}).get("id") or int(tg_id)},
+        "from": q.get("from") or {"id": int(tg_id)},
+        "text": kutilgan,
+    }})
 
 
 def yangilikni_qayta_ishla(u: dict) -> str:
@@ -650,6 +700,13 @@ def yangilikni_qayta_ishla(u: dict) -> str:
 
     # --- matn keldi ---
     matn = (xabar.get("text") or "").strip()
+
+    # Majburiy kanal a'zoligi — ilovaga olib boradigan har qanday yo'ldan
+    # OLDIN. Administratorlar (boshqaruv paneli) tekshirilmaydi.
+    from core import kanal as K
+    if (matn and not str(tg_id) in {str(x) for x in getattr(settings, "ADMIN_TG", [])}
+            and not K.bot_otkazadimi(tg_id)):
+        return kanal_shartini_yubor(chat_id, tg_id, til, matn)
     # Chaqiruv havolasi: `/start duel_<kod>`.
     #
     # Javob INLINE tugma bilan ketadi va bu ataylab: reply-klaviatura
