@@ -92,6 +92,25 @@ const TUGMALAR = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "+", "-", "*
  * Bosqichlar tepada nuqta bo'lib turadi, ya'ni odam yo'lning qayerida
  * ekanini ko'radi.
  */
+/**
+ * NAMUNA — o'rgatish uchun soxta jumboq.
+ *
+ * Qoidani gap bilan tushuntirish ishlamaydi: "oltin — belgi bor, lekin
+ * boshqa joyda" degan jumla bolaga hech narsa demaydi. Shuning uchun
+ * bu yerda HAQIQIY misol bor va ranglar `solishtir()` ning o'zi bilan
+ * hisoblanadi — ya'ni namuna o'yinning qoidasidan chetga chiqa olmaydi.
+ *
+ * Yechim ATAYLAB bugungi jumboq emas: namuna javobni ochib qo'ymasligi
+ * kerak.
+ */
+const NAMUNA_YECHIM = "12-5=7";
+const NAMUNA_QADAM: { urinish: string; sarlavha: Kalit; izoh: Kalit }[] = [
+  { urinish: "", sarlavha: "ksN1", izoh: "ksN1Izoh" },
+  { urinish: "9+8=17", sarlavha: "ksN2", izoh: "ksN2Izoh" },
+  { urinish: "14-7=7", sarlavha: "ksN3", izoh: "ksN3Izoh" },
+  { urinish: "12-5=7", sarlavha: "ksN4", izoh: "ksN4Izoh" },
+];
+
 type Bosqich = { kalit: Kalit; izoh: Kalit };
 const YOL: Bosqich[] = [
   { kalit: "ksYol1", izoh: "ksYol1Izoh" },
@@ -108,6 +127,7 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
   const [daraja, setDaraja] = useState<Daraja>(() => oqi().daraja ?? 2);
   const [joriy, setJoriy] = useState("");
   const [xato, setXato] = useState("");
+  const [namunaQadam, setNamunaQadam] = useState(0);
   const [qanday, setQanday] = useState(() => {
     try { return !localStorage.getItem(QANDAY_KALIT); } catch { return false; }
   });
@@ -469,33 +489,93 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
       )}
 
       {qanday && (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/50 p-4" role="dialog" aria-modal="true">
-          <div className="az-kirish w-full max-w-[380px] rounded-clay bg-sahna p-5 shadow-clay">
+        <div className="fixed inset-0 z-[90] grid place-items-center overflow-y-auto bg-black/50 p-4"
+          role="dialog" aria-modal="true">
+          <div className="az-kirish my-auto w-full max-w-[380px] rounded-clay bg-sahna p-5 shadow-clay
+                          [@media(max-height:640px)]:p-3.5">
             <h2 className="text-center text-[20px]">{t("ksQandayT")}</h2>
-            <p className="mt-2 text-center text-[14px] leading-snug text-ink-soft">{t("ksQanday1")}</p>
-            <div className="mt-4 flex justify-center gap-1.5">
-              {["9", "+", "8", "=", "1", "7"].map((b, i) => {
-                const r: Rang = i === 0 ? "yashil" : i === 2 ? "oltin" : "boz";
-                return (
-                  <span key={i} className={`grid size-10 place-items-center rounded-xl font-display text-[19px] ${
-                    RANG_KLASS[r]}`}>{b}</span>
-                );
-              })}
+            <p className="mt-1.5 text-center text-[13.5px] leading-snug text-ink-soft">{t("ksQanday1")}</p>
+
+            {/* Namuna: yashirin tenglik va unga qilingan urinishlar. */}
+            <div className="mt-4 grid gap-1.5">
+              {NAMUNA_QADAM.slice(1, namunaQadam + 1).map((q) => (
+                <div key={q.urinish} className="flex justify-center gap-1.5">
+                  {q.urinish.split("").map((b, i) => (
+                    <span key={i}
+                      className={`grid size-9 place-items-center rounded-lg font-display text-[17px]
+                                  [@media(max-height:640px)]:size-7 [@media(max-height:640px)]:text-[14px]
+                                  ${RANG_KLASS[solishtir(q.urinish, NAMUNA_YECHIM)[i]]}`}>
+                      {korinish(b)}
+                    </span>
+                  ))}
+                </div>
+              ))}
+              {namunaQadam === 0 && (
+                <div className="flex justify-center gap-1.5">
+                  {Array.from({ length: NAMUNA_YECHIM.length }, (_, i) => (
+                    <span key={i} className="grid size-9 place-items-center rounded-lg bg-karta/60 font-display
+                                             text-[17px] text-ink-soft
+                                             [@media(max-height:640px)]:size-7 [@media(max-height:640px)]:text-[14px]">?</span>
+                  ))}
+                </div>
+              )}
             </div>
-            <ul className="mt-4 space-y-1.5 text-[13.5px]">
-              <li className="flex items-center gap-2"><span className="size-4 rounded bg-brand-green" />{t("ksQanday2")}</li>
-              <li className="flex items-center gap-2"><span className="size-4 rounded bg-brand-gold" />{t("ksQanday3")}</li>
-              <li className="flex items-center gap-2"><span className="size-4 rounded bg-ink-dim/40" />{t("ksQanday4")}</li>
-              <li className="mt-2 text-ink-soft">{t("ksQanday5")}</li>
-            </ul>
-            <button type="button" onClick={() => {
-              setQanday(false);
-              try { localStorage.setItem(QANDAY_KALIT, "1"); } catch { /* jim */ }
-            }}
-              className="tugma-3d mt-5 w-full rounded-3xl bg-brand-green py-3.5 font-display text-[17px] text-white
-                         shadow-[0_5px_0_var(--color-brand-green-d)]">
-              {t("ksBoshladik")}
+
+            <div className="mt-3 rounded-clay bg-karta p-3 [@media(max-height:640px)]:p-2.5">
+              <div className="font-display text-[14.5px] leading-tight">
+                {t(NAMUNA_QADAM[namunaQadam].sarlavha)}
+              </div>
+              <p className="mt-1 text-[13px] leading-snug text-ink-soft">
+                {t(NAMUNA_QADAM[namunaQadam].izoh)}
+              </p>
+            </div>
+
+            {/* Ranglar kaliti — namunaning ikkinchi qadamidan boshlab kerak. */}
+            {namunaQadam >= 1 && (
+              <ul className="mt-3 space-y-1 text-[12.5px]">
+                <li className="flex items-center gap-2"><span className="size-3.5 rounded bg-brand-green" />{t("ksQanday2")}</li>
+                <li className="flex items-center gap-2"><span className="size-3.5 rounded bg-brand-gold" />{t("ksQanday3")}</li>
+                <li className="flex items-center gap-2"><span className="size-3.5 rounded bg-ink-dim/40" />{t("ksQanday4")}</li>
+              </ul>
+            )}
+            {namunaQadam === NAMUNA_QADAM.length - 1 && (
+              <p className="mt-3 text-[12.5px] leading-snug text-ink-soft">{t("ksQanday5")}</p>
+            )}
+
+            <div className="mt-4 flex items-center gap-2">
+              <div className="flex flex-1 gap-1">
+                {NAMUNA_QADAM.map((q, i) => (
+                  <span key={q.sarlavha} aria-hidden
+                    className={`h-1.5 flex-1 rounded-full ${i <= namunaQadam ? "bg-brand-green" : "bg-track"}`} />
+                ))}
+              </div>
+              <span className="shrink-0 text-[12px] text-ink-soft">
+                {namunaQadam + 1}/{NAMUNA_QADAM.length}
+              </span>
+            </div>
+
+            <button type="button"
+              onClick={() => {
+                if (namunaQadam < NAMUNA_QADAM.length - 1) { setNamunaQadam(namunaQadam + 1); return; }
+                setQanday(false);
+                setNamunaQadam(0);
+                try { localStorage.setItem(QANDAY_KALIT, "1"); } catch { /* jim */ }
+              }}
+              className="tugma-3d mt-3 w-full rounded-3xl bg-brand-green py-3.5 font-display text-[17px] text-white
+                         shadow-[0_5px_0_var(--color-brand-green-d)] [@media(max-height:640px)]:py-2.5">
+              {namunaQadam < NAMUNA_QADAM.length - 1 ? t("ksKeyingi") : t("ksBoshladik")}
             </button>
+            {namunaQadam < NAMUNA_QADAM.length - 1 && (
+              <button type="button"
+                onClick={() => {
+                  setQanday(false);
+                  setNamunaQadam(0);
+                  try { localStorage.setItem(QANDAY_KALIT, "1"); } catch { /* jim */ }
+                }}
+                className="mt-2 w-full py-1 text-[12.5px] text-ink-soft">
+                {t("ksOtkaz")}
+              </button>
+            )}
           </div>
         </div>
       )}
