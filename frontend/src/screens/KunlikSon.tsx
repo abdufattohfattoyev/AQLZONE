@@ -76,6 +76,29 @@ const RANG_KLASS: Record<Rang, string> = {
 
 const TUGMALAR = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "+", "-", "*", "/", "="];
 
+/**
+ * O'RGANISH YO'LI — to'rt bosqich.
+ *
+ * Birinchi marta ochgan odam bo'sh katakchalarni ko'radi va nima
+ * qilishni bilmaydi: kanaldagi tugmadan kelgan odam aynan shu yerda
+ * chiqib ketadi. Qoidalar oynasi bor edi, lekin u BIR MARTA
+ * ko'rsatiladi va yopilgandan keyin ekranda hech qanday yo'riq
+ * qolmasdi.
+ *
+ * Shuning uchun yo'riq endi doimiy va HOLATGA QARAB o'zgaradi:
+ * birinchi urinishdan oldin — "istalgan to'g'ri tenglikni yozing",
+ * urinishdan keyin — ranglarning ma'nosi, yechgandan keyin — zanjir.
+ * Bosqichlar tepada nuqta bo'lib turadi, ya'ni odam yo'lning qayerida
+ * ekanini ko'radi.
+ */
+type Bosqich = { kalit: Kalit; izoh: Kalit };
+const YOL: Bosqich[] = [
+  { kalit: "ksYol1", izoh: "ksYol1Izoh" },
+  { kalit: "ksYol2", izoh: "ksYol2Izoh" },
+  { kalit: "ksYol3", izoh: "ksYol3Izoh" },
+  { kalit: "ksYol4", izoh: "ksYol4Izoh" },
+];
+
 export function KunlikSon({ onChiq }: { onChiq: () => void }) {
   useOrqaga(onChiq);
   const { oyinTugadi } = useProgress();
@@ -227,6 +250,18 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
    * ostida havola turadi. Bot faqat o'yinchining O'Z suhbatiga yozadi,
    * guruhga odam uni o'zi yo'naltiradi.
    */
+  /**
+   * Hozirgi bosqich: 0 — birinchi urinish, 1 — ranglar, 2 — g'alaba,
+   * 3 — zanjir. Bosqich holatdan hisoblanadi, alohida saqlanmaydi:
+   * saqlansa, qurilma almashganda yo'l boshidan boshlanardi.
+   */
+  const bosqich = (() => {
+    if (yozuv.tugadi) return 3;                 // yechildi (yoki urinishlar tugadi)
+    if (yozuv.urinishlar.length === 0) return 0;
+    if (yozuv.urinishlar.length === 1) return 1;
+    return 2;
+  })();
+
   const ulash = async () => {
     if (ulashHolat === "ketmoqda") return;
     setUlashHolat("ketmoqda");
@@ -281,6 +316,29 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
             </button>
           );
         })}
+      </div>
+
+      {/* ---- o'rganish yo'li: hozir nima qilish kerak ---- */}
+      <div className="mt-3 rounded-clay bg-karta px-3 py-2.5 shadow-clay-sm">
+        <div className="flex items-center gap-1.5">
+          {YOL.map((b, i) => (
+            <span key={b.kalit} aria-hidden
+              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                i < bosqich ? "bg-brand-green" : i === bosqich ? "bg-brand-gold" : "bg-track"}`} />
+          ))}
+        </div>
+        <div className="mt-2 flex items-start gap-2">
+          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-gold/20
+                           font-display text-[12px] text-brand-gold">{bosqich + 1}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-[13.5px] leading-tight">{t(YOL[bosqich].kalit)}</span>
+            <span className="mt-0.5 block text-[12px] leading-snug text-ink-soft">{t(YOL[bosqich].izoh)}</span>
+          </span>
+          <button type="button" onClick={() => setQanday(true)} data-tahlil="Kunlik son: qoidalar"
+            className="clay-press shrink-0 rounded-full bg-sahna px-2.5 py-1 text-[11.5px] text-ink-soft">
+            {t("ksQoidalar")}
+          </button>
+        </div>
       </div>
 
       {/* ---- katakchalar ---- */}
