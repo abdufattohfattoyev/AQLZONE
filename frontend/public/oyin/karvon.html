@@ -197,8 +197,12 @@ h1,h2,h3,p{margin:0}
 
 /* ---- modal ---- */
 .qoplama{position:absolute;inset:0;z-index:9;display:grid;place-items:center;padding:20px;background:rgba(8,6,5,.78);backdrop-filter:blur(4px)}
-.modal{width:100%;max-width:330px;border-radius:var(--r-xl);padding:22px 18px;display:grid;gap:14px;text-align:center;
+.modal{width:100%;max-width:330px;max-height:100%;overflow-y:auto;scrollbar-width:none;
+  border-radius:var(--r-xl);padding:22px 18px;display:grid;gap:14px;text-align:center;align-content:start;
   background:var(--s1);border:1px solid var(--chiz);box-shadow:0 20px 50px rgba(0,0,0,.7),0 8px 24px rgba(217,101,40,.2)}
+.modal::-webkit-scrollbar{display:none}
+.modal .modal-amal{position:sticky;bottom:-22px;z-index:2;display:grid;gap:8px;
+  padding:10px 0 12px;margin-bottom:-12px;background:linear-gradient(rgba(29,24,21,0),var(--s1) 28%)}
 .modal h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
 .medal{width:110px;height:110px;justify-self:center;border-radius:50%;display:grid;place-items:center;
   background:radial-gradient(circle at 35% 28%,#F7DFA6,#C08A2E 58%,#6F4E14);box-shadow:0 10px 26px rgba(0,0,0,.5)}
@@ -391,6 +395,9 @@ h1,h2,h3,p{margin:0}
 .amal-panel .tugma{padding:13px 14px;font-size:15.5px}
 .amal-panel .yordam{padding:8px 10px}
 .amal-panel .yordam .ik{width:30px;height:30px}
+/* Xaritadagi asosiy tugma pastki menyu ustida yopishib turadi. */
+.bosh-panel{position:sticky;bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:5;display:grid;gap:6px;margin:0 -16px;
+  padding:12px 16px 10px;background:linear-gradient(rgba(18,15,13,0),#120F0D 34%)}
 /* ---- telefon: kichik ekranlarda ixchamroq ---- */
 @media (max-width:480px){
   .ilova{padding-block:8px 12px}
@@ -398,6 +405,7 @@ h1,h2,h3,p{margin:0}
   .varaq{height:calc(100dvh - 20px)}
   .ich{padding:10px 12px 18px;gap:10px}
   .amal-panel{margin:0 -12px -18px;padding-inline:12px}
+  .bosh-panel{margin:0 -12px;padding-inline:12px}
   .plita{padding:12px}
   .katak{font-size:21px;padding:8px 10px;min-width:44px}
   .tosh{padding:9px 2px 7px}
@@ -408,6 +416,10 @@ h1,h2,h3,p{margin:0}
 @media (max-height:760px){
   .amallar .amal-t{height:44px}
   .sahna{height:150px}
+  .ich{gap:9px;padding-bottom:12px}
+  .plita{padding:11px}
+  .bosh-panel{padding:8px 16px 6px}
+  .yol-izoh{display:none!important}
 }
 /* ---- o'rgatish ---- */
 .kirish-ekran{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:36px 22px!important;text-align:center}
@@ -438,10 +450,15 @@ h1,h2,h3,p{margin:0}
 .qollanma p{margin:8px 0 0;font-size:12.5px;line-height:1.45;color:var(--xira)}
 .qollanma .q-misol{color:var(--oltin-y);font-weight:700}
 html,body{background:#120F0D}
-body.ichki{padding-inline:0}
-body.ichki .ilova{max-width:560px;padding-block:0}
-body.ichki .qobiq{border-radius:0;box-shadow:none;min-height:100dvh}
-body.ichki .varaq{height:100dvh!important;min-height:0}
+/* Ilova ichida karta AYNAN bitta ekran bo'ladi.
+   Ilgari aylanadigan qism o'zi 100dvh edi: uning ustiga sarlavha,
+   ostiga menyu qo'shilib, karta ekrandan ~120px uzun chiqardi. Natijada
+   pastki menyu ham, "Yo'lga chiqish" tugmasi ham ko'rinmasdi va odam
+   ularni topish uchun butun sahifani aylantirardi. */
+body.ichki{padding-inline:0;height:100dvh;overflow:hidden}
+body.ichki .ilova{max-width:560px;padding-block:0;height:100dvh}
+body.ichki .qobiq{border-radius:0;box-shadow:none;height:100dvh;min-height:0;display:flex;flex-direction:column}
+body.ichki .varaq{height:auto!important;min-height:0;flex:1 1 auto}
 .joy-raqam{width:26px;flex:none;text-align:center;font-size:15px;font-weight:800;color:var(--xira)}
 .onlayn-nuqta{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3DDC84;box-shadow:0 0 0 3px rgba(61,220,132,.25);font-style:normal}
 .onlayn-nuqta.ustida{position:absolute;right:-2px;bottom:-2px;box-shadow:0 0 0 2px #1D1815}
@@ -733,11 +750,11 @@ function xarita(oldingiUlush){
      '<p class="izohcha">Karvon yo\'lini do\'stingizga yuboring — kim Xivaga birinchi yetib borarkin?</p>'+
      '<button class="qator" data-amal="chaqiriq" style="background:var(--s2)"><span class="ms" style="color:var(--lapis-y)">send</span>'+
        '<span><b>«Men '+(S.bekat+1)+'-bekatdaman, sen-chi?»</b><small>Telegramga chaqiriq yuborish</small></span></button></div>'+
-   (S.bekat>=9
+   '<div class="bosh-panel">'+(S.bekat>=9
      ? '<button class="tugma lapis" data-amal="qayta"><span class="ms">restart_alt</span>Yangi mavsumni boshlash</button>'
      : '<button class="tugma" data-amal="bosh"><span class="ms">hiking</span>Yo\'lga chiqish</button>')+
-   '<p class="izohcha" style="text-align:center;display:flex;gap:6px;justify-content:center;align-items:center">'+
-     '<span class="ms" style="font-size:15px">history</span>Ertaga aynan shu bekatdan davom etasiz (avto-saqlangan)</p>'
+   '<p class="izohcha yol-izoh" style="text-align:center;display:flex;gap:6px;justify-content:center;align-items:center">'+
+     '<span class="ms" style="font-size:15px">history</span>Ertaga aynan shu bekatdan davom etasiz (avto-saqlangan)</p></div>'
   );
   yolEl=$("#yolChiziq");yolUz=yolEl?yolEl.getTotalLength():0;
   xaritaNuqtalar();belgilarniJoyla(oldingiUlush);royxatSora();boshqalarniChiz();
@@ -756,6 +773,10 @@ const TIP={
  yol:{nom:"Yo'l ayrimi",xil:"Qaror",olch:"Eng qisqa yo'l",ish:"Uch yo'ldan eng qisqasini tanlang",cta:"Yo'lni tanlash"},
  qaroqchi:{nom:"Qaroqchilar kamini",xil:"Boss",olch:"Boj miqdori",ish:"Qaroqchilar boj so'rayapti — aniq miqdorni tuzing, aks holda yuk ketadi",cta:"Bojni to'lash"}};
 const mathmi=t=>TIP[t].xil==="Hisob"||t==="qaroqchi";
+/* Qaysi to'siqda amal tugmalari (+ - x /) kerak.
+   Bo'ronda kartalar faqat qo'shiladi, ko'prik/tarozi/ketma-ketlikda esa
+   bitta tosh tanlanadi — u yerda amal tanlash ortiqcha. */
+const amalKerak=t=>t==="tosh"||t==="qaroqchi";
 
 function vazifa(){
   const d=D[S.daraja],q=J.qol,soda=buffFaol("donishmand");
@@ -1092,9 +1113,9 @@ function yolTahlili(){
    (ogoh.length?'<div style="display:grid;gap:6px;text-align:left">'+ogoh.map(o=>
      '<div class="ogoh"><span class="ms">'+o[0]+'</span><span><b>'+o[1]+'</b><small>'+o[2]+'</small></span></div>').join("")+'</div>'
      :'<div class="ogoh yaxshi"><span class="ms">check_circle</span><span><b>Karvon to\'liq tayyor</b><small>Suv, kartalar va tanga yetarli</small></span></div>')+
-   '<button class="tugma" data-amal="bosh-tasdiq"><span class="ms">hiking</span>Karvonni yo\'lga chiqarish</button>'+
+   '<div class="modal-amal"><button class="tugma" data-amal="bosh-tasdiq"><span class="ms">hiking</span>Karvonni yo\'lga chiqarish</button>'+
    (ogoh.length?'<button class="tugma arvoh" data-amal="bozor-ochish"><span class="ms">storefront</span>Avval bozorga kirish</button>':
-     '<button class="tugma arvoh" data-amal="modal-yop">Keyinroq</button>'));
+     '<button class="tugma arvoh" data-amal="modal-yop">Keyinroq</button>')+'</div>');
 }
 function bekatBosh(){
   if(J&&J.yuklanmoqda)return;
@@ -1194,7 +1215,7 @@ function oyinChiz(natija){
      '<span class="ong">Keraklisini bosing</span></div><div class="toshlar" style="--n:'+J.qol.length+'">'+
      J.qol.map(k=>'<button class="tosh'+(ishl.has(k.id)?" ishlatildi":"")+(J.maslahat===k.id?" maslahat":"")+(yetakQadam()&&yetakQadam().karta===k.id?" yetak":"")+'" data-karta="'+k.id+'">'+
        '<b>'+k.v+'</b><small>'+(ishl.has(k.id)?"Qo'yildi":k.mad)+'</small></button>').join("")+'</div></div>':"")+
-   (J.tur==="tosh"?'<div><div class="sarlavha" style="margin-bottom:8px"><span class="yorliq">Hisob amallari</span>'+
+   (amalKerak(J.tur)?'<div><div class="sarlavha" style="margin-bottom:8px"><span class="yorliq">Hisob amallari</span>'+
      '<span class="ong">× va ÷ birinchi bajariladi</span></div><div class="amallar">'+
      ["+","−","×","÷"].map(o=>'<button class="amal-t'+(J.amal===o?" faol":"")+(yetakQadam()&&yetakQadam().op===o?" yetak":"")+'"'+(D[S.daraja].amallar.includes(o)?"":" disabled style=opacity:.3")+' data-op="'+o+'">'+o+'</button>').join("")+'</div></div>':"")+
    '<div class="amal-panel">'+(J.tur==="xotira"&&v.korsat?'<button class="tugma arvoh" disabled><span class="ms">visibility</span>Yuklarni eslab qoling…</button>'
@@ -1234,7 +1255,7 @@ function kartaBos(id){
   titra(8);oyinChiz();
 }
 function eslat(m){const e=qobiq.querySelector(".tekshiruv");if(e){e.className="tekshiruv xato";e.lastElementChild.textContent=m}}
-function amalBos(o){if(J.tur!=="tosh")return;J.amal=J.amal===o?null:o;oyinChiz()}
+function amalBos(o){if(!amalKerak(J.tur))return;J.amal=J.amal===o?null:o;oyinChiz()}
 function tanlovBos(i){J.tanlov=i;titra(8);oyinChiz()}
 function tekshir(){
   if(J.yolda||J.kutish)return;
