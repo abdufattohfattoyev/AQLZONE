@@ -9,6 +9,7 @@
  * ochilsa ham urinishlar joyida. Kuniga har darajada bitta o'yin.
  */
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
@@ -274,6 +275,27 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
     }
   };
 
+  /**
+   * Katak va klaviatura o'lchovi — ekrandan hisoblanadi.
+   *
+   * Ilgari o'lcham qattiq yozilgan edi (`size-12`) va ikki joyda
+   * buzilardi: tor oynada sakkizta katak eniga sig'masdi, past oynada
+   * esa olti qator klaviaturani pastga itarib yuborardi — "Tekshirish"
+   * tugmasi ekrandan chiqib ketardi.
+   *
+   * Endi ikkala o'lchov ham hisoblanadi va KICHIGI olinadi: eni bo'yicha
+   * (oyna kengligi / katak soni) va balandligi bo'yicha (qolgan joy /
+   * olti qator). Shuning uchun ekran qanday bo'lsa ham hammasi ko'rinadi.
+   */
+  const olcham = {
+    "--kat-oraliq": "clamp(3px,0.7vh,6px)",
+    "--kat": `clamp(24px, min(
+      (100vw - 30px - (${n} - 1) * clamp(3px,0.7vh,6px)) / ${n},
+      (var(--az-ekran) - 360px) / 6
+    ), 52px)`,
+    "--tugma-bal": "clamp(34px, 5.4vh, 48px)",
+  } as CSSProperties;
+
   const qatorlar = Array.from({ length: URINISH }, (_, i): { belgilar: string[]; ranglar: (Rang | null)[] } => {
     if (i < yozuv.urinishlar.length) {
       const u = yozuv.urinishlar[i];
@@ -286,14 +308,16 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
   });
 
   return (
-    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-3 pt-4 pb-4 sm:max-w-[520px]">
-      <div className="flex items-center gap-2">
+    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-3 pt-4 pb-4
+                    [@media(max-height:640px)]:pt-1.5 [@media(max-height:640px)]:pb-1.5 sm:max-w-[520px]">
+      <div className="flex shrink-0 items-center gap-2">
         <button type="button" onClick={onChiq} title={t("ortga")}
-          className="clay-press grid size-11 shrink-0 place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
+          className="clay-press grid size-11 shrink-0 place-items-center rounded-full bg-karta text-ink-soft
+                     shadow-clay-sm [@media(max-height:640px)]:size-9">
           <Icon name="chevron" size={20} className="rotate-180" />
         </button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[19px] leading-tight">{t("kunlikSon")}</h1>
+          <h1 className="text-[19px] leading-tight [@media(max-height:640px)]:text-[16px]">{t("kunlikSon")}</h1>
           <p className="text-[12px] text-ink-soft">
             {t("kunlikSonRaqam", { n: jumboqRaqami(kun), daraja: t(darajaMa(daraja).nom) })}
             {" · "}{t("ksZanjir", { n: server?.zanjir ?? zanjir(xotira) })}
@@ -301,16 +325,17 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
         </div>
         <button type="button" onClick={() => setQanday(true)} aria-label={t("ksQandayT")}
           className="clay-press grid size-11 shrink-0 place-items-center rounded-full bg-karta font-display
-                     text-[18px] text-brand-blue shadow-clay-sm">?</button>
+                     text-[18px] text-brand-blue shadow-clay-sm [@media(max-height:640px)]:size-9">?</button>
       </div>
 
-      <div className="mt-3 flex rounded-full bg-track p-1" role="tablist">
+      <div className="mt-2.5 flex shrink-0 rounded-full bg-track p-1
+                      [@media(max-height:640px)]:mt-1.5" role="tablist">
         {DARAJALAR.map((d) => {
           const y = xotira.kunlar[kun]?.[d.n];
           return (
             <button key={d.n} type="button" role="tab" aria-selected={daraja === d.n}
               onClick={() => darajaTanla(d.n)}
-              className={`flex-1 rounded-full py-2 font-display text-[14px] ${
+              className={`flex-1 rounded-full py-2 font-display text-[14px] [@media(max-height:640px)]:py-1 ${
                 daraja === d.n ? "bg-karta text-ink shadow-clay-sm" : "text-ink-soft"}`}>
               {t(d.nom)}{y?.yutdi ? " ✓" : ""}
             </button>
@@ -319,7 +344,8 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
       </div>
 
       {/* ---- o'rganish yo'li: hozir nima qilish kerak ---- */}
-      <div className="mt-3 rounded-clay bg-karta px-3 py-2.5 shadow-clay-sm">
+      <div className="mt-2.5 shrink-0 rounded-clay bg-karta px-3 py-2 shadow-clay-sm
+                      [@media(max-height:640px)]:mt-1.5 [@media(max-height:640px)]:py-1.5">
         <div className="flex items-center gap-1.5">
           {YOL.map((b, i) => (
             <span key={b.kalit} aria-hidden
@@ -332,7 +358,8 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
                            font-display text-[12px] text-brand-gold">{bosqich + 1}</span>
           <span className="min-w-0 flex-1">
             <span className="block font-display text-[13.5px] leading-tight">{t(YOL[bosqich].kalit)}</span>
-            <span className="mt-0.5 block text-[12px] leading-snug text-ink-soft">{t(YOL[bosqich].izoh)}</span>
+            <span className="mt-0.5 block text-[12px] leading-snug text-ink-soft
+                             [@media(max-height:640px)]:hidden">{t(YOL[bosqich].izoh)}</span>
           </span>
           <button type="button" onClick={() => setQanday(true)} data-tahlil="Kunlik son: qoidalar"
             className="clay-press shrink-0 rounded-full bg-sahna px-2.5 py-1 text-[11.5px] text-ink-soft">
@@ -342,15 +369,16 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
       </div>
 
       {/* ---- katakchalar ---- */}
-      <div className="mt-4 flex flex-col items-center gap-1.5">
+      <div className="mt-3 flex min-h-0 flex-1 flex-col items-center justify-center
+                      gap-[var(--kat-oraliq)]" style={olcham}>
         {qatorlar.map((q, i) => (
-          <div key={i} className="flex gap-1.5" aria-label={`${i + 1}`}>
+          <div key={i} className="flex gap-[var(--kat-oraliq)]" aria-label={`${i + 1}`}>
             {q.belgilar.map((b, j) => {
               const r = q.ranglar[j];
               return (
                 <span key={j}
-                  className={`grid place-items-center rounded-xl font-display
-                              ${n === 6 ? "size-12 text-[22px]" : "size-10 text-[19px] sm:size-12"}
+                  style={{ width: "var(--kat)", height: "var(--kat)", fontSize: "calc(var(--kat) * .46)" }}
+                  className={`grid place-items-center rounded-[calc(var(--kat)*.22)] font-display
                               ${r ? RANG_KLASS[r] : b.trim() ? "bg-karta text-ink ring-2 ring-brand-blue/40" : "bg-karta/60 text-ink"}`}>
                   {b.trim() ? korinish(b) : ""}
                 </span>
@@ -412,11 +440,12 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
           <p className="mt-3 text-[12.5px] text-ink-soft">{t("ksErtaga")}</p>
         </div>
       ) : (
-        <div className="mt-auto pt-4">
+        <div className="mt-auto shrink-0 pt-2.5" style={olcham}>
           <div className="grid grid-cols-5 gap-1.5">
             {TUGMALAR.map((b) => (
               <button key={b} type="button" onClick={() => bos(b)}
-                className={`clay-press h-12 rounded-xl font-display text-[20px] shadow-clay-sm ${
+                style={{ height: "var(--tugma-bal)" }}
+                className={`clay-press rounded-xl font-display text-[clamp(15px,2.3vh,20px)] shadow-clay-sm ${
                   tugmaRangi[b] ? RANG_KLASS[tugmaRangi[b]] : "bg-karta text-ink"}`}>
                 {korinish(b)}
               </button>
@@ -424,11 +453,15 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
           </div>
           <div className="mt-1.5 grid grid-cols-5 gap-1.5">
             <button type="button" onClick={() => bos("⌫")} aria-label="⌫"
-              className="clay-press col-span-2 h-12 rounded-xl bg-karta font-display text-[20px] text-ink-soft shadow-clay-sm">
+              style={{ height: "var(--tugma-bal)" }}
+              className="clay-press col-span-2 rounded-xl bg-karta font-display
+                         text-[clamp(15px,2.3vh,20px)] text-ink-soft shadow-clay-sm">
               ⌫
             </button>
             <button type="button" onClick={() => bos("ok")} data-tahlil="Kunlik son: tekshirish"
-              className="clay-press col-span-3 h-12 rounded-xl bg-brand-blue font-display text-[16px] text-white shadow-clay-sm">
+              style={{ height: "var(--tugma-bal)" }}
+              className="clay-press col-span-3 rounded-xl bg-brand-blue font-display
+                         text-[clamp(14px,2vh,16px)] text-white shadow-clay-sm">
               {t("ksTekshir")}
             </button>
           </div>
