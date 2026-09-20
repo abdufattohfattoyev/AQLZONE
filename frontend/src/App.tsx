@@ -215,6 +215,7 @@ function BoshSahifasi() {
       // emas: qaytib kelgan odam aynan o'sha darsni ochish uchun
       // kelgan va uni yana bir marta bosishga majburlash ortiqcha.
       onDavom={(c, ui, li) => nav(yolDars(c, ui, li))}
+      onKunlikSon={() => nav(yolKunlikSon())}
       onQidiruv={() => nav(yolQidiruv())}
       onReyting={() => nav(yolReyting())}
       onSozlama={() => nav(yolSozlama())}

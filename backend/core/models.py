@@ -1878,3 +1878,48 @@ class Hodisa(models.Model):
     class Meta:
         db_table = "hodisa"
         indexes = [models.Index(fields=["pupil", "created_at"])]
+
+
+class KunlikSonNatija(models.Model):
+    """
+    Kunlik son — kim qaysi kuni nechanchi urinishda yechdi.
+
+    ─────────────────── NEGA SERVERDA ───────────────────
+
+    O'yinning o'zi brauzerda (`lib/oyin/kunlikSon.ts`) va u shunday
+    qoladi. Lekin uchta narsa telefonda turolmaydi: ZANJIR (ilovani
+    o'chirgan bola tarixini yo'qotardi), RO'YXAT (boshqalarning
+    natijasi) va botning kechki xabari ("zanjiringiz 6 kun" — buni
+    yuborishdan oldin server bilishi kerak).
+
+    ─────────────────── BIR KUN — BIR YOZUV ───────────────────
+
+    `(profile, sana, daraja)` yagona. Birinchi yozuv qoladi, keyingilari
+    rad etiladi (`kunlik_son.yoz`): aks holda odam bir kunni qayta-qayta
+    yuborib, ro'yxatdagi vaqtini yaxshilab olardi.
+
+    Urinishlar MATN bo'lib saqlanadi ("7*8-6=50"). Ular ikki joyda
+    kerak: server javobni qayta tekshiradi va ulashiladigan kartochka
+    ranglarini shu qatorlardan chizadi.
+    """
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="kunlik_son")
+    sana = models.DateField()
+    daraja = models.SmallIntegerField()
+    #: Nechanchi urinishda tugadi (1–6).
+    urinish = models.SmallIntegerField(default=0)
+    bajardi = models.BooleanField(default=False)
+    #: Birinchi urinishdan oxirgisigacha — sekundda (mijoz o'lchaydi).
+    sekund = models.IntegerField(default=0)
+    urinishlar = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "kunlik_son_natija"
+        constraints = [
+            models.UniqueConstraint(fields=["profile", "sana", "daraja"], name="kunlik_son_bir_kun"),
+        ]
+        indexes = [
+            models.Index(fields=["sana", "bajardi"]),
+            models.Index(fields=["profile", "-sana"]),
+        ]

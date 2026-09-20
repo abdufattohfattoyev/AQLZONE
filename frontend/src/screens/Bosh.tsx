@@ -45,6 +45,7 @@ import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { Reveal } from "../components/Reveal";
+import { KunlikKarta } from "../components/KunlikKarta";
 import { TilTugma } from "../components/TilTugma";
 import { YoruglikTugma } from "../components/YoruglikTugma";
 import { getHisob, joriyProfil, profilSoni } from "../lib/api";
@@ -67,6 +68,8 @@ interface Props {
   onOyinlar: () => void;
   /** Boshlangan darsga qaytish. */
   onDavom: (c: Course, ui: number, li: number) => void;
+  /** Kunlik son ekrani — tepadagi karta shu yerga olib boradi. */
+  onKunlikSon: () => void;
   onQidiruv: () => void;
   onReyting: () => void;
   onSozlama: () => void;
@@ -106,7 +109,7 @@ function davomJoyi(progressOf: (c: Course) => Progress) {
 
 export function Bosh({
   progressOf, onKichkintoy, onDarslar, onMasalalar, onTestlar, onOyinlar,
-  onDavom, onQidiruv, onReyting, onSozlama, onProfillar,
+  onDavom, onKunlikSon, onQidiruv, onReyting, onSozlama, onProfillar,
 }: Props) {
   const kopBola = profilSoni() > 1;
   const [hisob, setHisob] = useState<Hisob | null>(null);
@@ -181,6 +184,16 @@ export function Bosh({
           Ilgari yangi odamga katta tugma yo'q edi — beshta teng eshik
           va ulardan qaysi biri "boshlanish" ekanini o'zi topishi
           kerak edi. */}
+      {/* KUNLIK SON — eng tepada, "davom etish" dan ham yuqorida.
+          Sabab `components/KunlikKarta.tsx` izohida: bu ilovadagi
+          yagona kunlik odat va u o'yinlar ro'yxatida yashiringani
+          uchun 30 kunda besh marta ochilgan edi. */}
+      <Reveal kech={60}>
+        <div className="az-kirish mt-2.5" style={kech(60)}>
+          <KunlikKarta onOch={onKunlikSon} />
+        </div>
+      </Reveal>
+
       {!davom && (
         <Reveal kech={70}>
           <div className="az-kirish mt-2.5" style={kech(70)}>

@@ -42,7 +42,8 @@ from django.utils import timezone
 
 from core import xabar as X
 from core.matn import M, tilni_tanla
-from core.models import Identity, LessonResult, MasalaUrinish, Pupil, TestIshlash
+from core.models import (Identity, KunlikSonNatija, LessonResult, MasalaUrinish, Pupil,
+                         TestIshlash)
 
 #: Shu kundan beri umuman faol bo'lmaganlarga yozmaymiz.
 FAOL_KUN = 14
@@ -73,6 +74,11 @@ def mashq_vaqtlari(pupil_id: int, profil_idlar: list[int], boshi):
     ochib yopgan odamga "bugun mashq qildingiz" deyish yolg'on bo'lardi.
     """
     vaqtlar = list(LessonResult.objects.filter(
+        profile_id__in=profil_idlar, created_at__gte=boshi,
+    ).values_list("created_at", flat=True))
+    # Kunlik jumboq ham mashq: faqat uni o'ynaydigan odam "faol emas"
+    # deb hisoblanib, eslatmadan butunlay tushib qolardi.
+    vaqtlar += list(KunlikSonNatija.objects.filter(
         profile_id__in=profil_idlar, created_at__gte=boshi,
     ).values_list("created_at", flat=True))
     for u in MasalaUrinish.objects.filter(profile_id__in=profil_idlar).filter(
@@ -201,6 +207,12 @@ class Command(BaseCommand):
             .values_list("profile_id", flat=True)
         ) | set(
             TestIshlash.objects.filter(created_at__date=bugun)
+            .values_list("profile_id", flat=True)
+        ) | set(
+            # Kunlik jumboqni yechgan odam ham bugun mashq qilgan. Busiz
+            # unga soat 18:00 da "mashq qiling" deb yozilardi — bu esa
+            # xabarni bir zumda ishonchsiz qiladi.
+            KunlikSonNatija.objects.filter(sana=bugun)
             .values_list("profile_id", flat=True)
         )
 

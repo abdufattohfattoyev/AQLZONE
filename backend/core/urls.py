@@ -5,6 +5,7 @@ from . import views
 from . import xona_views
 from . import shaharcha_views
 from . import karvon_views
+from . import kunlik_views
 
 urlpatterns = [
     path("auth/telegram", views.auth_telegram, name="auth-telegram"),
@@ -61,6 +62,13 @@ urlpatterns = [
     path("karvon/otkaz", karvon_views.karvon_otkaz, name="karvon-otkaz"),
     path("karvon/maslahat", karvon_views.karvon_maslahat, name="karvon-maslahat"),
     path("karvon/qayta", karvon_views.karvon_qayta, name="karvon-qayta"),
+
+    # Kunlik son — Wordle uslubidagi kunlik jumboq. O'yin qurilmada,
+    # zanjir va ro'yxat serverda (`core/kunlik_son.py` izohi).
+    path("kunlik-son/holat", kunlik_views.kunlik_holat, name="kunlik-holat"),
+    path("kunlik-son/natija", kunlik_views.kunlik_natija, name="kunlik-natija"),
+    path("kunlik-son/royxat", kunlik_views.kunlik_royxat, name="kunlik-royxat"),
+    path("kunlik-son/ulash", kunlik_views.kunlik_ulash, name="kunlik-ulash"),
     path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),
     path("shaharcha/qur", shaharcha_views.shaharcha_qur, name="shaharcha-qur"),
     path("shaharcha/oshir", shaharcha_views.shaharcha_oshir, name="shaharcha-oshir"),

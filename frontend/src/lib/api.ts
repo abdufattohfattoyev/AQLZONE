@@ -1439,6 +1439,32 @@ export async function kartaKolleksiya(): Promise<Record<string, number>> {
   } catch { return {}; }
 }
 
+/* ================= KUNLIK SON — zanjir, ro'yxat, kartochka =================
+ *
+ * O'yinning o'zi qurilmada (`lib/oyin/kunlikSon.ts`) va shunday qoladi.
+ * Serverga faqat NATIJA boradi: zanjir telefon xotirasida tursa, ilovani
+ * o'chirgan bola butun tarixini yo'qotardi, ro'yxat esa umuman bo'lmasdi. */
+export interface KunlikDaraja { bajardi: boolean; urinish: number; sekund: number }
+export interface KunlikHolat {
+  sana: string; raqam: number; zanjir: number; bajarildi: boolean;
+  darajalar: Record<string, KunlikDaraja>;
+}
+export interface KunlikQator {
+  id: number; ism: string; avatar: string; daraja: number;
+  urinish: number; sekund: number; men: boolean;
+}
+export interface KunlikRoyxat {
+  sana: string; raqam: number; qatorlar: KunlikQator[]; jami: number; yechgan: number;
+}
+export const kunlikHolat = () => xonaSorov<KunlikHolat>("/api/v1/kunlik-son/holat");
+export const kunlikNatija = (daraja: number, urinishlar: string[], sekund: number) =>
+  xonaSorov<KunlikHolat & { yangi: boolean; bajardi: boolean; joy: number | null }>(
+    "/api/v1/kunlik-son/natija", { daraja, urinishlar, sekund });
+export const kunlikRoyxat = (daraja?: number) =>
+  xonaSorov<KunlikRoyxat>(`/api/v1/kunlik-son/royxat${daraja ? `?daraja=${daraja}` : ""}`);
+/** Natija kartochkasini botga yuboradi — odam uni guruhga o'zi yo'naltiradi. */
+export const kunlikUlash = () => xonaSorov<{ ok: boolean }>("/api/v1/kunlik-son/ulash", {});
+
 /** "Meni jonli bellashuvga chaqirmasin". */
 export const duelSozlama = (yopiq: boolean): Promise<{ yopiq: boolean }> =>
   duelPost("/api/v1/duel/sozlama", { yopiq });

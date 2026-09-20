@@ -52,6 +52,21 @@ app.autodiscover_tasks()
 #: kerakli soatni o'zlari kutardi. Endi kutish kerak emas va
 #: `--soat` ham berilmaydi.
 app.conf.beat_schedule = {
+    # Kunlik son xabari — 17:30, umumiy eslatmadan OLDIN. Sabab:
+    # o'ynaydigan odamga jumboq haqidagi xabar foydaliroq, umumiy
+    # eslatma esa uni `eslatma_at` bo'yicha o'tkazib yuboradi (ya'ni
+    # bir odam bir kunda ikkita xabar olmaydi).
+    "kunlik-son-xabari": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=17, minute=30),
+        "args": ("kunlik_eslatma",),
+    },
+    # Kunlik son natijalari kanalga — kun tugagach.
+    "kunlik-son-kanal": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=21, minute=0),
+        "args": ("kunlik_kanal",),
+    },
     # Kunlik eslatma — 18:00. Ertalab yuborilgani darsga ketayotgan
     # bolada ochilmaydi va o'qilmagan xabar bo'lib qoladi.
     "kunlik-eslatma": {

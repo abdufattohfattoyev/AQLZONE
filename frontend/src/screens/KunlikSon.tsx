@@ -14,7 +14,8 @@ import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import type { Kalit } from "../lib/matn";
 import { havolaniOch, tebrat, useOrqaga } from "../lib/qobiq";
-import { botNomi } from "../lib/api";
+import { botNomi, kunlikHolat, kunlikNatija, kunlikRoyxat, kunlikUlash } from "../lib/api";
+import type { KunlikHolat, KunlikRoyxat } from "../lib/api";
 import { useProgress } from "../lib/progress";
 import { kunKaliti, kunOldin } from "../lib/zanjir";
 import { DARAJALAR, darajaMa } from "../lib/oyin/tur";
@@ -27,7 +28,13 @@ import type { Rang } from "../lib/oyin/kunlikSon";
 const KALIT = "az-kunlik-son";
 const QANDAY_KALIT = "az-kunlik-son-qanday";
 
-interface Yozuv { urinishlar: string[]; tugadi: boolean; yutdi: boolean; tanga?: boolean }
+interface Yozuv {
+  urinishlar: string[]; tugadi: boolean; yutdi: boolean; tanga?: boolean;
+  /** Birinchi urinish boshlangan payt (ms). Ro'yxatdagi vaqt shundan. */
+  boshAt?: number;
+  /** Serverga yozildimi — qayta ulanganda ikkinchi marta yuborilmasin. */
+  yuborildi?: boolean;
+}
 interface Xotira {
   kunlar: Record<string, Partial<Record<Daraja, Yozuv>>>;
   daraja?: Daraja;
@@ -80,6 +87,37 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
   const [qanday, setQanday] = useState(() => {
     try { return !localStorage.getItem(QANDAY_KALIT); } catch { return false; }
   });
+  // Zanjir va ro'yxat SERVERDAN keladi: telefon xotirasidagi zanjir
+  // ilova o'chirilganda yo'qolardi, boshqalarning natijasini esa u
+  // umuman bilmaydi.
+  const [server, setServer] = useState<KunlikHolat | null>(null);
+  const [royxat, setRoyxat] = useState<KunlikRoyxat | null>(null);
+  const [joy, setJoy] = useState<number | null>(null);
+  const [ulashHolat, setUlashHolat] = useState<"" | "ketmoqda" | "yuborildi" | "xato">("");
+
+  useEffect(() => {
+    let tirik = true;
+    void (async () => {
+      try {
+        const h = await kunlikHolat();
+        if (tirik) setServer(h);
+      } catch { /* aloqa yo'q — qurilmadagi zanjir ko'rsatiladi */ }
+    })();
+    return () => { tirik = false; };
+  }, []);
+
+  /** Bugungi eng tezlar — faqat kerak bo'lganda so'raladi. */
+  const royxatniOl = async () => {
+    try { setRoyxat(await kunlikRoyxat()); } catch { /* jim */ }
+  };
+
+  // Jumboq allaqachon yechilgan bo'lsa (ekran qayta ochildi) — ro'yxat
+  // darhol kerak: odam shu yerga natijasini ko'rish uchun qaytadi.
+  const tugagan = xotira.kunlar[kun]?.[daraja]?.tugadi ?? false;
+  useEffect(() => {
+    if (tugagan && !royxat) void royxatniOl();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tugagan]);
 
   const n = uzunlik(daraja);
   const yechim = useMemo(() => jumboq(kun, daraja), [kun, daraja]);
@@ -106,7 +144,11 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
     setXato("");
     if (b === "⌫") { setJoriy((s) => s.slice(0, -1)); return; }
     if (b === "ok") { yubor(); return; }
-    if (joriy.length < n) { tebrat("tanlov"); setJoriy(joriy + b); }
+    if (joriy.length < n) {
+      tebrat("tanlov");
+      if (!yozuv.boshAt) saqla({ ...yozuv, boshAt: Date.now() });
+      setJoriy(joriy + b);
+    }
   };
 
   const yubor = () => {
@@ -121,9 +163,24 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
       oyinTugadi(yutdi ? 6 + (URINISH - urinishlar.length) * 2 : 2, urinishlar.length);
       tanga = true;
     }
-    saqla({ urinishlar, tugadi, yutdi, tanga });
+    const boshAt = yozuv.boshAt ?? Date.now();
+    saqla({ urinishlar, tugadi, yutdi, tanga, boshAt, yuborildi: yozuv.yuborildi });
     setJoriy("");
     tebrat(yutdi ? "yutuq" : tugadi ? "xato" : "togri");
+    if (tugadi && !yozuv.yuborildi) {
+      // Serverga FAQAT tugagach yuboriladi va faqat bir marta: zanjir,
+      // ro'yxat va botning kechki xabari shu yozuvdan oziqlanadi.
+      const sekund = Math.max(1, Math.round((Date.now() - boshAt) / 1000));
+      void (async () => {
+        try {
+          const j = await kunlikNatija(daraja, urinishlar, sekund);
+          setServer(j);
+          setJoy(j.joy);
+          saqla({ urinishlar, tugadi, yutdi, tanga, boshAt, yuborildi: true });
+          void royxatniOl();
+        } catch { /* aloqa yo'q: natija qurilmada qoldi, zanjir ertaga tiklanadi */ }
+      })();
+    }
   };
 
   // Jismoniy klaviatura (kompyuter).
@@ -152,13 +209,34 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
     return eng;
   }, [yozuv.urinishlar, yechim]);
 
-  const ulash = async () => {
+  /** Eski yo'l: matnli kvadratchalar (kartochka yuborilmasa). */
+  const matnliUlash = async () => {
     const bot = await botNomi();
     const natija = yozuv.yutdi ? `${yozuv.urinishlar.length}/6` : "X/6";
     const matn = `${t("ksUlashMatn", { n: jumboqRaqami(kun), daraja: t(darajaMa(daraja).nom), natija })}\n\n`
       + ulashKvadratlar(yozuv.urinishlar, yechim);
     const havola = bot ? `https://t.me/${bot}?start=kunlik` : location.origin;
     havolaniOch(`https://t.me/share/url?url=${encodeURIComponent(havola)}&text=${encodeURIComponent(matn)}`);
+  };
+
+  /**
+   * Ulashish — natija KARTOCHKASI botga yuboriladi.
+   *
+   * Matn ko'rinishidagi kvadratchalar sinf guruhida ko'zga tashlanmaydi
+   * (30 kunda tugma bir marta bosilgan). Rasm esa o'zi ko'rinadi va
+   * ostida havola turadi. Bot faqat o'yinchining O'Z suhbatiga yozadi,
+   * guruhga odam uni o'zi yo'naltiradi.
+   */
+  const ulash = async () => {
+    if (ulashHolat === "ketmoqda") return;
+    setUlashHolat("ketmoqda");
+    try {
+      await kunlikUlash();
+      setUlashHolat("yuborildi");
+    } catch {
+      setUlashHolat("xato");
+      await matnliUlash();
+    }
   };
 
   const qatorlar = Array.from({ length: URINISH }, (_, i): { belgilar: string[]; ranglar: (Rang | null)[] } => {
@@ -183,7 +261,7 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
           <h1 className="text-[19px] leading-tight">{t("kunlikSon")}</h1>
           <p className="text-[12px] text-ink-soft">
             {t("kunlikSonRaqam", { n: jumboqRaqami(kun), daraja: t(darajaMa(daraja).nom) })}
-            {" · "}{t("ksZanjir", { n: zanjir(xotira) })}
+            {" · "}{t("ksZanjir", { n: server?.zanjir ?? zanjir(xotira) })}
           </p>
         </div>
         <button type="button" onClick={() => setQanday(true)} aria-label={t("ksQandayT")}
@@ -237,12 +315,43 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
               {t("ksJavob", { j: yechim.split("").map(korinish).join("") })}
             </div>
           )}
+          {royxat && royxat.yechgan > 0 && (
+            <p className="mt-1 text-[13px] text-ink-soft">
+              {joy ? t("ksJoy", { y: royxat.yechgan, j: joy }) : t("ksYechgan", { y: royxat.yechgan })}
+            </p>
+          )}
           <button type="button" onClick={() => void ulash()} data-tahlil="Kunlik son: ulashish"
+            disabled={ulashHolat === "ketmoqda"}
             className="tugma-3d mt-3 w-full rounded-3xl bg-brand-green py-3.5 font-display text-[16px] text-white
-                       shadow-[0_5px_0_var(--color-brand-green-d)]">
-            {t("ksUlash")}
+                       shadow-[0_5px_0_var(--color-brand-green-d)] disabled:opacity-60">
+            {ulashHolat === "yuborildi" ? t("ksUlashKetdi") : t("ksUlash")}
           </button>
-          <p className="mt-2 text-[12.5px] text-ink-soft">{t("ksErtaga")}</p>
+          {ulashHolat === "yuborildi" && (
+            <p className="mt-2 text-[12.5px] text-brand-green">{t("ksUlashIzoh")}</p>
+          )}
+
+          {/* Bugungi eng tezlar — "men ham urinib ko'ray" degan fikr shundan tug'iladi. */}
+          {royxat && royxat.qatorlar.length > 0 && (
+            <div className="mt-4 text-left">
+              <div className="mb-1.5 text-[12px] font-semibold tracking-wide text-ink-soft uppercase">
+                {t("ksTezlar")}
+              </div>
+              <ol className="grid gap-1">
+                {royxat.qatorlar.slice(0, 5).map((q, i) => (
+                  <li key={q.id}
+                    className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-[13.5px] ${
+                      q.men ? "bg-brand-gold/15 ring-1 ring-brand-gold/40" : "bg-sahna"}`}>
+                    <span className="w-5 shrink-0 text-center font-display text-ink-soft">{i + 1}</span>
+                    <span className="min-w-0 flex-1 truncate">{q.ism}</span>
+                    <span className="shrink-0 font-display text-ink-soft">
+                      {t("ksUrinishQisqa", { n: q.urinish })} · {Math.round(q.sekund)}s
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+          <p className="mt-3 text-[12.5px] text-ink-soft">{t("ksErtaga")}</p>
         </div>
       ) : (
         <div className="mt-auto pt-4">

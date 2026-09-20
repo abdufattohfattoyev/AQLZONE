@@ -7385,3 +7385,260 @@ class KarvonServerTest(TestCase):
         r = self.post("/api/v1/karvon/bekat", {"daraja": 1, "yetak": True}, h).json()
         self.assertTrue(r["vazifa"]["yetak"])
         self.assertEqual(len(r["vazifa"]["yechim"]), 2)
+
+
+class KunlikSonPortTest(TestCase):
+    """
+    Serverdagi jumboq mijozdagisi bilan AYNAN bir xilmi.
+
+    Bu eng muhim sinov: generator bir belgiga farq qilsa, server to'g'ri
+    javobni "noto'g'ri" deb rad etadi va buni faqat foydalanuvchi
+    sezardi. `core/etalon/kunlik_son.json` dagi 200 kunlik ro'yxat
+    TypeScript kodidan olingan.
+    """
+
+    def test_jumboqlar_etalonga_mos(self):
+        import json as _json
+        from pathlib import Path
+
+        from core import kunlik_son as KS
+
+        yol = Path(__file__).resolve().parent / "etalon" / "kunlik_son.json"
+        etalon = _json.loads(yol.read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(etalon), 100)
+        for kun, uchta in etalon.items():
+            for daraja, kutilgan in enumerate(uchta, 1):
+                self.assertEqual(KS.jumboq(kun, daraja), kutilgan, f"{kun} · {daraja}")
+
+    def test_hisobla_qoidalari(self):
+        from core import kunlik_son as KS
+
+        self.assertEqual(KS.hisobla("2+3*4"), 14)
+        self.assertIsNone(KS.hisobla("7/2"))
+        self.assertIsNone(KS.hisobla("07+1"))
+        self.assertIsNone(KS.hisobla("7+-1"))
+        self.assertEqual(KS.tekshir("7*8-6=50", 8), "")
+        self.assertEqual(KS.tekshir("7*8-6=51", 8), "teng_emas")
+        self.assertEqual(KS.tekshir("7*8=56", 8), "uzunlik")
+
+    def test_ranglar_takroriy_belgida(self):
+        from core import kunlik_son as KS
+
+        r = KS.solishtir("11+1=12", "12-1=11")
+        self.assertEqual(r[0], "yashil")
+        self.assertLessEqual(sum(1 for x in r if x != "boz"), 7)
+
+
+class KunlikSonTest(TestCase):
+    """Natija serverda tekshiriladi; zanjir va ro'yxat shundan chiqadi."""
+
+    def kir(self, device: str = "dev-kunlik-1111aaaa2222") -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def post(self, url, data, kim):
+        return self.client.post(url, data, content_type="application/json", **kim)
+
+    def yechim(self, daraja=2, kun=None):
+        from django.utils import timezone
+
+        from core import kunlik_son as KS
+
+        return KS.jumboq(KS.kun_kaliti(kun or timezone.localdate()), daraja)
+
+    def test_togri_javob_yoziladi_va_zanjir_boshlanadi(self):
+        h = self.kir()
+        r = self.post("/api/v1/kunlik-son/natija",
+                      {"daraja": 2, "urinishlar": [self.yechim()], "sekund": 42}, h)
+        self.assertEqual(r.status_code, 200, r.content)
+        j = r.json()
+        self.assertTrue(j["bajardi"])
+        self.assertTrue(j["yangi"])
+        self.assertEqual(j["zanjir"], 1)
+        self.assertEqual(j["joy"], 1)
+
+    def test_soxta_javob_qabul_qilinmaydi(self):
+        """Yechmagan odam "yechdim" deya olmaydi — server o'zi tekshiradi."""
+        h = self.kir()
+        r = self.post("/api/v1/kunlik-son/natija",
+                      {"daraja": 2, "urinishlar": ["7*8-6=50"], "sekund": 5}, h)
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(MDL.KunlikSonNatija.objects.count(), 0)
+
+    def test_yaroqsiz_tenglik_rad_etiladi(self):
+        h = self.kir()
+        r = self.post("/api/v1/kunlik-son/natija",
+                      {"daraja": 2, "urinishlar": ["7*8-6=51", self.yechim()], "sekund": 5}, h)
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.json()["sabab"], "urinish_notogri")
+
+    def test_ikkinchi_yuborish_natijani_yaxshilamaydi(self):
+        """Birinchi yozuv qoladi: aks holda vaqtni qayta-qayta yaxshilash mumkin edi."""
+        h = self.kir()
+        y = self.yechim()
+        self.post("/api/v1/kunlik-son/natija", {"daraja": 2, "urinishlar": [y], "sekund": 300}, h)
+        j = self.post("/api/v1/kunlik-son/natija",
+                      {"daraja": 2, "urinishlar": [y], "sekund": 3}, h).json()
+        self.assertFalse(j["yangi"])
+        self.assertEqual(MDL.KunlikSonNatija.objects.get().sekund, 300)
+
+    def test_zanjir_ketma_ket_kunlardan(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from core import kunlik_son as KS
+
+        h = self.kir()
+        self.post("/api/v1/kunlik-son/natija", {"daraja": 2, "urinishlar": [self.yechim()]}, h)
+        profil = MDL.KunlikSonNatija.objects.get().profile
+        bugun = timezone.localdate()
+        for n in (1, 2):
+            MDL.KunlikSonNatija.objects.create(
+                profile=profil, sana=bugun - timedelta(days=n), daraja=2,
+                urinish=3, bajardi=True, sekund=60, urinishlar=[],
+            )
+        self.assertEqual(KS.zanjir(profil), 3)
+        MDL.KunlikSonNatija.objects.create(
+            profile=profil, sana=bugun - timedelta(days=4), daraja=2,
+            urinish=1, bajardi=True, sekund=10, urinishlar=[],
+        )
+        self.assertEqual(KS.zanjir(profil), 3)
+
+    def test_zanjir_bugun_yechilmasa_uzilmaydi(self):
+        """Kun tugamagan: kechagi zanjir bugun ham ko'rinadi."""
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from core import kunlik_son as KS
+
+        h = self.kir()
+        self.post("/api/v1/kunlik-son/natija", {"daraja": 2, "urinishlar": [self.yechim()]}, h)
+        n = MDL.KunlikSonNatija.objects.get()
+        n.sana = timezone.localdate() - timedelta(days=1)
+        n.save()
+        self.assertEqual(KS.zanjir(n.profile), 1)
+
+    def test_royxat_tartibi_va_ochiq(self):
+        """Kam urinish oldinda; teng bo'lsa — tezroq yechgan."""
+        import json as _json
+
+        a = self.kir("dev-kunlik-aaaa1111cccc")
+        b = self.kir("dev-kunlik-bbbb2222dddd")
+        y = self.yechim()
+        self.post("/api/v1/kunlik-son/natija", {"daraja": 2, "urinishlar": [y], "sekund": 90}, a)
+        self.post("/api/v1/kunlik-son/natija",
+                  {"daraja": 2, "urinishlar": ["7*8-6=50", y], "sekund": 10}, b)
+        r = self.client.get("/api/v1/kunlik-son/royxat", **b).json()
+        self.assertEqual([q["urinish"] for q in r["qatorlar"]], [1, 2])
+        self.assertEqual(r["yechgan"], 2)
+        self.assertTrue(r["qatorlar"][1]["men"])
+        self.assertNotIn(y, _json.dumps(r))
+
+    def test_holat_boshlangich(self):
+        h = self.kir()
+        r = self.client.get("/api/v1/kunlik-son/holat", **h).json()
+        self.assertEqual((r["zanjir"], r["bajarildi"]), (0, False))
+        self.assertGreater(r["raqam"], 0)
+
+    def test_kartochka_png_chiqadi(self):
+        from core import kunlik_kartochka as KK
+        from core import kunlik_son as KS
+
+        h = self.kir()
+        self.post("/api/v1/kunlik-son/natija",
+                  {"daraja": 2, "urinishlar": [self.yechim()], "sekund": 30}, h)
+        n = MDL.KunlikSonNatija.objects.get()
+        png = KK.natijadan(n, n.profile)
+        self.assertTrue(png.startswith(b"\x89PNG"))
+        self.assertGreater(len(png), 5000)
+        self.assertNotIn(KS.jumboq(KS.kun_kaliti(n.sana), 2).encode(), png)
+
+
+class KunlikXabarTest(TestCase):
+    """Kechki xabar va kanal posti — kimga boradi va nima yozadi."""
+
+    def profil_yasa(self, tg_id: str, ism: str):
+        pupil = MDL.Pupil.objects.create(first_name=ism)
+        MDL.Identity.objects.create(pupil=pupil, provider=MDL.Identity.TELEGRAM, external_id=tg_id)
+        return MDL.Profile.objects.create(pupil=pupil, name=ism)
+
+    def natija(self, profil, kun=None, bajardi=True, urinish=2, sekund=60, daraja=2):
+        from django.utils import timezone
+
+        return MDL.KunlikSonNatija.objects.create(
+            profile=profil, sana=kun or timezone.localdate(), daraja=daraja,
+            urinish=urinish, bajardi=bajardi, sekund=sekund, urinishlar=[],
+        )
+
+    def chaqir(self, buyruq="kunlik_eslatma", **o):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        chiq = StringIO()
+        call_command(buyruq, sinov=True, stdout=chiq, **o)
+        return chiq.getvalue()
+
+    def test_oynamaganga_xabar_ketmaydi(self):
+        self.profil_yasa("111", "Hech qachon o'ynamagan")
+        self.assertIn("0 ta xabar", self.chaqir())
+
+    def test_oynagan_lekin_bugun_yechmaganga_ketadi(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        p = self.profil_yasa("222", "Kechagi o'yinchi")
+        self.natija(p, kun=timezone.localdate() - timedelta(days=1))
+        chiq = self.chaqir()
+        self.assertIn("1 ta xabar", chiq)
+        self.assertIn("zanjir", chiq.lower())
+
+    def test_bugun_yechganga_ketmaydi(self):
+        p = self.profil_yasa("333", "Bugun yechgan")
+        self.natija(p)
+        chiq = self.chaqir()
+        self.assertIn("0 ta xabar", chiq)
+        self.assertIn("1 ta bugun yechgan", chiq)
+
+    def test_bugun_xabar_olgan_ikkinchisini_olmaydi(self):
+        """Kuniga bitta xabar: umumiy eslatma bilan to'qnashmaydi."""
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        p = self.profil_yasa("444", "Xabar olgan")
+        self.natija(p, kun=timezone.localdate() - timedelta(days=1))
+        MDL.Pupil.objects.filter(pk=p.pupil_id).update(eslatma_at=timezone.now())
+        self.assertIn("0 ta xabar", self.chaqir())
+
+    def test_umumiy_eslatma_kunlik_oynaganni_otkazadi(self):
+        """Jumboqni yechgan odam "bugun mashq qilmadingiz" xabarini olmaydi."""
+        p = self.profil_yasa("555", "Bugun jumboq yechgan")
+        self.natija(p)
+        self.assertIn("0 ta xabar", self.chaqir("eslatma"))
+
+    def test_kanal_posti_yechimni_ochmaydi(self):
+        from django.utils import timezone
+
+        from core import kunlik_son as KS
+        from core.management.commands.kunlik_kanal import post_matni
+
+        p = self.profil_yasa("666", "Tezkor")
+        self.natija(p, urinish=2, sekund=45)
+        matn, yechgan = post_matni()
+        self.assertEqual(yechgan, 1)
+        self.assertIn("Tezkor", matn)
+        self.assertIn("2/6", matn)
+        for d in KS.DARAJALAR:
+            self.assertNotIn(KS.jumboq(KS.kun_kaliti(timezone.localdate()), d), matn)
+
+    def test_kanal_posti_bosh_kunda(self):
+        from core.management.commands.kunlik_kanal import post_matni
+
+        matn, yechgan = post_matni()
+        self.assertEqual(yechgan, 0)
+        self.assertIn("Birinchi", matn)
