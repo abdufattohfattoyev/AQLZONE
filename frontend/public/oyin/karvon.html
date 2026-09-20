@@ -484,9 +484,20 @@ const SHAHAR=[
  {nom:"Xiva",art:{nom:"Al-Xorazmiy al-jabr lavhasi",joy:"Ichan qal'a",bonus:"Mavsum kubogi va unvon",ik:"lavha"},
   sovga:"Mavsum tugadi"}];
 const D=[null,
- {nom:"1–4 sinf",min:1,max:9,amallar:["+","−"],chegara:20},
- {nom:"5–8 sinf",min:2,max:12,amallar:["+","−","×"],chegara:80},
- {nom:"9–11 sinf",min:3,max:20,amallar:["+","−","×","÷"],chegara:300}];
+ {nom:"1–4 sinf",min:1,max:9,amallar:["+","−"],chegara:20,qism:2},
+ {nom:"5–8 sinf",min:2,max:15,amallar:["+","−","×"],chegara:120,qism:3},
+ {nom:"9–11 sinf",min:6,max:48,amallar:["+","−","×","÷"],chegara:1200,qism:3}];
+/* Mavsum — nechanchi safar. Xivaga yetgan karvon ortga qaytadi va
+   sonlar kattalashadi (serverda ham shunday: `karvon.kuch`). */
+const MAVSUM_OSISH=.45,MAX_MAVSUM=9;
+const mavsumim=()=>Math.max(1,Math.min(MAX_MAVSUM,S.mavsum||1));
+function kuch(){
+  const d=D[S.daraja],o=1+MAVSUM_OSISH*(mavsumim()-1);
+  return {min:Math.max(1,Math.round(d.min*(1+(o-1)/2))),max:Math.max(d.min+3,Math.round(d.max*o)),
+    amallar:d.amallar,chegara:Math.round(d.chegara*o*o),qism:d.qism+(S.daraja===3&&mavsumim()>=3?1:0)};
+}
+/* Safar nomi: toq mavsum Toshkentdan Xivaga, juft mavsum ortga. */
+const mavsumNomi=(m)=>((m||1)%2?"Toshkentdan Xivaga":"Xivadan Toshkentga");
 const TUR={
  boron:{nom:"Qum bo'roni",olch:"Energiya",ish:"Kartalarni qo'shib aniq energiyani yig'ing",cta:"Yo'lni ochish (bo'ronni to'xtatish)"},
  tosh:{nom:"Tosh ko'chkisi",olch:"Tosh kuchi",ish:"Amallar bilan tosh kuchiga teng ifoda tuzing",cta:"Yo'lni ochish (toshni parchalash)"},
@@ -573,7 +584,7 @@ else{const bosh=boshlangich();S=Object.assign({},bosh,S);
   if(!S.buff||typeof S.buff!=="object")S.buff={};
   if(!S.orgatilgan||typeof S.orgatilgan!=="object")S.orgatilgan={};
   if(!Array.isArray(S.uskuna))S.uskuna=bosh.uskuna;}
-function boshlangich(){return{ism:(P.get("ism")||"Sayyoh").slice(0,24),tag:"",daraja:2,bekat:0,tanga:150,suv:3,maxSuv:3,qol:5,
+function boshlangich(){return{ism:(P.get("ism")||"Sayyoh").slice(0,24),tag:"",daraja:2,mavsum:1,bekat:0,tanga:150,suv:3,maxSuv:3,qol:5,
   yulduz:{},art:[],buff:{},uskuna:[],ulov:null,oazis:true,tab:"xarita",yuk:[],buyurtma:{},kunlik:null,ovoz:true,darajaTanlandi:false,kirishKorildi:false,orgatilgan:{},
   birga:{dost:"Nigora",bekat:0,navbat:"men"},saqlandi:Date.now()}}
 function saqla(){S.saqlandi=Date.now();try{localStorage.setItem(KALIT,JSON.stringify(S))}catch(e){}holatYubor()}
@@ -693,7 +704,7 @@ function xarita(oldingiUlush){
   const shNo=Math.min(3,Math.floor(S.bekat/3)+1),qoldi=3-(S.bekat%3);
   let ustki='<div class="karvon-nuqta'+(bor("libos")?" libosli":"")+'" id="karvonBelgi"><span class="soya"></span>'+
     (bor("libos")?'<span class="bayroq"></span>':'')+(bor("fonus")&&tun()?'<span class="fonus-nur"></span>':'')+'<span class="tuyacha">🐫</span>'+
-    '<small>'+(S.bekat>=9?"Yo'l tugadi":(S.bekat+1)+"-bekat")+'</small></div>';
+    '<small>'+(S.bekat>=9?"Keyingi safar tayyor":(S.bekat+1)+"-bekat"+(mavsumim()>1?" · "+mavsumim()+"-safar":""))+'</small></div>';
   if(S.bekat<8)ustki+='<div class="xarita-chip qulf" data-ulush="'+ulushBekat(S.bekat+1)+'" title="Qulflangan"><span class="ms">lock</span></div>';
   if(S.bekat>0)ustki+='<div class="xarita-chip bajarildi" data-ulush="'+ulushBekat(S.bekat-1)+'"><span class="ms">check_circle</span>'+(S.yulduz[S.bekat-1]||0)+'★</div>';
   const korish=S.bekat+(bor("kompas")?2:1);
@@ -726,7 +737,7 @@ function xarita(oldingiUlush){
    '<div class="plita qadam">'+
      '<span class="ms" style="color:var(--terra);font-size:22px">near_me</span>'+
      '<span><span class="yorliq">Hozirgi marshrut holati</span><b style="display:block;font-size:14px;line-height:1.35">'+
-       (S.bekat>=9?"Ipak yo'li bosib o'tildi":SHAHAR[shNo].nom+" shahrigacha "+qoldi+" bekat · "+km(JAMI_KM-bosibKm())+" qoldi")+'</b>'+
+       (S.bekat>=9?"Ipak yo'li bosib o'tildi — "+(mavsumim()+1)+"-safar kutmoqda":SHAHAR[shNo].nom+" shahrigacha "+qoldi+" bekat · "+km(JAMI_KM-bosibKm())+" qoldi")+'</b>'+
        (S.bekat<9?'<small class="izohcha">Keyingi bekat: '+BEKAT_NOM[S.bekat]+' · '+km(BEKAT_KM[S.bekat])+'</small>':"")+'</span>'+
      '<span class="chip">'+S.qol+'-karta tuyasi</span></div>'+
    (S.oazis?'<div class="plita qator" style="border-color:rgba(13,92,117,.6)">'+
@@ -751,7 +762,7 @@ function xarita(oldingiUlush){
      '<button class="qator" data-amal="chaqiriq" style="background:var(--s2)"><span class="ms" style="color:var(--lapis-y)">send</span>'+
        '<span><b>«Men '+(S.bekat+1)+'-bekatdaman, sen-chi?»</b><small>Telegramga chaqiriq yuborish</small></span></button></div>'+
    '<div class="bosh-panel">'+(S.bekat>=9
-     ? '<button class="tugma lapis" data-amal="qayta"><span class="ms">restart_alt</span>Yangi mavsumni boshlash</button>'
+     ? '<button class="tugma lapis" data-amal="qayta"><span class="ms">explore</span>'+(mavsumim()+1)+'-safarga chiqish · '+mavsumNomi(mavsumim()+1)+'</button>'
      : '<button class="tugma" data-amal="bosh"><span class="ms">hiking</span>Yo\'lga chiqish</button>')+
    '<p class="izohcha yol-izoh" style="text-align:center;display:flex;gap:6px;justify-content:center;align-items:center">'+
      '<span class="ms" style="font-size:15px">history</span>Ertaga aynan shu bekatdan davom etasiz (avto-saqlangan)</p></div>'
@@ -779,7 +790,7 @@ const mathmi=t=>TIP[t].xil==="Hisob"||t==="qaroqchi";
 const amalKerak=t=>t==="tosh"||t==="qaroqchi";
 
 function vazifa(){
-  const d=D[S.daraja],q=J.qol,soda=buffFaol("donishmand");
+  const d=kuch(),q=J.qol,soda=buffFaol("donishmand");
   J.tur=NAVBAT[(S.bekat*3+J.tosiq)%NAVBAT.length];
   const obh=obHavo(S.bekat);
   if(obh.k==="boron"&&J.tosiq===0)J.tur="boron";
@@ -1121,7 +1132,7 @@ function bekatBosh(){
   if(J&&J.yuklanmoqda)return;
   J={yangiSahna:true,tezlik:12,yolda:false,tosiq:0,qol:[],tokens:[],xato:0,yulduz:[],tanga0:S.tanga,maslahat:null,amal:null,tanlov:null,yuklanmoqda:true};
   api("bekat",{daraja:S.daraja,qol:S.qol,soda:buffFaol("donishmand"),sahro:buffFaol("sahro"),yetak:!S.orgatilgan.tosh})
-    .then(r=>{J.yuklanmoqda=false;S.bekat=r.bekat;saqla();vazifaQoy(r);ekran="oyin";oyinChiz();setTimeout(darsniKorsat,1700)})
+    .then(r=>{J.yuklanmoqda=false;S.bekat=r.bekat;if(r.mavsum)S.mavsum=r.mavsum;saqla();vazifaQoy(r);ekran="oyin";oyinChiz();setTimeout(darsniKorsat,1700)})
     .catch(x=>{J.yuklanmoqda=false;modal('<h2>Boshlab bo\'lmadi</h2><p class="izohcha">'+aloqaXato(x)+'</p><button class="tugma" data-amal="modal-yop">Yopish</button>')});
 }
 function keyingi(){vazifa();J.tokens=[];J.xato=0;J.kechirildi=false;J.maslahat=null;J.amal=null;J.tanlov=null;oyinChiz();setTimeout(darsniKorsat,1700)}
@@ -1302,7 +1313,7 @@ function hisobla(a){
     else{op.push(o);s.push(n)}}
   let x=s[0];op.forEach((o,j)=>{x=o==="+"?x+s[j+1]:x-s[j+1]});return x;
 }
-function yangiKarta(){const d=D[S.daraja];return{id:++idSon,v:r(d.min,d.max),mad:tanla(MADAN)}}
+function yangiKarta(){const d=kuch();return{id:++idSon,v:r(d.min,d.max),mad:tanla(MADAN)}}
 function tangaUch(n){
   const a=$("#qulf"),b=$("#hTanga");if(!a||!b)return;
   const q=a.getBoundingClientRect(),w=b.getBoundingClientRect();
@@ -1612,8 +1623,8 @@ function sayyoh(){
 
 const DARAJA_KARTA=[null,
  {ik:"🌱",sarlavha:"Boshlovchi karvonboshi",misol:"7 + 5 · 12 − 4",izoh:"Qo'shish va ayirish, 20 gacha"},
- {ik:"🐪",sarlavha:"Tajribali sarbon",misol:"6 × 8 · 45 − 17",izoh:"Ko'paytirish qo'shiladi, 80 gacha"},
- {ik:"🧭",sarlavha:"Ustoz munajjim",misol:"144 ÷ 12 · 3 × 17 − 8",izoh:"Bo'lish va uch qismli ifodalar"}];
+ {ik:"🐪",sarlavha:"Tajribali sarbon",misol:"6 × 8 · 45 − 17",izoh:"Ko'paytirish qo'shiladi, 120 gacha"},
+ {ik:"🧭",sarlavha:"Ustoz munajjim",misol:"144 ÷ 12 · 3 × 17 − 8",izoh:"To'rt amal, uchta tosh, 1 200 gacha"}];
 function darajaTanlash(){
   qobiq.innerHTML='<div class="varaq"><div class="ich" style="padding-top:28px">'+
    '<div style="text-align:center;display:grid;gap:10px;justify-items:center">'+
@@ -1763,9 +1774,10 @@ window.addEventListener("message",e=>{
   if(S.tab==="karvonlar")karvonlar();else if(S.tab==="xarita")boshqalarniChiz();
 });
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function bekatMatn(b){
-  if(b>=9)return "🏁 Xivaga yetib keldi";
-  return (b+1)+"-bekat · "+BEKAT_NOM[b]+" · "+SHAHAR[Math.floor(b/3)].nom+" → "+SHAHAR[Math.floor(b/3)+1].nom;
+function bekatMatn(b,m){
+  const s=(m||1)>1?(m+"-safar · "):"";
+  if(b>=9)return s+"🏁 Xivaga yetib keldi";
+  return s+(b+1)+"-bekat · "+BEKAT_NOM[b]+" · "+SHAHAR[Math.floor(b/3)].nom+" → "+SHAHAR[Math.floor(b/3)+1].nom;
 }
 const joyUlush=b=>b>=9?1:(b%3===0?SHAHAR_ULUSH[b/3]:ulushBekat(b-1));
 function boshqalarniChiz(){
@@ -1792,13 +1804,13 @@ function karvonlar(){
   if(!R)h+='<p class="izohcha" style="text-align:center;padding:24px 0">Yuklanmoqda…</p>';
   else if(!R.qatorlar.length)h+='<p class="izohcha" style="text-align:center;padding:24px 0">Hali hech kim yo\'lga chiqmadi — birinchi bo\'ling!</p>';
   else{
-    if(R.men&&R.men.joy)h+='<div class="qator men"><span class="ik">🧭</span><span><b>Siz: '+R.men.joy+'-o\'rin</b><small>'+bekatMatn(R.men.bekat)+'</small></span></div>';
+    if(R.men&&R.men.joy)h+='<div class="qator men"><span class="ik">🧭</span><span><b>Siz: '+R.men.joy+'-o\'rin</b><small>'+bekatMatn(R.men.bekat,R.men.mavsum)+'</small></span></div>';
     h+='<div style="display:grid;gap:7px">'+R.qatorlar.map((q,i)=>
       '<div class="qator'+(q.men?" men":"")+'">'+
         '<span class="joy-raqam">'+(i<3?["🥇","🥈","🥉"][i]:i+1)+'</span>'+
         '<span class="ik" style="position:relative">'+esc(q.belgi||String(q.ism||"?")[0])+(q.onlayn?'<i class="onlayn-nuqta ustida"></i>':'')+'</span>'+
         '<span style="flex:1;min-width:0"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(q.men?"Siz":q.ism)+'</b>'+
-          '<small>'+bekatMatn(q.bekat)+'</small>'+
+          '<small>'+bekatMatn(q.bekat,q.mavsum)+'</small>'+
           '<span class="chiziqcha" style="display:block;margin-top:5px"><b style="width:'+(q.bekat/9*100)+'%"></b></span></span>'+
         '<span class="ong"><b class="tnum" style="color:var(--oltin-y)">'+q.yulduz+' ★</b><small>'+(D[q.daraja]?D[q.daraja].nom:"")+'</small></span>'+
       '</div>').join("")+'</div>';
@@ -1878,7 +1890,11 @@ qobiq.addEventListener("click",e=>{
   }
   if(a==="chiqish")return ota({tur:"chiqish"});
   if(a==="qayta"&&ICHKI&&!b.dataset.tasdiq){b.dataset.tasdiq="1";api("qayta",{}).then(()=>b.click()).catch(x=>{delete b.dataset.tasdiq;modal('<h2>Bo\'lmadi</h2><p class="izohcha">'+aloqaXato(x)+'</p><button class="tugma" data-amal="modal-yop">Yopish</button>')});return}
-  if(a==="qayta"){const d=S.daraja,i=S.ism,t=S.tag;S=boshlangich();S.daraja=d;S.ism=i;S.tag=t;saqla();return xarita()}
+  if(a==="qayta"){const d=S.daraja,i=S.ism,t=S.tag,m=Math.min(MAX_MAVSUM,(S.mavsum||1)+1);
+    S=boshlangich();S.daraja=d;S.ism=i;S.tag=t;S.mavsum=m;saqla();
+    modal('<h2>'+m+'-safar</h2><p class="izohcha">'+mavsumNomi(m)+'. Har safarda sonlar kattalashadi — karvon ham, siz ham kuchayasiz.</p>'+
+      '<button class="tugma" data-amal="modal-yop">Yo\'lga tushdik</button>');
+    return xarita()}
 });
 document.addEventListener("keydown",e=>{
   if(ekran!=="oyin"||!J)return;
@@ -1887,7 +1903,7 @@ document.addEventListener("keydown",e=>{
 });
 korsat();holatYubor(true);
 api("men").then(r=>{
-  const o=S.bekat;S.bekat=r.bekat;
+  const o=S.bekat;S.bekat=r.bekat;if(r.mavsum)S.mavsum=r.mavsum;
   for(const k in r.yulduzlar)S.yulduz[k]=r.yulduzlar[k];
   for(const k in S.yulduz)if(+k>=r.bekat)delete S.yulduz[k];
   saqla();if(o!==r.bekat&&ekran==="tab"&&!qobiq.querySelector(".qoplama"))korsat();

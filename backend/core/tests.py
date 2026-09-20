@@ -7264,9 +7264,10 @@ class KarvonServerTest(TestCase):
         from core import karvon as KV
         import random as R
         rng = R.Random(7)
-        for daraja in (1, 2, 3):
+        for daraja, mavsum in [(1, 1), (2, 1), (3, 1), (1, 3), (2, 4), (3, 3), (3, 6), (3, 9)]:
             for n in range(200):
-                j = {"daraja": daraja, "tosiq": n % 3, "qol": [], "id_son": 0, "soda": False}
+                j = {"daraja": daraja, "mavsum": mavsum, "tosiq": n % 3, "qol": [],
+                     "id_son": 0, "soda": False}
                 j["qol"] = [KV._karta(j, rng) for _ in range(5)]
                 v = KV._vazifa(j, n % 9, rng)
                 if v["tur"] in ("xotira", "yol"):
@@ -7281,6 +7282,54 @@ class KarvonServerTest(TestCase):
                     ch, ong = v["variant"]["chap"], v["variant"]["ong"]
                     self.assertEqual(sum(ch), ong + v["maqsad"])
                     self.assertTrue(min(ch) > 0)
+
+    def test_yuqori_sinf_sonlari_jiddiy(self):
+        """9–11 sinf uchun "7 + 9" emas: ikki xonali sonlar va uchta tosh."""
+        from core import karvon as KV
+        k1, k3 = KV.kuch(1), KV.kuch(3)
+        self.assertGreaterEqual(k3["max"], 40, k3)
+        self.assertGreater(k3["max"], k1["max"] * 4)
+        self.assertEqual(k3["qism"], 3)
+        self.assertEqual(k3["amallar"], ["+", "−", "×", "÷"])
+
+    def test_mavsum_bilan_qiyinlashadi(self):
+        """Har yangi safarda sonlar kattalashadi, uchinchisidan — to'rtinchi tosh."""
+        from core import karvon as KV
+        oldin = KV.kuch(3, 1)
+        for m in (2, 3, 5, 9):
+            hozir = KV.kuch(3, m)
+            self.assertGreater(hozir["max"], oldin["max"], m)
+            self.assertGreater(hozir["chegara"], oldin["chegara"], m)
+            oldin = hozir
+        self.assertEqual(KV.kuch(3, 2)["qism"], 3)
+        self.assertEqual(KV.kuch(3, 3)["qism"], 4)
+        # Chegaradan tashqari mavsum ham xavfsiz: eng katta qiymatda qoladi.
+        self.assertEqual(KV.kuch(3, 99), KV.kuch(3, KV.MAX_MAVSUM))
+
+    def test_xivadan_keyin_yol_davom_etadi(self):
+        """Xivaga yetgan karvon keyingi safarga chiqadi, yulduzi yo'qolmaydi."""
+        h = self.kir()
+        self.post("/api/v1/karvon/bekat", {"daraja": 3, "qol": 5}, h)
+        holat = MDL.KarvonHolat.objects.get()
+        from core import karvon as KV
+        holat.bekat, holat.yulduz, holat.yulduzlar = KV.BEKATLAR, 21, {"0": 3}
+        holat.save()
+        r = self.post("/api/v1/karvon/qayta", {}, h)
+        self.assertEqual(r.status_code, 200, r.content)
+        yangi = MDL.KarvonHolat.objects.get()
+        self.assertEqual((yangi.mavsum, yangi.bekat, yangi.yulduz), (2, 0, 0))
+        self.assertEqual(yangi.otgan_yulduz, 21)
+        # Ikkinchi safarning to'sig'i birinchisidan kattaroq sonlar bilan.
+        r2 = self.post("/api/v1/karvon/bekat", {"daraja": 3, "qol": 5}, h).json()
+        self.assertEqual(r2["mavsum"], 2)
+        self.assertEqual(MDL.KarvonHolat.objects.get().joriy["kuch"]["max"], KV.kuch(3, 2)["max"])
+
+    def test_tugamagan_yolda_yangi_safar_yoq(self):
+        h = self.kir()
+        self.post("/api/v1/karvon/bekat", {"daraja": 2, "qol": 5}, h)
+        r = self.post("/api/v1/karvon/qayta", {}, h)
+        self.assertEqual(r.status_code, 409)
+        self.assertEqual(MDL.KarvonHolat.objects.get().mavsum, 1)
 
     def test_javob_kaliti_chiqmaydi(self):
         from core import karvon as KV

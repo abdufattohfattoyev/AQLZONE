@@ -1127,6 +1127,11 @@ class KarvonHolat(models.Model):
     bekat = models.SmallIntegerField(default=0)
     yulduz = models.SmallIntegerField(default=0)
     daraja = models.SmallIntegerField(default=2)
+    #: Nechanchi safar. Xivaga yetgan karvon ortga qaytadi va sonlar
+    #: kattalashadi — yo'l tugamaydi, qiyinlashadi (`karvon.kuch`).
+    mavsum = models.SmallIntegerField(default=1)
+    #: Oldingi mavsumlarda yig'ilgan yulduz (joriysi `yulduz` da).
+    otgan_yulduz = models.IntegerField(default=0)
     faol_at = models.DateTimeField(default=timezone.now)
     #: Har bekat yulduzi — {"0": 3, "1": 2}. Faqat server yozadi (`core/karvon.py`).
     yulduzlar = models.JSONField(default=dict, blank=True)
@@ -1135,7 +1140,7 @@ class KarvonHolat(models.Model):
 
     class Meta:
         db_table = "karvon_holat"
-        indexes = [models.Index(fields=["-bekat", "-yulduz"])]
+        indexes = [models.Index(fields=["-mavsum", "-bekat", "-yulduz"])]
 
 
 class KartaKolleksiya(models.Model):

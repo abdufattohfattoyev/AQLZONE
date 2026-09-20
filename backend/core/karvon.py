@@ -28,10 +28,41 @@ from django.utils import timezone
 from .models import KarvonHolat
 
 D = {
-    1: {"min": 1, "max": 9, "amallar": ["+", "−"], "chegara": 20},
-    2: {"min": 2, "max": 12, "amallar": ["+", "−", "×"], "chegara": 80},
-    3: {"min": 3, "max": 20, "amallar": ["+", "−", "×", "÷"], "chegara": 300},
+    1: {"min": 1, "max": 9, "amallar": ["+", "−"], "chegara": 20, "qism": 2},
+    2: {"min": 2, "max": 15, "amallar": ["+", "−", "×"], "chegara": 120, "qism": 3},
+    # 9–11 sinf. Ilgari bu yerda 3..20 oralig'idagi sonlar turardi va
+    # o'n birinchi sinf uchun bu mashq emas, o'yin ham emas edi: "7 + 9"
+    # ni yechish uchun karvonboshi bo'lish shart emas. Endi sonlar
+    # ikki xonali, ifodada uchta tosh va to'rtala amal qatnashadi.
+    3: {"min": 6, "max": 48, "amallar": ["+", "−", "×", "÷"], "chegara": 1200, "qism": 3},
 }
+
+#: Mavsum bilan sonlar qanchaga kattalashadi (1-mavsum — jadvaldagidek).
+MAVSUM_OSISH = 0.45
+MAX_MAVSUM = 9
+
+
+def kuch(daraja: int, mavsum: int = 1) -> dict:
+    """
+    Shu daraja va shu mavsumdagi sonlar kengligi.
+
+    Qiyinlik ikki o'qda o'sadi: SINF (daraja) va SAFAR (mavsum). Ikkinchisi
+    aynan shuning uchun bor — Xivaga yetgan bola uchun yo'l tugamasligi
+    kerak, lekin bir xil misollarni qayta yechish ham o'yin emas. Har
+    yangi safarda sonlar kattalashadi, uchinchi mavsumdan boshlab
+    yuqori sinfda ifodaga to'rtinchi tosh qo'shiladi.
+    """
+    d = D.get(daraja) or D[2]
+    m = max(1, min(MAX_MAVSUM, int(mavsum or 1)))
+    o = 1 + MAVSUM_OSISH * (m - 1)
+    chiq = {
+        "min": max(1, int(d["min"] * (1 + (o - 1) / 2))),
+        "max": max(d["min"] + 3, int(d["max"] * o)),
+        "amallar": list(d["amallar"]),
+        "chegara": int(d["chegara"] * o * o),
+        "qism": d["qism"] + (1 if daraja == 3 and m >= 3 else 0),
+    }
+    return chiq
 MADAN = ["Mis", "Granit", "Ohaktosh", "Marmar", "Feruza", "Lazurit", "Nefrit"]
 NAVBAT = ["tosh", "xotira", "boron", "yol", "koprik", "tarozi", "ketma"]
 OBHAVO = ["quyoshli", "issiq", "shamol", "boron", "salqin"]
@@ -78,12 +109,17 @@ def obhavo(bekat: int) -> str:
 
 def _karta(j: dict, rng: random.Random) -> dict:
     j["id_son"] += 1
-    d = D[j["daraja"]]
+    d = _kuch(j)
     return {"id": j["id_son"], "v": rng.randint(d["min"], d["max"]), "mad": rng.choice(MADAN)}
 
 
+def _kuch(j: dict) -> dict:
+    """Shu bekat uchun hisoblangan qiyinlik (eski saqlangan o'yinlarda — jadvaldan)."""
+    return j.get("kuch") or kuch(j.get("daraja") or 2, j.get("mavsum") or 1)
+
+
 def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
-    q, d, soda = j["qol"], D[j["daraja"]], j.get("soda")
+    q, d, soda = j["qol"], _kuch(j), j.get("soda")
     tur = NAVBAT[(bekat * 3 + j["tosiq"]) % len(NAVBAT)]
     if obhavo(bekat) == "boron" and j["tosiq"] == 0:
         tur = "boron"
@@ -99,14 +135,18 @@ def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
         return x
 
     if tur == "boron":
-        tan = aral()[:2 if j["daraja"] == 1 or soda else rng.randint(2, 3)]
+        eng = 2 if j["daraja"] == 1 or soda else min(len(q), d["qism"] + 1)
+        tan = aral()[:2 if eng <= 2 else rng.randint(2, eng)]
         return {"tur": tur, "maqsad": sum(q[i]["v"] for i in tan), "yechim": [q[i]["id"] for i in tan]}
 
     if tur in ("tosh", "qaroqchi"):
         boss = tur == "qaroqchi"
-        for u in range(120):
-            k = min(3, len(q)) if boss else (3 if j["daraja"] == 3 and not soda else
-                                             (3 if j["daraja"] == 2 and not soda and rng.random() < .35 else 2))
+        # Bossda ifoda doim to'liq uzunlikda, oddiy to'siqda esa daraja
+        # hal qiladi: boshlovchida ikki tosh, 5-sinfdan yuqorida uchta.
+        oddiy = 2 if soda or j["daraja"] == 1 else (
+            d["qism"] if j["daraja"] == 3 else (d["qism"] if rng.random() < .45 else 2))
+        for u in range(160):
+            k = min(len(q), d["qism"] + (1 if boss and j["daraja"] == 3 else 0)) if boss else min(len(q), oddiy)
             tan, a = aral()[:k], []
             for n, i in enumerate(tan):
                 if n:
@@ -132,13 +172,13 @@ def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
             else:
                 op = "+"
         if op == "+":
-            k = rng.randint(1, 9 if j["daraja"] == 1 else 25)
+            k = rng.randint(1, 9 if j["daraja"] == 1 else max(12, d["max"]))
             yoz = f"? + {k} = {c['v'] + k}"
         elif op == "−":
             k = rng.randint(1, c["v"] - 1)
             yoz = f"? − {k} = {c['v'] - k}"
         elif op == "×":
-            k = rng.randint(2, 6 if j["daraja"] == 2 else 9)
+            k = rng.randint(2, 6 if j["daraja"] == 2 else 12)
             yoz = f"? × {k} = {c['v'] * k}"
         return {"tur": tur, "maqsad": c["v"], "yechim": [c["id"]], "yoz": yoz}
 
@@ -151,7 +191,7 @@ def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
 
     if tur == "ketma":
         c = q[aral()[0]]
-        kmax = 4 if j["daraja"] == 1 else 9
+        kmax = 4 if j["daraja"] == 1 else (9 if j["daraja"] == 2 else 15)
         if c["v"] >= 5 and rng.random() < .6:
             k = rng.randint(1, min(kmax, (c["v"] - 1) // 4))
             qator = [c["v"] - 4 * k, c["v"] - 3 * k, c["v"] - 2 * k, c["v"] - k]
@@ -162,12 +202,12 @@ def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
                 "variant": {"qator": qator}, "qadam": k}
 
     if tur == "xotira":
-        yuklar = rng.sample(YUKLAR, 4 if j["daraja"] == 1 else 5)
+        yuklar = rng.sample(YUKLAR, 4 if j["daraja"] == 1 else (5 if j["daraja"] == 2 else 6))
         yoq = rng.randrange(len(yuklar))
         return {"tur": tur, "maqsad": yoq, "variant": {"yuklar": yuklar, "yoq": yoq}}
 
     # yo'l ayrimi
-    katta = 9 if j["daraja"] == 1 else 20
+    katta = 9 if j["daraja"] == 1 else max(20, d["max"])
     while True:
         yollar = [{"a": rng.randint(4, katta), "b": rng.randint(3, katta), "nom": rng.choice(YOL_NOMLARI)}
                   for _ in range(3)]
@@ -192,14 +232,16 @@ def _ochiq(v: dict) -> dict:
 
 def _korinish(h: KarvonHolat) -> dict:
     j = h.joriy
-    return {"bekat": h.bekat, "tosiq": j["tosiq"], "qol": j["qol"], "vazifa": _ochiq(j["vazifa"])}
+    return {"bekat": h.bekat, "mavsum": h.mavsum or 1, "tosiq": j["tosiq"], "qol": j["qol"],
+            "vazifa": _ochiq(j["vazifa"])}
 
 
 def men(profil) -> dict:
     h = KarvonHolat.objects.filter(profile=profil).first()
     if not h:
-        return {"bekat": 0, "yulduz": 0, "yulduzlar": {}}
-    return {"bekat": h.bekat, "yulduz": h.yulduz, "yulduzlar": h.yulduzlar or {}}
+        return {"bekat": 0, "yulduz": 0, "yulduzlar": {}, "mavsum": 1, "otgan_yulduz": 0}
+    return {"bekat": h.bekat, "yulduz": h.yulduz, "yulduzlar": h.yulduzlar or {},
+            "mavsum": h.mavsum or 1, "otgan_yulduz": h.otgan_yulduz or 0}
 
 
 def _qulfla(profil) -> KarvonHolat:
@@ -216,10 +258,14 @@ def bekat_bosh(profil, daraja, qol_soni, soda=False, sahro=False, yetak=False) -
         return _korinish(h)                            # to'xtagan joyidan
     daraja = daraja if daraja in D else 2
     rng = random.Random()
-    j = {"bekat": h.bekat, "daraja": daraja, "tosiq": 0, "qol": [], "id_son": 0, "xato": 0,
-         "otkaz": 0, "yulduzlar": [], "soda": bool(soda), "sahro": bool(sahro),
-         "yetak": bool(yetak), "kechirildi": False,
+    j = {"bekat": h.bekat, "daraja": daraja, "mavsum": h.mavsum or 1, "tosiq": 0, "qol": [],
+         "id_son": 0, "xato": 0, "otkaz": 0, "yulduzlar": [], "soda": bool(soda),
+         "sahro": bool(sahro), "yetak": bool(yetak), "kechirildi": False,
          "qol_soni": max(5, min(7, int(qol_soni or 5)))}
+    # Qiyinlik BEKAT BOSHIDA bir marta hisoblanadi va o'sha bekat davomida
+    # o'zgarmaydi: aks holda uch to'siqning sonlari har xil kenglikdan
+    # kelib, bola "nega birdan qiyinlashdi" deb o'ylardi.
+    j["kuch"] = kuch(daraja, j["mavsum"])
     j["qol"] = [_karta(j, rng) for _ in range(j["qol_soni"])]
     j["vazifa"] = _vazifa(j, h.bekat, rng)
     h.joriy, h.daraja, h.faol_at = j, daraja, timezone.now()
@@ -232,7 +278,7 @@ def _tokenlarni_tekshir(j: dict, tokenlar) -> float | None:
     if not isinstance(tokenlar, list) or not tokenlar or len(tokenlar) > 13:
         return None
     qiymat = {k["id"]: k["v"] for k in j["qol"]}
-    amallar = set(D[j["daraja"]]["amallar"])
+    amallar = set(_kuch(j)["amallar"])
     tur, a, korilgan = j["vazifa"]["tur"], [], set()
     for n, t in enumerate(tokenlar):
         if n % 2 == 0:
@@ -340,10 +386,18 @@ def maslahat(profil, ishlatilgan) -> dict:
 
 @transaction.atomic
 def qayta(profil) -> dict:
-    """Yangi mavsum — faqat Xivaga yetib kelgan karvon uchun."""
+    """
+    Keyingi safar — faqat Xivaga yetib kelgan karvon uchun.
+
+    Yo'l TUGAMAYDI: Xivadan karvon ortga qaytadi va sonlar kattalashadi
+    (`kuch`). Yig'ilgan yulduz yo'qolmaydi — u `otgan_yulduz` ga
+    qo'shiladi, ro'yxatda esa avval mavsum, keyin bekat solishtiriladi.
+    """
     h = _qulfla(profil)
     if h.bekat < BEKATLAR:
         raise KarvonXato("tugamagan")
+    h.otgan_yulduz = (h.otgan_yulduz or 0) + (h.yulduz or 0)
+    h.mavsum = min(MAX_MAVSUM, (h.mavsum or 1) + 1)
     h.bekat, h.yulduz, h.yulduzlar, h.joriy = 0, 0, {}, None
-    h.save(update_fields=["bekat", "yulduz", "yulduzlar", "joriy"])
+    h.save(update_fields=["bekat", "yulduz", "yulduzlar", "joriy", "mavsum", "otgan_yulduz"])
     return men(profil)

@@ -114,12 +114,13 @@ def karvon_royxat(request):
     profil = _profil_tanla(request)
     hozir = timezone.now()
     qs = (KarvonHolat.objects.select_related("profile")
-          .order_by("-bekat", "-yulduz", "-faol_at")[:ROYXAT])
+          .order_by("-mavsum", "-bekat", "-yulduz", "-faol_at")[:ROYXAT])
     qatorlar = [{
         "id": h.profile_id,
         "ism": korinadigan_ism(h.profile),
         "avatar": h.profile.avatar or "",
         "bekat": h.bekat,
+        "mavsum": h.mavsum or 1,
         "yulduz": h.yulduz,
         "daraja": h.daraja,
         "onlayn": hozir - h.faol_at < ONLAYN,
@@ -131,7 +132,11 @@ def karvon_royxat(request):
     if men is None:
         h = KarvonHolat.objects.filter(profile=profil).first()
         if h:
-            oldinda = KarvonHolat.objects.filter(bekat__gt=h.bekat).count() + KarvonHolat.objects.filter(
-                bekat=h.bekat, yulduz__gt=h.yulduz).count()
-            men = {"joy": oldinda + 1, "bekat": h.bekat, "yulduz": h.yulduz}
+            # Avval mavsum, keyin bekat: ikkinchi safardagi 1-bekat
+            # birinchi safardagi 8-bekatdan uzoqroqqa borgan karvon.
+            m = h.mavsum or 1
+            oldinda = (KarvonHolat.objects.filter(mavsum__gt=m).count()
+                       + KarvonHolat.objects.filter(mavsum=m, bekat__gt=h.bekat).count()
+                       + KarvonHolat.objects.filter(mavsum=m, bekat=h.bekat, yulduz__gt=h.yulduz).count())
+            men = {"joy": oldinda + 1, "bekat": h.bekat, "yulduz": h.yulduz, "mavsum": m}
     return Response({"qatorlar": qatorlar, "jami": jami, "onlayn": onlayn, "men": men})
