@@ -136,6 +136,21 @@ h1,h2,h3,p{margin:0}
 .katak.amal{background:var(--lapis-d);color:var(--lapis-y)}
 .katak.natija{background:rgba(229,169,60,.2);color:var(--oltin-y);min-width:64px}
 .katak.bosh{color:var(--xira);font-size:13px;font-weight:600;background:transparent;box-shadow:inset 0 0 0 1px var(--chiz)}
+.katak.natija.mos{background:rgba(46,160,110,.22);color:#6FE3AE}
+/* Maqsad chizig'i — "nechchi chiqishi kerak" degan savolga javob.
+   Ilgari bu son faqat sahna ustidagi yorliqda ("Tosh kuchi: 5") turardi
+   va bola uni ifoda bilan bog'lamasdi: son ko'rinardi, lekin u NIMA
+   ekani tushunarsiz edi. Endi u maydonning ustida, katta va izohi bilan
+   turadi, yonida esa hozirgi natija — ya'ni "qancha qoldi" ko'rinadi. */
+.maqsad{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-md);
+  background:rgba(229,169,60,.10);box-shadow:inset 0 0 0 1px rgba(229,169,60,.45)}
+.maqsad .ik-m{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:rgba(229,169,60,.18);color:var(--oltin-y)}
+.maqsad small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--xira)}
+.maqsad b{font-size:22px;font-weight:800;color:var(--oltin-y);line-height:1.15}
+.maqsad .holat{font-size:12px;font-weight:700;color:var(--xira);text-align:right;max-width:44%}
+.maqsad .holat.mos{color:#6FE3AE}
+.maqsad .holat.farqli{color:var(--terra-y)}
 .qulf.xato{box-shadow:0 0 0 1px var(--anor);animation:silk .4s}
 .qulf.togri{box-shadow:0 0 0 1px var(--zumrad)}
 @keyframes silk{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
@@ -1093,6 +1108,22 @@ function joriy(){
   if(J.tur==="koprik"||J.tur==="tarozi"||J.tur==="ketma")return J.tokens.length?J.tokens[0].v:null;
   const x=hisobla(J.tokens.map(t=>t.n?t.v:t.o));return Number.isFinite(x)?x:null;
 }
+/* "Nechchi chiqishi kerak" — maydon ustidagi chiziq.
+   Faqat aniq songa qaratilgan to'siqlarda chiqadi (tosh, bo'ron, boss):
+   qolganlarida maqsad boshqacha (muvozanat, keyingi son, yo'l) va uni
+   son bilan ko'rsatish chalg'itardi. */
+function maqsadChiziq(){
+  if(!(J.tur==="tosh"||J.tur==="boron"||J.tur==="qaroqchi")||J.maqsad==null)return "";
+  const j=joriy(),t=TIP[J.tur];
+  let holat='Toshlarni bosib ifoda tuzing',sinf='';
+  if(j!=null){
+    if(j===J.maqsad){holat='Mos keldi — «'+t.cta+'» ni bosing';sinf=' mos';}
+    else{const f=J.maqsad-j;holat='Hozir '+j+' — '+(f>0?f+' ta kam':Math.abs(f)+' ta ortiq');sinf=' farqli';}
+  }
+  return '<div class="maqsad"><span class="ik-m"><span class="ms">target</span></span>'+
+    '<span><small>Javob shu son bo\'lsin</small><b>'+J.maqsad+'</b></span>'+
+    '<span class="ong holat'+sinf+'">'+holat+'</span></div>';
+}
 function maydon(){
   const t=J.tur,v=J.variant,j=joriy();
   if(t==="koprik")return '<div class="qulf" id="qulf">'+J.yoz.split(" ").map(x=>
@@ -1122,7 +1153,7 @@ function maydon(){
     '<b>'+y.nom+'</b><span class="ong tnum">'+y.a+' + '+y.b+' km</span></button>').join("")+'</div>';
   return '<div class="qulf" id="qulf">'+(J.tokens.length
     ? J.tokens.map(x=>x.n?'<span class="katak">'+x.v+'</span>':'<span class="katak amal">'+x.o+'</span>').join("")+
-      '<span class="katak amal">=</span><span class="katak natija">'+(j==null?"?":j)+'</span>'
+      '<span class="katak amal">=</span><span class="katak natija'+(j!=null&&j===J.maqsad?" mos":"")+'">'+(j==null?"?":j)+'</span>'
     : '<span class="katak bosh">Pastdagi raqam toshlarini bosing</span>')+'</div>';
 }
 function oyinChiz(natija){
@@ -1152,6 +1183,7 @@ function oyinChiz(natija){
      '<div class="sarlavha"><span class="yorliq">'+(mathmi(J.tur)?"Matematik qulf maydoni":t.xil+" sinovi maydoni")+'</span>'+
        (kartaKerak?'<span class="ong"><button class="chip" data-amal="tozala"><span class="ms" style="font-size:14px">refresh</span>Qaytarish</button></span>':"")+'</div>'+
      (yetakQadam()?'<div class="yetak-banner"><b>'+(yetakQadam().n||"!")+'</b><span>'+yetakQadam().matn+'</span></div>':'')+
+     maqsadChiziq()+
      maydon()+
      '<div class="tekshiruv'+(natija==="xato"?" xato":natija==="togri"?" togri":"")+'"><span class="ms" style="font-size:16px">'+
        (natija==="togri"?"verified":natija==="xato"?"error":"info")+'</span><span>'+izohMatn+'</span></div></div>'+
@@ -1583,10 +1615,10 @@ function darajaTanlash(){
 /* ================= O'RGATISH ================= */
 const TARTIB_ORG=["tosh","boron","koprik","tarozi","ketma","xotira","yol","qaroqchi"];
 const DARS={
- tosh:{ik:"🪨",qoida:"Qo'ldagi raqam toshlari va amallardan (+ − × ÷) tosh kuchiga teng ifoda tuzing.",
-   misol:"Tosh kuchi 24 → 6 × 4 = 24",qadam:["Raqam toshini bosing","Amalni tanlang","Ikkinchi toshni bosing","«Toshni parchalash» ni bosing"]},
+ tosh:{ik:"🪨",qoida:"Tepada «Tosh kuchi» yozilgan son turadi — ifodangiz aynan shu songa teng chiqishi kerak. Qo'ldagi raqam toshlari va amallardan (+ − × ÷) foydalaning.",
+   misol:"Tosh kuchi 24 — demak ifoda 24 ga teng bo'lsin: 6 × 4 = 24",qadam:["Raqam toshini bosing","Amalni tanlang","Ikkinchi toshni bosing","«Toshni parchalash» ni bosing"]},
  boron:{ik:"🌪️",qoida:"Kartalarni bosing — ular o'zi qo'shiladi. Yig'indi aynan energiyaga teng bo'lishi kerak.",
-   misol:"Energiya 15 → 7 + 8 = 15",qadam:["Birinchi toshni bosing","Yig'indi yetguncha yana toshlar qo'shing","«Bo'ronni to'xtatish» ni bosing"]},
+   misol:"Energiya 15 — toshlar yig'indisi 15 bo'lsin: 7 + 8 = 15",qadam:["Birinchi toshni bosing","Yig'indi yetguncha yana toshlar qo'shing","«Bo'ronni to'xtatish» ni bosing"]},
  koprik:{ik:"🌉",qoida:"Tenglikdagi «?» o'rniga qaysi son mos kelishini toping va o'sha toshni bosing.",
    misol:"? × 3 = 18 → javob 6",qadam:["Tenglikni o'qing","Mos sonni hisoblang","O'sha toshni bosing va tiklang"]},
  tarozi:{ik:"⚖️",qoida:"Ikki palla teng bo'lishi kerak. O'ng pallaga qaysi tosh qo'yilsa, yig'indilar tenglashadi?",
@@ -1598,7 +1630,7 @@ const DARS={
  yol:{ik:"🔀",qoida:"Har yo'l ikki qismdan iborat. Qismlarni qo'shib, eng qisqa yo'lni tanlang.",
    misol:"12+9=21 · 8+15=23 · 10+7=17 → 17 km eng qisqa",qadam:["Har yo'lni qo'shing","Eng kichigini tanlang","«Yo'lni tanlash» ni bosing"]},
  qaroqchi:{ik:"🏴",qoida:"Boss sinovi: uch toshdan boj miqdoriga teng ifoda tuzing. Ikki marta xato qilinsa, yukdan biri yoki 40 tanga ketadi.",
-   misol:"Boj 30 → 4 × 6 + 6 = 30",qadam:["Uchta toshni tanlang","Amallar bilan boj miqdorini tuzing","«Bojni to'lash» ni bosing"]}};
+   misol:"Boj 30 — ifoda 30 ga teng bo'lsin: 4 × 6 + 6 = 30",qadam:["Uchta toshni tanlang","Amallar bilan boj miqdorini tuzing","«Bojni to'lash» ni bosing"]}};
 const KIRISH=[
  {ik:"🐫",sarlavha:"Xush kelibsiz, karvonboshi!",matn:"Vazifangiz — karvonni Toshkentdan Samarqand va Buxoro orqali Xivaga olib borish. Jami 9 bekat, 1 020 km yo'l."},
  {ik:"🗺️",sarlavha:"Bekatlar va to'siqlar",matn:"Har bekatda 3 ta to'siq bor. Yechsangiz, karvon yo'lni davom ettiradi. Har uchinchi bekatdan keyin — shahar."},
