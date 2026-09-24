@@ -149,7 +149,16 @@ def anketa_yoz(pupil: Pupil, d: dict) -> None:
     """
     Anketa javoblari. Bo'sh kelsa ham `anketa_at` qo'yiladi — bu
     "o'tkazib yubordi" degani va anketa ikkinchi marta chiqmaydi.
+
+    ─────────────── BITTA SAVOLLIK JAVOB ───────────────
+
+    `qisman=True` bo'lsa `anketa_at` QO'YILMAYDI. Bu darslar ro'yxati
+    tepasidagi bitta savol uchun: odam "kim uchun qidiryapsiz?" ga
+    javob beradi, ro'yxat o'sha zahoti moslashadi, lekin to'liq
+    tanishuv anketasi (bosqich, viloyat) keyinroq — ro'yxatdan
+    o'tganda — baribir so'raladi.
     """
+    qisman = bool(d.get("qisman"))
     kim = str(d.get("kim") or "")
     if kim in KIM_NOMI:
         pupil.kim = kim
@@ -162,6 +171,9 @@ def anketa_yoz(pupil: Pupil, d: dict) -> None:
     viloyat = str(d.get("viloyat") or "")
     if viloyat in VILOYAT_NOMI:
         pupil.viloyat = viloyat
+    if qisman:
+        pupil.save(update_fields=["kim", "anketa_sinf", "viloyat"])
+        return
     pupil.anketa_at = timezone.now()
     pupil.save(update_fields=["kim", "anketa_sinf", "viloyat", "anketa_at"])
 

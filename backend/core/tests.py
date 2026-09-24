@@ -7467,6 +7467,45 @@ class KarvonServerTest(TestCase):
         self.assertEqual(len(r["vazifa"]["yechim"]), 2)
 
 
+class AnketaQismanTest(TestCase):
+    """
+    Bitta savollik javob — darslar ro'yxati tepasidagi savol uchun.
+
+    Anketani to'ldirganlar atigi 12% edi: u faqat ro'yxatdan to'liq
+    o'tgan odamga chiqadi. Ro'yxatni hammaga majburlash eshikda odam
+    yo'qotardi, shuning uchun bitta savol kerak bo'lgan ekranda
+    so'raladi va TO'LIQ anketa keyinroq baribir chiqadi.
+    """
+
+    def test_qisman_javob_anketani_yopmaydi(self):
+        from core import tahlil as TH
+
+        p = MDL.Pupil.objects.create(first_name="Mehmon")
+        TH.anketa_yoz(p, {"kim": "talaba", "qisman": True})
+        p.refresh_from_db()
+        self.assertEqual(p.kim, "talaba")
+        self.assertIsNone(p.anketa_at)          # to'liq anketa hali oldinda
+
+    def test_toliq_javob_anketani_yopadi(self):
+        from core import tahlil as TH
+
+        p = MDL.Pupil.objects.create(first_name="O'quvchi")
+        TH.anketa_yoz(p, {"kim": "oquvchi", "sinf": 4, "viloyat": "samarqand"})
+        p.refresh_from_db()
+        self.assertEqual((p.kim, p.anketa_sinf, p.viloyat), ("oquvchi", 4, "samarqand"))
+        self.assertIsNotNone(p.anketa_at)
+
+    def test_api_orqali(self):
+        r = self.client.post("/api/v1/auth/device", {"deviceId": "dev-anketa-1111aaaa", "platform": "web"},
+                             content_type="application/json")
+        kim = {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+        javob = self.client.post("/api/v1/anketa", {"kim": "ustoz", "qisman": True},
+                                 content_type="application/json", **kim)
+        self.assertEqual(javob.status_code, 200)
+        self.assertEqual(javob.json()["user"]["kim"], "ustoz")
+        self.assertFalse(javob.json()["user"]["anketa"])
+
+
 class KunlikSonPortTest(TestCase):
     """
     Serverdagi jumboq mijozdagisi bilan AYNAN bir xilmi.

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
@@ -6,6 +7,8 @@ import { COURSES, lessonCount } from "../lib/curriculum";
 import { kursBelgi } from "../lib/chizma/kursBelgi";
 import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
+import type { Kalit } from "../lib/matn";
+import { sorov } from "../lib/api";
 import { kursMatn } from "../lib/tarjima/kurs";
 import type { Course } from "../lib/curriculum";
 import type { Progress } from "../lib/types";
@@ -53,6 +56,29 @@ interface Props {
  */
 const KATTALAR = ["talaba", "kattalar", "ustoz"];
 
+/**
+ * BITTA SAVOL — nega anketa emas.
+ *
+ * Anketani 757 hisobdan 90 tasi to'ldirgan (12%): u faqat ro'yxatdan
+ * to'liq o'tgan odamga chiqadi. Ro'yxatni hammaga majburlash esa
+ * eshikda odam yo'qotardi — kanaldan kelganlarning to'rtdan biri
+ * allaqachon bitta ekran ko'rib ketyapti.
+ *
+ * Shuning uchun savol KERAK BO'LGAN JOYDA turadi — aynan shu ekranda,
+ * chunki `/darslar` eng katta chiqish nuqtasi edi (34%). U hech
+ * narsani to'smaydi: ostida kurslar ro'yxati o'sha joyida qoladi,
+ * javob bitta bosish va u ro'yxatni o'sha zahoti qayta tizadi.
+ *
+ * Javob "qisman" bo'lib yoziladi: to'liq tanishuv anketasi (bosqich,
+ * viloyat) keyinroq, ro'yxatdan o'tganda baribir so'raladi.
+ */
+const SAVOL_JAVOBLARI: { kod: string; kalit: Kalit }[] = [
+  { kod: "oquvchi", kalit: "savolOquvchi" },
+  { kod: "ota_ona", kalit: "savolOtaOna" },
+  { kod: "talaba", kalit: "savolTalaba" },
+  { kod: "ustoz", kalit: "savolUstoz" },
+];
+
 /** Ro'yxat navbat bilan chiqsin — ekran "jonli" ochilgandek ko'rinadi. */
 const kech = (ms: number) => ({ "--az-kech": `${ms}ms` }) as CSSProperties;
 
@@ -61,7 +87,37 @@ export function Dashboard({
 }: Props) {
   const maktabgacha = COURSES.filter((c) => c.grade === 0);
   const sinflar = COURSES.filter((c) => c.grade > 0);
-  const kattalarAvval = KATTALAR.includes(kim ?? "");
+  // Javob shu yerda ham saqlanadi: serverga yozilishini kutib
+  // turmasdan ro'yxat darrov qayta tiziladi.
+  const [javob, setJavob] = useState(kim ?? "");
+  useEffect(() => { if (kim) setJavob(kim); }, [kim]);
+  const kattalarAvval = KATTALAR.includes(javob);
+
+  const savolBer = (kod: string) => {
+    setJavob(kod);
+    // Xato bo'lsa jim: ro'yxat baribir moslashgan, javob esa
+    // keyingi safar qayta so'raladi.
+    void sorov("/api/v1/anketa", { kim: kod, qisman: true }).catch(() => {});
+  };
+
+  const savol = !javob && (
+    <Reveal kech={40}>
+      <div className="az-kirish mt-3 rounded-clay bg-karta p-3.5 shadow-clay-sm" style={kech(40)}>
+        <div className="font-display text-[14.5px] leading-tight">{t("savolKim")}</div>
+        <p className="mt-0.5 text-[12px] leading-snug text-ink-soft">{t("savolIzoh")}</p>
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
+          {SAVOL_JAVOBLARI.map((j) => (
+            <button key={j.kod} type="button" onClick={() => savolBer(j.kod)}
+              data-tahlil={`Darslar: javob ${j.kod}`}
+              className="clay-press rounded-2xl bg-sahna px-3 py-2.5 text-left font-display
+                         text-[13px] leading-tight shadow-clay-sm">
+              {t(j.kalit)}
+            </button>
+          ))}
+        </div>
+      </div>
+    </Reveal>
+  );
 
   const kattalarBolimi = (
     <>
@@ -109,6 +165,8 @@ export function Dashboard({
       {/* Maktabgacha kurs alohida sarlavha ostida turadi: u sinf emas va
           ota-ona "bolam hali maktabga bormaydi" deganda aynan shu yerni
           izlaydi. Bitta ro'yxatda turganda u "0-sinf" dek ko'rinardi. */}
+      {savol}
+
       {kattalarAvval && kattalarBolimi}
 
       {maktabgacha.length > 0 && (
