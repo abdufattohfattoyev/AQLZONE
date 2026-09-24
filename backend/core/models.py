@@ -1126,6 +1126,8 @@ class KarvonHolat(models.Model):
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="karvon")
     bekat = models.SmallIntegerField(default=0)
     yulduz = models.SmallIntegerField(default=0)
+    #: Qiyinlik darajasi 1–5 (`karvon.DARAJA`). Eski hisoblarda 1–3
+    #: bo'lishi mumkin — `karvon.darajaga` ularni moslab beradi.
     daraja = models.SmallIntegerField(default=2)
     #: Nechanchi safar. Xivaga yetgan karvon ortga qaytadi va sonlar
     #: kattalashadi — yo'l tugamaydi, qiyinlashadi (`karvon.kuch`).

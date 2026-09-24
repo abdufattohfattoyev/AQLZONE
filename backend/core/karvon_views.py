@@ -42,7 +42,9 @@ def karvon_holat(request):
     """
     profil = _profil_tanla(request)
     h, _ = KarvonHolat.objects.get_or_create(profile=profil)
-    h.daraja = _son(request.data.get("daraja"), 1, 3)
+    # Daraja 1–5. Eski o'yin 1–3 yuborardi, tashqaridan sinf ham
+    # kelishi mumkin — ikkalasini `karvon.darajaga` moslaydi.
+    h.daraja = KV.darajaga(request.data.get("daraja"), request.data.get("sinf"))
     h.faol_at = timezone.now()
     h.save(update_fields=["daraja", "faol_at"])
     return Response({"ok": True})
@@ -63,9 +65,10 @@ def karvon_men(request):
 def karvon_bekat(request):
     d = request.data
     try:
-        return Response(KV.bekat_bosh(_profil_tanla(request), _son(d.get("daraja"), 1, 3),
+        return Response(KV.bekat_bosh(_profil_tanla(request), d.get("daraja"),
                                       _son(d.get("qol"), 5, 7), bool(d.get("soda")),
-                                      bool(d.get("sahro")), bool(d.get("yetak"))))
+                                      bool(d.get("sahro")), bool(d.get("yetak")),
+                                      sinf=d.get("sinf")))
     except KV.KarvonXato as e:
         return _xato(e)
 

@@ -7264,8 +7264,9 @@ class KarvonServerTest(TestCase):
         from core import karvon as KV
         import random as R
         rng = R.Random(7)
-        for daraja, mavsum in [(1, 1), (2, 1), (3, 1), (1, 3), (2, 4), (3, 3), (3, 6), (3, 9)]:
-            for n in range(200):
+        juftlar = [(x, 1) for x in range(1, 6)] + [(1, 3), (3, 4), (5, 3), (5, 6), (5, 9)]
+        for daraja, mavsum in juftlar:
+            for n in range(150):
                 j = {"daraja": daraja, "mavsum": mavsum, "tosiq": n % 3, "qol": [],
                      "id_son": 0, "soda": False}
                 j["qol"] = [KV._karta(j, rng) for _ in range(5)]
@@ -7283,28 +7284,86 @@ class KarvonServerTest(TestCase):
                     self.assertEqual(sum(ch), ong + v["maqsad"])
                     self.assertTrue(min(ch) > 0)
 
-    def test_yuqori_sinf_sonlari_jiddiy(self):
-        """9–11 sinf uchun "7 + 9" emas: ikki xonali sonlar va uchta tosh."""
+    def test_besh_daraja_pogonasi(self):
+        """
+        Beshta daraja: pastda qo'shish-ayirish, tepada to'rt amal va
+        uch xonaliga yaqin sonlar. Har pog'ona oldingisidan kattaroq.
+        """
         from core import karvon as KV
-        k1, k3 = KV.kuch(1), KV.kuch(3)
-        self.assertGreaterEqual(k3["max"], 40, k3)
-        self.assertGreater(k3["max"], k1["max"] * 4)
-        self.assertEqual(k3["qism"], 3)
-        self.assertEqual(k3["amallar"], ["+", "−", "×", "÷"])
+        k1, k2, k3, k5 = KV.kuch(1), KV.kuch(2), KV.kuch(3), KV.kuch(5)
+        self.assertEqual(len(KV.DARAJA), 5)
+        self.assertEqual(k1["amallar"], ["+", "−"])           # ko'paytirish yo'q
+        self.assertEqual(k2["amallar"], ["+", "−", "×"])  # bo'lish hali yo'q
+        self.assertIn("÷", k3["amallar"])
+        self.assertEqual(k1["qism"], 2)
+        self.assertEqual(k5["qism"], 3)
+        self.assertGreaterEqual(k5["max"], 100, k5)
+        self.assertGreater(k5["max"], k1["max"] * 8)
+        oldin = 0
+        for daraja in range(1, 6):                            # sonlar faqat o'sadi
+            hozir = KV.kuch(daraja)["max"]
+            self.assertGreater(hozir, oldin, daraja)
+            oldin = hozir
+
+    def test_kech_bekatda_tosiq_kopayadi(self):
+        """7-bekatda oltita to'siq — yo'l oxiriga borib uzayadi."""
+        from core import karvon as KV
+
+        h = self.kir()
+        self.post("/api/v1/karvon/bekat", {"daraja": 3, "qol": 5}, h)
+        holat = MDL.KarvonHolat.objects.get()
+        holat.bekat, holat.joriy = 6, None
+        holat.save()
+        r = self.post("/api/v1/karvon/bekat", {"daraja": 3, "qol": 5}, h).json()
+        self.assertEqual(r["tosiq_soni"], 6)
+        sanoq = 0
+        for _ in range(9):
+            j = self.post("/api/v1/karvon/javob", self.togri_javob(), h).json()
+            sanoq += 1
+            if j.get("bekat_tugadi"):
+                break
+        self.assertEqual(sanoq, KV.tosiqlar(6))
+        self.assertEqual(MDL.KarvonHolat.objects.get().bekat, 7)
+
+    def test_daraja_saqlanadi(self):
+        h = self.kir()
+        r = self.post("/api/v1/karvon/bekat", {"daraja": 1, "qol": 5}, h).json()
+        self.assertEqual(r["daraja"], 1)
+        self.assertEqual(MDL.KarvonHolat.objects.get().daraja, 1)
+        # Qo'ldagi toshlar 1-daraja oralig'ida (1..10).
+        self.assertTrue(all(1 <= k["v"] <= 10 for k in r["qol"]), r["qol"])
+
+    def test_daraja_moslash(self):
+        """Eski daraja (1–3), yangi daraja (1–5) va sinf — hammasi tushuniladi."""
+        from core import karvon as KV
+        for d in range(1, 6):
+            self.assertEqual(KV.darajaga(d), d)
+        self.assertEqual(KV.darajaga(None, 2), 1)             # 2-sinf → 1-daraja
+        self.assertEqual(KV.darajaga(None, 7), 4)             # 7-sinf → 4-daraja
+        self.assertEqual(KV.darajaga(None, 11), 5)
+        self.assertEqual(KV.darajaga(9), 3)                   # noma'lum — o'rtasi
+        self.assertEqual(KV.darajaga("x", None), 3)
+
+    def test_bekatlar_uzayadi(self):
+        """Yo'l tez tugamasin: oxirgi bekatlarda to'siq ko'proq."""
+        from core import karvon as KV
+        self.assertEqual([KV.tosiqlar(b) for b in range(KV.BEKATLAR)],
+                         [3, 3, 4, 4, 5, 5, 6, 6, 6])
+        self.assertEqual(sum(KV.tosiqlar(b) for b in range(KV.BEKATLAR)), 42)
 
     def test_mavsum_bilan_qiyinlashadi(self):
         """Har yangi safarda sonlar kattalashadi, uchinchisidan — to'rtinchi tosh."""
         from core import karvon as KV
-        oldin = KV.kuch(3, 1)
+        oldin = KV.kuch(5, 1)
         for m in (2, 3, 5, 9):
-            hozir = KV.kuch(3, m)
+            hozir = KV.kuch(5, m)
             self.assertGreater(hozir["max"], oldin["max"], m)
             self.assertGreater(hozir["chegara"], oldin["chegara"], m)
             oldin = hozir
-        self.assertEqual(KV.kuch(3, 2)["qism"], 3)
-        self.assertEqual(KV.kuch(3, 3)["qism"], 4)
+        self.assertEqual(KV.kuch(5, 2)["qism"], 3)
+        self.assertEqual(KV.kuch(5, 3)["qism"], 4)
         # Chegaradan tashqari mavsum ham xavfsiz: eng katta qiymatda qoladi.
-        self.assertEqual(KV.kuch(3, 99), KV.kuch(3, KV.MAX_MAVSUM))
+        self.assertEqual(KV.kuch(5, 99), KV.kuch(5, KV.MAX_MAVSUM))
 
     def test_xivadan_keyin_yol_davom_etadi(self):
         """Xivaga yetgan karvon keyingi safarga chiqadi, yulduzi yo'qolmaydi."""

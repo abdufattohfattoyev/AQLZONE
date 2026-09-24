@@ -27,42 +27,100 @@ from django.utils import timezone
 
 from .models import KarvonHolat
 
-D = {
-    1: {"min": 1, "max": 9, "amallar": ["+", "−"], "chegara": 20, "qism": 2},
-    2: {"min": 2, "max": 15, "amallar": ["+", "−", "×"], "chegara": 120, "qism": 3},
-    # 9–11 sinf. Ilgari bu yerda 3..20 oralig'idagi sonlar turardi va
-    # o'n birinchi sinf uchun bu mashq emas, o'yin ham emas edi: "7 + 9"
-    # ni yechish uchun karvonboshi bo'lish shart emas. Endi sonlar
-    # ikki xonali, ifodada uchta tosh va to'rtala amal qatnashadi.
-    3: {"min": 6, "max": 48, "amallar": ["+", "−", "×", "÷"], "chegara": 1200, "qism": 3},
+#: BESHTA DARAJA. Har biri o'lchab tanlangan (`scripts` dagi tahlil):
+#: qatorda toshlarning oralig'i, amallar, javob chegarasi va ifodadagi
+#: tosh soni turadi.
+#:
+#: Ilgari uchta daraja bor edi va ular juda keng edi: "9–11 sinf" da
+#: sonlar 3..20 oralig'ida qolib ketgandi, ya'ni o'n birinchi sinf
+#: uchun "7 + 9" degan misol chiqardi. Beshta pog'ona esa har ikki
+#: sinfga bittadan to'g'ri keladi va pog'onalar orasidagi sakrash
+#: bola ko'tara oladigan darajada qoladi.
+#:
+#: SINF EMAS, DARAJA — ataylab. Sinf so'ralsa, kuchli bola o'z
+#: sinfida zerikadi, qiynalayotgani esa pastini tanlashdan uyaladi.
+#: Daraja esa tanlov: yonidagi "1–2 sinf" faqat MASLAHAT.
+DARAJA = {
+    1: {"nom": "Yo'lboshchi", "sinf": "1–2 sinf",
+        "min": 1,  "max": 10,  "amallar": ["+", "−"],           "chegara": 25,   "qism": 2},
+    2: {"nom": "Sayyoh", "sinf": "3–4 sinf",
+        "min": 2,  "max": 30,  "amallar": ["+", "−", "×"],      "chegara": 150,  "qism": 2},
+    3: {"nom": "Sarbon", "sinf": "5–6 sinf",
+        "min": 3,  "max": 50,  "amallar": ["+", "−", "×", "÷"], "chegara": 500,  "qism": 3},
+    4: {"nom": "Karvonboshi", "sinf": "7–8 sinf",
+        "min": 6,  "max": 80,  "amallar": ["+", "−", "×", "÷"], "chegara": 1100, "qism": 3},
+    5: {"nom": "Ustoz munajjim", "sinf": "9–11 sinf",
+        "min": 10, "max": 110, "amallar": ["+", "−", "×", "÷"], "chegara": 2000, "qism": 3},
 }
+D = DARAJA                                 # eski nom bilan chaqiruvlar uchun
+
+#: Eski uchta daraja yangisining qayeriga tushadi. Bazada allaqachon
+#: `daraja=1..3` bo'lgan o'yinchilar bor — ular hech narsa
+#: tanlamasdan davom etishi kerak.
+ESKI_DARAJA = {1: 1, 2: 3, 3: 5}
+
+#: Sinf aytilsa (eski mijoz yoki tashqi chaqiruv) — qaysi darajaga.
+SINF_DARAJA = {1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5, 11: 5}
 
 #: Mavsum bilan sonlar qanchaga kattalashadi (1-mavsum — jadvaldagidek).
 MAVSUM_OSISH = 0.45
 MAX_MAVSUM = 9
 
 
+def darajaga(daraja=None, sinf=None) -> int:
+    """
+    Kelgan qiymatni 1–5 darajaga aylantiradi.
+
+    Uch xil chaqiruvni ham tushunadi: yangi daraja (1–5), eski daraja
+    (1–3) va sinf (1–11). Noma'lum qiymatda — o'rtasi.
+    """
+    try:
+        n = int(sinf)
+        if 1 <= n <= 11:
+            return SINF_DARAJA[n]
+    except (TypeError, ValueError):
+        pass
+    try:
+        d = int(daraja)
+    except (TypeError, ValueError):
+        return 3
+    if d in DARAJA:
+        return d
+    return ESKI_DARAJA.get(d, 3)
+
+
 def kuch(daraja: int, mavsum: int = 1) -> dict:
     """
-    Shu daraja va shu mavsumdagi sonlar kengligi.
+    Shu daraja va shu safardagi sonlar kengligi.
 
-    Qiyinlik ikki o'qda o'sadi: SINF (daraja) va SAFAR (mavsum). Ikkinchisi
+    Qiyinlik ikki o'qda o'sadi: DARAJA va SAFAR (mavsum). Ikkinchisi
     aynan shuning uchun bor — Xivaga yetgan bola uchun yo'l tugamasligi
     kerak, lekin bir xil misollarni qayta yechish ham o'yin emas. Har
-    yangi safarda sonlar kattalashadi, uchinchi mavsumdan boshlab
-    yuqori sinfda ifodaga to'rtinchi tosh qo'shiladi.
+    yangi safarda sonlar kattalashadi, uchinchi safardan boshlab eng
+    yuqori darajada ifodaga to'rtinchi tosh qo'shiladi.
     """
-    d = D.get(daraja) or D[2]
+    d = DARAJA.get(daraja) or DARAJA[3]
     m = max(1, min(MAX_MAVSUM, int(mavsum or 1)))
     o = 1 + MAVSUM_OSISH * (m - 1)
-    chiq = {
+    return {
         "min": max(1, int(d["min"] * (1 + (o - 1) / 2))),
         "max": max(d["min"] + 3, int(d["max"] * o)),
         "amallar": list(d["amallar"]),
         "chegara": int(d["chegara"] * o * o),
-        "qism": d["qism"] + (1 if daraja == 3 and m >= 3 else 0),
+        "qism": d["qism"] + (1 if daraja >= 5 and m >= 3 else 0),
     }
-    return chiq
+
+
+#: Bekatda nechta to'siq: 3, 3, 4, 4, 5, 5, 6, 6, 6 — jami 42.
+#:
+#: Ilgari hamma bekatda uchtadan edi, ya'ni butun yo'l 27 ta to'siq
+#: (taxminan 18 daqiqa) va uni bir o'tirishda tugatib qo'yish mumkin
+#: edi. Endi yo'l oxiriga borib uzayadi: boshida tanishtiradi,
+#: oxirida sinaydi.
+def tosiqlar(bekat: int) -> int:
+    return 3 + max(0, min(3, int(bekat) // 2))
+
+
 MADAN = ["Mis", "Granit", "Ohaktosh", "Marmar", "Feruza", "Lazurit", "Nefrit"]
 NAVBAT = ["tosh", "xotira", "boron", "yol", "koprik", "tarozi", "ketma"]
 OBHAVO = ["quyoshli", "issiq", "shamol", "boron", "salqin"]
@@ -115,15 +173,22 @@ def _karta(j: dict, rng: random.Random) -> dict:
 
 def _kuch(j: dict) -> dict:
     """Shu bekat uchun hisoblangan qiyinlik (eski saqlangan o'yinlarda — jadvaldan)."""
-    return j.get("kuch") or kuch(j.get("daraja") or 2, j.get("mavsum") or 1)
+    return j.get("kuch") or kuch(_daraja(j), j.get("mavsum") or 1)
+
+
+def _daraja(j: dict) -> int:
+    """O'yinchining darajasi (1–5). Eski holatda 1–3 bo'lishi mumkin."""
+    return darajaga(j.get("daraja"), j.get("sinf"))
 
 
 def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
-    q, d, soda = j["qol"], _kuch(j), j.get("soda")
+    q, d, soda, dj = j["qol"], _kuch(j), j.get("soda"), _daraja(j)
     tur = NAVBAT[(bekat * 3 + j["tosiq"]) % len(NAVBAT)]
     if obhavo(bekat) == "boron" and j["tosiq"] == 0:
         tur = "boron"
-    if bekat % 3 == 2 and j["tosiq"] == 2:
+    # Qaroqchi — bekatning OXIRGI to'sig'i (bekatlar endi turli
+    # uzunlikda, shuning uchun uchinchisi emas, oxirgisi).
+    if bekat % 3 == 2 and j["tosiq"] == tosiqlar(bekat) - 1:
         tur = "qaroqchi"
     if j.get("yetak") and bekat == 0 and j["tosiq"] == 0:
         a, b = sorted(q, key=lambda k: k["v"])[:2]
@@ -135,7 +200,7 @@ def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
         return x
 
     if tur == "boron":
-        eng = 2 if j["daraja"] == 1 or soda else min(len(q), d["qism"] + 1)
+        eng = 2 if dj <= 1 or soda else min(len(q), d["qism"] + 1)
         tan = aral()[:2 if eng <= 2 else rng.randint(2, eng)]
         return {"tur": tur, "maqsad": sum(q[i]["v"] for i in tan), "yechim": [q[i]["id"] for i in tan]}
 
@@ -143,10 +208,10 @@ def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
         boss = tur == "qaroqchi"
         # Bossda ifoda doim to'liq uzunlikda, oddiy to'siqda esa daraja
         # hal qiladi: boshlovchida ikki tosh, 5-sinfdan yuqorida uchta.
-        oddiy = 2 if soda or j["daraja"] == 1 else (
-            d["qism"] if j["daraja"] == 3 else (d["qism"] if rng.random() < .45 else 2))
+        oddiy = 2 if soda or dj <= 1 else (
+            d["qism"] if dj >= 3 else (d["qism"] if rng.random() < .45 else 2))
         for u in range(160):
-            k = min(len(q), d["qism"] + (1 if boss and j["daraja"] == 3 else 0)) if boss else min(len(q), oddiy)
+            k = min(len(q), d["qism"] + (1 if boss and dj >= 5 else 0)) if boss else min(len(q), oddiy)
             tan, a = aral()[:k], []
             for n, i in enumerate(tan):
                 if n:
@@ -172,13 +237,13 @@ def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
             else:
                 op = "+"
         if op == "+":
-            k = rng.randint(1, 9 if j["daraja"] == 1 else max(12, d["max"]))
+            k = rng.randint(1, 9 if dj <= 1 else max(12, d["max"]))
             yoz = f"? + {k} = {c['v'] + k}"
         elif op == "−":
             k = rng.randint(1, c["v"] - 1)
             yoz = f"? − {k} = {c['v'] - k}"
         elif op == "×":
-            k = rng.randint(2, 6 if j["daraja"] == 2 else 12)
+            k = rng.randint(2, 6 if dj <= 2 else 12)
             yoz = f"? × {k} = {c['v'] * k}"
         return {"tur": tur, "maqsad": c["v"], "yechim": [c["id"]], "yoz": yoz}
 
@@ -191,23 +256,23 @@ def _vazifa(j: dict, bekat: int, rng: random.Random) -> dict:
 
     if tur == "ketma":
         c = q[aral()[0]]
-        kmax = 4 if j["daraja"] == 1 else (9 if j["daraja"] == 2 else 15)
+        kmax = 4 if dj <= 1 else (9 if dj <= 3 else 15)
         if c["v"] >= 5 and rng.random() < .6:
             k = rng.randint(1, min(kmax, (c["v"] - 1) // 4))
             qator = [c["v"] - 4 * k, c["v"] - 3 * k, c["v"] - 2 * k, c["v"] - k]
         else:
-            k = -rng.randint(1, 3 if j["daraja"] == 1 else kmax)
+            k = -rng.randint(1, 3 if dj <= 1 else kmax)
             qator = [c["v"] - 4 * k, c["v"] - 3 * k, c["v"] - 2 * k, c["v"] - k]
         return {"tur": tur, "maqsad": c["v"], "yechim": [c["id"]],
                 "variant": {"qator": qator}, "qadam": k}
 
     if tur == "xotira":
-        yuklar = rng.sample(YUKLAR, 4 if j["daraja"] == 1 else (5 if j["daraja"] == 2 else 6))
+        yuklar = rng.sample(YUKLAR, 4 if dj <= 1 else (5 if dj <= 3 else 6))
         yoq = rng.randrange(len(yuklar))
         return {"tur": tur, "maqsad": yoq, "variant": {"yuklar": yuklar, "yoq": yoq}}
 
     # yo'l ayrimi
-    katta = 9 if j["daraja"] == 1 else max(20, d["max"])
+    katta = 9 if dj <= 1 else max(20, d["max"])
     while True:
         yollar = [{"a": rng.randint(4, katta), "b": rng.randint(3, katta), "nom": rng.choice(YOL_NOMLARI)}
                   for _ in range(3)]
@@ -232,16 +297,21 @@ def _ochiq(v: dict) -> dict:
 
 def _korinish(h: KarvonHolat) -> dict:
     j = h.joriy
-    return {"bekat": h.bekat, "mavsum": h.mavsum or 1, "tosiq": j["tosiq"], "qol": j["qol"],
+    return {"bekat": h.bekat, "mavsum": h.mavsum or 1, "tosiq": j["tosiq"],
+            "tosiq_soni": tosiqlar(h.bekat), "daraja": _daraja(j), "qol": j["qol"],
             "vazifa": _ochiq(j["vazifa"])}
 
 
 def men(profil) -> dict:
     h = KarvonHolat.objects.filter(profile=profil).first()
     if not h:
-        return {"bekat": 0, "yulduz": 0, "yulduzlar": {}, "mavsum": 1, "otgan_yulduz": 0}
+        return {"bekat": 0, "yulduz": 0, "yulduzlar": {}, "mavsum": 1, "otgan_yulduz": 0,
+                "daraja": 3, "tosiqlar": [tosiqlar(b) for b in range(BEKATLAR)]}
     return {"bekat": h.bekat, "yulduz": h.yulduz, "yulduzlar": h.yulduzlar or {},
-            "mavsum": h.mavsum or 1, "otgan_yulduz": h.otgan_yulduz or 0}
+            "mavsum": h.mavsum or 1, "otgan_yulduz": h.otgan_yulduz or 0,
+            "daraja": darajaga(h.daraja),
+            # Har bekatda nechta to'siq — mijoz "2/4" deb yozishi uchun.
+            "tosiqlar": [tosiqlar(b) for b in range(BEKATLAR)]}
 
 
 def _qulfla(profil) -> KarvonHolat:
@@ -250,13 +320,13 @@ def _qulfla(profil) -> KarvonHolat:
 
 
 @transaction.atomic
-def bekat_bosh(profil, daraja, qol_soni, soda=False, sahro=False, yetak=False) -> dict:
+def bekat_bosh(profil, daraja, qol_soni, soda=False, sahro=False, yetak=False, sinf=None) -> dict:
     h = _qulfla(profil)
     if h.bekat >= BEKATLAR:
         raise KarvonXato("tugagan")
     if h.joriy and h.joriy.get("bekat") == h.bekat:
         return _korinish(h)                            # to'xtagan joyidan
-    daraja = daraja if daraja in D else 2
+    daraja = darajaga(daraja if daraja is not None else h.daraja, sinf)
     rng = random.Random()
     j = {"bekat": h.bekat, "daraja": daraja, "mavsum": h.mavsum or 1, "tosiq": 0, "qol": [],
          "id_son": 0, "xato": 0, "otkaz": 0, "yulduzlar": [], "soda": bool(soda),
@@ -300,7 +370,7 @@ def _yechildi(h: KarvonHolat, yulduz: int, ishlatilgan: list[int]) -> dict:
     j["yulduzlar"].append(yulduz)
     j["tosiq"] += 1
     javob = {"togri": True, "yulduz": yulduz, "keyingi": None, "bekat_tugadi": None}
-    if j["tosiq"] >= 3:
+    if j["tosiq"] >= tosiqlar(h.bekat):
         s = j["yulduzlar"]
         bekat_yulduz = int(sum(s) / len(s) + 0.5)
         yulduzlar = dict(h.yulduzlar or {})
