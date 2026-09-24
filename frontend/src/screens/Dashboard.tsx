@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { Icon } from "../lib/icons";
+import type { IconName } from "../lib/icons";
 import { Reveal } from "../components/Reveal";
 import { COURSES, lessonCount } from "../lib/curriculum";
 import { kursBelgi } from "../lib/chizma/kursBelgi";
@@ -19,17 +20,68 @@ import type { Progress } from "../lib/types";
 interface Props {
   progressOf: (c: Course) => Progress;
   onOpen: (c: Course) => void;
+  /**
+   * Anketadagi javob ("talaba", "kattalar", "ustoz", "ota_ona",
+   * "oquvchi"). Bo'sh bo'lishi normal — odam anketani o'tkazib
+   * yuborgan bo'lishi mumkin.
+   */
+  kim?: string;
+  /** Kattalar bo'limidagi tugmalar. */
+  onFormulalar: () => void;
+  onTestlar: () => void;
+  onMasalalar: () => void;
+  onOyinlar: () => void;
 }
+
+/**
+ * KATTALAR BO'LIMI — nega bor.
+ *
+ * Tahlil ko'rsatdi: anketa to'ldirganlarning 58% i TALABA, yana 20% i
+ * o'qituvchi, ota-ona va boshqa kattalar. Shu bilan birga `/darslar`
+ * ilovadagi ENG KATTA CHIQISH NUQTASI edi (hamma chiqishning 34% i).
+ * Sabab ko'rinib turibdi: yigirma yoshli odam ekranni ochadi, "1-sinf
+ * … 11-sinf" ro'yxatini ko'radi va bu ilova o'ziga emas deb o'ylaydi.
+ *
+ * Yangi kurs yozilmadi — bu yolg'on bo'lardi. Buning o'rniga ilovada
+ * ALLAQACHON BOR narsalar ko'rsatildi: formulalar to'plami, blok
+ * testlar, o'quvchilar yozgan masalalar va hisob o'yinlari. Bularning
+ * hammasi yoshga bog'liq emas.
+ *
+ * Tartib javobga qarab o'zgaradi: talaba va kattalarga bu bo'lim
+ * BIRINCHI, ota-ona va o'quvchiga esa sinflar birinchi chiqadi —
+ * ota-ona bolasining sinfini qidirib keladi.
+ */
+const KATTALAR = ["talaba", "kattalar", "ustoz"];
 
 /** Ro'yxat navbat bilan chiqsin — ekran "jonli" ochilgandek ko'rinadi. */
 const kech = (ms: number) => ({ "--az-kech": `${ms}ms` }) as CSSProperties;
 
-export function Dashboard({ progressOf, onOpen }: Props) {
-
-
-
+export function Dashboard({
+  progressOf, onOpen, kim, onFormulalar, onTestlar, onMasalalar, onOyinlar,
+}: Props) {
   const maktabgacha = COURSES.filter((c) => c.grade === 0);
   const sinflar = COURSES.filter((c) => c.grade > 0);
+  const kattalarAvval = KATTALAR.includes(kim ?? "");
+
+  const kattalarBolimi = (
+    <>
+      <Sarlavha kech={kech(kattalarAvval ? 60 : 200)}>{t("kattalarBolim")}</Sarlavha>
+      <p className="az-kirish mb-2 ml-1.5 text-[12px] leading-snug text-ink-soft"
+        style={kech(kattalarAvval ? 70 : 210)}>
+        {t("kattalarIzoh")}
+      </p>
+      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <KattaKarta ik="sqrt" nom={t("kattalarFormula")} izoh={t("kattalarFormulaIzoh")}
+          rang="bg-brand-blue" on={onFormulalar} kech={kech(kattalarAvval ? 90 : 230)} />
+        <KattaKarta ik="chart" nom={t("kattalarTest")} izoh={t("kattalarTestIzoh")}
+          rang="bg-brand-purple" on={onTestlar} kech={kech(kattalarAvval ? 110 : 250)} />
+        <KattaKarta ik="pencil" nom={t("kattalarMasala")} izoh={t("kattalarMasalaIzoh")}
+          rang="bg-brand-green" on={onMasalalar} kech={kech(kattalarAvval ? 130 : 270)} />
+        <KattaKarta ik="puzzle" nom={t("kattalarOyin")} izoh={t("kattalarOyinIzoh")}
+          rang="bg-brand-orange" on={onOyinlar} kech={kech(kattalarAvval ? 150 : 290)} />
+      </div>
+    </>
+  );
 
   return (
     /* Kenglik ekranga qarab o'sadi. Telefonda bitta ustun — kartalar katta va
@@ -57,9 +109,11 @@ export function Dashboard({ progressOf, onOpen }: Props) {
       {/* Maktabgacha kurs alohida sarlavha ostida turadi: u sinf emas va
           ota-ona "bolam hali maktabga bormaydi" deganda aynan shu yerni
           izlaydi. Bitta ro'yxatda turganda u "0-sinf" dek ko'rinardi. */}
+      {kattalarAvval && kattalarBolimi}
+
       {maktabgacha.length > 0 && (
         <>
-          <Sarlavha kech={kech(60)}>{t("maktabgachaBolim")}</Sarlavha>
+          <Sarlavha kech={kech(kattalarAvval ? 200 : 60)}>{t("maktabgachaBolim")}</Sarlavha>
           {/* Maktabgacha kurs KENG karta bo'lib qoladi: u bitta va uni
               ikkiga bo'lingan setkaga qo'ysak, yonida bo'sh joy turardi.
               Kengligi ham vazifasiga mos — bu bo'limning bosh kursi. */}
@@ -71,7 +125,7 @@ export function Dashboard({ progressOf, onOpen }: Props) {
         </>
       )}
 
-      <Sarlavha kech={kech(90)}>{t("sinfKurslari")}</Sarlavha>
+      <Sarlavha kech={kech(kattalarAvval ? 230 : 90)}>{t("sinfKurslari")}</Sarlavha>
 
       {/* Sinflar TELEFONDA HAM ikkitadan turadi va kartasi boshqacha —
           tik (belgi tepada, yozuv ostida). Ilgari to'rttala sinf keng
@@ -89,10 +143,33 @@ export function Dashboard({ progressOf, onOpen }: Props) {
         ))}
       </div>
 
+      {!kattalarAvval && kattalarBolimi}
+
       <p className="az-kirish mt-5 text-center text-[11.5px] text-ink-soft/80" style={kech(460)}>
         {t("kurslarIzoh")}
       </p>
     </div>
+  );
+}
+
+/** Kattalar bo'limidagi bitta karta — sinf kartalari bilan bir o'lchamda. */
+function KattaKarta({ ik, nom, izoh, rang, on, kech }: {
+  ik: IconName; nom: string; izoh: string; rang: string; on: () => void; kech: CSSProperties;
+}) {
+  return (
+    <Reveal kech={0}>
+      <button type="button" onClick={on} data-tahlil={`Darslar: ${nom}`} style={kech}
+        className="az-kirish clay-press flex w-full flex-col items-start gap-2 rounded-clay bg-karta
+                   p-3 text-left shadow-clay-sm">
+        <span className={`grid size-10 place-items-center rounded-2xl text-white ${rang}`}>
+          <Icon name={ik} size={20} />
+        </span>
+        <span className="min-w-0">
+          <span className="block font-display text-[14px] leading-tight">{nom}</span>
+          <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-soft">{izoh}</span>
+        </span>
+      </button>
+    </Reveal>
   );
 }
 

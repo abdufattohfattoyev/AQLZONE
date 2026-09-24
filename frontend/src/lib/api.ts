@@ -732,6 +732,10 @@ export interface Hisob {
   tilTanlandi?: boolean;
   /** Tanishuv anketasi ko'rsatilganmi (`components/Anketa.tsx`). */
   anketa?: boolean;
+  /** Anketadagi javob: "oquvchi" | "talaba" | "ota_ona" | "ustoz" | "kattalar". */
+  kim?: string;
+  /** Bosqich: 0–11 maktab, 101–105 OTM, 120–132 o'qituvchi, -1 javobsiz. */
+  bosqich?: number;
 }
 
 /**

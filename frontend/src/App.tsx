@@ -5,7 +5,7 @@
  * noto'g'ri bo'lsa — masalan bola havolani qo'lda o'zgartirsa yoki kurs
  * o'chirilgan bo'lsa — bo'sh ekran o'rniga tushunarli sahifa ko'rsatiladi.
  */
-import { Suspense, lazy, useEffect, useMemo } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Panel, TepagaQayt, panelKerakmi } from "./components/Panel";
 import { Kutish } from "./components/Kutish";
@@ -67,7 +67,8 @@ import { mavzuById } from "./lib/kichkintoy";
 import { oyinById } from "./lib/oyin";
 import { darajaniOqi } from "./lib/oyin/tur";
 import { ochiqmi } from "./lib/oyin/rekord";
-import { courseBySlug } from "./lib/curriculum";
+import { COURSES, courseBySlug } from "./lib/curriculum";
+import { getHisob } from "./lib/api";
 import { KUNLIK_MAQSAD, useProgress } from "./lib/progress";
 import type { LessonResult } from "./lib/progress";
 import { isUnlocked, lessonId } from "./lib/types";
@@ -265,8 +266,36 @@ function ToplamSahifasi() {
 function KurslarSahifasi() {
   const { progressOf } = useProgress();
   const nav = useNavigate();
+  const [kim, setKim] = useState("");
   useTema("bosh");
-  return <Dashboard progressOf={progressOf} onOpen={(c) => nav(yolKurs(c))} />;
+
+  // Anketadagi javob — ro'yxat tartibi shunga qarab o'zgaradi
+  // (`screens/Dashboard.tsx` dagi KATTALAR izohi).
+  useEffect(() => {
+    let bekor = false;
+    void (async () => {
+      try {
+        const h = await getHisob();
+        if (!bekor) setKim(h?.kim ?? "");
+      } catch { /* anketa yo'q — maktab tartibida qoladi */ }
+    })();
+    return () => { bekor = true; };
+  }, []);
+
+  // Formulalar va blok testlar eng yuqori sinf kursida to'liq turadi:
+  // kattalar uchun aynan o'sha kerak.
+  const eng = COURSES.filter((c) => c.grade > 0).slice(-1)[0] ?? COURSES[0];
+  return (
+    <Dashboard
+      progressOf={progressOf}
+      onOpen={(c) => nav(yolKurs(c))}
+      kim={kim}
+      onFormulalar={() => nav(yolFormulalar(eng))}
+      onTestlar={() => nav(yolTestSinf())}
+      onMasalalar={() => nav(yolMasalalar())}
+      onOyinlar={() => nav(yolOyinlar())}
+    />
+  );
 }
 
 function KursSahifasi() {

@@ -94,6 +94,13 @@ def _user_json(pupil: Pupil) -> dict:
         # Tanishuv anketasi ko'rsatilganmi (javob yoki o'tkazib yuborish).
         # `false` bo'lsa ilova uch savolni bir marta so'raydi.
         "anketa": pupil.anketa_at is not None,
+        # ANKETA JAVOBI ham yuboriladi: ilova shunga qarab o'zini
+        # moslaydi. Tahlil ko'rsatdiki, kelganlarning yarmidan ko'pi
+        # talaba va kattalar — ularga "1-sinf … 11-sinf" ro'yxati
+        # birinchi bo'lib chiqsa, ular shu yerda chiqib ketadi
+        # (darslar ro'yxati eng katta chiqish nuqtasi edi).
+        "kim": pupil.kim or "",
+        "bosqich": pupil.anketa_sinf if pupil.anketa_sinf is not None else -1,
         "profillar": [_profil_json(pr) for pr in pupil.profiles.all()],
     }
 
