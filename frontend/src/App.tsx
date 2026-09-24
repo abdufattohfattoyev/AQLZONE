@@ -41,6 +41,7 @@ const KodKirish = lazy(() => import("./screens/KodKirish").then((m) => ({ defaul
 const Oyinlar = lazy(() => import("./screens/Oyinlar").then((m) => ({ default: m.Oyinlar })));
 const Maydon = lazy(() => import("./screens/Maydon").then((m) => ({ default: m.Maydon })));
 const KunlikSon = lazy(() => import("./screens/KunlikSon").then((m) => ({ default: m.KunlikSon })));
+const SonOvi = lazy(() => import("./screens/SonOvi").then((m) => ({ default: m.SonOvi })));
 const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel })));
 const DuelQabul = lazy(() => import("./screens/Duel").then((m) => ({ default: m.DuelQabul })));
 const JamoaOchish = lazy(() => import("./screens/Xona").then((m) => ({ default: m.JamoaOchish })));
@@ -77,7 +78,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
+  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolBosh, yolTestSinf, yolToplam,
 } from "./lib/yollar";
@@ -153,6 +154,7 @@ function Yollar() {
           deb qabul qilinib, "topilmadi" sahifasi chiqardi. */}
       <Route path="/oyinlar/maydon" element={<MaydonSahifasi />} />
       <Route path="/oyinlar/kunlik-son" element={<KunlikSonSahifasi />} />
+      <Route path="/oyinlar/son-ovi" element={<SonOviSahifasi />} />
       <Route path="/oyinlar/shaharcha" element={<ShaharchaSahifasi />} />
       <Route path="/oyinlar/shaharcha/:pid" element={<ShaharchaSahifasi />} />
       <Route path="/oyinlar/jadval" element={<JadvalSahifasi />} />
@@ -608,6 +610,7 @@ function OyinlarSahifasi() {
       onOyin={(id) => nav(yolOyin(id))}
       onMaydon={() => nav(yolMaydon())}
       onKunlikSon={() => nav(yolKunlikSon())}
+      onSonOvi={() => nav(yolSonOvi())}
       onShaharcha={() => nav(yolShaharcha())}
       onKarvon={() => nav(yolKarvon())}
       onJadval={() => nav(yolJadval())}
@@ -665,6 +668,12 @@ function KunlikSonSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
   return <KunlikSon onChiq={() => nav(yolOyinlar())} />;
+}
+
+function SonOviSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <SonOvi onChiq={() => nav(yolOyinlar())} />;
 }
 
 function MaydonSahifasi() {

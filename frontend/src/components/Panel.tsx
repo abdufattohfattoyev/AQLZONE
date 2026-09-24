@@ -72,6 +72,9 @@ const YOPIQ = [
   // Bugungi maydon — u ham o'yin, ustiga kuniga bitta urinish. Bu
   // yerda bexosdan bosilgan tugma butun kunni yo'qotardi.
   /^\/oyinlar\/maydon$/,
+  // Son ovi — o'yinda soat yuradi va pastdagi boshqaruv tugmalari
+  // panel bilan yonma-yon tushib qolardi.
+  /^\/oyinlar\/son-ovi$/,
   // Kunlik son — o'z klaviaturasi pastda, panel uni yopib qo'yardi.
   /^\/oyinlar\/kunlik-son$/,
   // Karvon yo'li — o'z menyusi bilan to'liq ekran.

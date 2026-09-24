@@ -46,6 +46,7 @@ import { duelTaklifOl } from "../lib/api";
 import type { XonaOyin } from "../lib/api";
 import { XONA_OYINLAR } from "../lib/xonaOyinlar";
 import { kunlikSonBugun } from "./KunlikSon";
+import { sonOviBugun } from "./SonOvi";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { OYINLAR } from "../lib/oyin";
@@ -73,12 +74,14 @@ function bolimOl(): Bolim {
   try { return localStorage.getItem(BOLIM_KALIT) === "jamoaviy" ? "jamoaviy" : "yakka"; } catch { return "yakka"; }
 }
 
-export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onShaharcha, onKarvon, onJadval, onDuel, onJamoa }: {
+export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onShaharcha, onKarvon, onJadval, onDuel, onJamoa }: {
   onBack: () => void;
   onOyin: (id: string) => void;
   onMaydon: () => void;
   /** Kunlik son — Wordle uslubidagi jumboq. */
   onKunlikSon: () => void;
+  /** Son ovi — to'rtta kartadan 24 ni chiqarish. */
+  onSonOvi: () => void;
   /** Tulki shaharchasi — tangaga bino, kunlik hosil. */
   onShaharcha: () => void;
   /** Karvon yo'li — Ipak yo'li bo'ylab sarguzasht. */
@@ -156,6 +159,27 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onShaharcha, on
               izoh={kunlikSonBugun() ? t("kunlikSonYechildi") : t("kunlikSonIzoh")}
               yorliq="" />
           </div>
+
+          {/* Son ovi — qoidasi bitta jumla, lekin soatlab o'ynaladi.
+              Kunlik son bilan yonma-yon emas, alohida qatorda: u
+              "bugun bir marta" emas, istagancha o'ynaladigan o'yin. */}
+          <button type="button" onClick={onSonOvi} data-tahlil="O'yinlar: son ovi"
+            className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay bg-brand-purple p-3
+                       text-left text-white shadow-clay">
+            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
+              <EmojiBelgi e="🎯" olcham={28} jonli />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
+                {t("sonOvi")}
+                <span className="rounded-full bg-white/25 px-2 py-0.5 text-[10px]">{t("karvonYangi")}</span>
+              </span>
+              <span className="block text-[11.5px] leading-snug opacity-90">
+                {sonOviBugun() > 0 ? t("sonOviBugun", { n: sonOviBugun() }) : t("sonOviIzoh")}
+              </span>
+            </span>
+            <span className="font-display text-[20px] opacity-90">24</span>
+          </button>
 
           {/* Karvon yo'li — eng katta yakka o'yin: xarita, to'siqlar, bozor. */}
           <button type="button" onClick={onKarvon} data-tahlil="O'yinlar: karvon yo'li"
