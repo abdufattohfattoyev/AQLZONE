@@ -1804,6 +1804,8 @@ const S = {
   ksZanjir: ["Zanjir: {n} kun", "Серия: {n} дн."],
   ksOynalgan: ["O'ynalgan: {n}", "Сыграно: {n}"],
   ksQoidalar: ["Qoidalar", "Правила"],
+  boshKattalarBoshla: ["Masalalardan boshlang", "Начните с задач"],
+  boshKattalarIzoh: ["Qiyin masalalar, yechimi va muhokamasi bilan", "Сложные задачи с решением"],
   kattalarBolim: ["Talaba va kattalar uchun", "Для студентов и взрослых"],
   kattalarIzoh: ["Sinfga bog'liq emas — formulalar, testlar va hisob mashqi",
     "Без привязки к классу — формулы, тесты и счёт"],

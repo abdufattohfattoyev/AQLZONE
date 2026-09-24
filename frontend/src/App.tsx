@@ -219,6 +219,8 @@ function BoshSahifasi() {
       // kelgan va uni yana bir marta bosishga majburlash ortiqcha.
       onDavom={(c, ui, li) => nav(yolDars(c, ui, li))}
       onKunlikSon={() => nav(yolKunlikSon())}
+      onFormulalar={() => nav(yolFormulalar(
+        COURSES.filter((c) => c.grade > 0).slice(-1)[0] ?? COURSES[0]))}
       onQidiruv={() => nav(yolQidiruv())}
       onReyting={() => nav(yolReyting())}
       onSozlama={() => nav(yolSozlama())}

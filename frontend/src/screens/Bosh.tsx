@@ -74,7 +74,23 @@ interface Props {
   onReyting: () => void;
   onSozlama: () => void;
   onProfillar: () => void;
+  /** Kattalar bo'limidagi ikkita qo'shimcha yo'l. */
+  onFormulalar: () => void;
 }
+
+/**
+ * KATTA YOSHLI DEB HISOBLANADIGAN JAVOBLAR.
+ *
+ * Anketa shuni ko'rsatdi: kelganlarning 58% i talaba, yana 20% i
+ * o'qituvchi va boshqa kattalar. Ularga birinchi bo'lib "O'rganishni
+ * boshlash · sinfingizni tanlang" degan tugma chiqsa, ilova o'ziga
+ * emasdek ko'rinadi — `/darslar` shu sababdan eng katta chiqish
+ * nuqtasi edi.
+ *
+ * Ota-ona ATAYLAB bu ro'yxatda yo'q: u bolasi uchun keladi va unga
+ * sinf kerak.
+ */
+const KATTALAR = ["talaba", "kattalar", "ustoz"];
 
 const kech = (ms: number) => ({ "--az-kech": `${ms}ms` }) as CSSProperties;
 
@@ -109,7 +125,7 @@ function davomJoyi(progressOf: (c: Course) => Progress) {
 
 export function Bosh({
   progressOf, onKichkintoy, onDarslar, onMasalalar, onTestlar, onOyinlar,
-  onDavom, onKunlikSon, onQidiruv, onReyting, onSozlama, onProfillar,
+  onDavom, onKunlikSon, onQidiruv, onReyting, onSozlama, onProfillar, onFormulalar,
 }: Props) {
   const kopBola = profilSoni() > 1;
   const [hisob, setHisob] = useState<Hisob | null>(null);
@@ -121,6 +137,7 @@ export function Bosh({
   }, []);
 
   const bola = joriyBola(hisob);
+  const kattalar = KATTALAR.includes(hisob?.kim ?? "");
   const davom = davomJoyi(progressOf);
 
   return (
@@ -184,6 +201,20 @@ export function Bosh({
           Ilgari yangi odamga katta tugma yo'q edi — beshta teng eshik
           va ulardan qaysi biri "boshlanish" ekanini o'zi topishi
           kerak edi. */}
+      {/* KATTALAR YO'LI — anketa "talaba / o'qituvchi / kattalar"
+          desa, birinchi qatorda sinf emas, ishlaydigan narsalar
+          turadi (izoh yuqorida, `KATTALAR`). */}
+      {kattalar && (
+        <Reveal kech={50}>
+          <div className="az-kirish mt-2.5 grid grid-cols-2 gap-2.5" style={kech(50)}>
+            <KattaEshik ik="sqrt" rang="bg-brand-blue" nom={t("kattalarFormula")}
+              izoh={t("kattalarFormulaIzoh")} on={onFormulalar} />
+            <KattaEshik ik="chart" rang="bg-brand-purple" nom={t("kattalarTest")}
+              izoh={t("kattalarTestIzoh")} on={onTestlar} />
+          </div>
+        </Reveal>
+      )}
+
       {/* KUNLIK SON — eng tepada, "davom etish" dan ham yuqorida.
           Sabab `components/KunlikKarta.tsx` izohida: bu ilovadagi
           yagona kunlik odat va u o'yinlar ro'yxatida yashiringani
@@ -194,7 +225,7 @@ export function Bosh({
         </div>
       </Reveal>
 
-      {!davom && (
+      {!davom && !kattalar && (
         <Reveal kech={70}>
           <div className="az-kirish mt-2.5" style={kech(70)}>
             <button type="button" onClick={onDarslar} data-tahlil="Bosh: boshlash"
@@ -206,6 +237,25 @@ export function Bosh({
                 </span>
                 <span className="mt-0.5 block text-[12.5px] leading-snug text-white/90">
                   {t("boshBoshlaIzoh")}
+                </span>
+              </span>
+              <Icon name="chevron" size={20} className="shrink-0 text-white/90" />
+            </button>
+          </div>
+        </Reveal>
+      )}
+      {!davom && kattalar && (
+        <Reveal kech={70}>
+          <div className="az-kirish mt-2.5" style={kech(70)}>
+            <button type="button" onClick={onMasalalar} data-tahlil="Bosh: kattalar masalalar"
+              className="tugma-3d flex w-full items-center gap-3 rounded-clay
+                         bg-brand-green p-4 text-left text-white shadow-clay">
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[17px] leading-tight">
+                  {t("boshKattalarBoshla")}
+                </span>
+                <span className="mt-0.5 block text-[12.5px] leading-snug text-white/90">
+                  {t("boshKattalarIzoh")}
                 </span>
               </span>
               <Icon name="chevron" size={20} className="shrink-0 text-white/90" />
@@ -266,6 +316,24 @@ export function Bosh({
 }
 
 /* --------------------------------------------------------------- bo'laklar */
+
+/** Kattalar yo'lidagi kichik eshik — bosh ekrandagi ikkita karta. */
+function KattaEshik({ ik, rang, nom, izoh, on }: {
+  ik: IconName; rang: string; nom: string; izoh: string; on: () => void;
+}) {
+  return (
+    <button type="button" onClick={on} data-tahlil={`Bosh: ${nom}`}
+      className="clay-press flex flex-col items-start gap-2 rounded-clay bg-karta p-3 text-left shadow-clay-sm">
+      <span className={`grid size-9 place-items-center rounded-2xl text-white ${rang}`}>
+        <Icon name={ik} size={18} />
+      </span>
+      <span className="min-w-0">
+        <span className="block font-display text-[14px] leading-tight">{nom}</span>
+        <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-soft">{izoh}</span>
+      </span>
+    </button>
+  );
+}
 
 function Chip(
   { ic, on, children, rang, avatar }:
