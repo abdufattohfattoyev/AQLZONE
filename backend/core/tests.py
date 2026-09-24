@@ -7264,7 +7264,7 @@ class KarvonServerTest(TestCase):
         from core import karvon as KV
         import random as R
         rng = R.Random(7)
-        juftlar = [(x, 1) for x in range(1, 6)] + [(1, 3), (3, 4), (5, 3), (5, 6), (5, 9)]
+        juftlar = [(x, 1) for x in range(1, 7)] + [(1, 3), (3, 4), (5, 3), (6, 6), (6, 9)]
         for daraja, mavsum in juftlar:
             for n in range(150):
                 j = {"daraja": daraja, "mavsum": mavsum, "tosiq": n % 3, "qol": [],
@@ -7291,7 +7291,7 @@ class KarvonServerTest(TestCase):
         """
         from core import karvon as KV
         k1, k2, k3, k5 = KV.kuch(1), KV.kuch(2), KV.kuch(3), KV.kuch(5)
-        self.assertEqual(len(KV.DARAJA), 5)
+        self.assertEqual(len(KV.DARAJA), 6)
         self.assertEqual(k1["amallar"], ["+", "−"])           # ko'paytirish yo'q
         self.assertEqual(k2["amallar"], ["+", "−", "×"])  # bo'lish hali yo'q
         self.assertIn("÷", k3["amallar"])
@@ -7300,7 +7300,7 @@ class KarvonServerTest(TestCase):
         self.assertGreaterEqual(k5["max"], 100, k5)
         self.assertGreater(k5["max"], k1["max"] * 8)
         oldin = 0
-        for daraja in range(1, 6):                            # sonlar faqat o'sadi
+        for daraja in range(1, 7):                            # sonlar faqat o'sadi
             hozir = KV.kuch(daraja)["max"]
             self.assertGreater(hozir, oldin, daraja)
             oldin = hozir
@@ -7325,6 +7325,27 @@ class KarvonServerTest(TestCase):
         self.assertEqual(sanoq, KV.tosiqlar(6))
         self.assertEqual(MDL.KarvonHolat.objects.get().bekat, 7)
 
+    def test_kattalar_darajasi(self):
+        """Anketa kelganlarning yarmidan ko'pi talaba deydi — ularga ham tepa kerak."""
+        from core import karvon as KV
+        k6 = KV.kuch(6)
+        self.assertEqual(k6["qism"], 4)                       # to'rtta tosh
+        self.assertGreater(k6["max"], KV.kuch(5)["max"])
+        self.assertEqual(KV.DARAJA[6]["sinf"], "talaba va kattalar")
+
+    def test_tavsiya_anketadan(self):
+        """Talaba kirsa — eng tepa, to'rtinchi sinf o'quvchisi — ikkinchi daraja."""
+        from core import karvon as KV
+        pupil = MDL.Pupil.objects.create(first_name="Talaba", kim="talaba", anketa_sinf=102)
+        profil = MDL.Profile.objects.create(pupil=pupil, name="T")
+        self.assertEqual(KV.tavsiya(profil), 6)
+        oquvchi = MDL.Pupil.objects.create(first_name="O'quvchi", kim="oquvchi", anketa_sinf=4)
+        p2 = MDL.Profile.objects.create(pupil=oquvchi, name="O")
+        self.assertEqual(KV.tavsiya(p2), 2)
+        bosh = MDL.Pupil.objects.create(first_name="Anketasiz")
+        p3 = MDL.Profile.objects.create(pupil=bosh, name="A")
+        self.assertEqual(KV.tavsiya(p3), 3)                   # noma'lum — o'rtasi
+
     def test_daraja_saqlanadi(self):
         h = self.kir()
         r = self.post("/api/v1/karvon/bekat", {"daraja": 1, "qol": 5}, h).json()
@@ -7336,7 +7357,7 @@ class KarvonServerTest(TestCase):
     def test_daraja_moslash(self):
         """Eski daraja (1–3), yangi daraja (1–5) va sinf — hammasi tushuniladi."""
         from core import karvon as KV
-        for d in range(1, 6):
+        for d in range(1, 7):
             self.assertEqual(KV.darajaga(d), d)
         self.assertEqual(KV.darajaga(None, 2), 1)             # 2-sinf → 1-daraja
         self.assertEqual(KV.darajaga(None, 7), 4)             # 7-sinf → 4-daraja

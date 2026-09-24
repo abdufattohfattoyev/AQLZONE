@@ -300,6 +300,7 @@ h1,h2,h3,p{margin:0}
 .ogoh.yaxshi .ms{color:#7BD6A6}
 .tuman-dog{position:absolute;transform:translate(-50%,-50%);width:74px;height:60px;border-radius:50%;pointer-events:none;
   background:radial-gradient(closest-side,rgba(28,20,12,.72),rgba(28,20,12,.35) 60%,transparent 78%);filter:blur(4px);z-index:1}
+.daraja-karta.mos{border-color:var(--terra);background:rgba(217,101,40,.12)}
 .daraja-karta{display:flex;align-items:center;gap:14px;width:100%;padding:16px;border-radius:var(--r-lg);
   background:var(--s1);border:1px solid var(--chiz);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 0 #0B0908;transition:transform .08s}
 .daraja-karta:active{transform:translateY(3px);box-shadow:0 1px 0 #0B0908}
@@ -495,8 +496,9 @@ const D=[null,
  {nom:"Sayyoh",       sinf:"3–4 sinf",  min:2, max:30, amallar:P3,chegara:150, qism:2,ik:"🧭",misol:"6 × 8 · 45 − 17",    izoh:"Ko'paytirish qo'shiladi, 150 gacha"},
  {nom:"Sarbon",       sinf:"5–6 sinf",  min:3, max:50, amallar:P4,chegara:500, qism:3,ik:"🐪",misol:"144 ÷ 12 + 26",      izoh:"To'rt amal, uchta tosh, 500 gacha"},
  {nom:"Karvonboshi",  sinf:"7–8 sinf",  min:6, max:80, amallar:P4,chegara:1100,qism:3,ik:"🏇",misol:"64 × 9 − 78",        izoh:"Ikki xonali sonlar, 1 100 gacha"},
- {nom:"Ustoz munajjim",sinf:"9–11 sinf",min:10,max:110,amallar:P4,chegara:2000,qism:3,ik:"⭐",misol:"96 × 17 − 105 ÷ 5",  izoh:"Eng katta sonlar, 2 000 gacha"}];
-const darajam=()=>Math.max(1,Math.min(5,+S.daraja||3));
+ {nom:"Ustoz munajjim",sinf:"9–11 sinf",min:10,max:110,amallar:P4,chegara:2000,qism:3,ik:"⭐",misol:"96 × 17 − 105 ÷ 5",  izoh:"Katta sonlar, 2 000 gacha"},
+ {nom:"Sarrof",      sinf:"talaba va kattalar",min:15,max:200,amallar:P4,chegara:5000,qism:4,ik:"💠",misol:"184 × 12 − 96 ÷ 8 + 45",izoh:"To'rtta tosh, uch xonali sonlar"}];
+const darajam=()=>Math.max(1,Math.min(6,+S.daraja||3));
 /* Mavsum — nechanchi safar. Xivaga yetgan karvon ortga qaytadi va
    sonlar kattalashadi (serverda ham shunday: `karvon.kuch`). */
 const MAVSUM_OSISH=.45,MAX_MAVSUM=9;
@@ -599,7 +601,7 @@ else{const bosh=boshlangich();S=Object.assign({},bosh,S);
   if(!S.buff||typeof S.buff!=="object")S.buff={};
   if(!S.orgatilgan||typeof S.orgatilgan!=="object")S.orgatilgan={};
   if(!Array.isArray(S.uskuna))S.uskuna=bosh.uskuna;}
-function boshlangich(){return{ism:(P.get("ism")||"Sayyoh").slice(0,24),tag:"",daraja:3,mavsum:1,bekat:0,tanga:150,suv:3,maxSuv:3,qol:5,
+function boshlangich(){return{ism:(P.get("ism")||"Sayyoh").slice(0,24),tag:"",daraja:3,tavsiya:0,mavsum:1,bekat:0,tanga:150,suv:3,maxSuv:3,qol:5,
   yulduz:{},art:[],buff:{},uskuna:[],ulov:null,oazis:true,tab:"xarita",yuk:[],buyurtma:{},kunlik:null,ovoz:true,darajaTanlandi:false,kirishKorildi:false,orgatilgan:{},
   birga:{dost:"Nigora",bekat:0,navbat:"men"},saqlandi:Date.now()}}
 function saqla(){S.saqlandi=Date.now();try{localStorage.setItem(KALIT,JSON.stringify(S))}catch(e){}holatYubor()}
@@ -1644,10 +1646,10 @@ function darajaTanlash(){
      '<h1 style="font-size:26px;font-weight:800;letter-spacing:-.02em;text-wrap:balance">Karvonboshi, qaysi darajadan boshlaymiz?</h1>'+
      '<p class="izohcha" style="max-width:300px">Har darajada sonlar va amallar boshqacha. Yonidagi sinf \u2014 faqat maslahat: istagan darajani tanlang, keyin almashtirsa ham bo\'ladi.</p>'+
    '</div>'+
-   [1,2,3,4,5].map(n=>{const k=D[n];
-     return '<button class="daraja-karta" data-daraja-tanla="'+n+'">'+
+   [1,2,3,4,5,6].map(n=>{const k=D[n],mos=(+S.tavsiya||0)===n;
+     return '<button class="daraja-karta'+(mos?" mos":"")+'" data-daraja-tanla="'+n+'">'+
        '<span class="ik">'+k.ik+'</span>'+
-       '<span style="flex:1;min-width:0"><span class="yorliq">'+k.sinf+'</span>'+
+       '<span style="flex:1;min-width:0"><span class="yorliq">'+k.sinf+(mos?' · sizga mos':'')+'</span>'+
          '<b>'+k.nom+'</b><small>'+k.izoh+'</small>'+
          '<span class="misol">'+k.misol+'</span></span>'+
        '<span class="ms" style="color:var(--terra)">chevron_right</span></button>'}).join("")+
@@ -1914,10 +1916,20 @@ document.addEventListener("keydown",e=>{
 });
 korsat();holatYubor(true);
 api("men").then(r=>{
-  const o=S.bekat;S.bekat=r.bekat;if(r.mavsum)S.mavsum=r.mavsum;if(r.daraja)S.daraja=r.daraja;
+  const o=S.bekat;S.bekat=r.bekat;if(r.mavsum)S.mavsum=r.mavsum;
+  // Tavsiya — anketadan (talaba/o'qituvchi/kattalar → eng tepa daraja).
+  // Tanlovni O'ZGARTIRMAYDI: faqat tanlash ekranida "sizga mos" deb
+  // belgilanadi va hali hech narsa tanlanmagan bo'lsa shundan boshlanadi.
+  if(r.tavsiya)S.tavsiya=r.tavsiya;
+  if(r.daraja)S.daraja=r.daraja;else if(r.tavsiya&&!S.darajaTanlandi)S.daraja=r.tavsiya;
   for(const k in r.yulduzlar)S.yulduz[k]=r.yulduzlar[k];
   for(const k in S.yulduz)if(+k>=r.bekat)delete S.yulduz[k];
-  saqla();if(o!==r.bekat&&ekran==="tab"&&!qobiq.querySelector(".qoplama"))korsat();
+  saqla();
+  // Tavsiya kechroq keladi (bitta so'rov). Tanlash ekrani allaqachon
+  // chizilgan bo'lsa, uni qaytadan chizamiz — aks holda "sizga mos"
+  // belgisi faqat ikkinchi kirishda ko'rinardi.
+  if(!S.darajaTanlandi)korsat();
+  else if(o!==r.bekat&&ekran==="tab"&&!qobiq.querySelector(".qoplama"))korsat();
 }).catch(()=>{});setInterval(()=>holatYubor(true),120000);
 })();
 </script>

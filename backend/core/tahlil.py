@@ -361,6 +361,119 @@ def kanal_statistikasi(boshi) -> dict:
     }
 
 
+#: Auditoriya SEGMENTLARI — "kim" va "bosqich" dan yig'iladi.
+#:
+#: Nega kerak. Ilova 1–11 sinf uchun qurilgan, lekin anketa boshqa
+#: narsani ko'rsatdi: kelganlarning yarmidan ko'pi TALABA. Bu bitta
+#: jadvalda ko'rinib turmasa, mahsulot yolg'on tasavvur bilan
+#: rivojlanaveradi — darslik sinflarga bo'linadi, o'yin esa bolalar
+#: tilida gapiradi, kelgan odam esa yigirma yoshda bo'ladi.
+SEGMENT = [
+    ("maktab", "Maktab o'quvchisi"),
+    ("talaba", "Talaba"),
+    ("kattalar", "Kattalar"),
+    ("ustoz", "O'qituvchi"),
+    ("ota_ona", "Ota-ona"),
+]
+
+
+def _segment(kim: str) -> str:
+    if kim == "oquvchi":
+        return "maktab"
+    if kim in ("talaba", "ustoz", "ota_ona", "kattalar"):
+        return kim
+    return "kattalar"
+
+
+def auditoriya() -> dict:
+    """
+    Kim kirmoqda — segmentlarda va bitta jumlalik xulosa bilan.
+
+    Faqat ANKETA to'ldirganlar bo'yicha: qolganlari haqida hech narsa
+    ma'lum emas va ularni "o'quvchi" deb hisoblash eng katta xato
+    bo'lardi. Shuning uchun qamrov foizi ham qaytariladi.
+    """
+    anketali = Pupil.objects.filter(anketa_at__isnull=False).exclude(kim="")
+    jami = anketali.count()
+    sanoq = {kod: 0 for kod, _ in SEGMENT}
+    for kim, n in anketali.values_list("kim").annotate(n=Count("id")):
+        sanoq[_segment(kim)] = sanoq.get(_segment(kim), 0) + n
+
+    qatorlar = [{"kod": kod, "nom": nom, "n": sanoq.get(kod, 0),
+                 "foiz": round(100 * sanoq.get(kod, 0) / jami) if jami else 0}
+                for kod, nom in SEGMENT]
+    qatorlar.sort(key=lambda r: -r["n"])
+
+    # Katta yosh = talaba + kattalar + o'qituvchi + ota-ona.
+    katta = sum(r["n"] for r in qatorlar if r["kod"] != "maktab")
+    katta_foiz = round(100 * katta / jami) if jami else 0
+    bola_foiz = 100 - katta_foiz if jami else 0
+    if jami < 20:
+        xulosa = "Anketa hali kam — xulosa chiqarish erta."
+    elif katta_foiz >= 60:
+        xulosa = (f"Kelganlarning {katta_foiz}% i KATTA YOSHLI. Ilova esa maktab "
+                  "dasturi bo'yicha qurilgan — o'yin va matnlar ikkalasiga ham "
+                  "to'g'ri kelishi kerak.")
+    elif bola_foiz >= 60:
+        xulosa = f"Kelganlarning {bola_foiz}% i maktab o'quvchisi."
+    else:
+        xulosa = f"Auditoriya aralash: {bola_foiz}% maktab, {katta_foiz}% katta yosh."
+
+    jami_hisob = Pupil.objects.count()
+    return {
+        "qatorlar": qatorlar,
+        "jami": jami,
+        "qamrov": round(100 * jami / jami_hisob) if jami_hisob else 0,
+        "katta_foiz": katta_foiz,
+        "bola_foiz": bola_foiz,
+        "xulosa": xulosa,
+    }
+
+
+def oyin_tahlili(boshi) -> dict:
+    """
+    O'yinlar bo'yicha CHUQURLIK: nechta odam boshladi va qayergacha bordi.
+
+    Sahifa ochilishi ("53 kishi o'yinlar bo'limini ochdi") hech narsa
+    demaydi — odam kirib, qarab, chiqib ketgan bo'lishi mumkin. Shuning
+    uchun bu yerda o'yinning O'Z yozuvlari sanaladi: karvonda qaysi
+    bekatgacha borilgan, kunlik sonda zanjir bormi.
+    """
+    from .models import KarvonHolat, KunlikSonNatija
+
+    karvon = KarvonHolat.objects.all()
+    karvon_jami = karvon.count()
+    daraja = [{"nom": f"{d}-daraja", "n": n, "foiz": round(100 * n / karvon_jami) if karvon_jami else 0}
+              for d, n in sorted((r["daraja"], r["n"]) for r in
+                                 karvon.values("daraja").annotate(n=Count("id")))]
+    # Bekat voronkasi: nechta odam shu bekatdan O'TDI.
+    voronka = [{"bekat": b, "n": karvon.filter(bekat__gt=b).count()} for b in range(9)]
+    for v in voronka:
+        v["foiz"] = round(100 * v["n"] / karvon_jami) if karvon_jami else 0
+
+    bugun = timezone.localdate()
+    kunlik = KunlikSonNatija.objects.all()
+    kunlik_odam = kunlik.values("profile").distinct().count()
+    zanjirli = (kunlik.filter(bajardi=True, sana__gte=bugun - timedelta(days=2))
+                .values("profile").distinct().count())
+
+    return {
+        "karvon": {
+            "oynagan": karvon_jami,
+            "boshlamagan": karvon.filter(bekat=0).count(),
+            "tugatgan": karvon.filter(bekat__gte=9).count(),
+            "daraja": daraja,
+            "voronka": voronka,
+        },
+        "kunlik": {
+            "oynagan": kunlik_odam,
+            "bugun": kunlik.filter(sana=bugun).values("profile").distinct().count(),
+            "yechgan_bugun": kunlik.filter(sana=bugun, bajardi=True).values("profile").distinct().count(),
+            "zanjirli": zanjirli,
+        },
+    }
+
+
 def statistika(kunlar: int = 30) -> dict:
     hozir = timezone.now()
     boshi = hozir - timedelta(days=kunlar)
@@ -447,6 +560,8 @@ def statistika(kunlar: int = 30) -> dict:
         "tugmalar": tugmalar,
         "faollar": faollar,
         "oxirgilar": oxirgilar,
+        "auditoriya": auditoriya(),
+        "oyin": oyin_tahlili(boshi),
         "qaytish": qaytish(boshi, kunlar_boyicha),
         "manbalar": manbalar(boshi, kunlar_boyicha),
         "chiqishlar": chiqish_nuqtalari(boshi),

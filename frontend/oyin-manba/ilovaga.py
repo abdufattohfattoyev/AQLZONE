@@ -38,8 +38,8 @@ const ICHKI=P.get("ichki")==="1",PID=(P.get("pid")||"0").replace(/[^0-9a-z]/gi,"
 if(ICHKI)document.body.classList.add("ichki");
 const ota=(xabar)=>{try{window.parent.postMessage(Object.assign({karvon:1},xabar),location.origin)}catch(e){}};
 const KALIT="karvon-yoli-p"+PID;''', 'parametrlar')
-qoy('function boshlangich(){return{ism:"Malika S.",tag:"@malika_math",daraja:3,mavsum:1,bekat:0,tanga:1420,',
-    'function boshlangich(){return{ism:(P.get("ism")||"Sayyoh").slice(0,24),tag:"",daraja:3,mavsum:1,bekat:0,tanga:150,', 'boshlangich')
+qoy('function boshlangich(){return{ism:"Malika S.",tag:"@malika_math",daraja:3,tavsiya:0,mavsum:1,bekat:0,tanga:1420,',
+    'function boshlangich(){return{ism:(P.get("ism")||"Sayyoh").slice(0,24),tag:"",daraja:3,tavsiya:0,mavsum:1,bekat:0,tanga:150,', 'boshlangich')
 
 # 5. Soxta do'stlar va reyting olib tashlanadi
 qoy('const DOSTLAR=[{ism:"Ali",b:1},{ism:"Nigora",b:5},{ism:"Jasur",b:7}];', 'const DOSTLAR=[];', 'dostlar')
@@ -281,10 +281,20 @@ qoy('''  if(a==="qayta"){''', '''  if(a==="qayta"&&ICHKI&&!b.dataset.tasdiq){b.d
 qoy('\nkorsat();holatYubor(true);', '''
 korsat();holatYubor(true);
 api("men").then(r=>{
-  const o=S.bekat;S.bekat=r.bekat;if(r.mavsum)S.mavsum=r.mavsum;if(r.daraja)S.daraja=r.daraja;
+  const o=S.bekat;S.bekat=r.bekat;if(r.mavsum)S.mavsum=r.mavsum;
+  // Tavsiya — anketadan (talaba/o'qituvchi/kattalar → eng tepa daraja).
+  // Tanlovni O'ZGARTIRMAYDI: faqat tanlash ekranida "sizga mos" deb
+  // belgilanadi va hali hech narsa tanlanmagan bo'lsa shundan boshlanadi.
+  if(r.tavsiya)S.tavsiya=r.tavsiya;
+  if(r.daraja)S.daraja=r.daraja;else if(r.tavsiya&&!S.darajaTanlandi)S.daraja=r.tavsiya;
   for(const k in r.yulduzlar)S.yulduz[k]=r.yulduzlar[k];
   for(const k in S.yulduz)if(+k>=r.bekat)delete S.yulduz[k];
-  saqla();if(o!==r.bekat&&ekran==="tab"&&!qobiq.querySelector(".qoplama"))korsat();
+  saqla();
+  // Tavsiya kechroq keladi (bitta so'rov). Tanlash ekrani allaqachon
+  // chizilgan bo'lsa, uni qaytadan chizamiz — aks holda "sizga mos"
+  // belgisi faqat ikkinchi kirishda ko'rinardi.
+  if(!S.darajaTanlandi)korsat();
+  else if(o!==r.bekat&&ekran==="tab"&&!qobiq.querySelector(".qoplama"))korsat();
 }).catch(()=>{});''', 'boshlanishda sinx')
 
 os.makedirs(r'D:\AQL ZONA\frontend\public\oyin', exist_ok=True)

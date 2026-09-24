@@ -44,6 +44,23 @@ o'sish bo'lmaydi.
     <div class="karta olchov"><div class="nom">Telegram Premium</div><div class="son">{{ premium_foiz }}%</div><div class="ost">{{ premium }} ta · to'lov odati bor</div></div>
   </div>
 
+  <!-- AUDITORIYA — eng tepada, chunki qolgan hamma raqam shunga bog'liq:
+       ilova 1–11 sinf uchun qurilgan, kelayotgan odam esa boshqa
+       bo'lishi mumkin (`core/tahlil.py: auditoriya`). -->
+  <div class="bolim"><h2>Kim kirmoqda</h2>
+    <p>anketa to'ldirgan {{ auditoriya.jami }} kishidan ({{ auditoriya.qamrov }}% qamrov)</p></div>
+  <div class="karta" style="margin-bottom:14px">
+    <div class="karta-bosh"><h3>Auditoriya</h3><span class="ost">{{ auditoriya.xulosa }}</span></div>
+    {% for r in auditoriya.qatorlar %}
+      <div class="bar">
+        <div class="bar-bosh"><span class="nom">{{ r.nom }}</span><b class="son">{{ r.n }}</b><span class="foiz">{{ r.foiz }}%</span></div>
+        <div class="chiziqcha"><span style="width:{{ r.foiz }}%"></span></div>
+      </div>
+    {% empty %}
+      <div class="bosh-holat">Hali anketa yo'q.</div>
+    {% endfor %}
+  </div>
+
   <div class="bolim"><h2>Qaytib keladimi</h2><p>shu davrda birinchi kelgan {{ qaytish.yangi }} kishidan</p></div>
   <div class="olchovlar">
     <div class="karta olchov urgu">
@@ -168,6 +185,31 @@ o'sish bo'lmaydi.
 
 <!-- ═══════════════════════════════════════════════════════ FAOLLIK -->
 <section class="qism" data-qism="faollik" role="tabpanel">
+
+  <!-- O'YINLAR — sahifa ochilishi emas, CHUQURLIK: odam qayergacha bordi. -->
+  <div class="bolim"><h2>O'yinlar qanday ketyapti</h2><p>o'yinning o'z yozuvlaridan, sahifa ochilishidan emas</p></div>
+  <div class="olchovlar">
+    <div class="karta olchov"><div class="nom">Karvon: o'ynagan</div><div class="son">{{ oyin.karvon.oynagan }}</div>
+      <div class="ost">{{ oyin.karvon.boshlamagan }} tasi 1-bekatdan o'tmagan</div></div>
+    <div class="karta olchov"><div class="nom">Karvon: Xivaga yetgan</div><div class="son">{{ oyin.karvon.tugatgan }}</div>
+      <div class="ost">butun yo'lni bosib o'tgan</div></div>
+    <div class="karta olchov"><div class="nom">Kunlik son: bugun</div><div class="son">{{ oyin.kunlik.yechgan_bugun }}</div>
+      <div class="ost">{{ oyin.kunlik.bugun }} urindi · jami {{ oyin.kunlik.oynagan }} o'yinchi</div></div>
+    <div class="karta olchov"><div class="nom">Zanjiri tirik</div><div class="son">{{ oyin.kunlik.zanjirli }}</div>
+      <div class="ost">oxirgi uch kunda yechgan</div></div>
+  </div>
+  <div class="setka k2">
+    {% include "boshqaruv/_taqsimot.html" with nom="Karvon: qaysi daraja" qatorlar=oyin.karvon.daraja %}
+    <div class="karta">
+      <div class="karta-bosh"><h3>Karvon: qayergacha bordi</h3></div>
+      {% for v in oyin.karvon.voronka %}
+        <div class="bar">
+          <div class="bar-bosh"><span class="nom">{{ v.bekat|add:1 }}-bekatdan o'tdi</span><b class="son">{{ v.n }}</b><span class="foiz">{{ v.foiz }}%</span></div>
+          <div class="chiziqcha"><span style="width:{{ v.foiz }}%"></span></div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
 
   <div class="bolim"><h2>Nimaga kiradi</h2><p>ko'pi tepada</p></div>
   <div class="setka k2">

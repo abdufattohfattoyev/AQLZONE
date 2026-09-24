@@ -51,6 +51,15 @@ DARAJA = {
         "min": 6,  "max": 80,  "amallar": ["+", "−", "×", "÷"], "chegara": 1100, "qism": 3},
     5: {"nom": "Ustoz munajjim", "sinf": "9–11 sinf",
         "min": 10, "max": 110, "amallar": ["+", "−", "×", "÷"], "chegara": 2000, "qism": 3},
+    # OLTINCHI DARAJA — kattalar uchun.
+    #
+    # Anketa shuni ko'rsatdi: kelganlarning 58% i TALABA, yana 20% i
+    # o'qituvchi, ota-ona va boshqa kattalar. Ilova esa maktab dasturi
+    # bo'yicha qurilgan va eng yuqori pog'onasi "11-sinf" edi —
+    # ya'ni yigirma yoshli odam uchun tepa yo'q edi. Bu pog'onada
+    # ifodada TO'RTTA tosh qatnashadi va sonlar uch xonaliga chiqadi.
+    6: {"nom": "Sarrof", "sinf": "talaba va kattalar",
+        "min": 15, "max": 200, "amallar": ["+", "−", "×", "÷"], "chegara": 5000, "qism": 4},
 }
 D = DARAJA                                 # eski nom bilan chaqiruvlar uchun
 
@@ -89,6 +98,30 @@ def darajaga(daraja=None, sinf=None) -> int:
     return ESKI_DARAJA.get(d, 3)
 
 
+def tavsiya(profil) -> int:
+    """
+    Anketaga qarab tavsiya etiladigan daraja.
+
+    MAJBURLAMAYDI — tanlash ekranida shunchaki "sizga mos" deb
+    belgilanadi. Sabab: anketani hamma ham to'ldirmagan (qamrov ~12%),
+    to'ldirgani ham bugun boshqacha kayfiyatda bo'lishi mumkin. Lekin
+    tavsiyasiz ekran ham yomon: talaba kirib, birinchi kartada
+    "1–2 sinf" ni ko'radi va o'yinni bolalarniki deb o'ylaydi.
+    """
+    pupil = getattr(profil, "pupil", None)
+    if not pupil:
+        return 3
+    kim = getattr(pupil, "kim", "") or ""
+    bosqich = getattr(pupil, "anketa_sinf", None)
+    if kim in ("talaba", "ustoz", "kattalar", "ota_ona"):
+        return 6
+    if isinstance(bosqich, int) and 1 <= bosqich <= 11:
+        return SINF_DARAJA[bosqich]
+    if isinstance(bosqich, int) and bosqich == 0:
+        return 1
+    return 3
+
+
 def kuch(daraja: int, mavsum: int = 1) -> dict:
     """
     Shu daraja va shu safardagi sonlar kengligi.
@@ -107,6 +140,7 @@ def kuch(daraja: int, mavsum: int = 1) -> dict:
         "max": max(d["min"] + 3, int(d["max"] * o)),
         "amallar": list(d["amallar"]),
         "chegara": int(d["chegara"] * o * o),
+        # Eng yuqori ikki pog'onada uchinchi safardan yana bitta tosh.
         "qism": d["qism"] + (1 if daraja >= 5 and m >= 3 else 0),
     }
 
@@ -306,10 +340,11 @@ def men(profil) -> dict:
     h = KarvonHolat.objects.filter(profile=profil).first()
     if not h:
         return {"bekat": 0, "yulduz": 0, "yulduzlar": {}, "mavsum": 1, "otgan_yulduz": 0,
-                "daraja": 3, "tosiqlar": [tosiqlar(b) for b in range(BEKATLAR)]}
+                "daraja": 0, "tavsiya": tavsiya(profil),
+                "tosiqlar": [tosiqlar(b) for b in range(BEKATLAR)]}
     return {"bekat": h.bekat, "yulduz": h.yulduz, "yulduzlar": h.yulduzlar or {},
             "mavsum": h.mavsum or 1, "otgan_yulduz": h.otgan_yulduz or 0,
-            "daraja": darajaga(h.daraja),
+            "daraja": darajaga(h.daraja), "tavsiya": tavsiya(profil),
             # Har bekatda nechta to'siq — mijoz "2/4" deb yozishi uchun.
             "tosiqlar": [tosiqlar(b) for b in range(BEKATLAR)]}
 
