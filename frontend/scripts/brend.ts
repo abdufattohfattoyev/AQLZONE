@@ -56,10 +56,11 @@ const tekshir = (nom: string, ok: boolean, izoh = "") => {
  *
  * Geometriya kodlari 100 dan boshlanadi (`curriculum/index.ts`),
  * shuning uchun ular qaytariladi — aks holda "eng katta sinf" 110
- * bo'lib chiqardi.
+ * bo'lib chiqardi. Talabalar kursi (301) umuman olinmaydi: u sinf
+ * emas va sarlavhadagi "1–11-sinf" oralig'iga tegishli emas.
  */
 const engKattaSinf = Math.max(
-  ...COURSES.map((c) => (c.grade >= 100 ? c.grade - 100 : c.grade)),
+  ...COURSES.filter((c) => c.grade < 300).map((c) => (c.grade >= 100 ? c.grade - 100 : c.grade)),
 );
 console.log(`kurs dasturi: ${COURSES.length} kurs, eng katta sinf — ${engKattaSinf}\n`);
 

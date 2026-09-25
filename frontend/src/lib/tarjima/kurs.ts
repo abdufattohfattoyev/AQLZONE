@@ -671,6 +671,54 @@ const RU: Record<string, string> = {
   "Bo'linish belgilari, proporsiya, manfiy sonlar, tenglama":
     "Признаки делимости, пропорция, отрицательные числа, уравнения",
 
+  /* =============== oliy matematika (talabalar) =============== */
+  "Oliy matematika · 1-kurs": "Высшая математика · 1 курс",
+  "Determinant, vektorlar, limit, hosila, integral, qatorlar":
+    "Определители, векторы, пределы, производные, интегралы, ряды",
+  "Chiziqli algebra": "Линейная алгебра",
+  "Vektorlar": "Векторы",
+  "Limitlar": "Пределы",
+  "Differensial hisob": "Дифференциальное исчисление",
+  "Integral hisob": "Интегральное исчисление",
+  "Qatorlar va differensial tenglamalar": "Ряды и дифференциальные уравнения",
+  "Matritsa va determinant": "Матрица и определитель",
+  "Chiziqli tenglamalar sistemasini jadval ko'rinishida yozish va determinant orqali yechish.":
+    "Запись системы линейных уравнений в виде таблицы и решение через определитель.",
+  "Fazodagi vektorlar": "Векторы в пространстве",
+  "Uzunlik, burchak va yuza — hammasi koordinatalar orqali hisoblanadi.":
+    "Длина, угол и площадь — всё вычисляется через координаты.",
+  "Noaniqliklarni ochish": "Раскрытие неопределённостей",
+  "Limit to'g'ridan-to'g'ri qo'yib bo'lmaganda: bosh hadlar, qisqartirish va ajoyib limit.":
+    "Когда предел нельзя найти подстановкой: старшие члены, сокращение и замечательный предел.",
+  "Hosila qoidalari": "Правила дифференцирования",
+  "Maktabdagi hosilalar jadvalidan keyingi qadam: ko'paytma, murakkab va ko'rsatkichli funksiya.":
+    "Следующий шаг после школьной таблицы: произведение, сложная и показательная функция.",
+  "Aniq integral": "Определённый интеграл",
+  "Nyuton–Leybnits formulasi va bo'laklab integrallash.":
+    "Формула Ньютона–Лейбница и интегрирование по частям.",
+  "Cheksiz yig'indi va o'zgarish qonuni": "Бесконечная сумма и закон изменения",
+  "Geometrik qator yig'indisi va eng sodda differensial tenglama.":
+    "Сумма геометрического ряда и простейшее дифференциальное уравнение.",
+  "2×2 determinant": "Определитель 2×2",
+  "3×3 determinant": "Определитель 3×3",
+  "Matritsalar ustida amallar": "Действия с матрицами",
+  "Matritsalarni ko'paytirish": "Умножение матриц",
+  "Kramer usuli": "Метод Крамера",
+  "Vektor uzunligi": "Длина вектора",
+  "Skalyar ko'paytma": "Скалярное произведение",
+  "Perpendikulyarlik sharti": "Условие перпендикулярности",
+  "Vektor ko'paytma": "Векторное произведение",
+  "Cheksizlikdagi limit": "Предел на бесконечности",
+  "0/0 noaniqlik": "Неопределённость 0/0",
+  "Birinchi ajoyib limit": "Первый замечательный предел",
+  "Ko'paytmaning hosilasi": "Производная произведения",
+  "Murakkab funksiya hosilasi": "Производная сложной функции",
+  "Ko'rsatkichli funksiya hosilasi": "Производная показательной функции",
+  "Nyuton–Leybnits formulasi": "Формула Ньютона–Лейбница",
+  "Bo'laklab integrallash": "Интегрирование по частям",
+  "Geometrik qator yig'indisi": "Сумма геометрического ряда",
+  "y′ = ky tenglamasi": "Уравнение y′ = ky",
+
   /* =============== kirish belgilaridagi so'zlar =============== */
   "sm": "см",
   "mm": "мм",
@@ -711,6 +759,9 @@ export function kursMatn(s: string): string {
 export const sinfMatn = (grade: number): string => {
   const ru = til() === "ru";
   if (grade === 0) return ru ? "Дошкольный курс" : "Maktabgacha";
+  // 301 — talabalar kursi (`curriculum/index.ts`). `>= 100` dan OLDIN:
+  // aks holda "201-sinf geometriya" bo'lib chiqardi.
+  if (grade === 301) return ru ? "Высшая математика" : "Oliy matematika";
   if (grade >= 100) {
     const sinf = grade - 100;
     return ru ? `${sinf} класс, геометрия` : `${sinf}-sinf geometriya`;

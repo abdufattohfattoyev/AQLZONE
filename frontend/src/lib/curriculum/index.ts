@@ -17,6 +17,7 @@ import { geometriya9 } from "./geometriya9";
 import { algebra10 } from "./algebra10";
 import { geometriya10 } from "./geometriya10";
 import { matematika11 } from "./matematika11";
+import { oliy1 } from "./oliy1";
 
 export interface Course {
   id: string;
@@ -29,6 +30,8 @@ export interface Course {
    * 7–10     algebra
    * 11       matematika (11-sinfda darslik bitta, ikkala fan birga)
    * 107–110  geometriya (100 + sinf)
+ * 301      oliy matematika, 1-kurs (talabalar) — `MAKTAB_KURSI` dan
+ *          tashqarida: "eng yuqori sinf" hisoblaganda olinmaydi
    *
    * Geometriya nega 100 dan boshlanadi. 7-sinfda algebra ham, geometriya
    * ham bor va ikkalasi ham "7" bo'lsa, ular serverda BIR-BIRIGA
@@ -50,6 +53,9 @@ export interface Course {
   /** Manzildagi qism: /kurs/1-sinf */
   slug: string;
 }
+
+/** Oliy matematika kursi kodi — server ham shu son bilan biladi (`boshqaruv.OLIY_MATEMATIKA`). */
+export const OLIY_KOD = 301;
 
 /** `slug` berilmasa sinf raqamidan yasaladi: 2 → "2-sinf". */
 const build = (c: Omit<Course, "key" | "slug"> & { slug?: string }): Course => ({
@@ -107,7 +113,19 @@ export const COURSES: Course[] = [
   // birga yuradi — kurs ham shunga mos ravishda bo'linmagan.
   build({ id: "matematika11", grade: 11, title: "11-sinf Matematika", ic: "trophy", color: "gold",
     desc: "Hosila, integral, fazoviy jismlar, ehtimollik", units: matematika11 }),
+
+  // Talabalar kursi ENG OXIRIDA: maktab ro'yxati o'z tartibida qoladi,
+  // Darslar ekrani esa uni alohida bo'limda ko'rsatadi.
+  build({ id: "oliy1", grade: OLIY_KOD, slug: "oliy-matematika", title: "Oliy matematika · 1-kurs",
+    ic: "sqrt", color: "blue",
+    desc: "Determinant, vektorlar, limit, hosila, integral, qatorlar", units: oliy1 }),
 ];
+
+/** Maktab kursimi (maktabgacha–11-sinf). Talabalar kursi — yo'q. */
+export const maktabKursi = (c: Course): boolean => c.grade < 300;
+
+/** Talabalar kurslari (OTM). */
+export const OLIY_KURSLAR = (): Course[] => COURSES.filter((c) => !maktabKursi(c));
 
 export const courseById = (id: string) => COURSES.find((c) => c.id === id);
 

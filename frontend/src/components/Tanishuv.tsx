@@ -138,17 +138,14 @@ export function Tanishuv({ children }: { children: ReactNode }) {
         setTilKutilmoqda(false);
 
         royxatniBelgila(h.royxatdan);
-        // Ro'yxatdan o'tgan, lekin hali tanishilmagan — uch savol.
-        // Faqat RO'YXATDAN O'TGANGA: reklamadan kelib, hali ilovani
-        // sinab ko'rayotgan odamni anketa bilan kutib olish uni
-        // haydab yuboradi.
         // Serverdagi javob qurilmaga (boshqa telefondan kelgan odam
         // qayta so'ralmasin).
         serverdanOl(h.kim, h.bosqich);
 
         // ANKETA ENDI HAMMAGA — ro'yxatdan o'tmaganga ham, va BIRINCHI.
-        // Ilgari u faqat ro'yxatdan o'tganga chiqardi va 12% odam
-        // to'ldirardi; ilova esa kimga gapirayotganini bilmasdi
+        // Ilgari u faqat ro'yxatdan o'tganga chiqardi ("sinab
+        // ko'rayotgan odamni anketa haydab yuboradi" degan qaror bilan)
+        // va 12% odam to'ldirardi; ilova esa kimga gapirayotganini bilmasdi
         // (`components/Anketa.tsx`). Keyingi qadam eslab qolinadi.
         const navbat: Holat = h.royxatdan ? "kerak-emas" : (h.telegram ? "ism" : "sinov");
         if (anketaKerak()) { setKeyin(navbat); return setHolat("anketa"); }

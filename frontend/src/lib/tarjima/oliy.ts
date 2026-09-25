@@ -233,6 +233,27 @@ const O = {
   txtVektorlar: ["a⃗({x1}; {y1}),  b⃗({x2}; {y2})", "a⃗({x1}; {y1}),  b⃗({x2}; {y2})"],
   txtFoiz: ["{s} so'm, yiliga {f}%, {n} yil", "{s} сум, {f}% в год, {n} лет"],
   txtQator: ["{q}", "{q}"],
+
+  /* ================= oliy matematika (talabalar, 1-kurs) ================= */
+  determinant2: ["2×2 determinantni hisoblang", "Вычислите определитель 2×2"],
+  determinant3: ["3×3 determinantni hisoblang", "Вычислите определитель 3×3"],
+  matritsaQosh: ["Matritsaning ko'rsatilgan elementini toping", "Найдите указанный элемент матрицы"],
+  matritsaKop: ["A·B ko'paytmaning ko'rsatilgan elementini toping", "Найдите указанный элемент произведения A·B"],
+  kramer: ["Kramer usuli bilan x ni toping", "Найдите x методом Крамера"],
+  vektorUzun3: ["Vektor uzunligini toping", "Найдите длину вектора"],
+  skalyar3: ["Skalyar ko'paytmani toping", "Найдите скалярное произведение"],
+  perpendikulyar: ["k ning qanday qiymatida vektorlar perpendikulyar?", "При каком k векторы перпендикулярны?"],
+  vektorKop: ["a × b vektor ko'paytmaning z-koordinatasini toping", "Найдите z-координату векторного произведения a × b"],
+  limitCheksiz: ["x → ∞ dagi limitni toping", "Найдите предел при x → ∞"],
+  limitNol: ["0/0 noaniqlikni ochib, limitni toping", "Раскройте неопределённость 0/0 и найдите предел"],
+  ajoyibLimit: ["Birinchi ajoyib limitdan foydalaning", "Используйте первый замечательный предел"],
+  hosilaKopaytmaNuqta: ["Ko'paytma hosilasining nuqtadagi qiymatini toping", "Найдите значение производной произведения в точке"],
+  hosilaMurakkabNuqta: ["Murakkab funksiya hosilasining nuqtadagi qiymatini toping", "Найдите значение производной сложной функции в точке"],
+  hosilaEksp: ["Hosilani toping", "Найдите производную"],
+  integralDaraja: ["Aniq integralni hisoblang", "Вычислите определённый интеграл"],
+  integralBolaklab: ["Bo'laklab integrallash bilan hisoblang", "Вычислите интегрированием по частям"],
+  qatorYigindi: ["Qator yig'indisini toping", "Найдите сумму ряда"],
+  difTenglama: ["Differensial tenglamaning yechimini toping", "Найдите решение дифференциального уравнения"],
 } satisfies Record<string, [string, string]>;
 
 export type OliyKalit = keyof typeof O;

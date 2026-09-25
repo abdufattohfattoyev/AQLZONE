@@ -2149,7 +2149,8 @@ const S = {
   boshAbiturientIzoh: ["Haqiqiy variantlar, vaqt bilan, xato tahlili", "Настоящие варианты, на время, разбор ошибок"],
   boshUstoz: ["O'quvchilarga testlar", "Тесты для учеников"],
   boshUstozIzoh: ["Sinf bo'yicha blok testlar va to'plamlar", "Блок-тесты и подборки по классам"],
-  darslarSizning: ["Sizning sinfingiz", "Ваш класс"],
+  darslarSizning: ["Siz uchun", "Для вас"],
+  oliyBolim: ["Universitet", "Университет"],
   testSizning: ["Sizning sinfingiz", "Ваш класс"],
 
   /* ---------------- xotira o'yini ---------------- */

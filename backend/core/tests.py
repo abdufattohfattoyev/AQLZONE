@@ -7844,3 +7844,29 @@ class KunlikXabarTest(TestCase):
         matn, yechgan = post_matni()
         self.assertEqual(yechgan, 0)
         self.assertIn("Birinchi", matn)
+
+
+class KursKodiTest(TestCase):
+    """`grade` 0–11 dan tashqaridagi kurs kodlari kesilmaydi."""
+
+    def _tekshir(self, kod):
+        from core.serializers import ResultSerializer
+
+        s = ResultSerializer(data={"grade": kod, "unit": 0, "lesson": 0, "asked": 6, "correct": 5, "stars": 2})
+        self.assertTrue(s.is_valid(), s.errors)
+        return s.validated_data["grade"]
+
+    def test_geometriya_va_oliy_saqlanadi(self):
+        # Ilgari 107 → 11 bo'lib, geometriya 11-sinfga qo'shilib ketardi.
+        self.assertEqual(self._tekshir(107), 107)
+        self.assertEqual(self._tekshir(110), 110)
+        self.assertEqual(self._tekshir(301), 301)
+
+    def test_nomalum_kod_kesiladi(self):
+        self.assertEqual(self._tekshir(55), 11)
+        self.assertEqual(self._tekshir(-3), 0)
+
+    def test_oliy_nomi(self):
+        from core.boshqaruv import sinf_nomi
+
+        self.assertEqual(sinf_nomi(301), "Oliy matematika")

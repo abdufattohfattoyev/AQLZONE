@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { Reveal } from "../components/Reveal";
-import { COURSES, lessonCount } from "../lib/curriculum";
+import { COURSES, OLIY_KURSLAR, lessonCount, maktabKursi } from "../lib/curriculum";
 import { kursBelgi } from "../lib/chizma/kursBelgi";
 import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
@@ -58,12 +58,14 @@ interface Props {
 const KATTALAR = ["talaba", "kattalar", "ustoz", "abiturient"];
 
 /**
- * BITTA SAVOL — nega anketa emas.
+ * BITTA SAVOL — ZAXIRA.
  *
- * Anketani 757 hisobdan 90 tasi to'ldirgan (12%): u faqat ro'yxatdan
- * to'liq o'tgan odamga chiqadi. Ro'yxatni hammaga majburlash esa
- * eshikda odam yo'qotardi — kanaldan kelganlarning to'rtdan biri
- * allaqachon bitta ekran ko'rib ketyapti.
+ * Ilgari anketani 757 hisobdan 90 tasi to'ldirgan edi (12%): u faqat
+ * ro'yxatdan to'liq o'tgan odamga chiqardi va shu savol uning o'rnini
+ * bosardi. Endi anketa kirishda HAMMAGA majburiy
+ * (`components/Anketa.tsx`), ya'ni bu savol deyarli chiqmaydi — faqat
+ * profil hech qayerda yo'q bo'lsa (masalan anketa oynasi chetlab
+ * o'tilgan `/kirish/<kod>` havolasidan kelganda).
  *
  * Shuning uchun savol KERAK BO'LGAN JOYDA turadi — aynan shu ekranda,
  * chunki `/darslar` eng katta chiqish nuqtasi edi (34%). U hech
@@ -87,7 +89,10 @@ export function Dashboard({
   progressOf, onOpen, kim, onFormulalar, onTestlar, onMasalalar, onOyinlar,
 }: Props) {
   const maktabgacha = COURSES.filter((c) => c.grade === 0);
-  const sinflar = COURSES.filter((c) => c.grade > 0);
+  const sinflar = COURSES.filter((c) => c.grade > 0 && maktabKursi(c));
+  // Talabalar kursi alohida bo'limda — sinflar setkasida "301-sinf"
+  // bo'lib turmasin.
+  const oliy = OLIY_KURSLAR();
   // Javob shu yerda ham saqlanadi: serverga yozilishini kutib
   // turmasdan ro'yxat darrov qayta tiziladi.
   const [javob, setJavob] = useState(kim ?? "");
@@ -219,6 +224,19 @@ export function Dashboard({
           <SinfKarta key={c.id} c={c} i={i + maktabgacha.length} progressOf={progressOf} onOpen={onOpen} />
         ))}
       </div>
+
+      {/* UNIVERSITET — talabalar kursi. O'z sinfi sifatida tepada
+          ko'rsatilgan bo'lsa, bu yerda takrorlanmaydi. */}
+      {oliy.length > 0 && !ozim.some((c) => oliy.includes(c)) && (
+        <>
+          <Sarlavha kech={kech(300)}>{t("oliyBolim")}</Sarlavha>
+          <div className={`grid gap-2.5 ${oliy.length > 1 ? "sm:grid-cols-2" : ""}`}>
+            {oliy.map((c, i) => (
+              <KursKarta key={c.id} c={c} i={i + sinflar.length} progressOf={progressOf} onOpen={onOpen} />
+            ))}
+          </div>
+        </>
+      )}
 
       {!kattalarAvval && kattalarBolimi}
 

@@ -5,6 +5,7 @@
  * natijalarni solishtirib bo'lmaydi) va savollar bitta sinfdan emas,
  * 7–11 dan keladi (aks holda bu DTM emas, 11-sinf testi).
  */
+import "./_xotira";
 import { IMTIHON_SINFLAR, imtihonKurslari, sinfOf } from "../src/lib/blok";
 import { OLCHAM, VARIANTLAR, variantYasa } from "../src/lib/imtihon";
 

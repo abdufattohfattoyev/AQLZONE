@@ -103,8 +103,8 @@ def tavsiya(profil) -> int:
     Anketaga qarab tavsiya etiladigan daraja.
 
     MAJBURLAMAYDI — tanlash ekranida shunchaki "sizga mos" deb
-    belgilanadi. Sabab: anketani hamma ham to'ldirmagan (qamrov ~12%),
-    to'ldirgani ham bugun boshqacha kayfiyatda bo'lishi mumkin. Lekin
+    belgilanadi. Sabab: anketa endi majburiy bo'lsa ham, eski hisoblarda
+    javob yo'q bo'lishi mumkin, to'ldirgani ham bugun boshqacha kayfiyatda bo'lishi mumkin. Lekin
     tavsiyasiz ekran ham yomon: talaba kirib, birinchi kartada
     "1–2 sinf" ni ko'radi va o'yinni bolalarniki deb o'ylaydi.
     """
@@ -113,7 +113,7 @@ def tavsiya(profil) -> int:
         return 3
     kim = getattr(pupil, "kim", "") or ""
     bosqich = getattr(pupil, "anketa_sinf", None)
-    if kim in ("talaba", "ustoz", "kattalar", "ota_ona"):
+    if kim in ("talaba", "abiturient", "ustoz", "kattalar", "ota_ona"):
         return 6
     if isinstance(bosqich, int) and 1 <= bosqich <= 11:
         return SINF_DARAJA[bosqich]

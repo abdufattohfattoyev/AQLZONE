@@ -385,6 +385,11 @@ def _kun_kaliti(dt):
     return timezone.localtime(dt).date()
 
 
+#: Talabalar uchun kurs kodi (`frontend/src/lib/curriculum/oliy1.ts`).
+#: 300 dan boshlanadi: 200/201 masalalar bo'limida band.
+OLIY_MATEMATIKA = 301
+
+
 def sinf_nomi(grade) -> str:
     """
     Kurs kodining nomi.
@@ -397,6 +402,7 @@ def sinf_nomi(grade) -> str:
         7–10     algebra
         11       matematika
         107–110  geometriya (100 + sinf)
+        301      oliy matematika (talabalar kursi)
         200      kattalar uchun   } masalalar bo'limi, kurs dasturidan
         201      olimpiada        } tashqarida (`Masala.KATTALAR`)
 
@@ -417,6 +423,8 @@ def sinf_nomi(grade) -> str:
         return "Kattalar uchun"
     if grade == Masala.OLIMPIADA:
         return "Olimpiada"
+    if grade == OLIY_MATEMATIKA:
+        return "Oliy matematika"
     if grade >= 100:
         return f"{grade - 100}-sinf geometriya"
     if 7 <= grade <= 10:

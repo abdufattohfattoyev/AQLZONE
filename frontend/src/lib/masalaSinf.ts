@@ -25,7 +25,7 @@
  * `Masala.KATTALAR` va `OLIMPIADA`) va `scripts/masala.ts` shu
  * mosligni tekshiradi.
  */
-import { COURSES } from "./curriculum";
+import { COURSES, maktabKursi } from "./curriculum";
 import { t } from "./matn";
 import { sinfMatn } from "./tarjima/kurs";
 
@@ -50,7 +50,7 @@ export interface Toifa {
 export const TOIFALAR: Toifa[] = [
   { kod: KATTALAR, nom: t("masalaKattalar"), kursdan: false },
   { kod: OLIMPIADA, nom: t("masalaOlimpiada"), kursdan: false },
-  ...COURSES.map((c) => ({ kod: c.grade, nom: sinfMatn(c.grade), kursdan: true })),
+  ...COURSES.filter(maktabKursi).map((c) => ({ kod: c.grade, nom: sinfMatn(c.grade), kursdan: true })),
 ];
 
 /** Faqat sinflar — filtr ro'yxatida ishlatiladi. */
@@ -82,7 +82,7 @@ export interface SinfGuruh {
  */
 export const SINF_GURUHLARI: SinfGuruh[] = (() => {
   const jadval = new Map<number, SinfGuruh>();
-  for (const c of COURSES) {
+  for (const c of COURSES.filter(maktabKursi)) {
     const sinf = c.grade >= 100 ? c.grade - 100 : c.grade;
     if (!jadval.has(sinf)) {
       jadval.set(sinf, { sinf, nom: sinfMatn(sinf === 0 ? 0 : sinf), fanlar: [] });

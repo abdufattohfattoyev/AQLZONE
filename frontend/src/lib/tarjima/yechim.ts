@@ -175,6 +175,22 @@ const Y = {
   kombinatorika: ["Ko'paytirish qoidasi: har bir tanlov qolganiga ko'paytiriladi",
     "Правило умножения: каждый выбор умножается на остальные"],
   orinAlmash: ["O'rin almashtirishlar soni: n!", "Число перестановок: n!"],
+  /* ---------------- oliy matematika ---------------- */
+  det2: ["det = a₁₁a₂₂ − a₁₂a₂₁", "det = a₁₁a₂₂ − a₁₂a₂₁"],
+  det3: ["Birinchi satr bo'yicha yoyamiz", "Раскладываем по первой строке"],
+  matritsaQoshQoida: ["Mos elementlar qo'shiladi", "Складываются соответствующие элементы"],
+  matritsaKopQoida: ["cᵢⱼ = i-satr × j-ustun", "cᵢⱼ = i-я строка × j-й столбец"],
+  kramerQoida: ["Kramer: x = Δₓ / Δ", "Крамер: x = Δₓ / Δ"],
+  vektorUzun3Q: ["|a| = √(x² + y² + z²)", "|a| = √(x² + y² + z²)"],
+  skalyar3Q: ["a·b = x₁x₂ + y₁y₂ + z₁z₂", "a·b = x₁x₂ + y₁y₂ + z₁z₂"],
+  perpQoida: ["Perpendikulyar: a·b = 0", "Перпендикулярны: a·b = 0"],
+  vektorKopQ: ["z = x₁y₂ − y₁x₂", "z = x₁y₂ − y₁x₂"],
+  boshHad: ["Eng katta darajali hadlar nisbati qoladi", "Остаётся отношение старших членов"],
+  kopaytuvchigaAjrat: ["Suratni ko'paytuvchilarga ajratib, qisqartiramiz", "Раскладываем числитель и сокращаем"],
+  ajoyibLimitQ: ["lim sin(t)/t = 1,  t → 0", "lim sin(t)/t = 1,  t → 0"],
+  ekspHosila: ["(eᵏˣ)' = k·eᵏˣ", "(eᵏˣ)' = k·eᵏˣ"],
+  bolaklab: ["∫u dv = uv − ∫v du", "∫u dv = uv − ∫v du"],
+  difYechim: ["y' = ky  ⇒  y = C·eᵏˣ", "y' = ky  ⇒  y = C·eᵏˣ"],
 } as const;
 
 export type YechimKalit = keyof typeof Y;

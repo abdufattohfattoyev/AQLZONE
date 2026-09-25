@@ -126,9 +126,21 @@ class ResultSerializer(serializers.ModelSerializer):
             "asked", "correct", "mistakes", "stars", "durationMs",
         ]
 
+    #: Kurs kodlari 0–11 dan tashqarida ham bor (`boshqaruv.sinf_nomi`):
+    #: geometriya 107–110 va oliy matematika 301. Ilgari `grade` 0–11
+    #: ga KESILARDI va geometriya natijalari jimgina "11-sinf" bo'lib
+    #: yozilardi — panelda 11-sinf va geometriya aralashib ketgan edi.
+    KURS_KODLARI = frozenset([*range(0, 12), *range(107, 111), 301])
+
     def validate(self, data):
+        try:
+            kod = int(data.get("grade") or 0)
+        except (TypeError, ValueError):
+            kod = 0
+        # Noma'lum kod — avvalgidek 0–11 ga kesiladi.
+        data["grade"] = kod if kod in self.KURS_KODLARI else min(11, max(0, kod))
         chegara = {
-            "grade": (0, 11), "unit": (0, 200), "lesson": (0, 500),
+            "unit": (0, 200), "lesson": (0, 500),
             "asked": (0, 500), "mistakes": (0, 1000), "stars": (0, 3),
             "duration_ms": (0, 6 * 3600_000),
         }

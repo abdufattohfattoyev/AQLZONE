@@ -163,11 +163,16 @@ class Pupil(models.Model):
     # pullik qilish, qayerga reklama berish) aynan shu savollarga
     # suyanadi.
     #
-    # Hammasi IXTIYORIY: anketada "o'tkazib yuborish" bor. Majburiy
-    # anketa yangi odamni birinchi daqiqada yo'qotadi.
+    # Ilgari hammasi IXTIYORIY edi ("majburiy anketa odam yo'qotadi"
+    # degan qaror bilan) va uni 12% odam to'ldirardi. 2026-09 dan kim va
+    # bosqich HAMMAGA MAJBURIY — ilova shunga moslashadi va tahlil uchun
+    # to'liq javob kerak (`frontend/src/components/Anketa.tsx`). Viloyat
+    # hali ham ixtiyoriy. `kim` qiymatlari `tahlil.KIM_NOMI` da (talaba,
+    # abiturient va boshqalar ham), `choices` faqat admin uchun.
     KIMLAR = [("oquvchi", "O'quvchi"), ("ota_ona", "Ota-ona"), ("ustoz", "Ustoz")]
     kim = models.CharField(max_length=10, choices=KIMLAR, default="", blank=True)
-    #: 0 — maktabgacha, 1..11 — sinf, -1 — javob berilmagan.
+    #: Bosqich kodi — to'liq ro'yxat `tahlil.BOSQICHLAR` da
+    #: (0 maktabgacha, 1..11 sinf, 101..105 kurs, 120..141, -1 javobsiz).
     anketa_sinf = models.SmallIntegerField(default=-1)
     viloyat = models.CharField(max_length=24, default="", blank=True)
     #: Anketa ko'rsatildimi (javob bergan YOKI o'tkazib yuborgan).

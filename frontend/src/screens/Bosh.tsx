@@ -102,7 +102,7 @@ interface Props {
  *
  *   maktab      darslar → testlar → o'yinlar → masalalar
  *   abituriyent testlar → masalalar → darslar → o'yinlar
- *   oliy        masalalar → testlar → darslar → o'yinlar
+ *   oliy        darslar (oliy matematika) → masalalar → testlar → o'yinlar
  *
  * Kichkintoylar faqat kerak bo'lganga (ota-ona, boshlang'ich sinf
  * o'qituvchisi) — talabaga u shovqin.
@@ -110,7 +110,7 @@ interface Props {
 const TARTIB: Record<Yol, string[]> = {
   maktab: ["palette", "map", "chart", "puzzle", "pencil"],
   abiturient: ["chart", "pencil", "map", "puzzle", "palette"],
-  oliy: ["pencil", "chart", "map", "puzzle", "palette"],
+  oliy: ["map", "pencil", "chart", "puzzle", "palette"],
 };
 
 /* Eshiklardagi sonlar — dasturdan hisoblanadi (fayl boshidagi izoh). */
@@ -477,7 +477,12 @@ function AsosiyAmal({
   const yol = yolOf(prof);
   const kurs = profilKursi(prof);
   if (kurs) {
-    const s = sinfOfProfil(prof) ?? 0;
+    const s = sinfOfProfil(prof);
+    if (s === null) {
+      // Oliy yo'l — talabalar kursi.
+      return tugma("bg-brand-blue", "Bosh: oliy matematika", () => onKurs(kurs),
+        kursMatn(kurs.title), kursMatn(kurs.desc), "sqrt");
+    }
     return tugma("bg-brand-blue", "Bosh: sinf darslari", () => onKurs(kurs),
       s === 0 ? t("boshMaktabgachaDarslari") : t("boshSinfDarslari", { n: s }),
       t("boshSinfDarslariIzoh"), "map");

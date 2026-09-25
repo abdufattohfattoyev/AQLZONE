@@ -15,7 +15,7 @@
  * Endi savol hammaga — bir bosishli ikki savol, til tanlangandan keyin.
  */
 import { useSyncExternalStore } from "react";
-import { COURSES } from "./curriculum";
+import { COURSES, OLIY_KURSLAR } from "./curriculum";
 import type { Course } from "./curriculum";
 import { t } from "./matn";
 
@@ -107,10 +107,12 @@ export function sinfOfProfil(p: Profil | null): number | null {
 }
 
 /**
- * Profilning O'Z kursi. 7–10-sinfda ikki fan bor va birinchisi
+ * Profilning O'Z kursi. Oliy yo'lda — talabalar kursi. 7–10-sinfda ikki fan bor va birinchisi
  * (algebra) olinadi — geometriya darslar ro'yxatida yonida turadi.
  */
 export function profilKursi(p: Profil | null): Course | null {
+  // Talaba va "universitet darajasi" — oliy matematika kursi.
+  if (yolOf(p) === "oliy") return OLIY_KURSLAR()[0] ?? null;
   const s = sinfOfProfil(p);
   if (s === null) return null;
   return COURSES.find((c) => c.grade === s) ?? null;
@@ -118,6 +120,7 @@ export function profilKursi(p: Profil | null): Course | null {
 
 /** Profilning o'z kurslari (ikki fanli sinfda ikkalasi). */
 export function profilKurslari(p: Profil | null): Course[] {
+  if (yolOf(p) === "oliy") return OLIY_KURSLAR();
   const s = sinfOfProfil(p);
   if (s === null) return [];
   return COURSES.filter((c) => (c.grade >= 100 ? c.grade - 100 : c.grade) === s);

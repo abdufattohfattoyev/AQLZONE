@@ -71,7 +71,7 @@ import { mavzuById } from "./lib/kichkintoy";
 import { oyinById } from "./lib/oyin";
 import { darajaniOqi } from "./lib/oyin/tur";
 import { ochiqmi } from "./lib/oyin/rekord";
-import { COURSES, courseBySlug } from "./lib/curriculum";
+import { COURSES, courseBySlug, maktabKursi } from "./lib/curriculum";
 import { KUNLIK_MAQSAD, useProgress } from "./lib/progress";
 import type { LessonResult } from "./lib/progress";
 import { isUnlocked, lessonId } from "./lib/types";
@@ -227,7 +227,7 @@ function BoshSahifasi() {
       onDavom={(c, ui, li) => nav(yolDars(c, ui, li))}
       onKunlikSon={() => nav(yolKunlikSon())}
       onFormulalar={() => nav(yolFormulalar(
-        COURSES.filter((c) => c.grade > 0).slice(-1)[0] ?? COURSES[0]))}
+        COURSES.filter((c) => c.grade > 0 && maktabKursi(c)).slice(-1)[0] ?? COURSES[0]))}
       onImtihon={() => nav(yolImtihon())}
       onQidiruv={() => nav(yolQidiruv())}
       onReyting={() => nav(yolReyting())}
@@ -288,7 +288,7 @@ function KurslarSahifasi() {
 
   // Formulalar va blok testlar eng yuqori sinf kursida to'liq turadi:
   // kattalar uchun aynan o'sha kerak.
-  const eng = COURSES.filter((c) => c.grade > 0).slice(-1)[0] ?? COURSES[0];
+  const eng = COURSES.filter((c) => c.grade > 0 && maktabKursi(c)).slice(-1)[0] ?? COURSES[0];
   return (
     <Dashboard
       progressOf={progressOf}
