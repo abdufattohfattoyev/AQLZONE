@@ -80,6 +80,29 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=18, minute=5),
         "args": ("masala_post", "--kunlik"),
     },
+    # ── Matematika rukni (`core/matematika_kanal.py`) ──
+    # Lentalar faqat oxirgi 15–30 xabarni saqlaydi — kun davomida
+    # yig'ib boriladi, aks holda ertalabgi yangilik kechgacha lentadan
+    # tushib ketardi.
+    "matematika-yigish": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(minute=20, hour="*/2"),
+        "args": ("matematika_kanal", "yigish"),
+    },
+    # 10:00 — yangilik bo'lsa yangiliklar, bo'lmasa qiziq fakt. Ertalab:
+    # kechki masala (18:05) va natijalar (21:00) postlaridan uzoqda.
+    "matematika-post": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=10, minute=0),
+        "args": ("matematika_kanal", "avto"),
+    },
+    # Og'zaki misol — haftada uch marta (sesh, pay, shan), tushlikdan
+    # keyin. Har kuni bo'lsa kechki masala posti bilan raqobat qilardi.
+    "matematika-misol": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=15, minute=0, day_of_week="2,4,6"),
+        "args": ("matematika_kanal", "misol"),
+    },
     # Kanaldagi postlar joyidami — kuniga bir marta yetarli.
     "kanal-tekshiruvi": {
         "task": "core.vazifalar.buyruq",

@@ -1971,3 +1971,42 @@ class ImtihonNatija(models.Model):
             models.UniqueConstraint(fields=["profile", "mijoz_vaqt"], name="imtihon_bir_urinish"),
         ]
         indexes = [models.Index(fields=["profile", "-mijoz_vaqt"])]
+
+
+class KanalYozuv(models.Model):
+    """
+    Kanaldagi matematika rukni — yig'ilgan yangilik yoki joylangan fakt.
+
+    Bitta jadval ikki ish qiladi:
+
+      * YANGILIK — RSS lentalaridan topilgan matematika xabari. Topilganda
+        yoziladi (`joylangan_at` bo'sh), kanalga chiqqanda belgilanadi.
+        `kalit` — maqola havolasi, ya'ni bir xabar ikki marta chiqmaydi,
+        u bir necha lentada turgan bo'lsa ham.
+      * FAKT — qaysi fakt qachon chiqqani. Hammasi bir marta chiqmaguncha
+        takrorlanmaydi (`core/matematika_kanal.py`).
+
+    Lenta faqat oxirgi 15–30 xabarni saqlaydi, matematika yangiligi esa
+    kamdan-kam chiqadi — shuning uchun lentalar kun davomida yig'iladi
+    va kanalga kuniga bir marta jamlanib chiqadi.
+    """
+
+    YANGILIK = "yangilik"
+    FAKT = "fakt"
+    MISOL = "misol"
+    TURLAR = [(YANGILIK, "Yangilik"), (FAKT, "Fakt"), (MISOL, "Misol")]
+
+    tur = models.CharField(max_length=10, choices=TURLAR)
+    kalit = models.CharField(max_length=300, unique=True)
+    sarlavha = models.CharField(max_length=300, default="", blank=True)
+    matn = models.TextField(default="", blank=True)
+    manba = models.CharField(max_length=40, default="", blank=True)
+    topilgan_at = models.DateTimeField(default=timezone.now)
+    joylangan_at = models.DateTimeField(null=True, blank=True, default=None)
+
+    class Meta:
+        db_table = "kanal_yozuv"
+        indexes = [models.Index(fields=["tur", "joylangan_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.tur}: {self.sarlavha[:60]}"

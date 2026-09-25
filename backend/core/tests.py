@@ -7870,3 +7870,152 @@ class KursKodiTest(TestCase):
         from core.boshqaruv import sinf_nomi
 
         self.assertEqual(sinf_nomi(301), "Oliy matematika")
+
+
+class MatematikaKanalTest(TestCase):
+    """Kanaldagi matematika rukni (`core/matematika_kanal.py`)."""
+
+    LENTA = """<?xml version="1.0"?><rss version="2.0"><channel>
+      <item><title>Shaxmat olimpiadasi. Oʻzbekiston AQShdan ustun keldi</title>
+        <link>https://kun.uz/news/shaxmat</link><description>Jamoa 16 ochko</description>
+        <pubDate>{sana}</pubDate></item>
+      <item><title>Oʻquvchilar xalqaro matematika olimpiadasida 3 ta oltin oldi</title>
+        <link>https://kun.uz/news/imo</link>
+        <description><![CDATA[<p>Terma jamoa &amp; murabbiylar</p>]]></description>
+        <pubDate>{sana}</pubDate></item>
+      <item><title>Математика фанидан янги дарслик</title>
+        <link>https://uza.uz/posts/darslik</link><description>Вазирлик</description>
+        <pubDate>{sana}</pubDate></item>
+    </channel></rss>"""
+
+    def _lenta(self):
+        from email.utils import format_datetime
+        return self.LENTA.format(sana=format_datetime(timezone.now())).encode()
+
+    def test_faqat_matematika_olinadi(self):
+        from core import matematika_kanal as MK
+
+        el = MK.lentani_oqi(self._lenta())
+        self.assertEqual(len(el), 3)
+        mat = [e for e in el if MK.matematikami(e["sarlavha"], e["izoh"])]
+        # Shaxmat olimpiadasi — yo'q; lotin va kirill matematika — bor.
+        self.assertEqual([e["havola"] for e in mat], ["https://kun.uz/news/imo", "https://uza.uz/posts/darslik"])
+        self.assertEqual(mat[0]["izoh"], "Terma jamoa & murabbiylar")
+
+    def test_yigish_takrorlamaydi_va_buzuq_lenta_toxtatmaydi(self):
+        from core import matematika_kanal as MK
+
+        def yuklovchi(url):
+            if "gazeta" in url:
+                raise OSError("tarmoq")
+            if "uza" in url:
+                return b"<buzuq"
+            return self._lenta()
+
+        birinchi = MK.yigish(yuklovchi)
+        self.assertEqual(birinchi, 2)            # bir xil lenta bir necha manbada — baribir 2 ta
+        self.assertEqual(MK.yigish(yuklovchi), 0)
+        self.assertEqual(len(MK.kutayotgan_yangiliklar()), 2)
+
+    def test_eski_yangilik_olinmaydi(self):
+        from email.utils import format_datetime
+        from core import matematika_kanal as MK
+
+        eski = self.LENTA.format(sana=format_datetime(timezone.now() - timedelta(days=10))).encode()
+        self.assertEqual(MK.yigish(lambda url: eski), 0)
+
+    def test_yangilik_posti_xavfsiz(self):
+        from core import matematika_kanal as MK
+        from core.models import KanalYozuv
+
+        y = KanalYozuv.objects.create(tur="yangilik", kalit="https://a.uz/?x=1&y=<2>",
+                                      sarlavha="A < B & C", matn="izoh", manba="Kun.uz")
+        post = MK.yangilik_posti([y])
+        self.assertIn("A &lt; B &amp; C", post)
+        self.assertIn('href="https://a.uz/?x=1&amp;y=&lt;2&gt;"', post)
+        self.assertIn("Kun.uz", post)
+
+    def test_fakt_takrorlanmaydi(self):
+        from core import matematika_kanal as MK
+
+        korilgan = set()
+        for _ in MK.FAKTLAR:
+            f = MK.keyingi_fakt()
+            self.assertNotIn(f[0], korilgan)
+            korilgan.add(f[0])
+            MK.fakt_belgila(f)
+        self.assertEqual(len(korilgan), len(MK.FAKTLAR))
+        # Hammasi chiqqandan keyin ham ishlayveradi.
+        self.assertIn(MK.keyingi_fakt(), MK.FAKTLAR)
+
+    def test_fakt_kalitlari_yagona(self):
+        from core import matematika_kanal as MK
+
+        kalitlar = [k for k, _ in MK.FAKTLAR]
+        self.assertEqual(len(kalitlar), len(set(kalitlar)))
+
+    def test_misollar_javobi_togri(self):
+        import random as R
+        import re
+        from core import matematika_kanal as MK
+
+        for urug in range(300):
+            for savol, javob, _ in MK._misollar(R.Random(urug)):
+                if "7 ning" in savol:
+                    n = int(re.search(r"(\d+)-darajasi", savol).group(1))
+                    self.assertEqual(MK._yetti_oxiri(savol), str(pow(7, n, 10)))
+                    continue
+                m = re.fullmatch(r"(\d+) × (\d+) = \?", savol)
+                if m:
+                    self.assertEqual(int(javob), int(m[1]) * int(m[2]))
+                m = re.fullmatch(r"(\d+)² = \?", savol)
+                if m:
+                    self.assertEqual(int(javob), int(m[1]) ** 2)
+                m = re.fullmatch(r"(\d+) ning (\d+)% i = \?", savol)
+                if m:
+                    self.assertEqual(int(javob) * 100, int(m[1]) * int(m[2]))
+                self.assertTrue(javob.isdigit(), savol)
+
+    def test_misol_posti_javobni_yashiradi(self):
+        from core import matematika_kanal as MK
+
+        post = MK.misol_posti(MK.bugungi_misol())
+        self.assertEqual(post.count("<tg-spoiler>"), 2)
+        self.assertEqual(MK.bugungi_misol(), MK.bugungi_misol())   # bir kunda bir xil
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x", BOT_USERNAME="AqlZoneBot")
+    def test_buyruq_yuboradi_va_belgilaydi(self):
+        from unittest import mock
+        from core import matematika_kanal as MK
+        from core.models import KanalYozuv
+
+        MK.yigish(lambda url: self._lenta())
+        with mock.patch.object(MK, "yigish", return_value=0), \
+             mock.patch("core.xabar.yubor", return_value=("yuborildi", "")) as yub:
+            call_command("matematika_kanal", "avto", stdout=StringIO())
+            matn = yub.call_args[0][1]
+            self.assertIn("Matematika yangiliklari", matn)
+            self.assertEqual(yub.call_args.kwargs["havola"], "https://t.me/AqlZoneBot?startapp")
+            # Ikkinchi marta — yangilik qolmagan, fakt chiqadi.
+            call_command("matematika_kanal", "avto", stdout=StringIO())
+            self.assertIn("Bilasizmi", yub.call_args[0][1])
+        self.assertFalse(KanalYozuv.objects.filter(tur="yangilik", joylangan_at__isnull=True).exists())
+        self.assertEqual(KanalYozuv.objects.filter(tur="fakt").count(), 1)
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
+    def test_yuborilmasa_belgilanmaydi(self):
+        from unittest import mock
+        from core import matematika_kanal as MK
+        from core.models import KanalYozuv
+
+        with mock.patch.object(MK, "yigish", return_value=0), \
+             mock.patch("core.xabar.yubor", return_value=("xato", "timeout")):
+            call_command("matematika_kanal", "fakt", stdout=StringIO(), stderr=StringIO())
+        self.assertFalse(KanalYozuv.objects.filter(tur="fakt").exists())
+
+    def test_jadvalda_bor(self):
+        from aqlzone.celery import app
+
+        jadval = app.conf.beat_schedule
+        self.assertEqual(jadval["matematika-post"]["args"], ("matematika_kanal", "avto"))
+        self.assertEqual(jadval["matematika-yigish"]["args"], ("matematika_kanal", "yigish"))
