@@ -225,10 +225,22 @@ aynan shunday ikkita xato chiqqan (`deploy/postgres-kochish.md`),
 shuning uchun jiddiy o'zgarishdan keyin sinovlarni Postgres'da ham
 bir marta yuritish kerak.
 
-Zaxira:
+Zaxira **avtomatik**: `zaxira` konteyneri kuniga bir marta
+`pg_dump` qiladi va nusxani serverdagi `./zaxira/` papkasiga yozadi,
+14 kundan eskisini o'chiradi (`deploy/zaxira.sh`; oraliq va muddat —
+`.env` dagi `ZAXIRA_SOAT`, `ZAXIRA_KUN`). Bir diskdagi nusxa disk
+buzilishidan saqlamaydi, shuning uchun vaqti-vaqti bilan uni serverdan
+tashqariga ham ko'chiring:
+
+```bash
+scp server:~/AQLZONE/zaxira/az-*.sql.gz .
+```
+
+Qo'lda nusxa va tiklash:
 
 ```bash
 docker exec aqlzone_db pg_dump -U aqlzone aqlzone | gzip > ~/az-$(date +%F).sql.gz
+gunzip -c zaxira/az-....sql.gz | docker exec -i aqlzone_db psql -U aqlzone aqlzone
 ```
 
 SQLite'dan ko'chirish yozuvi va orqaga qaytish yo'li —

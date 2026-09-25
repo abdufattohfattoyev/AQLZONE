@@ -190,6 +190,36 @@ services:
       redis:
         condition: service_healthy
 
+  # ─────────────────── ZAXIRA NUSXA ───────────────────
+  #
+  # Kuniga bir marta `pg_dump` — `deploy/zaxira.sh`. Nusxalar
+  # serverdagi `./zaxira/` papkasiga tushadi (volume emas, oddiy
+  # papka): ularni `scp` bilan boshqa kompyuterga ko'chirish oson.
+  # Bir diskda turgan nusxa disk buzilishidan saqlamaydi — muhim
+  # paytlarda nusxani serverdan tashqariga ham olib qo'ying.
+  #
+  # Obraz bazaning o'zi bilan bir xil: `pg_dump` versiyasi server
+  # versiyasidan past bo'lsa, u ishlashdan bosh tortadi.
+  zaxira:
+    image: postgres:17-alpine
+    container_name: aqlzone_zaxira
+    entrypoint: ["/bin/sh", "/zaxira.sh"]
+    env_file: .env
+    environment:
+      PGHOST: db
+      PGDATABASE: ${DB_NAME:-aqlzone}
+      PGUSER: ${DB_USER:-aqlzone}
+      PGPASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env da sozlanmagan}
+    volumes:
+      - ./deploy/zaxira.sh:/zaxira.sh:ro
+      - ./zaxira:/zaxira
+    networks:
+      - az-tarmoq
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   # Yuklangan fayllar (masala rasmlari). Ilgari bu yerda SQLite
   # bazasi ham turardi — u Postgres'ga ko'chdi, lekin volume

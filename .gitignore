@@ -57,3 +57,6 @@ emoji-royxat.txt
 # `frontend/public/belgi/` ga tushadi — xom fayl 3-4 MB va uni
 # saqlashning ma'nosi yo`q.
 .belgi/
+
+# Bazaning zaxira nusxalari (`docker-compose.yml` dagi `zaxira`).
+zaxira/
