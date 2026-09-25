@@ -74,3 +74,27 @@ def kunlik_ulash(request):
         return Response(telegramga_yubor(_profil_tanla(request)))
     except KS.KunlikXato as e:
         return _xato(e)
+
+
+# ------------------------------------------------------------ imtihon
+#
+# DTM varianti natijalari (`core/imtihon.py`). Shu faylda turibdi, chunki
+# ikkalasi ham bir xil shakldagi kichik so'rovlar: mijoz o'yinni o'zi
+# yuritadi, server natijani saqlaydi va tarixni qaytaradi.
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def imtihon_natija(request):
+    from . import imtihon as IM
+
+    profil = _profil_tanla(request)
+    if request.method == "POST":
+        d = request.data if hasattr(request.data, "get") else {}
+        # Bitta urinish ham, ro'yxat ham qabul qilinadi: ro'yxat
+        # telefondagi eski tarixni bir yo'la ko'chirish uchun.
+        yangi = IM.yoz(profil, d.get("urinishlar", d))
+        javob = IM.royxat(profil)
+        javob["yangi"] = yangi
+        return Response(javob)
+    return Response(IM.royxat(profil))

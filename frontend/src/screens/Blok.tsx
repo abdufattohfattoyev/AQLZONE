@@ -66,7 +66,7 @@ import { yolDars } from "../lib/yollar";
 import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
 import { useFaollik } from "../lib/faollik";
-import { natijaSaqla as imtihonSaqla, variantYasa } from "../lib/imtihon";
+import { natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa } from "../lib/imtihon";
 
 /** Bitta berilgan javob. `null` — ulgurilmadi. */
 interface Javob {
@@ -357,13 +357,17 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, onQayta, o
     // ro'yxatda "eng yaxshi natija" va o'rtacha daraja shundan
     // hisoblanadi (`lib/imtihon.ts`).
     if (imtihon) {
-      imtihonSaqla({
+      const urinish = {
         variant: imtihon,
         togri: toliq.filter((x) => x.togri).length,
         jami: toliq.length,
         sekund: Math.round((Date.now() - boshlandi.current) / 1000),
         vaqt: Date.now(),
-      });
+      };
+      // Avval qurilmaga (internet bo'lmasa ham yo'qolmasin), keyin
+      // serverga. Server takrorni `vaqt` bo'yicha o'zi tashlaydi.
+      imtihonSaqla(urinish);
+      imtihonServerga(urinish);
       return;
     }
 

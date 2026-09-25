@@ -1925,3 +1925,44 @@ class KunlikSonNatija(models.Model):
             models.Index(fields=["sana", "bajardi"]),
             models.Index(fields=["profile", "-sana"]),
         ]
+
+
+class ImtihonNatija(models.Model):
+    """
+    DTM varianti — bitta urinish.
+
+    ─────────────────── NEGA HAR URINISH SAQLANADI ───────────────────
+
+    Test to'plamida (`TestIshlash`) faqat birinchi natija qoladi, chunki
+    u yerda maqsad — hamma bilan SOLISHTIRISH. Imtihonda maqsad
+    boshqa: odam o'z O'SISHINI ko'rishi kerak ("1-variant: 12/30,
+    bir oydan keyin 21/30"). Shuning uchun hamma urinish yoziladi.
+
+    ─────────────────── BALL MIJOZDAN ───────────────────
+
+    Savollar serverda saqlanmaydi — ular variant raqamidan mijozda
+    yasaladi (`frontend/src/lib/imtihon.ts`). Demak ballni server
+    tekshira olmaydi; faqat chegaralaydi. Bu yerda ahamiyati kichik:
+    natija hech qanday mukofot bermaydi, faqat odamning o'ziga
+    ko'rsatiladi.
+
+    `mijoz_vaqt` — urinish tugagan payt (mijoz soati, ms). U takror
+    yuborishni to'xtatadi: internet uzilib qayta yuborilgan yoki
+    telefondagi eski tarix bilan birga kelgan urinish ikkinchi qator
+    bo'lib qolmaydi.
+    """
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="imtihon_natijalari")
+    variant = models.SmallIntegerField()
+    togri = models.SmallIntegerField()
+    jami = models.SmallIntegerField()
+    sekund = models.IntegerField(default=0)
+    mijoz_vaqt = models.BigIntegerField()
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "imtihon_natija"
+        constraints = [
+            models.UniqueConstraint(fields=["profile", "mijoz_vaqt"], name="imtihon_bir_urinish"),
+        ]
+        indexes = [models.Index(fields=["profile", "-mijoz_vaqt"])]

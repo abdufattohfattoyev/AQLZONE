@@ -24,6 +24,7 @@
  * hamma bitta testni ishlashi kerak. Savollar bazada saqlanmaydi —
  * faqat urug', qolganini generatorlar qiladi.
  */
+import { bilanProfil, sorov } from "./api";
 import { blokYasa } from "./blok";
 import type { Blok } from "./blok";
 import { kunUrugi, urugBilan } from "./oyin/urug";
@@ -100,4 +101,43 @@ export function daraja(): { foiz: number; urinish: number } | null {
   if (!oxirgi.length) return null;
   const jami = oxirgi.reduce((a, b) => a + foiz(b), 0);
   return { foiz: Math.round(jami / oxirgi.length), urinish: natijalar().length };
+}
+
+/* ------------------------------------------------------------ server */
+
+/**
+ * Serverdagi tarix — telefon xotirasidagi nusxadan USTUN.
+ *
+ * Nega: ilovani o'chirgan yoki telefon almashtirgan odam qurilmadagi
+ * tarixni yo'qotadi, tayyorgarlikda esa aynan o'sish tarixi eng
+ * qimmatli narsa. Qurilmadagi nusxa faqat internet yo'q paytda
+ * ekranni bo'sh qoldirmaslik uchun turadi.
+ */
+export interface ServerTarix {
+  oxirgilar: ImtihonNatija[];
+  /** Variant raqami → eng yaxshi natija. */
+  eng_yaxshi: Record<string, { togri: number; jami: number }>;
+  /** Oxirgi beshtaning o'rtacha foizi (urinish bo'lmasa — `null`). */
+  ortacha: number | null;
+  jami: number;
+}
+
+/**
+ * Qurilmadagi HAMMA urinishni serverga yuboradi va yakuniy tarixni
+ * qaytaradi.
+ *
+ * Har ochilishda chaqiriladi va bu ATAYLAB: server takrorni o'zi
+ * tashlaydi (`vaqt` bo'yicha), ya'ni eski tarix bir marta ko'chadi,
+ * internetsiz ishlangan variant esa keyingi ochilishda yetib boradi.
+ * Qurilmada ko'pi bilan 40 ta urinish turadi — so'rov yengil.
+ */
+export async function sinxronla(): Promise<ServerTarix> {
+  // `bilanProfil` — oilaviy hisobda natija AYNAN tanlangan bolaga
+  // yozilsin, hisobning birinchi profiliga emas.
+  return sorov<ServerTarix>("/api/v1/imtihon/natija", bilanProfil({ urinishlar: natijalar() }));
+}
+
+/** Bitta tugagan urinishni yuboradi. Xato bo'lsa jim — keyingi `sinxronla` yetkazadi. */
+export function serverga(n: ImtihonNatija): void {
+  void sorov("/api/v1/imtihon/natija", bilanProfil({ ...n })).catch(() => {});
 }

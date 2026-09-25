@@ -9,19 +9,37 @@
  * charchoq ham bor. Beshta urinishning o'rtachasi esa haqiqatga
  * yaqin va aynan shu son o'sib borishi kerak (`lib/imtihon.ts`).
  */
+import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import { Reveal } from "../components/Reveal";
 import { t } from "../lib/matn";
 import { useOrqaga } from "../lib/qobiq";
-import { OLCHAM, VARIANTLAR, daraja, engYaxshi, foiz, natijalar } from "../lib/imtihon";
+import { OLCHAM, VARIANTLAR, daraja, engYaxshi, foiz, natijalar, sinxronla } from "../lib/imtihon";
+import type { ServerTarix } from "../lib/imtihon";
 
 export function Imtihon({ onVariant, onChiq }: {
   onVariant: (n: number) => void;
   onChiq: () => void;
 }) {
   useOrqaga(onChiq);
-  const d = daraja();
-  const oxirgilar = natijalar().slice(0, 3);
+
+  // Tarix SERVERDAN: telefon almashsa ham yo'qolmaydi. Ochilganda
+  // qurilmadagi urinishlar ham yuboriladi — eski tarix shu yo'l bilan
+  // bir marta ko'chadi, internetsiz ishlangani keyinroq yetib boradi.
+  // Server javob bermaguncha (yoki internet yo'q bo'lsa) qurilmadagi
+  // nusxa ko'rinadi — ekran bo'sh turmaydi.
+  const [tarix, setTarix] = useState<ServerTarix | null>(null);
+  useEffect(() => {
+    let tirik = true;
+    sinxronla().then((x) => { if (tirik) setTarix(x); }).catch(() => {});
+    return () => { tirik = false; };
+  }, []);
+
+  const d = tarix
+    ? (tarix.ortacha === null ? null : { foiz: tarix.ortacha, urinish: tarix.jami })
+    : daraja();
+  const oxirgilar = (tarix ? tarix.oxirgilar : natijalar()).slice(0, 3);
+  const engi = (n: number) => (tarix ? tarix.eng_yaxshi[String(n)] ?? null : engYaxshi(n));
 
   return (
     <div className="mx-auto w-full max-w-[430px] px-3.5 pt-4 pb-10 sm:max-w-[700px] sm:px-6">
@@ -64,7 +82,7 @@ export function Imtihon({ onVariant, onChiq }: {
       </h2>
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         {Array.from({ length: VARIANTLAR }, (_, i) => i + 1).map((n) => {
-          const eng = engYaxshi(n);
+          const eng = engi(n);
           return (
             <button key={n} type="button" onClick={() => onVariant(n)}
               data-tahlil={`Imtihon: ${n}-variant`}

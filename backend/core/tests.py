@@ -7506,6 +7506,75 @@ class AnketaQismanTest(TestCase):
         self.assertFalse(javob.json()["user"]["anketa"])
 
 
+class ImtihonNatijaTest(TestCase):
+    """DTM natijalari serverda: tarix telefon almashganda ham qoladi."""
+
+    def kir(self, device: str = "dev-imtihon-1111aaaa2222") -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def yubor(self, data, kim):
+        return self.client.post("/api/v1/imtihon/natija", data,
+                                content_type="application/json", **kim)
+
+    def test_bitta_urinish_yoziladi(self):
+        h = self.kir()
+        r = self.yubor({"variant": 3, "togri": 18, "jami": 30, "sekund": 2400, "vaqt": 1000}, h)
+        self.assertEqual(r.status_code, 200, r.content)
+        j = r.json()
+        self.assertEqual(j["yangi"], 1)
+        self.assertEqual(j["jami"], 1)
+        self.assertEqual(j["eng_yaxshi"]["3"], {"togri": 18, "jami": 30})
+        self.assertEqual(j["ortacha"], 60)
+
+    def test_takror_yuborish_ikki_qator_bolmaydi(self):
+        """Internet qaytganda telefon qayta yuboradi — bu ikkinchi urinish emas."""
+        h = self.kir()
+        d = {"variant": 1, "togri": 10, "jami": 30, "sekund": 100, "vaqt": 555}
+        self.yubor(d, h)
+        j = self.yubor(d, h).json()
+        self.assertEqual(j["yangi"], 0)
+        self.assertEqual(MDL.ImtihonNatija.objects.count(), 1)
+
+    def test_eski_tarix_bir_yola_kochadi(self):
+        h = self.kir()
+        tarix = [{"variant": v, "togri": 10 + v, "jami": 30, "sekund": 60, "vaqt": 100 + v}
+                 for v in range(1, 6)]
+        j = self.yubor({"urinishlar": tarix}, h).json()
+        self.assertEqual(j["yangi"], 5)
+        self.assertEqual(j["jami"], 5)
+        self.assertEqual(j["oxirgilar"][0]["variant"], 5)   # eng yangisi tepada
+
+    def test_eng_yaxshi_va_ortacha(self):
+        h = self.kir()
+        self.yubor({"urinishlar": [
+            {"variant": 2, "togri": 12, "jami": 30, "vaqt": 1},
+            {"variant": 2, "togri": 24, "jami": 30, "vaqt": 2},
+            {"variant": 2, "togri": 18, "jami": 30, "vaqt": 3},
+        ]}, h)
+        j = self.client.get("/api/v1/imtihon/natija", **h).json()
+        self.assertEqual(j["eng_yaxshi"]["2"]["togri"], 24)
+        self.assertEqual(j["ortacha"], 60)                 # (40 + 80 + 60) / 3
+
+    def test_yaroqsiz_qiymatlar_tashlanadi(self):
+        h = self.kir()
+        j = self.yubor({"urinishlar": [
+            {"variant": 99, "togri": 5, "jami": 30, "vaqt": 1},    # bunday variant yo'q
+            {"variant": 1, "togri": 40, "jami": 30, "vaqt": 2},    # to'g'ri > jami
+            {"variant": 1, "togri": 5, "jami": 30},                 # vaqt yo'q
+            {"variant": 1, "togri": 5, "jami": 30, "vaqt": 3},     # yaroqli
+        ]}, h).json()
+        self.assertEqual(j["yangi"], 1)
+
+    def test_har_kim_ozinikini_koradi(self):
+        a, b = self.kir("dev-imtihon-aaaa1111bbbb"), self.kir("dev-imtihon-cccc2222dddd")
+        self.yubor({"variant": 1, "togri": 20, "jami": 30, "vaqt": 7}, a)
+        j = self.client.get("/api/v1/imtihon/natija", **b).json()
+        self.assertEqual(j["jami"], 0)
+        self.assertIsNone(j["ortacha"])
+
+
 class KunlikSonPortTest(TestCase):
     """
     Serverdagi jumboq mijozdagisi bilan AYNAN bir xilmi.

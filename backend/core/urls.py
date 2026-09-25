@@ -69,6 +69,9 @@ urlpatterns = [
     path("kunlik-son/natija", kunlik_views.kunlik_natija, name="kunlik-natija"),
     path("kunlik-son/royxat", kunlik_views.kunlik_royxat, name="kunlik-royxat"),
     path("kunlik-son/ulash", kunlik_views.kunlik_ulash, name="kunlik-ulash"),
+
+    # DTM tayyorgarlik — natijalar tarixi (`core/imtihon.py`).
+    path("imtihon/natija", kunlik_views.imtihon_natija, name="imtihon-natija"),
     path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),
     path("shaharcha/qur", shaharcha_views.shaharcha_qur, name="shaharcha-qur"),
     path("shaharcha/oshir", shaharcha_views.shaharcha_oshir, name="shaharcha-oshir"),
