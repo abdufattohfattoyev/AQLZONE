@@ -21,8 +21,15 @@ PROJECT_ROOT = BASE_DIR.parent
 _ZAXIRA_KALIT = "dev-only-insecure-key-almashtiring"
 
 SECRET_KEY = env("SECRET_KEY", _ZAXIRA_KALIT)
-DEBUG = env_bool("DEBUG", True)
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["*"])
+
+# Standart qiymatlar XAVFSIZ tomonda turadi: `.env` da DEBUG unutilsa,
+# sayt debug rejimida (kod va sozlamalarni ko'rsatib) ochilmaydi.
+# Ishlab chiqishda `.env.example` dagi `DEBUG=1` uni yoqadi.
+DEBUG = env_bool("DEBUG", False)
+# `*` faqat ishlab chiqishda standart. Serverda domen aniq yozilishi
+# kerak — aks holda Host sarlavhasini soxtalashtirib, parolni tiklash
+# kabi havolalarni begona domenga yo'naltirish mumkin bo'lardi.
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["*"] if DEBUG else ["localhost", "127.0.0.1"])
 
 # Ishlab chiqarishda standart kalit bilan ishga tushmaymiz.
 #
@@ -33,7 +40,9 @@ ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["*"])
 if not DEBUG and SECRET_KEY == _ZAXIRA_KALIT:
     raise RuntimeError(
         "SECRET_KEY sozlanmagan. .env ga yozing:\n"
-        '  python -c "import secrets; print(secrets.token_urlsafe(50))"'
+        '  python -c "import secrets; print(secrets.token_urlsafe(50))"\n'
+        "Ishlab chiqishda esa .env ga DEBUG=1 yozish yetarli "
+        "(.env.example ni nusxalang)."
     )
 
 # Telegram Mini App HTTPS ostida ishlaydi va tunnel domeni har safar o'zgaradi,
