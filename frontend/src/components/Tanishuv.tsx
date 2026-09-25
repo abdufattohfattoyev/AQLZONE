@@ -35,6 +35,17 @@ import { royxatniBelgila, taklifgaObuna } from "../lib/sinov";
 import type { Hisob } from "../lib/api";
 import type { ReactNode } from "react";
 import { t } from "../lib/matn";
+import { profil, serverdanOl } from "../lib/profil";
+
+/**
+ * Anketa kerakmi: profil yo'q yoki bosqichi so'ralmagan. Bosqichsiz
+ * javob darslar ro'yxatidagi eski "bitta savol" dan qolgan bo'lishi
+ * mumkin — abituriyentdan esa bosqich so'ralmaydi.
+ */
+function anketaKerak(): boolean {
+  const p = profil();
+  return !p || (p.bosqich < 0 && p.kim !== "abiturient");
+}
 
 /** Tekshiruv holati: hali bilmaymiz → sinov / ism so'raymiz / so'ramaymiz. */
 type Holat = "kutilyapti" | "sinov" | "ism" | "anketa" | "kerak-emas";
@@ -54,6 +65,8 @@ const KIRGAN_KEY = "az_kirgan";
 
 export function Tanishuv({ children }: { children: ReactNode }) {
   const [holat, setHolat] = useState<Holat>("kutilyapti");
+  /** Anketadan keyin qaysi holatga o'tiladi (sinov / ism / ochiq). */
+  const [keyin, setKeyin] = useState<Holat>("kerak-emas");
   /**
    * Til so'ralishi kerakmi.
    *
@@ -129,7 +142,17 @@ export function Tanishuv({ children }: { children: ReactNode }) {
         // Faqat RO'YXATDAN O'TGANGA: reklamadan kelib, hali ilovani
         // sinab ko'rayotgan odamni anketa bilan kutib olish uni
         // haydab yuboradi.
-        if (h.royxatdan) return setHolat(h.anketa === false ? "anketa" : "kerak-emas");
+        // Serverdagi javob qurilmaga (boshqa telefondan kelgan odam
+        // qayta so'ralmasin).
+        serverdanOl(h.kim, h.bosqich);
+
+        // ANKETA ENDI HAMMAGA — ro'yxatdan o'tmaganga ham, va BIRINCHI.
+        // Ilgari u faqat ro'yxatdan o'tganga chiqardi va 12% odam
+        // to'ldirardi; ilova esa kimga gapirayotganini bilmasdi
+        // (`components/Anketa.tsx`). Keyingi qadam eslab qolinadi.
+        const navbat: Holat = h.royxatdan ? "kerak-emas" : (h.telegram ? "ism" : "sinov");
+        if (anketaKerak()) { setKeyin(navbat); return setHolat("anketa"); }
+        if (h.royxatdan) return setHolat("kerak-emas");
         // Telegram bog'langan, lekin ism-familiya to'liq emas — odam
         // ikki bosqich orasida qolib ketgan.
         return setHolat(h.telegram ? "ism" : "sinov");
@@ -138,7 +161,8 @@ export function Tanishuv({ children }: { children: ReactNode }) {
         // Server javob bermadi. Ilovani to'smaymiz va taklif ham
         // chiqarmaymiz: internetsiz odamni Telegram'ga yuborishdan
         // ma'no yo'q, u baribir ochilmaydi.
-        setHolat("kerak-emas");
+        // Profil qurilmada saqlanadi — anketa internetsiz ham so'raladi.
+        setHolat(anketaKerak() ? "anketa" : "kerak-emas");
         setTilKutilmoqda(false);
         return;
       }
@@ -175,10 +199,10 @@ export function Tanishuv({ children }: { children: ReactNode }) {
     // Ism yozilgan zahoti — anketa. Serverdagi bayroq hali eski
     // (`anketa: false`), shuning uchun holat to'g'ridan-to'g'ri o'tadi.
     return <Sozlamalar royxat boshlangich={hisob} onBack={() => setHolat("sinov")}
-      onTayyor={() => setHolat(hisob?.anketa === false ? "anketa" : "kerak-emas")} />;
+      onTayyor={() => setHolat(anketaKerak() ? "anketa" : "kerak-emas")} />;
   }
 
-  if (holat === "anketa") return <Anketa onTugadi={() => setHolat("kerak-emas")} />;
+  if (holat === "anketa") return <Anketa onTugadi={() => setHolat(keyin)} />;
 
   // Mini App ichida taklif KO'RSATILMAYDI: u yerda kirish `initData`
   // orqali o'zi bo'ladi va odamni Telegram ichidan yana Telegram'ga

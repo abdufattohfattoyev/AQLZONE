@@ -102,6 +102,8 @@ const YOPIQ = [
   // (`/kichkintoy`) esa oddiy sahifa — u yerda panel qoladi.
   /^\/kichkintoy\/[^/]+$/,
   /^\/kirish\//,                 // botdagi havola
+  /^\/men$/,                     // anketani qayta to'ldirish — to'liq ekran
+  /^\/men$/,                     // anketani qayta to'ldirish — to'liq ekran
 ];
 
 export const panelKerakmi = (yol: string): boolean => !YOPIQ.some((r) => r.test(yol));

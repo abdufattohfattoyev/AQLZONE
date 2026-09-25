@@ -62,6 +62,8 @@ VILOYAT_NOMI = dict(VILOYATLAR)
 KIM_NOMI = {
     "oquvchi": "Maktab o'quvchisi",
     "talaba": "Talaba",
+    # DTMga tayyorlanayotgan — unga sinf ham, kurs ham to'g'ri kelmaydi.
+    "abiturient": "Abituriyent",
     "ota_ona": "Ota-ona",
     "ustoz": "O'qituvchi",
     "kattalar": "Boshqa (kattalar)",
@@ -77,6 +79,8 @@ KIM_NOMI = {
 #:    130..132     maktab o'qituvchisi: boshlang'ich / 5–9 / 10–11
 #:    120          OTM o'qituvchisi
 #:    121          o'quv markazi yoki repetitor
+#:    140          "boshqa": maktab matematikasi kerak
+#:    141          "boshqa": universitet darajasi kerak
 #:     -1          javob yo'q (kattalarda so'ralmaydi)
 BOSQICHLAR = {
     0: "Maktabgacha",
@@ -88,6 +92,8 @@ BOSQICHLAR = {
     132: "O'qituvchi · 10–11-sinf",
     120: "O'qituvchi · OTM",
     121: "O'qituvchi · o'quv markazi",
+    140: "Boshqa · maktab darajasi",
+    141: "Boshqa · universitet darajasi",
 }
 
 

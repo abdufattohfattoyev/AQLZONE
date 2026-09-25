@@ -7495,6 +7495,20 @@ class AnketaQismanTest(TestCase):
         self.assertEqual((p.kim, p.anketa_sinf, p.viloyat), ("oquvchi", 4, "samarqand"))
         self.assertIsNotNone(p.anketa_at)
 
+    def test_abituriyent_va_daraja(self):
+        from core import tahlil as TH
+
+        p = MDL.Pupil.objects.create(first_name="Abituriyent")
+        TH.anketa_yoz(p, {"kim": "abiturient"})
+        p.refresh_from_db()
+        self.assertEqual((p.kim, p.anketa_sinf), ("abiturient", -1))
+
+        k = MDL.Pupil.objects.create(first_name="Katta")
+        TH.anketa_yoz(k, {"kim": "kattalar", "sinf": 141})
+        k.refresh_from_db()
+        self.assertEqual((k.kim, k.anketa_sinf), ("kattalar", 141))
+        self.assertEqual(TH.bosqich_nomi(141), "Boshqa · universitet darajasi")
+
     def test_api_orqali(self):
         r = self.client.post("/api/v1/auth/device", {"deviceId": "dev-anketa-1111aaaa", "platform": "web"},
                              content_type="application/json")

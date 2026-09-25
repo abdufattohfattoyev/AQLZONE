@@ -29,6 +29,7 @@
  * yonida eskirib qoldi. Endi kurs kartalaridagi 3D belgilar va to'r:
  * telefonda 2 ustun, keng ekranda 3 ta.
  */
+import { sinfOfProfil, useProfil } from "../lib/profil";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
@@ -58,6 +59,11 @@ interface Props {
 
 export function TestSinf({ onSinf, onToplam, onBack }: Props) {
   const ozStrelka = useOrqaga(onBack);
+  // Anketadagi sinf eng oldinda va belgilangan: odam "nechanchi
+  // sinfman" deb qidirib o'tirmasin (`lib/profil.ts`).
+  const ozSinf = sinfOfProfil(useProfil());
+  const tartib = ozSinf !== null && SINFLAR.includes(ozSinf)
+    ? [ozSinf, ...SINFLAR.filter((s) => s !== ozSinf)] : SINFLAR;
   const [toplamlar, setToplamlar] = useState<Toplam[] | null>(null);
 
   useEffect(() => {
@@ -118,7 +124,7 @@ export function TestSinf({ onSinf, onToplam, onBack }: Props) {
       {/* ---- sinflar ---- */}
       <h2 className="mt-6 mb-2 ml-1 font-display text-[15px] leading-tight">{t("testSinfTanlash")}</h2>
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-        {SINFLAR.map((sinf) => {
+        {tartib.map((sinf) => {
           // Bir sinfda ikki fan bo'lishi mumkin (algebra va
           // geometriya). Testlar ikkalasidan ARALASH yig'iladi,
           // shuning uchun kirish nuqtasi bitta — birinchi kurs.
@@ -130,7 +136,9 @@ export function TestSinf({ onSinf, onToplam, onBack }: Props) {
           return (
             <button key={sinf} type="button"
               onClick={() => { tebrat("tanlov"); onSinf(bosh); }}
-              className="tugma-3d flex h-full flex-col rounded-clay bg-karta p-3 text-left shadow-clay-sm">
+              data-tahlil={sinf === ozSinf ? "Testlar: o'z sinfi" : undefined}
+              className={`tugma-3d flex h-full flex-col rounded-clay bg-karta p-3 text-left shadow-clay-sm
+                          ${sinf === ozSinf ? "ring-2 ring-brand-blue" : ""}`}>
               <span className="flex w-full items-start">
                 {rasm ? (
                   <img src={rasm} alt="" loading="lazy" className="kurs-belgi size-14" />
@@ -143,6 +151,9 @@ export function TestSinf({ onSinf, onToplam, onBack }: Props) {
               <span className="mt-2 block font-display text-[14.5px] leading-tight">
                 {t("testSinfNomi", { n: sinf })}
               </span>
+              {sinf === ozSinf && (
+                <span className="mt-0.5 block text-[12px] text-brand-blue">{t("testSizning")}</span>
+              )}
               {/* Ikki fan bo'lsa ikkalasi ham yoziladi: 9-sinf
                   o'quvchisi geometriya testi ham borligini shu
                   qatordan biladi. */}

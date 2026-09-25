@@ -5,11 +5,13 @@
  * noto'g'ri bo'lsa — masalan bola havolani qo'lda o'zgartirsa yoki kurs
  * o'chirilgan bo'lsa — bo'sh ekran o'rniga tushunarli sahifa ko'rsatiladi.
  */
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Panel, TepagaQayt, panelKerakmi } from "./components/Panel";
 import { Kutish } from "./components/Kutish";
 import { NotFound } from "./screens/NotFound";
+import { Anketa } from "./components/Anketa";
+import { useProfil } from "./lib/profil";
 
 /* ---------------------------------------------------------------- ekranlar
  *
@@ -70,7 +72,6 @@ import { oyinById } from "./lib/oyin";
 import { darajaniOqi } from "./lib/oyin/tur";
 import { ochiqmi } from "./lib/oyin/rekord";
 import { COURSES, courseBySlug } from "./lib/curriculum";
-import { getHisob } from "./lib/api";
 import { KUNLIK_MAQSAD, useProgress } from "./lib/progress";
 import type { LessonResult } from "./lib/progress";
 import { isUnlocked, lessonId } from "./lib/types";
@@ -132,6 +133,8 @@ function Yollar() {
       <Route path="/testlar" element={<TestSinfSahifasi />} />
       <Route path="/toplam/:id" element={<ToplamSahifasi />} />
       <Route path="/profillar" element={<ProfilSahifasi />} />
+      {/* "Siz kimsiz" javobini o'zgartirish — bosh sahifadagi yorliq. */}
+      <Route path="/men" element={<MenSahifasi />} />
       <Route path="/sozlamalar" element={<SozlamaSahifasi />} />
       {/* Botdagi «Saytga kirish» havolasi. Marshrut Tanishuv darvozasidan
           KEYIN turadi, lekin darvoza uni o'zi o'tkazib yuboradi — aks holda
@@ -230,6 +233,8 @@ function BoshSahifasi() {
       onReyting={() => nav(yolReyting())}
       onSozlama={() => nav(yolSozlama())}
       onProfillar={() => nav("/profillar")}
+      onKurs={(c) => nav(yolKurs(c))}
+      onProfil={() => nav("/men")}
     />
   );
 }
@@ -273,21 +278,13 @@ function ToplamSahifasi() {
 function KurslarSahifasi() {
   const { progressOf } = useProgress();
   const nav = useNavigate();
-  const [kim, setKim] = useState("");
   useTema("bosh");
-
   // Anketadagi javob — ro'yxat tartibi shunga qarab o'zgaradi
-  // (`screens/Dashboard.tsx` dagi KATTALAR izohi).
-  useEffect(() => {
-    let bekor = false;
-    void (async () => {
-      try {
-        const h = await getHisob();
-        if (!bekor) setKim(h?.kim ?? "");
-      } catch { /* anketa yo'q — maktab tartibida qoladi */ }
-    })();
-    return () => { bekor = true; };
-  }, []);
+  // (`screens/Dashboard.tsx` dagi KATTALAR izohi). Ilgari u har
+  // ochilishda serverdan so'ralardi; endi qurilmada (`lib/profil.ts`)
+  // va javob berilgan zahoti ro'yxat qayta tiziladi.
+  const prof = useProfil();
+  const kim = prof?.kim ?? "";
 
   // Formulalar va blok testlar eng yuqori sinf kursida to'liq turadi:
   // kattalar uchun aynan o'sha kerak.
@@ -568,6 +565,12 @@ function FormulalarSahifasi() {
 
   if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
   return <Formulalar sinf={sinfOf(c.grade)} onBack={() => nav(yolKurs(c))} />;
+}
+
+function MenSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Anketa qayta onTugadi={() => nav(yolBosh())} />;
 }
 
 function ProfilSahifasi() {

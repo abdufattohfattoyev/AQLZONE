@@ -9,6 +9,7 @@ import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import type { Kalit } from "../lib/matn";
 import { sorov } from "../lib/api";
+import { profilKurslari, useProfil } from "../lib/profil";
 import { kursMatn } from "../lib/tarjima/kurs";
 import type { Course } from "../lib/curriculum";
 import type { Progress } from "../lib/types";
@@ -54,7 +55,7 @@ interface Props {
  * BIRINCHI, ota-ona va o'quvchiga esa sinflar birinchi chiqadi —
  * ota-ona bolasining sinfini qidirib keladi.
  */
-const KATTALAR = ["talaba", "kattalar", "ustoz"];
+const KATTALAR = ["talaba", "kattalar", "ustoz", "abiturient"];
 
 /**
  * BITTA SAVOL — nega anketa emas.
@@ -92,6 +93,7 @@ export function Dashboard({
   const [javob, setJavob] = useState(kim ?? "");
   useEffect(() => { if (kim) setJavob(kim); }, [kim]);
   const kattalarAvval = KATTALAR.includes(javob);
+  const ozim = profilKurslari(useProfil());
 
   const savolBer = (kod: string) => {
     setJavob(kod);
@@ -169,6 +171,20 @@ export function Dashboard({
           ota-ona "bolam hali maktabga bormaydi" deganda aynan shu yerni
           izlaydi. Bitta ro'yxatda turganda u "0-sinf" dek ko'rinardi. */}
       {savol}
+
+      {/* SIZNING SINFINGIZ — anketada sinf aytilgan bo'lsa, o'sha
+          kurs(lar) eng tepada. Ro'yxat pastda to'liq qoladi: bola
+          o'tgan sinfni takrorlashi yoki oldinga o'tishi mumkin. */}
+      {ozim.length > 0 && (
+        <>
+          <Sarlavha kech={kech(50)}>{t("darslarSizning")}</Sarlavha>
+          <div className={`grid gap-2.5 ${ozim.length > 1 ? "sm:grid-cols-2" : ""}`}>
+            {ozim.map((c, i) => (
+              <KursKarta key={c.id} c={c} i={i} progressOf={progressOf} onOpen={onOpen} />
+            ))}
+          </div>
+        </>
+      )}
 
       {kattalarAvval && kattalarBolimi}
 

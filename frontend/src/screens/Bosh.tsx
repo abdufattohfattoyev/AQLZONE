@@ -58,6 +58,10 @@ import { OYINLAR } from "../lib/oyin";
 import { blokBormi, sinfOf } from "../lib/blok";
 import { useKompyuter } from "../lib/maket";
 import { qobiq, tgIsm } from "../lib/qobiq";
+import {
+  kichkintoyKerak, profilKursi, profilNomi, sinfOfProfil, useProfil, yolOf,
+} from "../lib/profil";
+import type { Profil, Yol } from "../lib/profil";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { keyingiDars } from "../lib/types";
@@ -82,21 +86,32 @@ interface Props {
   /** Kattalar bo'limidagi ikkita qo'shimcha yo'l. */
   onFormulalar: () => void;
   onImtihon: () => void;
+  /** Profildagi sinfning o'z kursi — "{n}-sinf darslari" tugmasi. */
+  onKurs: (c: Course) => void;
+  /** Anketani qayta ochish — "siz kimsiz" yorlig'i. */
+  onProfil: () => void;
 }
 
 /**
- * KATTA YOSHLI DEB HISOBLANADIGAN JAVOBLAR.
+ * PROFILGA QARAB ESHIKLAR TARTIBI.
  *
  * Anketa shuni ko'rsatdi: kelganlarning 58% i talaba, yana 20% i
- * o'qituvchi va boshqa kattalar. Ularga birinchi bo'lib "O'rganishni
- * boshlash · sinfingizni tanlang" degan tugma chiqsa, ilova o'ziga
- * emasdek ko'rinadi — `/darslar` shu sababdan eng katta chiqish
- * nuqtasi edi.
+ * o'qituvchi va boshqa kattalar. Ularga birinchi bo'lib "Kichkintoylar"
+ * va "Darslar · 1-sinf" chiqsa, ilova o'ziga emasdek ko'rinadi. Endi
+ * har kimga o'ziga kerakli bo'lim tepada (`lib/profil.ts`):
  *
- * Ota-ona ATAYLAB bu ro'yxatda yo'q: u bolasi uchun keladi va unga
- * sinf kerak.
+ *   maktab      darslar → testlar → o'yinlar → masalalar
+ *   abituriyent testlar → masalalar → darslar → o'yinlar
+ *   oliy        masalalar → testlar → darslar → o'yinlar
+ *
+ * Kichkintoylar faqat kerak bo'lganga (ota-ona, boshlang'ich sinf
+ * o'qituvchisi) — talabaga u shovqin.
  */
-const KATTALAR = ["talaba", "kattalar", "ustoz"];
+const TARTIB: Record<Yol, string[]> = {
+  maktab: ["palette", "map", "chart", "puzzle", "pencil"],
+  abiturient: ["chart", "pencil", "map", "puzzle", "palette"],
+  oliy: ["pencil", "chart", "map", "puzzle", "palette"],
+};
 
 /* Eshiklardagi sonlar — dasturdan hisoblanadi (fayl boshidagi izoh). */
 const JAMI_DARS = COURSES.reduce((s, c) => s + lessonCount(c), 0);
@@ -137,6 +152,7 @@ function davomJoyi(progressOf: (c: Course) => Progress) {
 export function Bosh({
   progressOf, onKichkintoy, onDarslar, onMasalalar, onTestlar, onOyinlar,
   onDavom, onKunlikSon, onQidiruv, onReyting, onSozlama, onProfillar, onFormulalar, onImtihon,
+  onKurs, onProfil,
 }: Props) {
   const kopBola = profilSoni() > 1;
   const [hisob, setHisob] = useState<Hisob | null>(null);
@@ -148,7 +164,10 @@ export function Bosh({
   }, []);
 
   const bola = joriyBola(hisob);
-  const kattalar = KATTALAR.includes(hisob?.kim ?? "");
+  const prof = useProfil();
+  const yol = yolOf(prof);
+  // Formulalar va DTM kartalari — maktab yo'lidan boshqa hammaga.
+  const kattalar = yol !== "maktab";
   const davom = davomJoyi(progressOf);
   const kompyuter = useKompyuter();
   // Bot ichida bosh sahifa boshqacha ochiladi: katta logo o'rniga
@@ -157,7 +176,7 @@ export function Bosh({
   const bot = qobiq() === "tg";
   const ism = (hisob?.toliqIsm || tgIsm()).split(" ")[0] ?? "";
 
-  const eshiklar: EshikMalumot[] = [
+  const hammasi: EshikMalumot[] = [
     { ic: "palette", nom: t("kichkintoyQisqa"), izoh: t("boshKichkintoyIzoh"),
       batafsil: t("boshKichkintoyBatafsil"), son: t("boshMavzuSoni", { n: MAVZULAR.length }), on: onKichkintoy },
     { ic: "map", nom: t("tabDarslar"), izoh: t("boshDarslarIzoh"),
@@ -169,10 +188,28 @@ export function Bosh({
     { ic: "puzzle", nom: t("oyinlar"), izoh: t("boshOyinlarIzoh"),
       batafsil: t("boshOyinlarBatafsil"), son: t("boshOyinSoni", { n: OYINLAR.length }), on: onOyinlar },
   ];
+  // Ota-ona maktabgacha bola uchun kelgan — unga kichkintoylar birinchi.
+  const tartib = sinfOfProfil(prof) === 0 ? ["palette", "map", "puzzle", "chart", "pencil"] : TARTIB[yol];
+  const eshiklar = tartib
+    .map((ic) => hammasi.find((e) => e.ic === ic)!)
+    .filter((e) => e.ic !== "palette" || kichkintoyKerak(prof));
+  const juft = eshiklar.length % 2 === 0;
+  /** Kompyuter setkasi: 5 ta — 3+2, 4 ta — 2+2; teshik qolmasin. */
+  const ustun = (i: number) =>
+    juft ? "xl:col-span-3"
+      : i < 3 ? "xl:col-span-2"
+        : i === eshiklar.length - 1 ? "col-span-2 xl:col-span-3" : "xl:col-span-3";
+
+  const profilYorliq = prof && (
+    <Chip ic="parent" on={onProfil} rang="text-brand-blue">
+      {profilNomi(prof)}
+    </Chip>
+  );
 
   const asosiy = (
-    <AsosiyAmal davom={davom} kattalar={kattalar} katta={kompyuter}
-      onDarslar={onDarslar} onMasalalar={onMasalalar} onDavom={onDavom} />
+    <AsosiyAmal davom={davom} prof={prof} katta={kompyuter}
+      onDarslar={onDarslar} onMasalalar={onMasalalar} onDavom={onDavom}
+      onKurs={onKurs} onImtihon={onImtihon} onTestlar={onTestlar} />
   );
 
   if (kompyuter) {
@@ -186,6 +223,7 @@ export function Bosh({
             <p className="mt-1 text-[15px] text-ink-soft">{t("boshSalomIzoh")}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {profilYorliq}
             {kopBola && <Chip ic="parent" on={onProfillar}>{t("kimOynayapti")}</Chip>}
             <Chip ic="pencil" on={onSozlama} avatar={bola?.avatar}>
               {hisob?.toliqIsm || t("hisobim")}
@@ -219,11 +257,11 @@ export function Bosh({
         </div>
 
         <h2 className="mt-9 text-[20px]">{t("boshBolimlar")}</h2>
-        {/* Beshta karta: keng ekranda 3 + 2 (pastki ikkitasi kengroq),
-            aks holda oxirgi qatorda teshik qolardi. */}
+        {/* Keng ekranda 3 + 2 yoki 2 + 2 (`ustun`) — aks holda oxirgi
+            qatorda teshik qolardi. */}
         <div className="mt-3 grid grid-cols-2 gap-4 xl:grid-cols-6">
           {eshiklar.map((e, i) => (
-            <div key={e.ic} className={`[&>*]:h-full ${i < 3 ? "xl:col-span-2" : i === 4 ? "col-span-2 xl:col-span-3" : "xl:col-span-3"}`}>
+            <div key={e.ic} className={`[&>*]:h-full ${ustun(i)}`}>
               <KompEshik e={e} kech={80 + i * 40} />
             </div>
           ))}
@@ -287,6 +325,10 @@ export function Bosh({
           {/* Yulduz va dars soni pillalari olib tashlandi: yangi odamga
               "0 yulduz · 637 dars" hech narsa demaydi, qaytganga esa
               yulduz kurs ichida ko'rinadi. */}
+          {/* "Siz kimsiz" yorlig'i — ilova nimaga moslashganini aytadi
+              va bosilsa javobni o'zgartirish mumkin. Alohida turadi:
+              tor ekranda o'z qatoriga tushadi. */}
+          {profilYorliq}
           <span className="flex min-w-0 items-center gap-1.5">
             {kopBola && (
               <Chip ic="parent" on={onProfillar}>{t("kimOynayapti")}</Chip>
@@ -379,8 +421,11 @@ export function Bosh({
  * U "hozir nima qilay?" degan savolga javob beradi:
  *
  *   qaytgan odam   → to'xtagan darsiga (yashil, "davom")
- *   yangi odam     → sinf tanlash (ko'k, "boshlash")
- *   yangi katta    → masalalar (yashil)
+ *   sinfi ma'lum   → o'sha sinf kursiga ("7-sinf darslari")
+ *   abituriyent    → DTM variantlari
+ *   o'qituvchi     → testlar (maktab) yoki masalalar (OTM)
+ *   oliy yo'l      → masalalar
+ *   profil yo'q    → sinf tanlash (ko'k, "boshlash")
  *
  * Ilgari yangi odamga katta tugma yo'q edi — beshta teng eshik va
  * ulardan qaysi biri "boshlanish" ekanini o'zi topishi kerak edi.
@@ -388,13 +433,18 @@ export function Bosh({
  * `katta` — kompyuterdagi ko'rinish: o'sha tugma, balandroq va
  * yirikroq yozuv bilan, chunki u yerda u yarim ekranni egallaydi.
  */
-function AsosiyAmal({ davom, kattalar, katta, onDarslar, onMasalalar, onDavom }: {
+function AsosiyAmal({
+  davom, prof, katta, onDarslar, onMasalalar, onDavom, onKurs, onImtihon, onTestlar,
+}: {
   davom: ReturnType<typeof davomJoyi>;
-  kattalar: boolean;
+  prof: Profil | null;
   katta: boolean;
   onDarslar: () => void;
   onMasalalar: () => void;
   onDavom: (c: Course, ui: number, li: number) => void;
+  onKurs: (c: Course) => void;
+  onImtihon: () => void;
+  onTestlar: () => void;
 }) {
   const ol = katta
     ? { p: "p-6 min-h-[120px]", nom: "text-[22px]", izoh: "text-[14.5px]" }
@@ -424,7 +474,23 @@ function AsosiyAmal({ davom, kattalar, katta, onDarslar, onMasalalar, onDavom }:
       `${kursMatn(davom.c.title)} · ${t("boshDavomJoy", { bob: davom.ui + 1, dars: davom.li + 1 })}`,
       "check");
   }
-  if (kattalar) {
+  const yol = yolOf(prof);
+  const kurs = profilKursi(prof);
+  if (kurs) {
+    const s = sinfOfProfil(prof) ?? 0;
+    return tugma("bg-brand-blue", "Bosh: sinf darslari", () => onKurs(kurs),
+      s === 0 ? t("boshMaktabgachaDarslari") : t("boshSinfDarslari", { n: s }),
+      t("boshSinfDarslariIzoh"), "map");
+  }
+  if (yol === "abiturient") {
+    return tugma("bg-brand-blue", "Bosh: abiturient DTM", onImtihon,
+      t("boshAbiturient"), t("boshAbiturientIzoh"), "clock");
+  }
+  if (prof?.kim === "ustoz" && yol === "maktab") {
+    return tugma("bg-brand-blue", "Bosh: ustoz testlar", onTestlar,
+      t("boshUstoz"), t("boshUstozIzoh"), "chart");
+  }
+  if (yol === "oliy") {
     return tugma("bg-brand-green", "Bosh: kattalar masalalar", onMasalalar,
       t("boshKattalarBoshla"), t("boshKattalarIzoh"));
   }

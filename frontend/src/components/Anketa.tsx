@@ -1,39 +1,43 @@
 /**
- * TANISHUV ANKETASI — ro'yxatdan o'tgandan keyin, bir marta.
+ * TANISHUV ANKETASI — ilovaga kirgan HAR BIR odamga, bir marta.
  *
  * Har savol ALOHIDA ekranda va har biri bir bosish:
  *
- *   1. Siz kimsiz?       maktab o'quvchisi / talaba / ota-ona /
- *                        o'qituvchi / boshqa (kattalar)
+ *   1. Siz kimsiz?       maktab o'quvchisi / talaba / abituriyent /
+ *                        ota-ona / o'qituvchi / boshqa
  *   2. Bosqich           savol va javoblar birinchi javobga moslashadi
  *   3. Qayerdansiz?      viloyat
  *
- * ─────────────── FAQAT MAKTAB EMAS ───────────────
- *
- * Ilgari javoblar maktabga qaratilgan edi (o'quvchi, ota-ona, ustoz) va
- * ikkinchi savol har doim "qaysi sinf?" edi. Ilovaga esa talabalar,
- * o'quv markazi o'qituvchilari, matematika yoqadigan kattalar ham
- * keladi — ular noto'g'ri tugmani bosib, tahlilni buzardi.
- *
- * Endi ikkinchi savol kimligiga qarab:
+ * Ikkinchi savol kimligiga qarab:
  *
  *   o'quvchi    qaysi sinf (1–11)
  *   ota-ona     farzand nechanchi sinfda (maktabgacha ham bor)
  *   talaba      nechanchi kurs / magistratura
+ *   abituriyent SO'RALMAYDI — unga DTM kerak, sinf ham, kurs ham emas
  *   o'qituvchi  qayerda: maktab (3 bosqich) / OTM / o'quv markazi
- *   kattalar    SO'RALMAYDI — ular uchun bosqich ma'nosiz
+ *   boshqa      qaysi daraja: maktab matematikasi yoki universitet
  *
  * Kodlar serverdagi `tahlil.BOSQICHLAR` bilan bir xil.
  *
  * Nega yozish maydoni yo'q: klaviatura ochilgan zahoti anketa "forma"
- * bo'lib qoladi va odam uni yopadi. "O'tkazib yuborish" har ekranda bor.
+ * bo'lib qoladi va odam uni yopadi.
+ *
+ * ─────────────── ENDI HAMMAGA VA MAJBURIY ───────────────
+ *
+ * Ilgari anketa faqat ro'yxatdan o'tganga chiqardi, har savolda
+ * "o'tkazib yuborish" bor edi va uni 12% odam to'ldirardi. Ilova esa
+ * kimga gapirayotganini bilmay, talabaga ham "1-sinf" ni ko'rsatardi.
+ * Endi birinchi ikki savol (kim va bosqich) HAMMAGA va o'tkazib
+ * bo'lmaydi — ikkalasi ham bitta bosish. Javob darhol qurilmaga
+ * yoziladi (`lib/profil.ts`) va butun ilova shunga moslashadi.
+ * Viloyat — faqat tahlil uchun, u o'tkazib yuboriladi.
  */
 import { useState } from "react";
 import { sorov } from "../lib/api";
 import { til } from "../lib/til";
 import { t } from "../lib/matn";
-
-type Kim = "oquvchi" | "talaba" | "ota_ona" | "ustoz" | "kattalar";
+import { BOSQICH, profilQoy } from "../lib/profil";
+import type { Kim } from "../lib/profil";
 
 const VILOYATLAR: [string, string, string][] = [
   ["toshkent_sh", "Toshkent shahri", "г. Ташкент"],
@@ -55,96 +59,129 @@ const VILOYATLAR: [string, string, string][] = [
 
 interface Javob { kim?: Kim; sinf?: number; viloyat?: string }
 
+/** [kod, nom, izoh?] */
+type Tanlov = [number, string, string?];
+
 /** Ikkinchi savolning sarlavhasi va javoblari — kimligiga qarab. */
-function bosqichSavol(kim: Kim | undefined): { savol: string; tanlov: [number, string][] } | null {
-  const sinflar = (boshi: number): [number, string][] =>
+function bosqichSavol(kim: Kim | undefined): { savol: string; tanlov: Tanlov[]; uzun: boolean } | null {
+  const sinflar = (boshi: number): Tanlov[] =>
     Array.from({ length: 12 - boshi }, (_, i) => [boshi + i, String(boshi + i)]);
   switch (kim) {
-    case "kattalar":
+    case "abiturient":
       return null;
+    case "kattalar":
+      return {
+        savol: t("anketaDaraja"),
+        uzun: true,
+        tanlov: [
+          [BOSQICH.maktabDaraja, t("anketaDarajaMaktab"), t("anketaDarajaMaktabIzoh")],
+          [BOSQICH.oliyDaraja, t("anketaDarajaOliy"), t("anketaDarajaOliyIzoh")],
+        ],
+      };
     case "talaba":
       return {
         savol: t("anketaKurs"),
+        uzun: true,
         tanlov: [
-          ...[1, 2, 3, 4].map((k): [number, string] => [100 + k, t("anketaKursN", { n: k })]),
-          [105, t("anketaMagistr")],
+          ...[1, 2, 3, 4].map((k): Tanlov => [100 + k, t("anketaKursN", { n: k })]),
+          [BOSQICH.magistr, t("anketaMagistr")],
         ],
       };
     case "ustoz":
       return {
         savol: t("anketaUstozJoy"),
+        uzun: true,
         tanlov: [
           [130, t("anketaUstozBoshlangich")],
           [131, t("anketaUstozOrta")],
           [132, t("anketaUstozYuqori")],
-          [120, t("anketaUstozOtm")],
-          [121, t("anketaUstozMarkaz")],
+          [BOSQICH.ustozOtm, t("anketaUstozOtm")],
+          [BOSQICH.ustozMarkaz, t("anketaUstozMarkaz")],
         ],
       };
     case "ota_ona":
-      return { savol: t("anketaSinfOta"), tanlov: [[0, t("anketaMaktabgacha")], ...sinflar(1)] };
+      return { savol: t("anketaSinfOta"), uzun: false, tanlov: [[0, t("anketaMaktabgacha")], ...sinflar(1)] };
     default:
-      return { savol: t("anketaSinf"), tanlov: sinflar(1) };
+      return { savol: t("anketaSinf"), uzun: false, tanlov: sinflar(1) };
   }
 }
 
-export function Anketa({ onTugadi }: { onTugadi: () => void }) {
+/**
+ * `qayta` — bosh sahifadagi "o'zgartirish" dan ochilgan. U holda
+ * viloyat so'ralmaydi (u allaqachon bor) va yopish tugmasi chiqadi.
+ */
+export function Anketa({ onTugadi, qayta = false }: { onTugadi: () => void; qayta?: boolean }) {
   const [qadam, setQadam] = useState(1);
   const [javob, setJavob] = useState<Javob>({});
 
   const bosqich = bosqichSavol(javob.kim);
-  /** Kattalarda ikkinchi savol yo'q — jami ikki qadam. */
-  const jami = javob.kim === "kattalar" ? 2 : 3;
-  /** Ekrandagi raqam: kattalarda viloyat "2 / 2" bo'lib ko'rinadi. */
-  const korinadigan = javob.kim === "kattalar" && qadam === 3 ? 2 : qadam;
+  const ikkinchiBor = javob.kim !== "abiturient";
+  const jami = (ikkinchiBor ? 2 : 1) + (qayta ? 0 : 1);
+  const korinadigan = !ikkinchiBor && qadam === 3 ? 2 : qadam;
 
   const yubor = (j: Javob) => {
-    // Javobni kutmaymiz: anketa kuzatuv, uning sekin interneti
-    // odamni ilova eshigida ushlab turmasin.
+    // Javobni kutmaymiz: sekin internet odamni eshikda ushlab turmasin.
     void sorov("/api/v1/anketa", j).catch(() => {});
     onTugadi();
   };
 
   const keyingi = (j: Javob) => {
     setJavob(j);
-    if (qadam >= 3) { yubor(j); return; }
-    // Kattalarga bosqich so'ralmaydi — to'g'ri viloyatga.
-    setQadam(qadam === 1 && j.kim === "kattalar" ? 3 : qadam + 1);
+    const bosqichTayyor = qadam === 2 || (qadam === 1 && j.kim === "abiturient");
+    // Kim va bosqich tayyor — ilova DARHOL moslashadi, viloyat kutilmaydi.
+    if (bosqichTayyor && j.kim) profilQoy({ kim: j.kim, bosqich: j.sinf ?? -1 });
+    if (qadam >= 3 || (bosqichTayyor && qayta)) { yubor(j); return; }
+    setQadam(qadam === 1 && j.kim === "abiturient" ? 3 : qadam + 1);
   };
 
-  const kimlar: [Kim, string][] = [
-    ["oquvchi", t("anketaOquvchi")],
-    ["talaba", t("anketaTalaba")],
-    ["ota_ona", t("anketaOtaOna")],
-    ["ustoz", t("anketaUstoz")],
-    ["kattalar", t("anketaKattalar")],
+  const orqaga = () => setQadam(qadam === 3 && !ikkinchiBor ? 1 : Math.max(1, qadam - 1));
+
+  const kimlar: [Kim, string, string][] = [
+    ["oquvchi", t("anketaOquvchi"), t("anketaOquvchiIzoh")],
+    ["talaba", t("anketaTalaba"), t("anketaTalabaIzoh")],
+    ["abiturient", t("anketaAbiturient"), t("anketaAbiturientIzoh")],
+    ["ota_ona", t("anketaOtaOna"), t("anketaOtaOnaIzoh")],
+    ["ustoz", t("anketaUstoz"), t("anketaUstozIzoh")],
+    ["kattalar", t("anketaKattalar"), t("anketaKattalarIzoh")],
   ];
 
-  // Uzun yozuvli tanlovlar (o'qituvchi, talaba) bitta ustunda — "OTM"
-  // yoki "o'quv markazi" uch ustunli setkaga sig'masdi.
-  const uzunTanlov = javob.kim === "ustoz" || javob.kim === "talaba";
-
   return (
-    <div className="mx-auto grid min-h-ekran w-full max-w-[430px] place-items-center px-4 py-8">
-      <div className="az-kirish w-full rounded-clay bg-karta p-6 shadow-clay">
-        <div className="flex items-center justify-between text-[12px] text-ink-dim">
-          <span>{korinadigan} / {jami}</span>
-          <button type="button" onClick={() => yubor(javob)} className="min-h-11 px-1">
-            {t("anketaOtkaz")}
-          </button>
+    <div className="mx-auto grid min-h-ekran w-full max-w-[460px] place-items-center px-4 py-6">
+      <div className="az-kirish w-full rounded-clay bg-karta p-5 shadow-clay sm:p-6">
+        <div className="flex min-h-11 items-center justify-between gap-2 text-[12px] text-ink-dim">
+          {qadam > 1 ? (
+            <button type="button" onClick={orqaga} className="min-h-11 px-1" data-tahlil="Anketa: ortga">
+              ← {t("ortga")}
+            </button>
+          ) : <span>{korinadigan} / {jami}</span>}
+          {qadam > 1 && <span>{korinadigan} / {jami}</span>}
+          {/* O'tkazib yuborish FAQAT viloyatda: kim va bosqich — ilova
+              moslashadigan javob, viloyat esa faqat tahlil uchun. */}
+          {qadam === 3 && (
+            <button type="button" onClick={() => yubor(javob)} className="min-h-11 px-1">
+              {t("anketaOtkaz")}
+            </button>
+          )}
+          {qayta && qadam === 1 && (
+            <button type="button" onClick={onTugadi} className="min-h-11 px-1">
+              {t("yopish")}
+            </button>
+          )}
         </div>
 
         {qadam === 1 && (
           <>
             <h1 className="mt-1 text-[22px] leading-tight">{t("anketaSarlavha")}</h1>
-            <p className="mt-1 text-[13px] text-ink-dim">{t("anketaIzoh")}</p>
-            <h2 className="mt-5 text-[16px]">{t("anketaKim")}</h2>
-            <div className="mt-3 space-y-2">
-              {kimlar.map(([kod, nom]) => (
-                <button key={kod} type="button" onClick={() => keyingi({ ...javob, kim: kod })}
-                  className="clay-press flex min-h-12 w-full items-center justify-center rounded-2xl
-                             bg-sahna px-3 font-display text-[16px] shadow-ichki">
-                  {nom}
+            <p className="mt-1 text-[13px] leading-snug text-ink-dim">{t("anketaMajburIzoh")}</p>
+            <h2 className="mt-4 text-[16px]">{t("anketaKim")}</h2>
+            <div className="mt-3 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+              {kimlar.map(([kod, nom, izoh]) => (
+                <button key={kod} type="button" data-tahlil={`Anketa: ${kod}`}
+                  onClick={() => keyingi({ ...javob, kim: kod, sinf: undefined })}
+                  className="clay-press flex min-h-14 w-full flex-col items-start justify-center rounded-2xl
+                             bg-sahna px-3.5 py-2 text-left shadow-ichki">
+                  <span className="font-display text-[15px] leading-tight">{nom}</span>
+                  <span className="mt-0.5 text-[12px] leading-snug text-ink-dim">{izoh}</span>
                 </button>
               ))}
             </div>
@@ -154,12 +191,15 @@ export function Anketa({ onTugadi }: { onTugadi: () => void }) {
         {qadam === 2 && bosqich && (
           <>
             <h2 className="mt-1 text-[20px] leading-tight">{bosqich.savol}</h2>
-            <div className={`mt-4 grid gap-2 ${uzunTanlov ? "grid-cols-1" : "grid-cols-3"}`}>
-              {bosqich.tanlov.map(([kod, nom]) => (
-                <button key={kod} type="button" onClick={() => keyingi({ ...javob, sinf: kod })}
-                  className={`clay-press min-h-12 rounded-2xl bg-sahna px-3 font-display text-[15px]
-                              shadow-ichki ${kod === 0 ? "col-span-3" : ""}`}>
-                  {nom}
+            <div className={`mt-4 grid gap-2 ${bosqich.uzun ? "grid-cols-1" : "grid-cols-3"}`}>
+              {bosqich.tanlov.map(([kod, nom, izoh]) => (
+                <button key={kod} type="button" data-tahlil="Anketa: bosqich"
+                  onClick={() => keyingi({ ...javob, sinf: kod })}
+                  className={`clay-press flex min-h-12 flex-col justify-center rounded-2xl bg-sahna px-3
+                              py-2 shadow-ichki ${kod === 0 ? "col-span-3" : ""}
+                              ${izoh ? "items-start text-left" : "items-center"}`}>
+                  <span className="font-display text-[15px] leading-tight">{nom}</span>
+                  {izoh && <span className="mt-0.5 text-[12px] leading-snug text-ink-dim">{izoh}</span>}
                 </button>
               ))}
             </div>
