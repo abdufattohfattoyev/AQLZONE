@@ -82,7 +82,24 @@ export const dtmBormi = (sinf: number): boolean => sinf === 11;
  *   "hammasi"  butun sinf — algebra va geometriya aralash
  *   bob        bitta bob (kurs id + bobning tartib raqami)
  */
-export type Qamrov = { tur: "hammasi" } | { tur: "bob"; kursId: string; ui: number };
+export type Qamrov =
+  | { tur: "hammasi" }
+  | { tur: "bob"; kursId: string; ui: number }
+  | { tur: "imtihon" };
+
+/**
+ * IMTIHON QAMROVI — qaysi sinflardan savol olinadi.
+ *
+ * DTM matematika blokida savol bitta sinfdan kelmaydi: kvadrat
+ * tenglama 8-sinfniki, progressiya 9-sinfniki, logarifm 11-sinfniki va
+ * imtihonda uchalasi ham bo'ladi. Shuning uchun "11-sinf testi" DTM ga
+ * tayyorgarlik emas — u faqat oxirgi yilni o'lchaydi.
+ *
+ * 7-sinfdan boshlanadi: undan pastdagi mavzular (oddiy kasr, o'nli
+ * kasr) imtihonda alohida savol bo'lib deyarli uchramaydi va ular
+ * baribir yuqori sinf savollari ichida ishlatiladi.
+ */
+export const IMTIHON_SINFLAR = [7, 8, 9, 10, 11];
 
 /* ------------------------------------------------------------- savol */
 
@@ -122,6 +139,10 @@ export interface Blok {
  */
 export const sinfKurslari = (sinf: number): Course[] =>
   COURSES.filter((c) => c.grade === sinf || c.grade === 100 + sinf);
+
+/** Imtihon uchun kurslar — 7–11 sinf, algebra va geometriya birga. */
+export const imtihonKurslari = (): Course[] =>
+  IMTIHON_SINFLAR.flatMap((n) => sinfKurslari(n));
 
 /** Test shu sinfda bormi. 5-sinfdan 11-gacha. */
 export const blokBormi = (sinf: number): boolean => sinf >= 5 && sinf <= 11;
@@ -226,7 +247,7 @@ export function blokYasa(
    */
   boshqa?: { savol: number; daqiqa: number },
 ): Blok | null {
-  const kurslar = sinfKurslari(sinf);
+  const kurslar = qamrov.tur === "imtihon" ? imtihonKurslari() : sinfKurslari(sinf);
   if (!kurslar.length) return null;
 
   const hammasi: Manba[] = [];

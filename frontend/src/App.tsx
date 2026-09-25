@@ -42,6 +42,8 @@ const Oyinlar = lazy(() => import("./screens/Oyinlar").then((m) => ({ default: m
 const Maydon = lazy(() => import("./screens/Maydon").then((m) => ({ default: m.Maydon })));
 const KunlikSon = lazy(() => import("./screens/KunlikSon").then((m) => ({ default: m.KunlikSon })));
 const SonOvi = lazy(() => import("./screens/SonOvi").then((m) => ({ default: m.SonOvi })));
+const Imtihon = lazy(() => import("./screens/Imtihon").then((m) => ({ default: m.Imtihon })));
+const BlokEkran = lazy(() => import("./screens/Blok").then((m) => ({ default: m.Blok })));
 const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel })));
 const DuelQabul = lazy(() => import("./screens/Duel").then((m) => ({ default: m.DuelQabul })));
 const JamoaOchish = lazy(() => import("./screens/Xona").then((m) => ({ default: m.JamoaOchish })));
@@ -79,7 +81,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
+  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolBosh, yolTestSinf, yolToplam,
 } from "./lib/yollar";
@@ -156,6 +158,8 @@ function Yollar() {
       <Route path="/oyinlar/maydon" element={<MaydonSahifasi />} />
       <Route path="/oyinlar/kunlik-son" element={<KunlikSonSahifasi />} />
       <Route path="/oyinlar/son-ovi" element={<SonOviSahifasi />} />
+      <Route path="/imtihon" element={<ImtihonSahifasi />} />
+      <Route path="/imtihon/:n" element={<ImtihonVariantSahifasi />} />
       <Route path="/oyinlar/shaharcha" element={<ShaharchaSahifasi />} />
       <Route path="/oyinlar/shaharcha/:pid" element={<ShaharchaSahifasi />} />
       <Route path="/oyinlar/jadval" element={<JadvalSahifasi />} />
@@ -221,6 +225,7 @@ function BoshSahifasi() {
       onKunlikSon={() => nav(yolKunlikSon())}
       onFormulalar={() => nav(yolFormulalar(
         COURSES.filter((c) => c.grade > 0).slice(-1)[0] ?? COURSES[0]))}
+      onImtihon={() => nav(yolImtihon())}
       onQidiruv={() => nav(yolQidiruv())}
       onReyting={() => nav(yolReyting())}
       onSozlama={() => nav(yolSozlama())}
@@ -293,7 +298,7 @@ function KurslarSahifasi() {
       onOpen={(c) => nav(yolKurs(c))}
       kim={kim}
       onFormulalar={() => nav(yolFormulalar(eng))}
-      onTestlar={() => nav(yolTestSinf())}
+      onTestlar={() => nav(yolImtihon())}
       onMasalalar={() => nav(yolMasalalar())}
       onOyinlar={() => nav(yolOyinlar())}
     />
@@ -705,6 +710,29 @@ function SonOviSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
   return <SonOvi onChiq={() => nav(yolOyinlar())} />;
+}
+
+function ImtihonSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Imtihon onVariant={(n) => nav(yolImtihonVariant(n))} onChiq={() => nav(yolKurslar())} />;
+}
+
+/**
+ * Bitta DTM varianti — oddiy blok test yurituvchisining o'zi
+ * (`screens/Blok.tsx`), faqat savollar variantdan yasaladi va 7–11
+ * sinfning hammasidan keladi (`lib/imtihon.ts`).
+ */
+function ImtihonVariantSahifasi() {
+  const nav = useNavigate();
+  const { n } = useParams();
+  useTema("bosh");
+  const raqam = Number(n);
+  if (!Number.isInteger(raqam) || raqam < 1) return <Navigate to={yolImtihon()} replace />;
+  return (
+    <BlokEkran sinf={11} uzunlik="dtm" qamrov={{ tur: "imtihon" }} imtihon={raqam}
+      onExit={() => nav(yolImtihon())} />
+  );
 }
 
 function MaydonSahifasi() {

@@ -66,6 +66,7 @@ import { yolDars } from "../lib/yollar";
 import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
 import { useFaollik } from "../lib/faollik";
+import { natijaSaqla as imtihonSaqla, variantYasa } from "../lib/imtihon";
 
 /** Bitta berilgan javob. `null` — ulgurilmadi. */
 interface Javob {
@@ -73,7 +74,17 @@ interface Javob {
   togri: boolean;
 }
 
-export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, onExit }: {
+export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, onExit }: {
+  /**
+   * IMTIHON VARIANTI — raqami berilsa, savollar shu variantdan
+   * yasaladi (`lib/imtihon.ts`) va natija qurilmada variant bo'yicha
+   * saqlanadi.
+   *
+   * To'plam kabi, bu yerda ham "yarim qolgan test" saqlanmaydi:
+   * imtihon varianti bir o'tirishda, vaqt bilan ishlanadi — yarmida
+   * to'xtab, ertaga davom etish mashqning ma'nosini yo'qotadi.
+   */
+  imtihon?: number;
   /**
    * Test to'plami — berilsa savollar URUG' bilan yasaladi (hamma uchun
    * bir xil), natija serverga yoziladi va yakunda boshqalar bilan
@@ -116,17 +127,18 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, 
    * yangisini yasashdan oldin "davom etasizmi?" so'raladi. Javob
    * berilgach bu qiymat ahamiyatsiz bo'lib qoladi (`tanlov`).
    */
-  const [yarim] = useState(() => (toplam ? null : joriyniOqi()));
+  const [yarim] = useState(() => (toplam || imtihon ? null : joriyniOqi()));
   const [tanlov, setTanlov] = useState<"sora" | "davom" | "yangi">(() => {
-    const bor = !toplam && joriyniOqi() !== null;
+    const bor = !toplam && !imtihon && joriyniOqi() !== null;
     if (!bor) return "yangi";
     return davomEt ? "davom" : "sora";
   });
 
   const blok = useMemo(
-    () => (toplam ? toplamYasa(toplam) : blokYasa(sinf, uzunlik, qamrov)),
+    () => (imtihon ? variantYasa(imtihon)
+      : toplam ? toplamYasa(toplam) : blokYasa(sinf, uzunlik, qamrov)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sinf, uzunlik, qamrov, urinish],
+    [sinf, uzunlik, qamrov, urinish, imtihon],
   );
 
   // Material topilmadi. Amalda bu deyarli bo'lmaydi (test qulfsiz va
@@ -152,7 +164,7 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, 
   return <Oyna key={`${uzunlik}-${urinish}-${davom ? "d" : "y"}`}
     blok={davom ? { savollar: davom.savollar, daqiqa: davom.daqiqa } : blok}
     davom={davom}
-    sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam}
+    sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam} imtihon={imtihon}
     onQayta={() => { joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
 }
@@ -226,8 +238,9 @@ function Bosh({ onExit }: { onExit: () => void }) {
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, onQayta, onExit }: {
+function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, onQayta, onExit }: {
   toplam?: Toplam;
+  imtihon?: number;
   blok: Blok;
   /** Yarim qolgan testdan davom etilyaptimi. Yo'q bo'lsa — yangi test. */
   davom: Joriy | null;
@@ -272,7 +285,9 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, onQayta, onExit }: 
   // Natija ekranida signal to'xtaydi — test tugagan.
   useFaollik(tugadi ? null : {
     joy: toplam ? "toplam" : "blok",
-    nom: toplam ? toplam.nom : bobNomi ? `${sinf}-sinf · ${bobNomi}` : `${sinf}-sinf · ${uzunlik}`,
+    nom: imtihon ? `${t("imtihonVariant", { n: imtihon })}`
+      : toplam ? toplam.nom
+        : bobNomi ? `${sinf}-sinf · ${bobNomi}` : `${sinf}-sinf · ${uzunlik}`,
     savol: Math.min(idx + 1, blok.savollar.length),
     jami: blok.savollar.length,
     togri: javoblar.filter((x) => x.togri).length,
@@ -338,11 +353,25 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, onQayta, onExit }: 
       return;
     }
 
+    // Imtihon varianti — natija variant raqami bilan saqlanadi:
+    // ro'yxatda "eng yaxshi natija" va o'rtacha daraja shundan
+    // hisoblanadi (`lib/imtihon.ts`).
+    if (imtihon) {
+      imtihonSaqla({
+        variant: imtihon,
+        togri: toliq.filter((x) => x.togri).length,
+        jami: toliq.length,
+        sekund: Math.round((Date.now() - boshlandi.current) / 1000),
+        vaqt: Date.now(),
+      });
+      return;
+    }
+
     // Test tugadi — yarim qolgan nusxa endi keraksiz. Qoldirilsa,
     // keyingi safar tugallangan test "davom etasizmi?" bo'lib
     // qaytib chiqardi.
     joriyniOchir();
-  }, [blok.savollar.length, sinf, uzunlik, bobNomi, toplam]);
+  }, [blok.savollar.length, sinf, uzunlik, bobNomi, toplam, imtihon]);
 
   /*
    * Har o'zgarishda yarim qolgan test yoziladi.
@@ -353,7 +382,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, onQayta, onExit }: 
    * Yagona ishonchli payt — javob berilgan zahoti.
    */
   useEffect(() => {
-    if (tugadi || toplam) return;
+    if (tugadi || toplam || imtihon) return;
     joriyniSaqla({
       sinf, uzunlik, bobNomi,
       savollar: blok.savollar,
@@ -363,7 +392,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, onQayta, onExit }: 
       tugash: tugash.current,
       boshlandi: boshlandi.current,
     });
-  }, [idx, javoblar, tugadi, blok.savollar, blok.daqiqa, sinf, uzunlik, bobNomi, toplam]);
+  }, [idx, javoblar, tugadi, blok.savollar, blok.daqiqa, sinf, uzunlik, bobNomi, toplam, imtihon]);
 
   /*
    * Soat.

@@ -75,6 +75,9 @@ const YOPIQ = [
   // Son ovi — o'yinda soat yuradi va pastdagi boshqaruv tugmalari
   // panel bilan yonma-yon tushib qolardi.
   /^\/oyinlar\/son-ovi$/,
+  // DTM varianti — bir soatlik imtihon. Pastdagi tugmani bexosdan
+  // bosish butun urinishni yo'qotardi.
+  /^\/imtihon\/\d+$/,
   // Kunlik son — o'z klaviaturasi pastda, panel uni yopib qo'yardi.
   /^\/oyinlar\/kunlik-son$/,
   // Karvon yo'li — o'z menyusi bilan to'liq ekran.

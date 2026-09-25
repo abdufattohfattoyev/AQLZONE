@@ -129,7 +129,10 @@ export function Dashboard({
       <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <KattaKarta ik="sqrt" nom={t("kattalarFormula")} izoh={t("kattalarFormulaIzoh")}
           rang="bg-brand-blue" on={onFormulalar} kech={kech(kattalarAvval ? 90 : 230)} />
-        <KattaKarta ik="chart" nom={t("kattalarTest")} izoh={t("kattalarTestIzoh")}
+        {/* Testlar o'rnida DTM: kattaga kerakli test aynan imtihon
+            varianti, sinf bo'yicha blok test emas. Blok testlar
+            sinf kurslari ichida o'z joyida qoladi. */}
+        <KattaKarta ik="clock" nom={t("kattalarDtm")} izoh={t("kattalarDtmIzoh")}
           rang="bg-brand-purple" on={onTestlar} kech={kech(kattalarAvval ? 110 : 250)} />
         <KattaKarta ik="pencil" nom={t("kattalarMasala")} izoh={t("kattalarMasalaIzoh")}
           rang="bg-brand-green" on={onMasalalar} kech={kech(kattalarAvval ? 130 : 270)} />

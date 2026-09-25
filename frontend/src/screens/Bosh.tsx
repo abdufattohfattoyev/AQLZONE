@@ -76,6 +76,7 @@ interface Props {
   onProfillar: () => void;
   /** Kattalar bo'limidagi ikkita qo'shimcha yo'l. */
   onFormulalar: () => void;
+  onImtihon: () => void;
 }
 
 /**
@@ -125,7 +126,7 @@ function davomJoyi(progressOf: (c: Course) => Progress) {
 
 export function Bosh({
   progressOf, onKichkintoy, onDarslar, onMasalalar, onTestlar, onOyinlar,
-  onDavom, onKunlikSon, onQidiruv, onReyting, onSozlama, onProfillar, onFormulalar,
+  onDavom, onKunlikSon, onQidiruv, onReyting, onSozlama, onProfillar, onFormulalar, onImtihon,
 }: Props) {
   const kopBola = profilSoni() > 1;
   const [hisob, setHisob] = useState<Hisob | null>(null);
@@ -209,8 +210,8 @@ export function Bosh({
           <div className="az-kirish mt-2.5 grid grid-cols-2 gap-2.5" style={kech(50)}>
             <KattaEshik ik="sqrt" rang="bg-brand-blue" nom={t("kattalarFormula")}
               izoh={t("kattalarFormulaIzoh")} on={onFormulalar} />
-            <KattaEshik ik="chart" rang="bg-brand-purple" nom={t("kattalarTest")}
-              izoh={t("kattalarTestIzoh")} on={onTestlar} />
+            <KattaEshik ik="clock" rang="bg-brand-purple" nom={t("kattalarDtm")}
+              izoh={t("kattalarDtmIzoh")} on={onImtihon} />
           </div>
         </Reveal>
       )}

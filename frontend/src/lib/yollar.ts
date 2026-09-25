@@ -106,6 +106,9 @@ export const yolMaydon = () => "/oyinlar/maydon";
 /** Kunlik son — Wordle uslubidagi kunlik jumboq. */
 export const yolKunlikSon = () => "/oyinlar/kunlik-son";
 export const yolSonOvi = () => "/oyinlar/son-ovi";
+/** DTM tayyorgarlik — variantlar ro'yxati va bitta variant. */
+export const yolImtihon = () => "/imtihon";
+export const yolImtihonVariant = (n: number) => `/imtihon/${n}`;
 
 /** Tulki shaharchasi; `pid` bilan — sherikning shaharchasiga mehmonga. */
 export const yolShaharcha = (pid?: number) => (pid ? `/oyinlar/shaharcha/${pid}` : "/oyinlar/shaharcha");
