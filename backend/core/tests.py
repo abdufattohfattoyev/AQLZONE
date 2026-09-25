@@ -4472,6 +4472,8 @@ class JavobTengTest(TestCase):
         self.assertTrue(MDL.javob_teng("15 kg", "15 sm"))
 
 
+@override_settings(BOT_USERNAME="aqlzone_bot", KANAL="aqlzone",
+                   ADMIN_TG=["973358587"], BOT_TOKEN="sinov:token")
 class MasalaKanalTest(TestCase):
     """
     Kanalga joylanadigan post.
@@ -4597,6 +4599,8 @@ class MuallifUnvoniTest(TestCase):
                 self.assertIn("8-sinf", birinchi)
 
 
+@override_settings(BOT_USERNAME="aqlzone_bot", KANAL="aqlzone",
+                   ADMIN_TG=["973358587"], BOT_TOKEN="sinov:token")
 class MasalaKanalTugmaTest(TestCase):
     """
     Ilovadagi «Kanalga yuborish» tugmasi.

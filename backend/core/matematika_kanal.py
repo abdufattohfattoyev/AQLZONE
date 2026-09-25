@@ -344,6 +344,7 @@ def _misollar(r: random.Random) -> list[tuple[str, str, str]]:
     beshli = r.randint(2, 9) * 10 + 5
     burchak = r.randint(6, 20)
     foiz, son = r.choice([(15, 240), (12, 250), (35, 160), (8, 450), (25, 680), (45, 220), (6, 350)])
+    bir_foiz = f"{son / 100:g}".replace(".", ",")
     # 5-hadgacha savolda yozilgan — so'raladigani 6-dan boshlab.
     qator = r.randint(6, 9)
     return [
@@ -360,7 +361,7 @@ def _misollar(r: random.Random) -> list[tuple[str, str, str]]:
         (f"{burchak} burchakli qavariq ko'pburchakning nechta diagonali bor?",
          str(burchak * (burchak - 3) // 2), f"n(n − 3) / 2 = {burchak} × {burchak - 3} / 2."),
         (f"{son} ning {foiz}% i = ?", str(son * foiz // 100),
-         f"{son} × {foiz} / 100 — yoki {son} ning 1% i ({f"{son / 100:g}".replace(".", ",")}) ni {foiz} ga ko'paytiring."),
+         f"{son} × {foiz} / 100 — yoki {son} ning 1% i ({bir_foiz}) ni {foiz} ga ko'paytiring."),
         (f"Keyingi son qaysi: 2, 6, 12, 20, 30, …, {qator}-had?", str(qator * (qator + 1)),
          f"n-had = n × (n + 1): {qator} × {qator + 1}."),
     ]
