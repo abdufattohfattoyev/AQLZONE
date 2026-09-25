@@ -422,6 +422,14 @@ const S = {
     "Игры на счёт, логику и память, арена дня и дуэль с друзьями.",
   ],
   boshOchish: ["Ochish", "Открыть"],
+  /* Yangi odamning birinchi ekrani — "bu nima?" degan savolga javob
+     (`components/Tanishtiruv.tsx`). Qolgan qatorlar yuqoridagi
+     `bosh...Batafsil` izohlaridan olinadi. */
+  tanishSarlavha: ["Aql Zone — matematika ilovasi", "Aql Zone — приложение по математике"],
+  tanishIzoh: [
+    "Kichkintoylardan abituriyentgacha: darslar, testlar, masalalar va o'yinlar bitta joyda.",
+    "От малышей до абитуриентов: уроки, тесты, задачи и игры в одном месте.",
+  ],
   boshSalom: ["Xush kelibsiz, {ism}", "Добро пожаловать, {ism}"],
   boshSalomYangi: ["Xush kelibsiz!", "Добро пожаловать!"],
   boshSalomIzoh: [

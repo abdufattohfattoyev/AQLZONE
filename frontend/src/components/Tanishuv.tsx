@@ -25,6 +25,7 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Anketa } from "./Anketa";
+import { Tanishtiruv, tanishtirilganmi } from "./Tanishtiruv";
 import { Kirish } from "./Kirish";
 import { Kutish } from "./Kutish";
 import { TilTanlash } from "./TilTanlash";
@@ -91,6 +92,8 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   const [tilKutilmoqda, setTilKutilmoqda] = useState(() => !tilTanlangan());
   /** Sinov taklifi ko'rsatilyaptimi va bola nechta yulduz olgan edi. */
   const [taklif, setTaklif] = useState<number | null>(null);
+  /** "Aql Zone nima?" ekrani hali ko'rilmaganmi (`Tanishtiruv.tsx`). */
+  const [tanishtirish, setTanishtirish] = useState(() => !tanishtirilganmi());
   // Ism so'raladigan bo'lsa, o'sha ekranga TAYYOR holda beriladi. Aks
   // holda u xuddi shu `/me` javobini ikkinchi marta so'rar va odam
   // kirish tugmasini bosgach yana kutib turardi.
@@ -195,6 +198,13 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   // ism so'rash ham) allaqachon biror tilda yozilgan bo'ladi va noto'g'ri
   // tanlangani odamni birinchi qadamda to'xtatib qo'yadi.
   if (tilSoraladi) return <TilTanlash onTanlandi={() => setTilSoraladi(false)} />;
+
+  // Yangi odamga — anketadan OLDIN sayt nima ekani. Ro'yxatdan o'tgan
+  // (`kerak-emas`) va bot orqali kirish o'rtasidagi (`ism`) odam buni
+  // allaqachon biladi, unga ko'rsatilmaydi.
+  if (tanishtirish && (holat === "anketa" || holat === "sinov")) {
+    return <Tanishtiruv onTayyor={() => setTanishtirish(false)} />;
+  }
 
   if (holat === "ism") {
     // Ism yozilgan zahoti — anketa. Serverdagi bayroq hali eski
