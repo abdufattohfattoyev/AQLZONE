@@ -22,9 +22,8 @@
  * AYNAN kirish jarayonida. Uni kirish ekraniga tiqsak, cheksiz halqa
  * yuzaga kelardi.
  */
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Sozlamalar } from "../screens/Sozlamalar";
 import { Anketa } from "./Anketa";
 import { Kirish } from "./Kirish";
 import { Kutish } from "./Kutish";
@@ -36,6 +35,11 @@ import type { Hisob } from "../lib/api";
 import type { ReactNode } from "react";
 import { t } from "../lib/matn";
 import { profil, serverdanOl } from "../lib/profil";
+
+// Ism so'rash ekrani — hisob hayotida bir marta. Asosiy bo'lakka
+// kirmasin: `App.tsx` ham uni `lazy` bilan oladi va shu yerdagi oddiy
+// import o'sha ajratishni butunlay bekor qilardi.
+const Sozlamalar = lazy(() => import("../screens/Sozlamalar").then((m) => ({ default: m.Sozlamalar })));
 
 /**
  * Anketa kerakmi: profil yo'q yoki bosqichi so'ralmagan. Bosqichsiz
@@ -195,8 +199,12 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   if (holat === "ism") {
     // Ism yozilgan zahoti — anketa. Serverdagi bayroq hali eski
     // (`anketa: false`), shuning uchun holat to'g'ridan-to'g'ri o'tadi.
-    return <Sozlamalar royxat boshlangich={hisob} onBack={() => setHolat("sinov")}
-      onTayyor={() => setHolat(anketaKerak() ? "anketa" : "kerak-emas")} />;
+    return (
+      <Suspense fallback={<Kutish />}>
+        <Sozlamalar royxat boshlangich={hisob} onBack={() => setHolat("sinov")}
+          onTayyor={() => setHolat(anketaKerak() ? "anketa" : "kerak-emas")} />
+      </Suspense>
+    );
   }
 
   if (holat === "anketa") return <Anketa onTugadi={() => setHolat(keyin)} />;

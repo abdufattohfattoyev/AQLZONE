@@ -14,6 +14,22 @@ export default defineConfig(({ mode }) => {
     // Veb'da manzil /kurs/1-sinf/2-bob/3-dars bo'lishi mumkin. Nisbiy base
     // bunday chuqurlikda asset yo'llarini buzadi — shuning uchun ildizdan.
     base: apk ? './' : '/',
+    build: {
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            // React va marshrutlagich alohida bo'lakda. Ular ilova
+            // kodidan ancha kam o'zgaradi: har joylashda brauzer
+            // faqat o'zgargan ilova bo'lagini qayta yuklaydi, bu
+            // ~250 KB esa keshda qolaveradi. Asosiy bo'lak ham shu
+            // bilan 500 KB chegarasidan tushadi.
+            groups: [
+              { name: 'react', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/ },
+            ],
+          },
+        },
+      },
+    },
     server: {
       // 5180 — odatiy port. `PORT` berilgan bo'lsa u ustun turadi: bir
       // vaqtda ikkita ishlab chiqish serveri kerak bo'lganda (masalan
