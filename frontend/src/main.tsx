@@ -14,6 +14,7 @@ import { ProgressProvider } from "./lib/progress";
 import { t } from "./lib/matn";
 import { tilniUlash } from "./lib/til";
 import { qobiqniUlash } from "./lib/qobiq";
+import { maketniUlash } from "./lib/maket";
 import { qolla as yoruglikniQolla, tizimniKuzat } from "./lib/yoruglik";
 
 /**
@@ -51,6 +52,8 @@ tizimniKuzat();
  * balandlikda chizilib, keyin sakrab to'g'rilanardi.
  */
 qobiqniUlash();
+// Maket qobiqdan KEYIN: u "Telegram ichidamizmi" degan javobga suyanadi.
+maketniUlash();
 
 /**
  * Veb va Telegram Mini App'da manzil chiroyli bo'lishi kerak:

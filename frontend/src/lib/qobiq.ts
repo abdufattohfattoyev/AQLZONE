@@ -50,7 +50,7 @@ interface TgChet {
  */
 interface TgWebApp {
   initData?: string;
-  initDataUnsafe?: { start_param?: string; user?: { id?: number } };
+  initDataUnsafe?: { start_param?: string; user?: { id?: number; first_name?: string } };
   version?: string;
   platform?: string;
   colorScheme?: "light" | "dark";
@@ -225,6 +225,19 @@ export function tgFoydalanuvchi(): string {
   try {
     const id = tgWebApp()?.initDataUnsafe?.user?.id;
     return id ? String(id) : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Telegram'dagi ism — botdagi bosh sahifada salomlashish uchun.
+ * Imzolanmagan, lekin bu yerda faqat ko'rsatiladi, hech narsaga
+ * suyanilmaydi (yuqoridagi izohga qarang).
+ */
+export function tgIsm(): string {
+  try {
+    return (tgWebApp()?.initDataUnsafe?.user?.first_name || "").trim().slice(0, 32);
   } catch {
     return "";
   }

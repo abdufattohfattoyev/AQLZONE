@@ -41,15 +41,22 @@
  * Busiz bosh sahifada turgan bola "Do'kon" ni bosganda hech narsa
  * bo'lmasdi: qaysi kursning do'koni ochilishi noma'lum edi.
  */
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { PanelBelgi, panelRang, type PanelBelgiNom } from "../lib/chizma/panelBelgi";
+import { Icon, type IconName } from "../lib/icons";
+import { useKompyuter } from "../lib/maket";
 import { Menyu } from "./Menyu";
+import { Logo } from "./Logo";
+import { TilTugma } from "./TilTugma";
+import { YoruglikTugma } from "./YoruglikTugma";
 import { COURSES, courseBySlug } from "../lib/curriculum";
 import { oxirgiKurs } from "../lib/oxirgi";
 import { useProgress } from "../lib/progress";
 import { nishonlar, olingan } from "../lib/nishon";
-import { yolBosh, yolKurs, yolKurslar, yolMasalalar, yolOyinlar } from "../lib/yollar";
+import {
+  yolBosh, yolKurs, yolKurslar, yolMasalalar, yolOyinlar, yolQidiruv, yolReyting, yolSozlama,
+} from "../lib/yollar";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
 
@@ -104,6 +111,9 @@ export function Panel() {
   const nav = useNavigate();
   const { progressOf, kunlik } = useProgress();
   const [menyu, setMenyu] = useState(false);
+  // Keng brauzer oynasida panel PASTDA emas, CHAPDA turadi
+  // (`lib/maket.ts`). Tugmalar o'sha — faqat joyi va ko'rinishi boshqa.
+  const kompyuter = useKompyuter();
 
   // Manzildagi kurs, bo'lmasa oxirgi ochilgani, bo'lmasa birinchisi.
   const kurs =
@@ -199,6 +209,33 @@ export function Panel() {
       on: () => { tebrat("tanlov"); setMenyu(true); },
     },
   ] as const;
+
+  if (kompyuter) {
+    return (
+      <>
+        <Menyu ochiq={menyu} onYop={() => setMenyu(false)} kurs={kurs} />
+        <YonPanel>
+          {tablar.map((t) => (
+            <YonTugma key={t.nom} ic={t.ic} nom={t.nom} faol={t.faol}
+              yoniq={"yoniq" in t ? t.yoniq : false}
+              nuqta={"nuqta" in t ? t.nuqta : false}
+              on={t.on} />
+          ))}
+          {/* Telefonda bular bosh sahifadagi chiplarda turadi. Kompyuterda
+              yon panelda joy bor va ular HAR sahifadan bir bosishda
+              ochilsin — sichqoncha bilan sahifani yuqoriga aylantirib,
+              chip qidirish noqulay. */}
+          <div className="my-2 h-px bg-track" />
+          <YonTugma ic="reyting" nom={t("reyting")} faol={pathname === yolReyting()}
+            on={yur(yolReyting(), pathname === yolReyting())} />
+          <YonSatr ik="search" nom={t("qidiruvNom")} faol={pathname === yolQidiruv()}
+            on={yur(yolQidiruv(), pathname === yolQidiruv())} />
+          <YonSatr ik="pencil" nom={t("hisobim")} faol={pathname === yolSozlama()}
+            on={yur(yolSozlama(), pathname === yolSozlama())} />
+        </YonPanel>
+      </>
+    );
+  }
 
   return (
     <>
@@ -307,6 +344,87 @@ function Tab({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
       <span className="relative w-full truncate px-0.5 text-center text-[10.5px] leading-none">
         {nom}
       </span>
+    </button>
+  );
+}
+
+/**
+ * Chap yon panel — kompyuterdagi navigatsiya.
+ *
+ * Nega pastki panel kompyuterda qolmadi: 1440px li ekranning pastida
+ * beshta 56px li tugma bir-biridan uzoqda sochilib turardi, sichqoncha
+ * esa har safar ekran pastigacha tushishi kerak edi. Saytlarda odam
+ * navigatsiyani chapda yoki tepada kutadi.
+ *
+ * Mazmun panel ostiga kirib qolmasin — `<html data-yon>` qo'yiladi va
+ * CSS sahifani o'ngga suradi (`index.css`, "YON PANEL"). Atribut panel
+ * bilan BIRGA yo'qoladi: darsda panel yo'q va sahifa yana o'rtada.
+ */
+function YonPanel({ children }: { children: ReactNode }) {
+  const nav = useNavigate();
+  useEffect(() => {
+    document.documentElement.dataset.yon = "1";
+    return () => { delete document.documentElement.dataset.yon; };
+  }, []);
+
+  return (
+    <nav data-tur="panel"
+      className="az-yon fixed inset-y-0 left-0 z-30 flex w-[var(--az-yon)] flex-col
+                 gap-1 overflow-y-auto bg-karta px-3 py-4">
+      <button type="button" onClick={() => nav(yolBosh())} data-tahlil="Yon: logo"
+        className="clay-press mb-3 flex items-center gap-2.5 rounded-2xl px-2 py-1.5 text-left">
+        <Logo size={40} jonli={false} />
+        <span className="font-display text-[20px] leading-none">Aql Zone</span>
+      </button>
+      {children}
+      <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+        <YoruglikTugma />
+        <TilTugma />
+      </div>
+    </nav>
+  );
+}
+
+/** Yon paneldagi asosiy tugma — pastki paneldagi `Tab` ning yotiq egizagi. */
+function YonTugma({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
+  ic: PanelBelgiNom;
+  nom: string;
+  on: () => void;
+  faol?: boolean;
+  yoniq?: boolean;
+  nuqta?: boolean;
+}) {
+  const belgili = faol || yoniq;
+  return (
+    <button type="button" onClick={on} data-tahlil={`Yon: ${ic}`}
+      aria-current={faol ? "page" : undefined}
+      style={{ "--az-tab-rang": panelRang(ic) } as CSSProperties}
+      className={`clay-press relative flex h-12 w-full items-center gap-3 rounded-2xl px-3
+                  text-left text-[15px] transition-colors duration-200
+                  ${belgili ? "az-tab-yoniq" : "text-ink-soft hover:bg-sahna"}`}>
+      <span aria-hidden
+        className={`az-tab-yostiq absolute inset-0 rounded-2xl
+                    ${belgili ? "opacity-100" : "opacity-0"}`} />
+      <span className="relative">
+        <PanelBelgi nom={ic} faol={belgili} size={26} />
+        {nuqta && (
+          <span className="az-nuqta absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
+        )}
+      </span>
+      <span className="relative truncate">{nom}</span>
+    </button>
+  );
+}
+
+/** Ikkinchi darajali satr — chiziqli belgi, yostiqsiz. */
+function YonSatr({ ik, nom, on, faol }: { ik: IconName; nom: string; on: () => void; faol: boolean }) {
+  return (
+    <button type="button" onClick={on} data-tahlil={`Yon: ${ik}`}
+      aria-current={faol ? "page" : undefined}
+      className={`clay-press flex h-11 w-full items-center gap-3 rounded-2xl px-3.5 text-left
+                  text-[14px] ${faol ? "bg-sahna text-brand-blue" : "text-ink-soft hover:bg-sahna"}`}>
+      <Icon name={ik} size={18} className="shrink-0" />
+      <span className="truncate">{nom}</span>
     </button>
   );
 }

@@ -397,6 +397,47 @@ const S = {
   boshMavzuSoni: ["{n} mavzu", "{n} тем"],
   boshOyinSoni: ["{n} o'yin", "{n} игр"],
   boshSinfOraliq: ["{a}–{b}-sinf", "{a}–{b} класс"],
+  /* Kompyuterdagi bosh sahifa — eshiklarning TO'LIQ izohi. Keng
+     ekranda bir qatorlik izoh kartaning yarmini bo'sh qoldirardi va
+     yangi odam "ichkarida nima bor" degan savolga baribir javob
+     olmasdi. Telefonda (va botda) qisqasi qoladi. */
+  boshKichkintoyBatafsil: [
+    "2–5 yoshli bolalar uchun: mashinalar, hayvonlar, ranglar, raqamlar. Har rasm ovoz bilan aytiladi — o'qishni bilmagan bola ham o'zi ko'radi.",
+    "Для детей 2–5 лет: машины, животные, цвета, цифры. Каждая картинка озвучена — смотреть может даже ребёнок, который ещё не читает.",
+  ],
+  boshDarslarBatafsil: [
+    "Maktab dasturi bo'yicha 0–11-sinf. Har bob kichik darslarga bo'lingan: tushuntirish, misol, keyin mashq va yulduz.",
+    "Школьная программа 0–11 классов. Каждая глава разбита на короткие уроки: объяснение, пример, затем практика и звёзды.",
+  ],
+  boshMasalalarBatafsil: [
+    "O'quvchilar va ustozlar yozgan masalalar. Yeching, izoh qoldiring yoki o'zingiz masala qo'shing.",
+    "Задачи от учеников и учителей. Решайте, комментируйте или добавьте свою.",
+  ],
+  boshTestlarBatafsil: [
+    "Sinf bo'yicha blok testlar va DTM variantlari. Vaqt bilan ishlaysiz, oxirida xatolar tahlili chiqadi.",
+    "Блок-тесты по классам и варианты ДТМ. Работаете на время, в конце — разбор ошибок.",
+  ],
+  boshOyinlarBatafsil: [
+    "Tez hisob, mantiq va xotira o'yinlari, bugungi maydon hamda do'stlar bilan bellashuv.",
+    "Игры на счёт, логику и память, арена дня и дуэль с друзьями.",
+  ],
+  boshOchish: ["Ochish", "Открыть"],
+  boshSalom: ["Xush kelibsiz, {ism}", "Добро пожаловать, {ism}"],
+  boshSalomYangi: ["Xush kelibsiz!", "Добро пожаловать!"],
+  boshSalomIzoh: [
+    "Bugun nimadan boshlaymiz? Quyida hamma bo'lim bir joyda.",
+    "С чего начнём сегодня? Все разделы ниже, в одном месте.",
+  ],
+  /* Botda — qisqa va shaxsiy: Telegram ismni o'zi beradi. */
+  botSalom: ["Salom, {ism}!", "Привет, {ism}!"],
+  boshQanday: ["Qanday ishlaydi", "Как это работает"],
+  boshQadam1: ["Sinfingizni tanlang", "Выберите класс"],
+  boshQadam1Izoh: ["Yoki bolangiznikini — har profil alohida", "Или класс ребёнка — у каждого профиля свой"],
+  boshQadam2: ["Darsni yeching", "Решайте уроки"],
+  boshQadam2Izoh: ["To'g'ri javob — yulduz va tanga", "Правильный ответ — звёзды и монеты"],
+  boshQadam3: ["Reytingda ko'tariling", "Поднимайтесь в рейтинге"],
+  boshQadam3Izoh: ["Har kuni kichik qadam — katta natija", "Каждый день по шагу — большой результат"],
+  qidiruvNom: ["Qidiruv", "Поиск"],
 
   /* ---------------- testlar: sinf tanlash ---------------- */
   testlar: ["Testlar", "Тесты"],

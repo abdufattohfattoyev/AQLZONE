@@ -123,7 +123,23 @@
      kesilgandek ko'rinardi. iPhone'da esa haqiqiy qiymat kattaroq
      va u saqlanadi. */
   --az-past: max(env(safe-area-inset-bottom), 10px);
+  /* Kompyuterdagi chap yon panel kengligi (`components/Panel.tsx`). */
+  --az-yon: 248px;
 }
+
+/* ============================================================
+   YON PANEL — faqat kompyuterda (`lib/maket.ts`).
+
+   Panel `fixed` va mazmun uning ostiga kirib qolmasin: sahifa panel
+   kengligicha o'ngga suriladi. `data-yon` panel bilan birga qo'yiladi
+   va olinadi — darsda panel yo'q, sahifa yana ekran o'rtasida.
+
+   Pastki xabarlar (`Holat`, taklif) ham surilgan maydonning o'rtasida
+   chiqsin, aks holda ular yarim yon panel ustiga tushardi. */
+:root[data-yon] body { padding-left: var(--az-yon); }
+:root[data-yon] [role="status"],
+:root[data-yon] [role="alert"] { left: var(--az-yon); }
+.az-yon { box-shadow: inset -1px 0 0 var(--color-track); }
 
 @utility shadow-clay { box-shadow: var(--az-soya); }
 @utility shadow-clay-sm { box-shadow: var(--az-soya-sm); }
