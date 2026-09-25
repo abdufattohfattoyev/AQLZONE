@@ -19,6 +19,7 @@ import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { Hajmli } from "../lib/hajmli";
 import { t } from "../lib/matn";
+import { xatoniYubor } from "../lib/xatoKuzatuv";
 
 interface Props {
   children: ReactNode;
@@ -40,6 +41,8 @@ export class XatoUshlagich extends Component<Props, State> {
   componentDidCatch(xato: Error, info: ErrorInfo) {
     // Konsolga yozamiz — ishlab chiquvchi uchun yagona iz shu.
     console.error("Aql Zone — kutilmagan xato:", xato, info.componentStack);
+    // Admin ham bilsin — bola bu haqda hech kimga aytmaydi.
+    if (!import.meta.env.DEV) xatoniYubor(xato, `${this.props.qayer ?? ""}${info.componentStack ?? ""}`);
   }
 
   qayta = () => this.setState({ xato: null });

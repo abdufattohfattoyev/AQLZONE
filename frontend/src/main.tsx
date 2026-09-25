@@ -16,6 +16,11 @@ import { tilniUlash } from "./lib/til";
 import { qobiqniUlash } from "./lib/qobiq";
 import { maketniUlash } from "./lib/maket";
 import { qolla as yoruglikniQolla, tizimniKuzat } from "./lib/yoruglik";
+import { xatoKuzatuvniUlash } from "./lib/xatoKuzatuv";
+
+// Brauzerdagi xato adminga yetib borsin — ENG BIRINCHI, qolgan
+// hamma ulash ham yiqilishi mumkin (`lib/xatoKuzatuv.ts`).
+xatoKuzatuvniUlash();
 
 /**
  * Sahifa sarlavhasi va `lang` atributi.

@@ -433,6 +433,17 @@ if SECURE_HSTS_SECONDS:
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+        # Serverdagi 500, yiqilgan fon vazifasi va brauzerdagi xato —
+        # administratorning Telegram'iga (`core/xato_kuzatuv.py`).
+        # Faqat ERROR: 404 va 400 lar oddiy holat, xato emas.
+        "admin_tg": {"class": "core.xato_kuzatuv.AdmingaXato", "level": "ERROR"},
+    },
     "root": {"handlers": ["console"], "level": "INFO"},
+    "loggers": {
+        "django.request": {"handlers": ["admin_tg"], "level": "ERROR"},
+        "celery.app.trace": {"handlers": ["admin_tg"], "level": "ERROR"},
+        "core.frontend": {"handlers": ["admin_tg"], "level": "ERROR"},
+    },
 }

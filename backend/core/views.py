@@ -211,6 +211,31 @@ def health(request):
     })
 
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def frontend_xato(request):
+    """
+    Bolaning brauzerida yiqilgan JavaScript xatosi.
+
+    Tokensiz ham qabul qilinadi: xato ko'pincha aynan kirishdan OLDIN
+    (birinchi ekranda) chiqadi. Suiiste'mol chegarasi — DRF tezlik
+    cheklovi va `xato_kuzatuv` dagi takror/soatlik to'siq; maydonlar
+    kesiladi, ya'ni katta yuk jurnalga ham, Telegram'ga ham yetmaydi.
+    """
+    d = request.data if isinstance(request.data, dict) else {}
+
+    def maydon(nom: str, uzunlik: int) -> str:
+        return str(d.get(nom) or "")[:uzunlik]
+
+    matn = maydon("matn", 300)
+    if matn:
+        logging.getLogger("core.frontend").error(
+            "Brauzer: %s\n%s\n\n%s\n%s", matn, maydon("joy", 300),
+            maydon("iz", 2000), request.META.get("HTTP_USER_AGENT", "")[:200],
+        )
+    return Response(status=204)
+
+
 # ------------------------------------------------------------------ kirish
 
 

@@ -23,6 +23,8 @@ urlpatterns = [
     path("leaderboard", views.leaderboard, name="leaderboard"),
     path("liga", views.liga, name="liga"),
     path("kanal", views.kanal, name="kanal"),
+    # Brauzerda yiqilgan JavaScript — adminga (`core/xato_kuzatuv.py`).
+    path("xato", views.frontend_xato, name="frontend-xato"),
 
     # Ovoz — matnni o'zbekcha talaffuzda qaytaradi (audio/wav).
     # Keshda bori hammaga ochiq, yangisi tokenli so'rovdan o'tadi.

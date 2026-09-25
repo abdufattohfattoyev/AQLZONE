@@ -8023,3 +8023,76 @@ class MatematikaKanalTest(TestCase):
         jadval = app.conf.beat_schedule
         self.assertEqual(jadval["matematika-post"]["args"], ("matematika_kanal", "avto"))
         self.assertEqual(jadval["matematika-yigish"]["args"], ("matematika_kanal", "yigish"))
+
+
+@override_settings(BOT_TOKEN="sinov:token", ADMIN_TG=["111", "222"], TESTDA=False)
+class XatoKuzatuvTest(TestCase):
+    """
+    Xatolar administratorning Telegram'iga (`core/xato_kuzatuv.py`).
+
+    Diqqat qaratilgan joy — SHOVQIN. Bitta buzuq sahifani yuzta bola
+    ochsa, admin yuzta xabar olmasligi kerak: aks holda u botni
+    ovozsiz qiladi va keyingi haqiqiy xatoni ham ko'rmaydi.
+    """
+
+    def setUp(self):
+        cache.clear()
+        # Fon oqimi o'rniga joyida — sinov natijani darhol ko'rsin.
+        p = patch("core.xato_kuzatuv.threading.Thread")
+        self.addCleanup(p.stop)
+        thread = p.start()
+        thread.side_effect = lambda target, args, **_: MagicMock(start=lambda: target(*args))
+
+    def test_brauzer_xatosi_har_adminga_ketadi(self):
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            r = self.client.post("/api/v1/xato", {"matn": "TypeError: x is undefined",
+                                 "joy": "/kurs/5-sinf", "iz": "at Lesson.tsx:10"},
+                                 content_type="application/json")
+        self.assertEqual(r.status_code, 204)
+        self.assertEqual([c.args[1]["chat_id"] for c in s.call_args_list], ["111", "222"])
+        self.assertIn("TypeError: x is undefined", s.call_args_list[0].args[1]["text"])
+
+    def test_bir_xil_xato_bir_marta(self):
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            for _ in range(5):
+                self.client.post("/api/v1/xato", {"matn": "bir xil"},
+                                 content_type="application/json")
+        self.assertEqual(s.call_count, 2)            # ikki admin × bir marta
+
+    def test_soatlik_chegara(self):
+        from core import xato_kuzatuv as XK
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            for i in range(XK.SOATIGA + 10):
+                XK.adminga("xato", "iz", f"kalit-{i}")
+        self.assertEqual(s.call_count, XK.SOATIGA * 2)
+
+    def test_html_qalqonlanadi(self):
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            self.client.post("/api/v1/xato", {"matn": "<b>3 < x</b>"},
+                             content_type="application/json")
+        matn = s.call_args.args[1]["text"]
+        self.assertIn("&lt;b&gt;3 &lt; x&lt;/b&gt;", matn)
+
+    def test_bosh_xato_yuborilmaydi(self):
+        with patch("core.xabar._sorov") as s:
+            r = self.client.post("/api/v1/xato", {}, content_type="application/json")
+        self.assertEqual(r.status_code, 204)
+        s.assert_not_called()
+
+    def test_server_500_adminga_ketadi(self):
+        import logging
+        with patch("core.xabar._sorov", return_value=(True, 200, "")) as s:
+            try:
+                raise ZeroDivisionError("nolga bo'lish")
+            except ZeroDivisionError:
+                logging.getLogger("django.request").error(
+                    "Internal Server Error: /api/v1/me", exc_info=True)
+        matn = s.call_args.args[1]["text"]
+        self.assertIn("ZeroDivisionError", matn)
+        self.assertIn("/api/v1/me", matn)
+
+    @override_settings(BOT_TOKEN="")
+    def test_bot_sozlanmagan_bolsa_jim(self):
+        with patch("core.xabar._sorov") as s:
+            self.client.post("/api/v1/xato", {"matn": "x"}, content_type="application/json")
+        s.assert_not_called()
