@@ -1,0 +1,54 @@
+# Har push va PR da: backend sinovlari va frontend tekshiruvlari.
+#
+# Buningsiz yiqilgan sinov hech kimga ko'rinmaydi — aynan shunday
+# 10 ta kanal sinovi sezilmay qolgan edi.
+name: Tekshiruv
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: tekshir-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Sinov uchun ishlab chiqish rejimi: SECRET_KEY talab qilinmaydi.
+      DEBUG: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # Serverdagi obraz bilan bir xil (`Dockerfile`).
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: python manage.py check
+      - name: Migratsiya unutilmaganmi
+        run: python manage.py makemigrations --check --dry-run
+      - run: python manage.py test
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Serverdagi obraz bilan bir xil (`Dockerfile`).
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run tekshir
