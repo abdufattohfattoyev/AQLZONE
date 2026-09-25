@@ -32,7 +32,7 @@ beradi.
 yangraydi va ular brauzerning o'zida yasaladi (`lib/tovush.ts`) — hech
 qanday fayl yuklanmaydi. Hayvonlarda esa tovush **so'z** bo'lib qoladi
 ("vov-vov"): bola uni o'zi takrorlaydi, haqiqiy hurishni esa qaytara
-olmasdi. Batafsil — `OVOZ-README.md`.
+olmasdi. Batafsil — `docs/OVOZ-README.md`.
 
 **Nega o'n ikkitasi birga emas.** Setka qilib hammasini ko'rsatish kattalar
 uchun qulay. 3 yoshli bola esa o'n ikkita rasmda hech biriga qaramaydi —
@@ -57,7 +57,7 @@ Kod: `frontend/src/lib/kichkintoy.ts` (lug'at va gaplar, ikki tilda),
 `lib/chizma/` (26 ta rasm), `lib/tovush.ts` (signal, sirena, qo'ng'iroq),
 `screens/Kichkintoy.tsx` (mavzular), `screens/KichkintoyMavzu.tsx` (albom va
 o'yin), `components/KichkintoyKarta.tsx` (rasm, rang va raqam kartalari).
-Ovoz — `OVOZ-README.md`.
+Ovoz — `docs/OVOZ-README.md`.
 
 **Yangi karta qo'shish** uch qadam: `kichkintoy.ts` ga yozuv,
 `lib/chizma/` ga rasm (+ `chizma/idlar.ts` ga id — busiz loyiha
@@ -1358,7 +1358,7 @@ Xarajat uch qavat bilan cheklangan: oq ro'yxat (faqat
 chegarasi. Ro'yxat eng muhimi — dars savollari tasodifiy sonlar bilan
 yasaladi, ya'ni ularsiz har savol yangi to'lov bo'lardi.
 
-Sozlash, lug'atni tayyorlash va yangi so'z qo'shish — `OVOZ-README.md`.
+Sozlash, lug'atni tayyorlash va yangi so'z qo'shish — `docs/OVOZ-README.md`.
 
 ## Testlar
 

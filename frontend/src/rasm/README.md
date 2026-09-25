@@ -7,8 +7,8 @@ ko'rsatiladi. Kodga tegish shart emas — fayl qo'yildi, ilova o'zi oladi
 ## Hozir nima bor
 
 **Mashinalar (12)** va **Hayvonlar (14)** — hammasi surat. Ikkalasi
-ham bitta-bitta AI varag'idan kesilgan (`toplam rasm.png` va
-`hayvonlar toplami.png`, loyiha ildizida). Fayllar:
+ham bitta-bitta AI varag'idan kesilgan (`docs/manba/toplam-rasm.png` va
+`docs/manba/hayvonlar-toplami.png`). Fayllar:
 
 - 512×512, foni shaffof `.webp`;
 - **hammasi CHAPGA qaragan** — mashinalardan beshtasi va

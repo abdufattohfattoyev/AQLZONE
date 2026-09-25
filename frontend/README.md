@@ -79,7 +79,7 @@ export const OVOZ_YONIQ = true;
 ```
 
 Chaqiruv joylari (dars savoli, to'g'ri/xato javob) kodda allaqachon turibdi.
-Tayyor mp3 fayllar `public/audio/` da — `../OVOZ-README.md` ga qarang.
+Tayyor mp3 fayllar `public/audio/` da — `../docs/OVOZ-README.md` ga qarang.
 
 ## APK / iOS
 
