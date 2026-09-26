@@ -1624,7 +1624,7 @@ def masalalar(request):
     """
     Tasdiqlangan masalalar ro'yxati va yangi masala yuborish.
 
-        GET  ?sinf=7&tartib=yangi|zor|qiyin|koplik&sahifa=0&teskari=1
+        GET  ?sinf=7&tartib=yangi|zor|qiyin|koplik&sahifa=0&teskari=1&q=matn
         POST {sinf, matn, javob, yechim}
 
     Ro'yxatda YECHIM YO'Q — hatto urinib ko'rgan odam uchun ham.
@@ -1669,6 +1669,12 @@ def masalalar(request):
     sinf = request.query_params.get("sinf")
     if sinf not in (None, "", "hammasi"):
         qs = qs.filter(sinf=_butun(sinf, -1))
+
+    # `?q=kasr` — matn bo'yicha (umumiy qidiruv ekrani, `screens/Qidiruv.tsx`).
+    # Ikki harfdan qisqasi e'tiborsiz: "a" butun ro'yxatni qaytarardi.
+    matn = (request.query_params.get("q") or "").strip()[:60]
+    if len(matn) >= 2:
+        qs = qs.filter(matn__icontains=matn)
 
     # Yechgan / yechilmagan filtri.
     #

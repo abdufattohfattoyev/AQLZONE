@@ -194,11 +194,13 @@ export interface Menikilar {
  */
 export function royxat(
   sinf: number | null, tartib: Tartib, sahifa = 0, holat: Holat = "hammasi",
-  teskari = false,
+  teskari = false, matn = "",
 ): Promise<Royxat> {
   const q = new URLSearchParams({ tartib, sahifa: String(sahifa), holat });
   if (sinf !== null) q.set("sinf", String(sinf));
   if (teskari) q.set("teskari", "1");
+  // Umumiy qidiruv (`screens/Qidiruv.tsx`) — masala matni bo'yicha.
+  if (matn.trim()) q.set("q", matn.trim());
   return sorov<Royxat>(`/api/v1/masalalar?${q}${profilQuery("&")}`);
 }
 

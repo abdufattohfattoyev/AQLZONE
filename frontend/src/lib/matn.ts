@@ -373,6 +373,11 @@ const S = {
   otaYordamIzoh: ["{nom} — {jami} ta savoldan {togri} tasi to'g'ri.", "{nom} — верно {togri} из {jami}."],
   otaDarsniOch: ["Darsni ochish", "Открыть урок"],
 
+  /* ---------------- Qidiruv (yangi dizayn) ---------------- */
+  qidiruvBekor: ["Bekor", "Отмена"],
+  qidiruvBoshqa: ["Boshqa", "Другое"],
+  qidiruvYana: ["Yana {n} ta", "Ещё {n}"],
+
   /* ---------------- Men (`screens/Men.tsx`) ---------------- */
   menSarlavha: ["Men", "Я"],
   menMehmon: ["Mehmon", "Гость"],

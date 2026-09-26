@@ -4206,6 +4206,16 @@ class MasalaTest(TestCase):
 
     # ------------------------------------------------------------- ro'yxat
 
+    def test_matn_boyicha_qidiruv(self):
+        a = self.masala_yasa()
+        b = self.masala_yasa()
+        Masala.objects.filter(pk=b.pk).update(matn="Pitsaning 3/8 qismi — KASR")
+        r = self.client.get("/api/v1/masalalar?q=kasr", **self.auth(self.yechuvchi_token))
+        self.assertEqual([x["id"] for x in r.json()["masalalar"]], [b.pk])
+        # Bir harf — filtr yo'q.
+        r = self.client.get("/api/v1/masalalar?q=k", **self.auth(self.yechuvchi_token))
+        self.assertEqual({x["id"] for x in r.json()["masalalar"]}, {a.pk, b.pk})
+
     def test_sinf_boyicha_filtr_va_saralash(self):
         a = self.masala_yasa()
         b = self.masala_yasa()
