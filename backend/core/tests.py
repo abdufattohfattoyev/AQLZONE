@@ -7961,28 +7961,62 @@ class MatematikaKanalTest(TestCase):
         from core import matematika_kanal as MK
 
         for urug in range(300):
-            for savol, javob, _ in MK._misollar(R.Random(urug)):
-                if "7 ning" in savol:
-                    n = int(re.search(r"(\d+)-darajasi", savol).group(1))
-                    self.assertEqual(MK._yetti_oxiri(savol), str(pow(7, n, 10)))
-                    continue
-                m = re.fullmatch(r"(\d+) × (\d+) = \?", savol)
+            for kim, savol, javob, usul in MK._misollar(R.Random(urug)):
+                self.assertTrue(javob.isdigit(), savol)
+                self.assertRegex(kim, r"^\d–\d-sinf$")
+                self.assertTrue(usul.endswith(javob) or usul.endswith(javob + "."), usul)
+                m = re.search(r"7 ning (\d+)-darajasi", savol)
+                if m:
+                    self.assertEqual(javob, str(pow(7, int(m[1]), 10)))
+                m = re.fullmatch(r"Hisoblang: (\d+) × (\d+)", savol)
                 if m:
                     self.assertEqual(int(javob), int(m[1]) * int(m[2]))
-                m = re.fullmatch(r"(\d+)² = \?", savol)
+                m = re.match(r"Hisoblang: (\d+)²", savol)
                 if m:
                     self.assertEqual(int(javob), int(m[1]) ** 2)
-                m = re.fullmatch(r"(\d+) ning (\d+)% i = \?", savol)
+                m = re.fullmatch(r"(\d+) ning (\d+) foizi nechaga teng\?", savol)
                 if m:
                     self.assertEqual(int(javob) * 100, int(m[1]) * int(m[2]))
-                self.assertTrue(javob.isdigit(), savol)
 
-    def test_misol_posti_javobni_yashiradi(self):
+    def test_misol_posti_javobsiz_va_tugmasiz(self):
+        from datetime import date
         from core import matematika_kanal as MK
 
-        post = MK.misol_posti(MK.bugungi_misol())
-        self.assertEqual(post.count("<tg-spoiler>"), 2)
+        misol = MK.bugungi_misol()
+        post = MK.misol_posti(misol)
+        self.assertNotIn("tg-spoiler", post)
+        self.assertNotIn(misol[3], post)                     # usul savolda yo'q
+        self.assertIn("izohda", post)
+        self.assertIn(MK.JAVOB_SOATI, post)
+        self.assertIn(misol[0], post)                        # kim uchun
         self.assertEqual(MK.bugungi_misol(), MK.bugungi_misol())   # bir kunda bir xil
+        # Seshanba → keyingisi payshanba.
+        self.assertIn("payshanba", MK.javob_posti(misol, date(2026, 9, 22)))
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
+    def test_misol_va_javob_bir_marta_ulanib_chiqadi(self):
+        from unittest import mock
+        from core.models import KanalYozuv
+
+        with mock.patch("core.xabar.kanal_matn", return_value=("yuborildi", "", 77)) as yub, \
+             mock.patch("core.xabar.yubor") as tugmali:
+            call_command("matematika_kanal", "misol", stdout=StringIO())
+            self.assertEqual(yub.call_args.kwargs["javob_id"], 0)
+            call_command("matematika_kanal", "javob", stdout=StringIO())
+            self.assertEqual(yub.call_args.kwargs["javob_id"], 77)    # savolga ulanadi
+            self.assertIn("Qanday topiladi", yub.call_args[0][1])
+            call_command("matematika_kanal", "javob", stdout=StringIO())
+            self.assertEqual(yub.call_count, 2)                        # ikkinchi javob yo'q
+            tugmali.assert_not_called()
+        self.assertEqual(KanalYozuv.objects.filter(tur="misol").count(), 2)
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
+    def test_misolsiz_kunda_javob_chiqmaydi(self):
+        from unittest import mock
+
+        with mock.patch("core.xabar.kanal_matn") as yub:
+            call_command("matematika_kanal", "javob", stdout=StringIO(), stderr=StringIO())
+            yub.assert_not_called()
 
     @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x", BOT_USERNAME="AqlZoneBot")
     def test_buyruq_yuboradi_va_belgilaydi(self):

@@ -331,61 +331,119 @@ def fakt_belgila(fakt: tuple[str, str]) -> None:
 # ─────────────────────────── OG'ZAKI MISOL ───────────────────────────
 #
 # Qalam-qog'ozsiz, 30 soniyada yechiladigan misol va uning USULI.
-# Javob Telegram'ning yashirin matnida (`tg-spoiler`) turadi: o'qigan
-# odam avval o'zi o'ylaydi, keyin bosib tekshiradi.
+#
+# Ikki post bo'lib chiqadi:
+#   1. 15:00 — savol va KIM UCHUN. Javob yo'q, tugma yo'q: o'quvchi
+#      javobini izohda yozadi. Javob oldindan ko'rinsa (spoiler ham)
+#      izohda bahs bo'lmaydi — hamma bosib ko'radi-yu, ketadi.
+#   2. JAVOB_SOATI da — to'g'ri javob va yechish usuli, savol postiga
+#      javob (reply) bo'lib. Oraliq vaqt izohlar yig'ilishi uchun.
+#
+# Misol kunga bog'liq (`bugungi_misol`), ya'ni javob posti savolni
+# bazadan emas, qayta hisoblab oladi — ikkalasi doim bir xil.
 
-def _misollar(r: random.Random) -> list[tuple[str, str, str]]:
-    """(savol, javob, usul) — har biri hisoblab yasaladi, qo'lda yozilmaydi."""
+#: Javob posti qachon chiqadi (Toshkent vaqti). Jadval: `aqlzone/celery.py`.
+JAVOB_SOATI = "17:00"
+
+#: Misol kunlari — `date.weekday()` (0 = dushanba). Jadval bilan bir xil.
+MISOL_KUNLARI = {1: "seshanba", 3: "payshanba", 5: "shanba"}
+
+
+def _misollar(r: random.Random) -> list[tuple[str, str, str, str]]:
+    """
+    (kim uchun, savol, javob, usul) — har biri hisoblab yasaladi, qo'lda
+    yozilmaydi. "Kim uchun" — o'sha usul maktabda o'tiladigan sinflar;
+    kattaroqlar ham yecha oladi, lekin kichikroqqa og'ir bo'ladi.
+    """
     k = r.randint(12, 39) * 4
     ab = r.choice([x for x in range(12, 99) if x % 10 + x // 10 < 10])
+    a, b = ab // 10, ab % 10
     n = r.choice([20, 30, 40, 50, 60, 80, 100, 200])
     d = r.randint(21, 99)
-    kop = r.randint(5, 12)
+    daraja = r.randint(5, 12) * 4 + r.randint(1, 3)
+    oxiri = [1, 7, 9, 3][daraja % 4]
     beshli = r.randint(2, 9) * 10 + 5
+    bosh = beshli // 10
     burchak = r.randint(6, 20)
     foiz, son = r.choice([(15, 240), (12, 250), (35, 160), (8, 450), (25, 680), (45, 220), (6, 350)])
+    bir_foiz = f"{son / 100:g}".replace(".", ",")
     # 5-hadgacha savolda yozilgan — so'raladigani 6-dan boshlab.
     qator = r.randint(6, 9)
     return [
-        (f"25 × {k} = ?", str(25 * k), f"25 × 4 = 100, demak 25 × {k} = {k // 4} × 100."),
-        (f"11 × {ab} = ?", str(11 * ab),
-         f"Raqamlar orasiga ularning yig'indisini qo'ying: {ab // 10}_{ab // 10 + ab % 10}_{ab % 10}."),
-        (f"1 + 2 + 3 + … + {n} = ?", str(n * (n + 1) // 2), f"Gauss usuli: {n} × {n + 1} / 2."),
-        (f"99 × {d} = ?", str(99 * d), f"99 × {d} = 100 × {d} − {d}."),
-        (f"7 ning {kop * 4 + r.randint(1, 3)}-darajasi qanday raqam bilan tugaydi?",
-         "", "7 darajalarining oxirgi raqami 4 qadamda takrorlanadi: 7, 9, 3, 1."),
-        (f"{beshli}² = ?", str(beshli * beshli),
-         f"5 bilan tugagan son kvadrati: {beshli // 10} × {beshli // 10 + 1} = "
-         f"{(beshli // 10) * (beshli // 10 + 1)}, oxiriga 25 qo'shiladi."),
-        (f"{burchak} burchakli qavariq ko'pburchakning nechta diagonali bor?",
-         str(burchak * (burchak - 3) // 2), f"n(n − 3) / 2 = {burchak} × {burchak - 3} / 2."),
-        (f"{son} ning {foiz}% i = ?", str(son * foiz // 100),
-         f"{son} × {foiz} / 100 — yoki {son} ning 1% i ({f"{son / 100:g}".replace(".", ",")}) ni {foiz} ga ko'paytiring."),
-        (f"Keyingi son qaysi: 2, 6, 12, 20, 30, …, {qator}-had?", str(qator * (qator + 1)),
-         f"n-had = n × (n + 1): {qator} × {qator + 1}."),
+        ("4–6-sinf", f"Hisoblang: 25 × {k}", str(25 * k),
+         f"25 × 4 = 100. Shuning uchun {k} ni 4 ga bo'lamiz: {k} : 4 = {k // 4}. "
+         f"Demak 25 × {k} = {k // 4} × 100 = {25 * k}."),
+        ("4–6-sinf", f"Hisoblang: 11 × {ab}", str(11 * ab),
+         f"Ikki xonali sonni 11 ga ko'paytirganda uning raqamlari orasiga ularning yig'indisi "
+         f"yoziladi: {a} va {b} → {a}, {a} + {b} = {a + b}, {b}. Javob: {11 * ab}."),
+        ("5–7-sinf", f"1 dan {n} gacha bo'lgan barcha natural sonlar yig'indisi nechaga teng?",
+         str(n * (n + 1) // 2),
+         f"Gauss usuli: sonlarni chetdan juftlaymiz — 1 + {n}, 2 + {n - 1}, 3 + {n - 2}, … "
+         f"Har bir juft {n + 1} ga teng, juftlar soni {n // 2} ta. "
+         f"{n // 2} × {n + 1} = {n * (n + 1) // 2}."),
+        ("4–6-sinf", f"Hisoblang: 99 × {d}", str(99 * d),
+         f"99 = 100 − 1. Demak 99 × {d} = 100 × {d} − {d} = {100 * d} − {d} = {99 * d}."),
+        ("7–9-sinf", f"7 ning {daraja}-darajasi (7^{daraja}) qanday raqam bilan tugaydi?", str(oxiri),
+         f"7 darajalarining oxirgi raqami har 4 qadamda takrorlanadi: 7, 9, 3, 1, 7, 9, 3, 1, … "
+         f"{daraja} ni 4 ga bo'lsak, qoldiq {daraja % 4} — demak oxirgi raqam {oxiri}."),
+        ("6–8-sinf", f"Hisoblang: {beshli}²  (ya'ni {beshli} × {beshli})", str(beshli * beshli),
+         f"5 bilan tugagan sonni kvadratga ko'tarishda o'nliklar raqami keyingi songa "
+         f"ko'paytiriladi: {bosh} × {bosh + 1} = {bosh * (bosh + 1)}, oxiriga 25 yoziladi. "
+         f"Javob: {beshli * beshli}."),
+        ("8–9-sinf", f"{burchak} burchakli qavariq ko'pburchakning nechta diagonali bor?",
+         str(burchak * (burchak - 3) // 2),
+         f"Har bir uchdan n − 3 ta diagonal chiqadi (o'ziga va ikki qo'shnisiga chiqmaydi), "
+         f"har bir diagonal esa ikki marta sanaladi. n(n − 3) / 2 = "
+         f"{burchak} × {burchak - 3} / 2 = {burchak * (burchak - 3) // 2}."),
+        ("5–7-sinf", f"{son} ning {foiz} foizi nechaga teng?", str(son * foiz // 100),
+         f"Avval 1 foizini topamiz: {son} : 100 = {bir_foiz}. Keyin uni {foiz} ga ko'paytiramiz: "
+         f"{bir_foiz} × {foiz} = {son * foiz // 100}."),
+        ("6–8-sinf", f"Qatorni davom ettiring: 2, 6, 12, 20, 30, … Uning {qator}-hadi nechaga teng?",
+         str(qator * (qator + 1)),
+         f"Har bir had — ketma-ket ikki sonning ko'paytmasi: 1 × 2, 2 × 3, 3 × 4, … "
+         f"Demak {qator}-had = {qator} × {qator + 1} = {qator * (qator + 1)}."),
     ]
 
 
-def _yetti_oxiri(savol: str) -> str:
-    """"7 ning N-darajasi" savolining javobi — savoldagi N dan."""
-    m = re.search(r"7 ning (\d+)-darajasi", savol)
-    return str([1, 7, 9, 3][int(m.group(1)) % 4]) if m else ""
-
-
-def bugungi_misol(kun=None) -> tuple[str, str, str]:
+def bugungi_misol(kun=None) -> tuple[str, str, str, str]:
     """Kunga bog'liq — bir kunda qayta chaqirilsa ham o'sha misol chiqadi."""
     kun = kun or timezone.localdate()
     r = random.Random(kun.toordinal())
-    savol, javob, usul = r.choice(_misollar(r))
-    return savol, javob or _yetti_oxiri(savol), usul
+    return r.choice(_misollar(r))
 
 
-def misol_posti(misol: tuple[str, str, str]) -> str:
-    savol, javob, usul = misol
+def misol_posti(misol: tuple[str, str, str, str]) -> str:
+    kim, savol, _, _ = misol
     e = html.escape
     return (
-        "🧠 <b>Og'zaki misol</b> — qalamsiz, 30 soniyada\n\n"
-        f"<b>{e(savol)}</b>\n\n"
-        f"Javob: <tg-spoiler>{e(javob)}</tg-spoiler>\n"
-        f"Usul: <tg-spoiler>{e(usul)}</tg-spoiler>"
+        "🧠 <b>Og'zaki misol</b> — qalamsiz, 30 soniyada\n"
+        f"👥 Kim uchun: <b>{e(kim)}</b> (kattalar ham sinab ko'rsin)\n\n"
+        f"❓ <b>{e(savol)}</b>\n\n"
+        "💬 Javobingizni <b>izohda</b> yozing — faqat sonni, yechimni emas, "
+        "boshqalar ham o'ylab ko'rsin.\n"
+        f"⏰ To'g'ri javob va yechish usuli bugun soat <b>{JAVOB_SOATI}</b> da chiqadi."
     )
+
+
+def _keyingi_misol_kuni(kun) -> str:
+    for i in range(1, 8):
+        nomi = MISOL_KUNLARI.get((kun + timedelta(days=i)).weekday())
+        if nomi:
+            return nomi
+    return ""
+
+
+def javob_posti(misol: tuple[str, str, str, str], kun=None) -> str:
+    _, savol, javob, usul = misol
+    e = html.escape
+    keyingi = _keyingi_misol_kuni(kun or timezone.localdate())
+    matn = (
+        "✅ <b>Og'zaki misol — javob</b>\n\n"
+        f"❓ {e(savol)}\n"
+        f"Javob: <b>{e(javob)}</b>\n\n"
+        f"💡 <b>Qanday topiladi</b>\n{e(usul)}\n\n"
+        "Izohda to'g'ri yozganlarning hammasiga — qoyil! 👏"
+    )
+    if keyingi:
+        matn += f"\nKeyingi misol — {keyingi} kuni soat 15:00 da."
+    return matn
