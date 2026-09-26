@@ -11,10 +11,11 @@
  * (`screens/Bosh.tsx`). Sonlar dasturdan hisoblanadi — kurs o'sganda
  * bu yerdagi "82 dars" qolib ketmaydi.
  *
- * Izohlar QISQA (bir qator) va bu ataylab: ilgari to'liq izohlar bilan
- * ekran 320px telefonda ikki marta uzun chiqib, "Boshlash" ko'rinmay
- * qolardi. Odam bu yerda bo'limlarni o'qimaydi, ko'z yugurtiradi —
- * batafsili bosh sahifada, kompyuterda turadi.
+ * IZOH YO'Q — faqat belgi, nom va son. Ilgari har qatorda izoh bor edi:
+ * avval to'liq, keyin bir qatorlik. Ikkalasida ham tor telefonda matn
+ * qirqilib ("siz…") yoki ekran cho'zilib ketardi. Odam bu yerda
+ * o'qimaydi, ko'z yugurtiradi — nom va son shunga yetadi, batafsili
+ * bosh sahifada turadi.
  *
  * Qatorlar BOSILMAYDI: bu yerda hali tanlov yo'q, bitta yo'l bor —
  * "Boshlash". Bosiladigan ko'rinishdagi qator bosilmasa, odam ilova
@@ -25,7 +26,6 @@
  */
 import { Logo } from "./Logo";
 import { COURSES, lessonCount } from "../lib/curriculum";
-import { MAVZULAR } from "../lib/kichkintoy";
 import { OYINLAR } from "../lib/oyin";
 import { blokBormi, sinfOf } from "../lib/blok";
 import { t } from "../lib/matn";
@@ -48,46 +48,38 @@ export function Tanishtiruv({ onTayyor }: { onTayyor: () => void }) {
   // Tartib — yoshga qarab: kichkintoydan boshlab. Odam o'zini qatorda
   // topishi oson bo'lsin ("farzandim 4 yoshda" — birinchi qator).
   const bolimlar = [
-    { ic: "palette", nom: t("kichkintoyQisqa"), izoh: t("boshKichkintoyIzoh"),
-      son: t("boshMavzuSoni", { n: MAVZULAR.length }) },
-    { ic: "map", nom: t("tabDarslar"), izoh: t("boshDarslarIzoh"),
-      son: t("darsSoni", { n: JAMI_DARS }) },
-    { ic: "chart", nom: t("testlar"), izoh: t("boshTestlarIzoh"),
+    { ic: "palette", nom: t("kichkintoy"), son: t("tanishYosh") },
+    { ic: "map", nom: t("tabDarslar"), son: t("darsSoni", { n: JAMI_DARS }) },
+    { ic: "chart", nom: t("testlar"),
       son: t("boshSinfOraliq", { a: Math.min(...TEST_SINFLAR), b: Math.max(...TEST_SINFLAR) }) },
-    { ic: "pencil", nom: t("masalalar"), izoh: t("boshMasalalarIzoh"), son: "" },
-    { ic: "puzzle", nom: t("oyinlar"), izoh: t("boshOyinlarIzoh"),
-      son: t("boshOyinSoni", { n: OYINLAR.length }) },
+    { ic: "pencil", nom: t("masalalar"), son: "" },
+    { ic: "puzzle", nom: t("oyinlar"), son: t("boshOyinSoni", { n: OYINLAR.length }) },
   ];
 
   const boshlash = () => { tanishtirildi(); onTayyor(); };
 
   return (
-    <div className="mx-auto grid min-h-ekran w-full max-w-[460px] place-items-center px-4 py-4">
+    <div className="mx-auto grid min-h-ekran w-full max-w-[400px] place-items-center px-4 py-4">
       <div className="az-kirish w-full min-w-0 rounded-clay bg-karta p-4 shadow-clay min-[360px]:p-5 sm:p-6">
-        {/* Logo sarlavha YONIDA, ustida emas: 320×568 telefonda har
-            satr hisobda — tugma birinchi ekranga sig'ishi kerak. */}
         <div className="flex items-center gap-3">
           <Logo size={40} className="shrink-0" />
-          <h1 className="font-display text-[20px] leading-tight">{t("tanishSarlavha")}</h1>
+          <div className="min-w-0">
+            <h1 className="font-display text-[21px] leading-tight">{t("tanishSarlavha")}</h1>
+            <p className="text-[13px] leading-snug text-ink-soft">{t("tanishIzoh")}</p>
+          </div>
         </div>
-        <p className="mt-1.5 text-[14.5px] leading-snug text-ink-soft">{t("tanishIzoh")}</p>
 
-        <ul className="mt-4 grid grid-cols-1 gap-2.5">
+        <ul className="mt-4 grid grid-cols-1 gap-2">
           {bolimlar.map((b) => (
-            <li key={b.ic} className="flex gap-3">
-              {/* Belgi foni neytral — bosh sahifadagi eshiklar bilan bir xil. */}
-              <span aria-hidden
-                className="bg-track grid size-11 shrink-0 place-items-center rounded-[14px]">
-                <img src={`/belgi/${b.ic}.webp`} width={30} height={30} alt=""
-                  decoding="async" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-baseline justify-between gap-2">
-                  <span className="min-w-0 truncate font-display text-[15px] leading-tight">{b.nom}</span>
-                  {b.son && <span className="shrink-0 text-[12px] text-ink-dim">{b.son}</span>}
-                </span>
-                <span className="mt-0.5 line-clamp-1 text-[13px] leading-snug text-ink-soft">{b.izoh}</span>
-              </span>
+            <li key={b.ic} className="flex min-h-11 items-center gap-2.5 rounded-2xl bg-sahna px-3 py-2 shadow-ichki">
+              {/* Qator foni neytral botiq maydon (`bg-sahna shadow-ichki`): beshta
+                  bo'lim beshta rangda turganda ekran kamalakka aylanardi. */}
+              <img src={`/belgi/${b.ic}.webp`} width={28} height={28} alt=""
+                aria-hidden decoding="async" className="shrink-0" />
+              {/* Qirqilmaydi ("Kichkintoyl…" bo'lib qolardi) — tor ekranda
+                  kerak bo'lsa ikkinchi qatorga o'tadi. */}
+              <span className="min-w-0 flex-1 font-display text-[15px] leading-tight">{b.nom}</span>
+              {b.son && <span className="shrink-0 text-[12.5px] text-ink-dim">{b.son}</span>}
             </li>
           ))}
         </ul>

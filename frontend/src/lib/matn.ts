@@ -425,11 +425,9 @@ const S = {
   /* Yangi odamning birinchi ekrani — "bu nima?" degan savolga javob
      (`components/Tanishtiruv.tsx`). Qolgan qatorlar yuqoridagi
      `bosh...Batafsil` izohlaridan olinadi. */
-  tanishSarlavha: ["Aql Zone — matematika ilovasi", "Aql Zone — приложение по математике"],
-  tanishIzoh: [
-    "Kichkintoylardan abituriyentgacha: darslar, testlar, masalalar va o'yinlar bitta joyda.",
-    "От малышей до абитуриентов: уроки, тесты, задачи и игры в одном месте.",
-  ],
+  tanishSarlavha: ["Aql Zone", "Aql Zone"],
+  tanishIzoh: ["Matematika — 2 yoshdan abituriyentgacha", "Математика — от 2 лет до абитуриента"],
+  tanishYosh: ["2–5 yosh", "2–5 лет"],
   boshSalom: ["Xush kelibsiz, {ism}", "Добро пожаловать, {ism}"],
   boshSalomYangi: ["Xush kelibsiz!", "Добро пожаловать!"],
   boshSalomIzoh: [
