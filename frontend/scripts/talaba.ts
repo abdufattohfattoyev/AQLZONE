@@ -6,7 +6,9 @@
  * mustaqil formula bilan qayta hisoblanadigan joyda — qayta tekshiriladi.
  */
 import "./_xotira";
-import * as T from "../src/lib/oliy/talaba";
+import * as T1 from "../src/lib/oliy/talaba";
+import * as T2 from "../src/lib/oliy/talaba2";
+const T = { ...T1, ...T2 };
 import { oliy1 } from "../src/lib/curriculum/oliy1";
 import { COURSES, maktabKursi } from "../src/lib/curriculum";
 
@@ -34,7 +36,7 @@ for (const [nom, g] of gens) {
 
 /* ---- mustaqil qayta hisob: 2×2 determinant ---- */
 for (let i = 0; i < 200; i++) {
-  const a = T.o1Det2() as unknown as { text: string; answer: string };
+  const a = T1.o1Det2() as unknown as { text: string; answer: string };
   const s = a.text.match(/−?\d+/g)!.map((x) => Number(x.replace("−", "-")));
   const [p, q, r, u] = s.slice(-4);
   t("det2 to'g'ri", Number(a.answer.replace("−", "-")) === p * u - q * r, a.text);
@@ -44,7 +46,7 @@ for (let i = 0; i < 200; i++) {
 t("kursda 6 bob", oliy1.length >= 6, String(oliy1.length));
 t("har darsda generator bor", oliy1.every((u) => u.lessons.every((l) => l.gens.length > 0)));
 const oliy = COURSES.filter((c) => !maktabKursi(c));
-t("talabalar kursi ro'yxatda", oliy.length === 1 && oliy[0].grade === 301);
+t("talabalar kurslari ro'yxatda", oliy.map((c) => c.grade).join() === "301,302,303");
 t("slug yagona", new Set(COURSES.map((c) => c.slug)).size === COURSES.length);
 t("grade yagona", new Set(COURSES.map((c) => c.grade)).size === COURSES.length);
 

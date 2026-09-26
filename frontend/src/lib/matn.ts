@@ -120,6 +120,7 @@ const S = {
   /* ---------------- kurs sahifasi (Home) ---------------- */
   izohMaktabgacha: ["Maktabga tayyorgarlik", "Подготовка к школе"],
   izohToliqKurs: ["Darslik bo'yicha to'liq kurs", "Полный курс по учебнику"],
+  izohOtmKurs: ["OTM fan dasturi bo'yicha", "По программе вуза"],
   otaOnaPaneli: ["Ota-ona paneli", "Панель для родителей"],
   darsTugallandi: ["{done} / {jami} dars tugallandi", "Уроков пройдено: {done} / {jami}"],
   bobDars: ["{n} dars", "уроков: {n}"],
@@ -2151,6 +2152,20 @@ const S = {
   boshUstozIzoh: ["Sinf bo'yicha blok testlar va to'plamlar", "Блок-тесты и подборки по классам"],
   darslarSizning: ["Siz uchun", "Для вас"],
   oliyBolim: ["Universitet", "Университет"],
+  reytingTalabalar: ["Talabalar", "Студенты"],
+  sessiya: ["Sessiyaga tayyorlanish", "Подготовка к сессии"],
+  sessiyaIzoh: [
+    "Har variant — {savol} savol, {daqiqa} daqiqa. Oxirida baho va xatolar tahlili.",
+    "Каждый вариант — {savol} вопросов, {daqiqa} минут. В конце оценка и разбор ошибок.",
+  ],
+  sessiyaBaho: ["Baho", "Оценка"],
+  sessiyaBahoIzoh: [
+    "Taxminiy baho: 86% — 5, 71% — 4, 55% — 3. Har oliygohning o'z mezoni bor.",
+    "Примерная оценка: 86% — 5, 71% — 4, 55% — 3. У каждого вуза свои критерии.",
+  ],
+  menyuSessiyaIzoh: ["O'z faningiz bo'yicha, vaqt bilan", "По вашему предмету, на время"],
+  menyuOliyFormulaIzoh: ["Limit, hosila, integral, ehtimollik", "Пределы, производные, интегралы, вероятность"],
+  menyuTalaba: ["Talaba uchun", "Для студента"],
   testSizning: ["Sizning sinfingiz", "Ваш класс"],
 
   /* ---------------- xotira o'yini ---------------- */

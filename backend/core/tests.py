@@ -7861,6 +7861,7 @@ class KursKodiTest(TestCase):
         self.assertEqual(self._tekshir(107), 107)
         self.assertEqual(self._tekshir(110), 110)
         self.assertEqual(self._tekshir(301), 301)
+        self.assertEqual(self._tekshir(303), 303)
 
     def test_nomalum_kod_kesiladi(self):
         self.assertEqual(self._tekshir(55), 11)
@@ -8019,3 +8020,44 @@ class MatematikaKanalTest(TestCase):
         jadval = app.conf.beat_schedule
         self.assertEqual(jadval["matematika-post"]["args"], ("matematika_kanal", "avto"))
         self.assertEqual(jadval["matematika-yigish"]["args"], ("matematika_kanal", "yigish"))
+
+
+
+class TalabaEslatmaTest(TestCase):
+    """Talabaga kunlik eslatma o'z tilida boradi."""
+
+    def test_talaba_matni(self):
+        from core.management.commands.eslatma import matn_yasa
+
+        for kun in range(3):
+            m = matn_yasa("Aziz", 0, kun, "uz", "talaba")
+            self.assertIn("Aziz", m)
+            self.assertNotIn("yulduz", m.lower())
+        self.assertIn("Aziz", matn_yasa("Aziz", 0, 0, "ru", "talaba"))
+
+    def test_boshqalarga_ozgarmadi(self):
+        from core.management.commands.eslatma import matn_yasa
+
+        self.assertEqual(matn_yasa("Ali", 0, 3, "uz"), matn_yasa("Ali", 0, 3, "uz", "oquvchi"))
+        # Zanjir xabari hammaga bir xil — u eng kuchli sabab.
+        self.assertEqual(matn_yasa("Ali", 5, 0, "uz", "talaba"), matn_yasa("Ali", 5, 0, "uz"))
+
+
+class TalabaReytingTest(TestCase):
+    """`?guruh=talaba` — faqat talabalar."""
+
+    def test_guruh_filtri(self):
+        from core.views import _reyting_jami
+
+        def odam(kim, yulduz):
+            p = MDL.Pupil.objects.create(first_name=kim, kim=kim, registered_at=timezone.now())
+            pr = MDL.Profile.objects.create(pupil=p, name=kim)
+            MDL.Progress.objects.create(profile=pr, stars=yulduz)
+            return pr.pk
+
+        t = odam("talaba", 5)
+        o = odam("oquvchi", 50)
+        _, hammasi = _reyting_jami(10)
+        _, talabalar = _reyting_jami(10, "talaba")
+        self.assertEqual([p for p, _ in hammasi], [o, t])
+        self.assertEqual([p for p, _ in talabalar], [t])

@@ -46,6 +46,7 @@ import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { PanelBelgi, panelRang, type PanelBelgiNom } from "../lib/chizma/panelBelgi";
 import { Icon, type IconName } from "../lib/icons";
 import { useKompyuter } from "../lib/maket";
+import { profilKursi, useProfil, yolOf } from "../lib/profil";
 import { Menyu } from "./Menyu";
 import { Logo } from "./Logo";
 import { TilTugma } from "./TilTugma";
@@ -85,6 +86,8 @@ const YOPIQ = [
   // DTM varianti — bir soatlik imtihon. Pastdagi tugmani bexosdan
   // bosish butun urinishni yo'qotardi.
   /^\/imtihon\/\d+$/,
+  // Sessiya varianti — xuddi shunday, bir soatlik nazorat.
+  /^\/sessiya\/[^/]+\/\d+$/,
   // Kunlik son — o'z klaviaturasi pastda, panel uni yopib qo'yardi.
   /^\/oyinlar\/kunlik-son$/,
   // Karvon yo'li — o'z menyusi bilan to'liq ekran.
@@ -113,13 +116,20 @@ export function Panel() {
   const nav = useNavigate();
   const { progressOf, kunlik } = useProgress();
   const [menyu, setMenyu] = useState(false);
+  const prof = useProfil();
   // Keng brauzer oynasida panel PASTDA emas, CHAPDA turadi
   // (`lib/maket.ts`). Tugmalar o'sha — faqat joyi va ko'rinishi boshqa.
   const kompyuter = useKompyuter();
 
   // Manzildagi kurs, bo'lmasa oxirgi ochilgani, bo'lmasa birinchisi.
+  // Talabada (oliy yo'l) o'z kursi oxirgi ochilgandan USTUN: tahlil
+  // ko'rsatdiki, talabalar 1–4-sinf kurslarini ham ochadi va o'shanda
+  // menyudagi "kunlik sinov" va "xatolar daftari" 1-sinfga bog'lanib
+  // qolardi.
+  const oliyKurs = yolOf(prof) === "oliy" ? profilKursi(prof) : null;
   const kurs =
     courseBySlug(/^\/kurs\/([^/]+)/.exec(pathname)?.[1] ?? "") ??
+    oliyKurs ??
     courseBySlug(oxirgiKurs()) ??
     COURSES[0];
 

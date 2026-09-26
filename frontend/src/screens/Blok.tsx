@@ -67,6 +67,7 @@ import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
 import { useFaollik } from "../lib/faollik";
 import { natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa } from "../lib/imtihon";
+import { baho, sessiyaSaqla, sessiyaYasa } from "../lib/sessiya";
 
 /** Bitta berilgan javob. `null` — ulgurilmadi. */
 interface Javob {
@@ -74,7 +75,13 @@ interface Javob {
   togri: boolean;
 }
 
-export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, onExit }: {
+export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, sessiya, onExit }: {
+  /**
+   * SESSIYA varianti — talabalar kursi bo'yicha (`lib/sessiya.ts`).
+   * DTM variantidek bir o'tirishda ishlanadi, natija oxirida 5 ballik
+   * taxminiy baho bilan ko'rsatiladi.
+   */
+  sessiya?: { slug: string; n: number };
   /**
    * IMTIHON VARIANTI — raqami berilsa, savollar shu variantdan
    * yasaladi (`lib/imtihon.ts`) va natija qurilmada variant bo'yicha
@@ -127,18 +134,19 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, 
    * yangisini yasashdan oldin "davom etasizmi?" so'raladi. Javob
    * berilgach bu qiymat ahamiyatsiz bo'lib qoladi (`tanlov`).
    */
-  const [yarim] = useState(() => (toplam || imtihon ? null : joriyniOqi()));
+  const [yarim] = useState(() => (toplam || imtihon || sessiya ? null : joriyniOqi()));
   const [tanlov, setTanlov] = useState<"sora" | "davom" | "yangi">(() => {
-    const bor = !toplam && !imtihon && joriyniOqi() !== null;
+    const bor = !toplam && !imtihon && !sessiya && joriyniOqi() !== null;
     if (!bor) return "yangi";
     return davomEt ? "davom" : "sora";
   });
 
   const blok = useMemo(
     () => (imtihon ? variantYasa(imtihon)
-      : toplam ? toplamYasa(toplam) : blokYasa(sinf, uzunlik, qamrov)),
+      : sessiya ? sessiyaYasa(sessiya.slug, sessiya.n)
+        : toplam ? toplamYasa(toplam) : blokYasa(sinf, uzunlik, qamrov)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sinf, uzunlik, qamrov, urinish, imtihon],
+    [sinf, uzunlik, qamrov, urinish, imtihon, sessiya?.slug, sessiya?.n],
   );
 
   // Material topilmadi. Amalda bu deyarli bo'lmaydi (test qulfsiz va
@@ -164,7 +172,7 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, 
   return <Oyna key={`${uzunlik}-${urinish}-${davom ? "d" : "y"}`}
     blok={davom ? { savollar: davom.savollar, daqiqa: davom.daqiqa } : blok}
     davom={davom}
-    sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam} imtihon={imtihon}
+    sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam} imtihon={imtihon} sessiya={sessiya}
     onQayta={() => { joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
 }
@@ -238,9 +246,10 @@ function Bosh({ onExit }: { onExit: () => void }) {
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, onQayta, onExit }: {
+function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, onQayta, onExit }: {
   toplam?: Toplam;
   imtihon?: number;
+  sessiya?: { slug: string; n: number };
   blok: Blok;
   /** Yarim qolgan testdan davom etilyaptimi. Yo'q bo'lsa — yangi test. */
   davom: Joriy | null;
@@ -286,6 +295,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, onQayta, o
   useFaollik(tugadi ? null : {
     joy: toplam ? "toplam" : "blok",
     nom: imtihon ? `${t("imtihonVariant", { n: imtihon })}`
+      : sessiya ? `${t("sessiya")} · ${t("imtihonVariant", { n: sessiya.n })}`
       : toplam ? toplam.nom
         : bobNomi ? `${sinf}-sinf · ${bobNomi}` : `${sinf}-sinf · ${uzunlik}`,
     savol: Math.min(idx + 1, blok.savollar.length),
@@ -353,6 +363,19 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, onQayta, o
       return;
     }
 
+    // Sessiya varianti — faqat qurilmaga (`lib/sessiya.ts`).
+    if (sessiya) {
+      sessiyaSaqla({
+        kurs: sessiya.slug,
+        variant: sessiya.n,
+        togri: toliq.filter((x) => x.togri).length,
+        jami: toliq.length,
+        sekund: Math.round((Date.now() - boshlandi.current) / 1000),
+        vaqt: Date.now(),
+      });
+      return;
+    }
+
     // Imtihon varianti — natija variant raqami bilan saqlanadi:
     // ro'yxatda "eng yaxshi natija" va o'rtacha daraja shundan
     // hisoblanadi (`lib/imtihon.ts`).
@@ -375,7 +398,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, onQayta, o
     // keyingi safar tugallangan test "davom etasizmi?" bo'lib
     // qaytib chiqardi.
     joriyniOchir();
-  }, [blok.savollar.length, sinf, uzunlik, bobNomi, toplam, imtihon]);
+  }, [blok.savollar.length, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya]);
 
   /*
    * Har o'zgarishda yarim qolgan test yoziladi.
@@ -386,7 +409,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, onQayta, o
    * Yagona ishonchli payt — javob berilgan zahoti.
    */
   useEffect(() => {
-    if (tugadi || toplam || imtihon) return;
+    if (tugadi || toplam || imtihon || sessiya) return;
     joriyniSaqla({
       sinf, uzunlik, bobNomi,
       savollar: blok.savollar,
@@ -396,7 +419,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, onQayta, o
       tugash: tugash.current,
       boshlandi: boshlandi.current,
     });
-  }, [idx, javoblar, tugadi, blok.savollar, blok.daqiqa, sinf, uzunlik, bobNomi, toplam, imtihon]);
+  }, [idx, javoblar, tugadi, blok.savollar, blok.daqiqa, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya]);
 
   /*
    * Soat.
@@ -468,7 +491,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, onQayta, o
 
   if (tugadi) {
     return <>
-      <Natija blok={blok} javoblar={javoblar} toplam={toplam} stat={stat}
+      <Natija blok={blok} javoblar={javoblar} toplam={toplam} stat={stat} sessiya={Boolean(sessiya)}
         onQayta={onQayta} onExit={onExit} />
       {oyna}
     </>;
@@ -580,7 +603,9 @@ interface Mavzu {
   ulgurmadi: number;
 }
 
-function Natija({ blok, javoblar, toplam, stat, onQayta, onExit }: {
+function Natija({ blok, javoblar, toplam, stat, sessiya = false, onQayta, onExit }: {
+  /** Sessiya — foiz yonida 5 ballik taxminiy baho. */
+  sessiya?: boolean;
   blok: Blok;
   javoblar: Javob[];
   toplam?: Toplam;
@@ -643,6 +668,12 @@ function Natija({ blok, javoblar, toplam, stat, onQayta, onExit }: {
       <div className="az-savol rounded-clay bg-karta p-5 text-center shadow-clay">
         <div className="font-display text-[46px] leading-none text-brand-green-d">{f}%</div>
         <div className="mt-1 text-[13px] text-ink-dim">{t("blokNatija", { a: togri, b: jami })}</div>
+        {sessiya && (
+          <div className="mt-2 text-[14px]">
+            {t("sessiyaBaho")}: <b className="font-display text-[18px]">{baho(f)}</b>
+            <span className="block text-[12px] text-ink-dim">{t("sessiyaBahoIzoh")}</span>
+          </div>
+        )}
 
         <div className="mt-4 flex gap-2">
           <Box v={togri} l={t("natijaTogri")} c="text-brand-green-d" />

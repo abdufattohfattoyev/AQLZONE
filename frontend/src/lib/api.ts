@@ -525,10 +525,11 @@ export interface Reyting {
   qatnashchilar: number;
 }
 
-export async function getReyting(davr: "jami" | "hafta"): Promise<Reyting | null> {
+export async function getReyting(davr: "jami" | "hafta", guruh = ""): Promise<Reyting | null> {
   if (!(await signIn())) return null;
   try {
-    const r = await fetch(`/api/v1/leaderboard?davr=${davr}${profilId ? `&profileId=${profilId}` : ""}`, {
+    const g = guruh ? `&guruh=${guruh}` : "";
+    const r = await fetch(`/api/v1/leaderboard?davr=${davr}${g}${profilId ? `&profileId=${profilId}` : ""}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!r.ok) return null;

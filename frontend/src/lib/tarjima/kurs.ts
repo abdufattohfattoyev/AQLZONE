@@ -718,6 +718,41 @@ const RU: Record<string, string> = {
   "Bo'laklab integrallash": "Интегрирование по частям",
   "Geometrik qator yig'indisi": "Сумма геометрического ряда",
   "y′ = ky tenglamasi": "Уравнение y′ = ky",
+  "Oliy matematika · 2-kurs": "Высшая математика · 2 курс",
+  "Xususiy hosila, karrali integral, qatorlar, differensial tenglamalar":
+    "Частные производные, кратные интегралы, ряды, дифференциальные уравнения",
+  "Ehtimollar nazariyasi va statistika": "Теория вероятностей и статистика",
+  "Kombinatorika, ehtimollik, tasodifiy miqdorlar, statistika":
+    "Комбинаторика, вероятность, случайные величины, статистика",
+  "Ko'p o'zgaruvchili funksiyalar": "Функции нескольких переменных",
+  "Karrali integrallar": "Кратные интегралы",
+  "Qatorlar": "Ряды",
+  "Differensial tenglamalar": "Дифференциальные уравнения",
+  "Kombinatorika": "Комбинаторика",
+  "Tasodifiy hodisalar": "Случайные события",
+  "Tasodifiy miqdorlar": "Случайные величины",
+  "Matematik statistika": "Математическая статистика",
+  "x bo'yicha xususiy hosila": "Частная производная по x",
+  "y bo'yicha xususiy hosila": "Частная производная по y",
+  "Gradient": "Градиент",
+  "Ikki o'zgaruvchili funksiya ekstremumi": "Экстремум функции двух переменных",
+  "To'g'ri to'rtburchak bo'yicha integral": "Интеграл по прямоугольнику",
+  "Ko'paytmaning karrali integrali": "Кратный интеграл произведения",
+  "Soha yuzi": "Площадь области",
+  "Sonli qatorlarning yaqinlashishi": "Сходимость числовых рядов",
+  "Yaqinlashish radiusi": "Радиус сходимости",
+  "Makloren qatori": "Ряд Маклорена",
+  "O'zgaruvchilari ajraladigan tenglamalar": "Уравнения с разделяющимися переменными",
+  "Xarakteristik tenglama": "Характеристическое уравнение",
+  "Umumiy yechim": "Общее решение",
+  "Kombinatsiya, o'rinlashtirish, o'rin almashtirish": "Сочетания, размещения, перестановки",
+  "Klassik ehtimollik": "Классическая вероятность",
+  "Ehtimollarni ko'paytirish": "Умножение вероятностей",
+  "To'la ehtimollik formulasi": "Формула полной вероятности",
+  "Bernulli sxemasi": "Схема Бернулли",
+  "Matematik kutilma": "Математическое ожидание",
+  "Binomial taqsimot": "Биномиальное распределение",
+  "Tanlanma xarakteristikalari": "Характеристики выборки",
 
   /* =============== kirish belgilaridagi so'zlar =============== */
   "sm": "см",
@@ -762,6 +797,8 @@ export const sinfMatn = (grade: number): string => {
   // 301 — talabalar kursi (`curriculum/index.ts`). `>= 100` dan OLDIN:
   // aks holda "201-sinf geometriya" bo'lib chiqardi.
   if (grade === 301) return ru ? "Высшая математика" : "Oliy matematika";
+  if (grade === 302) return ru ? "Высшая математика, 2 курс" : "Oliy matematika, 2-kurs";
+  if (grade === 303) return ru ? "Теория вероятностей" : "Ehtimollar nazariyasi";
   if (grade >= 100) {
     const sinf = grade - 100;
     return ru ? `${sinf} класс, геометрия` : `${sinf}-sinf geometriya`;

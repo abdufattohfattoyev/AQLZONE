@@ -79,6 +79,10 @@ export const yolMasalaMuallif = (profilId: number) => `/masalalar/muallif/${prof
 /** Reyting — kim qancha yulduz yig'gan. Kursdan tashqarida: hammasi birga. */
 export const yolReyting = () => "/reyting";
 
+/** Talabaning nazoratga tayyorgarligi (`screens/Sessiya.tsx`). */
+export const yolSessiya = () => "/sessiya";
+export const yolSessiyaVariant = (slug: string, n: number) => `/sessiya/${slug}/${n}`;
+
 /**
  * Kichkintoylar bo'limi — kursdan TASHQARIDA va bu ataylab.
  *

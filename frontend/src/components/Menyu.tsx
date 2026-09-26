@@ -57,13 +57,15 @@ import { UNIT_COLORS } from "../lib/types";
 import type { Course } from "../lib/curriculum";
 import { profilSoni } from "../lib/api";
 import { useProgress } from "../lib/progress";
+import { kichkintoyKerak, useProfil, yolOf } from "../lib/profil";
+import { maktabKursi } from "../lib/curriculum";
 import { nishonlar, olingan } from "../lib/nishon";
 import { sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import {
   yolTestlar, yolDaftar, yolDokon, yolDuel, yolFormulalar, yolHisobot, yolKichkintoy, yolKurs,
   yolKurslar, yolMasalalar, yolMaydon, yolNishon, yolOtaOna, yolOyinlar,
-  yolQidiruv, yolReyting, yolSinov, yolTestSinf, yolSozlama,
+  yolQidiruv, yolReyting, yolSinov, yolTestSinf, yolSozlama, yolSessiya,
 } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
@@ -105,6 +107,9 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
    * to'rttasi ham yopiq turgan menyu birinchi ochilishda bo'sh
    * tuyulardi.
    */
+  const prof = useProfil();
+  const talaba = yolOf(prof) === "oliy";
+  const oziUchun = ["talaba", "abiturient", "kattalar"].includes(prof?.kim ?? "");
   const [ochiqBolim, setOchiqBolim] = useState<BolimId | null>("talim");
 
   /**
@@ -247,8 +252,14 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
               izoh={t("menyuKurslarIzoh")} on={yur(yolKurslar())} />
             {/* Testlar endi kursdan TASHQARIDA ham ochiladi —
                 ilgari ular faqat kurs ichida turardi. */}
-            <Satr ic="chart" rang="blue" nom={t("testlar")}
-              izoh={t("testSinfIzoh")} on={yur(yolTestSinf())} />
+            {/* Talabaga maktab testlari emas — o'z fani bo'yicha sessiya. */}
+            {talaba ? (
+              <Satr ic="clock" rang="blue" nom={t("sessiya")}
+                izoh={t("menyuSessiyaIzoh")} on={yur(yolSessiya())} />
+            ) : (
+              <Satr ic="chart" rang="blue" nom={t("testlar")}
+                izoh={t("testSinfIzoh")} on={yur(yolTestSinf())} />
+            )}
             {/* Masalalar TA'LIM ichida turadi, o'yin bo'limida emas.
                 U o'yin emas: bu yerda vaqt ham, rekord ham yo'q,
                 odam masalani o'ylab yechadi. */}
@@ -274,8 +285,12 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
                 bola bu yerda narsalarning NOMINI o'rganadi. Eng oxirida
                 turadi — u ilovadagi eng yosh bo'lim va uni izlaydigan
                 odam kamchilik. */}
-            <Satr ic="palette" rang="gold" nom={t("kichkintoy")}
-              izoh={t("menyuKichkintoyIzoh")} on={yur(yolKichkintoy())} />
+            {/* Faqat kerakli odamga (`lib/profil.ts`): talabaga bu
+                bo'lim shovqin. */}
+            {kichkintoyKerak(prof) && (
+              <Satr ic="palette" rang="gold" nom={t("kichkintoy")}
+                izoh={t("menyuKichkintoyIzoh")} on={yur(yolKichkintoy())} />
+            )}
           </Bolim>
 
           {/* ================ imtihonga tayyorgarlik ================
@@ -297,6 +312,16 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
               ochiladi, ya'ni yo'l uzunligi bitta bosish farq qiladi,
               lekin bo'lim izohi bilan turadi va kerak bo'lmaganda
               umuman chizilmaydi. */}
+          {/* Talabaga — o'z bo'limi: sessiya va oliy formulalar. */}
+          {talaba && !maktabKursi(kurs) && (
+            <Bolim id="imtihon" ic="order" nom={t("menyuTalaba")}
+              ochiq={ochiqBolim} onOchiq={setOchiqBolim}>
+              <Satr ic="clock" rang="blue" nom={t("sessiya")}
+                izoh={t("menyuSessiyaIzoh")} on={yur(yolSessiya())} />
+              <Satr ic="sqrt" rang="orange" nom={t("formulaTugma")}
+                izoh={t("menyuOliyFormulaIzoh")} on={yur(yolFormulalar(kurs))} />
+            </Bolim>
+          )}
           {blokBormi(sinfOf(kurs.grade)) && (
             <Bolim id="imtihon" ic="order" nom={t("menyuImtihon")}
               ochiq={ochiqBolim} onOchiq={setOchiqBolim}>
@@ -338,8 +363,12 @@ export function Menyu({ ochiq, onYop, kurs }: Props) {
           {/* ======================== hisob ======================== */}
           <Bolim id="hisob" ic="pencil" nom={t("menyuHisobBolim")}
             ochiq={ochiqBolim} onOchiq={setOchiqBolim}>
-            <Satr ic="parent" rang="green" nom={t("otaOnaPaneli")}
-              izoh={t("menyuOtaOnaIzoh")} on={yur(yolOtaOna(kurs))} />
+            {/* Ota-ona paneli — bolasi uchun kelganlarga. Talaba,
+                abituriyent va "o'zim uchun" deganlarga u begona. */}
+            {!oziUchun && (
+              <Satr ic="parent" rang="green" nom={t("otaOnaPaneli")}
+                izoh={t("menyuOtaOnaIzoh")} on={yur(yolOtaOna(kurs))} />
+            )}
             <Satr ic="pencil" rang="blue" nom={t("hisobSozlamalari")}
               izoh={t("menyuSozlamaIzoh")} on={yur(yolSozlama())} />
             {/* Profil almashtirish faqat IKKI va undan ko'p bola bo'lganda

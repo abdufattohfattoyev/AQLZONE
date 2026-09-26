@@ -191,6 +191,20 @@ const Y = {
   ekspHosila: ["(eᵏˣ)' = k·eᵏˣ", "(eᵏˣ)' = k·eᵏˣ"],
   bolaklab: ["∫u dv = uv − ∫v du", "∫u dv = uv − ∫v du"],
   difYechim: ["y' = ky  ⇒  y = C·eᵏˣ", "y' = ky  ⇒  y = C·eᵏˣ"],
+  xususiyQ: ["Boshqa o'zgaruvchi o'zgarmas deb olinadi", "Другая переменная считается постоянной"],
+  gradientQ: ["grad f = (∂f/∂x; ∂f/∂y),  |grad f| = √(…)", "grad f = (∂f/∂x; ∂f/∂y),  |grad f| = √(…)"],
+  karraliQ: ["Avval ichki, keyin tashqi integral", "Сначала внутренний, затем внешний интеграл"],
+  pQator: ["Σ 1/nᵖ yaqinlashadi ⇔ p > 1", "Σ 1/nᵖ сходится ⇔ p > 1"],
+  radiusQ: ["R = 1 / lim |aₙ₊₁/aₙ|", "R = 1 / lim |aₙ₊₁/aₙ|"],
+  teylorQ: ["eᵃˣ = Σ aⁿxⁿ / n!", "eᵃˣ = Σ aⁿxⁿ / n!"],
+  xarakteristikQ: ["y″ → k²,  y′ → k,  y → 1", "y″ → k²,  y′ → k,  y → 1"],
+  ajraladiganQ: ["O'zgaruvchilarni ajratib integrallaymiz", "Разделяем переменные и интегрируем"],
+  shartliQ: ["P(AB) = P(A) · P(B|A)", "P(AB) = P(A) · P(B|A)"],
+  tolaEhtimolQ: ["P(A) = Σ P(Hᵢ) · P(A|Hᵢ)", "P(A) = Σ P(Hᵢ) · P(A|Hᵢ)"],
+  bernulliQ: ["Bernulli: Pₙ(k) = Cₙᵏ pᵏ qⁿ⁻ᵏ", "Бернулли: Pₙ(k) = Cₙᵏ pᵏ qⁿ⁻ᵏ"],
+  kutilmaQ: ["M(X) = Σ xᵢ pᵢ", "M(X) = Σ xᵢ pᵢ"],
+  dispersiyaQ: ["D(X) = M(X²) − M(X)²", "D(X) = M(X²) − M(X)²"],
+  kenglikQ: ["R = x_max − x_min", "R = x_max − x_min"],
 } as const;
 
 export type YechimKalit = keyof typeof Y;

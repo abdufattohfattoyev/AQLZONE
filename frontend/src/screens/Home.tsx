@@ -46,6 +46,11 @@ interface Props {
   onBlok?: () => void;
   onHisobot?: () => void;
   onFormulalar?: () => void;
+  /**
+   * Talabalar kursi: blok test va hisobot o'rniga SESSIYA
+   * (`screens/Sessiya.tsx`) — oliygohdagi nazoratga tayyorgarlik.
+   */
+  onSessiya?: () => void;
 }
 
 function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -81,7 +86,7 @@ function Ring({ done, total, color }: { done: number; total: number; color: stri
 
 export function Home({
   slug, title, izoh, units, progress, kunlik, maqsad,
-  onStart, onDaftar, onSinov, onOtaOna, onBlok, onHisobot, onFormulalar,
+  onStart, onDaftar, onSinov, onOtaOna, onBlok, onHisobot, onFormulalar, onSessiya,
 }: Props) {
   // Zanjir tiklash va jami tanga kontekstdan keladi: ular BUTUN hisobga
   // tegishli, bitta kursga emas.
@@ -276,6 +281,15 @@ export function Home({
             izoh={t("hisobotTugmaIzoh")} on={onHisobot} />
           <TayyorgarlikTugma ic="sqrt" rang="bg-brand-orange" nom={t("formulaTugma")}
             izoh={t("formulaTugmaIzoh")} on={onFormulalar} />
+        </div>
+      )}
+
+      {onSessiya && onFormulalar && (
+        <div className="mx-auto mt-4 max-w-[560px] space-y-2">
+          <TayyorgarlikTugma ic="clock" rang="bg-brand-blue" nom={t("sessiya")}
+            izoh={t("menyuSessiyaIzoh")} on={onSessiya} />
+          <TayyorgarlikTugma ic="sqrt" rang="bg-brand-blue" nom={t("formulaTugma")}
+            izoh={t("menyuOliyFormulaIzoh")} on={onFormulalar} />
         </div>
       )}
 

@@ -209,4 +209,99 @@ export const FORMULALAR: Bolim[] = [
       { nom: "Chetlanish", ru: "Отклонение", f: "σ = √D" },
     ],
   },
+
+  /* ─────────────── TALABALAR (sinf = kurs kodi − 100) ───────────────
+   * 201 — oliy matematika 1-kurs, 202 — 2-kurs, 203 — ehtimollar.
+   * Maktab o'quvchisiga KO'RSATILMAYDI (`Formulalar.tsx`): 2-sinf
+   * bolasiga determinant ro'yxati faqat shovqin. */
+  {
+    nom: "Chiziqli algebra", ru: "Линейная алгебра", sinf: 201, ikon: "grid",
+    lar: [
+      { nom: "2×2 determinant", ru: "Определитель 2×2", f: "|a b; c d| = ad − bc" },
+      { nom: "3×3 determinant — birinchi satr bo'yicha", ru: "Определитель 3×3 — по первой строке", f: "a₁₁M₁₁ − a₁₂M₁₂ + a₁₃M₁₃" },
+      { nom: "Matritsalar ko'paytmasi", ru: "Произведение матриц", f: "cᵢⱼ = Σₖ aᵢₖ bₖⱼ" },
+      { nom: "Teskari matritsa (2×2)", ru: "Обратная матрица (2×2)", f: "A⁻¹ = 1/det · [d −b; −c a]" },
+      { nom: "Kramer formulalari", ru: "Формулы Крамера", f: "x = Δₓ/Δ,   y = Δᵧ/Δ" },
+    ],
+  },
+  {
+    nom: "Vektorlar va analitik geometriya", ru: "Векторы и аналитическая геометрия", sinf: 201, ikon: "angle",
+    lar: [
+      { nom: "Vektor uzunligi", ru: "Длина вектора", f: "|a| = √(x² + y² + z²)" },
+      { nom: "Skalyar ko'paytma", ru: "Скалярное произведение", f: "a·b = x₁x₂ + y₁y₂ + z₁z₂ = |a||b|cos φ" },
+      { nom: "Vektor ko'paytma", ru: "Векторное произведение", f: "a × b = (y₁z₂ − z₁y₂;  z₁x₂ − x₁z₂;  x₁y₂ − y₁x₂)" },
+      { nom: "Perpendikulyarlik sharti", ru: "Условие перпендикулярности", f: "a·b = 0" },
+      { nom: "To'g'ri chiziq tenglamasi", ru: "Уравнение прямой", f: "y = kx + b,   Ax + By + C = 0" },
+      { nom: "Nuqtadan to'g'ri chiziqqacha masofa", ru: "Расстояние от точки до прямой", f: "d = |Ax₀ + By₀ + C| / √(A² + B²)" },
+    ],
+  },
+  {
+    nom: "Limitlar", ru: "Пределы", sinf: 201, ikon: "search",
+    lar: [
+      { nom: "Birinchi ajoyib limit", ru: "Первый замечательный предел", f: "lim sin x / x = 1,   x → 0" },
+      { nom: "Ikkinchi ajoyib limit", ru: "Второй замечательный предел", f: "lim (1 + 1/x)ˣ = e,   x → ∞" },
+      { nom: "Ekvivalent cheksiz kichiklar (x → 0)", ru: "Эквивалентные бесконечно малые (x → 0)", f: "sin x ~ tg x ~ ln(1 + x) ~ eˣ − 1 ~ x" },
+      { nom: "Ratsional kasr, x → ∞", ru: "Рациональная дробь, x → ∞", f: "lim = bosh hadlar nisbati" },
+      { nom: "Lopital qoidasi", ru: "Правило Лопиталя", f: "lim f/g = lim f′/g′   (0/0, ∞/∞)" },
+    ],
+  },
+  {
+    nom: "Hosila va integral", ru: "Производная и интеграл", sinf: 201, ikon: "chart",
+    lar: [
+      { nom: "Ko'paytma hosilasi", ru: "Производная произведения", f: "(uv)′ = u′v + uv′" },
+      { nom: "Bo'linma hosilasi", ru: "Производная частного", f: "(u/v)′ = (u′v − uv′) / v²" },
+      { nom: "Murakkab funksiya", ru: "Сложная функция", f: "(f(g(x)))′ = f′(g) · g′" },
+      { nom: "Ko'rsatkichli va logarifmik", ru: "Показательная и логарифмическая", f: "(eˣ)′ = eˣ,   (aˣ)′ = aˣ ln a,   (ln x)′ = 1/x" },
+      { nom: "Trigonometrik", ru: "Тригонометрические", f: "(sin x)′ = cos x,   (cos x)′ = −sin x,   (tg x)′ = 1/cos²x" },
+      { nom: "Nyuton–Leybnits", ru: "Ньютон–Лейбниц", f: "∫ₐᵇ f(x)dx = F(b) − F(a)" },
+      { nom: "Bo'laklab integrallash", ru: "Интегрирование по частям", f: "∫u dv = uv − ∫v du" },
+      { nom: "Asosiy integrallar", ru: "Основные интегралы", f: "∫dx/x = ln|x| + C,   ∫eˣdx = eˣ + C,   ∫cos x dx = sin x + C" },
+    ],
+  },
+  {
+    nom: "Ko'p o'zgaruvchili funksiyalar va karrali integral", ru: "Функции многих переменных и кратные интегралы", sinf: 202, ikon: "cube",
+    lar: [
+      { nom: "Xususiy hosila", ru: "Частная производная", f: "∂f/∂x — y o'zgarmas" },
+      { nom: "To'la differensial", ru: "Полный дифференциал", f: "df = f′ₓdx + f′ᵧdy" },
+      { nom: "Gradient", ru: "Градиент", f: "grad f = (∂f/∂x; ∂f/∂y)" },
+      { nom: "Ekstremum sharti", ru: "Условие экстремума", f: "f′ₓ = 0,  f′ᵧ = 0;   AC − B² > 0" },
+      { nom: "Ikki karrali integral", ru: "Двойной интеграл", f: "∬ f dxdy = ∫ₐᵇ dx ∫ f dy" },
+      { nom: "Qutb koordinatalari", ru: "Полярные координаты", f: "dxdy = r dr dφ" },
+    ],
+  },
+  {
+    nom: "Qatorlar va differensial tenglamalar", ru: "Ряды и дифференциальные уравнения", sinf: 202, ikon: "repeat",
+    lar: [
+      { nom: "Umumlashgan garmonik qator", ru: "Обобщённый гармонический ряд", f: "Σ 1/nᵖ yaqinlashadi ⇔ p > 1" },
+      { nom: "Dalamber alomati", ru: "Признак Даламбера", f: "lim aₙ₊₁/aₙ = l < 1 ⇒ yaqinlashadi" },
+      { nom: "Yaqinlashish radiusi", ru: "Радиус сходимости", f: "R = lim |aₙ / aₙ₊₁|" },
+      { nom: "Makloren qatori", ru: "Ряд Маклорена", f: "f(x) = Σ f⁽ⁿ⁾(0) xⁿ / n!" },
+      { nom: "eˣ yoyilmasi", ru: "Разложение eˣ", f: "eˣ = 1 + x + x²/2! + x³/3! + …" },
+      { nom: "Ajraladigan tenglama", ru: "Уравнение с разделяющимися переменными", f: "y′ = f(x)g(y) ⇒ ∫dy/g = ∫f dx" },
+      { nom: "y″ + py′ + qy = 0 tenglamasi", ru: "Уравнение y″ + py′ + qy = 0", f: "k² + pk + q = 0 → y = C₁e^(k₁x) + C₂e^(k₂x)" },
+      { nom: "Karrali ildiz", ru: "Кратный корень", f: "y = (C₁ + C₂x)e^(kx)" },
+    ],
+  },
+  {
+    nom: "Ehtimollar nazariyasi", ru: "Теория вероятностей", sinf: 203, ikon: "pie",
+    lar: [
+      { nom: "Klassik ehtimollik", ru: "Классическая вероятность", f: "P(A) = m / n" },
+      { nom: "Yig'indi ehtimoli", ru: "Вероятность суммы", f: "P(A + B) = P(A) + P(B) − P(AB)" },
+      { nom: "Ko'paytma ehtimoli", ru: "Вероятность произведения", f: "P(AB) = P(A) · P(B|A)" },
+      { nom: "To'la ehtimollik", ru: "Полная вероятность", f: "P(A) = Σ P(Hᵢ) P(A|Hᵢ)" },
+      { nom: "Bayes formulasi", ru: "Формула Байеса", f: "P(Hᵢ|A) = P(Hᵢ)P(A|Hᵢ) / P(A)" },
+      { nom: "Bernulli formulasi", ru: "Формула Бернулли", f: "Pₙ(k) = Cₙᵏ pᵏ qⁿ⁻ᵏ" },
+    ],
+  },
+  {
+    nom: "Tasodifiy miqdorlar va statistika", ru: "Случайные величины и статистика", sinf: 203, ikon: "order",
+    lar: [
+      { nom: "Matematik kutilma", ru: "Математическое ожидание", f: "M(X) = Σ xᵢpᵢ" },
+      { nom: "Dispersiya", ru: "Дисперсия", f: "D(X) = M(X²) − M(X)²" },
+      { nom: "Binomial taqsimot", ru: "Биномиальное распределение", f: "M = np,   D = npq" },
+      { nom: "Uch sigma qoidasi", ru: "Правило трёх сигм", f: "P(|X − a| < 3σ) ≈ 0,997" },
+      { nom: "Tanlanma o'rtacha", ru: "Выборочное среднее", f: "x̄ = Σ xᵢ / n" },
+      { nom: "Tuzatilgan dispersiya", ru: "Исправленная дисперсия", f: "s² = Σ(xᵢ − x̄)² / (n − 1)" },
+    ],
+  },
 ];

@@ -572,7 +572,7 @@ MAX_REYTING = 100
 _hafta_boshi = L.hafta_boshi
 
 
-def _reyting_jami(limit: int):
+def _reyting_jami(limit: int, kim: str = ""):
     """
     Butun vaqt bo'yicha: yig'ilgan yulduzlar.
 
@@ -582,11 +582,13 @@ def _reyting_jami(limit: int):
     qs = Progress.objects.filter(
         stars__gt=0, profile__pupil__registered_at__isnull=False
     )
+    if kim:
+        qs = qs.filter(profile__pupil__kim=kim)
     top = list(qs.order_by("-stars", "updated_at").values("profile", "stars", "updated_at")[:limit])
     return qs, [(r["profile"], r["stars"]) for r in top]
 
 
-def _reyting_hafta(limit: int):
+def _reyting_hafta(limit: int, kim: str = ""):
     """
     Shu hafta yig'ilgani.
 
@@ -599,6 +601,7 @@ def _reyting_hafta(limit: int):
         LessonResult.objects.filter(
             created_at__gte=_hafta_boshi(),
             profile__pupil__registered_at__isnull=False,
+            **({"profile__pupil__kim": kim} if kim else {}),
         )
         .values("profile")
         .annotate(yulduz=Sum("stars"))
@@ -669,8 +672,13 @@ def leaderboard(request):
 
     Faqat ro'yxatdan o'tgan hisoblar qatnashadi — ismsiz qator jadvalni
     "Noma'lum" bilan to'ldirib tashlagan bo'lardi.
+
+    `?guruh=talaba` — faqat talabalar orasida. Talaba maktab o'quvchilari
+    bilan bitta jadvalda turganda 1-sinf darslaridan yulduz yig'gan bola
+    uning oldida bo'lardi — solishtirish ma'nosiz edi.
     """
     davr = "hafta" if request.query_params.get("davr") == "hafta" else "jami"
+    guruh = "talaba" if request.query_params.get("guruh") == "talaba" else ""
     try:
         limit = int(request.query_params.get("limit") or 50)
     except ValueError:
@@ -678,7 +686,7 @@ def leaderboard(request):
     limit = min(MAX_REYTING, max(1, limit))
 
     joriy = _profil_tanla(request)
-    qs, top = _reyting_jami(limit) if davr == "jami" else _reyting_hafta(limit)
+    qs, top = _reyting_jami(limit, guruh) if davr == "jami" else _reyting_hafta(limit, guruh)
 
     # --- o'z o'rnim ---
     # Top ichida bo'lsam qo'shimcha so'rov kerak emas.

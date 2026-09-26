@@ -112,7 +112,12 @@ export function sinfOfProfil(p: Profil | null): number | null {
  */
 export function profilKursi(p: Profil | null): Course | null {
   // Talaba va "universitet darajasi" — oliy matematika kursi.
-  if (yolOf(p) === "oliy") return OLIY_KURSLAR()[0] ?? null;
+  // 2-kurs va undan yuqori — 2-kurs dasturi: 1-kursniki unga takrorlash.
+  if (yolOf(p) === "oliy") {
+    const [birinchi, ikkinchi] = OLIY_KURSLAR();
+    const yuqori = p!.kim === "talaba" && p!.bosqich >= 102;
+    return (yuqori ? ikkinchi : birinchi) ?? birinchi ?? null;
+  }
   const s = sinfOfProfil(p);
   if (s === null) return null;
   return COURSES.find((c) => c.grade === s) ?? null;
@@ -120,7 +125,11 @@ export function profilKursi(p: Profil | null): Course | null {
 
 /** Profilning o'z kurslari (ikki fanli sinfda ikkalasi). */
 export function profilKurslari(p: Profil | null): Course[] {
-  if (yolOf(p) === "oliy") return OLIY_KURSLAR();
+  if (yolOf(p) === "oliy") {
+    // O'z kursi birinchi, qolgan talabalar kurslari ortidan.
+    const oz = profilKursi(p);
+    return OLIY_KURSLAR().sort((a, b) => Number(b === oz) - Number(a === oz));
+  }
   const s = sinfOfProfil(p);
   if (s === null) return [];
   return COURSES.filter((c) => (c.grade >= 100 ? c.grade - 100 : c.grade) === s);
