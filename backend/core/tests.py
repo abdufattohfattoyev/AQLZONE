@@ -8096,6 +8096,52 @@ class MatematikaKanalTest(TestCase):
             tugmali.assert_not_called()
         self.assertEqual(KanalYozuv.objects.filter(tur="misol").count(), 2)
 
+    def test_tez_test_savollari_togri_va_sigadi(self):
+        import random as R
+        import re
+        from core import matematika_kanal as MK
+
+        for urug in range(300):
+            for kim, savol, javob, usul, variantlar, togri in MK._testlar(R.Random(urug)):
+                self.assertEqual(len(variantlar), 4, savol)
+                self.assertEqual(len(set(variantlar)), 4, variantlar)
+                self.assertEqual(variantlar[togri], javob)
+                self.assertLessEqual(len(usul), 200, usul)            # quiz izohi cheklovi
+                self.assertLessEqual(len(savol), 300)
+                self.assertTrue(all(len(v) <= 100 for v in variantlar))
+                self.assertIn(": ", savol)
+                son = lambda s: int(re.sub(r"\D", "", s))
+                m = re.fullmatch(r"Hisoblang: (\d+) × (\d+)", savol)
+                if m:
+                    self.assertEqual(son(javob), int(m[1]) * int(m[2]))
+                m = re.fullmatch(r"Hisoblang: (\d+)² − (\d+)²", savol)
+                if m:
+                    self.assertEqual(son(javob), int(m[1]) ** 2 - int(m[2]) ** 2)
+                m = re.search(r"… \+ (\d+)$", savol)
+                if m:
+                    self.assertEqual(son(javob), sum(range(1, int(m[1]) + 1, 2)))
+                m = re.search(r"(\d+):(\d\d)$", savol)
+                if m:
+                    h, mi = int(m[1]), int(m[2])
+                    a = abs(30 * h + mi / 2 - 6 * mi)
+                    self.assertEqual(son(javob), min(a, 360 - a))
+        self.assertTrue(MK.test_rasmi(MK.bugungi_test()).startswith(b"\xff\xd8"))
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
+    def test_tez_test_rasm_ostiga_quiz_bir_marta(self):
+        from unittest import mock
+
+        with mock.patch("core.xabar.rasm_yubor", return_value=("yuborildi", "", 55)) as rasm, \
+             mock.patch("core.xabar.quiz_yubor", return_value=("yuborildi", "", 56)) as quiz:
+            call_command("matematika_kanal", "test", stdout=StringIO())
+            call_command("matematika_kanal", "test", stdout=StringIO())
+        self.assertEqual(rasm.call_count, 1)
+        self.assertEqual(quiz.call_count, 1)
+        self.assertEqual(quiz.call_args.kwargs["javob_id"], 55)      # rasm ostida
+        _, savol, variantlar, togri, _ = quiz.call_args[0]
+        self.assertEqual(len(variantlar), 4)
+        self.assertIn(togri, range(4))
+
     @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
     def test_misolsiz_kunda_javob_chiqmaydi(self):
         from unittest import mock

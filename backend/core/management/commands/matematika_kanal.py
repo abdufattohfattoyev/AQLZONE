@@ -6,6 +6,7 @@ Kanaldagi matematika rukni (`core/matematika_kanal.py`).
     python manage.py matematika_kanal fakt            # qiziq fakt
     python manage.py matematika_kanal misol           # og'zaki misol — savol, javob izohda
     python manage.py matematika_kanal javob           # o'sha misolning javobi va usuli
+    python manage.py matematika_kanal test            # kattalar uchun tez test — rasm + quiz
     python manage.py matematika_kanal avto --sinov    # yubormaydi, matnni ko'rsatadi
 """
 from __future__ import annotations
@@ -23,7 +24,7 @@ class Command(BaseCommand):
     help = "Kanalga matematika yangiligi, qiziq fakt yoki og'zaki misol joylaydi"
 
     def add_arguments(self, parser):
-        parser.add_argument("tur", choices=["yigish", "avto", "fakt", "misol", "javob"])
+        parser.add_argument("tur", choices=["yigish", "avto", "fakt", "misol", "javob", "test"])
         parser.add_argument("--sinov", action="store_true", help="yubormaydi, faqat ko'rsatadi")
 
     def _kanal(self) -> str:
@@ -85,8 +86,51 @@ class Command(BaseCommand):
         )
         self.stdout.write(self.style.SUCCESS(f"kanalga joylandi: {tur}"))
 
+    def _test(self, sinov: bool) -> None:
+        """
+        Tez test — savol rasmi, uning ostida quiz so'rovnoma (rasmga javob
+        bo'lib). `test:<sana>` bir kunda ikkinchi marta chiqarmaydi.
+        """
+        kun = timezone.localdate()
+        test = MK.bugungi_test(kun)
+        _, savol, javob, usul, variantlar, togri = test
+        kalit = f"test:{kun}"
+
+        if sinov:
+            self.stdout.write(MK.test_posti(test))
+            self.stdout.write(f"\n❓ {savol}")
+            for n, v in enumerate(variantlar):
+                self.stdout.write(f"  {'✅' if n == togri else '▫️'} {v}")
+            self.stdout.write(f"💡 {usul}")
+            self.stdout.write(self.style.SUCCESS("(sinov — yuborilmadi)"))
+            return
+        if KanalYozuv.objects.filter(kalit=kalit).exists():
+            self.stdout.write("bugungi test allaqachon chiqqan")
+            return
+        kanal = self._kanal()
+        if not kanal:
+            return
+
+        holat, izoh, rasm_id = X.rasm_yubor(kanal, MK.test_rasmi(test), MK.test_posti(test))
+        if holat != "yuborildi":
+            self.stderr.write(self.style.ERROR(f"rasm yuborilmadi: {holat} {izoh}"))
+            return
+        KanalYozuv.objects.create(
+            kalit=kalit, tur=KanalYozuv.MISOL, sarlavha=savol[:300],
+            manba=str(rasm_id), joylangan_at=timezone.now(),
+        )
+        holat, izoh, _ = X.quiz_yubor(kanal, savol, variantlar, togri, usul, javob_id=rasm_id)
+        if holat != "yuborildi":
+            self.stderr.write(self.style.ERROR(f"so'rovnoma yuborilmadi: {holat} {izoh}"))
+            return
+        self.stdout.write(self.style.SUCCESS("kanalga joylandi: test"))
+
     def handle(self, *args, **o):
         tur, sinov = o["tur"], o["sinov"]
+
+        if tur == "test":
+            self._test(sinov)
+            return
 
         if tur == "yigish":
             n = MK.yigish()

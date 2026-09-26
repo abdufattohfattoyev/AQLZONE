@@ -460,7 +460,7 @@ def _qatorlarga(d, matn: str, shrift, kenglik: int) -> list[str]:
     return qatorlar + ([joriy] if joriy else [])
 
 
-def misol_rasmi(misol: tuple[str, str, str, str]) -> bytes:
+def misol_rasmi(misol: tuple, rukn: str = "OG'ZAKI MISOL", pastki: str = "") -> bytes:
     """
     Savol kartasi — JPEG baytlari (kanalga `sendPhoto` bilan chiqadi).
 
@@ -478,8 +478,8 @@ def misol_rasmi(misol: tuple[str, str, str, str]) -> bytes:
     from .kunlik_kartochka import _shrift
     from .tamga import _belgi
 
-    kim, savol, _, _ = misol
-    S, EN = 2, 1080                                  # S — supersampling, chetlar silliq bo'lsin
+    kim, savol = misol[0], misol[1]
+    S, EN = 2, 1080                                 # S — supersampling, chetlar silliq bo'lsin
     t = Image.new("RGB", (EN * S, EN * S), _FON)
     d = ImageDraw.Draw(t)
     m = 60 * S
@@ -498,7 +498,7 @@ def misol_rasmi(misol: tuple[str, str, str, str]) -> bytes:
     # Tepa: rukn nomi va kim uchun.
     ichki = 120 * S
     sh = _shrift(34 * S)
-    d.text((ichki, 128 * S), "OG'ZAKI MISOL", font=sh, fill=_KOK)
+    d.text((ichki, 128 * S), rukn, font=sh, fill=_KOK)
     en = d.textlength(kim, font=sh)
     x2 = EN * S - ichki
     d.rounded_rectangle([x2 - en - 44 * S, 112 * S, x2, 176 * S], radius=32 * S, outline=_XIRA, width=2 * S)
@@ -530,7 +530,7 @@ def misol_rasmi(misol: tuple[str, str, str, str]) -> bytes:
 
     # Past: nima qilish kerak va kanal.
     past = _shrift(32 * S, False)
-    yoz = f"Qalamsiz, 30 soniyada · javob {JAVOB_SOATI} da"
+    yoz = pastki or f"Qalamsiz, 30 soniyada · javob {JAVOB_SOATI} da"
     d.text(((EN * S - d.textlength(yoz, font=past)) / 2, 860 * S), yoz, font=past, fill=_XIRA)
     kanal = (getattr(settings, "KANAL", "") or "").strip()
     belgi = f"Aql Zone · {kanal if kanal.startswith('@') else '@' + kanal}" if kanal else "Aql Zone"
@@ -565,3 +565,156 @@ def javob_posti(misol: tuple[str, str, str, str], kun=None) -> str:
     if keyingi:
         matn += f"\nKeyingi misol — {keyingi} kuni soat 15:00 da."
     return matn
+
+
+# ─────────────────────────── TEZ TEST (QUIZ) ───────────────────────────
+#
+# Kattalar uchun, og'zaki misoldan sal qiyinroq: savol RASMDA, uning
+# ostida — Telegram test so'rovnomasi (`xabar.quiz_yubor`) 4 variant
+# bilan. Odam belgilashi bilan to'g'ri javob va qisqa yechim chiqadi —
+# alohida javob posti kerak emas.
+#
+# Savollar "tuzoqli": birinchi xayolga keladigan javob (o'rtacha tezlik
+# uchun o'rta arifmetik, foizda "o'zgarmadi") variantlar orasida turadi.
+
+#: Test kunlari — og'zaki misol bo'lmagan kunlar (dush, chor, jum).
+TEST_KUNLARI = {0: "dushanba", 2: "chorshanba", 4: "juma"}
+
+KATTALAR = "Kattalar uchun"
+
+
+def _son(n: int) -> str:
+    """1210000 → "1 210 000" — katta son ko'z bilan tez o'qilsin."""
+    return f"{n:,}".replace(",", " ")
+
+
+def _variantlar(r: random.Random, togri, xatolar, fmt=str) -> tuple[list[str], int]:
+    """To'g'ri javob + 3 ta xato, takrorsiz va aralashtirilgan."""
+    vs = [togri]
+    for x in xatolar:
+        if x not in vs and (not isinstance(x, int) or x > 0):
+            vs.append(x)
+    q = 1
+    while len(vs) < 4:                               # faqat son javoblarda yetmay qolishi mumkin
+        for x in (togri + 10 * q, togri - 10 * q):
+            if x > 0 and x not in vs and len(vs) < 4:
+                vs.append(x)
+        q += 1
+    vs = vs[:4]
+    r.shuffle(vs)
+    return [fmt(v) for v in vs], vs.index(togri)
+
+
+def _testlar(r: random.Random) -> list[tuple[str, str, str, str, list[str], int]]:
+    """
+    (kim uchun, savol, javob, usul, variantlar, to'g'ri raqami).
+
+    `usul` — quiz izohi, Telegram 200 belgidan ortig'ini qabul qilmaydi.
+    """
+    t = []
+
+    # 1. Toq sonlar yig'indisi.
+    n = r.randint(15, 40)
+    v, i = _variantlar(r, n * n, [n * (n - 1), n * (n + 1), n * (2 * n - 1)], _son)
+    t.append((KATTALAR, f"Yig'indini toping: 1 + 3 + 5 + … + {2 * n - 1}", _son(n * n),
+              f"Birinchi n ta toq sonning yig'indisi n² ga teng. {2 * n - 1} = 2·{n} − 1, "
+              f"ya'ni {n} ta son: {n}² = {_son(n * n)}.", v, i))
+
+    # 2. Avval oshdi, keyin tushdi.
+    p = r.choice([10, 20, 30, 40, 50])
+    q = p * p // 100
+    togri = f"{q}% arzonladi"
+    v, i = _variantlar(r, togri, ["O'zgarmadi", f"{q}% qimmatladi", f"{p}% arzonladi"])
+    t.append((KATTALAR, f"Narx avval {p}% oshdi, keyin {p}% tushdi: oxirida narx qanday o'zgardi?",
+              togri,
+              f"100 deb olaylik: {p}% oshsa {100 + p}. Endi {100 + p} ning {p}% i — "
+              f"{(100 + p) * p // 100} ayriladi: {100 - q}. Ya'ni {q}% arzonladi.", v, i))
+
+    # 3. O'rtacha tezlik — o'rta arifmetik EMAS.
+    a, b = r.choice([(60, 40), (30, 60), (60, 90), (80, 120), (40, 120), (20, 30)])
+    ort = 2 * a * b // (a + b)
+    v, i = _variantlar(r, ort, [(a + b) // 2, (a + b) // 2 - 5, ort - 4], lambda x: f"{x} km/soat")
+    t.append((KATTALAR, f"Mashina borishda {a} km/soat, qaytishda {b} km/soat yurdi: "
+              "o'rtacha tezlik qancha?", f"{ort} km/soat",
+              f"O'rtacha tezlik = butun yo'l / butun vaqt. ({a} + {b}) / 2 emas! "
+              f"2·{a}·{b} / ({a} + {b}) = {ort} km/soat.", v, i))
+
+    # 4. 100 ga yaqin sonlar ko'paytmasi.
+    x, y = r.randint(2, 9), r.randint(2, 9)
+    k = (100 + x) * (100 + y)
+    v, i = _variantlar(r, k, [k - x * y, k + 10, k - 100], _son)
+    t.append((KATTALAR, f"Hisoblang: {100 + x} × {100 + y}", _son(k),
+              f"(100 + {x})(100 + {y}) = 10 000 + 100·({x} + {y}) + {x}·{y} = "
+              f"10 000 + {100 * (x + y)} + {x * y} = {_son(k)}.", v, i))
+
+    # 5. Kvadratlar ayirmasi.
+    a = r.randint(56, 89)
+    b = 100 - a
+    k = 100 * (a - b)
+    v, i = _variantlar(r, k, [(a - b) ** 2, k - 100, k + 200], _son)
+    t.append((KATTALAR, f"Hisoblang: {a}² − {b}²", _son(k),
+              f"a² − b² = (a − b)(a + b) = {a - b} × {a + b} = {_son(k)}.", v, i))
+
+    # 6. Soat millari — soat mili ham siljiydi.
+    h, m = r.randint(1, 11), r.choice([10, 20, 40, 50])
+    xom = abs(30 * h - 11 * m // 2)
+    burchak = min(xom, 360 - xom)
+    sodda = abs(30 * h - 6 * m)
+    sodda = min(sodda, 360 - sodda)
+    v, i = _variantlar(r, burchak, [sodda, burchak + 10, burchak - 10], lambda x: f"{x}°")
+    t.append((KATTALAR, f"Soat millari orasidagi kichik burchak necha gradus: {h}:{m:02d}",
+              f"{burchak}°",
+              f"Minut mili {6 * m}° da. Soat mili ham siljigan: {30 * h} + {m}/2 = "
+              f"{30 * h + m // 2}°. Farq {xom}°"
+              + (f", kichigi 360 − {xom} = {burchak}°." if xom > 180 else "."), v, i))
+
+    # 7. Ikki quvur.
+    a, b = r.choice([(3, 6), (4, 12), (6, 12), (10, 15), (12, 24), (20, 30), (6, 30), (12, 36)])
+    k = a * b // (a + b)
+    v, i = _variantlar(r, k, [(a + b) // 2, b - a, k + 1], lambda x: f"{x} soat")
+    t.append((KATTALAR, f"Bir quvur hovuzni {a} soatda, ikkinchisi {b} soatda to'ldiradi: "
+              "ikkalasi birga necha soatda to'ldiradi?", f"{k} soat",
+              f"Bir soatda 1/{a} + 1/{b} = 1/{k} qismi to'ladi. Demak butun hovuz {k} soatda.", v, i))
+
+    # 8. Foizga foiz.
+    s, p = r.choice([1, 2, 5, 10]), r.choice([10, 20])
+    m0 = s * 1_000_000
+    y1 = m0 * (100 + p) // 100
+    y2 = y1 * (100 + p) // 100
+    oddiy = m0 * (100 + 2 * p) // 100
+    v, i = _variantlar(r, y2, [oddiy, y1, y2 + m0 * p * p // 10_000], lambda x: f"{_son(x)} so'm")
+    t.append((KATTALAR, f"Bankka {s} mln so'm yiliga {p}% dan qo'yildi (foizga foiz): "
+              "2 yildan keyin qancha bo'ladi?", f"{_son(y2)} so'm",
+              f"1-yil: {_son(m0)} → {_son(y1)}. 2-yil foiz {_son(y1)} dan hisoblanadi: "
+              f"{_son(y2)}. Oddiy foizda {_son(oddiy)} bo'lardi.", v, i))
+
+    # 9. Mushuk va sichqonlar.
+    k = r.randint(3, 7)
+    n = k * r.choice([10, 20, 30])
+    v, i = _variantlar(r, k, [n, n // k, 1], lambda x: f"{x} ta")
+    t.append((KATTALAR, f"{k} ta mushuk {k} daqiqada {k} ta sichqon tutadi: "
+              f"{n} ta sichqonni {n} daqiqada nechta mushuk tutadi?", f"{k} ta",
+              f"Bitta mushuk {k} daqiqada 1 ta sichqon tutadi, {n} daqiqada — {n // k} ta. "
+              f"{n} ta sichqon uchun {n} / {n // k} = {k} ta mushuk.", v, i))
+    return t
+
+
+def bugungi_test(kun=None) -> tuple[str, str, str, str, list[str], int]:
+    """Kunga bog'liq; og'zaki misoldan boshqa urug' — ular bir-birini takrorlamasin."""
+    kun = kun or timezone.localdate()
+    r = random.Random(kun.toordinal() * 7 + 3)
+    return r.choice(_testlar(r))
+
+
+def test_posti(test) -> str:
+    """Rasm ostidagi yozuv. Savol rasmda, variantlar — pastdagi so'rovnomada."""
+    return (
+        "🎯 <b>Tez test</b> — kattalar uchun, sal qiyinroq\n"
+        "⏱ 30 soniyada o'ylab, pastdagi variantni belgilang.\n"
+        "💡 Belgilashingiz bilan to'g'ri javob va yechim chiqadi.\n\n"
+        "Birinchi xayolga kelgan javobga shoshilmang 😉"
+    )
+
+
+def test_rasmi(test) -> bytes:
+    return misol_rasmi(test, rukn="TEZ TEST", pastki="30 soniya · variantni pastda belgilang")

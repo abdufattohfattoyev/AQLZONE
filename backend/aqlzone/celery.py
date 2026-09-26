@@ -111,6 +111,13 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=17, minute=0, day_of_week="2,4,6"),
         "args": ("matematika_kanal", "javob"),
     },
+    # Tez test (kattalar uchun, quiz) — misolsiz kunlarda (dush, chor,
+    # jum), o'sha 15:00 da. Javob so'rovnomaning o'zida — alohida post yo'q.
+    "matematika-test": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=15, minute=0, day_of_week="1,3,5"),
+        "args": ("matematika_kanal", "test"),
+    },
     # Kanaldagi postlar joyidami — kuniga bir marta yetarli.
     "kanal-tekshiruvi": {
         "task": "core.vazifalar.buyruq",

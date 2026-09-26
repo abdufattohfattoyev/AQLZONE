@@ -234,6 +234,60 @@ def kanal_matn(chat_id: str, matn: str, javob_id: int = 0) -> tuple[str, str, in
         return "xato", str(e)[:200], 0
 
 
+#: Telegram so'rovnoma cheklovlari: savol, har bir variant, izoh.
+MAX_SOROVNOMA_SAVOL, MAX_VARIANT, MAX_QUIZ_IZOH = 300, 100, 200
+
+
+def quiz_yubor(
+    chat_id: str, savol: str, variantlar: list[str], togri: int,
+    izoh: str = "", javob_id: int = 0,
+) -> tuple[str, str, int]:
+    """
+    Test (quiz) turidagi so'rovnoma. `(holat, izoh, xabar_id)` qaytaradi.
+
+    Kanalda so'rovnoma doim ANONIM (Telegram boshqasiga ruxsat bermaydi):
+    bot kim nima belgilaganini bilmaydi, faqat umumiy sonlarni. Shuning
+    uchun bu — kanal o'quvchisi uchun o'yin, ilovadagi ballga ulanmaydi.
+
+    `izoh` — odam javob bergandan keyin 💡 ostida chiqadigan yechim
+    (200 belgigacha). `javob_id` — rasm postiga ulanadi: savol rasmda,
+    variantlar esa uning ostida.
+    """
+    payload = {
+        "chat_id": chat_id,
+        "question": savol[:MAX_SOROVNOMA_SAVOL],
+        "options": [{"text": v[:MAX_VARIANT]} for v in variantlar],
+        "type": "quiz",
+        "is_anonymous": True,
+        "correct_option_id": int(togri),
+    }
+    if izoh:
+        payload["explanation"] = izoh[:MAX_QUIZ_IZOH]
+    if javob_id:
+        payload["reply_parameters"] = {"message_id": int(javob_id), "allow_sending_without_reply": True}
+    url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPoll"
+    so_rov = urllib.request.Request(
+        url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(so_rov, timeout=20) as r:
+            javob = json.loads(r.read())
+            if not javob.get("ok"):
+                return "xato", "ok=false", 0
+            return "yuborildi", "", int(javob.get("result", {}).get("message_id") or 0)
+    except urllib.error.HTTPError as e:
+        izoh_ = ""
+        try:
+            izoh_ = str(json.loads(e.read()).get("description", ""))[:200]
+        except Exception:
+            pass
+        if e.code == 403 or "chat not found" in izoh_.lower():
+            return "bloklandi", izoh_ or f"HTTP {e.code}", 0
+        return "xato", izoh_ or f"HTTP {e.code}", 0
+    except Exception as e:                       # tarmoq uzilishi va boshqalar
+        return "xato", str(e)[:200], 0
+
+
 #: Rasmli xabar ostidagi yozuvning eng katta uzunligi (Telegram cheklovi).
 MAX_SARLAVHA = 1024
 
