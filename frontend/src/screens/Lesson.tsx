@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "../lib/icons";
 import { EmojiMatn } from "../lib/hajmli";
 import { useFaollik } from "../lib/faollik";
-import { QuestionView, sahnaBor } from "../components/QuestionView";
+import { QuestionView, sahnaBor, shartSahnada } from "../components/QuestionView";
 import { Ogit } from "../components/Ogit";
 import { Rasm } from "../components/Rasm";
 import { Konfetti } from "../components/Konfetti";
@@ -332,10 +332,13 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
           yo'li bo'lishi kerak, shuning uchun karnay tugmasi doim shu yerda
           turadi (`lib/ovoz.ts` o'chiq bo'lsa ham bosilaveradi — brauzer
           ovozi zaxira sifatida qoladi). */}
-      <div key={`p-${idx}`}
-        className="az-savol mt-5 rounded-clay bg-karta p-4 text-center text-[15px] leading-snug shadow-clay-sm">
-        {A.prompt}
-      </div>
+      {/* Formulali savolda shart kartaning ichida (`QuestionView`). */}
+      {!shartSahnada(A) && (
+        <div key={`p-${idx}`}
+          className="az-savol mt-5 rounded-clay bg-karta p-4 text-center text-[15px] leading-snug shadow-clay-sm">
+          {A.prompt}
+        </div>
+      )}
 
       {/* Savol maydoni — "sahna".
           Ataylab o'z yuzasi bor: savol orqa fon manzarasi bilan qo'shilib

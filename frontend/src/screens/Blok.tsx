@@ -45,7 +45,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
 import { EmojiMatn } from "../lib/hajmli";
-import { QuestionView, sahnaBor } from "../components/QuestionView";
+import { QuestionView, sahnaBor, shartSahnada } from "../components/QuestionView";
 import { Chiqish } from "../components/Chiqish";
 import { Yechim } from "../components/Yechim";
 import { Konfetti } from "../components/Konfetti";
@@ -534,10 +534,13 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
           style={{ width: `${(idx / blok.savollar.length) * 100}%` }} />
       </div>
 
-      <div key={`p-${idx}`}
-        className="az-savol mt-4 rounded-clay bg-karta p-4 text-center text-[15px] leading-snug shadow-clay-sm">
-        {S.a.prompt}
-      </div>
+      {/* Formulali savolda shart kartaning ichida (`QuestionView`). */}
+      {!shartSahnada(S.a) && (
+        <div key={`p-${idx}`}
+          className="az-savol mt-4 rounded-clay bg-karta p-4 text-center text-[15px] leading-snug shadow-clay-sm">
+          {S.a.prompt}
+        </div>
+      )}
 
       <div className="relative my-4 flex flex-1 items-center justify-center
                       rounded-clay bg-sahna/85 p-4 ring-1 ring-track ring-inset backdrop-blur-sm">

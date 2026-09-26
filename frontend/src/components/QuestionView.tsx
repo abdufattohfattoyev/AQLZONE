@@ -9,10 +9,39 @@ import { SHAPES } from "../lib/activity";
 import { Rasm } from "./Rasm";
 import type { Activity } from "../lib/activity";
 
+/**
+ * Formulada matematik belgi bormi. Yo'q bo'lsa `text` — oddiy gap
+ * ("Yaqinlashuvchi qatorni tanlang") va u shartning o'zi: tepasiga
+ * yana shartni yozsak, bir gap ikki xil so'z bilan ikki marta turardi.
+ */
+const MATEMATIK = /[0-9=+−\-×·÷/^²³√∫∑Σ∂()<>≤≥π|]/;
+
 export function QuestionView({ a }: { a: Activity }) {
   switch (a.type) {
-    case "eqn":
-      return <div className="text-center font-display text-[34px] leading-tight break-words">{a.text}</div>;
+    case "eqn": {
+      // Savol BITTA kartada to'liq: shart (nima qilish kerak) va uning
+      // ostida formula. Ilgari shart tepadagi alohida kichik kartada
+      // turardi va katta kartada faqat formula qolardi — skrinshot
+      // qilinsa yoki ko'z faqat kartaga tushsa, "nimani topish kerak"
+      // yo'qolib, savol chala ko'rinardi.
+      //
+      // Formula ichidagi uch va undan ko'p bo'sh joy — muallif qo'ygan
+      // ajratgich (`f = …,   ∂f/∂x (1; −1) = ?`): funksiya bir qatorda,
+      // so'ralgani keyingisida. Tor ekranda satr tasodifiy joyda
+      // bo'linmasin, shuning uchun ular alohida qator bo'ladi.
+      const qatorlar = a.text.split(/,?\s{3,}/).filter(Boolean);
+      const formula = MATEMATIK.test(a.text);
+      return (
+        <div className="text-center">
+          {formula && a.prompt && (
+            <div className="mx-auto mb-4 max-w-[300px] text-[15px] leading-snug text-ink-soft">{a.prompt}</div>
+          )}
+          <div className="font-display text-[34px] leading-tight break-words">
+            {qatorlar.map((q, i) => <div key={i}>{q}</div>)}
+          </div>
+        </div>
+      );
+    }
 
     case "column":
       return (
@@ -307,6 +336,11 @@ function Guruh({ n, emoji }: { n: number; emoji: string }) {
  * ko'rinishini chizadi), aks holda ekranning yarmi quruq turadi va bola
  * u yerda nimadir bo'lishi kerakdek his qiladi.
  */
+/** Shart sahnaning O'ZIDA yoziladimi — unda tepadagi alohida karta kerak emas. */
+export function shartSahnada(a: Activity): boolean {
+  return a.type === "eqn";
+}
+
 export function sahnaBor(a: Activity): boolean {
   if (a.type === "rasm") return Boolean(a.emoji);
   if (a.type === "rang") return Boolean(a.rang);
