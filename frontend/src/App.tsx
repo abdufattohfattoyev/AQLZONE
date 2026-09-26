@@ -188,7 +188,7 @@ function Yollar() {
       <Route path="/sessiya/:slug/:n" element={<SessiyaVariantSahifasi />} />
       <Route path="/oyinlar/shaharcha" element={<ShaharchaSahifasi />} />
       <Route path="/oyinlar/shaharcha/:pid" element={<ShaharchaSahifasi />} />
-      <Route path="/oyinlar/jadval" element={<JadvalSahifasi />} />
+      <Route path="/oyinlar/reyting-jadval" element={<JadvalSahifasi />} />
       <Route path="/oyinlar/karvon" element={<KarvonSahifasi />} />
       <Route path="/oyinlar/duel" element={<DuelSahifasi />} />
       <Route path="/duel/:kod" element={<DuelQabulSahifasi />} />
@@ -755,7 +755,7 @@ function JamoaOchishSahifasi() {
   const { oyin } = useParams();
   useTema("bosh");
   if (oyin !== "kartalar" && oyin !== "royale" && oyin !== "kodlar" && oyin !== "seyf") {
-    return <NotFound nima={t("oyinlar")} qaytish={{ matn: t("oyinlarBolim"), yol: yolOyinlar() }} />;
+    return <NotFound nima={t("bundayOyin")} qaytish={{ matn: t("oyinlarBolim"), yol: yolOyinlar() }} />;
   }
   return <JamoaOchish oyin={oyin} onXona={(kod) => nav(yolXona(kod), { replace: true })}
     onChiq={() => nav(yolOyinlar())} />;
@@ -917,7 +917,7 @@ function OyinDarajaSahifasi() {
 
   const o = oyinById(id ?? "");
   if (!o) {
-    return <NotFound nima={t("oyinlar")}
+    return <NotFound nima={t("bundayOyin")}
       qaytish={{ matn: t("oyinlarBolim"), yol: yolOyinlar() }} />;
   }
 
@@ -946,8 +946,12 @@ function OyinSahifasi() {
   const o = oyinById(id ?? "");
   const d = darajaniOqi(daraja);
 
+  // Qisqa `/oyinlar/tezkor/2` ham ishlasin — to'liq manzilga o'tkaziladi.
+  if (o && d === null && /^[123]$/.test(daraja ?? "")) {
+    return <Navigate to={yolOyinDaraja(o.id, Number(daraja))} replace />;
+  }
   if (!o || d === null) {
-    return <NotFound nima={t("oyinlar")}
+    return <NotFound nima={t("bundayOyin")}
       qaytish={{ matn: t("oyinlarBolim"), yol: yolOyinlar() }} />;
   }
   if (!ochiqmi(o.id, d)) return <Navigate to={yolOyin(o.id)} replace />;

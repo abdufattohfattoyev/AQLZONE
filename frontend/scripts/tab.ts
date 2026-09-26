@@ -8,6 +8,10 @@
  * `npm run tekshir` bilan birga ishlaydi.
  */
 import { faolTab } from "../src/lib/tab";
+import { OYIN_IDLAR } from "../src/lib/oyin";
+import {
+  yolDuel, yolJadval, yolKarvon, yolKunlikSon, yolMaydon, yolOyin, yolShaharcha, yolSonOvi,
+} from "../src/lib/yollar";
 
 let xato = 0;
 const tekshir = (yol: string, kutilgan: ReturnType<typeof faolTab>) => {
@@ -58,6 +62,16 @@ tekshir("/qidiruv", null);
 tekshir("/mening-sahifam", null);
 // Prefiks tasodifan mos kelmasin: "/menyu" — "/men" emas.
 tekshir("/menyu", null);
+
+// O'yin manzili `/oyinlar/<id>` band sahifa bilan to'qnashmasin: ilgari
+// `/oyinlar/jadval` reytingni ochib, "Ko'paytirish jadvali" o'yini
+// ochilmay qolgan edi.
+const band = [yolMaydon(), yolKunlikSon(), yolSonOvi(), yolShaharcha(), yolKarvon(), yolJadval(), yolDuel()];
+for (const id of OYIN_IDLAR) {
+  const ok = !band.includes(yolOyin(id));
+  if (!ok) xato++;
+  console.log(`${ok ? "✅" : "❌"} ${yolOyin(id)} — alohida sahifa bilan to'qnashmaydi`);
+}
 
 console.log(xato === 0 ? "\n✅ tab: hammasi joyida" : `\n❌ ${xato} ta xato`);
 if (xato) process.exit(1);
