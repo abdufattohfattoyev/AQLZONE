@@ -38,6 +38,7 @@ import { useEffect, useRef, useState } from "react";
 import { MasalaBaho } from "../components/MasalaBaho";
 import { useFaollik } from "../lib/faollik";
 import { MasalaMatn } from "../components/MasalaMatn";
+import { MasalaIzohlar } from "../components/MasalaIzohlar";
 import { EslatmaTaklif } from "../components/EslatmaTaklif";
 import { TangaOqim } from "../components/TangaOqim";
 import { TangaSorov } from "../components/TangaSorov";
@@ -864,6 +865,9 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           </div>
         </div>
       )}
+
+      {/* ---- izohlar — tasdiqlangan masalada; yechim ochilganda qayta so'raladi ---- */}
+      {m.holat === "tasdiq" && <MasalaIzohlar id={m.id} ochiqKalit={Boolean(yechim)} />}
 
       {/* ---- muallif va davom yo'li (yechilgandan keyin) ----
           Muallif TEPADA ham turadi, lekin u yerda ingichka qator

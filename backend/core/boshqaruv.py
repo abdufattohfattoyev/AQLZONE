@@ -46,7 +46,7 @@ from . import reklama as R
 from .liga import DARAJALAR
 from .models import (
     Duel,
-    Identity, LessonResult, LigaAzo, Masala, Profile, Progress, Pupil, Reklama,
+    Identity, LessonResult, LigaAzo, Masala, MasalaIzoh, Profile, Progress, Pupil, Reklama,
     Session,
 )
 
@@ -1290,6 +1290,9 @@ def duellar(request):
 #: Ro'yxatda bir sahifada nechta masala ko'rsatiladi.
 MASALA_ROYXAT = 40
 
+#: Tasdiqlash sahifasidagi izohlar yorlig'i (`?holat=izoh`).
+IZOH = "izoh"
+
 
 def masalalar(request):
     """
@@ -1324,8 +1327,18 @@ def masalalar(request):
         return _masala_amal(request)
 
     holat = request.GET.get("holat") or Masala.KUTMOQDA
-    if holat not in {h for h, _ in Masala.HOLATLAR}:
+    if holat not in {h for h, _ in Masala.HOLATLAR} | {IZOH}:
         holat = Masala.KUTMOQDA
+
+    # Izohlar navbati — o'sha sahifada, alohida yorliq: izoh ham masala
+    # kabi bolaga ko'rinishidan OLDIN tekshiriladi (`MasalaIzoh`).
+    izohlar = []
+    if holat == IZOH:
+        izohlar = list(
+            MasalaIzoh.objects.filter(holat=MasalaIzoh.KUTMOQDA)
+            .select_related("masala", "profile__pupil")
+            .order_by("created_at")[:MASALA_ROYXAT]
+        )
 
     qs = (
         Masala.objects
@@ -1340,12 +1353,14 @@ def masalalar(request):
         Masala.objects.values_list("holat").annotate(n=Count("id"))
     )
     return render(request, "boshqaruv/masala.html", bolim("navbat") | {
-        "royxat": qs[:MASALA_ROYXAT],
+        "royxat": [] if holat == IZOH else qs[:MASALA_ROYXAT],
+        "izohlar": izohlar,
         "holat": holat,
         "sanoq": {
             "kutmoqda": sanoq.get(Masala.KUTMOQDA, 0),
             "tasdiq": sanoq.get(Masala.TASDIQ, 0),
             "rad": sanoq.get(Masala.RAD, 0),
+            "izoh": MasalaIzoh.objects.filter(holat=MasalaIzoh.KUTMOQDA).count(),
         },
         "xabar": request.GET.get("xabar", "")[:200],
         "yangilangan": timezone.now(),
@@ -1353,9 +1368,18 @@ def masalalar(request):
 
 
 def _masala_amal(request):
-    """POST amallari: tasdiqlash va rad etish."""
+    """POST amallari: tasdiqlash va rad etish (masala yoki izoh)."""
     amal = request.POST.get("amal", "")
     holat = request.POST.get("holat") or Masala.KUTMOQDA
+
+    if amal in ("izoh_tasdiq", "izoh_rad"):
+        iz = MasalaIzoh.objects.filter(pk=_son(request.POST.get("id"))).first()
+        if iz is None:
+            return _masala_javob("Izoh topilmadi", holat)
+        iz.holat = MasalaIzoh.TASDIQ if amal == "izoh_tasdiq" else MasalaIzoh.RAD
+        iz.save(update_fields=["holat"])
+        return _masala_javob(f"Izoh #{iz.pk} {'tasdiqlandi' if amal == 'izoh_tasdiq' else 'rad etildi'}", holat)
+
     m = Masala.objects.filter(pk=_son(request.POST.get("id"))).first()
     if m is None:
         return _masala_javob("Masala topilmadi", holat)

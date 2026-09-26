@@ -3,6 +3,7 @@
 {% block sahifa_nomi %}Tasdiqlash{% endblock %}
 {% block sahifa_izoh %}
   {% if holat == 'kutmoqda' %}Eng uzoq kutgani birinchi · javob va yechimni tekshiring
+  {% elif holat == 'izoh' %}Eng uzoq kutgani birinchi · izoh bolaga faqat tasdiqlangach ko'rinadi
   {% else %}Yangisi birinchi{% endif %}
 {% endblock %}
 
@@ -22,6 +23,7 @@ ustma-ust. Rad etish sababi maydoni ochiq turadi: sababni yozish
     <a class="{% if holat == 'kutmoqda' %}faol{% endif %}" href="?holat=kutmoqda">Navbat · {{ sanoq.kutmoqda }}</a>
     <a class="{% if holat == 'tasdiq' %}faol{% endif %}" href="?holat=tasdiq">Tasdiqlangan · {{ sanoq.tasdiq }}</a>
     <a class="{% if holat == 'rad' %}faol{% endif %}" href="?holat=rad">Rad · {{ sanoq.rad }}</a>
+    <a class="{% if holat == 'izoh' %}faol{% endif %}" href="?holat=izoh">Izohlar · {{ sanoq.izoh }}</a>
   </nav>
 {% endblock %}
 
@@ -30,7 +32,35 @@ ustma-ust. Rad etish sababi maydoni ochiq turadi: sababni yozish
 
   {% if xabar %}<div class="xabar-quti {% if 'sabab' in xabar or 'topilmadi' in xabar %}xato{% endif %}">{{ xabar }}</div>{% endif %}
 
-  {% if not royxat %}
+  {% if holat == 'izoh' %}
+    {% if not izohlar %}<div class="karta bosh-holat">Izohlar navbati bo'sh. 🎉</div>{% endif %}
+    {% for iz in izohlar %}
+      <article class="karta masala">
+        <div class="masala-bosh">
+          <b>#{{ iz.masala_id }}</b>
+          <span class="xira">{{ iz.profile.pupil.toliq_ism|default:iz.profile.name|default:"—" }}</span>
+          <span class="juda-xira">{{ iz.created_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        <div class="masala-tana">
+          <div class="qism-quti">
+            <div class="qism-nom">Masala</div>
+            <div class="qism-matn">{{ iz.masala.matn|truncatechars:280|linebreaksbr }}</div>
+          </div>
+          <div class="qism-quti">
+            <div class="qism-nom">Izoh</div>
+            <div class="qism-matn">{{ iz.matn }}</div>
+          </div>
+        </div>
+        <form method="post" class="amal">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ iz.pk }}">
+          <input type="hidden" name="holat" value="izoh">
+          <button class="tugma yashil" name="amal" value="izoh_tasdiq">Tasdiqlash</button>
+          <button class="tugma xavfli" name="amal" value="izoh_rad">Rad etish</button>
+        </form>
+      </article>
+    {% endfor %}
+  {% elif not royxat %}
     <div class="karta bosh-holat">
       {% if holat == 'kutmoqda' %}Navbat bo'sh — hammasi ko'rib chiqilgan. 🎉
       {% else %}Bu yerda hali hech narsa yo'q.{% endif %}

@@ -1855,6 +1855,37 @@ def _admin_mi(profil) -> bool:
     return bool(tg) and B.admin_tg_mi(tg)
 
 
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def masala_izohlar(request, pk: int):
+    """
+    Masala izohlari. GET — ro'yxat, POST `{"matn": ...}` — yangi izoh.
+
+    Izohlar YECHIM OCHILGANDAN keyin ko'rinadi va yoziladi (ular javobni
+    aytib yuborishi mumkin); yopiq bo'lsa ham SONI qaytadi — ekran
+    "Izohlar 6" deb tura oladi. Yangi izoh admin tasdiqlaguncha faqat
+    muallifiga ko'rinadi (`MasalaIzoh`).
+    """
+    profil = _profil_tanla(request)
+    m = Masala.objects.filter(pk=pk, holat=Masala.TASDIQ).first()
+    if m is None:
+        return Response({"detail": "topilmadi"}, status=404)
+
+    if request.method == "POST":
+        iz, xato = M.izoh_yoz(m, profil, str(request.data.get("matn") or ""))
+        if iz is None:
+            kod = {"yopiq": 403, "qisqa": 400, "kop": 429}[xato]
+            return Response({"error": xato}, status=kod)
+        return Response(M.izoh_json(iz, profil), status=201)
+
+    ochiq = M.izoh_ochiqmi(m, profil)
+    return Response({
+        "ochiq": ochiq,
+        "soni": M.izoh_soni(m),
+        "royxat": M.izohlar(m, profil) if ochiq else [],
+    })
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def masala_yechim(request, pk: int):

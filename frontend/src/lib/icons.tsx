@@ -251,6 +251,8 @@ const PATHS = {
   oy: <path d="M20.2 14.8A8.6 8.6 0 019.2 3.8a8.6 8.6 0 1011 11z" />,
   // Telegram uchun — qog'oz samolyot
   send: <path d="M20.5 3.5L2.8 10.4l6.1 2.3 2.3 6.1z M8.9 12.7l11.6-9.2" />,
+  // Izoh (gap pufagi) — masala izohlari qatori.
+  izoh: <path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z" />,
   // Karnay: savolni qayta eshitish. To'lqinlar ataylab ikkita — bittasi
   // kichik belgida yo'qolib ketardi, uchtasi esa qalashib qolardi.
   ovoz: (

@@ -29,7 +29,7 @@ from django.db.models import F, Max
 from django.utils import timezone
 
 from .models import (
-    Masala, MasalaKorish, MasalaOvoz, MasalaUrinish, Profile, javob_teng,
+    Masala, MasalaIzoh, MasalaKorish, MasalaOvoz, MasalaUrinish, Profile, javob_teng,
 )
 
 
@@ -521,3 +521,62 @@ def rad_et(masala: Masala, sabab: str) -> None:
 def navbat_soni() -> int:
     """Ko'rilmagan masalalar soni — boshqaruv panelidagi belgi uchun."""
     return Masala.objects.filter(holat=Masala.KUTMOQDA).count()
+
+
+# ------------------------------------------------------------------ izohlar
+
+#: Bir odamning tekshiruv kutayotgan izohlari shundan oshmaydi — navbatni
+#: bitta odam to'ldirib qo'ymasin.
+IZOH_KUTISH_CHEGARA = 5
+
+
+def izoh_ochiqmi(masala: Masala, kim: Profile) -> bool:
+    """
+    Izohlarni ko'rish va yozish mumkinmi — yechim ochilgan bo'lsa.
+
+    `masala_json` dagi yechim qoidasi bilan bir xil: izohlar javobni
+    aytib yuborishi mumkin (`MasalaIzoh` izohiga qarang).
+    """
+    if masala.muallif_id == kim.pk:
+        return True
+    urinish = uringanmi(masala, kim)
+    return urinish is not None and urinish.yechim_ochiq
+
+
+def izoh_json(iz: MasalaIzoh, kim: Profile) -> dict:
+    return {
+        "id": iz.pk,
+        "matn": iz.matn,
+        "muallif": muallif_json(iz.profile),
+        "holat": iz.holat,
+        "meniki": iz.profile_id == kim.pk,
+        "createdAt": iz.created_at,
+    }
+
+
+def izohlar(masala: Masala, kim: Profile) -> list[dict]:
+    """Tasdiqlanganlar hammaga, o'zimniki esa holati bilan (tekshiruvda/rad)."""
+    from django.db.models import Q
+
+    qs = (
+        MasalaIzoh.objects.filter(masala=masala)
+        .filter(Q(holat=MasalaIzoh.TASDIQ) | Q(profile=kim))
+        .select_related("profile__pupil")
+    )
+    return [izoh_json(iz, kim) for iz in qs[:200]]
+
+
+def izoh_soni(masala: Masala) -> int:
+    return MasalaIzoh.objects.filter(masala=masala, holat=MasalaIzoh.TASDIQ).count()
+
+
+def izoh_yoz(masala: Masala, kim: Profile, matn: str) -> tuple[MasalaIzoh | None, str]:
+    """Yangi izoh — tekshiruv navbatiga. `(izoh, xato)`; xato: yopiq | qisqa | kop."""
+    matn = " ".join((matn or "").split())[:MasalaIzoh.UZUNLIK]
+    if not izoh_ochiqmi(masala, kim):
+        return None, "yopiq"
+    if len(matn) < 2:
+        return None, "qisqa"
+    if MasalaIzoh.objects.filter(profile=kim, holat=MasalaIzoh.KUTMOQDA).count() >= IZOH_KUTISH_CHEGARA:
+        return None, "kop"
+    return MasalaIzoh.objects.create(masala=masala, profile=kim, matn=matn), ""

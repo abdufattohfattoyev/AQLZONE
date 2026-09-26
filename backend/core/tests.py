@@ -4495,6 +4495,67 @@ class JavobTengTest(TestCase):
         self.assertTrue(MDL.javob_teng("15 kg", "15 sm"))
 
 
+@override_settings(BOSHQARUV_YONIQ=True, ADMIN_TG=[ADMIN_ID])
+class MasalaIzohTest(TestCase):
+    """Masala izohlari: yechimdan keyin, admin tasdiqlagach hammaga."""
+
+    kir = MasalaTest.kir
+    auth = MasalaTest.auth
+    setUp = MasalaTest.setUp
+    masala_yasa = MasalaTest.masala_yasa
+
+    def url(self, m):
+        return f"/api/v1/masalalar/{m.pk}/izohlar"
+
+    def yoz(self, m, token, matn="Men boshqacha yechdim"):
+        return self.client.post(self.url(m), {"matn": matn}, content_type="application/json", **self.auth(token))
+
+    def test_yechimsiz_yopiq(self):
+        m = self.masala_yasa()
+        j = self.client.get(self.url(m), **self.auth(self.yechuvchi_token)).json()
+        self.assertEqual((j["ochiq"], j["royxat"]), (False, []))
+        self.assertEqual(self.yoz(m, self.yechuvchi_token).status_code, 403)
+
+    def test_tekshiruvdan_keyin_hammaga(self):
+        m = self.masala_yasa()
+        MasalaUrinish.objects.create(masala=m, profile=self.yechuvchi, togri=True, yechdi=True,
+                                     yechim_ochiq=True)
+        r = self.yoz(m, self.yechuvchi_token, "  Men   boshqacha yechdim  ")
+        self.assertEqual(r.status_code, 201, r.content)
+        self.assertEqual(r.json()["matn"], "Men boshqacha yechdim")
+        # Muallifning o'ziga — "tekshirilmoqda" bilan, boshqaga — yo'q.
+        j = self.client.get(self.url(m), **self.auth(self.yechuvchi_token)).json()
+        self.assertEqual([(x["holat"], x["meniki"]) for x in j["royxat"]], [("kutmoqda", True)])
+        self.assertEqual(j["soni"], 0)
+        j = self.client.get(self.url(m), **self.auth(self.muallif_token)).json()
+        self.assertEqual(j["royxat"], [])
+
+        from django.test import Client
+        from .boshqaruv import havola_yasa
+        admin = Client()
+        kod = havola_yasa(ADMIN_ID).rsplit("/", 1)[-1]
+        admin.get(f"/boshqaruv/havola/{kod}")
+        r = admin.get("/boshqaruv/masalalar?holat=izoh")
+        self.assertContains(r, "Men boshqacha yechdim")
+        iz = MDL.MasalaIzoh.objects.get()
+        admin.post("/boshqaruv/masalalar", {"amal": "izoh_tasdiq", "id": iz.pk, "holat": "izoh"})
+
+        j = self.client.get(self.url(m), **self.auth(self.muallif_token)).json()
+        self.assertEqual(j["soni"], 1)
+        self.assertEqual([x["matn"] for x in j["royxat"]], ["Men boshqacha yechdim"])
+
+    def test_qisqa_va_kop(self):
+        m = self.masala_yasa()
+        self.assertEqual(self.yoz(m, self.muallif_token, " a ").status_code, 400)
+        for _ in range(MS.IZOH_KUTISH_CHEGARA):
+            self.assertEqual(self.yoz(m, self.muallif_token).status_code, 201)
+        self.assertEqual(self.yoz(m, self.muallif_token).status_code, 429)
+
+    def test_tasdiqlanmagan_masalaga_yoq(self):
+        m = self.masala_yasa(holat=Masala.KUTMOQDA)
+        self.assertEqual(self.client.get(self.url(m), **self.auth(self.muallif_token)).status_code, 404)
+
+
 @override_settings(BOT_USERNAME="aqlzone_bot", KANAL="aqlzone",
                    ADMIN_TG=["973358587"], BOT_TOKEN="sinov:token")
 class MasalaKanalTest(TestCase):

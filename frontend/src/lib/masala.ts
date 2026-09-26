@@ -314,3 +314,29 @@ export function yubor(m: YangiMasala): Promise<{ ok: true; masala: Masala }> {
   f.append("rasm", rasm);
   return sorov(`/api/v1/masalalar`, f);
 }
+
+/* ------------------------------------------------------------------ izohlar */
+
+export interface Izoh {
+  id: number;
+  matn: string;
+  muallif: Muallif;
+  /** Tasdiqlanmagani faqat muallifiga keladi — "tekshirilmoqda" yoki "rad". */
+  holat: MasalaHolat;
+  meniki: boolean;
+  createdAt: string;
+}
+
+export interface Izohlar {
+  /** Yechim ochilganmi — yopiq bo'lsa ro'yxat bo'sh, soni esa bor. */
+  ochiq: boolean;
+  soni: number;
+  royxat: Izoh[];
+}
+
+export const izohlar = (id: number): Promise<Izohlar> =>
+  sorov<Izohlar>(`/api/v1/masalalar/${id}/izohlar${profilQuery()}`);
+
+/** Yangi izoh — admin tasdiqlaguncha faqat yozganga ko'rinadi. */
+export const izohYoz = (id: number, matn: string): Promise<Izoh> =>
+  sorov<Izoh>(`/api/v1/masalalar/${id}/izohlar`, bilanProfil({ matn }));

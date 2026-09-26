@@ -1708,6 +1708,49 @@ class MasalaOvoz(models.Model):
         ]
 
 
+class MasalaIzoh(models.Model):
+    """
+    Masala ostidagi IZOH — "men boshqacha yechdim", "shartda xato bor".
+
+    ─────────────────── NEGA OLDINDAN TEKSHIRILADI ───────────────────
+
+    Ilova bolalar uchun: begona odamning matni bolaga TO'G'RIDAN-TO'G'RI
+    ko'rinmasligi kerak. Shuning uchun har izoh avval navbatga tushadi
+    (`KUTMOQDA`) va faqat admin tasdiqlagach hammaga ko'rinadi — xuddi
+    masalaning o'zidek (`/boshqaruv/masalalar?holat=izoh`). Muallif esa
+    o'z izohini darhol "tekshirilmoqda" belgisi bilan ko'radi.
+
+    ─────────────────── NEGA FAQAT YECHIMDAN KEYIN ───────────────────
+
+    Izohlar ko'pincha javobni aytib yuboradi. Ular yechim ochilgan
+    odamga ko'rinadi va faqat u yoza oladi (`masala.izoh_ochiqmi`) —
+    aks holda izohlar ro'yxati masalaning tayyor javobiga aylanardi.
+    """
+
+    KUTMOQDA = "kutmoqda"
+    TASDIQ = "tasdiq"
+    RAD = "rad"
+    HOLATLAR = [(KUTMOQDA, "Kutmoqda"), (TASDIQ, "Tasdiqlangan"), (RAD, "Rad etilgan")]
+
+    #: Izohning eng uzun matni. Izoh — bir-ikki gap; uzun yechim
+    #: uchun masalaning o'z "Yechim" qismi bor.
+    UZUNLIK = 300
+
+    masala = models.ForeignKey(Masala, on_delete=models.CASCADE, related_name="izohlar")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="masala_izohlari")
+    matn = models.CharField(max_length=UZUNLIK)
+    holat = models.CharField(max_length=10, choices=HOLATLAR, default=KUTMOQDA, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "masala_izoh"
+        ordering = ["created_at"]
+        indexes = [models.Index(fields=["masala", "holat"])]
+
+    def __str__(self) -> str:
+        return f"#{self.masala_id}: {self.matn[:40]}"
+
+
 class TestToplam(models.Model):
     """
     TEST TO'PLAMI — hamma uchun BIR XIL savollar.
