@@ -31,7 +31,12 @@ xatoKuzatuvniUlash();
  * ko'rinadi.
  */
 tilniUlash();
-document.title = t("shior");
+// Server sahifaga O'Z sarlavhasini qo'ygan bo'lsa (`backend/core/seo.py`:
+// dars, kurs, masala…) — u qoladi: Google JS'ni ishga tushirib sahifani
+// qayta o'qiganda "Kasrlarni qo'shish — 5-sinf…" o'rniga umumiy shiorni
+// ko'rib, hamma sahifani bir xil deb hisoblardi. Belgisi — `#az-seo`
+// bloki (React uni birinchi chizishda almashtiradi, shuning uchun hozir).
+if (!document.getElementById("az-seo")) document.title = t("shior");
 
 /**
  * Yorug'lik: oq yoki qora.

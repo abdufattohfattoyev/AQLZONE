@@ -8650,3 +8650,78 @@ class YonalishTest(TestCase):
         TH.anketa_yoz(p, {"kim": "talaba", "yonalish": "kosmonavt"})
         p.refresh_from_db()
         self.assertEqual(p.yonalish, "")
+
+
+class SeoTest(TestCase):
+    """Google uchun: har sahifa o'z sarlavhasi va mazmuni bilan, shaxsiylari noindex."""
+
+    def setUp(self):
+        import json
+        import tempfile
+        from pathlib import Path
+
+        self.papka = tempfile.TemporaryDirectory()
+        d = Path(self.papka.name)
+        (d / "index.html").write_text(
+            '<!doctype html><html><head><title>Aql Zone</title>'
+            '<meta name="description" content="eski" />'
+            '<meta name="robots" content="index, follow" />'
+            '<link rel="canonical" href="https://aql-zone.uz/" />'
+            '<meta property="og:title" content="eski" /></head><body>'
+            '<div id="root"><div id="az-boshlash"><div class="az-quti"><b>Aql Zone</b><i></i></div></div></div>'
+            "</body></html>", "utf-8")
+        (d / "seo.json").write_text(json.dumps({"asos": "https://aql-zone.uz", "sahifalar": {
+            "/imtihon": {"sarlavha": "DTM testlari | Aql Zone", "tavsif": "DTM <variantlar>", "h1": "DTM",
+                         "matn": ["30 savol"], "havolalar": [{"yol": "/", "nom": "Bosh"}],
+                         "ld": [{"@type": "Thing", "name": "</script>x"}], "muhim": 0.9},
+            "/kurs/x/formulalar": {"sarlavha": "F", "tavsif": "F", "h1": "F", "matn": [], "havolalar": [],
+                                   "ld": [], "kanonik": "/formulalar"},
+        }}), "utf-8")
+        self.ozgar = override_settings(FRONTEND_DIST=d)
+        self.ozgar.enable()
+
+    def tearDown(self):
+        self.ozgar.disable()
+        self.papka.cleanup()
+
+    def test_sahifa_sarlavhasi_va_mazmuni(self):
+        h = self.client.get("/imtihon").content.decode()
+        self.assertIn("<title>DTM testlari | Aql Zone</title>", h)
+        self.assertIn('content="DTM &lt;variantlar&gt;"', h)
+        self.assertIn('href="https://aql-zone.uz/imtihon"', h)
+        self.assertIn("<h1>DTM</h1>", h)
+        self.assertNotIn("az-boshlash", h.split("</head>")[1])
+        self.assertTrue(h.rstrip().endswith("</div></body></html>"))  # #root yopilgan
+        self.assertIn("<\\/script>x", h)  # JSON-LD skriptni yopmaydi
+        self.assertIn("index, follow", h)
+
+    def test_kanonik_nusxa(self):
+        h = self.client.get("/kurs/x/formulalar").content.decode()
+        self.assertIn('href="https://aql-zone.uz/formulalar"', h)
+
+    def test_shaxsiy_sahifa_noindex(self):
+        h = self.client.get("/sozlamalar").content.decode()
+        self.assertIn('content="noindex, follow"', h)
+        self.assertNotIn("canonical", h)
+
+    def test_masala_javobsiz(self):
+        m = Masala.objects.create(muallif=Pupil.objects.create(first_name="A").asosiy_profil(), sinf=108,
+                                  matn="Kvadrat tomoni 5 sm. Yuzini toping.", javob="25", yechim="5·5 = 25 MAXFIY",
+                                  holat=Masala.TASDIQ)
+        h = self.client.get(f"/masalalar/{m.pk}").content.decode()
+        self.assertIn("8-sinf geometriya", h)
+        self.assertIn("Kvadrat tomoni 5 sm", h)
+        self.assertNotIn("MAXFIY", h)
+        Masala.objects.filter(pk=m.pk).update(holat=Masala.KUTMOQDA)
+        self.assertIn("noindex", self.client.get(f"/masalalar/{m.pk}").content.decode())
+
+    def test_sitemap_va_robots(self):
+        m = Masala.objects.create(muallif=Pupil.objects.create(first_name="B").asosiy_profil(), sinf=5,
+                                  matn="2+2?", javob="4", holat=Masala.TASDIQ)
+        x = self.client.get("/sitemap.xml").content.decode()
+        self.assertIn("<loc>https://aql-zone.uz/imtihon</loc>", x)
+        self.assertIn(f"<loc>https://aql-zone.uz/masalalar/{m.pk}</loc>", x)
+        self.assertNotIn("formulalar", x)
+        r = self.client.get("/robots.txt").content.decode()
+        self.assertIn("Sitemap: https://aql-zone.uz/sitemap.xml", r)
+        self.assertIn("Disallow: /api/", r)

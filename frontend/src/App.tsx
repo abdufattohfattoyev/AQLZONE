@@ -146,6 +146,7 @@ function Yollar() {
       {/* O'qish › Testlar yorlig'i. Eski ro'yxat (to'plamlar va sinflar)
           `/testlar/toplamlar` da — yorliqdan bir bosishda. */}
       <Route path="/testlar" element={<TestlarYorliqSahifasi />} />
+      <Route path="/formulalar" element={<FormulalarUmumiySahifasi />} />
       <Route path="/testlar/toplamlar" element={<TestSinfSahifasi />} />
       <Route path="/toplam/:id" element={<ToplamSahifasi />} />
       <Route path="/profillar" element={<ProfilSahifasi />} />
@@ -622,6 +623,25 @@ function FormulalarSahifasi() {
   const { c, slug } = useKurs();
 
   if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
+  return (
+    <OqishQobiq yorliq="formulalar" kurs={c}>
+      <Formulalar ichki sinf={sinfOf(c.grade)} onBack={() => nav(yolKurs(c))} />
+    </OqishQobiq>
+  );
+}
+
+/**
+ * Barcha formulalar — kursdan tashqari manzil (`/formulalar`).
+ *
+ * Google uchun formulalarning BITTA asosiy sahifasi kerak: har kursdagi
+ * `/kurs/…/formulalar` bir xil mazmun va ular shu manzilga kanonik
+ * (`scripts/seo.ts`). Ochilganda eng katta sinf kursi qobig'ida turadi —
+ * u hamma bo'limni ochiq ko'rsatadi.
+ */
+function FormulalarUmumiySahifasi() {
+  const nav = useNavigate();
+  const c = courseBySlug("11-sinf") ?? COURSES[COURSES.length - 1]!;
+  useTema("bosh");
   return (
     <OqishQobiq yorliq="formulalar" kurs={c}>
       <Formulalar ichki sinf={sinfOf(c.grade)} onBack={() => nav(yolKurs(c))} />

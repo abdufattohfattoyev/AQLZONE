@@ -18,6 +18,8 @@ from django.conf import settings
 from django.http import FileResponse, HttpResponse, HttpResponseNotFound, JsonResponse
 from django.urls import re_path
 
+from . import seo as SEO
+
 # Brauzer eski nusxani ushlab qolmasin (Mini App'da bu ayniqsa og'riqli).
 # Vite fayl nomiga xesh qo'shadi, shuning uchun assets uzoq keshlanadi.
 KESH_UZOQ = "public, max-age=31536000, immutable"
@@ -66,8 +68,11 @@ def spa(request, rel: str = ""):
         javob["Cache-Control"] = KESH_UZOQ if "/assets/" in f"/{rel}" else KESH_YOQ
         return javob
 
-    # Fayl yo'q — demak bu React marshruti.
-    javob = FileResponse(index.open("rb"), content_type="text/html; charset=utf-8")
+    # Fayl yo'q — demak bu React marshruti. HTML shu manzilning sarlavhasi,
+    # teglari va mazmuni bilan to'ldiriladi (`core/seo.py`): Google JS'siz
+    # ham har sahifani alohida ko'rsin.
+    html = SEO.boyit(index.read_text("utf-8"), rel)
+    javob = HttpResponse(html, content_type="text/html; charset=utf-8")
     javob["Cache-Control"] = KESH_YOQ
     return javob
 
