@@ -86,18 +86,24 @@ const MASLAHAT_SONI = 10;
  * odamda "oxirgi kurs" mahalliy xotirada yo'q, progressi esa
  * serverdan qaytib kelgan bo'ladi.
  *
+ * Oxirgi kursda davom etadigan joy bo'lmasa (hali boshlanmagan yoki
+ * tugagan) keyingi nomzodga o'tiladi. Aks holda bir qurilmada faqat
+ * ko'rib chiqilgan bo'sh kurs boshqa qurilmadagi "Keyingi dars"ni
+ * yashirib qo'yardi — bir hisob, ikki xil bosh sahifa.
+ *
  * Hech narsa boshlanmagan bo'lsa `null` — yangi odamga "davom
  * eting" deyish ma'nosiz.
  */
 function davomJoyi(progressOf: (c: Course) => Progress) {
-  const c =
-    courseBySlug(oxirgiKurs()) ??
-    COURSES.find((x) => progressOf(x).stars > 0);
-  if (!c) return null;
-  const p = progressOf(c);
-  if (!p.stars) return null;
-  const keyingi = keyingiDars(c.units, p);
-  return keyingi ? { c, p, ...keyingi } : null;
+  const oxirgi = courseBySlug(oxirgiKurs());
+  const nomzodlar = oxirgi ? [oxirgi, ...COURSES.filter((x) => x !== oxirgi)] : COURSES;
+  for (const c of nomzodlar) {
+    const p = progressOf(c);
+    if (!p.stars) continue;
+    const keyingi = keyingiDars(c.units, p);
+    if (keyingi) return { c, p, ...keyingi };
+  }
+  return null;
 }
 
 /** Joriy bolaning profili — server bilan bir xil qoidaga bo'ysunadi. */
