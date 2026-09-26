@@ -240,7 +240,7 @@ MAX_SOROVNOMA_SAVOL, MAX_VARIANT, MAX_QUIZ_IZOH = 300, 100, 200
 
 def quiz_yubor(
     chat_id: str, savol: str, variantlar: list[str], togri: int,
-    izoh: str = "", javob_id: int = 0,
+    izoh: str = "", javob_id: int = 0, anonim: bool = True, klaviatura: list | None = None,
 ) -> tuple[str, str, int]:
     """
     Test (quiz) turidagi so'rovnoma. `(holat, izoh, xabar_id)` qaytaradi.
@@ -258,9 +258,11 @@ def quiz_yubor(
         "question": savol[:MAX_SOROVNOMA_SAVOL],
         "options": [{"text": v[:MAX_VARIANT]} for v in variantlar],
         "type": "quiz",
-        "is_anonymous": True,
+        "is_anonymous": anonim,
         "correct_option_id": int(togri),
     }
+    if klaviatura:
+        payload["reply_markup"] = {"inline_keyboard": klaviatura}
     if izoh:
         payload["explanation"] = izoh[:MAX_QUIZ_IZOH]
     if javob_id:

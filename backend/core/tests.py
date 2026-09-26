@@ -8142,6 +8142,35 @@ class MatematikaKanalTest(TestCase):
         self.assertEqual(len(variantlar), 4)
         self.assertIn(togri, range(4))
 
+    def test_quiz_namunalari_cheklovga_sigadi(self):
+        from core import quiz_namuna as QN
+
+        self.assertEqual(len(QN.NAMUNALAR), 5)
+        for savol, variantlar, togri, izoh in QN.NAMUNALAR:
+            self.assertLessEqual(len(savol), 300)
+            self.assertLessEqual(len(izoh), 200, izoh)
+            self.assertLessEqual(izoh.count("\n"), 2)
+            self.assertEqual(len(set(variantlar)), 4)
+            self.assertIn(togri, range(4))
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x", ADMIN_TG=["111"])
+    def test_quiz_namuna_admin_tasdiqlasa_kanalga_bir_marta(self):
+        from unittest import mock
+        from core import quiz_namuna as QN
+
+        with mock.patch("core.xabar.quiz_yubor", return_value=("yuborildi", "", 9)) as quiz:
+            self.assertEqual(QN.adminlarga_yubor(QN.NAMUNALAR[:2]), 2)
+            self.assertEqual(quiz.call_args.args[0], "111")
+            self.assertFalse(quiz.call_args.kwargs["anonim"])
+            ok, yoq = [t["callback_data"] for t in quiz.call_args.kwargs["klaviatura"][0]]
+            self.assertEqual(QN.qaror(ok, "222"), "ruxsat_yoq")         # begona
+            quiz.reset_mock()
+            self.assertEqual(QN.qaror(ok, "111"), "yuborildi")
+            self.assertEqual(quiz.call_args.args[0], "@AqlZoneUz")
+            self.assertEqual(QN.qaror(ok, "111"), "eskirgan")           # ikkinchi bosish
+            self.assertEqual(QN.qaror(yoq, "111"), "eskirgan")          # bir namuna — bir qaror
+            self.assertEqual(quiz.call_count, 1)
+
     @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
     def test_misolsiz_kunda_javob_chiqmaydi(self):
         from unittest import mock
