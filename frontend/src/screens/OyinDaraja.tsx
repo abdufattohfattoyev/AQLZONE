@@ -35,11 +35,14 @@ import { ochiqmi, ochishgaQolgan, rekord } from "../lib/oyin/rekord";
 import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import { useOrqaga } from "../lib/qobiq";
+import { useOyinlarJonli } from "../lib/oyinlarJonli";
 
-export function OyinDaraja({ oyin, onBack, onBoshla }: {
+export function OyinDaraja({ oyin, onBack, onBoshla, onDuel }: {
   oyin: Oyin;
   onBack: () => void;
   onBoshla: (d: Daraja) => void;
+  /** Shu o'yinda duel — faqat duelga mos o'yinlarda beriladi. */
+  onDuel?: () => void;
 }) {
   const ozStrelka = useOrqaga(onBack);
   const rang = UNIT_COLORS[oyin.rang];
@@ -82,7 +85,50 @@ export function OyinDaraja({ oyin, onBack, onBoshla }: {
       <p className="az-kirish mt-4 text-center text-[11.5px] leading-snug text-ink-soft/80">
         {t("darajaYoshIzoh")}
       </p>
+
+      {onDuel && <Bellashuv oyinId={oyin.id} onDuel={onDuel} />}
     </div>
+  );
+}
+
+/**
+ * "Shu o'yinda hozir 2 kishi — Bellashish".
+ *
+ * Darajalar OSTIDA, ustida emas: bu ekranning asosiy ishi — daraja
+ * tanlab o'ynash, duel esa ikkinchi yo'l. Tugma neytral, ko'k emas:
+ * bir ekranda bitta asosiy amal.
+ *
+ * Duel shu o'yin TANLANGAN holda ochiladi (`?oyin=`) — bola uni duel
+ * ekranida qaytadan qidirib o'tirmasin.
+ */
+function Bellashuv({ oyinId, onDuel }: { oyinId: string; onDuel: () => void }) {
+  const jonli = useOyinlarJonli();
+  const shu = jonli?.oyinlar[oyinId] ?? 0;
+  const onlayn = jonli?.onlayn ?? 0;
+  const matn = shu > 0 ? t("oyinShuOyinda", { n: shu })
+    : onlayn > 0 ? t("oyinOnlaynBor", { n: onlayn })
+    : t("oyinBellashIzoh");
+
+  return (
+    <button type="button" onClick={onDuel} data-tahlil="O'yin: bellashish"
+      className="az-kirish clay-press mt-5 flex w-full items-center gap-3 rounded-clay bg-karta p-3
+                 text-left shadow-clay-sm">
+      <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-track">
+        <EmojiBelgi e="⚔️" olcham={24} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[14.5px] leading-tight text-ink">{t("duel")}</span>
+        <span className={`mt-0.5 flex items-center gap-1.5 text-[12px] ${
+          shu > 0 || onlayn > 0 ? "font-semibold text-brand-green" : "text-ink-soft"}`}>
+          {(shu > 0 || onlayn > 0) && <span className="az-jonli size-1.5 shrink-0 rounded-full bg-brand-green" />}
+          <span className="truncate">{matn}</span>
+        </span>
+      </span>
+      <span className="flex h-11 shrink-0 items-center rounded-full bg-track px-3.5 text-[13px]
+                       font-semibold text-ink">
+        {t("oyinBellashish")}
+      </span>
+    </button>
   );
 }
 

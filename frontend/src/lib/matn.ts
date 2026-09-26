@@ -1486,6 +1486,28 @@ const S = {
     "Hozircha hech kim yo'q. Chaqiruv yasab, havolasini do'stingizga yuboring — u istalgan vaqtda ochadi.",
     "Пока никого нет. Создайте вызов и отправьте ссылку другу — он откроет её в любое время.",
   ],
+  /* O'yinlar ekranidagi duel banneri va kartalardagi "• 2". */
+  duelBanner: ["Duel — raqib toping", "Дуэль — найдите соперника"],
+  /* Telefonda banner tor — izoh bir qatorga sig'adigan qisqa. */
+  duelBannerIzoh: ["{n} ta o'yinda jonli bellashuv", "Живая дуэль в {n} играх"],
+  duelBannerOyinda: ["{n} kishi hozir o'yinlarda", "{n} чел. сейчас в играх"],
+  duelBannerOnlayn: ["{n} kishi hozir ilovada", "{n} чел. в приложении"],
+  duelBannerHechKim: ["Do'stingizni chaqiring", "Позовите друга"],
+  duelKirish: ["Kirish", "Войти"],
+  oyinKartaDuel: ["duel", "дуэль"],
+  oyinKartaHozir: ["{n} kishi hozir o'ynayapti", "Сейчас играют: {n}"],
+  /* Odamning holati — chaqirish tugmasi shunga qarab o'zgaradi. */
+  duelHolatBosh: ["hozir bo'sh", "сейчас свободен"],
+  duelHolatOyinda: ["{oyin} o'ynayapti", "играет: {oyin}"],
+  duelHolatOyindaIzoh: ["o'yini tugagach ko'radi", "увидит после игры"],
+  duelHolatDuelda: ["duelda bellashyapti", "сейчас в дуэли"],
+  duelHolatOqiyapti: ["dars qilyapti", "занимается"],
+  duelBand: ["Band", "Занят"],
+  /* O'yin ichidan duelga: "shu o'yinda hozir 2 kishi". */
+  oyinShuOyinda: ["Shu o'yinda hozir {n} kishi", "Сейчас в этой игре: {n}"],
+  oyinOnlaynBor: ["Hozir ilovada {n} kishi", "Сейчас в приложении: {n}"],
+  oyinBellashIzoh: ["Shu o'yinda do'stingiz bilan bellashing", "Сразитесь с другом в этой игре"],
+  oyinBellashish: ["Bellashish", "Сразиться"],
   duelChaqiruvKetdi: [
     "Chaqiruv Telegramga yuborildi — javobini kutyapmiz",
     "Вызов отправлен в Telegram — ждём ответа",

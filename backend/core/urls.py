@@ -33,6 +33,8 @@ urlpatterns = [
     path("duel", views.duel_boshla, name="duel-boshla"),
     # Hozir ilovada turgan o'yinchilar — duelga chaqirish uchun.
     path("onlayn", views.onlayn_royxat, name="onlayn"),
+    # O'yinlar ekrani: kim qaysi o'yinda — faqat sonlar.
+    path("oyinlar/jonli", views.oyinlar_jonli, name="oyinlar-jonli"),
     # "Men shu yerdaman" — ilova ochiq turganini bildiradi. Butun
     # ishi tekshiruvdan o'tish: u `Session.last_seen` ni yangilaydi.
     path("tirik", views.tirik, name="tirik"),

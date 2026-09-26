@@ -33,7 +33,13 @@ function deviceId(): string {
 }
 
 let token: string | null = localStorage.getItem(TOKEN_KEY);
-let profilId: string | null = localStorage.getItem(PROFIL_KEY);
+/**
+ * Faqat RAQAM qabul qilinadi. Shu kalitda bir muddat anketa javobi
+ * (`{"kim":…}`) turgan (`lib/profil.ts` dagi izohga qarang) va u har
+ * so'rovga qo'shilib, serverni 500 ga tushirardi.
+ */
+const profilXom = localStorage.getItem(PROFIL_KEY);
+let profilId: string | null = profilXom && /^\d+$/.test(profilXom) ? profilXom : null;
 
 /** Joriy profilni almashtirish (profil tanlash ekranidan chaqiriladi). */
 export function profilniTanla(id: number | string | null): void {
@@ -1141,6 +1147,40 @@ export interface OnlaynOyinchi {
   onlayn: boolean;
   /** Oxirgi marta qachon ko'ringani (ISO). */
   korindi: string;
+  /** Hozir nima qilyapti — chaqirish tugmasi shunga qarab o'zgaradi. */
+  holat?: OdamHolat;
+  /** `oyinda`/`duelda` bo'lsa — qaysi o'yinda (id). */
+  oyin?: string;
+}
+
+/**
+ * Odamning hozirgi holati (`backend/core/onlayn.py`):
+ * `bosh` ilovada, bo'sh · `oyinda` mashq o'yinida · `duelda` bellashyapti ·
+ * `oqiyapti` dars/test · `yoq` bugun kirgan, hozir yo'q.
+ */
+export type OdamHolat = "bosh" | "oyinda" | "duelda" | "oqiyapti" | "yoq";
+
+/** O'yinlar ekrani uchun sonlar — ismlarsiz. */
+export interface OyinlarJonli {
+  /** Hozir o'yinda (mashq yoki duel) — o'zimsiz. */
+  oyinda: number;
+  duelda: number;
+  /** Hozir ilovada — o'zimsiz. */
+  onlayn: number;
+  /** O'yin id'si → hozir o'ynayotganlar soni. */
+  oyinlar: Record<string, number>;
+}
+
+/** Xato bo'lsa `null` — ekran sonlarsiz ham ishlaydi. */
+export async function oyinlarJonli(): Promise<OyinlarJonli | null> {
+  if (!(await signIn())) return null;
+  try {
+    const r = await fetch("/api/v1/oyinlar/jonli", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as OyinlarJonli;
+  } catch { return null; }
 }
 
 export interface OnlaynRoyxat {
@@ -1226,6 +1266,8 @@ export interface DuelDost {
   ism: string;
   avatar: string;
   onlayn: boolean;
+  holat?: OdamHolat;
+  oyin?: string;
   hisob: DuelHisob;
   /** `men` — u o'ynab qo'ygan, javob menda; `u` — men kutyapman; bo'sh — hech kim. */
   navbat: "men" | "u" | "";

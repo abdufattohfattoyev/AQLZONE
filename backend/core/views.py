@@ -151,7 +151,11 @@ def _profil_tanla(request) -> Profile:
     xom = request.query_params.get("profileId") or (
         request.data.get("profileId") if hasattr(request.data, "get") else None
     )
-    if xom:
+    # Raqam bo'lmagan qiymat (eski ilova anketa javobini shu maydonga
+    # yuborib qo'ygan: `{"kim":"oquvchi",…}`) e'tiborsiz qoladi. Usiz
+    # baza so'rovi ValueError bilan yiqilib, `/me` va `/progress` 500
+    # qaytarardi — ya'ni ilova umuman ochilmasdi.
+    if xom and str(xom).isdigit():
         pr = request.user.profiles.filter(pk=str(xom)).first()
         if pr:
             return pr
@@ -1098,6 +1102,16 @@ def onlayn_royxat(request):
         "oyinchilar": oyinchilar,
         "onlaynSoni": sum(1 for o in oyinchilar if o["onlayn"]),
     })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def oyinlar_jonli(request):
+    """
+    O'yinlar ekrani uchun sonlar: nechta odam o'yinda, nechtasi onlayn
+    va har o'yinda nechtasi (`onlayn.oyinlar_jonli`). Ismlar qaytmaydi.
+    """
+    return Response(ON.oyinlar_jonli(request.user))
 
 
 @api_view(["POST"])

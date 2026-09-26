@@ -35,7 +35,7 @@ from . import views
 from . import masala_kanal as MK
 from . import models as MDL
 from .models import (
-    Duel, DuelTaklif, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
+    Duel, DuelTaklif, Faollik, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
     MasalaOvoz, MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul,
     Session, Xona,
 )
@@ -6093,6 +6093,86 @@ class OnlaynTest(TestCase):
                                  content_type="application/json", **self.auth(self.token))
         s.assert_not_called()
         self.assertFalse(r.json()["yuborildi"])
+
+    # ---- holat: kim hozir nima qilyapti ----
+
+    def faol(self, pupil: Pupil, joy: str, nom: str = "", eski: bool = False) -> None:
+        Faollik.objects.update_or_create(
+            profile=pupil.asosiy_profil(),
+            defaults={"joy": joy, "nom": nom, "updated_at": timezone.now() - timedelta(
+                seconds=600 if eski else 0)},
+        )
+
+    def qator(self, ism: str) -> dict:
+        return next(x for x in self.royxat() if x["ism"] == ism)
+
+    def test_holat_oyinda_va_qaysi_oyin(self):
+        p = self.tayyorla("dev-holat-oyin-0101", "Oyinchi", "900000101")
+        self.faol(p, Faollik.OYIN, "tezkor")
+        q = self.qator("Oyinchi")
+        self.assertEqual((q["holat"], q["oyin"]), ("oyinda", "tezkor"))
+        self.assertTrue(q["onlayn"])
+
+    def test_holat_duel_oqishdan_ustun(self):
+        p = self.tayyorla("dev-holat-duel-0102", "Duelchi", "900000102")
+        self.faol(p, Faollik.DUEL, "jadval")
+        self.assertEqual(self.qator("Duelchi")["holat"], "duelda")
+
+    def test_eski_faollik_hisobga_olinmaydi(self):
+        """Ilovani yopgan telefon "chiqdim" demaydi — signal eskiradi."""
+        p = self.tayyorla("dev-holat-eski-0103", "Eski", "900000103")
+        Session.objects.filter(pupil=p).update(last_seen=timezone.now())
+        self.faol(p, Faollik.OYIN, "tezkor", eski=True)
+        self.assertEqual(self.qator("Eski")["holat"], "bosh")
+
+    def test_yoq_holati(self):
+        p = self.tayyorla("dev-holat-yoq-0104", "Yoq", "900000104")
+        Session.objects.filter(pupil=p).update(last_seen=timezone.now() - timedelta(hours=3))
+        self.assertEqual(self.qator("Yoq")["holat"], "yoq")
+
+    def test_taklif_yopiq_royxatda_korinmaydi(self):
+        p = self.tayyorla("dev-holat-yopiq-0105", "Yopiq", "900000105")
+        Profile.objects.filter(pupil=p).update(taklif_yopiq=True)
+        self.assertNotIn("Yopiq", [x["ism"] for x in self.royxat()])
+
+    def test_oyinlar_jonli_sonlari(self):
+        a = self.tayyorla("dev-jonli-a-0106", "A", "900000106")
+        b = self.tayyorla("dev-jonli-b-0107", "B", "900000107")
+        self.faol(a, Faollik.OYIN, "tezkor")
+        self.faol(b, Faollik.DUEL, "tezkor")
+        # O'zim sanalmayman.
+        self.faol(self.men, Faollik.OYIN, "jadval")
+        r = self.client.get("/api/v1/oyinlar/jonli", **self.auth(self.token)).json()
+        self.assertEqual(r["oyinda"], 2)
+        self.assertEqual(r["duelda"], 1)
+        self.assertEqual(r["oyinlar"], {"tezkor": 2})
+        self.assertGreaterEqual(r["onlayn"], 2)
+
+    def test_faollik_oyin_joyini_qabul_qiladi(self):
+        r = self.client.post("/api/v1/faollik", {"joy": "oyin", "nom": "belgi"},
+                             content_type="application/json", **self.auth(self.token))
+        self.assertEqual(r.status_code, 200)
+        f = Faollik.objects.get(profile=self.men.asosiy_profil())
+        self.assertEqual((f.joy, f.nom), ("oyin", "belgi"))
+
+
+class ProfilIdXomTest(TestCase):
+    """
+    `profileId` o'rnida raqam bo'lmagan qiymat — 500 emas, asosiy profil.
+
+    Ilova bir muddat anketa javobini (`{"kim":"oquvchi","bosqich":5}`)
+    shu maydonga yuborib turgan (`frontend/src/lib/profil.ts`) va har
+    `/me` so'rovi yiqilardi.
+    """
+
+    def test_json_profileid_ilovani_yiqitmaydi(self):
+        r = self.client.post("/api/v1/auth/device",
+                             {"deviceId": "dev-xom-profil-000001", "platform": "web"},
+                             content_type="application/json")
+        auth = {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+        xom = '{"kim":"oquvchi","bosqich":5}'
+        self.assertEqual(self.client.get("/api/v1/me", {"profileId": xom}, **auth).status_code, 200)
+        self.assertEqual(self.client.get("/api/v1/progress", {"profileId": xom}, **auth).status_code, 200)
 
 
 class MasalaFiltrTest(TestCase):

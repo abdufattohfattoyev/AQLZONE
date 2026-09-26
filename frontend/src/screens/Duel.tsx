@@ -42,6 +42,7 @@ import { useOrqaga, havolaniOch } from "../lib/qobiq";
 import { useTgHisob } from "../lib/tgHisob";
 import { Kirish } from "../components/Kirish";
 import { useProgress } from "../lib/progress";
+import { useFaollik } from "../lib/faollik";
 import { OYINLAR, oyinById } from "../lib/oyin";
 import {
   DUEL_SAVOLLAR, DUEL_VAQTLAR, darajaSon, duelSavollari,
@@ -53,7 +54,7 @@ import {
   onlaynOyinchilar, duelQabul, duelTaklifYubor, duelTayyor, duelYana,
 } from "../lib/api";
 import type {
-  DuelDost, DuelHisob, DuelHolat, DuelJonli, DuelShart, DuelYakun, OnlaynOyinchi,
+  DuelDost, DuelHisob, DuelHolat, DuelJonli, DuelShart, DuelYakun, OdamHolat, OnlaynOyinchi,
 } from "../lib/api";
 import { DARAJALAR, darajaMa } from "../lib/oyin/tur";
 import type { Daraja, Oyin as OyinTur, OyinNatija } from "../lib/oyin/tur";
@@ -84,8 +85,10 @@ type Bosqich =
   | { nima: "havola"; duel: DuelHolat }
   | { nima: "yakun"; yakun: DuelYakun; duel: DuelHolat; xato: number };
 
-export function Duel({ onChiq, onOyin, onKod }: {
+export function Duel({ onChiq, onOyin, onKod, boshOyin }: {
   onChiq: () => void;
+  /** Oldindan tanlangan o'yin — o'yin ichidagi "Bellashish" dan. */
+  boshOyin?: string;
   /** Mashq rejimi — natijadagi "shu o'yinni mashq qilish". */
   onOyin?: (id: string) => void;
   /** Do'st kutayotgan chaqiruvni ochish — `/duel/<kod>`. */
@@ -134,7 +137,7 @@ export function Duel({ onChiq, onOyin, onKod }: {
 
   if (bosqich.nima === "shartlar") {
     return (
-      <Shartlar onTanladi={yasa} onChiq={onChiq} onKod={onKod}
+      <Shartlar onTanladi={yasa} onChiq={onChiq} onKod={onKod} boshOyin={boshOyin}
         onJonli={(d) => setBosqich({ nima: "lobbi", duel: d })} />
     );
   }
@@ -211,18 +214,20 @@ const DUEL_OYINLAR = OYINLAR.filter((o) => o.tur === "oqim");
  * yozib qo'yardi va ikkinchi tomon "nega 45?" degan savol bilan
  * qolardi: tanlov qancha keng bo'lsa, qaror shuncha og'ir.
  */
-function Shartlar({ onTanladi, onChiq, onKod, onJonli }: {
+function Shartlar({ onTanladi, onChiq, onKod, onJonli, boshOyin }: {
   /** `kimga` — onlayn ro'yxatdan tanlangan raqib (bo'lmasa havola bilan). */
   onTanladi: (s: DuelShart, kimga?: number) => void;
   onChiq: () => void;
   onKod?: (kod: string) => void;
   /** Jonli taklif yuborildi — lobbiga o'tiladi. */
   onJonli: (d: DuelHolat) => void;
+  boshOyin?: string;
 }) {
-  const [oyin, setOyin] = useState<OyinTur>(DUEL_OYINLAR[0]);
+  const [oyin, setOyin] = useState<OyinTur>(
+    () => DUEL_OYINLAR.find((o) => o.id === boshOyin) ?? DUEL_OYINLAR[0]);
   const [savollar, setSavollar] = useState<number>(20);
   const [vaqt, setVaqt] = useState<number>(60);
-  const [daraja, setDaraja] = useState<Daraja>(() => duelDarajaTaklif(DUEL_OYINLAR[0].id));
+  const [daraja, setDaraja] = useState<Daraja>(() => duelDarajaTaklif(oyin.id));
   const shart: DuelShart = { oyin: oyin.id, savollar, vaqt, daraja };
 
   /* ---- do'stlar ----
@@ -461,6 +466,7 @@ function DostlarRoyxat({ sarlavha, dostlar, onKod, onJonli, onChaqir, yuborilmoq
                 <span className={`block truncate text-[11.5px] ${
                   h.xavf ? "text-brand-gold-d" : "text-ink-dim"}`}>
                   {h.xavf ? t("duelZanjirXavf")
+                    : d.onlayn && holatYozuv(d.holat, d.oyin) ? holatYozuv(d.holat, d.oyin)
                     : h.jami ? t("duelDostHisob", { men: h.men, raqib: h.raqib })
                     : d.onlayn ? t("duelHozir") : ""}
                 </span>
@@ -506,6 +512,23 @@ function DostlarRoyxat({ sarlavha, dostlar, onKod, onJonli, onChaqir, yuborilmoq
  * Holbuki ikkinchisi deyarli albatta javob beradi, birinchisi esa
  * yo'q — va odam kimni chaqirishni aynan shunga qarab tanlaydi.
  */
+/**
+ * Odamning holati bitta qisqa yozuvda: "Jadval o'ynayapti", "duelda".
+ * `bosh` va `yoq` uchun `null` — ular uchun o'z yozuvi bor.
+ */
+function holatYozuv(holat?: OdamHolat, oyin?: string): string | null {
+  if (holat === "duelda") return t("duelHolatDuelda");
+  if (holat === "oqiyapti") return t("duelHolatOqiyapti");
+  if (holat === "oyinda") {
+    const o = oyin ? oyinById(oyin) : undefined;
+    return t("duelHolatOyinda", { oyin: o ? t(o.nom) : t("oyinlar") });
+  }
+  return null;
+}
+
+/** Duelda yoki darsda — chaqirilmaydi, o'qish va bellashuv uzilmasin. */
+const bandmi = (holat?: OdamHolat) => holat === "duelda" || holat === "oqiyapti";
+
 function qachonKorindi(iso: string): string {
   const daqiqa = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
   if (daqiqa < 60) return t("duelDaqiqaOldin", { n: Math.max(1, daqiqa) });
@@ -567,7 +590,11 @@ function Onlayn({ onChaqir }: { onChaqir: (profil: number) => void }) {
     const yukla = async () => {
       const d = await onlaynOyinchilar();
       if (bekor) return;
-      setRo(d.oyinchilar);
+      // Tartib — kimni chaqirish oson: bo'sh turgan tepada, band pastda.
+      const tartib: Record<string, number> = { bosh: 0, oyinda: 1, yoq: 2, duelda: 3, oqiyapti: 4 };
+      setRo([...d.oyinchilar].sort((a, b) =>
+        (tartib[a.holat ?? (a.onlayn ? "bosh" : "yoq")] ?? 2)
+        - (tartib[b.holat ?? (b.onlayn ? "bosh" : "yoq")] ?? 2)));
       setOnlaynSoni(d.onlaynSoni);
     };
 
@@ -630,16 +657,27 @@ function Onlayn({ onChaqir }: { onChaqir: (profil: number) => void }) {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] leading-tight">{o.ism}</span>
-                <span className={`text-[10.5px] ${
-                  o.onlayn ? "text-brand-green" : "text-ink-dim"}`}>
-                  {o.onlayn ? t("duelHozir") : qachonKorindi(o.korindi)}
+                {/* Holat: nima qilyapti. Band odam kulrang — uni hozir
+                    chaqirib bo'lmasligi yozuvning o'zidan ko'rinsin. */}
+                <span className={`block truncate text-[11px] ${
+                  bandmi(o.holat) ? "text-ink-dim"
+                    : o.onlayn ? "text-brand-green" : "text-ink-dim"}`}>
+                  {holatYozuv(o.holat, o.oyin)
+                    ?? (o.onlayn ? t("duelHolatBosh") : qachonKorindi(o.korindi))}
                 </span>
               </span>
-              <button type="button" onClick={() => onChaqir(o.profil)}
-                className="clay-press shrink-0 rounded-full bg-brand-orange px-3 py-1.5
-                           text-[12px] text-white">
-                {t("duelChaqir")}
-              </button>
+              {bandmi(o.holat) ? (
+                <span className="shrink-0 rounded-full bg-track px-3 py-1.5 text-[12px] text-ink-dim">
+                  {t("duelBand")}
+                </span>
+              ) : (
+                <button type="button" onClick={() => onChaqir(o.profil)}
+                  data-tahlil={`Duel: onlayn chaqirish (${o.holat ?? "?"})`}
+                  className="clay-press min-h-9 shrink-0 rounded-full bg-brand-blue px-3.5 py-1.5
+                             text-[12.5px] text-white">
+                  {t("duelChaqir")}
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -1135,6 +1173,11 @@ function Bellashuv({ duel, jonli, menChaqirdim, onChiq, onHavola, onYakun }: {
   const { oyinTugadi } = useProgress();
   const [raqibBall, setRaqibBall] = useState(0);
   const [kutilmoqda, setKutilmoqda] = useState(false);
+  // "Duelda" — boshqalarning ro'yxatida chaqirish tugmasi o'chadi va
+  // server bu odamga jonli taklif yubormaydi (`duel.taklif_mumkinmi`).
+  // Raqib tugatishini kutayotganda ham "duelda": natija bir necha soniyada
+  // keladi va shu orada kelgan taklif "yana o'ynaymizmi?" ni to'sib qo'yardi.
+  useFaollik({ joy: "duel", nom: duel.oyin });
   const menBall = useRef(0);
   const menSanoq = useRef<number[]>([]);
 

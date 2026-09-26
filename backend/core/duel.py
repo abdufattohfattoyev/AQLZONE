@@ -810,19 +810,25 @@ def dostlar(men: Profile) -> list[dict]:
         if len(sheriklar) >= MAX_DOST:
             break
 
+    from .onlayn import BOSH, YOQ, holat_xaritasi
+    holatlar = holat_xaritasi([s.pupil_id for s, _ in sheriklar.values()])
+
     ro = []
     for sherik, oxirgi in sheriklar.values():
         hisob = juft_hisob(men, sherik) or {}
         menga = _ochiq_chaqiruv(sherik, men)
         unga = None if menga else _ochiq_chaqiruv(men, sherik)
         ochiq = menga or unga
-        onlayn = _onlaynmi(sherik)
+        holat, oyin = holatlar.get(sherik.pupil_id, (BOSH, ""))
+        onlayn = holat != BOSH or _onlaynmi(sherik)
         mumkin, _ = taklif_mumkinmi(men, sherik, onlayn=onlayn)
         ro.append({
             "profil": sherik.pk,
             "ism": korinadigan_ism(sherik),
             "avatar": sherik.avatar,
             "onlayn": onlayn,
+            "holat": holat if onlayn else YOQ,
+            "oyin": oyin,
             "hisob": hisob,
             # "men" — sherik o'ynab qo'ygan, javob menda; "u" — aksincha.
             "navbat": "men" if menga else "u" if unga else "",
@@ -873,6 +879,14 @@ def taklif_mumkinmi(kimdan: Profile, kimga: Profile,
         onlayn = _onlaynmi(kimga)
     if not onlayn:
         return False, "oflayn"
+
+    # Duelda yoki darsda turgan odamning ekraniga taklif chiqmaydi: u
+    # birinchisida boshqa odam bilan bellashyapti, ikkinchisida o'qiyapti.
+    # Mashq o'yinidagi odam esa chaqiriladi — taklif o'yini tugagach,
+    # natija ekranida ko'rinadi.
+    from .onlayn import DUELDA, OQIYAPTI, profil_holati
+    if profil_holati(kimga) in (DUELDA, OQIYAPTI):
+        return False, "band"
 
     hozir = timezone.now()
     if DuelTaklif.objects.filter(

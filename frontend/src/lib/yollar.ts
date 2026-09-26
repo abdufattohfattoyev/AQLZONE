@@ -124,7 +124,8 @@ export const yolKarvon = () => "/oyinlar/karvon";
 export const yolJadval = () => "/oyinlar/jadval";
 
 /** Do'st bilan bellashuv — chaqiruv yasash. */
-export const yolDuel = () => "/oyinlar/duel";
+export const yolDuel = (oyin?: string) =>
+  oyin ? `/oyinlar/duel?oyin=${encodeURIComponent(oyin)}` : "/oyinlar/duel";
 
 /** Chaqiruv havolasi. ATAYLAB qisqa (`/duel/<kod>`): u Telegramda
  *  ulashiladi va uzun manzil xabarni ikki qatorga bo'lib yuboradi. */

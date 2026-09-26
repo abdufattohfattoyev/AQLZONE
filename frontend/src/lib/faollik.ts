@@ -22,7 +22,8 @@
 import { useEffect, useRef } from "react";
 import { bilanProfil, sorov } from "./api";
 
-export type FaollikJoy = "dars" | "blok" | "toplam" | "masala";
+/** `oyin` va `duel` da `nom` — o'yin id'si ("tezkor"): o'yinlar ekranidagi `• 2` shundan. */
+export type FaollikJoy = "dars" | "blok" | "toplam" | "masala" | "oyin" | "duel";
 
 export interface FaollikHolat {
   joy: FaollikJoy;

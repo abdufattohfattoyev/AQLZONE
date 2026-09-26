@@ -6,7 +6,7 @@
  * o'chirilgan bo'lsa — bo'sh ekran o'rniga tushunarli sahifa ko'rsatiladi.
  */
 import { Suspense, lazy, useEffect, useMemo } from "react";
-import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Panel, TepagaQayt, panelKerakmi } from "./components/Panel";
 import { Kutish } from "./components/Kutish";
 import { NotFound } from "./screens/NotFound";
@@ -775,10 +775,13 @@ function MaydonSahifasi() {
 
 function DuelSahifasi() {
   const nav = useNavigate();
+  const [qidiruv] = useSearchParams();
   useTema("bosh");
   return (
+    // `?oyin=tezkor` — o'yin ichidagi "Bellashish" dan kelganda o'sha o'yin
+    // tanlangan holda ochiladi: bola uni qaytadan qidirib o'tirmasin.
     <Duel onChiq={() => nav(yolOyinlar())} onOyin={(id) => nav(yolOyin(id))}
-      onKod={(kod) => nav(yolDuelKod(kod))} />
+      onKod={(kod) => nav(yolDuelKod(kod))} boshOyin={qidiruv.get("oyin") ?? undefined} />
   );
 }
 
@@ -818,6 +821,7 @@ function OyinDarajaSahifasi() {
       oyin={o}
       onBack={() => nav(yolOyinlar())}
       onBoshla={(d) => nav(yolOyinDaraja(o.id, d))}
+      onDuel={o.tur === "oqim" ? () => nav(yolDuel(o.id)) : undefined}
     />
   );
 }

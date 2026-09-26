@@ -1821,7 +1821,16 @@ class Faollik(models.Model):
     BLOK = "blok"
     TOPLAM = "toplam"
     MASALA = "masala"
-    JOYLAR = [(DARS, "Dars"), (BLOK, "Blok test"), (TOPLAM, "Test to'plami"), (MASALA, "Masala")]
+    #: O'yinlar — "kim qaysi o'yinda" (o'yinlar ekranidagi `• 2` va duel
+    #: ro'yxatidagi holat). `nom` da o'yinning id'si: "tezkor", "jadval".
+    OYIN = "oyin"
+    DUEL = "duel"
+    JOYLAR = [
+        (DARS, "Dars"), (BLOK, "Blok test"), (TOPLAM, "Test to'plami"), (MASALA, "Masala"),
+        (OYIN, "O'yin"), (DUEL, "Duel"),
+    ]
+    #: O'qish joylari — bu yerdagi odam jonli taklif bilan uzilmaydi.
+    OQISH = (DARS, BLOK, TOPLAM, MASALA)
 
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, primary_key=True,
                                    related_name="faollik")

@@ -44,13 +44,39 @@ export const BOSQICH = {
   oliyDaraja: 141,
 } as const;
 
-const KALIT = "az_profil";
+/**
+ * Kalit "az_anketa" — "az_profil" EMAS.
+ *
+ * Ilgari bu yerda "az_profil" turardi va u `lib/api.ts` dagi TANLANGAN
+ * BOLA raqamining kaliti bilan bir xil edi. Anketa javobi raqamning
+ * ustidan yozilar, ilova esa har so'rovga `profileId={"kim":…}` qo'shib
+ * yuborardi — server uni raqam deb o'qiy olmay `/me` va `/progress` da
+ * 500 qaytarardi (2026-09-26 da topildi).
+ */
+const KALIT = "az_anketa";
+const ESKI_KALIT = "az_profil";
 const KIMLAR: Kim[] = ["oquvchi", "talaba", "abiturient", "ota_ona", "ustoz", "kattalar"];
+
+function yaroqli(x: unknown): x is Profil {
+  const p = x as Profil | null;
+  return Boolean(p && KIMLAR.includes(p.kim) && typeof p.bosqich === "number");
+}
 
 function oqi(): Profil | null {
   try {
     const x = JSON.parse(localStorage.getItem(KALIT) || "null");
-    if (x && KIMLAR.includes(x.kim) && typeof x.bosqich === "number") return x;
+    if (yaroqli(x)) return x;
+    // Eski kalitda anketa qolgan bo'lsa — yangisiga ko'chiriladi va eski
+    // kalit TOZALANADI: u yerda faqat bola raqami turishi kerak.
+    const eski = localStorage.getItem(ESKI_KALIT);
+    if (eski && eski.startsWith("{")) {
+      localStorage.removeItem(ESKI_KALIT);
+      const e = JSON.parse(eski);
+      if (yaroqli(e)) {
+        localStorage.setItem(KALIT, eski);
+        return e;
+      }
+    }
   } catch { /* xotira yo'q yoki buzuq — profil yo'q deb qaraymiz */ }
   return null;
 }
