@@ -777,6 +777,26 @@ def navbat_soni(profil: Profile) -> int:
 MAX_DOST = 20
 
 
+def sherik_idlari(men: Profile) -> set[int]:
+    """
+    TANISHlarim — men bilan duel o'ynagan profillar. Reytingdagi "Do'stlar"
+    jadvali uchun (`views.leaderboard?guruh=dostlar`).
+
+    Qoida `tanishmi()` bilan bir xil: chaqiruvni QABUL qilgan bo'lishi
+    kerak. Javob berilmagan chaqiruv tanishlik emas — aks holda bir marta
+    chaqiruv yuborgan notanish odam bolaning ismini jadvalda ko'rardi.
+    """
+    ids: set[int] = set()
+    for chaqirgan, qabul in (
+        Duel.objects.filter(Q(chaqirgan=men) | Q(qabul=men), qabul__isnull=False)
+        .values_list("chaqirgan_id", "qabul_id")[:1000]
+    ):
+        sherik = qabul if chaqirgan == men.pk else chaqirgan
+        if sherik != men.pk:
+            ids.add(sherik)
+    return ids
+
+
 def dostlar(men: Profile) -> list[dict]:
     """
     "SIZNING NAVBATINGIZ" — kim bilan o'ynaganim va hozir kimning navbati.

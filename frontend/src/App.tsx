@@ -948,7 +948,7 @@ function OyinSahifasi() {
 function ReytingSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
-  return <Reyting onBack={() => nav(yolMen())} />;
+  return <Reyting onBack={() => nav(yolMen())} onDuel={() => nav(yolDuel())} />;
 }
 
 /* ------------------------------------------------------------ masalalar

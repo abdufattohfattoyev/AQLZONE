@@ -6,6 +6,8 @@
  *   Sinfim   anketada shu sinfni aytganlar orasida (`?guruh=sinf`);
  *            talabada — talabalar orasida (`?guruh=talaba`)
  *   Hamma    butun sayt
+ *   Do'stlar men va duel o'ynagan tanishlarim (`?guruh=dostlar`) —
+ *            begonalar emas, "kimdan o'tib ketdim" eng kuchli sabab
  *   Liga     o'ziga teng 20 bola (`LigaJadval`) — har hafta yangidan
  *
  * Davr — "Bu hafta" yoki "Hammasi" (sarlavhaning o'ng chetida). Hafta
@@ -13,8 +15,9 @@
  * yuqoridagilarni hech qachon quvib yeta olmaydi, haftalikda esa hamma
  * har dushanba teng boshlaydi.
  *
- * Dizayndagi uchinchi yorliq "Do'stlar" edi — do'stlik ma'lumoti hali
- * yo'q, uning o'rnida mavjud Liga turadi.
+ * Do'stlik alohida saqlanmaydi: chaqiruvni QABUL qilgan har kim tanish
+ * (`duel.tanishmi` bilan bir qoida). Hali tanish bo'lmasa — jadval o'rniga
+ * "do'stni duelga chaqiring" taklifi.
  *
  * O'z o'rning DOIM ko'rinadi: top ichida bo'lmasang ham pastda alohida
  * qator bo'lib turadi (ko'k fon bilan).
@@ -29,13 +32,13 @@ import { t } from "../lib/matn";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 import { sinfOfProfil, useProfil } from "../lib/profil";
 
-type Guruh = "sinf" | "hamma" | "liga";
+type Guruh = "sinf" | "hamma" | "dostlar" | "liga";
 type Davr = "hafta" | "jami";
 
 const bosHarflar = (ism: string) =>
   ism.split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join("") || "?";
 
-export function Reyting({ onBack }: { onBack: () => void }) {
+export function Reyting({ onBack, onDuel }: { onBack: () => void; onDuel: () => void }) {
   const prof = useProfil();
   const talaba = prof?.kim === "talaba";
   // "Sinfim" faqat sinfi ma'lum odamga (yoki talabaga — talabalar jadvali).
@@ -51,7 +54,7 @@ export function Reyting({ onBack }: { onBack: () => void }) {
     if (guruh === "liga") return;
     let bekor = false;
     setYuklanyapti(true);
-    getReyting(davr, guruh === "sinf" ? (talaba ? "talaba" : "sinf") : "").then((d) => {
+    getReyting(davr, guruh === "sinf" ? (talaba ? "talaba" : "sinf") : guruh === "dostlar" ? "dostlar" : "").then((d) => {
       if (bekor) return;
       setMa(d);
       setYuklanyapti(false);
@@ -60,11 +63,14 @@ export function Reyting({ onBack }: { onBack: () => void }) {
   }, [guruh, davr, talaba]);
 
   const menRoyxatda = Boolean(ma?.top.some((q) => q.men));
+  // Do'stlar jadvalida faqat o'zim bo'lsam — hali tanish yo'q.
+  const dostsiz = guruh === "dostlar" && Boolean(ma) && !ma!.top.some((q) => !q.men);
   const top3 = ma?.top.slice(0, 3) ?? [];
   const qolgan = ma?.top.slice(3) ?? [];
   const yorliqlar: { id: Guruh; nom: string }[] = [
     ...(sinfBor ? [{ id: "sinf" as const, nom: talaba ? t("reytingTalabalar") : t("reytingSinfim") }] : []),
     { id: "hamma", nom: t("reytingHamma") },
+    { id: "dostlar", nom: t("reytingDostlar") },
     { id: "liga", nom: t("reytingLiga") },
   ];
 
@@ -78,7 +84,7 @@ export function Reyting({ onBack }: { onBack: () => void }) {
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
         )}
-        <h1 className="min-w-0 flex-1 truncate font-display text-[24px]">{t("reyting")}</h1>
+        <h1 className="min-w-0 flex-1 truncate font-display text-[21px] min-[360px]:text-[24px]">{t("reyting")}</h1>
         {guruh !== "liga" && (
           <button type="button" data-tahlil="Reyting: davr"
             onClick={() => { tebrat("tanlov"); setDavr((d) => (d === "hafta" ? "jami" : "hafta")); }}
@@ -91,12 +97,12 @@ export function Reyting({ onBack }: { onBack: () => void }) {
       </header>
 
       <nav aria-label={t("reyting")} className={`grid gap-1 rounded-2xl bg-track p-1 ${
-        yorliqlar.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+        yorliqlar.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
         {yorliqlar.map((y) => (
           <button key={y.id} type="button" aria-current={guruh === y.id ? "page" : undefined}
             data-tahlil={`Reyting: ${y.id}`}
             onClick={() => { if (guruh !== y.id) { tebrat("tanlov"); setGuruh(y.id); } }}
-            className={`grid min-h-10 min-w-0 place-items-center rounded-xl px-1 text-[14.5px] ${
+            className={`grid min-h-10 min-w-0 place-items-center rounded-xl px-1 text-[13px] min-[360px]:text-[14.5px] ${
               guruh === y.id ? "bg-karta font-bold text-brand-blue-t shadow-clay-sm" : "font-semibold text-ink-soft"}`}>
             <span className="max-w-full truncate">{y.nom}</span>
           </button>
@@ -116,7 +122,18 @@ export function Reyting({ onBack }: { onBack: () => void }) {
             </div>
           )}
 
-          {!yuklanyapti && ma?.top.length === 0 && (
+          {!yuklanyapti && dostsiz && (
+            <div className="flex flex-col items-center gap-2.5 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
+              <EmojiBelgi e="🤝" olcham={30} />
+              <p className="text-[14px] leading-snug text-ink-soft">{t("reytingDostYoq")}</p>
+              <button type="button" onClick={onDuel} data-tahlil="Reyting: do'stni chaqirish"
+                className="clay-press min-h-11 rounded-xl bg-brand-blue/10 px-4 text-[14.5px] font-bold text-brand-blue-t">
+                {t("reytingDostChaqir")}
+              </button>
+            </div>
+          )}
+
+          {!yuklanyapti && !dostsiz && ma?.top.length === 0 && (
             <div className="rounded-clay bg-karta p-5 text-center shadow-clay-sm">
               <EmojiBelgi e="⭐" olcham={30} className="mx-auto" />
               <p className="mt-2 text-[14px] leading-snug text-ink-soft">
@@ -125,9 +142,9 @@ export function Reyting({ onBack }: { onBack: () => void }) {
             </div>
           )}
 
-          {!yuklanyapti && top3.length > 0 && <Podium top={top3} />}
+          {!yuklanyapti && !dostsiz && top3.length > 0 && <Podium top={top3} />}
 
-          {!yuklanyapti && ma && (qolgan.length > 0 || (ma.men && !menRoyxatda)) && (
+          {!yuklanyapti && ma && !dostsiz && (qolgan.length > 0 || (ma.men && !menRoyxatda)) && (
             <ol className="flex flex-col divide-y divide-track overflow-hidden rounded-[20px] bg-karta shadow-clay-sm">
               {qolgan.map((q) => <Qator key={`${q.orin}-${q.toliqIsm}`} q={q} />)}
               {/* Top ichida bo'lmasam — oxirida alohida. Bo'lsam
@@ -136,7 +153,7 @@ export function Reyting({ onBack }: { onBack: () => void }) {
             </ol>
           )}
 
-          {!yuklanyapti && ma && !ma.men && !menRoyxatda && ma.top.length > 0 && (
+          {!yuklanyapti && ma && !dostsiz && !ma.men && !menRoyxatda && ma.top.length > 0 && (
             <p className="text-center text-[13px] leading-snug text-ink-dim">
               {davr === "hafta" ? t("haftaYulduzsiz") : t("yulduzsiz")}
             </p>

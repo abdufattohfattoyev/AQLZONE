@@ -610,14 +610,16 @@ _hafta_boshi = L.hafta_boshi
 SINF_KIMLAR = ("oquvchi", "ota_ona")
 
 
-def _guruh_filtri(kim: str = "", sinf: int | None = None) -> dict:
-    """Reyting guruhi → so'rov filtri: talabalar yoki bir sinf (0–11)."""
+def _guruh_filtri(kim: str = "", sinf: int | None = None, profillar: set[int] | None = None) -> dict:
+    """Reyting guruhi → so'rov filtri: talabalar, bir sinf (0–11) yoki do'stlar."""
+    if profillar is not None:
+        return {"profile_id__in": profillar}
     if sinf is not None:
         return {"profile__pupil__anketa_sinf": sinf, "profile__pupil__kim__in": SINF_KIMLAR}
     return {"profile__pupil__kim": kim} if kim else {}
 
 
-def _reyting_jami(limit: int, kim: str = "", sinf: int | None = None):
+def _reyting_jami(limit: int, kim: str = "", sinf: int | None = None, profillar: set[int] | None = None):
     """
     Butun vaqt bo'yicha: yig'ilgan yulduzlar.
 
@@ -625,13 +627,13 @@ def _reyting_jami(limit: int, kim: str = "", sinf: int | None = None):
     shuning uchun bu yerda qayta sanash shart emas.
     """
     qs = Progress.objects.filter(
-        stars__gt=0, profile__pupil__registered_at__isnull=False, **_guruh_filtri(kim, sinf)
+        stars__gt=0, profile__pupil__registered_at__isnull=False, **_guruh_filtri(kim, sinf, profillar)
     )
     top = list(qs.order_by("-stars", "updated_at").values("profile", "stars", "updated_at")[:limit])
     return qs, [(r["profile"], r["stars"]) for r in top]
 
 
-def _reyting_hafta(limit: int, kim: str = "", sinf: int | None = None):
+def _reyting_hafta(limit: int, kim: str = "", sinf: int | None = None, profillar: set[int] | None = None):
     """
     Shu hafta yig'ilgani.
 
@@ -644,7 +646,7 @@ def _reyting_hafta(limit: int, kim: str = "", sinf: int | None = None):
         LessonResult.objects.filter(
             created_at__gte=_hafta_boshi(),
             profile__pupil__registered_at__isnull=False,
-            **_guruh_filtri(kim, sinf),
+            **_guruh_filtri(kim, sinf, profillar),
         )
         .values("profile")
         .annotate(yulduz=Sum("stars"))
@@ -722,6 +724,10 @@ def leaderboard(request):
 
     `?guruh=sinf` — "Sinfim": anketada o'sha sinfni aytganlar orasida
     (o'quvchi yoki ota-ona). Sinf aytilmagan bo'lsa — butun jadval.
+
+    `?guruh=dostlar` — men va duel o'ynagan sheriklarim (`duel.sherik_idlari`).
+    Begonalar bilan solishtirish emas, "kimdan o'tib ketdim" — tanish
+    odamlar orasidagi o'rin bolani eng ko'p qaytaradi.
     """
     davr = "hafta" if request.query_params.get("davr") == "hafta" else "jami"
     guruh_q = request.query_params.get("guruh")
@@ -736,7 +742,8 @@ def leaderboard(request):
     limit = min(MAX_REYTING, max(1, limit))
 
     joriy = _profil_tanla(request)
-    qs, top = (_reyting_jami if davr == "jami" else _reyting_hafta)(limit, guruh, sinf)
+    profillar = (D.sherik_idlari(joriy) | {joriy.pk}) if guruh_q == "dostlar" else None
+    qs, top = (_reyting_jami if davr == "jami" else _reyting_hafta)(limit, guruh, sinf, profillar)
 
     # --- o'z o'rnim ---
     # Top ichida bo'lsam qo'shimcha so'rov kerak emas.

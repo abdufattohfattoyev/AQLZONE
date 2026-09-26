@@ -8410,6 +8410,39 @@ class SinfReytingTest(TestCase):
         self.assertEqual(j["qatnashchilar"], 1)
 
 
+class DostReytingTest(TestCase):
+    """`?guruh=dostlar` — men va duel qabul qilgan tanishlarim."""
+
+    def odam(self, ism, yulduz):
+        p = MDL.Pupil.objects.create(first_name=ism, registered_at=timezone.now())
+        pr = MDL.Profile.objects.create(pupil=p, name=ism)
+        MDL.Progress.objects.create(profile=pr, stars=yulduz)
+        return pr
+
+    def test_faqat_tanishlar(self):
+        from core import duel as D
+        from core.views import _reyting_jami
+
+        men, dost, chaqirilgan, begona = (self.odam(n, y) for n, y in
+                                          (("Men", 5), ("Dost", 9), ("Chaqirilgan", 7), ("Begona", 50)))
+        MDL.Duel.objects.create(kod="d1", urug=1, oyin="tezkor", chaqirgan=dost, qabul=men)
+        # Javob berilmagan chaqiruv — tanishlik emas.
+        MDL.Duel.objects.create(kod="d2", urug=1, oyin="tezkor", chaqirgan=men, kimga=chaqirilgan)
+        ids = D.sherik_idlari(men)
+        self.assertEqual(ids, {dost.pk})
+        _, top = _reyting_jami(10, profillar=ids | {men.pk})
+        self.assertEqual([p for p, _ in top], [dost.pk, men.pk])
+        self.assertNotIn(begona.pk, [p for p, _ in top])
+
+    def test_sorov_dostsiz(self):
+        r = self.client.post("/api/v1/auth/device", {"deviceId": "dev-dost-reyting-1234", "platform": "web"},
+                             content_type="application/json")
+        h = {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+        self.odam("Begona", 50)
+        j = self.client.get("/api/v1/leaderboard?guruh=dostlar", **h).json()
+        self.assertEqual(j["top"], [])
+
+
 class SessiyaNatijaTest(TestCase):
     """Talabaning sessiya natijalari serverda va DTM tarixidan alohida."""
 

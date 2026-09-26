@@ -358,10 +358,10 @@ const S = {
   sertSavolRaqam: ["{n}-savol", "Вопрос {n}"],
 
   /* ---------------- Reyting (yangi dizayn) ---------------- */
-  reytingSinfim: ["Sinfim", "Мой класс"],
+  reytingSinfim: ["Sinfim", "Класс"],
   reytingHamma: ["Hamma", "Все"],
-  reytingBuHafta: ["Bu hafta", "Эта неделя"],
-  reytingHammasi: ["Hammasi", "За всё время"],
+  reytingBuHafta: ["Bu hafta", "Неделя"],
+  reytingHammasi: ["Hammasi", "Всё время"],
   reytingSiz: ["Siz — {ism}", "Вы — {ism}"],
 
   /* ---------------- Ota-ona paneli (yangi dizayn) ---------------- */
@@ -1342,6 +1342,12 @@ const S = {
 
   /* ---------------- reyting ---------------- */
   reytingLiga: ["Liga", "Лига"],
+  reytingDostlar: ["Do'stlar", "Друзья"],
+  reytingDostYoq: [
+    "Bu yerda duel o'ynagan do'stlaringiz chiqadi. Do'stingizni chaqiring — kim ko'proq yulduz yig'ishini ko'rasiz.",
+    "Здесь появятся друзья, с которыми вы играли дуэль. Позовите друга — и увидите, кто соберёт больше звёзд.",
+  ],
+  reytingDostChaqir: ["Do'stni duelga chaqirish", "Позвать друга на дуэль"],
   reytingJami: ["Jami", "Всего"],
   reytingHafta: ["Shu hafta", "На неделе"],
   ligaIzoh: ["Har hafta yangi guruh, yangi imkoniyat", "Каждую неделю новая группа и новый шанс"],
