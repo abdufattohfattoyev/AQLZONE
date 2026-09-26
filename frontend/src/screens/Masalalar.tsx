@@ -184,18 +184,20 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack, onQidiruv }: Pr
     && yechilganlik === "hammasi";
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-24 min-[360px]:px-[18px]
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3 px-3.5 pt-3.5 pb-24 min-[360px]:gap-4 min-[360px]:px-[18px] min-[360px]:pt-5
                     sm:max-w-2xl">
-      {/* ---- sarlavha: nom · Menikilar · qidiruv (`manba/Masalalar.dc.html`) ----
-          "Masala yozish" sarlavhadan pastdagi SUZUVCHI tugmaga ko'chdi:
-          u ekrandagi yagona asosiy amal va ro'yxat surilganda ham
-          qo'l ostida turadi. */}
+      {/* ---- sarlavha: nom · sinf · qidiruv (Masalalar kanvasi) ----
+          Sinf tanlagichi sarlavhaga ko'chdi, "Menikilar" esa pastdagi
+          almashtirgichga: 320px ekranda ham bir qatorda sig'adi.
+          "Masala yozish" — pastdagi SUZUVCHI tugma: ekrandagi yagona
+          asosiy amal va ro'yxat surilganda ham qo'l ostida. */}
       <header className="flex min-h-12 items-center gap-2">
         <h1 className="min-w-0 flex-1 truncate font-display text-[23px] min-[360px]:text-[26px]">{t("masalalar")}</h1>
-        <button type="button" onClick={onMenikilar} data-tahlil="Masalalar: menikilar"
-          className="clay-press grid min-h-11 shrink-0 place-items-center rounded-[14px] px-2.5 text-[15px] font-bold
-                     text-brand-blue-t min-[360px]:px-3">
-          {t("masalaMenikilarTugma")}
+        <button type="button" onClick={() => och("sinf")} data-tahlil="Masalalar: sinf"
+          className={`clay-press flex min-h-11 max-w-[45%] shrink-0 items-center gap-0.5 rounded-[14px] bg-karta pr-2.5
+                      pl-3.5 text-[14.5px] font-bold shadow-clay-sm ${sinf !== null ? "text-brand-blue-t" : "text-ink"}`}>
+          <span className="truncate">{sinfNomi}</span>
+          <Icon name="chevron" size={15} className="shrink-0 rotate-90 text-ink-dim" />
         </button>
         <button type="button" onClick={onQidiruv} aria-label={t("qidiruvNom")} data-tahlil="Masalalar: qidiruv"
           className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta shadow-clay-sm">
@@ -203,36 +205,30 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack, onQidiruv }: Pr
         </button>
       </header>
 
-      {/* ---- filtr chiplari ----
-          Sinf — eng ko'p ishlatiladigani: tanlangan bo'lsa KO'K
-          to'ldirilgan. "Yangi" va "Ommabop" — ikki eng ko'p kerak
-          bo'ladigan saralash. Qolgani (eng qiyin, eng zo'r, yo'nalish,
-          yechilganlik) "Saralash" varag'ida; o'zgartirilgan bo'lsa
-          tugmada ko'k nuqta — ro'yxat nega boshqacha ekani yashirin
-          qolmasin. */}
+      {/* ---- almashtirgich: Yangi · Ommabop · Menikilar ----
+          Eng ko'p kerak bo'ladigan uchta ko'rinish bitta relsda. Qolgan
+          saralash (eng qiyin, yo'nalish, yechilganlik) — o'ngdagi
+          tugmada; o'zgartirilgan bo'lsa unda ko'k nuqta. */}
       <div className="flex items-center gap-2">
-        <button type="button" onClick={() => och("sinf")} data-tahlil="Masalalar: sinf"
-          className={`clay-press grid min-h-10 shrink-0 place-items-center rounded-full px-3.5 text-[14px]
-                      min-[360px]:px-4 min-[360px]:text-[14.5px] ${
-            sinf !== null ? "bg-brand-blue font-bold text-white" : "bg-karta font-semibold text-ink-soft shadow-clay-sm"}`}>
-          <span className="truncate">{sinfNomi}</span>
-        </button>
-        {(["yangi", "koplik"] as const).map((k) => (
-          <button key={k} type="button" onClick={() => almashtir(k)} aria-pressed={tartib === k}
-            data-tahlil={`Masalalar: ${k}`}
-            /* 320px da ikkala chip sig'maydi (ayniqsa ruschada): "Ommabop"
-               yashiriladi — u "Saralash" varag'ida "Ko'p yechilgan" bo'lib turadi. */
-            className={`clay-press min-h-10 min-w-0 place-items-center rounded-full bg-karta px-3 text-[14px]
-                        shadow-clay-sm min-[360px]:px-4 min-[360px]:text-[14.5px] ${
-              k === "koplik" ? "hidden min-[360px]:grid" : "grid"} ${
-              tartib === k ? "font-bold text-brand-blue-t outline-2 -outline-offset-2 outline-brand-blue outline-solid"
-                : "font-semibold text-ink-soft"}`}>
-            <span className="max-w-full truncate">{k === "yangi" ? t("masalaYangilar") : t("masalaOmmabop")}</span>
+        <div role="tablist" aria-label={t("masalaSaralash")}
+          className="grid min-w-0 flex-1 grid-cols-3 gap-0.5 rounded-[14px] bg-track p-[3px]">
+          {(["yangi", "koplik"] as const).map((k) => (
+            <button key={k} type="button" role="tab" aria-selected={tartib === k} onClick={() => almashtir(k)}
+              data-tahlil={`Masalalar: ${k}`}
+              className={`min-h-10 min-w-0 rounded-[11px] px-1 text-[13px] min-[360px]:text-[14px] ${
+                tartib === k ? "bg-karta font-bold text-ink shadow-clay-sm" : "font-semibold text-ink-dim"}`}>
+              <span className="block truncate">{k === "yangi" ? t("masalaYangilar") : t("masalaOmmabop")}</span>
+            </button>
+          ))}
+          <button type="button" role="tab" aria-selected={false} onClick={onMenikilar}
+            data-tahlil="Masalalar: menikilar"
+            className="min-h-10 min-w-0 rounded-[11px] px-1 text-[13px] font-semibold text-ink-dim min-[360px]:text-[14px]">
+            <span className="block truncate">{t("masalaMenikilarTugma")}</span>
           </button>
-        ))}
+        </div>
         <button type="button" onClick={() => och("tartib")} aria-label={t("masalaSaralash")}
           data-tahlil="Masalalar: saralash"
-          className="clay-press relative ml-auto grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta
+          className="clay-press relative grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta
                      shadow-clay-sm">
           <Icon name="order" size={19} />
           {((tartib !== "yangi" && tartib !== "koplik") || teskari || yechilganlik !== "hammasi") && (
@@ -293,7 +289,7 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack, onQidiruv }: Pr
 
       {bosh && <Bosh katta={butunlayBosh} onYangi={onYangi} />}
 
-      <div className="mt-3 space-y-2.5">
+      <div className="space-y-2.5">
         {royxat.map((m) => (
           <MasalaKarta key={m.id} m={m} on={() => onOch(m.id)} />
         ))}
@@ -307,12 +303,16 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack, onQidiruv }: Pr
           Bo'sh ro'yxatda u o'rtadagi katta tugma bilan takrorlanmasin. */}
       {!butunlayBosh && (
         <button type="button" onClick={onYangi} data-tahlil="Masalalar: masala yozish"
-          className={`tugma-3d fixed right-4 z-20 flex min-h-14 items-center gap-2 rounded-[20px] bg-brand-blue px-5
-                      font-display text-[17px] font-bold text-white shadow-[0_4px_0_var(--color-brand-blue-d)]
-                      min-[360px]:right-[18px] ${
+          aria-label={t("masalaYozish")}
+          /* Tor telefonda (320px) faqat "+" belgisi — yozuvli tugma
+             ro'yxatning o'ng yarmini to'sib qo'yardi. */
+          className={`tugma-3d fixed right-3.5 z-20 flex min-h-[54px] min-w-[54px] items-center justify-center gap-2
+                      rounded-[18px] bg-brand-blue font-display text-[16.5px] font-semibold text-white
+                      shadow-[0_4px_0_var(--color-brand-blue-d)] min-[360px]:right-[18px] min-[360px]:pr-5
+                      min-[360px]:pl-[18px] ${
             kompyuter ? "bottom-6" : "bottom-[calc(4.25rem+var(--az-past)+14px)]"}`}>
           <Icon name="plus" size={20} />
-          {t("masalaYozish")}
+          <span className="hidden min-[360px]:inline">{t("masalaYozish")}</span>
         </button>
       )}
     </div>

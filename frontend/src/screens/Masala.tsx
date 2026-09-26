@@ -382,7 +382,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-5 pb-10 min-[360px]:px-[18px] sm:max-w-2xl">
+    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-3.5 pb-10 min-[360px]:px-[18px] min-[360px]:pt-5 sm:max-w-2xl">
       {/* Sarlavha qatori (`manba/Masala.dc.html`): orqaga · "Masala #12" ·
           ulashish. Sinf endi kartaning muallif qatorida. Tanga hisobi
           yo'q: tanga sarflash oynasi (`TangaSorov`) uni o'zi aytadi. */}
@@ -393,7 +393,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
         )}
-        <h1 className="min-w-0 flex-1 truncate font-display text-[21px] leading-none">
+        <h1 className="min-w-0 flex-1 truncate font-display text-[19px] leading-none min-[360px]:text-[21px]">
           {t("masalaShartSarlavha", { n: m.raqam })}
         </h1>
 
@@ -419,8 +419,26 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           Yechilgandan keyin yig'ish imkoni qoladi: uzun shartni
           yopib, yechimga tez o'tish uchun. `open` o'zgarmas qiymat —
           React uni qayta yozmaydi va foydalanuvchi yopgani saqlanadi. */}
+      {/* Muallif — kartadan TASHQARIDA, ixcham qatorda (Masalalar
+          kanvasi): karta ichida faqat shart qoladi va u yirik o'qiladi.
+          Bosh harflar neytral — rang faqat amal va natija uchun. */}
+      <button type="button" onClick={() => onMuallif(m.muallif.id)} data-tahlil="Masala: muallif"
+        className="clay-press mt-3 flex min-h-11 w-full items-center gap-2.5 rounded-[14px] text-left">
+        <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-track text-[13.5px]
+                                     font-bold text-ink-soft">
+          {m.muallif.ism.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]!.toUpperCase()).join("") || "?"}
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
+          <span className="truncate text-[15px] font-bold">{m.muallif.ism}</span>
+          <span className="truncate text-[13px] text-ink-dim">
+            {sinfNomi(m.sinf)}{m.yechganSoni > 0 ? ` · ${t("masalaNechaYechdi", { n: m.yechganSoni })}` : ""}
+          </span>
+        </span>
+      </button>
+
       <details open
-        className="az-natija group mt-4 rounded-clay bg-karta p-[18px] shadow-clay-sm">
+        className="az-natija group mt-3 rounded-[24px] bg-karta px-4 py-[18px] shadow-clay-sm
+                   min-[360px]:px-5 min-[360px]:py-[22px]">
         {/* Kartaning sarlavha qatori. Chapda masala raqami — odam
             uni do'stiga aytadi va kanaldagi post bilan solishtiradi;
             o'ngda qiyinlik — SO'Z bilan, chunki bu yerda joy bor va
@@ -450,20 +468,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
         {/* Yechilmagan holatda sarlavha qatori YO'Q — u ekran
             sarlavhasini takrorlardi. Karta to'g'ridan-to'g'ri shartdan
             boshlanadi. */}
-        {/* Muallif va sinf — kim yozgani va necha kishi yechgani. */}
-        <div className={`flex items-center gap-2.5 ${yechildi ? "mt-3" : ""}`}>
-          <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-blue/12
-                                       font-bold text-brand-blue-t">
-            {m.muallif.ism.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]!.toUpperCase()).join("") || "?"}
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-[15px] font-bold">{m.muallif.ism}</span>
-            <span className="truncate text-[13px] text-ink-dim">
-              {sinfNomi(m.sinf)}{m.yechganSoni > 0 ? ` · ${t("masalaNechaYechdi", { n: m.yechganSoni })}` : ""}
-            </span>
-          </span>
-        </div>
-        <div className="mt-3.5">
+        <div className={yechildi ? "mt-3" : ""}>
           <MasalaMatn matn={m.matn} katta />
         </div>
 
@@ -609,8 +614,9 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
                 onChange={(e) => setJavob(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") void yubor(); }}
                 maxLength={100}
-                className="min-h-[60px] min-w-0 rounded-[18px] border-2 border-track bg-karta px-[18px] font-display
-                           text-[22px] font-bold outline-none focus:border-brand-blue"
+                className="min-h-[62px] min-w-0 rounded-[18px] border-2 border-track bg-karta px-[18px] font-display
+                           text-[24px] font-semibold outline-none transition-shadow focus:border-brand-blue
+                           focus:shadow-[0_0_0_4px_rgb(59_111_224/0.14)]"
               />
             </label>
           )}
@@ -639,12 +645,15 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               className="tugma-3d mt-3 flex min-h-14 w-full items-center gap-2 rounded-[18px]
                          bg-brand-blue px-4 py-3 font-display text-[19px] font-bold text-white
                          shadow-[0_4px_0_var(--color-brand-blue-d)] disabled:opacity-50">
-              <span className="min-w-0 flex-1 truncate text-left">
+              {/* Chapdagi bo'sh joy o'ngdagi mukofot bilan teng — yozuv
+                  tugmaning aniq o'rtasida turadi. */}
+              {!yuborilmoqda && <span aria-hidden className="w-12 shrink-0" />}
+              <span className="min-w-0 flex-1 truncate text-center">
                 {yuborilmoqda ? t("yuklanyapti") : t("masalaTekshir")}
               </span>
               {!yuborilmoqda && (
-                <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-white/20
-                                 px-2 py-0.5 text-[12.5px] leading-none">
+                <span className="flex w-12 shrink-0 items-center justify-center gap-0.5 rounded-full bg-white/20
+                                 py-1 text-[12.5px] leading-none">
                   <Icon name="coin" size={12} />
                   +{mukofot(urinishim + 1)}
                 </span>
@@ -665,9 +674,11 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           {/* Yechim qulf ortida — javob berilmaguncha. Ilgari bu haqda
               hech narsa yozilmasdi va odam yechim umuman yo'q deb o'ylardi. */}
           {urinishim === 0 && !yechim && (
-            <div className="mt-3 flex min-h-14 items-center gap-3 rounded-[18px] bg-track px-3.5 py-2.5">
-              <Icon name="lock" size={18} className="shrink-0 text-ink-soft" />
-              <span className="min-w-0 flex-1 text-[14.5px] leading-snug text-ink-soft">{t("masalaYechimQulf")}</span>
+            <div className="mt-3 flex min-h-14 items-center gap-3 rounded-[18px] bg-karta px-3.5 shadow-clay-sm"
+              aria-label={t("masalaYechimQulf")}>
+              <Icon name="lock" size={19} className="shrink-0 text-ink-dim" />
+              <span className="min-w-0 flex-1 text-[15px] font-semibold">{t("masalaYechim")}</span>
+              <span className="shrink-0 text-[13px] text-ink-dim">{t("masalaJavobdanKeyin")}</span>
             </div>
           )}
         </div>

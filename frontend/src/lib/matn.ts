@@ -718,11 +718,12 @@ const S = {
   masalaZorlar: ["Eng zo'r", "Лучшие"],
   masalaKoplar: ["Ko'p yechilgan", "Часто решают"],
   /* Yangi dizayn: ro'yxat tepasidagi chip — "ko'p yechilgan" saralashi. */
-  masalaOmmabop: ["Ommabop", "Популярные"],
+  masalaOmmabop: ["Ommabop", "Топ"],
   masalaMenikilarTugma: ["Menikilar", "Мои"],
   masalaYozish: ["Masala yozish", "Написать задачу"],
   masalaNechaYechdi: ["{n} kishi yechdi", "решили: {n}"],
   masalaYechimQulf: ["Yechim — javob berganingizdan keyin ochiladi", "Решение откроется после вашего ответа"],
+  masalaJavobdanKeyin: ["javobdan keyin", "после ответа"],
   masalaIzohlar: ["Izohlar", "Комментарии"],
   masalaIzohQulf: [
     "Izohlarda javob bo'lishi mumkin — ular yechim ochilgandan keyin ko'rinadi.",
@@ -759,6 +760,11 @@ const S = {
   ],
   masalaYechdi: ["{n}/{jami} yechdi", "решили {n}/{jami}"],
   masalaYechgansiz: ["Yechgansiz", "Решено"],
+  vaqtHozir: ["hozir", "сейчас"],
+  vaqtDaqiqa: ["{n} daq", "{n} мин"],
+  vaqtSoat: ["{n} soat", "{n} ч"],
+  vaqtKecha: ["kecha", "вчера"],
+  vaqtKun: ["{n} kun", "{n} дн"],
   masalaQaytaUrinish: ["Yecholmagansiz", "Не решено"],
   /* Kartadagi uchinchi holat: hali ochilmagan masala. */
   masalaYechilmagan: ["Yechilmagan", "Не решалась"],
