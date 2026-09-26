@@ -33,13 +33,13 @@ import type { IconName } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import { getHisob, joriyProfil, kunlikHolat, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
-import { COURSES, courseBySlug } from "../lib/curriculum";
+import { COURSES } from "../lib/curriculum";
 import type { Course } from "../lib/curriculum";
 import { oxirgiKurs } from "../lib/oxirgi";
 import { useKompyuter } from "../lib/maket";
 import { tgIsm } from "../lib/qobiq";
 import {
-  joriyKurs, pedagogmi, profilKursi, sinfOfProfil, useProfil, yolOf,
+  joriyKurs, pedagogmi, profilKursi, profilKurslari, sinfOfProfil, useProfil, yolOf,
 } from "../lib/profil";
 import type { Profil } from "../lib/profil";
 import { t } from "../lib/matn";
@@ -91,12 +91,17 @@ const MASLAHAT_SONI = 10;
  * ko'rib chiqilgan bo'sh kurs boshqa qurilmadagi "Keyingi dars"ni
  * yashirib qo'yardi — bir hisob, ikki xil bosh sahifa.
  *
+ * Oliy yo'lda faqat talabalar kurslari qaraladi (`joriyKurs` dagi
+ * qoida bilan bir xil): talaba qiziqib ochgan maktabgacha kurs uning
+ * "Keyingi dars"iga aylanmasin.
+ *
  * Hech narsa boshlanmagan bo'lsa `null` — yangi odamga "davom
  * eting" deyish ma'nosiz.
  */
-function davomJoyi(progressOf: (c: Course) => Progress) {
-  const oxirgi = courseBySlug(oxirgiKurs());
-  const nomzodlar = oxirgi ? [oxirgi, ...COURSES.filter((x) => x !== oxirgi)] : COURSES;
+function davomJoyi(progressOf: (c: Course) => Progress, prof: Profil | null) {
+  const asos = yolOf(prof) === "oliy" ? profilKurslari(prof) : COURSES;
+  const oxirgi = asos.find((c) => c.slug === oxirgiKurs());
+  const nomzodlar = oxirgi ? [oxirgi, ...asos.filter((x) => x !== oxirgi)] : asos;
   for (const c of nomzodlar) {
     const p = progressOf(c);
     if (!p.stars) continue;
@@ -133,7 +138,7 @@ export function Bosh({
   const prof = useProfil();
   const kompyuter = useKompyuter();
   const bugun = kunKaliti();
-  const davom = davomJoyi(progressOf);
+  const davom = davomJoyi(progressOf, prof);
   const kurs = davom?.c ?? joriyKurs(prof, oxirgiKurs());
 
   // ---- sarlavha ----
