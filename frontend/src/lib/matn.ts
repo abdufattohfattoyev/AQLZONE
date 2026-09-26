@@ -378,6 +378,14 @@ const S = {
   qidiruvBoshqa: ["Boshqa", "Другое"],
   qidiruvYana: ["Yana {n} ta", "Ещё {n}"],
 
+  /* ---------------- Kichkintoy rejimi (yangi dizayn) ---------------- */
+  kichkintoyOtaOna: ["Ota-ona", "Родителям"],
+  kichkintoyOtaOnaChiqish: ["Ota-ona uchun: chiqish", "Для родителей: выход"],
+  kichkintoyQulfIzoh: ["Ota-ona uchun. Javobni tanlang:", "Для родителей. Выберите ответ:"],
+  kichkintoyQulfXato: ["Noto'g'ri — yana urinib ko'ring", "Неверно — попробуйте ещё"],
+  kichkintoyRejimi: ["Kichkintoy rejimi", "Режим для малышей"],
+  kichkintoyRejimiIzoh: ["2–5 yosh", "2–5 лет"],
+
   /* ---------------- Men (`screens/Men.tsx`) ---------------- */
   menSarlavha: ["Men", "Я"],
   menMehmon: ["Mehmon", "Гость"],

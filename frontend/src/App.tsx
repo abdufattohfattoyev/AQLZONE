@@ -12,6 +12,7 @@ import { Kutish } from "./components/Kutish";
 import { NotFound } from "./screens/NotFound";
 import { Anketa } from "./components/Anketa";
 import { OqishQobiq } from "./components/OqishQobiq";
+import { rejimdanChiq, useKichkintoyRejim } from "./lib/kichkintoyRejim";
 import { joriyKurs, profilKursi, useProfil } from "./lib/profil";
 
 /* ---------------------------------------------------------------- ekranlar
@@ -115,12 +116,16 @@ export default function App() {
   // Qaysi ekran ochildi, qaysi tugma bosildi — panelidagi "Tahlil"
   // uchun (`lib/tahlil.ts`).
   useTahlil();
+  // Kichkintoy rejimida (`lib/kichkintoyRejim.ts`) bo'lim ekranida ham
+  // panel yo'q: 2–5 yoshli bola pastdagi tugmalarni bexosdan bosardi.
+  const kichkintoy = useKichkintoyRejim();
+  const panel = panelKerakmi(pathname) && !(kichkintoy && pathname.startsWith("/kichkintoy"));
 
   return (
     <>
       <TepagaQayt />
       <Yollar />
-      {panelKerakmi(pathname) && <Panel />}
+      {panel && <Panel />}
     </>
   );
 }
@@ -228,7 +233,10 @@ function Yollar() {
 function BoshSahifasi() {
   const { progressOf } = useProgress();
   const nav = useNavigate();
+  const kichkintoy = useKichkintoyRejim();
   useTema("bosh");
+  // Kichkintoy rejimida ilova to'g'ridan-to'g'ri bolaning ekranida ochiladi.
+  if (kichkintoy) return <Navigate to={yolKichkintoy()} replace />;
   return (
     <Bosh
       progressOf={progressOf}
@@ -668,6 +676,7 @@ function KichkintoySahifasi() {
     <Kichkintoy
       onBack={() => nav(yolKurslar())}
       onMavzu={(id) => nav(yolKichkintoyMavzu(id))}
+      onChiq={() => { rejimdanChiq(); nav(yolBosh(), { replace: true }); }}
     />
   );
 }

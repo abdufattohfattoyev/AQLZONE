@@ -25,14 +25,15 @@ import { t } from "../lib/matn";
 import type { Kalit } from "../lib/matn";
 import { nishonlar, olingan } from "../lib/nishon";
 import { oxirgiKurs } from "../lib/oxirgi";
-import { joriyKurs, profilNomi, useProfil } from "../lib/profil";
+import { joriyKurs, kichkintoyKerak, profilNomi, useProfil } from "../lib/profil";
+import { rejimgaKir } from "../lib/kichkintoyRejim";
 import { useProgress } from "../lib/progress";
 import { tgIsm, tebrat } from "../lib/qobiq";
 import { TILLAR, til, tilniAlmashtir } from "../lib/til";
 import { obuna, yoruglikniOqi, yoruglikniQoy } from "../lib/yoruglik";
 import type { Yoruglik } from "../lib/yoruglik";
 import {
-  yolAnketa, yolDokon, yolNishon, yolOtaOna, yolReyting, yolSozlama,
+  yolAnketa, yolDokon, yolKichkintoy, yolNishon, yolOtaOna, yolReyting, yolSozlama,
 } from "../lib/yollar";
 import { Tanlov, TanlovVaraq } from "../components/Varaq";
 
@@ -136,6 +137,12 @@ export function Men({ onYol }: Props) {
           <Qator ic="menyu" nom={t("menProfillar")}
             qiymat={bolalar.length ? t("menProfilSoni", { n: bolalar.length }) : ""}
             on={() => onYol("/profillar")} />
+          {/* Kichkintoy rejimi — telefonni 2–5 yoshli bolaga berishdan oldin.
+              Chiqish faqat qulf orqali (`lib/kichkintoyRejim.ts`). */}
+          {kichkintoyKerak(prof) && (
+            <Qator ic="puzzle" nom={t("kichkintoyRejimi")} qiymat={t("kichkintoyRejimiIzoh")}
+              on={() => { rejimgaKir(); onYol(yolKichkintoy()); }} />
+          )}
         </Guruh>
       )}
 

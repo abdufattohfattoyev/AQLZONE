@@ -21,187 +21,152 @@
  * Qulflangan katta esa unga "sen bunga arzimaysan" deb ko'rinadi,
  * holbuki u hali "keyingi" degan so'zni ham bilmaydi.
  *
- * Ko'rilgan kartalar soni kartada turadi ("12 tadan 5 tasi"), lekin u
- * MAQSAD emas, ESLATMA: ota-ona qayerda to'xtaganini ko'radi, bola esa
- * o'sib borayotgan sonni yoqtiradi.
+ * ─────────── KICHKINTOY REJIMI (yangi dizayn) ───────────
+ *
+ * `manba/Kichkintoy.dc.html`: tepada bolaning ismi, o'ngda qulfli
+ * "Ota-ona" tugmasi; ekranning qolgan hammasi — to'rtta katta karta.
+ * Rejimda (`lib/kichkintoyRejim.ts`) pastki panel yo'q va orqaga yo'l
+ * yo'q: ilovaning qolgan qismiga faqat ota-ona oddiy misolni yechib
+ * o'tadi. Rejimdan tashqarida (qidiruvdan kelgan katta) — oddiy orqaga
+ * strelkasi.
+ *
+ * Ko'rilgan kartalar soni ("12 tadan 5 tasi") kartadan olib tashlandi:
+ * u bolaga emas, kattaga kerak edi va bola uchun faqat shovqin edi.
  */
-import type { CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
-import { Reveal } from "../components/Reveal";
 import { KichkintoyKarta } from "../components/KichkintoyKarta";
-import { ChizmaRang } from "../lib/chizma/rang";
-import { EmojiBelgi } from "../lib/hajmli";
-import { MAVZULAR, kNom, kartaById } from "../lib/kichkintoy";
+import { MAVZULAR, kNom } from "../lib/kichkintoy";
 import type { Mavzu } from "../lib/kichkintoy";
-import { korilganSoni } from "../lib/kichkintoyHolat";
-import { UNIT_COLORS } from "../lib/types";
+import { getHisob, joriyProfil, profilSoni } from "../lib/api";
+import { qulfSavoli, useKichkintoyRejim } from "../lib/kichkintoyRejim";
 import { t } from "../lib/matn";
-import { useOrqaga } from "../lib/qobiq";
+import { tebrat, useOrqaga } from "../lib/qobiq";
 import { OvozTugma } from "../components/OvozTugma";
 
-export function Kichkintoy({ onBack, onMavzu }: {
+export function Kichkintoy({ onBack, onMavzu, onChiq }: {
   onBack: () => void;
   onMavzu: (id: string) => void;
+  /** Ota-ona qulfni ochdi — rejimdan chiqib, oddiy ilovaga. */
+  onChiq: () => void;
 }) {
-  const ozStrelka = useOrqaga(onBack);
+  const rejim = useKichkintoyRejim();
+  // Rejimda orqaga yo'l yo'q — Telegram'ning orqaga tugmasi ham.
+  const ozStrelka = useOrqaga(onBack, !rejim);
+  const [qulf, setQulf] = useState(false);
+  const [ism, setIsm] = useState("");
+
+  // Sarlavhada bolaning ismi. Bir bolali hisobda profil nomi ko'pincha
+  // standart ("Men") — o'shanda bo'lim nomi turadi.
+  useEffect(() => {
+    let bekor = false;
+    getHisob().then((h) => {
+      if (bekor || !h || profilSoni() < 2) return;
+      const b = h.profillar?.find((p) => String(p.id) === joriyProfil());
+      if (b?.ism) setIsm(b.ism);
+    });
+    return () => { bekor = true; };
+  }, []);
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-10 sm:max-w-[700px]">
-      <div className="flex items-center justify-between">
-        {ozStrelka ? (
-          <button type="button" onClick={onBack} title={t("ortga")}
-            className="clay-press grid size-[38px] place-items-center rounded-full bg-karta
-                       text-ink-soft shadow-clay-sm">
+    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col gap-[18px] px-4 pt-[22px] pb-[26px]
+                    min-[360px]:px-[18px] sm:max-w-[700px]">
+      <header className="flex min-h-[52px] items-center gap-2.5">
+        {!rejim && ozStrelka && (
+          <button type="button" onClick={onBack} aria-label={t("ortga")}
+            className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta shadow-clay-sm">
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
-        ) : <span />}
-        {/* Ovoz tugmasi SHU YERDA turadi va butun bo'lim bo'ylab bir
-            joyda qoladi. Ota-ona uni bir marta topadi (avtobusda,
-            uxlash oldidan) va keyin qidirmaydi. */}
+        )}
+        <h1 className="min-w-0 flex-1 truncate font-display text-[22px] min-[400px]:text-[30px]">
+          {ism || t("kichkintoy")}
+        </h1>
+        {/* Ovoz tugmasi butun bo'lim bo'ylab bir joyda — ota-ona uni bir
+            marta topadi (avtobusda, uxlash oldidan) va keyin qidirmaydi. */}
         <OvozTugma />
+        {rejim && (
+          <button type="button" onClick={() => { tebrat("tanlov"); setQulf(true); }}
+            aria-label={t("kichkintoyOtaOnaChiqish")} data-tahlil="Kichkintoy: ota-ona"
+            className="clay-press flex min-h-11 shrink-0 items-center gap-1.5 rounded-[14px] bg-track px-3.5
+                       text-[14px] font-bold text-ink-soft">
+            <Icon name="lock" size={16} />
+            {/* Tor ekranda faqat qulf belgisi — yozuv bolaning ismini qirqardi. */}
+            <span className="hidden min-[360px]:inline">{t("kichkintoyOtaOna")}</span>
+          </button>
+        )}
+      </header>
+
+      <div className="grid flex-1 grid-cols-2 grid-rows-2 gap-3.5">
+        {MAVZULAR.map((m) => <MavzuKarta key={m.id} m={m} onOch={() => onMavzu(m.id)} />)}
       </div>
 
-      <div className="az-kirish mt-4 text-center">
-        <span className="mx-auto grid size-16 place-items-center rounded-[22px] bg-brand-orange/15">
-          <EmojiBelgi e="🧸" olcham={30} />
-        </span>
-        <h1 className="mt-3 font-display text-[24px] leading-tight">{t("kichkintoy")}</h1>
-        <p className="mt-1 text-[13px] leading-snug text-ink-soft">{t("kichkintoyIzoh")}</p>
-      </div>
-
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        {MAVZULAR.map((m, i) => (
-          <MavzuKarta key={m.id} m={m} i={i} onOch={() => onMavzu(m.id)} />
-        ))}
-      </div>
-
-      <p className="az-kirish mt-6 text-center text-[11.5px] leading-snug text-ink-soft/80"
-        style={{ "--az-kech": "420ms" } as CSSProperties}>
-        {t("kichkintoyTagi")}
-      </p>
+      {qulf && <Qulf onOchildi={() => { setQulf(false); onChiq(); }} onYop={() => setQulf(false)} />}
     </div>
   );
 }
 
 /**
- * Mavzu kartasidagi KATTA belgi.
- *
- * ─────────── NEGA EMOJI EMAS ───────────
- *
- * Ilgari bu yerda 🚗, 🐶, 🎨, 🔢 turardi. Ikkita muammo bor edi.
- *
- * BIR XIL NARSA IKKI XIL. Bola "Mashinalar" kartasida Windows
- * chizgan qizil emojini ko'rardi, ichkariga kirsa — butunlay boshqa
- * mashina. Bu yoshda bu ikki xil narsa: u kartani bosganda nimani
- * kutishni bilmasdi — kartani bosganda nima chiqishini u oldindan
- * ko'rgan bo'lishi kerak.
- *
- * PLATFORMAGA BOG'LIQLIK. Emoji har telefonda boshqa rassom qo'lida
- * chizilgan — aynan shu sabab butun albom uchun o'z chizmalarimiz
- * yasalgan edi (`lib/chizma/mashina.tsx`), lekin kirish ekrani
- * o'shanda ham emojida qolib ketgandi.
- *
- * Endi karta bo'limning O'Z birinchi rasmini ko'rsatadi: mashinada —
- * mashina, hayvonlarda — it. Rasm surat bo'lsa, surat chiqadi.
- *
- * Ranglar va raqamlarda bitta karta bo'limni ifodalay olmaydi ("qizil"
- * degan doira "ranglar" degan gapni aytmaydi), shuning uchun ular
- * alohida chiziladi: uchta rang va "123".
+ * Mavzu belgisi (`manba/Kichkintoy.dc.html`): mashina va hayvonda albomning
+ * birinchi kartasi (bola ichkarida AYNAN shu rasmni topadi), ranglar va
+ * raqamlarda — ilovaning 3D belgisi.
  */
 function MavzuBelgi({ m }: { m: Mavzu }) {
-  if (m.id === "rang") {
-    /* Uchta shar UCHBURCHAK bo'lib turadi: ikkitasi tepada, biri
-       pastda o'rtada.
-
-       Ilgari ular bitta qatorda, bir-birining ustiga chiqib turardi
-       va o'sha holda 86px ramkadan CHIQIB ketgandi — uchta yonma-yon
-       shar kvadratga hech qanday o'lchamda sig'maydi. Uchburchak esa
-       kvadratning to'rt burchagini ham ishlatadi, ya'ni sharlar
-       kattaroq bo'lgani holda ichkarida qoladi.
-
-       Ranglar albomdagi birinchi uchtasi (`RANG` ro'yxati): kartada
-       ko'rgan sharni bola ichkarida AYNAN o'sha holida topadi. */
-    const joy = [
-      { left: 0, top: 0 },
-      { left: 28, top: 0 },
-      { left: 14, top: 26 },
-    ];
+  if (m.id === "rang" || m.id === "raqam") {
     return (
-      <span aria-hidden className="relative block size-[68px]">
-        {m.kartalar.slice(0, 3).map((k, i) => (
-          <ChizmaRang key={k.id} hex={k.hex ?? "#000"}
-            className="absolute size-[40px]"
-            style={{ left: joy[i].left, top: joy[i].top }} />
-        ))}
-      </span>
+      <img src={`/belgi/${m.id === "rang" ? "palette" : "raqamlar"}.webp`} alt="" width={84} height={84}
+        className="size-[72px] min-[360px]:size-[84px]" />
     );
   }
-
-  if (m.id === "raqam") {
-    return (
-      <span aria-hidden
-        className="font-display text-[38px] leading-none text-ink
-                   drop-shadow-[0_3px_0_var(--color-clay)]">
-        123
-      </span>
-    );
-  }
-
   const k = m.kartalar[0];
-  return k
-    ? <KichkintoyKarta k={k} olcham="belgi" />
-    : <EmojiBelgi e={m.e} olcham={36} />;
+  return k ? <KichkintoyKarta k={k} olcham="kichik" /> : null;
+}
+
+/** Katta mavzu kartasi — ekranning chorak qismi. */
+function MavzuKarta({ m, onOch }: { m: Mavzu; onOch: () => void }) {
+  return (
+    <button type="button" onClick={onOch} title={kNom(m)} data-tahlil={`Kichkintoy: ${m.id}`}
+      className="tugma-3d flex min-h-40 flex-col items-center justify-center gap-3.5 rounded-[30px] bg-karta p-3
+                 shadow-clay">
+      <MavzuBelgi m={m} />
+      <span className="font-display text-[19px] leading-tight font-bold min-[360px]:text-[22px]">{kNom(m)}</span>
+    </button>
+  );
 }
 
 /**
- * Bitta mavzu kartasi.
- *
- * Belgi ATAYLAB juda katta (86px maydon) va kartaning yarmini
- * egallaydi: bola yozuvni o'qimaydi, u RASMNI taniydi. Yozuv esa
- * ota-ona uchun — u bolaga nomini aytib beradi.
+ * Ota-ona qulfi — oddiy misol. Ikki xonali qo'shish 2–5 yoshli bolaga
+ * yechilmaydi, kattaga esa bir soniya. Xato javobda yangi misol chiqadi.
  */
-function MavzuKarta({ m, i, onOch }: { m: Mavzu; i: number; onOch: () => void }) {
-  const rang = UNIT_COLORS[m.rang];
-  const korilgan = korilganSoni(m.id);
-  const jami = m.kartalar.length;
-
+function Qulf({ onOchildi, onYop }: { onOchildi: () => void; onYop: () => void }) {
+  const [s, setS] = useState(() => qulfSavoli());
+  const [xato, setXato] = useState(false);
   return (
-    <Reveal kech={i * 80} className="h-full">
-      <button type="button" onClick={onOch} title={kNom(m)}
-        style={{ "--az-kech": `${80 + i * 70}ms` } as CSSProperties}
-        className="az-kirish tugma-3d flex h-full w-full flex-col items-center gap-2 rounded-clay
-                   bg-karta p-4 text-center shadow-clay">
-        {/* Rang KLASS bilan emas, uslub bilan: Tailwind klasslarni manba
-            matnidan topib yasaydi va `${rang.bg}` kabi yig'ilgan satr
-            hech qachon CSS'ga tushmasdi. */}
-        <span style={{ backgroundColor: `${rang.road}22` }}
-          className="grid size-[86px] shrink-0 place-items-center rounded-[28px]">
-          <MavzuBelgi m={m} />
-        </span>
-
-        <span className="font-display text-[17px] leading-tight text-ink">{kNom(m)}</span>
-
-        {/* Ishora belgilari — "ichkarida nima bor" degan gapni yozuvsiz
-            aytadi. Bola ularni ham taniydi va kartani bosishga sabab
-            topadi. */}
-        <span aria-hidden className="flex h-[26px] items-center gap-1.5 opacity-85">
-          {m.ishora.map((id) => {
-            const k = kartaById(m, id);
-            return k ? <KichkintoyKarta key={id} k={k} olcham="mayda" /> : null;
-          })}
-        </span>
-
-        {/* Sanoq faqat BOSHLANGAN mavzuda. Nolinchi sanoq ("0 / 12")
-            hech narsa aytmaydi va faqat kartani band qiladi. */}
-        {korilgan > 0 && (
-          <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-track px-2.5 py-0.5
-                           text-[10.5px] leading-none text-ink-soft">
-            {korilgan >= jami
-              ? <><Icon name="check" size={11} className="text-brand-green-d" />{t("kichkintoyHammasi")}</>
-              : t("kichkintoyKorildi", { n: korilgan, jami })}
-          </span>
-        )}
-      </button>
-    </Reveal>
+    <div onClick={onYop} role="dialog" aria-modal="true" aria-label={t("kichkintoyOtaOnaChiqish")}
+      className="fixed inset-0 z-[80] grid place-items-center bg-black/45 p-4">
+      <div onClick={(e) => e.stopPropagation()}
+        className="az-kanal w-full max-w-[340px] rounded-clay bg-karta p-5 text-center shadow-clay">
+        <p className="text-[14px] font-bold text-ink-dim">{t("kichkintoyQulfIzoh")}</p>
+        <p className="mt-2 font-display text-[30px] font-bold">{s.a} + {s.b} = ?</p>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {s.variantlar.map((v) => (
+            <button key={v} type="button" data-tahlil="Kichkintoy: qulf javobi"
+              onClick={() => {
+                if (v === s.javob) { tebrat("togri"); onOchildi(); return; }
+                tebrat("xato");
+                setXato(true);
+                setS(qulfSavoli());
+              }}
+              className="clay-press min-h-12 rounded-2xl bg-sahna font-display text-[20px] font-bold shadow-clay-sm">
+              {v}
+            </button>
+          ))}
+        </div>
+        {xato && <p className="mt-3 text-[13px] text-brand-red">{t("kichkintoyQulfXato")}</p>}
+        <button type="button" onClick={onYop}
+          className="clay-press mt-3 min-h-11 w-full text-[15px] font-semibold text-ink-soft">
+          {t("bekor")}
+        </button>
+      </div>
+    </div>
   );
 }
