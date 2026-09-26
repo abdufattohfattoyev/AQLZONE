@@ -97,6 +97,7 @@ export function ochishgaQolgan(id: OyinId, d: Daraja): number {
  * shoshib o'ynalgan o'yin haftalik mehnatni o'chirib yuborardi.
  */
 export function natijaniYoz(id: OyinId, d: Daraja, ball: number): boolean {
+  oxirgiQosh(id, ball);
   const h = oqi();
   const eski = h[k(id, d)] ?? BOSH;
   const yangi = ball > eski.ball;
@@ -107,6 +108,58 @@ export function natijaniYoz(id: OyinId, d: Daraja, ball: number): boolean {
   };
   yoz(h);
   return yangi;
+}
+
+/* ------------------------------------------------------------------ */
+/*                       oxirgi natijalar                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * OXIRGI 7 NATIJA — O'yin tabidagi kichik grafik uchun (`screens/Oyinlar.tsx`).
+ *
+ * Rekord yozuvi faqat ENG YAXSHISINI saqlaydi va undan "o'syapmanmi?"
+ * degan savolga javob chiqmaydi. Shuning uchun har o'yin (darajadan
+ * qat'i nazar) oxirgi yettita natijasi ALOHIDA kalitda yuritiladi:
+ * eski `azapp_oyin_v1` ga tegilmaydi, ya'ni eski ma'lumot buzilmaydi,
+ * yangi kalit esa bo'sh boshlanadi. Kalit versiyali — shakl o'zgarsa,
+ * `_v2` bilan toza boshlanadi.
+ */
+const OXIRGI_KALIT = "azapp_oyin_oxirgi_v1";
+export const OXIRGI_SONI = 7;
+
+/** Bitta natija: ball va kun ("2026-09-26") — "haftada" farqi uchun. */
+export interface OxirgiNatija { b: number; k: string }
+
+const oxirgiKalitim = (): string => {
+  const p = joriyProfil();
+  return p ? `${OXIRGI_KALIT}::${p}` : OXIRGI_KALIT;
+};
+
+function oxirgiOqi(): Record<string, OxirgiNatija[]> {
+  try {
+    const x = JSON.parse(localStorage.getItem(oxirgiKalitim()) || "{}") as unknown;
+    return x && typeof x === "object" && !Array.isArray(x) ? (x as Record<string, OxirgiNatija[]>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Shu o'yinning oxirgi natijalari — eskidan yangiga, ko'pi bilan 7 ta. */
+export function oxirgilar(id: OyinId): OxirgiNatija[] {
+  const r = oxirgiOqi()[id];
+  return Array.isArray(r)
+    ? r.filter((x) => x && typeof x.b === "number" && typeof x.k === "string").slice(-OXIRGI_SONI)
+    : [];
+}
+
+function oxirgiQosh(id: OyinId, ball: number): void {
+  const h = oxirgiOqi();
+  h[id] = [...oxirgilar(id), { b: ball, k: kunKaliti() }].slice(-OXIRGI_SONI);
+  try {
+    localStorage.setItem(oxirgiKalitim(), JSON.stringify(h));
+  } catch {
+    /* xotira to'lgan — grafik yangilanmaydi, o'yin esa ishlaydi */
+  }
 }
 
 /* ------------------------------------------------------------------ */

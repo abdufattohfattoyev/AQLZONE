@@ -305,6 +305,20 @@ const S = {
   oqishXatoMavzular: ["Daftardagi mavzular", "Темы в тетради"],
   oqishXatoMarta: ["{n} marta xato", "ошибок: {n}"],
 
+  /* ---------------- O'yin tabi (`screens/Oyinlar.tsx`, yangi dizayn) ---------------- */
+  tezOyin: ["Tez o'yin", "Блиц"],
+  tezOyinIzoh: ["Duel · jonli raqib bilan", "Дуэль вживую"],
+  tezOyinTugma: ["O'ynash", "Играть"],
+  oyinYakkaSarlavha: ["Yakka o'yinlar", "Одиночные игры"],
+  oyinOxirgi: ["oxirgi", "последний"],
+  oyinRekord: ["rekord", "рекорд"],
+  oyinHaftaOsdi: ["↑ +{n} haftada", "↑ +{n} за неделю"],
+  oyinHaftaTushdi: ["↓ −{n} haftada", "↓ −{n} за неделю"],
+  oyinGrafikAria: ["{nom}, oxirgi natijalar: {sonlar}. Rekord {rekord}.", "{nom}, последние результаты: {sonlar}. Рекорд {rekord}."],
+  oyinOynalmagan: ["Hali o'ynalmagan", "Ещё не играли"],
+  oyinBoshqa: ["Boshqa o'yinlar", "Другие игры"],
+  oyinDostlar: ["Do'stlar bilan", "С друзьями"],
+
   /* ---------------- Men (`screens/Men.tsx`) ---------------- */
   menSarlavha: ["Men", "Я"],
   menMehmon: ["Mehmon", "Гость"],

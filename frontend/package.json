@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "tekshir": "jiti scripts/tekshir.ts && jiti scripts/zanjir.ts && jiti scripts/qobiq.ts && jiti scripts/oyin.ts && jiti scripts/maydon.ts && jiti scripts/kunlikSon.ts && jiti scripts/sonOvi.ts && jiti scripts/imtihon.ts && jiti scripts/sertifikat.ts && jiti scripts/duel.ts && jiti scripts/kichkintoy.ts && jiti scripts/yechim.ts && jiti scripts/variant.ts && jiti scripts/blok.ts && jiti scripts/togri.ts && jiti scripts/navbat.ts && jiti scripts/qidiruv.ts && jiti scripts/masala.ts && jiti scripts/brend.ts && jiti scripts/talaba.ts && jiti scripts/tab.ts && jiti scripts/bugun.ts"
+    "tekshir": "jiti scripts/tekshir.ts && jiti scripts/zanjir.ts && jiti scripts/qobiq.ts && jiti scripts/oyin.ts && jiti scripts/maydon.ts && jiti scripts/kunlikSon.ts && jiti scripts/sonOvi.ts && jiti scripts/imtihon.ts && jiti scripts/sertifikat.ts && jiti scripts/duel.ts && jiti scripts/kichkintoy.ts && jiti scripts/yechim.ts && jiti scripts/variant.ts && jiti scripts/blok.ts && jiti scripts/togri.ts && jiti scripts/navbat.ts && jiti scripts/qidiruv.ts && jiti scripts/masala.ts && jiti scripts/brend.ts && jiti scripts/talaba.ts && jiti scripts/tab.ts && jiti scripts/bugun.ts && jiti scripts/grafik.ts"
   },
   "dependencies": {
     "react": "^19.2.7",

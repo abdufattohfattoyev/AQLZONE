@@ -708,6 +708,7 @@ function OyinlarSahifasi() {
       onJadval={() => nav(yolJadval())}
       onDuel={() => nav(yolDuel())}
       onJamoa={(oyin) => nav(yolJamoa(oyin))}
+      onQidiruv={() => nav(yolQidiruv())}
     />
   );
 }
