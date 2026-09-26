@@ -60,6 +60,11 @@
   --color-brand-orange: #f5b301;
   --color-brand-orange-d: #d09400;
   --color-brand-red: #e5484d;
+  /* Ko'k YOZUV — tanlangan tab, "Almashtirish" kabi ikkinchi darajali
+     havola. Yorug' fonda to'q ko'k (`brand-blue-d`), qora rejimda esa
+     to'q ko'k quyuq kartada o'qilmasdi (kontrast ~2) — u yerda och
+     ko'k (pastda, "qora" blokida). Yangi rang emas: o'sha ko'k. */
+  --color-brand-blue-t: var(--color-brand-blue-d);
 
   /* --- temaga qarab o'zgaradigan tokenlar (standarti: bolalar) --- */
   --color-karta: #ffffff;            /* karta yuzasi */
@@ -234,6 +239,7 @@
   --color-ink: #eef2ff;
   --color-ink-soft: #b7c2e6;
   --color-ink-dim: #8b97c2;
+  --color-brand-blue-t: color-mix(in srgb, var(--color-brand-blue) 55%, white);
   /* Quyuq fonda "loy" soyasi ham quyuq bo'ladi — shundagina karta
      yuzadan ko'tarilgandek ko'rinadi. */
   --color-clay: #10152e;
@@ -313,6 +319,7 @@
 /* ---------- OQ ---------- */
 
 :root[data-tema][data-yoruglik="oq"] {
+  --color-brand-blue-t: var(--color-brand-blue-d);
   --az-body: #f4f6fb;
 
   --color-karta: #ffffff;
@@ -369,6 +376,7 @@
   --color-ink: #eef2ff;
   --color-ink-soft: #b7c2e6;
   --color-ink-dim: #8b97c2;
+  --color-brand-blue-t: color-mix(in srgb, var(--color-brand-blue) 55%, white);
   /* Quyuq fonda "loy" soyasi ham quyuq — shundagina karta ko'tarilgandek. */
   --color-clay: #10152e;
   --color-locked: #46508a;
@@ -704,21 +712,18 @@
    ni ALOHIDA `scale` xossasi bilan beradi (`transform` emas), ya'ni
    faqat `transform` yozilsa o'tish umuman bo'lmay, o'lcham sakrab
    o'zgarardi. `transform` esa qo'lda yozilgan uslublar uchun qoladi. */
-/* Yostiq va yozuv TUGMANING O'Z rangida (`--az-tab-rang`, Panel.tsx da
-   beriladi). Ilgari ikkalasi ham qattiq yashil edi — belgilar rangli
-   bo'lgach binafsha planshet ostidagi yashil yostiq begona ko'rinardi.
-   `color-mix` bilan bir rangdan uchta quyuqlik olinadi va panelda
-   qo'lda yozilgan rang paydo bo'lmaydi. */
+/* Yostiq — yumshoq ko'k (`manba/Tab.dc.html`: rgba(59,111,224,0.1)).
+   Ilgari har tugma o'z rangida edi (`--az-tab-rang`: yashil uy,
+   binafsha planshet) va panel kamalakka aylanardi; endi tanlangan
+   holat hamma joyda bitta — ko'k. `color-mix` qo'lda rang yozmaslik
+   uchun. */
 .az-tab-yostiq {
-  background: color-mix(in srgb, var(--az-tab-rang) 13%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--az-tab-rang) 18%, transparent);
+  background: color-mix(in srgb, var(--color-brand-blue) 10%, transparent);
   transition:
     opacity 200ms ease-out,
     scale 240ms cubic-bezier(0.34, 1.32, 0.64, 1),
     transform 240ms cubic-bezier(0.34, 1.32, 0.64, 1);
 }
-
-.az-tab-yoniq { color: var(--az-tab-rang); }
 
 /* Belgi ham yumshoq kattalashadi — lekin JOYIDAN QIMIRLAMAYDI.
    Eski `az-tab-sakra` uni yuqoriga irg'itardi (`translateY(-2px)`) va

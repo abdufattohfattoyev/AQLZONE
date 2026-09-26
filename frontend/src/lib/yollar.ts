@@ -46,6 +46,15 @@ export const yolTestSinf = () => "/testlar";
 /** Test to'plami — hamma uchun bir xil test (`lib/toplam.ts`). */
 export const yolToplam = (id: number) => `/toplam/${id}`;
 
+/**
+ * "Men" bo'limi — profil, yutuqlar, ota-ona, sozlamalar.
+ *
+ * Ilgari `/men` anketani qayta ochardi; anketa endi `/men/anketa` da,
+ * chunki "Men" — pastki paneldagi beshinchi bo'lim (eski "Menyu" o'rnida).
+ */
+export const yolMen = () => "/men";
+export const yolAnketa = () => "/men/anketa";
+
 /** Hisob sozlamalari: ism, familiya, kirish usullari. */
 export const yolSozlama = () => "/sozlamalar";
 

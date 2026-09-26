@@ -36,6 +36,7 @@ const Lesson = lazy(() => import("./screens/Lesson").then((m) => ({ default: m.L
 const Dokon = lazy(() => import("./screens/Dokon").then((m) => ({ default: m.Dokon })));
 const Nishonlar = lazy(() => import("./screens/Nishonlar").then((m) => ({ default: m.Nishonlar })));
 const OtaOna = lazy(() => import("./screens/OtaOna").then((m) => ({ default: m.OtaOna })));
+const Men = lazy(() => import("./screens/Men").then((m) => ({ default: m.Men })));
 const Profillar = lazy(() => import("./screens/Profillar").then((m) => ({ default: m.Profillar })));
 const Reyting = lazy(() => import("./screens/Reyting").then((m) => ({ default: m.Reyting })));
 const Sozlamalar = lazy(() => import("./screens/Sozlamalar").then((m) => ({ default: m.Sozlamalar })));
@@ -87,7 +88,7 @@ import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
   yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
-  yolBosh, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
+  yolAnketa, yolMen, yolBosh, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -137,8 +138,10 @@ function Yollar() {
       <Route path="/testlar" element={<TestSinfSahifasi />} />
       <Route path="/toplam/:id" element={<ToplamSahifasi />} />
       <Route path="/profillar" element={<ProfilSahifasi />} />
-      {/* "Siz kimsiz" javobini o'zgartirish — bosh sahifadagi yorliq. */}
+      {/* "Men" — pastki paneldagi beshinchi bo'lim (eski Menyu o'rnida). */}
       <Route path="/men" element={<MenSahifasi />} />
+      {/* "Siz kimsiz" javobini o'zgartirish. Ilgari `/men` edi. */}
+      <Route path="/men/anketa" element={<AnketaSahifasi />} />
       <Route path="/sozlamalar" element={<SozlamaSahifasi />} />
       {/* Botdagi «Saytga kirish» havolasi. Marshrut Tanishuv darvozasidan
           KEYIN turadi, lekin darvoza uni o'zi o'tkazib yuboradi — aks holda
@@ -242,7 +245,7 @@ function BoshSahifasi() {
       onSozlama={() => nav(yolSozlama())}
       onProfillar={() => nav("/profillar")}
       onKurs={(c) => nav(yolKurs(c))}
-      onProfil={() => nav("/men")}
+      onProfil={() => nav(yolAnketa())}
     />
   );
 }
@@ -505,7 +508,9 @@ function DokonSahifasi() {
       progress={progressOf(c)}
       onSotibOl={(id, narx) => sotibOl(c, id, narx)}
       onKiy={(id) => kiy(c, id)}
-      onBack={() => nav(yolKurs(c))}
+      // Do'kon, nishonlar va ota-ona paneli — "Men" bo'limida
+      // (`lib/tab.ts`), ya'ni orqaga ham o'sha yerga.
+      onBack={() => nav(yolMen())}
     />
   );
 }
@@ -522,7 +527,7 @@ function NishonSahifasi() {
       nishonlar={nishonlarniHisobla({
         progress: p, kunlik, units: c.units, savollar: p.savollar ?? 0,
       })}
-      onBack={() => nav(yolKurs(c))}
+      onBack={() => nav(yolMen())}
     />
   );
 }
@@ -532,7 +537,7 @@ function OtaOnaSahifasi() {
   const { c, slug } = useKurs();
 
   if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
-  return <OtaOna onBack={() => nav(yolKurs(c))} />;
+  return <OtaOna onBack={() => nav(yolMen())} />;
 }
 
 /**
@@ -585,13 +590,19 @@ function FormulalarSahifasi() {
 function MenSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
-  return <Anketa qayta onTugadi={() => nav(yolBosh())} />;
+  return <Men onYol={(yol) => nav(yol)} />;
+}
+
+function AnketaSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Anketa qayta onTugadi={() => nav(yolMen())} />;
 }
 
 function ProfilSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
-  return <Profillar onBack={() => nav(yolKurslar())} />;
+  return <Profillar onBack={() => nav(yolMen())} />;
 }
 
 function SozlamaSahifasi() {
@@ -599,7 +610,7 @@ function SozlamaSahifasi() {
   useTema("bosh");
   return (
     <Sozlamalar
-      onBack={() => nav(yolKurslar())}
+      onBack={() => nav(yolMen())}
       onProfillar={() => nav("/profillar")}
     />
   );
@@ -892,7 +903,7 @@ function OyinSahifasi() {
 function ReytingSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
-  return <Reyting onBack={() => nav(yolKurslar())} />;
+  return <Reyting onBack={() => nav(yolMen())} />;
 }
 
 /* ------------------------------------------------------------ masalalar

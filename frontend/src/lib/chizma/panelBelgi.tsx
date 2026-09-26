@@ -69,17 +69,6 @@ const RANG: Record<PanelBelgiNom, { och: string; quyuq: string }> = {
 };
 
 /**
- * Tugmaning rangi — yostiq va yozuv uchun.
- *
- * Ilgari panelda hamma narsa YASHIL edi: belgi ham, yostiq ham, yozuv
- * ham. Belgilar rangli bo'lgach yashil yostiq binafsha planshet ostida
- * yot ko'rinib qoldi — bir tugmada ikkita begona rang. Endi yostiq va
- * yozuv belgining O'Z rangini oladi, ya'ni bitta tugma bitta rangda
- * gapiradi.
- */
-export const panelRang = (nom: PanelBelgiNom): string => RANG[nom].quyuq;
-
-/**
  * Qaysi belgi 3D rasm bilan chiziladi.
  *
  * Ro'yxat ATAYLAB qo'lda: papkaga fayl tashlab qo'yish bilan belgi
@@ -88,6 +77,14 @@ export const panelRang = (nom: PanelBelgiNom): string => RANG[nom].quyuq;
  * ro'yxatini ham yangilash esga tushadi.
  */
 const RASM = new Set<PanelBelgiNom>(["uy", "xarita", "oyin", "vazifa", "menyu"]);
+
+/**
+ * Rasm fayli nomi belgi nomidan farq qilsa. Yangi dizaynda (`manba/Tab.dc.html`)
+ * O'qish — xarita (`map.webp`), Masalalar — qalam (`pencil.webp`). Ilgari
+ * bu yerda `xarita.webp` (ochiq kitob) va `vazifa.webp` (planshet) turardi;
+ * kitob endi "Men › Til" qatorida ishlatiladi.
+ */
+const FAYL: Partial<Record<PanelBelgiNom, string>> = { xarita: "map", vazifa: "pencil" };
 
 export function PanelBelgi({ nom, faol = false, size = 26 }: {
   nom: PanelBelgiNom;
@@ -106,7 +103,7 @@ export function PanelBelgi({ nom, faol = false, size = 26 }: {
 
   if (RASM.has(nom)) {
     return (
-      <img src={`/belgi/${nom}.webp`} width={size} height={size} alt=""
+      <img src={`/belgi/${FAYL[nom] ?? nom}.webp`} width={size} height={size} alt=""
         // Panelda beshta rasm bor va ular BIRINCHI ko'rinadigan
         // narsalardan. Brauzerga "keyinroq" deb qo'yib berilsa,
         // panel bir zum bo'sh turardi.

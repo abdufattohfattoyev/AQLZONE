@@ -182,6 +182,30 @@ const S = {
   tabOtaOna: ["Ota-ona", "Родители"],
   tabOyinlar: ["O'yinlar", "Игры"],
   tabMenyu: ["Menyu", "Меню"],
+  /* Yangi dizayn: pastki panelda besh bo'lim (`lib/tab.ts`). */
+  tabBugun: ["Bugun", "Сегодня"],
+  tabOqish: ["O'qish", "Учёба"],
+  tabOyin: ["O'yin", "Игры"],
+  tabMen: ["Men", "Я"],
+  tabBolimlar: ["Asosiy bo'limlar", "Основные разделы"],
+
+  /* ---------------- Men (`screens/Men.tsx`) ---------------- */
+  menSarlavha: ["Men", "Я"],
+  menMehmon: ["Mehmon", "Гость"],
+  menAlmashtir: ["Almashtirish", "Сменить"],
+  menYulduz: ["yulduz", "звёзды"],
+  menTanga: ["tanga", "монеты"],
+  menZanjir: ["zanjir", "серия"],
+  menKun: ["{n} kun", "{n} дн."],
+  menYutuqlar: ["Yutuqlar", "Достижения"],
+  menOtaOnaUchun: ["Ota-ona uchun", "Для родителей"],
+  menSozlamalar: ["Sozlamalar", "Настройки"],
+  menReytingOrin: ["#{n} o'rin", "#{n} место"],
+  menHisobot: ["Haftalik hisobot", "Недельный отчёт"],
+  menProfillar: ["Bolalar profillari", "Профили детей"],
+  menProfilSoni: ["{n} ta", "{n}"],
+  menTelegram: ["Telegram va hisob", "Аккаунт"],
+  menKimsiz: ["Siz kimsiz", "Кто вы"],
 
   /* ---------------- menyu (yon panel) ----------------
      Ilovaning to'liq ro'yxati. Har satrning izohi bor: menyu

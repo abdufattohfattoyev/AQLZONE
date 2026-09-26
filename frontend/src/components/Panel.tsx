@@ -2,62 +2,42 @@
  * Pastki panel — ilovaning asosiy navigatsiyasi.
  *
  * HAMMA ekranda turadi va o'rni hech qachon o'zgarmaydi. Aynan shu
- * o'zgarmaslik uni foydali qiladi: bola bir marta "do'kon pastda, o'ngdan
- * ikkinchi" deb o'rganadi va keyin o'ylamaydi. Ilgari bu tugmalar faqat
- * kurs sahifasida, yuqorida, yozuvsiz kulrang doiralar bo'lib turardi —
- * boshqa ekranga o'tgan bola ularni butunlay yo'qotardi va orqaga qaytish
- * tugmasini qidirishga majbur bo'lardi.
+ * o'zgarmaslik uni foydali qiladi: bola bir marta "o'yinlar o'rtada"
+ * deb o'rganadi va keyin o'ylamaydi.
  *
- * ────────────── NEGA OLTITA TUGMA BESHTAGA TUSHDI ──────────────
+ * ─────────────── BESH BO'LIM, MENYUSIZ (yangi dizayn) ───────────────
  *
- * Ilgari panelda oltita tugma turardi: bosh, darslar, nishonlar,
- * do'kon, reyting, ota-ona. Uchta muammosi bor edi.
+ * Ilgari beshinchi tugma "Menyu" edi va u 25 dan ortiq narsani bitta
+ * ro'yxatga yig'ardi: xatolar daftari, do'kon, nishonlar, ota-ona
+ * paneli, formulalar, sozlamalar. Muhim bo'limlar kurs ichida ham
+ * yashiringan edi va odam narsani topa olmasdi.
  *
- *   O'YINLAR YO'Q EDI.  Ilovaning yarmi — sakkizta o'yin, bugungi
- *   maydon, duel — panelda umuman ko'rinmasdi. Ularga faqat bosh
- *   sahifadagi bitta kartadan kirilardi, ya'ni boshqa ekranga o'tgan
- *   odam ularni yo'qotardi.
+ * Endi panelda doim BESH BO'LIM turadi va har narsa bitta joyda:
  *
- *   OLTITA YOZUV SIG'MASDI.  320px li telefonda bir tugmaga ~53px
- *   qolardi va yozuvlar kesilib ketardi.
+ *   Bugun      `/`           — bugun nima qilish kerak
+ *   O'qish     `/darslar`    — darslar, testlar, formulalar, xatolar
+ *   O'yin      `/oyinlar`    — duel, maydon, yakka o'yinlar
+ *   Masalalar  `/masalalar`  — lenta, masala yozish
+ *   Men        `/men`        — yutuqlar, ota-ona, sozlamalar
  *
- *   TENG TUGMA — TENG MA'NO.  Do'kon va ota-ona paneli har kuni
- *   bosiladigan joylar emas, lekin panelda ular "Darslar" bilan bir
- *   xil og'irlikda turardi.
+ * Qaysi manzil qaysi bo'limga tegishli — `lib/tab.ts` (sinovi
+ * `scripts/tab.ts`). Eski manzillar (`/kurs/.../dokon`, `/imtihon/3`)
+ * o'chirilmadi — ular ochiladi va to'g'ri tab yonadi.
  *
- * Endi panelda faqat HAR KUNI kerak bo'ladigan to'rttasi va menyu
- * bor. Nishonlar, do'kon, ota-ona paneli, sozlamalar, kunlik sinov,
- * xatolar daftari — hammasi menyuda, izohi bilan
- * (`components/Menyu.tsx`).
- *
- * Ikkita tugma KURSGA bog'liq (darslar va menyuning ichidagilar),
- * qolgani bog'liq emas. Kursga bog'liqlari qaysi kursni ochadi degan
- * savol bor va javob uch bosqichli:
- *
- *   1. Ayni paytda kurs sahifasidamiz — o'sha kurs.
- *   2. Emasmiz (masalan reytingda) — oxirgi ochilgan kurs (`lib/oxirgi`).
- *   3. Hali hech qanday kurs ochilmagan — ro'yxatdagi birinchisi.
- *
- * Busiz bosh sahifada turgan bola "Do'kon" ni bosganda hech narsa
- * bo'lmasdi: qaysi kursning do'koni ochilishi noma'lum edi.
+ * Faol tugma bir xil KO'K rangda. Ilgari har belgining o'z rangi bor
+ * edi (yashil uy, binafsha planshet) va panel kamalakka aylanardi —
+ * dizayn qoidasi esa tanlangan holat uchun faqat ko'kni beradi.
  */
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
-import { PanelBelgi, panelRang, type PanelBelgiNom } from "../lib/chizma/panelBelgi";
+import { PanelBelgi, type PanelBelgiNom } from "../lib/chizma/panelBelgi";
 import { Icon, type IconName } from "../lib/icons";
 import { useKompyuter } from "../lib/maket";
-import { profilKursi, useProfil, yolOf } from "../lib/profil";
-import { Menyu } from "./Menyu";
 import { Logo } from "./Logo";
 import { TilTugma } from "./TilTugma";
 import { YoruglikTugma } from "./YoruglikTugma";
-import { COURSES, courseBySlug } from "../lib/curriculum";
-import { oxirgiKurs } from "../lib/oxirgi";
-import { useProgress } from "../lib/progress";
-import { nishonlar, olingan } from "../lib/nishon";
-import {
-  yolBosh, yolKurs, yolKurslar, yolMasalalar, yolOyinlar, yolQidiruv, yolReyting, yolSozlama,
-} from "../lib/yollar";
+import { faolTab, type TabId } from "../lib/tab";
+import { yolBosh, yolKurslar, yolMasalalar, yolMen, yolOyinlar, yolQidiruv } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
 
@@ -108,8 +88,9 @@ const YOPIQ = [
   // (`/kichkintoy`) esa oddiy sahifa — u yerda panel qoladi.
   /^\/kichkintoy\/[^/]+$/,
   /^\/kirish\//,                 // botdagi havola
-  /^\/men$/,                     // anketani qayta to'ldirish — to'liq ekran
-  /^\/men$/,                     // anketani qayta to'ldirish — to'liq ekran
+  // Anketani qayta to'ldirish — to'liq ekran. Ilgari u `/men` da edi;
+  // endi `/men` — "Men" bo'limining o'zi va u yerda panel kerak.
+  /^\/men\/anketa$/,
 ];
 
 export const panelKerakmi = (yol: string): boolean => !YOPIQ.some((r) => r.test(yol));
@@ -117,138 +98,48 @@ export const panelKerakmi = (yol: string): boolean => !YOPIQ.some((r) => r.test(
 export function Panel() {
   const { pathname } = useLocation();
   const nav = useNavigate();
-  const { progressOf, kunlik } = useProgress();
-  const [menyu, setMenyu] = useState(false);
-  const prof = useProfil();
   // Keng brauzer oynasida panel PASTDA emas, CHAPDA turadi
   // (`lib/maket.ts`). Tugmalar o'sha — faqat joyi va ko'rinishi boshqa.
   const kompyuter = useKompyuter();
+  const faol = faolTab(pathname);
 
-  // Manzildagi kurs, bo'lmasa oxirgi ochilgani, bo'lmasa birinchisi.
-  // Talabada (oliy yo'l) o'z kursi oxirgi ochilgandan USTUN: tahlil
-  // ko'rsatdiki, talabalar 1–4-sinf kurslarini ham ochadi va o'shanda
-  // menyudagi "kunlik sinov" va "xatolar daftari" 1-sinfga bog'lanib
-  // qolardi.
-  const oliyKurs = yolOf(prof) === "oliy" ? profilKursi(prof) : null;
-  const kurs =
-    courseBySlug(/^\/kurs\/([^/]+)/.exec(pathname)?.[1] ?? "") ??
-    oliyKurs ??
-    courseBySlug(oxirgiKurs()) ??
-    COURSES[0];
-
-  // Yangi nishon bor-yo'qligi — tugma ustidagi qizil nuqta uchun.
-  const p = progressOf(kurs);
-  const yangiNishon = useMemo(
-    () => olingan(nishonlar({
-      progress: p, kunlik, units: kurs.units, savollar: p.savollar ?? 0,
-    })) > 0,
-    [p, kunlik, kurs],
-  );
-
-  const bosh = pathname === yolBosh();
-  // "Darslar" tugmasi kurslar RO'YXATINI ham, ochilgan kursni ham
-  // o'ziga oladi: odam uchun bu bitta joy — "darslarim". Ilgari
-  // ro'yxat "Bosh" tugmasida turardi va ikkala tugma bir narsani
-  // ko'rsatgandek tuyulardi.
-  const darslar = pathname === yolKurslar() || /^\/kurs\/[^/]+$/.test(pathname);
-  const masalalar = pathname.startsWith("/masalalar");
-  // O'yinlar tugmasi butun BO'LIM uchun yonadi: ro'yxat, daraja
-  // tanlash, maydon, duel — hammasi `/oyinlar` ostida. Faqat ro'yxatning
-  // o'ziga qarasa, daraja tanlash ekranida panel "hech qayerdasiz" deb
-  // turardi.
-  const oyinlar = pathname.startsWith("/oyinlar");
-
-  // Tugmalar ro'yxat bo'lib turadi, chunki siljiydigan belgiga FAOL
-  // TUGMANING INDEKSI kerak. Alohida yozilganda uni sanash uchun har
-  // safar qo'lda tartib raqami yozib qo'yishga to'g'ri kelardi — tugma
-  // qo'shilganda unutiladigan qadam.
   /**
-   * Faol tugma qayta bosilsa — sahifa boshiga qaytadi.
+   * Tugma bosilganda: bo'limning BOSH sahifasiga.
    *
-   * Bir xil manzilga o'tish hech narsa qilmaydi va tugma "buzuq" bo'lib
-   * tuyulardi. Pastga aylanib ketgan odam uchun esa eng tabiiy kutilma
-   * aynan shu: tepaga qayt.
+   * Faol tugma o'z bosh sahifasida qayta bosilsa — sahifa boshiga
+   * qaytadi (bir xil manzilga o'tish hech narsa qilmasdi va tugma
+   * "buzuq" tuyulardi). Bo'limning ichki sahifasida (masalan Men ›
+   * Do'kon) esa bo'lim boshiga olib chiqadi.
    */
-  const yur = (yol: string, faol: boolean) => () => {
+  const yur = (yol: string) => () => {
     // Yengil tebranish — Telegram ichida tugma "bosildi" degan javobni
     // beradi. Boshqa joyda hech narsa qilmaydi.
     tebrat("tanlov");
-    if (faol) window.scrollTo({ top: 0, behavior: "smooth" });
+    if (pathname === yol) window.scrollTo({ top: 0, behavior: "smooth" });
     else nav(yol);
   };
 
-  // Belgilar `lib/icons.tsx` dan EMAS, `lib/chizma/panelBelgi.tsx` dan
-  // keladi: panelda ular chiziqli emas, hajmli va rangli. Sababi o'sha
-  // faylda yozilgan — bu yerda beshta belgi bir-biridan AJRALIB
-  // turishi kerak, ro'yxatdagidek bir xil bo'lishi emas.
-  const tablar = [
-    { ic: "uy", nom: t("tabBosh"), faol: bosh, on: yur(yolBosh(), bosh) },
-    // Kurs ochilgan bo'lsa O'SHA kursga, bo'lmasa ro'yxatga. Odam
-    // ko'pincha bitta kursda yuradi va uni har safar ro'yxatdan
-    // qayta tanlashi ortiqcha qadam bo'lardi.
-    {
-      ic: "xarita", nom: t("tabDarslar"), faol: darslar,
-      on: yur(pathname.startsWith("/kurs/") ? yolKurs(kurs) : yolKurslar(), darslar),
-    },
-    // O'yinlar ENG O'RTADA — paneldagi eng oson yetiladigan joy. Bu
-    // yerda o'yin, bugungi maydon va duel bir eshik ortida turadi.
-    { ic: "oyin", nom: t("tabOyinlar"), faol: oyinlar, on: yur(yolOyinlar(), oyinlar) },
-    // REYTING SHU YERDA EDI — bosh sahifaga ko'chdi.
-    //
-    // U bo'lim emas, MUKOFOT: odam unga kunda bir marta, yulduz
-    // yig'gandan keyin kiradi. Panelning beshdan biri esa doim
-    // ko'rinib turadigan joy va uni har kuni ochiladigan bo'limga
-    // berish kerak edi. Reyting endi bosh sahifadagi chipda turadi
-    // — o'zi yig'gan yulduz sonining YONIDA, ya'ni ma'nosi ham
-    // ravshanroq bo'ldi.
-    {
-      ic: "vazifa", nom: t("masalalar"), faol: masalalar,
-      on: yur(yolMasalalar(), masalalar),
-    },
-    // Menyu ENG O'NGDA: u manzil emas, ochiladigan ro'yxat. Qizil nuqta
-    // ham shu yerga ko'chdi — nishon endi menyu ichida va odam yangi
-    // nishonini boshqa hech qayerdan sezmasdi.
-    //
-    // `faol` EMAS, `yoniq`. Farq katta va u ko'rinib turadi: `faol`
-    // siljiydigan yashil belgini o'ziga tortadi, ya'ni menyu ochilishi
-    // bilan belgi joriy sahifadan Menyuga qarab yugurardi va turgan
-    // sahifa tugmasi kulrangga aylanardi — panel SAHIFA ALMASHDI deb
-    // yolg'on aytardi. Ustiga menyuning o'zi o'ng tomondan chiqadi:
-    // bir vaqtda ikki narsa qarama-qarshi tomonga qimirlardi.
-    //
-    // Menyu esa manzil emas — u shu sahifa USTIDA ochiladigan oyna.
-    // Shuning uchun belgi joyida qoladi, tugma faqat yonadi.
-    {
-      ic: "menyu", nom: t("tabMenyu"), faol: false, yoniq: menyu,
-      nuqta: yangiNishon,
-      on: () => { tebrat("tanlov"); setMenyu(true); },
-    },
-  ] as const;
+  const tablar: { id: TabId; ic: PanelBelgiNom; nom: string; yol: string }[] = [
+    { id: "bugun", ic: "uy", nom: t("tabBugun"), yol: yolBosh() },
+    { id: "oqish", ic: "xarita", nom: t("tabOqish"), yol: yolKurslar() },
+    // O'yin ENG O'RTADA — paneldagi eng oson yetiladigan joy.
+    { id: "oyin", ic: "oyin", nom: t("tabOyin"), yol: yolOyinlar() },
+    { id: "masalalar", ic: "vazifa", nom: t("masalalar"), yol: yolMasalalar() },
+    { id: "men", ic: "menyu", nom: t("tabMen"), yol: yolMen() },
+  ];
 
   if (kompyuter) {
     return (
-      <>
-        <Menyu ochiq={menyu} onYop={() => setMenyu(false)} kurs={kurs} />
-        <YonPanel>
-          {tablar.map((t) => (
-            <YonTugma key={t.nom} ic={t.ic} nom={t.nom} faol={t.faol}
-              yoniq={"yoniq" in t ? t.yoniq : false}
-              nuqta={"nuqta" in t ? t.nuqta : false}
-              on={t.on} />
-          ))}
-          {/* Telefonda bular bosh sahifadagi chiplarda turadi. Kompyuterda
-              yon panelda joy bor va ular HAR sahifadan bir bosishda
-              ochilsin — sichqoncha bilan sahifani yuqoriga aylantirib,
-              chip qidirish noqulay. */}
-          <div className="my-2 h-px bg-track" />
-          <YonTugma ic="reyting" nom={t("reyting")} faol={pathname === yolReyting()}
-            on={yur(yolReyting(), pathname === yolReyting())} />
-          <YonSatr ik="search" nom={t("qidiruvNom")} faol={pathname === yolQidiruv()}
-            on={yur(yolQidiruv(), pathname === yolQidiruv())} />
-          <YonSatr ik="pencil" nom={t("hisobim")} faol={pathname === yolSozlama()}
-            on={yur(yolSozlama(), pathname === yolSozlama())} />
-        </YonPanel>
-      </>
+      <YonPanel>
+        {tablar.map((x) => (
+          <YonTugma key={x.id} ic={x.ic} nom={x.nom} faol={faol === x.id} on={yur(x.yol)} />
+        ))}
+        {/* Telefonda qidiruv har bo'lim sarlavhasidagi lupada. Kompyuterda
+            yon panelda joy bor va u HAR sahifadan bir bosishda ochilsin. */}
+        <div className="my-2 h-px bg-track" />
+        <YonSatr ik="search" nom={t("qidiruvNom")} faol={pathname === yolQidiruv()}
+          on={yur(yolQidiruv())} />
+      </YonPanel>
     );
   }
 
@@ -257,28 +148,18 @@ export function Panel() {
       {/* Oddiy oqimdagi bo'shliq: panel `fixed` bo'lgani uchun sahifa
           oxiri uning ostiga kirib qolardi. Bo'shliq shu yerda turadi va
           panel bilan BIRGA paydo bo'ladi — darsda ikkalasi ham yo'q. */}
-      <div aria-hidden className="h-[calc(4rem+var(--az-past))]" />
-
-      <Menyu ochiq={menyu} onYop={() => setMenyu(false)} kurs={kurs} />
+      <div aria-hidden className="h-[calc(4.25rem+var(--az-past))]" />
 
       {/* Chegara `border-t` EMAS, `.az-panel` ichidagi soya bilan
           chiziladi. Ilgari u `border-karta/45` edi — ya'ni oq kartada
           oq chiziq, ko'rinmaydigan chegara. */}
-      <nav data-tur="panel"
+      <nav data-tur="panel" aria-label={t("tabBolimlar")}
         className="az-panel fixed inset-x-0 bottom-0 z-30 pb-[var(--az-past)]">
-        <div className="mx-auto w-full max-w-[430px] px-1 sm:max-w-[560px]">
-          {/* Yostiq endi UMUMIY EMAS — har tugmaning o'zida (`Tab`).
-              Ilgari shu yerda bitta yostiq turardi va tugmadan tugmaga
-              siljirdi: butun panel bo'ylab yuguradigan yashil dog'
-              "nimadir joyidan qimirladi" degan tuyg'u berardi. */}
-          <div className="flex">
-            {tablar.map((t) => (
-              <Tab key={t.nom} ic={t.ic} nom={t.nom} faol={t.faol}
-                yoniq={"yoniq" in t ? t.yoniq : false}
-                nuqta={"nuqta" in t ? t.nuqta : false}
-                on={t.on} />
-            ))}
-          </div>
+        <div className="mx-auto grid w-full max-w-[430px] grid-cols-5 gap-1 px-1.5 pt-1.5 pb-1
+                        sm:max-w-[560px]">
+          {tablar.map((x) => (
+            <Tab key={x.id} ic={x.ic} nom={x.nom} faol={faol === x.id} on={yur(x.yol)} />
+          ))}
         </div>
       </nav>
     </>
@@ -286,77 +167,40 @@ export function Panel() {
 }
 
 /**
- * Panelning bitta tugmasi. Balandligi 56px — barmoq uchun yetarli.
+ * Panelning bitta tugmasi. Balandligi 60px — barmoq uchun yetarli.
  *
- * `faol` va `yoniq` — ATAYLAB ikki xil narsa:
- *
- *   faol   "siz shu sahifadasiz". Ekran o'quvchi `aria-current="page"`
- *          ni o'qiydi.
- *   yoniq  "shu tugma ochgan narsa hozir ekranda". Menyu shunday: u
- *          sahifa emas, shu sahifa ustidagi oyna. Tugma yonadi, lekin
- *          manzil o'zgarmagani uchun `aria-current` berilmaydi.
+ * Faol holat: yumshoq ko'k yostiq va to'q ko'k yozuv (`manba/Tab.dc.html`).
+ * Faol bo'lmaganlar kulrang va belgisi sal xira — ko'z faol tugmani
+ * birinchi topadi.
  *
  * Yostiq HAR TUGMANING O'ZIDA. Ilgari butun panelga bitta yostiq
  * bor edi va u tugmadan tugmaga siljirdi — ko'z tugmani emas, o'sha
- * yuguruvchini kuzatardi. Endi ketayotgani joyida so'nadi, kelayotgani
- * joyida ochiladi: panelda hech narsa hech qayerga ketmaydi.
+ * yuguruvchini kuzatardi.
  */
-function Tab({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
+function Tab({ ic, nom, on, faol }: {
   ic: PanelBelgiNom;
   nom: string;
   on: () => void;
-  faol?: boolean;
-  yoniq?: boolean;
-  nuqta?: boolean;
+  faol: boolean;
 }) {
-  // Ko'rinish ikkalasiga ham tegishli — bosilgan tugma javob berishi
-  // kerak, bu sahifa bo'ladimi yoki oyna.
-  const belgili = faol || yoniq;
-
   return (
-    // `relative` — yostiq shu tugma ICHIDA joylashadi.
-    <button type="button" onClick={on} title={nom}
+    <button type="button" onClick={on} title={nom} data-tahlil={`Panel: ${ic}`}
       aria-current={faol ? "page" : undefined}
-      /* Tugmaning rangi bir joyda beriladi va yostiq ham, yozuv ham
-         shundan oladi — belgi binafsha bo'lib, yostig'i yashil qolgan
-         holat shu bilan mumkin emas. */
-      style={{ "--az-tab-rang": panelRang(ic) } as CSSProperties}
-      /* `min-w-0` SHART: usiz flex elementi o'z mazmunidan kichrayolmaydi
-         va uzun yozuv ("Родителям") tugmani kengaytirib, qolgan beshtasini
-         siqib qo'yadi. U bilan esa yozuv `truncate` ga bo'ysunadi. */
-      className={`clay-press relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2
-                  transition-colors duration-200
-                  ${belgili ? "az-tab-yoniq" : "text-ink-soft"}`}>
-      {/* Yostiq — tugmaning O'Z chegarasi.
-          `inset-x-1` yon bo'shliq qoldiradi: yostiqlar bir-biriga
-          tegib ketsa, beshta tugma bitta uzun tasmaga aylanardi.
-          O'lcham `scale` bilan o'zgaradi — `width` sahifani qayta
-          o'lchashga majbur qiladi va past telefonda sakrab ketardi.
-          Rangi `--az-tab-rang` dan — ya'ni belgi bilan bir xil. */}
+      /* `min-w-0` SHART: usiz grid elementi o'z mazmunidan kichrayolmaydi
+         va uzun yozuv ("Задачи") qo'shnilarini siqib qo'yadi. */
+      className={`clay-press relative flex min-h-[60px] min-w-0 flex-col items-center justify-center
+                  gap-1 rounded-2xl transition-colors duration-200
+                  ${faol ? "text-brand-blue-t" : "text-ink-dim"}`}>
       <span aria-hidden
-        className={`az-tab-yostiq absolute inset-x-1 inset-y-1 rounded-2xl
-                    ${belgili ? "scale-100 opacity-100" : "scale-90 opacity-0"}`} />
-
-      {/* Belgi va yozuv yostiq USTIDA turishi kerak: joylashgansiz
-          element joylashganning ostida chiziladi. */}
-      <span className="relative">
-        <span className={`az-tab-belgi block ${belgili ? "scale-110" : "scale-100"}`}>
-          <PanelBelgi nom={ic} faol={belgili} size={26} />
-        </span>
-        {nuqta && (
-          <span className="az-nuqta absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
-        )}
+        className={`az-tab-yostiq absolute inset-0 rounded-2xl
+                    ${faol ? "scale-100 opacity-100" : "scale-90 opacity-0"}`} />
+      <span className={`relative ${faol ? "" : "opacity-75"}`}>
+        <PanelBelgi nom={ic} faol={faol} size={28} />
       </span>
-      {/* Beshta yozuv 320px li telefonga ham sig'ishi kerak — bir
-          tugmaga ~64px qoladi. Oltitasida bu ~53px edi va eng uzun
-          yozuv ("Родители") kesilib ketardi; beshtasida joy yetadi,
-          lekin `truncate` baribir turadi: chetdan chiqib ketgan harf
-          butun qatorni qiyshaytirardi. */}
-      {/* Yozuv shrifti FAOLLIKDA O'ZGARMAYDI. Sinab ko'rildi: `Fredoka`
-          ga almashtirilganda 10.5px yozuv boshqa kenglikda chizilib,
-          tugma almashganda titrab ketgandek tuyulardi. Ajratish uchun
-          yostiq va rang yetarli. */}
-      <span className="relative w-full truncate px-0.5 text-center text-[10.5px] leading-none">
+      {/* 320px li telefonda bir tugmaga ~60px qoladi: yozuv 11px, kengroqda
+          dizayndagi 12.5px. 11px dan kichigi o'qilmaydi (dizayn qoidasi). */}
+      <span className="relative w-full truncate px-0.5 text-center text-[11px] leading-none font-bold
+                       min-[360px]:text-[12.5px]">
         {nom}
       </span>
     </button>
@@ -401,30 +245,23 @@ function YonPanel({ children }: { children: ReactNode }) {
 }
 
 /** Yon paneldagi asosiy tugma — pastki paneldagi `Tab` ning yotiq egizagi. */
-function YonTugma({ ic, nom, on, faol = false, yoniq = false, nuqta = false }: {
+function YonTugma({ ic, nom, on, faol }: {
   ic: PanelBelgiNom;
   nom: string;
   on: () => void;
-  faol?: boolean;
-  yoniq?: boolean;
-  nuqta?: boolean;
+  faol: boolean;
 }) {
-  const belgili = faol || yoniq;
   return (
     <button type="button" onClick={on} data-tahlil={`Yon: ${ic}`}
       aria-current={faol ? "page" : undefined}
-      style={{ "--az-tab-rang": panelRang(ic) } as CSSProperties}
       className={`clay-press relative flex h-12 w-full items-center gap-3 rounded-2xl px-3
                   text-left text-[15px] transition-colors duration-200
-                  ${belgili ? "az-tab-yoniq" : "text-ink-soft hover:bg-sahna"}`}>
+                  ${faol ? "font-bold text-brand-blue-t" : "text-ink-soft hover:bg-sahna"}`}>
       <span aria-hidden
         className={`az-tab-yostiq absolute inset-0 rounded-2xl
-                    ${belgili ? "opacity-100" : "opacity-0"}`} />
+                    ${faol ? "opacity-100" : "opacity-0"}`} />
       <span className="relative">
-        <PanelBelgi nom={ic} faol={belgili} size={26} />
-        {nuqta && (
-          <span className="az-nuqta absolute -top-0.5 -right-1 size-2.5 rounded-full bg-brand-red ring-2 ring-karta" />
-        )}
+        <PanelBelgi nom={ic} faol={faol} size={26} />
       </span>
       <span className="relative truncate">{nom}</span>
     </button>

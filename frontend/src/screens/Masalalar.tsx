@@ -50,6 +50,7 @@ import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { t } from "../lib/matn";
 import { MasalaKarta } from "../components/MasalaKarta";
+import { Tanlov, TanlovVaraq } from "../components/Varaq";
 import { SINFLAR } from "../lib/masalaSinf";
 import * as MS from "../lib/masala";
 import type { Holat, Masala, Tartib } from "../lib/masala";
@@ -444,56 +445,4 @@ function Tanlagich(
   );
 }
 
-/**
- * Tanlov varag'i — filtr ro'yxati ochiladigan oyna.
- *
- * Ro'yxat ekranda emas, VARAQDA: sinflar o'n oltita va ular hech
- * qanday tasmaga sig'maydi. Varaqda esa ular o'ralib joylashadi va
- * hammasi bir vaqtda ko'rinadi — ya'ni "8-sinf" ni qidirib surish
- * kerak bo'lmaydi.
- *
- * Fonga bosilsa yopiladi. Bu yerda tanga sarflanmaydi, ya'ni
- * e'tiborsiz bosishning narxi yo'q (`components/TangaSorov.tsx`
- * dagi holat boshqacha va u yerda fon yopmaydi).
- */
-function TanlovVaraq(
-  { sarlavha, onYop, children }:
-  { sarlavha: string; onYop: () => void; children: ReactNode },
-) {
-  return (
-    <div onClick={onYop} role="dialog" aria-modal="true" aria-label={sarlavha}
-      className="az-kanal-fon fixed inset-0 z-[80] grid place-items-end bg-black/45
-                 backdrop-blur-[2px] sm:place-items-center sm:p-4">
-      <div onClick={(e) => e.stopPropagation()}
-        className="az-kanal w-full rounded-t-clay bg-karta p-4 shadow-clay
-                   sm:max-w-[420px] sm:rounded-clay">
-        <div className="mb-3 flex items-center gap-2">
-          <h2 className="font-display text-[15px] leading-tight">{sarlavha}</h2>
-          <button type="button" onClick={onYop} aria-label={t("yopish")}
-            className="clay-press ml-auto grid size-7 shrink-0 place-items-center rounded-full
-                       bg-sahna text-ink-dim">
-            <Icon name="close" size={14} />
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-1.5">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-/** Varaq ichidagi bitta tanlov. */
-function Tanlov(
-  { faol, on, children }: { faol: boolean; on: () => void; children: ReactNode },
-) {
-  return (
-    <button type="button" onClick={on}
-      className={`clay-press flex items-center gap-1.5 rounded-full px-3.5 py-1.5
-                  text-[12.5px] whitespace-nowrap ${
-        faol
-          ? "bg-brand-purple font-display text-white shadow-clay-sm"
-          : "shadow-ichki bg-sahna text-ink-soft"}`}>
-      {children}
-    </button>
-  );
-}
 
