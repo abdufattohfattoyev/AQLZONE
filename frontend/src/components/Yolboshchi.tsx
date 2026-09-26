@@ -43,8 +43,9 @@ interface Qadam {
 const qadamlar = (): Qadam[] => [
   { matn: t("turSalom") },
   { nishon: "davom", matn: t("turDavom") },
-  { nishon: "hisob", matn: t("turHisob") },
-  { nishon: "maqsad", matn: t("turMaqsad") },
+  // Yangi dizayn: yulduz pillalari va kunlik maqsad kurs sahifasidan
+  // ketdi (Men va Bugun ga), ularning o'rniga — O'qish yorliqlari.
+  { nishon: "yorliqlar", matn: t("turYorliqlar") },
   { nishon: "boblar", matn: t("turBoblar") },
   { nishon: "panel", matn: t("turPanel") },
 ];

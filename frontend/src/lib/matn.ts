@@ -263,6 +263,48 @@ const S = {
     "Умножить двузначное число на 11: раздвинь цифры и поставь между ними их сумму. 11 × 36 = 396.",
   ],
 
+  /* ---------------- O'qish qobig'i (`components/OqishQobiq.tsx`) ---------------- */
+  oqishFormulalar: ["Formulalar", "Формулы"],
+  oqishXatolar: ["Xatolar", "Ошибки"],
+  oqishBolimlar: ["O'qish bo'limlari", "Разделы учёбы"],
+  oqishSinfTanlash: ["Sinfni tanlang", "Выберите класс"],
+  oqishDarsSoni: ["{n} / {jami} dars", "{n} / {jami} ур."],
+  oqishBobTugadi: ["{n} / {jami} dars · tugadi", "{n} / {jami} ур. · готово"],
+  oqishBoshlash: ["Boshlash", "Начать"],
+  /* Testlar yorlig'i (`screens/OqishTestlar.tsx`) */
+  oqishBlokTest: ["{n}-sinf blok testi", "Блок-тест {n} класса"],
+  oqishAralash: ["{fan} · aralash", "{fan} · вперемешку"],
+  oqishIkkiFan: ["Algebra va geometriya", "Алгебра и геометрия"],
+  oqishSavol: ["{n} savol", "{n} вопросов"],
+  oqishDaqiqa: ["{n} daqiqa", "{n} минут"],
+  oqishTestBoshlash: ["Testni boshlash", "Начать тест"],
+  oqishBoshqaTestlar: ["Boshqa testlar", "Другие тесты"],
+  oqishImtihon: ["Milliy sertifikat va DTM", "Нацсертификат и ДТМ"],
+  oqishImtihonIzoh: ["Imtihon formatidagi variantlar, vaqt bilan", "Варианты в формате экзамена, на время"],
+  oqishMavzu: ["Mavzu bo'yicha test", "Тест по теме"],
+  oqishMavzuIzoh: ["Bitta bobni tanlab tekshiring", "Проверьте одну главу"],
+  oqishToplamlar: ["Test to'plamlari", "Сборники тестов"],
+  oqishToplamlarIzoh: ["Hamma bir xil savolni yechadi", "Все решают одни и те же вопросы"],
+  oqishQuyiSinf: [
+    "Blok testlar 5-sinfdan boshlanadi. Hozircha darslar va kunlik sinov bilan mashq qiling.",
+    "Блок-тесты начинаются с 5 класса. Пока тренируйтесь на уроках и тесте дня.",
+  ],
+  /* Xatolar yorlig'i (`screens/OqishXatolar.tsx`) */
+  oqishXatoBugun: ["Bugun takrorlash", "Повторить сегодня"],
+  oqishXatoSoni: ["{n} ta savol", "{n} вопр."],
+  oqishXatoIzoh: [
+    "Xato qilgan savollaringiz 1, 3 va 7 kundan keyin qaytadi — shunda esda qoladi.",
+    "Вопросы с ошибками возвращаются через 1, 3 и 7 дней — так они запоминаются.",
+  ],
+  oqishMashq: ["Mashq qilish", "Тренироваться"],
+  oqishXatoYoq: ["Bugun takrorlash yo'q", "Сегодня повторять нечего"],
+  oqishXatoBosh: [
+    "Daftar bo'sh. Darsda xato qilgan savol shu yerga tushadi va keyinroq qaytadi.",
+    "Тетрадь пуста. Вопрос с ошибкой попадёт сюда и вернётся позже.",
+  ],
+  oqishXatoMavzular: ["Daftardagi mavzular", "Темы в тетради"],
+  oqishXatoMarta: ["{n} marta xato", "ошибок: {n}"],
+
   /* ---------------- Men (`screens/Men.tsx`) ---------------- */
   menSarlavha: ["Men", "Я"],
   menMehmon: ["Mehmon", "Гость"],
@@ -1141,21 +1183,17 @@ const S = {
     "Dars shu tugmadan boshlanadi. Bir bosasan — va o'qish boshlanadi.",
     "Урок начинается с этой кнопки. Одно нажатие — и занятие идёт.",
   ],
-  turHisob: [
-    "Har bir to'g'ri javob uchun yulduz va tanga olasan.",
-    "За каждый верный ответ ты получаешь звезду и монету.",
-  ],
-  turMaqsad: [
-    "Har kuni shuncha savol yechsang, zanjiring uzilmaydi.",
-    "Решай столько вопросов каждый день — и твоя серия не прервётся.",
+  turYorliqlar: [
+    "Testlar, formulalar va xatolar daftari shu yerda — bir bosishda.",
+    "Тесты, формулы и тетрадь ошибок — здесь, в одно касание.",
   ],
   turBoblar: [
-    "Darslar boblarga bo'lingan. Bobni ochsang, ichida dars yo'li chiqadi.",
-    "Уроки собраны в главы. Откроешь главу — увидишь дорожку уроков.",
+    "Darslar boblarga bo'lingan. Bobni ochsang, ichidagi darslar chiqadi.",
+    "Уроки собраны в главы. Откроешь главу — увидишь её уроки.",
   ],
   turPanel: [
-    "Pastda nishonlaring, do'koning, reyting va ota-ona paneli turadi.",
-    "Внизу — награды, магазин, рейтинг и панель для родителей.",
+    "Pastda besh bo'lim. Nishonlar, do'kon, reyting va ota-ona paneli — \"Men\" da.",
+    "Внизу пять разделов. Награды, магазин, рейтинг и панель родителей — в «Я».",
   ],
   turQaytadan: ["Qaytadan ko'rsatish", "Показать заново"],
   turBoshlanadi: ["Kursni ochsangiz boshlanadi", "Начнётся при открытии курса"],

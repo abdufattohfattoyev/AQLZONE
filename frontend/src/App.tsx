@@ -11,7 +11,8 @@ import { Panel, TepagaQayt, panelKerakmi } from "./components/Panel";
 import { Kutish } from "./components/Kutish";
 import { NotFound } from "./screens/NotFound";
 import { Anketa } from "./components/Anketa";
-import { useProfil } from "./lib/profil";
+import { OqishQobiq } from "./components/OqishQobiq";
+import { joriyKurs, profilKursi, useProfil } from "./lib/profil";
 
 /* ---------------------------------------------------------------- ekranlar
  *
@@ -59,6 +60,8 @@ const Jadval = lazy(() => import("./screens/Jadval").then((m) => ({ default: m.J
 const XonaSahifa = lazy(() => import("./screens/Xona").then((m) => ({ default: m.XonaSahifa })));
 const OyinDaraja = lazy(() => import("./screens/OyinDaraja").then((m) => ({ default: m.OyinDaraja })));
 const Oyin = lazy(() => import("./screens/Oyin").then((m) => ({ default: m.Oyin })));
+const OqishTestlar = lazy(() => import("./screens/OqishTestlar").then((m) => ({ default: m.OqishTestlar })));
+const OqishXatolar = lazy(() => import("./screens/OqishXatolar").then((m) => ({ default: m.OqishXatolar })));
 const Testlar = lazy(() => import("./screens/Testlar").then((m) => ({ default: m.Testlar })));
 const Hisobot = lazy(() => import("./screens/Hisobot").then((m) => ({ default: m.Hisobot })));
 const Formulalar = lazy(() => import("./screens/Formulalar").then((m) => ({ default: m.Formulalar })));
@@ -76,19 +79,19 @@ import { oyinById } from "./lib/oyin";
 import { darajaniOqi } from "./lib/oyin/tur";
 import { ochiqmi } from "./lib/oyin/rekord";
 import { COURSES, courseBySlug, maktabKursi } from "./lib/curriculum";
-import { KUNLIK_MAQSAD, useProgress } from "./lib/progress";
+import { useProgress } from "./lib/progress";
 import type { LessonResult } from "./lib/progress";
 import { isUnlocked, lessonId } from "./lib/types";
 import { temaOf, useTema } from "./lib/tema";
 import { takrorlashDarsi } from "./lib/takrorlash";
-import { oxirginiYoz } from "./lib/oxirgi";
+import { oxirgiKurs, oxirginiYoz } from "./lib/oxirgi";
 import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov,
+  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
-  yolMen, yolBosh, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
+  yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -135,7 +138,10 @@ function Yollar() {
       <Route path="/darslar" element={<KurslarSahifasi />} />
       {/* Testlar kursdan tashqarida: o'lchamoqchi bo'lgan odamda
           faqat "nechanchi sinfman" degan savol bor. */}
-      <Route path="/testlar" element={<TestSinfSahifasi />} />
+      {/* O'qish › Testlar yorlig'i. Eski ro'yxat (to'plamlar va sinflar)
+          `/testlar/toplamlar` da — yorliqdan bir bosishda. */}
+      <Route path="/testlar" element={<TestlarYorliqSahifasi />} />
+      <Route path="/testlar/toplamlar" element={<TestSinfSahifasi />} />
       <Route path="/toplam/:id" element={<ToplamSahifasi />} />
       <Route path="/profillar" element={<ProfilSahifasi />} />
       {/* "Men" — pastki paneldagi beshinchi bo'lim (eski Menyu o'rnida). */}
@@ -193,6 +199,7 @@ function Yollar() {
       {/* Kunlik sinov ham dars: shu sabab u `/:bob/:dars` dan OLDIN
           turadi, aks holda marshrut "sinov" ni bob nomi deb o'qirdi. */}
       <Route path="/kurs/:slug/sinov" element={<SinovSahifasi />} />
+      <Route path="/kurs/:slug/xatolar" element={<XatolarSahifasi />} />
       <Route path="/kurs/:slug/dokon" element={<DokonSahifasi />} />
       <Route path="/kurs/:slug/nishonlar" element={<NishonSahifasi />} />
       <Route path="/kurs/:slug/ota-ona" element={<OtaOnaSahifasi />} />
@@ -258,7 +265,7 @@ function TestSinfSahifasi() {
       onSinf={(c) => nav(yolTestlar(c))}
       onImtihon={() => nav(yolSertifikat())}
       onToplam={(id) => nav(yolToplam(id))}
-      onBack={() => nav(yolBosh())}
+      onBack={() => nav(yolTestSinf())}
     />
   );
 }
@@ -270,7 +277,7 @@ function ToplamSahifasi() {
   useTema("bosh");
   const raqam = Number(id);
   if (!Number.isInteger(raqam) || raqam <= 0) return <Navigate to={yolTestSinf()} replace />;
-  return <ToplamSahifa id={raqam} onBack={() => nav(yolTestSinf())} />;
+  return <ToplamSahifa id={raqam} onBack={() => nav(yolToplamlar())} />;
 }
 
 /**
@@ -291,6 +298,13 @@ function KurslarSahifasi() {
   const prof = useProfil();
   const kim = prof?.kim ?? "";
 
+  // O'qish tabi: kurs ma'lum bo'lsa (oxirgi ochilgan yoki profil sinfi) —
+  // to'g'ri o'sha kursning Darslar yorlig'iga. Ro'yxat faqat hali hech
+  // narsa bilinmagan odamga ("qaysi sinf?") qoladi.
+  if (courseBySlug(oxirgiKurs()) || profilKursi(prof)) {
+    return <Navigate to={yolKurs(joriyKurs(prof, oxirgiKurs()))} replace />;
+  }
+
   // Formulalar va blok testlar eng yuqori sinf kursida to'liq turadi:
   // kattalar uchun aynan o'sha kerak.
   const eng = COURSES.filter((c) => c.grade > 0 && maktabKursi(c)).slice(-1)[0] ?? COURSES[0];
@@ -309,7 +323,7 @@ function KurslarSahifasi() {
 
 function KursSahifasi() {
   const { slug } = useParams();
-  const { progressOf, kunlik } = useProgress();
+  const { progressOf } = useProgress();
   const nav = useNavigate();
 
   const c = courseBySlug(slug ?? "");
@@ -326,30 +340,42 @@ function KursSahifasi() {
   if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
 
   return (
-    <Home
-      slug={c.slug}
-      title={c.title}
-      // Talabalar kursi darslik bo'yicha emas — OTM dasturi bo'yicha.
-      izoh={c.grade === 0 ? t("izohMaktabgacha")
-        : maktabKursi(c) ? t("izohToliqKurs") : t("izohOtmKurs")}
-      units={c.units}
-      progress={progressOf(c)}
-      kunlik={kunlik}
-      maqsad={KUNLIK_MAQSAD}
-      onStart={(ui, li) => nav(yolDars(c, ui, li))}
-      onDaftar={() => nav(yolDaftar(c))}
-      onSinov={() => nav(yolSinov(c))}
-      onOtaOna={() => nav(yolOtaOna(c))}
-      {...(blokBormi(sinfOf(c.grade)) ? {
-        onBlok: () => nav(yolTestlar(c)),
-        onHisobot: () => nav(yolHisobot(c)),
-        onFormulalar: () => nav(yolFormulalar(c)),
-      } : {})}
-      {...(!maktabKursi(c) ? {
-        onSessiya: () => nav(yolSessiya()),
-        onFormulalar: () => nav(yolFormulalar(c)),
-      } : {})}
-    />
+    <OqishQobiq yorliq="darslar" kurs={c}>
+      <Home units={c.units} progress={progressOf(c)} onStart={(ui, li) => nav(yolDars(c, ui, li))} />
+    </OqishQobiq>
+  );
+}
+
+/**
+ * O'qish › Testlar — `/testlar`. Manzilda kurs yo'q (eski havola), shuning
+ * uchun kurs oxirgi ochilganidan olinadi (`lib/profil.ts` → joriyKurs).
+ */
+function TestlarYorliqSahifasi() {
+  const nav = useNavigate();
+  const prof = useProfil();
+  useTema("bosh");
+  const c = joriyKurs(prof, oxirgiKurs());
+  return (
+    <OqishQobiq yorliq="testlar" kurs={c}>
+      <OqishTestlar kurs={c}
+        onBlok={(boshla) => nav(yolTestlar(c) + (boshla ? "?boshla=toliq" : ""))}
+        onImtihon={() => nav(yolImtihon())}
+        onToplamlar={() => nav(yolToplamlar())}
+        onSessiya={() => nav(yolSessiya())} />
+    </OqishQobiq>
+  );
+}
+
+/** O'qish › Xatolar — daftardagi savollar va "Mashq qilish". */
+function XatolarSahifasi() {
+  const nav = useNavigate();
+  const { c, slug } = useKurs();
+  useEffect(() => { if (c) oxirginiYoz(c.slug); }, [c]);
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
+  return (
+    <OqishQobiq yorliq="xatolar" kurs={c}>
+      <OqishXatolar kurs={c} onMashq={() => nav(yolDaftar(c))} />
+    </OqishQobiq>
   );
 }
 
@@ -426,8 +452,9 @@ function DaftarSahifasi() {
       unit={dars.unit}
       lesson={dars.lesson}
       takrorlash
-      onExit={() => nav(yolKurs(c))}
-      onFinish={() => nav(yolKurs(c))}
+      // Daftar O'qish › Xatolar yorlig'idan ochiladi — o'sha yerga qaytadi.
+      onExit={() => nav(yolXatolar(c))}
+      onFinish={() => nav(yolXatolar(c))}
     />
   );
 }
@@ -541,6 +568,7 @@ function OtaOnaSahifasi() {
  */
 function TestlarSahifasi() {
   const nav = useNavigate();
+  const [qidiruv] = useSearchParams();
   const { c, slug } = useKurs();
 
   if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
@@ -550,7 +578,9 @@ function TestlarSahifasi() {
   return (
     <Testlar
       sinf={sinfOf(c.grade)}
-      onBack={() => nav(yolKurs(c))}
+      boshlaToliq={qidiruv.get("boshla") === "toliq"}
+      // Testlar ekrani O'qish › Testlar yorlig'idan ochiladi.
+      onBack={() => nav(yolTestSinf())}
       onHisobot={() => nav(yolHisobot(c))}
     />
   );
@@ -577,7 +607,11 @@ function FormulalarSahifasi() {
   const { c, slug } = useKurs();
 
   if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
-  return <Formulalar sinf={sinfOf(c.grade)} onBack={() => nav(yolKurs(c))} />;
+  return (
+    <OqishQobiq yorliq="formulalar" kurs={c}>
+      <Formulalar ichki sinf={sinfOf(c.grade)} onBack={() => nav(yolKurs(c))} />
+    </OqishQobiq>
+  );
 }
 
 function MenSahifasi() {

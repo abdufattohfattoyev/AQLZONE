@@ -51,7 +51,8 @@ import { useProgress } from "../lib/progress";
 import { SINOV_SAVOL, qolganSoat, sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import { jumboqRaqami } from "../lib/oyin/kunlikSon";
-import { kunKaliti } from "../lib/zanjir";
+import { kunKaliti, qaytish } from "../lib/zanjir";
+import { Qaytish, ZanjirTiklash } from "../components/Qaytish";
 import {
   darsBugunmi, hafta, joriyZanjir, rekordniYangila, salomVaqti, yilKuni,
 } from "../lib/bugun";
@@ -122,7 +123,7 @@ export function Bosh({
     return () => { bekor = true; };
   }, []);
 
-  const { kunlik } = useProgress();
+  const { kunlik, jamiTanga, tiklash, zanjirniTikla } = useProgress();
   const prof = useProfil();
   const kompyuter = useKompyuter();
   const bugun = kunKaliti();
@@ -205,6 +206,14 @@ export function Bosh({
         </div>
       </section>
     ),
+    // Uzilgan zanjirni tanga bilan tiklash yoki "qaytdingiz" — ilgari
+    // kurs sahifasida edi; zanjir shu ekranda bo'lgani uchun uning
+    // ostiga ko'chdi. Ikkalasi ham faqat kerakli kuni chiqadi.
+    ogoh: tiklash ? (
+      <div className="[&>*]:mt-0"><ZanjirTiklash taklif={tiklash} jamiTanga={jamiTanga} onTikla={zanjirniTikla} /></div>
+    ) : qaytish(kunlik) > 0 && (
+      <div className="[&>*]:mt-0"><Qaytish kun={qaytish(kunlik)} /></div>
+    ),
     keyingi: <AsosiyKarta amal={amal} />,
     kattalar: kattalar && (
       <div className="grid grid-cols-2 gap-2.5">
@@ -246,7 +255,7 @@ export function Bosh({
       <div className="mx-auto flex w-full max-w-[960px] flex-col gap-4 px-8 pt-8 pb-14">
         {sarlavha}
         <div className="grid grid-cols-2 items-start gap-4">
-          <div className="flex flex-col gap-3.5">{bloklar.halqa}{bloklar.zanjir}</div>
+          <div className="flex flex-col gap-3.5">{bloklar.halqa}{bloklar.zanjir}{bloklar.ogoh}</div>
           <div className="flex flex-col gap-3.5">{bloklar.keyingi}{bloklar.kattalar}{bloklar.maslahat}</div>
         </div>
       </div>
@@ -259,6 +268,7 @@ export function Bosh({
       {sarlavha}
       {bloklar.halqa}
       {bloklar.zanjir}
+      {bloklar.ogoh}
       {bloklar.keyingi}
       {bloklar.kattalar}
       {bloklar.maslahat}

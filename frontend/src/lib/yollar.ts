@@ -43,6 +43,13 @@ export const yolKurslar = () => "/darslar";
  */
 export const yolTestSinf = () => "/testlar";
 
+/**
+ * Test to'plamlari va sinf bo'yicha testlar ro'yxati (eski `/testlar`
+ * ekrani). Yangi dizaynda `/testlar` — O'qish › Testlar yorlig'i, bu
+ * ro'yxat esa undan bir bosishda ochiladi.
+ */
+export const yolToplamlar = () => "/testlar/toplamlar";
+
 /** Test to'plami — hamma uchun bir xil test (`lib/toplam.ts`). */
 export const yolToplam = (id: number) => `/toplam/${id}`;
 
@@ -155,6 +162,8 @@ export const yolOyinDaraja = (id: string, daraja: number) => `/oyinlar/${id}/${d
 export const yolKurs = (c: Course) => `/kurs/${c.slug}`;
 /** Xatolar daftari (takrorlash darsi). */
 export const yolDaftar = (c: Course) => `/kurs/${c.slug}/daftar`;
+/** O'qish › Xatolar yorlig'i: daftardagi savollar soni va "Mashq qilish". */
+export const yolXatolar = (c: Course) => `/kurs/${c.slug}/xatolar`;
 /** Kunlik sinov — faqat bugun ochiq. */
 export const yolSinov = (c: Course) => `/kurs/${c.slug}/sinov`;
 /** Tangalar do'koni. */

@@ -28,8 +28,13 @@ import { til } from "../lib/til";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 import { sinfMatn } from "../lib/tarjima/kurs";
 
-export function Formulalar({ sinf, onBack }: { sinf: number; onBack: () => void }) {
-  const ozStrelka = useOrqaga(onBack);
+/**
+ * `ichki` — O'qish qobig'i ichida (`components/OqishQobiq.tsx`): o'z
+ * sarlavhasi va orqaga tugmasi chizilmaydi, ular qobiqda.
+ */
+export function Formulalar({ sinf, onBack, ichki = false }: { sinf: number; onBack: () => void; ichki?: boolean }) {
+  // Qobiq ichida Telegram'ning orqaga tugmasi kerak emas — bu yorliq ildizi.
+  const ozStrelka = useOrqaga(onBack, !ichki);
   const ru = til() === "ru";
 
   // O'z sinfiniki boshdan ochiq. Bo'lim nomi kalit sifatida ishlatiladi:
@@ -84,8 +89,8 @@ export function Formulalar({ sinf, onBack }: { sinf: number; onBack: () => void 
   };
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-10">
-      <div className="flex items-center gap-3">
+    <div className={ichki ? "" : "mx-auto w-full max-w-[430px] px-4 pt-4 pb-10"}>
+      <div className={`flex items-center gap-3 ${ichki ? "hidden" : ""}`}>
         {ozStrelka && (
           <button type="button" onClick={onBack} title={t("ortga")}
             className="clay-press grid size-11 place-items-center rounded-2xl bg-karta text-ink-soft shadow-clay-sm">
@@ -95,7 +100,7 @@ export function Formulalar({ sinf, onBack }: { sinf: number; onBack: () => void 
         <h1 className="font-display text-[18px]">{t("formulaSarlavha")}</h1>
       </div>
 
-      <p className="mt-3 text-[12.5px] leading-snug text-ink-dim">{t("formulaIzoh")}</p>
+      <p className={`${ichki ? "" : "mt-3"} text-[13px] leading-snug text-ink-dim`}>{t("formulaIzoh")}</p>
 
       {/* Qidiruv. `type="search"` — telefonda klaviaturada tozalash
           tugmasi paydo bo'ladi va u qo'lda yasagan tugmadan qulayroq. */}

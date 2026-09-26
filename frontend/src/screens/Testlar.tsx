@@ -54,14 +54,22 @@ interface Tanlov {
   davomEt?: boolean;
 }
 
-export function Testlar({ sinf, onBack, onHisobot }: {
+export function Testlar({ sinf, onBack, onHisobot, boshlaToliq = false }: {
   sinf: number;
   onBack: () => void;
   onHisobot: () => void;
+  /**
+   * O'qish › Testlar dagi "Testni boshlash" dan kelganda — to'liq blok
+   * testning tasdiq oynasi DARHOL ochiladi (`?boshla=toliq`). Odam
+   * testni tanlab bo'lgan, uni ro'yxatdan qayta topishga majburlash
+   * ortiqcha qadam bo'lardi.
+   */
+  boshlaToliq?: boolean;
 }) {
   const [tanlov, setTanlov] = useState<Tanlov | null>(null);
   /** Tasdiq kutayotgan tanlov — faqat uzun test uchun. */
-  const [sorov, setSorov] = useState<Tanlov | null>(null);
+  const [sorov, setSorov] = useState<Tanlov | null>(
+    () => (boshlaToliq ? { uzunlik: "toliq", qamrov: { tur: "hammasi" } } : null));
   const ozStrelka = useOrqaga(onBack);
 
   /**
