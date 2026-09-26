@@ -38,6 +38,8 @@ import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
 import { Logo } from "../components/Logo";
+import { Hajmli } from "../lib/hajmli";
+import type { HajmliNom } from "../lib/hajmli";
 import { getHisob, joriyProfil, kunlikHolat, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
 import { COURSES } from "../lib/curriculum";
@@ -57,7 +59,6 @@ import type { Progress } from "../lib/types";
 import { useProgress } from "../lib/progress";
 import { SINOV_SAVOL, qolganSoat, sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
-import { jumboqRaqami } from "../lib/oyin/kunlikSon";
 import { kunKaliti, qaytish } from "../lib/zanjir";
 import { Qaytish, ZanjirTiklash } from "../components/Qaytish";
 import {
@@ -165,12 +166,13 @@ export function Bosh({
   const sinovMumkin = progressOf(kurs).stars > 0 || bugungiSoni(kurs.slug) > 0;
   const vazifalar: Vazifa[] = [
     {
-      nom: t("bugunBittaDars"), ik: "map", amal: t("bugunAmalBoshlash"),
+      nom: t("bugunBittaDars"), ik: "map", bel: "kitob", qisqa: t("bugunDaqiqa", { n: 5 }), amal: t("bugunAmalBoshlash"),
       izoh: t("bugunDarsIzoh"), bajarildi: darsBugunmi(bugun), tahlil: "Bugun: bitta dars",
       on: davom ? () => onDavom(davom.c, davom.ui, davom.li) : onDarslar,
     },
     {
-      nom: t("bugunSinov"), ik: "clock", amal: t("bugunAmalYechish"),
+      nom: t("bugunSinov"), ik: "clock", bel: "nishon", amal: t("bugunAmalYechish"),
+      qisqa: sinovMumkin ? t("bugunSavolSoni", { n: SINOV_SAVOL }) : t("bugunDarsdanKeyin"),
       bajarildi: sinovBajarilgan(kurs.slug), tahlil: "Bugun: sinov",
       izoh: sinovMumkin
         ? t("bugunSinovIzoh", { n: SINOV_SAVOL, d: Math.ceil(SINOV_SAVOL / 2) })
@@ -178,7 +180,8 @@ export function Bosh({
       on: sinovMumkin ? () => onSinov(kurs) : undefined,
     },
     {
-      nom: t("bugunKunlikSon", { n: jumboqRaqami(bugun) }), ik: "puzzle", amal: t("bugunAmalOynash"),
+      nom: t("bugunKunlikSonQisqa"), ik: "puzzle", bel: "goya", amal: t("bugunAmalOynash"),
+      qisqa: t("bugunQoldi", { soat: t("bugunSoat", { n: qolganSoat() }) }),
       bajarildi: sonServer ?? kunlikSonBugun(), tahlil: "Bugun: kunlik son",
       izoh: t("bugunSonIzoh", { soat: t("bugunSoat", { n: qolganSoat() }) }), on: onKunlikSon,
     },
@@ -221,46 +224,45 @@ export function Bosh({
     </header>
   );
 
+  /* Bugungi reja — UCH PLITKA yonma-yon (ilgari ro'yxat edi). Har birida
+     3D belgi, nomi va bitta qisqa yozuv; bajarilgani yashil bo'lib
+     burchagida belgi chiqadi. Uch vazifa bir qarashda ko'rinadi va
+     qaysi biri qolgani rangdan bilinadi — o'qish shart emas. */
+  const bajarilgan = vazifalar.filter((v) => v.bajarildi).length;
   const reja = (
-    <section aria-label={t("bugunReja")} className="flex flex-col rounded-[22px] bg-karta shadow-clay-sm">
-      <div className="flex flex-col gap-2.5 px-4 pt-4 pb-1.5">
-        <div className="flex items-baseline gap-2">
-          <h2 className="min-w-0 flex-1 font-display text-[18px]">{t("bugunReja")}</h2>
-          <span className="shrink-0 text-[14px] font-bold text-ink-soft">
-            {vazifalar.filter((v) => v.bajarildi).length} / {vazifalar.length}
-          </span>
-        </div>
-        <div className="grid grid-cols-3 gap-1" aria-hidden>
-          {vazifalar.map((v) => (
-            <span key={v.tahlil} className={`h-1.5 rounded-full ${v.bajarildi ? "bg-brand-green" : "bg-track"}`} />
-          ))}
-        </div>
+    <section aria-label={t("bugunReja")} className="flex flex-col gap-3 rounded-[24px] bg-karta p-3.5 shadow-clay-sm
+                                                     min-[360px]:p-4">
+      <div className="flex items-center gap-2">
+        <h2 className="min-w-0 flex-1 font-display text-[18px]">{t("bugunReja")}</h2>
+        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-bold ${
+          bajarilgan === vazifalar.length ? "bg-brand-green/15 text-brand-green-d" : "bg-track text-ink-soft"}`}>
+          {bajarilgan} / {vazifalar.length}
+        </span>
       </div>
-      {vazifalar.map((v) => (
-        <button key={v.tahlil} type="button" onClick={v.on} disabled={!v.on} data-tahlil={v.tahlil}
-          className="clay-press flex min-h-16 items-center gap-3 border-t border-track px-4 py-2 text-left
-                     disabled:cursor-default">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-track text-ink-soft">
-            <Icon name={v.ik} size={20} />
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col leading-snug">
-            <span className={`text-[15.5px] font-bold ${v.bajarildi ? "text-ink-soft" : ""}`}>{v.nom}</span>
-            {v.izoh && <span className="text-[13px] text-ink-dim">{v.izoh}</span>}
-          </span>
-          {v.bajarildi ? (
-            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-green text-white"
-              aria-label={t("bugunBajarildi")}>
-              <Icon name="check" size={14} />
-            </span>
-          ) : v.on && (
-            /* Tor ekranda faqat "›" — izoh matni to'liq sig'sin. */
-            <span className="flex shrink-0 items-center gap-0.5 text-[13px] font-bold text-brand-blue-t">
-              <span className="hidden min-[360px]:inline">{v.amal}</span>
-              <Icon name="chevron" size={15} />
-            </span>
-          )}
-        </button>
-      ))}
+      <div className="grid grid-cols-3 gap-2 min-[360px]:gap-2.5">
+        {vazifalar.map((v) => (
+          <button key={v.tahlil} type="button" onClick={v.on} disabled={!v.on} data-tahlil={v.tahlil}
+            aria-label={`${v.nom}. ${v.izoh ?? ""}${v.bajarildi ? ` · ${t("bugunBajarildi")}` : ""}`}
+            className={`clay-press relative flex min-h-[132px] min-w-0 flex-col items-center gap-1.5 rounded-[18px]
+                        px-1.5 pt-3 pb-2.5 text-center transition-colors disabled:cursor-default ${
+              v.bajarildi ? "bg-brand-green/12 ring-[1.5px] ring-brand-green/40 ring-inset"
+                : v.on ? "bg-brand-blue/8 ring-[1.5px] ring-brand-blue/20 ring-inset" : "bg-track opacity-70"}`}>
+            {v.bajarildi && (
+              <span className="absolute top-1.5 right-1.5 grid size-[22px] place-items-center rounded-full bg-brand-green
+                               text-white shadow-clay-sm">
+                <Icon name="check" size={13} />
+              </span>
+            )}
+            {!v.on && !v.bajarildi && (
+              <span className="absolute top-2 right-2 text-ink-dim"><Icon name="lock" size={14} /></span>
+            )}
+            <Hajmli nom={v.bel} olcham={44} jonli={!v.bajarildi && Boolean(v.on)} />
+            <span className={`line-clamp-2 text-[13.5px] leading-[1.15] font-bold min-[360px]:text-[14.5px] ${
+              v.bajarildi ? "text-brand-green-d" : ""}`}>{v.nom}</span>
+            <span className="mt-auto line-clamp-2 text-[12px] leading-tight text-ink-dim">{v.qisqa}</span>
+          </button>
+        ))}
+      </div>
     </section>
   );
 
@@ -277,8 +279,9 @@ export function Bosh({
         {hafta(kunlik, bugun).map((k) => (
           <div key={k.sana} className="flex flex-col items-center gap-1.5">
             <span aria-hidden
-              className={`grid size-[30px] place-items-center rounded-full text-white min-[360px]:size-[34px] ${
-                k.holat === "oynagan" ? "bg-brand-blue" : "bg-track"} ${
+              /* O'ynagan kun — OLTIN: sarlavhadagi olov bilan bir xil (zanjir — mukofot). */
+              className={`grid size-[30px] place-items-center rounded-full text-ink min-[360px]:size-[34px] ${
+                k.holat === "oynagan" ? "bg-brand-gold shadow-[0_3px_0_var(--color-brand-gold-d)]" : "bg-track"} ${
                 k.bugun && k.holat !== "oynagan" ? "ring-2 ring-brand-blue ring-inset" : ""}`}>
               {k.holat === "oynagan" && <Icon name="check" size={15} />}
             </span>
@@ -347,6 +350,10 @@ export function Bosh({
 interface Vazifa {
   nom: string;
   ik: IconName;
+  /** Plitkadagi 3D belgi. */
+  bel: HajmliNom;
+  /** Plitka ostidagi qisqa yozuv: "5 daq", "6 ta savol", "5 soat qoldi". */
+  qisqa: string;
   /** O'ngdagi yozuv: "Boshlash", "Yechish", "O'ynash". */
   amal: string;
   bajarildi: boolean;
@@ -442,31 +449,37 @@ function asosiyAmal({ davom, prof, onDarslar, onMasalalar, onDavom, onKurs, onIm
 function AsosiyKarta({ amal }: { amal: Amal }) {
   const otilgan = amal.yol?.filter((h) => h === "otilgan").length ?? 0;
   const jami = amal.yol?.length ?? 0;
+  const belgi: HajmliNom = amal.yol ? "raketa" : "bitiruv";
   return (
     <button type="button" onClick={amal.on} data-tahlil={amal.tahlil}
-      className="clay-press flex w-full flex-col gap-3.5 rounded-[24px] bg-karta p-4 text-left shadow-clay
-                 min-[360px]:p-[18px] md:p-[22px]">
-      <span className="flex flex-col gap-1">
-        <span className="flex items-baseline gap-2 text-[13px] font-bold">
-          <span className="min-w-0 flex-1 truncate text-brand-blue-t">{amal.yorliq}</span>
-          {amal.joy && <span className="shrink-0 text-ink-dim">{amal.joy}</span>}
+      className="tugma-3d relative flex w-full flex-col gap-3.5 overflow-hidden rounded-[26px] bg-brand-blue p-4
+                 text-left text-white shadow-[0_5px_0_var(--color-brand-blue-d)] min-[360px]:p-[18px] md:p-[22px]">
+      {/* Bezak: ikki yumshoq doira — karta tekis ko'k dog' bo'lib qolmasin. */}
+      <span aria-hidden className="pointer-events-none absolute -top-16 -right-12 size-48 rounded-full bg-white/10" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-20 -left-10 size-40 rounded-full bg-white/[0.06]" />
+      <span className="relative flex items-start gap-3">
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-bold">
+            <span className="rounded-full bg-white/20 px-2.5 py-0.5">{amal.yorliq}</span>
+            {amal.joy && <span className="text-white/80">{amal.joy}</span>}
+          </span>
+          <span className="font-display text-[21px] leading-[1.18] font-bold min-[360px]:text-[23px] md:text-[26px]">
+            {amal.nom}
+          </span>
+          {amal.izoh && <span className="text-[14.5px] leading-snug text-white/85">{amal.izoh}</span>}
         </span>
-        <span className="font-display text-[21px] leading-[1.2] font-bold min-[360px]:text-[23px] md:text-[26px]">
-          {amal.nom}
-        </span>
-        {amal.izoh && <span className="text-[15px] leading-snug text-ink-soft">{amal.izoh}</span>}
+        <span className="az-suzish shrink-0"><Hajmli nom={belgi} olcham={68} jonli /></span>
       </span>
       {jami > 0 && (
-        <span className="flex flex-col gap-1.5">
-          <span className="block h-2 overflow-hidden rounded-full bg-track" aria-hidden>
-            <span className="block h-full rounded-full bg-brand-blue"
-              style={{ width: `${Math.round((otilgan / jami) * 100)}%` }} />
+        <span className="relative flex flex-col gap-1.5">
+          <span className="block h-2 overflow-hidden rounded-full bg-white/25" aria-hidden>
+            <span className="block h-full rounded-full bg-white" style={{ width: `${Math.max(4, Math.round((otilgan / jami) * 100))}%` }} />
           </span>
-          <span className="text-[13px] text-ink-dim">{t("bugunBobYoli", { n: otilgan, jami })}</span>
+          <span className="text-[13px] text-white/85">{t("bugunBobYoli", { n: otilgan, jami })}</span>
         </span>
       )}
-      <span className="grid min-h-14 w-full place-items-center rounded-[18px] bg-brand-blue font-display text-[19px]
-                       font-bold text-white shadow-[0_4px_0_var(--color-brand-blue-d)]">
+      <span className="relative grid min-h-[52px] w-full place-items-center rounded-2xl bg-white font-display
+                       text-[19px] font-bold text-brand-blue-d shadow-[0_4px_0_rgb(0_0_0/0.12)]">
         {amal.tugma}
       </span>
     </button>
