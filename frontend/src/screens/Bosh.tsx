@@ -59,7 +59,7 @@ import { blokBormi, sinfOf } from "../lib/blok";
 import { useKompyuter } from "../lib/maket";
 import { qobiq, tgIsm } from "../lib/qobiq";
 import {
-  kichkintoyKerak, profilKursi, profilNomi, sinfOfProfil, useProfil, yolOf,
+  kichkintoyKerak, pedagogmi, profilKursi, profilNomi, sinfOfProfil, useProfil, yolOf,
 } from "../lib/profil";
 import type { Profil, Yol } from "../lib/profil";
 import { t } from "../lib/matn";
@@ -476,6 +476,12 @@ function AsosiyAmal({
   }
   const yol = yolOf(prof);
   const kurs = profilKursi(prof);
+  // Bo'lajak boshlang'ich sinf o'qituvchisi — 1–4-sinf ro'yxatiga
+  // ("Darslar" tepasida "Siz uchun" bo'limi shu sinflar).
+  if (pedagogmi(prof)) {
+    return tugma("bg-brand-blue", "Bosh: pedagog darslari", onDarslar,
+      t("boshPedagog"), t("boshPedagogIzoh"), "map");
+  }
   if (kurs) {
     const s = sinfOfProfil(prof);
     if (s === null) {

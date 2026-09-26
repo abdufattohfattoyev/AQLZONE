@@ -175,6 +175,11 @@ class Pupil(models.Model):
     #: (0 maktabgacha, 1..11 sinf, 101..105 kurs, 120..141, -1 javobsiz).
     anketa_sinf = models.SmallIntegerField(default=-1)
     viloyat = models.CharField(max_length=24, default="", blank=True)
+    #: Talabaning yo'nalishi (`tahlil.YONALISH_NOMI`). Faqat talabadan
+    #: so'raladi. Nega kerak: talabalar ko'pi 1–4-sinf darslarini
+    #: ochyapti — ular bo'lajak boshlang'ich sinf o'qituvchisimi yoki
+    #: boshqami, faqat shu javob aytadi va ilova shunga moslashadi.
+    yonalish = models.CharField(max_length=12, default="", blank=True)
     #: Anketa ko'rsatildimi (javob bergan YOKI o'tkazib yuborgan).
     #: Ikkinchi marta so'ralmasin.
     anketa_at = models.DateTimeField(null=True, blank=True, default=None)
@@ -930,7 +935,11 @@ class DuelTaklif(models.Model):
     """
 
     KUTYAPTI, QABUL, RAD = "kutyapti", "qabul", "rad"
-    HOLATLAR = [(KUTYAPTI, "kutyapti"), (QABUL, "qabul"), (RAD, "rad")]
+    #: Chaqirgan odam o'zi bekor qildi (2026-09-26). Rad chegarasiga
+    #: ham, "soatiga bitta" ga ham SANALMAYDI: bu chaqirganning qarori,
+    #: do'stning emas — o'yinni almashtirib qayta chaqira olsin.
+    BEKOR = "bekor"
+    HOLATLAR = [(KUTYAPTI, "kutyapti"), (QABUL, "qabul"), (RAD, "rad"), (BEKOR, "bekor")]
 
     #: Taklif shuncha soniyadan keyin o'z-o'zidan yopiladi.
     MUDDAT_SONIYA = 15
@@ -1821,7 +1830,16 @@ class Faollik(models.Model):
     BLOK = "blok"
     TOPLAM = "toplam"
     MASALA = "masala"
-    JOYLAR = [(DARS, "Dars"), (BLOK, "Blok test"), (TOPLAM, "Test to'plami"), (MASALA, "Masala")]
+    #: O'yinlar — "kim qaysi o'yinda" (o'yinlar ekranidagi `• 2` va duel
+    #: ro'yxatidagi holat). `nom` da o'yinning id'si: "tezkor", "jadval".
+    OYIN = "oyin"
+    DUEL = "duel"
+    JOYLAR = [
+        (DARS, "Dars"), (BLOK, "Blok test"), (TOPLAM, "Test to'plami"), (MASALA, "Masala"),
+        (OYIN, "O'yin"), (DUEL, "Duel"),
+    ]
+    #: O'qish joylari — bu yerdagi odam jonli taklif bilan uzilmaydi.
+    OQISH = (DARS, BLOK, TOPLAM, MASALA)
 
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, primary_key=True,
                                    related_name="faollik")
@@ -1958,6 +1976,11 @@ class ImtihonNatija(models.Model):
     """
 
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="imtihon_natijalari")
+    #: Bo'sh — DTM varianti. Aks holda talabalar kursining manzili
+    #: (`oliy-matematika`, …) — sessiya varianti (`core/imtihon.py`).
+    #: Alohida jadval emas: urinishning tuzilishi AYNAN bir xil va
+    #: tekshirilgan mantiqni ikki marta yozish kerak bo'lmasin.
+    kurs = models.CharField(max_length=40, default="", blank=True)
     variant = models.SmallIntegerField()
     togri = models.SmallIntegerField()
     jami = models.SmallIntegerField()

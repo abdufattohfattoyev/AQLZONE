@@ -604,8 +604,37 @@ def tugma_javobi(q: dict) -> str:
     if data == "kanal_tekshir":
         return kanal_tekshir_tugmasi(q, tg_id, til)
 
+    if data.startswith(("quiz_ok:", "quiz_yoq:")):
+        return quiz_namuna_tugmasi(q, tg_id, data)
+
     api("answerCallbackQuery", callback_query_id=q.get("id"))
     return f"{tg_id}: noma'lum tugma ({data[:32]})"
+
+
+#: Admin quiz namunasi tugmasi — natijaga qarab javob matni.
+QUIZ_QAROR_MATNI = {
+    "yuborildi": "✅ Kanalga yuborildi",
+    "rad": "❌ Olib tashlandi",
+    "eskirgan": "Bu namuna allaqachon hal qilingan",
+    "ruxsat_yoq": "Faqat admin uchun",
+    "xato": "Kanalga yuborilmadi — qayta bosib ko'ring",
+}
+
+
+def quiz_namuna_tugmasi(q: dict, tg_id: str, data: str) -> str:
+    """ "✅ Kanalga" / "❌ Kerak emas" — `core/quiz_namuna.py`. """
+    from core import quiz_namuna as QN
+    natija = QN.qaror(data, tg_id)
+    api("answerCallbackQuery", callback_query_id=q.get("id"),
+        text=QUIZ_QAROR_MATNI[natija], show_alert=natija in ("ruxsat_yoq", "xato"))
+    # Hal qilingan namunaning tugmalari o'rniga — natija (bosib bo'lmaydigan yozuv).
+    xabar = q.get("message") or {}
+    if natija in ("yuborildi", "rad", "eskirgan") and xabar.get("message_id"):
+        api("editMessageReplyMarkup",
+            chat_id=xabar["chat"]["id"], message_id=xabar["message_id"],
+            reply_markup={"inline_keyboard": [[{"text": QUIZ_QAROR_MATNI[natija],
+                                                "callback_data": "quiz_hal"}]]})
+    return f"{tg_id}: quiz namuna — {natija}"
 
 
 # ------------------------------------------------ majburiy kanal a'zoligi

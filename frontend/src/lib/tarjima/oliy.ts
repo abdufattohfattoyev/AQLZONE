@@ -254,6 +254,35 @@ const O = {
   integralBolaklab: ["Bo'laklab integrallash bilan hisoblang", "Вычислите интегрированием по частям"],
   qatorYigindi: ["Qator yig'indisini toping", "Найдите сумму ряда"],
   difTenglama: ["Differensial tenglamaning yechimini toping", "Найдите решение дифференциального уравнения"],
+
+  /* ================= oliy matematika 2-kurs, ehtimollar ================= */
+  xususiyHosila: ["Xususiy hosilaning nuqtadagi qiymatini toping", "Найдите значение частной производной в точке"],
+  gradient: ["Gradient uzunligini toping", "Найдите длину градиента"],
+  ekstremum2: ["Funksiyaning minimum nuqtasini toping", "Найдите точку минимума функции"],
+  karraliIntegral: ["Ikki karrali integralni hisoblang", "Вычислите двойной интеграл"],
+  sohaYuzi: ["Soha yuzini karrali integral bilan toping", "Найдите площадь области двойным интегралом"],
+  qatorYaqinlashish: ["Qaysi qator yaqinlashadi?", "Какой ряд сходится?"],
+  txtQaysiQator: ["Yaqinlashuvchi qatorni tanlang", "Выберите сходящийся ряд"],
+  radius: ["Darajali qatorning yaqinlashish radiusini toping", "Найдите радиус сходимости степенного ряда"],
+  teylor: ["Makloren qatori koeffitsiyentini toping", "Найдите коэффициент ряда Маклорена"],
+  xarakteristik: ["Xarakteristik tenglama ildizlarini toping", "Найдите корни характеристического уравнения"],
+  umumiyYechim: ["Tenglamaning umumiy yechimini toping", "Найдите общее решение уравнения"],
+  orinlashtirish: ["Nechta usulda tanlash mumkin (tartib muhim)?", "Сколькими способами (порядок важен)?"],
+  tolaEhtimol: ["To'la ehtimollik formulasi bilan toping", "Найдите по формуле полной вероятности"],
+  kutilma: ["Matematik kutilmani toping", "Найдите математическое ожидание"],
+  binomial: ["Binomial taqsimot parametrini toping", "Найдите параметр биномиального распределения"],
+  medianaTop: ["Medianani toping", "Найдите медиану"],
+  kenglik: ["Variatsion qator kengligini toping", "Найдите размах выборки"],
+  txtGuruhTanlash: ["{n} kishidan {k} kishilik guruh tuzish", "Составить группу из {k} человек среди {n}"],
+  txtLavozim: ["{n} kishidan {k} ta turli lavozimga tayinlash", "Назначить {k} разные должности среди {n} человек"],
+  txtNavbat: ["{n} kishini navbatga turg'izish", "Поставить {n} человек в очередь"],
+  txtQutiBir: ["Qutida {oq} ta oq va {qora} ta qora shar. Bitta olindi — oq bo'lishi", "В урне {oq} белых и {qora} чёрных шаров. Вынут один — белый"],
+  txtQutiIkki: ["Qutida {oq} ta oq, {qora} ta qora shar. Qaytarmasdan 2 ta olindi — ikkalasi oq", "В урне {oq} белых, {qora} чёрных. Вынуты 2 без возврата — оба белые"],
+  txtIkkiKubik: ["Ikki kubik tashlandi. Ochkolar yig'indisi {s} ga teng", "Брошены две кости. Сумма очков равна {s}"],
+  txtIkkiQuti: ["1-qutida {a} oq, {b} qora; 2-qutida {c} oq, {d} qora. Tasodifiy qutidan olingan shar oq", "В 1-й урне {a} белых, {b} чёрных; во 2-й {c} белых, {d} чёрных. Шар из случайной урны — белый"],
+  txtBernulli: ["Tanga {n} marta tashlandi. Gerb aniq {k} marta tushishi", "Монета брошена {n} раз. Герб выпал ровно {k} раз"],
+
+  /* ================= sessiya ================= */
 } satisfies Record<string, [string, string]>;
 
 export type OliyKalit = keyof typeof O;

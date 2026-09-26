@@ -11,3 +11,4 @@ export * from "./geometriya";
 export * from "./analiz";
 export * from "./fazo";
 export * from "./talaba";
+export * from "./talaba2";

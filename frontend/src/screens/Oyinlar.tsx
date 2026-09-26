@@ -34,6 +34,11 @@
  * ikkalasi ham BUGUN bo'ladi, ikkalasida ham qarshi tomon bor.
  * Pastdagi sakkiztasi esa mashq — ular har doim joyida.
  *
+ * 2026-09-26: duel kartadan TEPADAGI BANNERGA ko'chdi (tablardan
+ * yuqorida, ikkalasida ko'rinadi) va tirik son oldi: "4 kishi hozir
+ * o'yinlarda". Mashq kartalarining burchagida esa ⚔️ (duel bor) va
+ * `• 2` (hozir o'ynayotganlar) turadi — `lib/oyinlarJonli.ts`.
+ *
  * KARTA IKKI XIL GAPIRADI. O'ynalmagan o'yinda izoh turadi ("Qaysi
  * belgi yashiringan?") — u savol bo'lib, qiziqish uyg'otadi.
  * O'ynalganida esa uning o'rniga REKORD chiqadi: endi izoh ortiqcha,
@@ -43,7 +48,8 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { duelTaklifOl } from "../lib/api";
-import type { XonaOyin } from "../lib/api";
+import type { OyinlarJonli, XonaOyin } from "../lib/api";
+import { useOyinlarJonli } from "../lib/oyinlarJonli";
 import { XONA_OYINLAR } from "../lib/xonaOyinlar";
 import { kunlikSonBugun } from "./KunlikSon";
 import { sonOviBugun } from "./SonOvi";
@@ -97,6 +103,8 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onSha
   // Bugun o'ynalganmi — karta shunga qarab ikki xil gapiradi.
   const bugun = maydonNatija();
   const [bolim, setBolim] = useState<Bolim>(bolimOl);
+  // Kim qaysi o'yinda — banner va kartalardagi `• 2` (har 8 soniyada).
+  const jonli = useOyinlarJonli();
   const tanla = (b: Bolim) => {
     setBolim(b);
     try { localStorage.setItem(BOLIM_KALIT, b); } catch { /* jim */ }
@@ -131,6 +139,13 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onSha
         </span>
       </div>
 
+      {/* ---- Duel banneri ----
+          Tablardan TEPADA, ikkalasida ham ko'rinadi: odam bu yerga
+          ko'pincha "kim bilan o'ynasam?" degan savol bilan keladi va u
+          javobni tab almashtirib qidirmasligi kerak. Tirik son ("4 kishi
+          hozir o'yinlarda") — kirish uchun eng kuchli sabab. */}
+      <DuelBanner jonli={jonli} onOch={onDuel} />
+
       {/* ---- Yakka / Jamoaviy ----
           Ilgari maydon va duel yonma-yon turardi ("yolg'iz yoki do'st
           bilan"). Jamoaviy o'yinlar qo'shilgach bu savol tabga aylandi:
@@ -162,54 +177,59 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onSha
 
           {/* Son ovi — qoidasi bitta jumla, lekin soatlab o'ynaladi.
               Kunlik son bilan yonma-yon emas, alohida qatorda: u
-              "bugun bir marta" emas, istagancha o'ynaladigan o'yin. */}
-          <button type="button" onClick={onSonOvi} data-tahlil="O'yinlar: son ovi"
-            className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay bg-brand-purple p-3
-                       text-left text-white shadow-clay">
-            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
-              <EmojiBelgi e="🎯" olcham={28} jonli />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
-                {t("sonOvi")}
-                <span className="rounded-full bg-white/25 px-2 py-0.5 text-[10px]">{t("karvonYangi")}</span>
+              "bugun bir marta" emas, istagancha o'ynaladigan o'yin.
+              Uchala katta o'yin telefonda ustma-ust, kengroq ekranda esa
+              bitta qatorda — ilgari planshetda ular butun enga cho'zilib,
+              ichi bo'sh uzun lentaga aylanardi. */}
+          <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
+            <button type="button" onClick={onSonOvi} data-tahlil="O'yinlar: son ovi"
+              className="az-kirish tugma-3d flex w-full items-center gap-3 rounded-clay bg-brand-purple p-3
+                         text-left text-white shadow-clay">
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
+                <EmojiBelgi e="🎯" olcham={28} jonli />
               </span>
-              <span className="block text-[11.5px] leading-snug opacity-90">
-                {sonOviBugun() > 0 ? t("sonOviBugun", { n: sonOviBugun() }) : t("sonOviIzoh")}
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
+                  {t("sonOvi")}
+                  <span className="rounded-full bg-white/25 px-2 py-0.5 text-[10px]">{t("karvonYangi")}</span>
+                </span>
+                <span className="block text-[11.5px] leading-snug opacity-90">
+                  {sonOviBugun() > 0 ? t("sonOviBugun", { n: sonOviBugun() }) : t("sonOviIzoh")}
+                </span>
               </span>
-            </span>
-            <span className="font-display text-[20px] opacity-90">24</span>
-          </button>
-
-          {/* Karvon yo'li — eng katta yakka o'yin: xarita, to'siqlar, bozor. */}
-          <button type="button" onClick={onKarvon} data-tahlil="O'yinlar: karvon yo'li"
-            className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay p-3 text-left text-white shadow-clay"
-            style={{ background: "linear-gradient(120deg,#2B1D14,#6B3A1C 55%,#D96528)" }}>
-            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/15">
-              <EmojiBelgi e="🐫" olcham={28} jonli />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
-                {t("karvonTitul")}
-                <span className="rounded-full bg-[#E5A93C] px-2 py-0.5 text-[10px] text-[#2A1B06]">{t("karvonYangi")}</span>
+              <span className="font-display text-[20px] opacity-90">24</span>
+            </button>
+  
+            {/* Karvon yo'li — eng katta yakka o'yin: xarita, to'siqlar, bozor. */}
+            <button type="button" onClick={onKarvon} data-tahlil="O'yinlar: karvon yo'li"
+              className="az-kirish tugma-3d flex w-full items-center gap-3 rounded-clay p-3 text-left text-white shadow-clay"
+              style={{ background: "linear-gradient(120deg,#2B1D14,#6B3A1C 55%,#D96528)" }}>
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/15">
+                <EmojiBelgi e="🐫" olcham={28} jonli />
               </span>
-              <span className="block text-[11.5px] leading-snug opacity-90">{t("karvonIzoh")}</span>
-            </span>
-          </button>
-
-          {/* Tulki shaharchasi — tangani sarflaydigan joy va har kuni qaytish sababi. */}
-          <button type="button" onClick={onShaharcha} data-tahlil="O'yinlar: shaharcha"
-            className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay bg-brand-orange p-3
-                       text-left text-white shadow-clay">
-            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
-              <EmojiBelgi e="🦊" olcham={28} jonli />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block font-display text-[15px] leading-tight">{t("shTitul")}</span>
-              <span className="block text-[11.5px] opacity-90">{t("shIzoh")}</span>
-            </span>
-            <span className="text-[22px]">🏠🌳🏪</span>
-          </button>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
+                  {t("karvonTitul")}
+                  <span className="rounded-full bg-[#E5A93C] px-2 py-0.5 text-[10px] text-[#2A1B06]">{t("karvonYangi")}</span>
+                </span>
+                <span className="block text-[11.5px] leading-snug opacity-90">{t("karvonIzoh")}</span>
+              </span>
+            </button>
+  
+            {/* Tulki shaharchasi — tangani sarflaydigan joy va har kuni qaytish sababi. */}
+            <button type="button" onClick={onShaharcha} data-tahlil="O'yinlar: shaharcha"
+              className="az-kirish tugma-3d flex w-full items-center gap-3 rounded-clay bg-brand-orange p-3
+                         text-left text-white shadow-clay">
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
+                <EmojiBelgi e="🦊" olcham={28} jonli />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[15px] leading-tight">{t("shTitul")}</span>
+                <span className="block text-[11.5px] opacity-90">{t("shIzoh")}</span>
+              </span>
+              <span className="text-[22px] sm:hidden lg:inline">🏠🌳🏪</span>
+            </button>
+          </div>
 
           <h2 className="az-kirish mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
             {t("maydonMashq")}
@@ -220,7 +240,8 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onSha
 
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             {OYINLAR.map((o, i) => (
-              <Karta key={o.id} o={o} i={i} onOch={() => onOyin(o.id)} />
+              <Karta key={o.id} o={o} i={i} onOch={() => onOyin(o.id)}
+                hozir={jonli?.oyinlar[o.id] ?? 0} />
             ))}
           </div>
 
@@ -243,8 +264,10 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onSha
             </span>
             <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
           </button>
+          {/* Duel kartasi bu yerda endi YO'Q: u tepadagi bannerga ko'chdi
+              va ikkita "duel" tugmasi bir ekranda "qaysi biri?" degan
+              savol tug'dirardi. */}
           <div className="mt-3 grid grid-cols-2 items-stretch gap-2.5 lg:grid-cols-4">
-            <DuelKarta onOch={onDuel} />
             {(Object.keys(XONA_OYINLAR) as XonaOyin[]).map((k, i) => {
               const m = XONA_OYINLAR[k];
               return (
@@ -294,17 +317,26 @@ function MaydonKarta({ bugun, onOch }: {
   );
 }
 
+/** Duelda qatnashadigan o'yinlar — "oqim" turidagilar (`backend/core/duel.py:OYINLAR`). */
+const duelmi = (o: Oyin) => o.tur === "oqim";
+const DUEL_SONI = OYINLAR.filter(duelmi).length;
+
 /**
- * Do'st bilan bellashuv kartasi.
+ * Duel banneri — "raqib toping" va TIRIK son.
  *
- * Maydonning YONIDA, ostida emas. Ikkalasi bir turdagi taklif —
- * "bugun bir marta" — va ular bir-birining muqobili: yolg'iz
- * o'ynaysizmi yoki do'st bilanmi. Ustma-ust turganda esa ular
- * ketma-ketlikdek o'qilardi.
+ * Uch qavat (dizayn qoidasi): sarlavha · izoh · tirik qator. Tirik qator
+ * eng muhimi va u holatga qarab bittagina narsani aytadi, muhimlik
+ * tartibida:
+ *
+ *   1. "Sizni 2 kishi kutyapti" — do'st o'ynab qo'ygan, javob menda;
+ *   2. "4 kishi hozir o'yinlarda" — jonli raqib bor;
+ *   3. "3 kishi hozir ilovada"   — o'yinda emas, lekin chaqirsa bo'ladi;
+ *   4. hech kim yo'q — do'stni chaqirishga undaydi. "0 kishi" yozilmaydi:
+ *      nol son bo'limni o'lik ko'rsatadi.
+ *
+ * Yashil nuqta faqat haqiqatan kimdir bo'lganda jimirlaydi.
  */
-function DuelKarta({ onOch }: { onOch: () => void }) {
-  // "Sizni 2 kishi kutyapti" — do'st o'ynab qo'ygan va javob kutyapti.
-  // Kartadagi yagona yorliq shu: bu odatiy holat emas, qaytish sababi.
+function DuelBanner({ jonli, onOch }: { jonli: OyinlarJonli | null; onOch: () => void }) {
   const [navbat, setNavbat] = useState(0);
   useEffect(() => {
     let bekor = false;
@@ -312,14 +344,38 @@ function DuelKarta({ onOch }: { onOch: () => void }) {
     return () => { bekor = true; };
   }, []);
 
+  const oyinda = jonli?.oyinda ?? 0;
+  const onlayn = jonli?.onlayn ?? 0;
+  const tirik = navbat > 0 || oyinda > 0 || onlayn > 0;
+  const qator = navbat > 0 ? t("duelKutyaptiBelgi", { n: navbat })
+    : oyinda > 0 ? t("duelBannerOyinda", { n: oyinda })
+    : onlayn > 0 ? t("duelBannerOnlayn", { n: onlayn })
+    : t("duelBannerHechKim");
+
   return (
-    <Chorlov
-      onOch={onOch} kech={90}
-      rang="bg-brand-orange text-white shadow-clay" quti="bg-white/20"
-      belgi="⚔️" oq jonli halqa
-      nom={t("duel")} izoh={t("duelIzoh")}
-      yorliq={navbat > 0 ? t("duelKutyaptiBelgi", { n: navbat }) : ""}
-    />
+    <button type="button" onClick={onOch} data-tahlil="O'yinlar: duel banneri"
+      className="az-kirish tugma-3d mt-4 flex w-full items-center gap-3 rounded-clay bg-brand-blue
+                 p-3 text-left text-white shadow-clay sm:p-4">
+      <span className="grid size-12 shrink-0 place-items-center rounded-[16px] bg-white/20">
+        <EmojiBelgi e="⚔️" olcham={30} jonli={tirik} className="hajmli-oq" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[16px] leading-tight">{t("duelBanner")}</span>
+        <span className="mt-0.5 block truncate text-[12px] leading-snug opacity-90">
+          {t("duelBannerIzoh", { n: DUEL_SONI })}
+        </span>
+        <span className="mt-1 flex items-center gap-1.5 text-[12.5px] font-semibold">
+          <span className={`size-2 shrink-0 rounded-full ${tirik ? "az-jonli bg-brand-green" : "bg-white/50"}`} />
+          <span className="truncate">{qator}</span>
+        </span>
+      </span>
+      {/* Tor ekranda (320px) faqat strelka qoladi — yozuv sig'maydi. */}
+      <span className="flex h-11 shrink-0 items-center gap-1 rounded-full bg-white/20 px-3 text-[13px]
+                       font-semibold">
+        <span className="hidden min-[360px]:inline">{t("duelKirish")}</span>
+        <Icon name="chevron" size={16} />
+      </span>
+    </button>
   );
 }
 
@@ -376,22 +432,45 @@ function Chorlov({
  * bo'yicha to'liq hisob keyingi ekranda, tanlash paytida ko'rinadi —
  * ya'ni aynan kerak bo'lgan payt.
  */
-function Karta({ o, i, onOch }: { o: Oyin; i: number; onOch: () => void }) {
+function Karta({ o, i, onOch, hozir }: {
+  o: Oyin; i: number; onOch: () => void;
+  /** Shu o'yinni hozir o'ynayotganlar (o'zimsiz). */
+  hozir: number;
+}) {
   const rang = UNIT_COLORS[o.rang];
   const eng = Math.max(...DARAJALAR.map((d) => rekord(o.id, d.n)));
   // Rekord NOL bo'lsa izoh o'z o'rnida qoladi. "🏆 0" degan yozuv
   // hech narsa aytmaydi va faqat kartani xunuk qiladi: o'yin ochilib
   // yopilgan bo'lsa ham, odam uni hali o'ynamagan hisoblanadi.
   const bor = eng > 0;
+  const duel = duelmi(o);
 
   return (
     /* `title` SHART: kartaning ichida katta emoji va ikki qator yozuv
        bor, lekin tugmaning o'z nomi yo'q — ekran o'quvchi uni "tugma"
        deb o'qib, qaysi o'yin ekanini aytmasdi. */
-    <button type="button" onClick={onOch} title={t(o.nom)}
+    <button type="button" onClick={onOch}
+      title={hozir > 0 ? `${t(o.nom)} · ${t("oyinKartaHozir", { n: hozir })}` : t(o.nom)}
       style={{ "--az-kech": `${60 + i * 45}ms` } as CSSProperties}
-      className="az-kirish clay-press flex flex-col items-center gap-1.5 rounded-clay bg-karta
+      className="az-kirish clay-press relative flex flex-col items-center gap-1.5 rounded-clay bg-karta
                  p-3 text-center shadow-clay-sm">
+      {/* Burchak belgilari — kartaning uch qavatiga QO'SHILMAYDI, markazdagi
+          belgi atrofidagi bo'sh joyda turadi:
+            chapda  ⚔️  — shu o'yinda duel bor (odatiy holat emas, ajratiladi)
+            o'ngda  • 2 — hozir o'ynayotganlar; nol bo'lsa umuman chizilmaydi */}
+      {duel && (
+        <span aria-label={t("oyinKartaDuel")}
+          className="absolute top-2 left-2 grid size-6 place-items-center rounded-full bg-track">
+          <EmojiBelgi e="⚔️" olcham={13} />
+        </span>
+      )}
+      {hozir > 0 && (
+        <span className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-brand-green/15
+                         px-2 py-0.5 text-[11px] leading-none font-semibold text-brand-green">
+          <span className="az-jonli size-1.5 rounded-full bg-brand-green" />
+          {hozir}
+        </span>
+      )}
       {/* Rang KLASS bilan emas, uslub bilan beriladi. Tailwind
           klasslarni manba matnidan topib yasaydi, ya'ni `${rang.bg}/12`
           kabi yig'ilgan satr hech qachon CSS'ga tushmasdi va doira

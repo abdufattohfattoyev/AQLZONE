@@ -26,6 +26,7 @@ import { FORMULALAR } from "../lib/formulalar";
 import { t } from "../lib/matn";
 import { til } from "../lib/til";
 import { tebrat, useOrqaga } from "../lib/qobiq";
+import { sinfMatn } from "../lib/tarjima/kurs";
 
 export function Formulalar({ sinf, onBack }: { sinf: number; onBack: () => void }) {
   const ozStrelka = useOrqaga(onBack);
@@ -41,6 +42,16 @@ export function Formulalar({ sinf, onBack }: { sinf: number; onBack: () => void 
   const q = qidiruv.trim().toLowerCase();
 
   /**
+   * Qaysi bo'limlar ko'rinadi. Talaba (sinf > 200) — o'z kurslari
+   * TEPADA, maktab formulalari ostida (ular ham kerak: logarifm,
+   * trigonometriya). Maktab o'quvchisiga talabalar bo'limi yo'q.
+   */
+  const talaba = sinf > 200;
+  const royxat = useMemo(() => (talaba
+    ? [...FORMULALAR.filter((b) => b.sinf > 200), ...FORMULALAR.filter((b) => b.sinf <= 200)]
+    : FORMULALAR.filter((b) => b.sinf <= 200)), [talaba]);
+
+  /**
    * Qidiruv natijasi.
    *
    * Bo'sh so'rovda barcha bo'limlar o'z holicha qaytadi. So'rov
@@ -48,8 +59,8 @@ export function Formulalar({ sinf, onBack }: { sinf: number; onBack: () => void 
    * qidirgan odamdan yana bir marta bosishni so'rash ma'nosiz.
    */
   const korinadigan = useMemo(() => {
-    if (!q) return FORMULALAR.map((b) => ({ b, lar: b.lar }));
-    return FORMULALAR
+    if (!q) return royxat.map((b) => ({ b, lar: b.lar }));
+    return royxat
       .map((b) => ({
         b,
         lar: b.lar.filter((f) =>
@@ -60,7 +71,7 @@ export function Formulalar({ sinf, onBack }: { sinf: number; onBack: () => void 
       .filter((x) => x.lar.length > 0
         || x.b.nom.toLowerCase().includes(q)
         || x.b.ru.toLowerCase().includes(q));
-  }, [q]);
+  }, [q, royxat]);
 
   const almashtir = (nom: string) => {
     setOchiq((s) => {
@@ -120,7 +131,7 @@ export function Formulalar({ sinf, onBack }: { sinf: number; onBack: () => void 
                     {ru ? b.ru : b.nom}
                   </span>
                   <span className="mt-0.5 block text-[11px] text-ink-dim">
-                    {t("formulaSinf", { n: b.sinf })} · {lar.length}
+                    {b.sinf > 200 ? sinfMatn(b.sinf + 100) : t("formulaSinf", { n: b.sinf })} · {lar.length}
                   </span>
                 </span>
                 {!q && (

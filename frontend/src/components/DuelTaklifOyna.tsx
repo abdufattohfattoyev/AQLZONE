@@ -15,8 +15,24 @@
  *      rad, sozlamada "takliflarni o'chirish".
  *
  * O'z-o'zidan yopilish RAD hisoblanmaydi: bola boshqa xonada bo'lishi
- * mumkin, uni chegaraga yozish adolatsiz bo'lardi. Faqat "Keyinroq"
+ * mumkin, uni chegaraga yozish adolatsiz bo'lardi. Faqat "Rad etish"
  * tugmasi rad deb yoziladi.
+ *
+ * ─────────────────── BITTA QAROR (2026-09-26) ───────────────────
+ *
+ * Oynada 15 soniya bor va ilgari uning ichida daraja tanlovi turardi
+ * ("Oson/O'rta/Qiyin" + izoh + "Siz: Oson · Aziz: Qiyin"). Bola shu
+ * uchta tugma ustida o'ylanib qolar va vaqt tugardi. Endi daraja anketa
+ * va o'yin tajribasidan o'zi olinadi (`duelDarajaTaklif`) va oynada
+ * bitta savol qoladi: o'ynaymi-yo'qmi. Chess.com va Lichess'dagi
+ * chaqiruv ham shunday: kim, qaysi o'yin, "Qabul" / "Rad".
+ *
+ * Daraja turgan joyda endi ikkita narsa: do'st bilan umumiy hisob
+ * (o'ynash uchun eng kuchli sabab) va "har kim o'z sinfiga mos misol
+ * oladi" — bola dadasi bilan o'ynashdan qo'rqmasin.
+ *
+ * Chaqirgan odam taklifni BEKOR qilsa, oyna keyingi so'rovda o'zi
+ * yopiladi va "Aziz taklifni bekor qildi" deb aytadi.
  */
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -28,10 +44,8 @@ import { useTgHisob } from "../lib/tgHisob";
 import { duelTaklifJavob, duelTaklifOl } from "../lib/api";
 import type { KelganTaklif } from "../lib/api";
 import { oyinById } from "../lib/oyin";
-import { darajaSon } from "../lib/oyin/duel";
-import { duelDarajaSaqla, duelDarajaTaklif } from "../lib/oyin/duelDaraja";
-import { DARAJALAR, darajaMa } from "../lib/oyin/tur";
-import type { Daraja } from "../lib/oyin/tur";
+import { duelDarajaTaklif } from "../lib/oyin/duelDaraja";
+import { DuelXato } from "../lib/api";
 import { yolDuelKod } from "../lib/yollar";
 
 /**
@@ -63,12 +77,19 @@ export function DuelTaklifOyna() {
   const nav = useNavigate();
   const [taklif, setTaklif] = useState<KelganTaklif | null>(null);
   const [qolgan, setQolgan] = useState(0);
-  const [daraja, setDaraja] = useState<Daraja>(1);
   const [band, setBand] = useState(false);
   const [xabar, setXabar] = useState("");
   // Bir taklif bir marta: "Keyinroq" dan keyin keyingi so'rov uni
   // (server hali yopmagan bo'lsa) qayta ochib qo'ymasin.
   const korilgan = useRef(new Set<number>());
+  // Ochiq oyna — so'rov ichidan (yopilgan klojurada) ko'rinsin.
+  const ochiqRef = useRef<{ id: number; kimdan: string; qolgan: number } | null>(null);
+  ochiqRef.current = taklif ? { id: taklif.id, kimdan: taklif.kimdan, qolgan } : null;
+
+  const xabarBer = (m: string) => {
+    setXabar(m);
+    setTimeout(() => setXabar(""), 3000);
+  };
 
   // Bellashuv faqat Telegram hisobi bilan o'ynaladi — boshqalardan
   // so'rov yuborishning ma'nosi yo'q, bu esa har 8 soniyadagi yukni
@@ -83,10 +104,18 @@ export function DuelTaklifOyna() {
     const sora = async () => {
       if (document.hidden) return;
       const h = await duelTaklifOl();
-      if (bekor || !h?.taklif || korilgan.current.has(h.taklif.id)) return;
+      if (bekor || !h) return;
+      // Ochiq taklif serverda yo'qoldi — chaqirgan bekor qildi yoki
+      // lobbidan ketdi. Oxirgi ikki soniyada esa bu oddiy muddat tugashi,
+      // uni "bekor qildi" deyish yolg'on bo'lardi.
+      const ochiq = ochiqRef.current;
+      if (ochiq && h.taklif?.id !== ochiq.id) {
+        setTaklif(null);
+        if (ochiq.qolgan > 2) xabarBer(t("duelTaklifBekorQildi", { nom: ochiq.kimdan }));
+      }
+      if (!h.taklif || korilgan.current.has(h.taklif.id)) return;
       const k = h.taklif;
       korilgan.current.add(k.id);
-      setDaraja(duelDarajaTaklif(k.oyin));
       setQolgan(k.qolgan);
       setXabar("");
       setTaklif(k);
@@ -128,17 +157,16 @@ export function DuelTaklifOyna() {
 
   const javob = (qabul: boolean) => {
     setBand(true);
-    if (qabul) duelDarajaSaqla(daraja);
-    duelTaklifJavob(taklif.id, qabul, qabul ? daraja : undefined)
+    duelTaklifJavob(taklif.id, qabul, qabul ? duelDarajaTaklif(taklif.oyin) : undefined)
       .then((j) => {
         setTaklif(null);
         if (qabul) nav(yolDuelKod(j.kod));
       })
-      .catch(() => {
+      .catch((e) => {
         setTaklif(null);
         if (qabul) {
-          setXabar(t("duelTaklifEskirdi"));
-          setTimeout(() => setXabar(""), 3000);
+          xabarBer(e instanceof DuelXato && e.sabab === "bekor"
+            ? t("duelTaklifBekorQildi", { nom: taklif.kimdan }) : t("duelTaklifEskirdi"));
         }
       })
       .finally(() => setBand(false));
@@ -168,34 +196,24 @@ export function DuelTaklifOyna() {
           {oyin ? `${t(oyin.nom)} · ` : ""}{taklif.savollar} · {t("duelSoniya", { n: taklif.vaqt })}
         </p>
         {hisob && hisob.jami > 0 && (
-          <p className="mt-1 text-[12.5px] text-ink-soft">
+          // Hisob — o'ynash uchun eng kuchli sabab, shuning uchun alohida
+          // yorliq bo'lib turadi (oltin — reyting rangi).
+          <p className="mx-auto mt-2 w-fit rounded-full bg-brand-gold/15 px-3 py-1 text-[13px]
+                        font-semibold text-brand-gold-d">
             {t("duelDostHisob", { men: hisob.men, raqib: hisob.raqib })}
             {(hisob.zanjir ?? 0) > 0 && (
-              <span className="font-semibold text-brand-gold-d">
+              <span>
                 {" · "}<EmojiMatn>{t("duelZanjir", { n: hisob.zanjir ?? 0 })}</EmojiMatn>
               </span>
             )}
           </p>
         )}
 
-        {/* Har kimga o'z darajasi — oynaning o'zida tanlanadi, qabul
-            qilgach qo'shimcha qadam bo'lmasin. */}
-        <p className="mt-3 text-[12px] leading-snug text-ink-dim">{t("duelTaklifIzoh")}</p>
-        <div className="mt-2 flex gap-1.5">
-          {DARAJALAR.map((d) => (
-            <button key={d.n} type="button" onClick={() => setDaraja(d.n)}
-              aria-pressed={d.n === daraja}
-              className={`clay-press min-w-0 flex-1 rounded-full py-2 font-display text-[13.5px]
-                          ${d.n === daraja ? "bg-brand-blue text-white" : "bg-track text-ink-soft"}`}>
-              {t(d.nom)}
-            </button>
-          ))}
-        </div>
-        <p className="mt-1.5 text-[12px] text-ink-dim">
-          {t("duelDarajalar", {
-            men: t(darajaMa(daraja).nom), nom: taklif.kimdan,
-            u: t(darajaMa(darajaSon(taklif.raqibDaraja)).nom),
-          })}
+        {/* Daraja tanlovi o'rnida — adolat haqida bitta qator. */}
+        <p className="mt-3 flex items-center justify-center gap-1.5 rounded-full bg-track px-3 py-1.5
+                      text-[12px] leading-snug text-ink-soft">
+          <EmojiBelgi e="🎓" olcham={14} />
+          {t("duelTaklifAdolat")}
         </p>
 
         {/* Qolgan vaqt chizig'i — raqam bilan birga: bola sonni o'qimasa
@@ -214,7 +232,7 @@ export function DuelTaklifOyna() {
         <button type="button" onClick={() => javob(false)} disabled={band}
           data-tahlil="Duel taklif: keyinroq"
           className="mt-2 w-full py-2 text-[13.5px] font-semibold text-ink-dim">
-          {t("keyinroq")}
+          {t("duelTaklifRadEt")}
         </button>
       </div>
     </div>

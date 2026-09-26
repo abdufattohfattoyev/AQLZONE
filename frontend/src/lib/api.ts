@@ -33,7 +33,13 @@ function deviceId(): string {
 }
 
 let token: string | null = localStorage.getItem(TOKEN_KEY);
-let profilId: string | null = localStorage.getItem(PROFIL_KEY);
+/**
+ * Faqat RAQAM qabul qilinadi. Shu kalitda bir muddat anketa javobi
+ * (`{"kim":…}`) turgan (`lib/profil.ts` dagi izohga qarang) va u har
+ * so'rovga qo'shilib, serverni 500 ga tushirardi.
+ */
+const profilXom = localStorage.getItem(PROFIL_KEY);
+let profilId: string | null = profilXom && /^\d+$/.test(profilXom) ? profilXom : null;
 
 /** Joriy profilni almashtirish (profil tanlash ekranidan chaqiriladi). */
 export function profilniTanla(id: number | string | null): void {
@@ -525,10 +531,11 @@ export interface Reyting {
   qatnashchilar: number;
 }
 
-export async function getReyting(davr: "jami" | "hafta"): Promise<Reyting | null> {
+export async function getReyting(davr: "jami" | "hafta", guruh = ""): Promise<Reyting | null> {
   if (!(await signIn())) return null;
   try {
-    const r = await fetch(`/api/v1/leaderboard?davr=${davr}${profilId ? `&profileId=${profilId}` : ""}`, {
+    const g = guruh ? `&guruh=${guruh}` : "";
+    const r = await fetch(`/api/v1/leaderboard?davr=${davr}${g}${profilId ? `&profileId=${profilId}` : ""}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!r.ok) return null;
@@ -736,6 +743,8 @@ export interface Hisob {
   kim?: string;
   /** Bosqich: 0–11 maktab, 101–105 OTM, 120–132 o'qituvchi, -1 javobsiz. */
   bosqich?: number;
+  /** Talabaning yo'nalishi (`lib/profil.ts` → Yonalish). */
+  yonalish?: string;
 }
 
 /**
@@ -956,7 +965,7 @@ export type DuelDaraja = 1 | 2 | 3;
 
 /** Jonli taklifning chaqirgan tomondagi holati. `otdi` — javobsiz, muddati tugadi. */
 export interface DuelTaklifHolati {
-  holat: "kutyapti" | "qabul" | "rad" | "otdi";
+  holat: "kutyapti" | "qabul" | "rad" | "otdi" | "bekor";
   qolgan: number;
 }
 
@@ -1140,6 +1149,40 @@ export interface OnlaynOyinchi {
   onlayn: boolean;
   /** Oxirgi marta qachon ko'ringani (ISO). */
   korindi: string;
+  /** Hozir nima qilyapti — chaqirish tugmasi shunga qarab o'zgaradi. */
+  holat?: OdamHolat;
+  /** `oyinda`/`duelda` bo'lsa — qaysi o'yinda (id). */
+  oyin?: string;
+}
+
+/**
+ * Odamning hozirgi holati (`backend/core/onlayn.py`):
+ * `bosh` ilovada, bo'sh · `oyinda` mashq o'yinida · `duelda` bellashyapti ·
+ * `oqiyapti` dars/test · `yoq` bugun kirgan, hozir yo'q.
+ */
+export type OdamHolat = "bosh" | "oyinda" | "duelda" | "oqiyapti" | "yoq";
+
+/** O'yinlar ekrani uchun sonlar — ismlarsiz. */
+export interface OyinlarJonli {
+  /** Hozir o'yinda (mashq yoki duel) — o'zimsiz. */
+  oyinda: number;
+  duelda: number;
+  /** Hozir ilovada — o'zimsiz. */
+  onlayn: number;
+  /** O'yin id'si → hozir o'ynayotganlar soni. */
+  oyinlar: Record<string, number>;
+}
+
+/** Xato bo'lsa `null` — ekran sonlarsiz ham ishlaydi. */
+export async function oyinlarJonli(): Promise<OyinlarJonli | null> {
+  if (!(await signIn())) return null;
+  try {
+    const r = await fetch("/api/v1/oyinlar/jonli", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as OyinlarJonli;
+  } catch { return null; }
 }
 
 export interface OnlaynRoyxat {
@@ -1225,6 +1268,8 @@ export interface DuelDost {
   ism: string;
   avatar: string;
   onlayn: boolean;
+  holat?: OdamHolat;
+  oyin?: string;
   hisob: DuelHisob;
   /** `men` — u o'ynab qo'ygan, javob menda; `u` — men kutyapman; bo'sh — hech kim. */
   navbat: "men" | "u" | "";
@@ -1293,6 +1338,10 @@ export const duelTaklifJavob = (
   id: number, qabul: boolean, daraja?: DuelDaraja,
 ): Promise<{ kod: string; qabul: boolean }> =>
   duelPost(`/api/v1/duel/taklif/${id}/javob`, { qabul, ...(daraja ? { daraja } : {}) });
+
+/** Chaqirgan odam jonli taklifni bekor qiladi — do'stidagi oyna yopiladi. */
+export const duelTaklifBekor = (kod: string): Promise<{ bekor: boolean }> =>
+  duelPost("/api/v1/duel/taklif/bekor", { kod });
 
 /* ================= JAMOAVIY O'YINLAR — xonalar ================= */
 

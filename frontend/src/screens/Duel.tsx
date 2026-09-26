@@ -31,6 +31,7 @@
  * ustunlik olardi.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Oqim } from "../components/oyin/Oqim";
 import { Konfetti } from "../components/Konfetti";
 import { Kutish } from "../components/Kutish";
@@ -38,24 +39,26 @@ import { avatarBelgi } from "../lib/dokon";
 import { EmojiBelgi, EmojiMatn } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { useOrqaga, havolaniOch } from "../lib/qobiq";
+import { useOrqaga, havolaniOch, tebrat } from "../lib/qobiq";
 import { useTgHisob } from "../lib/tgHisob";
 import { Kirish } from "../components/Kirish";
 import { useProgress } from "../lib/progress";
+import { useFaollik } from "../lib/faollik";
 import { OYINLAR, oyinById } from "../lib/oyin";
 import {
   DUEL_SAVOLLAR, DUEL_VAQTLAR, darajaSon, duelSavollari,
 } from "../lib/oyin/duel";
-import { duelDarajaSaqla, duelDarajaTaklif } from "../lib/oyin/duelDaraja";
+import { duelDarajaTaklif } from "../lib/oyin/duelDaraja";
 import { tangaHisobi } from "../lib/oyin/rekord";
 import {
   DuelXato, duelBall, duelBoshla, duelDostlar, duelHolat, duelKorish, duelNatija,
-  onlaynOyinchilar, duelQabul, duelTaklifYubor, duelTayyor, duelYana,
+  onlaynOyinchilar, duelQabul, duelTaklifBekor, duelTaklifYubor, duelTayyor, duelYana,
 } from "../lib/api";
 import type {
-  DuelDost, DuelHisob, DuelHolat, DuelJonli, DuelShart, DuelYakun, OnlaynOyinchi,
+  DuelDost, DuelHisob, DuelHolat, DuelJonli, DuelShart, DuelTaklifHolati, DuelYakun, OdamHolat,
+  OnlaynOyinchi,
 } from "../lib/api";
-import { DARAJALAR, darajaMa } from "../lib/oyin/tur";
+import { darajaMa } from "../lib/oyin/tur";
 import type { Daraja, Oyin as OyinTur, OyinNatija } from "../lib/oyin/tur";
 import type { Kalit } from "../lib/matn";
 import { UNIT_COLORS } from "../lib/types";
@@ -84,8 +87,10 @@ type Bosqich =
   | { nima: "havola"; duel: DuelHolat }
   | { nima: "yakun"; yakun: DuelYakun; duel: DuelHolat; xato: number };
 
-export function Duel({ onChiq, onOyin, onKod }: {
+export function Duel({ onChiq, onOyin, onKod, boshOyin }: {
   onChiq: () => void;
+  /** Oldindan tanlangan o'yin — o'yin ichidagi "Bellashish" dan. */
+  boshOyin?: string;
   /** Mashq rejimi — natijadagi "shu o'yinni mashq qilish". */
   onOyin?: (id: string) => void;
   /** Do'st kutayotgan chaqiruvni ochish — `/duel/<kod>`. */
@@ -134,7 +139,7 @@ export function Duel({ onChiq, onOyin, onKod }: {
 
   if (bosqich.nima === "shartlar") {
     return (
-      <Shartlar onTanladi={yasa} onChiq={onChiq} onKod={onKod}
+      <Shartlar onTanladi={yasa} onChiq={onChiq} onKod={onKod} boshOyin={boshOyin}
         onJonli={(d) => setBosqich({ nima: "lobbi", duel: d })} />
     );
   }
@@ -166,6 +171,9 @@ export function Duel({ onChiq, onOyin, onKod }: {
         duel={bosqich.duel} menChaqirdim
         onBoshla={(d) => setBosqich({ nima: "oyin", duel: d, jonli: true })}
         onYolgiz={() => setBosqich({ nima: "oyin", duel: bosqich.duel, jonli: false })}
+        // Bekor qilingach — chaqiruv ekraniga, o'yinlar ro'yxatiga emas:
+        // odam odatda boshqa o'yin yoki boshqa do'st bilan qayta chaqiradi.
+        onBekor={() => setBosqich({ nima: "shartlar" })}
         onChiq={onChiq}
       />
     );
@@ -211,35 +219,56 @@ const DUEL_OYINLAR = OYINLAR.filter((o) => o.tur === "oqim");
  * yozib qo'yardi va ikkinchi tomon "nega 45?" degan savol bilan
  * qolardi: tanlov qancha keng bo'lsa, qaror shuncha og'ir.
  */
-function Shartlar({ onTanladi, onChiq, onKod, onJonli }: {
-  /** `kimga` — onlayn ro'yxatdan tanlangan raqib (bo'lmasa havola bilan). */
+/**
+ * ──────────── 2026-09-26: BITTA EKRAN, IKKI SAVOL, BITTA TUGMA ────────────
+ *
+ * Ilgari ekran olti bo'limdan iborat edi: o'yin, savollar, vaqt,
+ * daraja, tugma, keyin esa — tugmaning OSTIDA — do'stlar va onlayn
+ * ro'yxat. Odam chaqirmoqchi bo'lgan kishini topish uchun hamma
+ * sozlamalardan o'tib, pastga aylantirishi kerak edi, "Chaqiruv
+ * yuborish" esa Telegram Desktop'ning past oynasida umuman ko'rinmasdi.
+ *
+ * Endi ekran faqat ikkita savol beradi, muhimlik tartibida:
+ *
+ *   1. KIM BILAN?  gorizontal qator: "Havola" + do'stlar + onlayn odamlar.
+ *   2. QAYSI O'YIN? oltita katak.
+ *
+ * Savollar soni, vaqt va daraja bitta yig'ilgan qatorga tushdi
+ * ("20 savol · 60 s · Oson") — ularni deyarli hech kim o'zgartirmaydi,
+ * standart qiymat esa eslab qolinadi. Asosiy tugma pastga YOPISHGAN va
+ * tanlangan odamga qarab gapiradi: "Azizni chaqirish", "Aziz bilan
+ * jonli" yoki "Chaqiruv yuborish".
+ */
+function Shartlar({ onTanladi, onChiq, onKod, onJonli, boshOyin }: {
+  /** `kimga` — ro'yxatdan tanlangan raqib (bo'lmasa havola bilan). */
   onTanladi: (s: DuelShart, kimga?: number) => void;
   onChiq: () => void;
   onKod?: (kod: string) => void;
   /** Jonli taklif yuborildi — lobbiga o'tiladi. */
   onJonli: (d: DuelHolat) => void;
+  boshOyin?: string;
 }) {
-  const [oyin, setOyin] = useState<OyinTur>(DUEL_OYINLAR[0]);
+  const [oyin, setOyin] = useState<OyinTur>(
+    () => DUEL_OYINLAR.find((o) => o.id === boshOyin) ?? DUEL_OYINLAR[0]);
   const [savollar, setSavollar] = useState<number>(20);
   const [vaqt, setVaqt] = useState<number>(60);
-  const [daraja, setDaraja] = useState<Daraja>(() => duelDarajaTaklif(DUEL_OYINLAR[0].id));
+  // Daraja SO'RALMAYDI — anketa va o'yin tajribasidan (`duelDaraja.ts`).
+  const daraja = duelDarajaTaklif(oyin.id);
+  const [sozlamaOchiq, setSozlamaOchiq] = useState(false);
   const shart: DuelShart = { oyin: oyin.id, savollar, vaqt, daraja };
 
-  /* ---- do'stlar ----
-     Bir marta yuklanadi va ikki joyda chiziladi: kutayotganlar TEPADA
-     (javob berish — eng muhim ish), qolganlari pastda, chaqiruv
-     tugmasi ostida (ular uchun avval shartlar tanlanadi). */
   const [dostlar, setDostlar] = useState<DuelDost[] | null>(null);
   const [taklifXato, setTaklifXato] = useState("");
   const [yuborilmoqda, setYuborilmoqda] = useState(0);
+  // 0 — havola bilan (hech kim tanlanmagan).
+  const [kimga, setKimga] = useState(0);
+  const onlayn = useOnlayn();
 
   useEffect(() => {
     let bekor = false;
     duelDostlar().then((d) => { if (!bekor) setDostlar(d); });
     return () => { bekor = true; };
   }, []);
-
-  const darajaTanla = (d: Daraja) => { setDaraja(d); duelDarajaSaqla(d); };
 
   const jonliChaqir = (dost: DuelDost) => {
     setTaklifXato("");
@@ -253,68 +282,105 @@ function Shartlar({ onTanladi, onChiq, onKod, onJonli }: {
         setTaklifXato(`${dost.ism}: ${
           ["notanish", "oflayn", "soatiga", "bugun_rad", "yopiq", "band"].includes(sabab)
             ? t(kalit) : t("duelXato")}`);
-        // Ro'yxat eskirgan — "jonli" tugmasi endi noto'g'ri bo'lishi mumkin.
+        // Ro'yxat eskirgan — "jonli" endi noto'g'ri bo'lishi mumkin.
         duelDostlar().then(setDostlar);
       });
   };
 
   const kutayotganlar = (dostlar ?? []).filter((d) => d.navbat === "men");
-  const qolganlar = (dostlar ?? []).filter((d) => d.navbat !== "men");
+  const odamlar = odamlarYig(dostlar ?? [], onlayn.ro ?? []);
+  // Tanlangan odam ro'yxat yangilanganda band bo'lib qolishi mumkin —
+  // o'shanda jimgina havolaga qaytiladi, tugma yolg'on gapirmasin.
+  const tanlangan = odamlar.find((o) => o.profil === kimga && !o.band);
+
+  const yubor = () => {
+    tebrat("tanlov");
+    if (!tanlangan) onTanladi(shart);
+    else if (tanlangan.dost?.jonli) jonliChaqir(tanlangan.dost);
+    else onTanladi(shart, tanlangan.profil);
+  };
+  const tugmaYozuv = !tanlangan ? t("duelChaqirish")
+    : tanlangan.dost?.jonli ? t("duelJonliBilan", { ism: tanlangan.ism })
+    : t("duelOdamniChaqir", { ism: tanlangan.ism });
 
   return (
-    /* Kenglik ekranga qarab o'sadi, balandlik esa SIQILADI. Telegram
-       Desktop'da Mini App tor VA past oynada ochiladi: u yerda qat'iy
-       bo'shliqlar bilan "Chaqirish" tugmasi ekrandan chiqib ketardi va
-       odam uni umuman ko'rmasdi. `clamp` bilan tepa qismi past oynada
-       o'zi kichrayadi. */
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-[clamp(10px,2.5vh,24px)]
-                    pb-8 sm:max-w-[600px] lg:max-w-[760px]">
-      <div className="text-center">
-        <span className="mx-auto grid place-items-center rounded-[24px] bg-brand-orange shadow-clay
-                         size-[clamp(52px,9vh,72px)]">
-          {/* O'lcham `olcham` bilan emas, klass bilan beriladi: bu ekran
-              past telefonda siqiladi va tomon `clamp` bo'lishi kerak,
-              raqam esa buni ifodalay olmaydi. `olcham` faqat xaritada
-              yo'q emoji uchun — o'shanda matn bo'lib chiqadi. */}
-          <EmojiBelgi e="⚔️" olcham={40} className="size-[clamp(30px,5vh,40px)]" />
+    /* Ustun ekran bo'yi: tugma pastga yopishadi va past oynada ham
+       (Telegram Desktop) doim ko'rinib turadi. */
+    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-4
+                    pt-[clamp(10px,2.5vh,24px)] sm:max-w-[600px] lg:max-w-[760px]">
+      {/* Sarlavha YONMA-YON — o'yinlar ekrani bilan bir xil. Markazdagi
+          katta belgi ekranning uchdan birini yeb, tanlovni pastga
+          surardi. */}
+      <div className="flex items-center gap-3">
+        <span className="grid size-12 shrink-0 place-items-center rounded-[18px] bg-brand-blue/15">
+          <EmojiBelgi e="⚔️" olcham={30} />
         </span>
-        <h1 className="mt-2.5 text-[clamp(19px,3.4vh,23px)] leading-tight">{t("duel")}</h1>
-        <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">{t("duelShartIzoh")}</p>
+        <span className="min-w-0">
+          <h1 className="text-[20px] leading-tight">{t("duel")}</h1>
+          <p className="mt-0.5 text-[12px] leading-snug text-ink-soft">{t("duelShartIzoh")}</p>
+        </span>
       </div>
 
-      {/* ---- sizni kutyapti ----
-          Eng tepada: do'st allaqachon o'ynab qo'ygan va javob kutyapti.
-          Bu — ekranga kirishning eng ko'p sababi (Trivia Crack usuli). */}
+      {/* ---- sizni kutyapti ---- javob berish — eng muhim ish. */}
       {kutayotganlar.length > 0 && (
         <DostlarRoyxat sarlavha={t("duelNavbatSarlavha")} dostlar={kutayotganlar}
           onKod={onKod} onJonli={jonliChaqir} onChaqir={(p) => onTanladi(shart, p)}
           yuborilmoqda={yuborilmoqda} />
       )}
 
-      {/* ---- o'yin ---- */}
-      <h2 className="mt-[clamp(14px,2.5vh,24px)] mb-2 ml-1.5 text-[11px] tracking-widest
+      {/* ---- 1. kim bilan ---- */}
+      <h2 className="mt-[clamp(14px,2.5vh,22px)] mb-2 ml-1.5 flex items-center gap-1.5 text-[11px]
+                     tracking-widest text-ink-soft uppercase">
+        {t("duelKimBilan")}
+        {onlayn.soni > 0 && (
+          <span className="ml-auto flex items-center gap-1 tracking-normal normal-case">
+            <span className="az-jonli size-1.5 rounded-full bg-brand-green" />
+            {t("duelOnlayn", { n: onlayn.soni })}
+          </span>
+        )}
+      </h2>
+      {/* Telefonda gorizontal aylanadi (odam ko'p bo'lsa ham bitta qator),
+          kengroq ekranda esa o'raladi — aylantirish kerak bo'lmasin. */}
+      <div role="radiogroup" aria-label={t("duelKimBilan")}
+        className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pt-0.5 pb-1.5 [scrollbar-width:none]
+                   sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+        <OdamTanlov tanlangan={!tanlangan} ism={t("duelHavolaBilan")} onTanla={() => setKimga(0)}
+          belgi={<Icon name="send" size={19} className="text-brand-blue" />} />
+        {odamlar.map((o) => (
+          <OdamTanlov key={o.profil} tanlangan={tanlangan?.profil === o.profil} ism={o.ism}
+            onlayn={o.onlayn} band={o.band} onTanla={() => setKimga(o.profil)}
+            belgi={<EmojiBelgi e={avatarBelgi(o.avatar)} olcham={20} />} />
+        ))}
+      </div>
+      {/* Tanlov haqida bitta qator — kimni tanlaganini va u hozir
+          nima qilayotganini. Ro'yxat bo'sh bo'lsa buni ochiq aytadi. */}
+      <p className="mt-1 ml-1.5 text-[12px] leading-snug text-ink-dim">
+        {tanlangan ? `${tanlangan.ism}${tanlangan.izoh ? ` · ${tanlangan.izoh}` : ""}`
+          : onlayn.ro !== null && odamlar.length === 0 ? t("duelHechKim")
+          : t("duelHavolaIzoh")}
+      </p>
+
+      {/* ---- 2. o'yin ---- */}
+      <h2 className="mt-[clamp(14px,2.5vh,22px)] mb-2 ml-1.5 text-[11px] tracking-widest
                      text-ink-soft uppercase">
         {t("duelOyinTanla")}
       </h2>
-      {/* Oltita o'yin: tor telefonda 3×2, kengroq ekranda bitta qatorda.
-          `min-w-0` SHART — busiz uzun nom katakni kengaytirib, setkani
-          buzib yuborardi. */}
+      {/* Tor telefonda 3×2, kengroq ekranda bitta qatorda. `min-w-0`
+          SHART — busiz uzun nom katakni kengaytirib, setkani buzardi. */}
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {DUEL_OYINLAR.map((o) => {
-          const tanlangan = o.id === oyin.id;
+          const tanlanganOyin = o.id === oyin.id;
           const rang = UNIT_COLORS[o.rang];
           return (
             <button key={o.id} type="button" onClick={() => setOyin(o)} title={t(o.nom)}
-              aria-pressed={tanlangan}
-              style={tanlangan ? undefined : { backgroundColor: `${rang.road}14` }}
+              aria-pressed={tanlanganOyin}
+              style={tanlanganOyin ? undefined : { backgroundColor: `${rang.road}14` }}
               className={`clay-press flex min-w-0 flex-col items-center justify-start gap-1
                           rounded-clay px-1.5 py-2.5 text-center transition-colors
-                          ${tanlangan ? `${rang.bg} text-white shadow-clay` : "text-ink shadow-clay-sm"}`}>
+                          ${tanlanganOyin ? "bg-brand-blue text-white shadow-clay" : "text-ink shadow-clay-sm"}`}>
               <EmojiBelgi e={o.emoji} olcham={30} className="size-[clamp(24px,4vh,30px)]" />
-              {/* Nom KESILMAYDI, ikki qatorgacha o'raladi: "Ko'paytirish
-                  jadvali" kesilganda "Ko'paytirish jad…" bo'lib qolardi
-                  va bola qaysi o'yin ekanini bilmasdi. */}
-              <span className="hyphens-auto font-display text-[10.5px] leading-[1.15] break-words">
+              {/* Nom KESILMAYDI, ikki qatorgacha o'raladi. */}
+              <span className="hyphens-auto font-display text-[11px] leading-[1.15] break-words">
                 {t(o.nom)}
               </span>
             </button>
@@ -322,82 +388,141 @@ function Shartlar({ onTanladi, onChiq, onKod, onJonli }: {
         })}
       </div>
 
-      {/* ---- savollar va vaqt ---- */}
-      <ShartQator nom={t("duelSavollarSoni")} qiymatlar={DUEL_SAVOLLAR}
-        joriy={savollar} onTanla={setSavollar} yozuv={(n) => String(n)} />
-      <ShartQator nom={t("duelVaqtSoni")} qiymatlar={DUEL_VAQTLAR}
-        joriy={vaqt} onTanla={setVaqt} yozuv={(n) => t("duelSoniya", { n })} />
-
-      <DarajaTanlov joriy={daraja} onTanla={darajaTanla} />
-
-      {/* Tanlangan shartlar bitta qatorda takrorlanadi: uchta tanlov uch
-          joyda turadi va ularni birga ko'rmasdan "nima chiqdi?" degan
-          savolga javob berib bo'lmaydi. */}
-      <p className="mt-[clamp(10px,2vh,20px)] text-center text-[12.5px] text-ink-soft">
-        {t("duelShartYakun", { oyin: t(oyin.nom), savollar, vaqt })}
-      </p>
-
-      <button type="button" onClick={() => onTanladi(shart)}
-        className="tugma-3d az-yaltir mt-2.5 w-full rounded-3xl bg-brand-green
-                   py-[clamp(11px,2.2vh,16px)] font-display text-[17px] text-white
-                   shadow-[0_6px_0_var(--color-brand-green-d)]">
-        {t("duelChaqirish")}
+      {/* ---- sozlamalar — yig'ilgan ----
+          Uchala qiymat ham shu qatorda ko'rinadi, ya'ni odam nima bilan
+          o'ynashini biladi, lekin o'zgartirish uchun uchta bo'limdan
+          o'tishi shart emas. */}
+      <button type="button" onClick={() => setSozlamaOchiq((v) => !v)} aria-expanded={sozlamaOchiq}
+        data-tahlil="Duel: sozlamalar"
+        className="clay-press mt-3 flex min-h-11 w-full items-center gap-2 rounded-clay bg-karta px-3.5
+                   text-left shadow-clay-sm">
+        <span className="min-w-0 flex-1 truncate text-[13px] text-ink-soft">
+          {t("duelSozlamaQator", { savollar, vaqt })}
+        </span>
+        <span className="shrink-0 text-[12.5px] font-semibold text-brand-blue">
+          {sozlamaOchiq ? t("duelYopish") : t("duelOzgartirish")}
+        </span>
       </button>
 
-      <button type="button" onClick={onChiq}
-        className="mt-2.5 w-full py-2 text-[13.5px] font-semibold text-ink-dim">
-        {t("duelOyinlarga")}
-      </button>
+      {sozlamaOchiq && (
+        <div className="az-kirish">
+          {/* Savollar va vaqt YONMA-YON: har birida uchta qisqa qiymat
+              va 320px da ham sig'adi — ikkita alohida qator bo'yni
+              behuda cho'zardi. */}
+          <div className="grid grid-cols-2 gap-x-3">
+            <div className="min-w-0">
+              <ShartQator nom={t("duelSavollarSoni")} qiymatlar={DUEL_SAVOLLAR}
+                joriy={savollar} onTanla={setSavollar} yozuv={(n) => String(n)} />
+            </div>
+            <div className="min-w-0">
+              <ShartQator nom={t("duelVaqtSoni")} qiymatlar={DUEL_VAQTLAR}
+                joriy={vaqt} onTanla={setVaqt} yozuv={(n) => t("duelSoniya", { n })} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {taklifXato && (
-        <p role="status" className="mt-5 rounded-clay bg-karta px-3.5 py-3 text-[13px]
+        <p role="status" className="mt-4 rounded-clay bg-karta px-3.5 py-3 text-[13px]
                                     leading-snug text-ink-soft shadow-clay-sm">
           {taklifXato}
         </p>
       )}
 
-      {qolganlar.length > 0 && (
-        <DostlarRoyxat sarlavha={t("duelDostlar")} dostlar={qolganlar}
-          onKod={onKod} onJonli={jonliChaqir} onChaqir={(p) => onTanladi(shart, p)}
-          yuborilmoqda={yuborilmoqda} />
-      )}
+      <div className="flex-1" />
 
-      <Onlayn onChaqir={(profil) => onTanladi(shart, profil)} />
+      {/* ---- asosiy tugma — pastga yopishgan ---- */}
+      <div className="sticky bottom-0 z-10 -mx-4 mt-4 bg-[var(--az-body)] px-4 pt-3
+                      pb-[calc(0.5rem+var(--az-past))]">
+        <button type="button" onClick={yubor} disabled={yuborilmoqda > 0}
+          data-tahlil={`Duel: yuborish (${!tanlangan ? "havola" : tanlangan.dost?.jonli ? "jonli" : "odam"})`}
+          className="tugma-3d az-yaltir flex w-full items-center justify-center gap-2 rounded-3xl
+                     bg-brand-green px-4 py-[clamp(12px,2.2vh,16px)] font-display text-[17px] text-white
+                     shadow-[0_6px_0_var(--color-brand-green-d)] disabled:opacity-60">
+          <Icon name="send" size={18} className="shrink-0" />
+          <span className="truncate">{yuborilmoqda > 0 ? "…" : tugmaYozuv}</span>
+        </button>
+        <button type="button" onClick={onChiq}
+          className="mt-1 h-10 w-full text-[13px] font-semibold text-ink-dim">
+          {t("duelOyinlarga")}
+        </button>
+      </div>
     </div>
   );
 }
 
-/**
- * O'z darajasini tanlash — uchta tugma va yosh MASLAHATI.
- *
- * Bu duelni yoshdan qat'iy nazar adolatli qiladigan yagona tanlov: bola
- * "Oson" da, dadasi "Qiyin" da yechadi va ikkalasi teng imkoniyat bilan
- * o'ynaydi. Raqib o'z darajasini o'zi tanlaydi.
- */
-function DarajaTanlov({ joriy, onTanla }: { joriy: Daraja; onTanla: (d: Daraja) => void }) {
+/** "Kim bilan?" qatoridagi bitta odam (yoki "Havola"). */
+function OdamTanlov({ tanlangan, ism, belgi, onlayn, band, onTanla }: {
+  tanlangan: boolean; ism: string; belgi: ReactNode;
+  onlayn?: boolean; band?: boolean; onTanla: () => void;
+}) {
   return (
-    <>
-      <h2 className="mt-[clamp(12px,2.2vh,20px)] mb-0.5 ml-1.5 text-[11px] tracking-widest
-                     text-ink-soft uppercase">
-        {t("duelDarajaSarlavha")}
-      </h2>
-      <p className="mb-1.5 ml-1.5 text-[12px] leading-snug text-ink-dim">{t("duelDarajaIzoh")}</p>
-      <div className="flex gap-2">
-        {DARAJALAR.map((d) => (
-          <button key={d.n} type="button" onClick={() => onTanla(d.n)} aria-pressed={d.n === joriy}
-            className={`clay-press flex min-w-0 flex-1 flex-col items-center rounded-clay px-1
-                        py-[clamp(7px,1.5vh,10px)] transition-colors ${d.n === joriy
-                          ? "bg-brand-blue text-white shadow-clay"
-                          : "bg-karta text-ink-soft shadow-clay-sm"}`}>
-            <span className="font-display text-[clamp(14px,2.4vh,16px)]">{t(d.nom)}</span>
-            <span className={`truncate text-[11px] ${d.n === joriy ? "text-white/85" : "text-ink-dim"}`}>
-              {t(d.yosh).split(" · ")[0]}
-            </span>
-          </button>
-        ))}
-      </div>
-    </>
+    <button type="button" role="radio" aria-checked={tanlangan} disabled={band} onClick={onTanla}
+      title={band ? `${ism} · ${t("duelBand")}` : ism}
+      className={`clay-press flex w-[74px] shrink-0 snap-start flex-col items-center gap-1 rounded-clay
+                  px-1 py-2 transition-colors disabled:opacity-45 ${tanlangan
+                    ? "bg-brand-blue/15 ring-2 ring-brand-blue" : "bg-karta shadow-clay-sm"}`}>
+      <span className="relative">
+        <span className="grid size-11 place-items-center rounded-full bg-track">{belgi}</span>
+        {/* Yashil nuqta avatar ustida — messenjerlardagi kabi "hozir shu yerda". */}
+        {onlayn && (
+          <span className="az-jonli absolute right-0 bottom-0 size-3 rounded-full bg-brand-green
+                           ring-2 ring-karta" />
+        )}
+      </span>
+      <span className="w-full truncate text-center text-[11.5px] leading-tight text-ink">{ism}</span>
+    </button>
   );
+}
+
+/** Chaqirsa bo'ladigan odam — do'st yoki onlayn o'yinchi, bitta shaklda. */
+interface Odam {
+  profil: number;
+  ism: string;
+  avatar: string;
+  onlayn: boolean;
+  /** Hozir chaqirib bo'lmaydi: duelda, darsda yoki javobini men kutyapman. */
+  band: boolean;
+  /** Tanlanganda chiqadigan bitta holat yozuvi. */
+  izoh: string;
+  /** Do'st bo'lsa — jonli taklif shu orqali ketadi. */
+  dost?: DuelDost;
+}
+
+/**
+ * Do'stlar va onlayn ro'yxat — BITTA qatorga.
+ *
+ * Ilgari ular ikki alohida bo'lim edi va bir odam ikkalasida ham
+ * turishi mumkin edi. Endi do'st ustun (unda hisob va jonli taklif
+ * bor), onlayn ro'yxatdan faqat notanishlar qo'shiladi.
+ */
+function odamlarYig(dostlar: DuelDost[], onlayn: OnlaynOyinchi[]): Odam[] {
+  const bor = new Set<number>();
+  const ro: Odam[] = [];
+  for (const d of dostlar) {
+    if (d.navbat === "men") continue;   // ular tepada, "Sizni kutyapti" da
+    bor.add(d.profil);
+    const h = d.hisob;
+    ro.push({
+      profil: d.profil, ism: d.ism, avatar: d.avatar, onlayn: d.onlayn, dost: d,
+      band: d.navbat === "u" || bandmi(d.holat),
+      izoh: d.navbat === "u" ? t("duelJavobKutilmoqda")
+        : h.xavf ? t("duelZanjirXavf")
+        : (d.onlayn && holatYozuv(d.holat, d.oyin))
+          || (h.jami ? t("duelDostHisob", { men: h.men, raqib: h.raqib })
+            : d.onlayn ? t("duelHozir") : ""),
+    });
+  }
+  for (const o of onlayn) {
+    if (bor.has(o.profil)) continue;
+    ro.push({
+      profil: o.profil, ism: o.ism, avatar: o.avatar, onlayn: o.onlayn, band: bandmi(o.holat),
+      izoh: holatYozuv(o.holat, o.oyin) ?? (o.onlayn ? t("duelHolatBosh") : qachonKorindi(o.korindi)),
+    });
+  }
+  // Chaqirsa bo'ladiganlar oldinda, ular ichida — hozir ilovadagilar.
+  // Saralash barqaror: teng holatda do'st notanishdan oldin qoladi.
+  return ro.sort((a, b) => Number(a.band) - Number(b.band) || Number(b.onlayn) - Number(a.onlayn));
 }
 
 /** "Siz: Oson · Aziz: Qiyin" — ikkala daraja ochiq ko'rinadi, yashirin ustunlik yo'q. */
@@ -461,6 +586,7 @@ function DostlarRoyxat({ sarlavha, dostlar, onKod, onJonli, onChaqir, yuborilmoq
                 <span className={`block truncate text-[11.5px] ${
                   h.xavf ? "text-brand-gold-d" : "text-ink-dim"}`}>
                   {h.xavf ? t("duelZanjirXavf")
+                    : d.onlayn && holatYozuv(d.holat, d.oyin) ? holatYozuv(d.holat, d.oyin)
                     : h.jami ? t("duelDostHisob", { men: h.men, raqib: h.raqib })
                     : d.onlayn ? t("duelHozir") : ""}
                 </span>
@@ -506,6 +632,23 @@ function DostlarRoyxat({ sarlavha, dostlar, onKod, onJonli, onChaqir, yuborilmoq
  * Holbuki ikkinchisi deyarli albatta javob beradi, birinchisi esa
  * yo'q — va odam kimni chaqirishni aynan shunga qarab tanlaydi.
  */
+/**
+ * Odamning holati bitta qisqa yozuvda: "Jadval o'ynayapti", "duelda".
+ * `bosh` va `yoq` uchun `null` — ular uchun o'z yozuvi bor.
+ */
+function holatYozuv(holat?: OdamHolat, oyin?: string): string | null {
+  if (holat === "duelda") return t("duelHolatDuelda");
+  if (holat === "oqiyapti") return t("duelHolatOqiyapti");
+  if (holat === "oyinda") {
+    const o = oyin ? oyinById(oyin) : undefined;
+    return t("duelHolatOyinda", { oyin: o ? t(o.nom) : t("oyinlar") });
+  }
+  return null;
+}
+
+/** Duelda yoki darsda — chaqirilmaydi, o'qish va bellashuv uzilmasin. */
+const bandmi = (holat?: OdamHolat) => holat === "duelda" || holat === "oqiyapti";
+
 function qachonKorindi(iso: string): string {
   const daqiqa = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
   if (daqiqa < 60) return t("duelDaqiqaOldin", { n: Math.max(1, daqiqa) });
@@ -527,58 +670,40 @@ function qachonKorindi(iso: string): string {
 const ONLAYN_YANGILASH_MS = 8_000;
 
 /**
- * KIMNI CHAQIRSA BO'LADI — bitta bosishda chaqiriladi.
- *
- * NEGA KERAK. Duel shu paytgacha faqat HAVOLA bilan ishlardi: odam
- * chaqiruv yasaydi, uni do'stiga yuboradi va javobini kutadi. Do'sti
- * bor odam uchun bu yetarli, kimsasi yo'q bola esa duelni umuman
- * o'ynay olmasdi — raqib topadigan joy yo'q edi.
+ * KIMNI CHAQIRSA BO'LADI — Telegram'i bog'langan o'yinchilar ro'yxati.
  *
  * Ro'yxatga faqat Telegram'i bog'langanlar tushadi: chaqiruv o'sha
- * yerga xabar bo'lib boradi va boshqa yetkazish yo'li yo'q
- * (`backend/core/onlayn.py`).
+ * yerga xabar bo'lib boradi (`backend/core/onlayn.py`).
  *
- * ─────────────── BO'SH BO'LSA HAM KO'RINADI ───────────────
+ * 2026-09-26: ilgari bu alohida bo'lim edi va chaqiruv tugmasining
+ * OSTIDA turardi. Endi u faqat ma'lumot beradi, chizish esa "Kim
+ * bilan?" qatorida — do'stlar bilan birga (`odamlarYig`).
  *
- * Ilgari ro'yxat bo'sh bo'lganda BUTUNLAY yashirinardi va u deyarli
- * har doim bo'sh edi (kuniga o'n besh chog'li odam kiradi, ya'ni
- * istalgan lahzada ichkarida bir-ikki kishi bo'ladi). Natijada
- * xususiyat bor edi-yu, uni hech kim ko'rmasdi — hatto uni
- * yozganlar ham "ishlamayapti" deb o'ylardi.
+ * O'ZI YANGILANADI: har `ONLAYN_YANGILASH_MS` da va ekranga
+ * qaytilganda (`visibilitychange`). Odam duel ekranida o'ylanib turadi
+ * va shu orada boshqa birov ilovaga kirishi mumkin. Ilova fonda
+ * turganda so'rov ketmaydi.
  *
- * Endi bo'lim har doim turadi va bo'sh bo'lsa buni AYTADI. Yo'qlik
- * ham javob: odam nima bo'layotganini biladi va havola bilan
- * chaqirish yo'liga o'tadi.
- *
- * ─────────────── O'ZI YANGILANADI ───────────────
- *
- * Ro'yxat yigirma soniyada bir qayta so'raladi va ekranga qaytilganda
- * ham (`visibilitychange`). Bir marta yuklab qo'yish yetarli emas:
- * odam duel ekranida o'ylanib turadi va shu orada boshqa birov
- * ilovaga kirishi mumkin — u esa ro'yxatda paydo bo'lmasdi.
+ * `ro === null` — birinchi yuklanish hali tugamagan: bo'sh ro'yxat bir
+ * lahza "hech kim yo'q" deb chaqnab, keyin to'lishi xatodek ko'rinardi.
  */
-function Onlayn({ onChaqir }: { onChaqir: (profil: number) => void }) {
+function useOnlayn(): { ro: OnlaynOyinchi[] | null; soni: number } {
   const [ro, setRo] = useState<OnlaynOyinchi[] | null>(null);
-  const [onlaynSoni, setOnlaynSoni] = useState(0);
+  const [soni, setSoni] = useState(0);
 
   useEffect(() => {
     let bekor = false;
-
     const yukla = async () => {
       const d = await onlaynOyinchilar();
       if (bekor) return;
       setRo(d.oyinchilar);
-      setOnlaynSoni(d.onlaynSoni);
+      setSoni(d.onlaynSoni);
     };
 
     void yukla();
-    const soat = setInterval(() => { void yukla(); }, ONLAYN_YANGILASH_MS);
-    // Ilova fonda turganda so'rov yubormaymiz va qaytilganda darhol
-    // yangilaymiz: telefon fonda soatlab tursa, o'nlab keraksiz
-    // so'rov ketardi va qaytgan odam baribir eski ro'yxatni ko'rardi.
+    const soat = setInterval(() => { if (!document.hidden) void yukla(); }, ONLAYN_YANGILASH_MS);
     const korinish = () => { if (!document.hidden) void yukla(); };
     document.addEventListener("visibilitychange", korinish);
-
     return () => {
       bekor = true;
       clearInterval(soat);
@@ -586,66 +711,7 @@ function Onlayn({ onChaqir }: { onChaqir: (profil: number) => void }) {
     };
   }, []);
 
-  // Birinchi yuklanish tugamaguncha hech narsa chizilmaydi: bo'sh
-  // ro'yxat bir lahza chaqnab, keyin to'lishi "xato bo'ldimi?" degan
-  // taassurot berardi.
-  if (ro === null) return null;
-
-  return (
-    <div className="mt-7">
-      <h2 className="mb-2 ml-1.5 flex items-center gap-1.5 text-[11px] tracking-widest
-                     text-ink-soft uppercase">
-        {/* Yashil nuqta — "hozir" degan yagona ishora. Kimdir onlayn
-            bo'lsa u JIMIRLAYDI: ro'yxat tirik ekanini va o'zi
-            yangilanib turishini shu bildiradi. Hech kim bo'lmasa
-            nuqta so'nadi va tinch turadi. */}
-        <span className={`size-1.5 rounded-full ${
-          onlaynSoni > 0 ? "az-jonli bg-brand-green" : "bg-ink-dim/40"}`} />
-        {onlaynSoni > 0 ? t("duelOnlayn", { n: onlaynSoni }) : t("duelKimChaqirish")}
-      </h2>
-
-      {ro.length === 0 ? (
-        <p className="rounded-clay bg-karta px-3.5 py-3 text-[12.5px] leading-snug
-                      text-ink-dim shadow-clay-sm">
-          {t("duelHechKim")}
-        </p>
-      ) : (
-        <div className="space-y-1.5">
-          {ro.map((o) => (
-            <div key={o.profil}
-              className="flex items-center gap-2.5 rounded-clay bg-karta px-3 py-2.5
-                         shadow-clay-sm">
-              <span className="relative shrink-0">
-                <span className="grid size-7 place-items-center rounded-full bg-track
-                                 text-[13px]">
-                  <EmojiBelgi e={avatarBelgi(o.avatar)} olcham={12} />
-                </span>
-                {/* Yashil nuqta avatarning ustida — "hozir shu yerda"
-                    degan belgi messenjerlarda ham shu joyda turadi va
-                    uni tushuntirish kerak emas. */}
-                {o.onlayn && (
-                  <span className="az-jonli absolute -right-0.5 -bottom-0.5 size-2.5
-                                   rounded-full bg-brand-green ring-2 ring-karta" />
-                )}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] leading-tight">{o.ism}</span>
-                <span className={`text-[10.5px] ${
-                  o.onlayn ? "text-brand-green" : "text-ink-dim"}`}>
-                  {o.onlayn ? t("duelHozir") : qachonKorindi(o.korindi)}
-                </span>
-              </span>
-              <button type="button" onClick={() => onChaqir(o.profil)}
-                className="clay-press shrink-0 rounded-full bg-brand-orange px-3 py-1.5
-                           text-[12px] text-white">
-                {t("duelChaqir")}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return { ro, soni };
 }
 
 /** Bitta shart qatori — uchta tugma yonma-yon. */
@@ -834,21 +900,22 @@ export function DuelQabul({ kod, onChiq, onDuel, onOyin }: {
  * qoladi. Bu duelni "do'stim onlaynmi?" degan savolga bog'liq
  * bo'lishdan qutqaradi.
  */
-function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
+function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onBekor, onChiq }: {
   duel: DuelHolat;
   menChaqirdim: boolean;
   /** O'yin boshlanadi — oxirgi ma'lum darajalar bilan yangilangan duel. */
   onBoshla: (d: DuelHolat) => void;
   onYolgiz?: () => void;
+  /** Jonli taklifni bekor qilish — faqat chaqirganda. */
+  onBekor?: () => void;
   onChiq: () => void;
 }) {
   const oyin = oyinById(duel.oyin);
   const [holat, setHolat] = useState<DuelJonli | null>(null);
   const [tayyorlanmoqda, setTayyorlanmoqda] = useState(false);
   const boshlandiRef = useRef(false);
-  // Qabul qilgan tomon darajasini SHU YERDA tanlaydi ("tayyorman" dan oldin).
-  const [daraja, setDaraja] = useState<Daraja>(() =>
-    darajaSon(duel.menDaraja ?? duelDarajaTaklif(duel.oyin)));
+  // Qabul qilgan tomonning darajasi — so'ralmaydi, anketadan olinadi.
+  const daraja: Daraja = darajaSon(duel.menDaraja ?? duelDarajaTaklif(duel.oyin));
   // O'yin savollari MENING darajamda yasaladi — boshlanish lahzasidagi
   // eng so'nggi qiymat kerak, shuning uchun ref.
   const oxirgiRef = useRef<DuelJonli | null>(null);
@@ -906,7 +973,6 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
 
   const tayyorla = () => {
     setTayyorlanmoqda(true);
-    if (!menChaqirdim) duelDarajaSaqla(daraja);
     duelTayyor(duel.kod, menChaqirdim ? undefined : daraja)
       .then((h) => setHolat(h))
       .catch(() => setTayyorlanmoqda(false));
@@ -931,6 +997,14 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
   const taklif = holat?.taklif ?? duel.taklif ?? null;
   const raqibNomi = holat?.raqibNom || (menChaqirdim ? t("duelDostKutilmoqda") : duel.chaqirgan);
   const taklifTugadi = taklif?.holat === "rad" || taklif?.holat === "otdi";
+
+  // Jonli taklif — o'z ekrani: bitta karta, sanoq va ikki yo'l.
+  if (menChaqirdim && taklif) {
+    return (
+      <TaklifKutish duel={duel} taklif={taklif} nom={raqibNomi}
+        onYolgiz={onYolgiz} onBekor={onBekor} onChiq={onChiq} />
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col justify-center px-4 py-10
@@ -1031,8 +1105,6 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
         />
       </div>
 
-      {!menTayyor && !menChaqirdim && <DarajaTanlov joriy={daraja} onTanla={setDaraja} />}
-
       {!menTayyor ? (
         <button type="button" onClick={tayyorla} disabled={tayyorlanmoqda}
           className="tugma-3d az-yaltir mt-4 w-full rounded-3xl bg-brand-green py-4 font-display
@@ -1061,6 +1133,131 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onChiq }: {
         className="mt-1 w-full py-2 text-[13px] font-semibold text-ink-dim/80">
         {t("duelOyinlarga")}
       </button>
+    </div>
+  );
+}
+
+/**
+ * Jonli taklif yuborilgan — do'stning javobini kutish.
+ *
+ * ─────────────────── NEGA ALOHIDA EKRAN (2026-09-26) ───────────────────
+ *
+ * Ilgari bu umumiy lobbi edi: sarlavha, o'yin kartasi, hisob, darajalar,
+ * holat qatori, "Siz — tayyor / Aziz — kutyapti" qatorlari, "Raqib tayyor
+ * bo'lishini kutamiz" va uchta pastki tugma. Jonli taklifda esa bularning
+ * hech biri kerak emas: server chaqirganni o'zi tayyor qiladi, do'st
+ * qabul qilishi bilan sanoq boshlanadi. Odamni faqat bitta narsa
+ * qiziqtiradi — "u qabul qiladimi?".
+ *
+ * Chess.com / Lichess'dagi chaqiruv kabi: katta sanoq, "Bekor qilish"
+ * va "kutmayman". Rad etilsa yoki vaqt tugasa — ikki yo'l: o'zim
+ * o'ynayman (natija unga chaqiruv bo'lib boradi) yoki boshqa odamni
+ * chaqiraman.
+ */
+function TaklifKutish({ duel, taklif, nom, onYolgiz, onBekor, onChiq }: {
+  duel: DuelHolat;
+  taklif: DuelTaklifHolati;
+  nom: string;
+  onYolgiz?: () => void;
+  onBekor?: () => void;
+  onChiq: () => void;
+}) {
+  const oyin = oyinById(duel.oyin);
+  // Sanoq o'z soatimiz bilan: server qiymati 2 soniyada bir keladi va
+  // raqam sakrab turardi. Har yangi server qiymati bilan tekislanadi.
+  const [qolgan, setQolgan] = useState(taklif.qolgan);
+  useEffect(() => { setQolgan(taklif.qolgan); }, [taklif.qolgan]);
+  useEffect(() => {
+    if (taklif.holat !== "kutyapti") return;
+    const id = setInterval(() => setQolgan((n) => Math.max(0, n - 1)), 1000);
+    return () => clearInterval(id);
+  }, [taklif.holat]);
+
+  const bekorQil = () => {
+    tebrat("tanlov");
+    // Javobni kutmaymiz: tarmoq sekin bo'lsa ham odam darhol chiqsin.
+    // Bekor so'rovi yetib bormasa, taklif baribir 15 soniyada o'zi yopiladi.
+    void duelTaklifBekor(duel.kod).catch(() => undefined);
+    onBekor?.();
+  };
+
+  const tugadi = taklif.holat === "rad" || taklif.holat === "otdi" || taklif.holat === "bekor";
+  const kutyapti = taklif.holat === "kutyapti" && qolgan > 0;
+
+  return (
+    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-4 pt-10
+                    text-center sm:max-w-[520px]">
+      <div className="my-auto">
+        {/* Siz ⚔ o'yin — kim bilan nima o'ynalayotgani bir qarashda. */}
+        <div className="flex items-center justify-center gap-3">
+          <span className="grid size-14 place-items-center rounded-full bg-karta shadow-clay-sm
+                           font-display text-[13px] text-ink-soft">
+            {t("duelSiz")}
+          </span>
+          <EmojiBelgi e="⚔️" olcham={30} jonli={kutyapti} />
+          <span className="grid size-14 place-items-center rounded-full bg-karta shadow-clay-sm">
+            {oyin ? <EmojiBelgi e={oyin.emoji} olcham={30} /> : <Icon name="send" size={22} />}
+          </span>
+        </div>
+
+        <h1 className="mt-5 text-[21px] leading-tight">
+          {taklif.holat === "rad" ? t("duelTaklifRad", { nom })
+            : taklif.holat === "qabul" ? t("duelBoshlanmoqda")
+            : tugadi || qolgan === 0 ? t("duelTaklifOtdi", { nom })
+            : t("duelKutyapmizSarlavha", { nom })}
+        </h1>
+        <p className="mt-1.5 text-[13px] text-ink-soft">
+          {oyin ? `${t(oyin.nom)} · ` : ""}
+          {t("duelSozlamaQator", { savollar: duel.savollar || 20, vaqt: duel.vaqt || 60 })}
+        </p>
+
+        {kutyapti && (
+          <>
+            <div aria-live="polite" className="mt-6 font-display text-[64px] leading-none">{qolgan}</div>
+            {/* Chiziq — bola sonni o'qimasa ham vaqt ketayotganini ko'radi. */}
+            <div className="mx-auto mt-4 h-1.5 max-w-[260px] overflow-hidden rounded-full bg-track">
+              <div className="h-full rounded-full bg-brand-green transition-[width] duration-1000 ease-linear"
+                style={{ width: `${Math.min(100, (qolgan / 15) * 100)}%` }} />
+            </div>
+          </>
+        )}
+
+        {(tugadi || (!kutyapti && taklif.holat !== "qabul")) && (
+          <p className="mx-auto mt-4 max-w-[320px] text-[13px] leading-snug text-ink-dim">
+            {t("duelTaklifYolgiz")}
+          </p>
+        )}
+      </div>
+
+      {/* Pastki tugmalar — holatga qarab. Kutish paytida asosiy tugma
+          YO'Q: odam hech narsa qilmasligi kerak, faqat kutadi. */}
+      <div className="pb-[calc(1rem+var(--az-past))]">
+        {kutyapti ? (
+          <>
+            <button type="button" onClick={onYolgiz} data-tahlil="Duel taklif: kutmayman"
+              className="h-11 w-full text-[13.5px] font-semibold text-ink-dim">
+              {t("duelKutmayman")}
+            </button>
+            <button type="button" onClick={bekorQil} data-tahlil="Duel taklif: bekor"
+              className="clay-press mt-1 h-12 w-full rounded-3xl bg-karta font-display text-[15px]
+                         text-ink-soft shadow-clay-sm">
+              {t("duelBekorQilish")}
+            </button>
+          </>
+        ) : taklif.holat !== "qabul" && (
+          <>
+            <button type="button" onClick={onYolgiz} data-tahlil="Duel taklif: o'zim o'ynayman"
+              className="tugma-3d az-yaltir w-full rounded-3xl bg-brand-green py-4 font-display
+                         text-[17px] text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
+              {t("duelOzimOynayman")}
+            </button>
+            <button type="button" onClick={onBekor ?? onChiq} data-tahlil="Duel taklif: boshqa odam"
+              className="mt-2 h-11 w-full text-[13.5px] font-semibold text-ink-dim">
+              {t("duelBoshqaOdam")}
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -1135,6 +1332,11 @@ function Bellashuv({ duel, jonli, menChaqirdim, onChiq, onHavola, onYakun }: {
   const { oyinTugadi } = useProgress();
   const [raqibBall, setRaqibBall] = useState(0);
   const [kutilmoqda, setKutilmoqda] = useState(false);
+  // "Duelda" — boshqalarning ro'yxatida chaqirish tugmasi o'chadi va
+  // server bu odamga jonli taklif yubormaydi (`duel.taklif_mumkinmi`).
+  // Raqib tugatishini kutayotganda ham "duelda": natija bir necha soniyada
+  // keladi va shu orada kelgan taklif "yana o'ynaymizmi?" ni to'sib qo'yardi.
+  useFaollik({ joy: "duel", nom: duel.oyin });
   const menBall = useRef(0);
   const menSanoq = useRef<number[]>([]);
 
@@ -1296,7 +1498,7 @@ function Taklif({ duel, onQabul, onChiq }: {
   duel: DuelHolat; onQabul: (daraja: Daraja) => void; onChiq: () => void;
 }) {
   const oyin = oyinById(duel.oyin);
-  const [daraja, setDaraja] = useState<Daraja>(() => duelDarajaTaklif(duel.oyin));
+  const daraja = duelDarajaTaklif(duel.oyin);
 
   return (
     <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col justify-center px-4 py-10
@@ -1327,12 +1529,11 @@ function Taklif({ duel, onQabul, onChiq }: {
           degan qator chaqiruvni qabul qilishning eng katta sababi. */}
       <Hisob hisob={duel.hisob} />
 
-      {/* Raqib o'z darajasida o'ynab qo'ygan — endi mening navbatim
-          o'zimnikini tanlash. Uning darajasi ham ochiq ko'rinadi. */}
+      {/* Daraja endi so'ralmaydi (anketadan) — ikkalasiniki ochiq ko'rinadi,
+          yashirin ustunlik yo'q. */}
       <DarajaJuftlik nom={duel.chaqirgan} men={daraja} raqib={duel.raqibDaraja} />
-      <div className="text-left"><DarajaTanlov joriy={daraja} onTanla={setDaraja} /></div>
 
-      <button type="button" onClick={() => { duelDarajaSaqla(daraja); onQabul(daraja); }}
+      <button type="button" onClick={() => onQabul(daraja)}
         className="tugma-3d az-yaltir mt-6 w-full rounded-3xl bg-brand-green py-4 font-display
                    text-[18px] text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
         {t("duelQabul")}

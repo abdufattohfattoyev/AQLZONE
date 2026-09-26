@@ -36,8 +36,8 @@ import { useState } from "react";
 import { sorov } from "../lib/api";
 import { til } from "../lib/til";
 import { t } from "../lib/matn";
-import { BOSQICH, profilQoy } from "../lib/profil";
-import type { Kim } from "../lib/profil";
+import { BOSQICH, YONALISHLAR, profil, profilQoy } from "../lib/profil";
+import type { Kim, Yonalish } from "../lib/profil";
 
 const VILOYATLAR: [string, string, string][] = [
   ["toshkent_sh", "Toshkent shahri", "г. Ташкент"],
@@ -57,7 +57,7 @@ const VILOYATLAR: [string, string, string][] = [
   ["chet_el", "Chet el", "Зарубежье"],
 ];
 
-interface Javob { kim?: Kim; sinf?: number; viloyat?: string }
+interface Javob { kim?: Kim; sinf?: number; viloyat?: string; yonalish?: Yonalish }
 
 /** [kod, nom, izoh?] */
 type Tanlov = [number, string, string?];
@@ -106,35 +106,70 @@ function bosqichSavol(kim: Kim | undefined): { savol: string; tanlov: Tanlov[]; 
   }
 }
 
+/** Anketa qadamlari. Qaysilari bo'lishi birinchi javobga bog'liq. */
+type Qadam = "kim" | "bosqich" | "yonalish" | "viloyat";
+
 /**
  * `qayta` — bosh sahifadagi "o'zgartirish" dan ochilgan. U holda
  * viloyat so'ralmaydi (u allaqachon bor) va yopish tugmasi chiqadi.
+ *
+ * `faqatYonalish` — anketani ilgari to'ldirgan talabaga BITTA savol.
+ * Yo'nalish savoli keyin qo'shildi va butun anketani qaytadan so'rash
+ * odamni jahlini chiqarardi.
  */
-export function Anketa({ onTugadi, qayta = false }: { onTugadi: () => void; qayta?: boolean }) {
-  const [qadam, setQadam] = useState(1);
+export function Anketa({ onTugadi, qayta = false, faqatYonalish = false }: {
+  onTugadi: () => void; qayta?: boolean; faqatYonalish?: boolean;
+}) {
   const [javob, setJavob] = useState<Javob>({});
+  const [qadam, setQadam] = useState<Qadam>(faqatYonalish ? "yonalish" : "kim");
+
+  /** Shu javoblar bilan o'tiladigan qadamlar ketma-ketligi. */
+  const qadamlar = (j: Javob): Qadam[] => {
+    if (faqatYonalish) return ["yonalish"];
+    const q: Qadam[] = ["kim"];
+    if (j.kim !== "abiturient") q.push("bosqich");
+    // Yo'nalish faqat talabadan: ilova unga qarab butunlay boshqacha
+    // tiziladi (`lib/profil.ts` → pedagogmi, ustozRejimi).
+    if (j.kim === "talaba") q.push("yonalish");
+    if (!qayta) q.push("viloyat");
+    return q;
+  };
+  const royxat = qadamlar(javob);
+  const raqam = royxat.indexOf(qadam) + 1;
 
   const bosqich = bosqichSavol(javob.kim);
-  const ikkinchiBor = javob.kim !== "abiturient";
-  const jami = (ikkinchiBor ? 2 : 1) + (qayta ? 0 : 1);
-  const korinadigan = !ikkinchiBor && qadam === 3 ? 2 : qadam;
 
   const yubor = (j: Javob) => {
     // Javobni kutmaymiz: sekin internet odamni eshikda ushlab turmasin.
-    void sorov("/api/v1/anketa", j).catch(() => {});
+    const tana = faqatYonalish ? { yonalish: j.yonalish, qisman: true } : j;
+    void sorov("/api/v1/anketa", tana).catch(() => {});
     onTugadi();
+  };
+
+  /** Ilova DARHOL moslashsin — viloyatni kutmasdan. */
+  const profilniYoz = (j: Javob) => {
+    if (faqatYonalish) {
+      const p = profil();
+      if (p && j.yonalish) profilQoy({ ...p, yonalish: j.yonalish });
+      return;
+    }
+    if (j.kim) profilQoy({ kim: j.kim, bosqich: j.sinf ?? -1, ...(j.yonalish ? { yonalish: j.yonalish } : {}) });
   };
 
   const keyingi = (j: Javob) => {
     setJavob(j);
-    const bosqichTayyor = qadam === 2 || (qadam === 1 && j.kim === "abiturient");
-    // Kim va bosqich tayyor — ilova DARHOL moslashadi, viloyat kutilmaydi.
-    if (bosqichTayyor && j.kim) profilQoy({ kim: j.kim, bosqich: j.sinf ?? -1 });
-    if (qadam >= 3 || (bosqichTayyor && qayta)) { yubor(j); return; }
-    setQadam(qadam === 1 && j.kim === "abiturient" ? 3 : qadam + 1);
+    const r = qadamlar(j);
+    const k = r[r.indexOf(qadam) + 1];
+    // Viloyatdan oldingi hamma javob — moslashuv uchun kerakli qism.
+    if (!k || k === "viloyat") profilniYoz(j);
+    if (!k) { yubor(j); return; }
+    setQadam(k);
   };
 
-  const orqaga = () => setQadam(qadam === 3 && !ikkinchiBor ? 1 : Math.max(1, qadam - 1));
+  const orqaga = () => {
+    const i = royxat.indexOf(qadam);
+    if (i > 0) setQadam(royxat[i - 1]);
+  };
 
   const kimlar: [Kim, string, string][] = [
     ["oquvchi", t("anketaOquvchi"), t("anketaOquvchiIzoh")],
@@ -149,27 +184,27 @@ export function Anketa({ onTugadi, qayta = false }: { onTugadi: () => void; qayt
     <div className="mx-auto grid min-h-ekran w-full max-w-[460px] place-items-center px-4 py-6">
       <div className="az-kirish w-full rounded-clay bg-karta p-5 shadow-clay sm:p-6">
         <div className="flex min-h-11 items-center justify-between gap-2 text-[12px] text-ink-dim">
-          {qadam > 1 ? (
+          {raqam > 1 ? (
             <button type="button" onClick={orqaga} className="min-h-11 px-1" data-tahlil="Anketa: ortga">
               ← {t("ortga")}
             </button>
-          ) : <span>{korinadigan} / {jami}</span>}
-          {qadam > 1 && <span>{korinadigan} / {jami}</span>}
-          {/* O'tkazib yuborish FAQAT viloyatda: kim va bosqich — ilova
+          ) : <span>{raqam} / {royxat.length}</span>}
+          {raqam > 1 && <span>{raqam} / {royxat.length}</span>}
+          {/* O'tkazib yuborish FAQAT viloyatda: qolgani — ilova
               moslashadigan javob, viloyat esa faqat tahlil uchun. */}
-          {qadam === 3 && (
+          {qadam === "viloyat" && (
             <button type="button" onClick={() => yubor(javob)} className="min-h-11 px-1">
               {t("anketaOtkaz")}
             </button>
           )}
-          {qayta && qadam === 1 && (
+          {qayta && raqam === 1 && (
             <button type="button" onClick={onTugadi} className="min-h-11 px-1">
               {t("yopish")}
             </button>
           )}
         </div>
 
-        {qadam === 1 && (
+        {qadam === "kim" && (
           <>
             <h1 className="mt-1 text-[22px] leading-tight">{t("anketaSarlavha")}</h1>
             <p className="mt-1 text-[13px] leading-snug text-ink-dim">{t("anketaMajburIzoh")}</p>
@@ -177,7 +212,7 @@ export function Anketa({ onTugadi, qayta = false }: { onTugadi: () => void; qayt
             <div className="mt-3 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
               {kimlar.map(([kod, nom, izoh]) => (
                 <button key={kod} type="button" data-tahlil={`Anketa: ${kod}`}
-                  onClick={() => keyingi({ ...javob, kim: kod, sinf: undefined })}
+                  onClick={() => keyingi({ ...javob, kim: kod, sinf: undefined, yonalish: undefined })}
                   className="clay-press flex min-h-14 w-full flex-col items-start justify-center rounded-2xl
                              bg-sahna px-3.5 py-2 text-left shadow-ichki">
                   <span className="font-display text-[15px] leading-tight">{nom}</span>
@@ -188,7 +223,7 @@ export function Anketa({ onTugadi, qayta = false }: { onTugadi: () => void; qayt
           </>
         )}
 
-        {qadam === 2 && bosqich && (
+        {qadam === "bosqich" && bosqich && (
           <>
             <h2 className="mt-1 text-[20px] leading-tight">{bosqich.savol}</h2>
             <div className={`mt-4 grid gap-2 ${bosqich.uzun ? "grid-cols-1" : "grid-cols-3"}`}>
@@ -206,7 +241,25 @@ export function Anketa({ onTugadi, qayta = false }: { onTugadi: () => void; qayt
           </>
         )}
 
-        {qadam === 3 && (
+        {qadam === "yonalish" && (
+          <>
+            <h2 className="mt-1 text-[20px] leading-tight">{t("anketaYonalish")}</h2>
+            <p className="mt-1 text-[13px] leading-snug text-ink-dim">{t("anketaYonalishIzoh")}</p>
+            <div className="mt-4 grid grid-cols-1 gap-2">
+              {YONALISHLAR.map((kod) => (
+                <button key={kod} type="button" data-tahlil={`Anketa: yonalish ${kod}`}
+                  onClick={() => keyingi({ ...javob, yonalish: kod })}
+                  className="clay-press flex min-h-14 flex-col items-start justify-center rounded-2xl bg-sahna
+                             px-3.5 py-2 text-left shadow-ichki">
+                  <span className="font-display text-[15px] leading-tight">{t(`yonalish_${kod}`)}</span>
+                  <span className="mt-0.5 text-[12px] leading-snug text-ink-dim">{t(`yonalishIzoh_${kod}`)}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {qadam === "viloyat" && (
           <>
             <h2 className="mt-1 text-[20px] leading-tight">{t("anketaViloyat")}</h2>
             <div className="mt-4 grid grid-cols-2 gap-2">

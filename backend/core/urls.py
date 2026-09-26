@@ -35,6 +35,8 @@ urlpatterns = [
     path("duel", views.duel_boshla, name="duel-boshla"),
     # Hozir ilovada turgan o'yinchilar — duelga chaqirish uchun.
     path("onlayn", views.onlayn_royxat, name="onlayn"),
+    # O'yinlar ekrani: kim qaysi o'yinda — faqat sonlar.
+    path("oyinlar/jonli", views.oyinlar_jonli, name="oyinlar-jonli"),
     # "Men shu yerdaman" — ilova ochiq turganini bildiradi. Butun
     # ishi tekshiruvdan o'tish: u `Session.last_seen` ni yangilaydi.
     path("tirik", views.tirik, name="tirik"),
@@ -51,6 +53,8 @@ urlpatterns = [
     path("duel/dostlar", views.duel_dostlar, name="duel-dostlar"),
     path("duel/taklif", views.duel_taklif, name="duel-taklif"),
     path("duel/taklif/<int:pk>/javob", views.duel_taklif_javob, name="duel-taklif-javob"),
+    # Chaqirgan odam kutishdan voz kechdi — do'stidagi oyna yopiladi.
+    path("duel/taklif/bekor", views.duel_taklif_bekor, name="duel-taklif-bekor"),
     path("duel/sozlama", views.duel_sozlama, name="duel-sozlama"),
     # Jamoaviy o'yin xonalari: Son kartalari, Hisob Royale, Son kodlari.
     # Tulki shaharchasi.
@@ -74,6 +78,8 @@ urlpatterns = [
 
     # DTM tayyorgarlik — natijalar tarixi (`core/imtihon.py`).
     path("imtihon/natija", kunlik_views.imtihon_natija, name="imtihon-natija"),
+    # Talabaning sessiya urinishlari (`core/imtihon.py` → sessiya_royxat).
+    path("sessiya/natija", kunlik_views.sessiya_natija, name="sessiya-natija"),
     path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),
     path("shaharcha/qur", shaharcha_views.shaharcha_qur, name="shaharcha-qur"),
     path("shaharcha/oshir", shaharcha_views.shaharcha_oshir, name="shaharcha-oshir"),

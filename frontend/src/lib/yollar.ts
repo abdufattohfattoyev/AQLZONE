@@ -79,6 +79,10 @@ export const yolMasalaMuallif = (profilId: number) => `/masalalar/muallif/${prof
 /** Reyting — kim qancha yulduz yig'gan. Kursdan tashqarida: hammasi birga. */
 export const yolReyting = () => "/reyting";
 
+/** Talabaning nazoratga tayyorgarligi (`screens/Sessiya.tsx`). */
+export const yolSessiya = () => "/sessiya";
+export const yolSessiyaVariant = (slug: string, n: number) => `/sessiya/${slug}/${n}`;
+
 /**
  * Kichkintoylar bo'limi — kursdan TASHQARIDA va bu ataylab.
  *
@@ -109,6 +113,9 @@ export const yolSonOvi = () => "/oyinlar/son-ovi";
 /** DTM tayyorgarlik — variantlar ro'yxati va bitta variant. */
 export const yolImtihon = () => "/imtihon";
 export const yolImtihonVariant = (n: number) => `/imtihon/${n}`;
+/** Milliy sertifikat — xuddi shu qolipda (`lib/sertifikat.ts`). */
+export const yolSertifikat = () => "/sertifikat";
+export const yolSertifikatVariant = (n: number) => `/sertifikat/${n}`;
 
 /** Tulki shaharchasi; `pid` bilan — sherikning shaharchasiga mehmonga. */
 export const yolShaharcha = (pid?: number) => (pid ? `/oyinlar/shaharcha/${pid}` : "/oyinlar/shaharcha");
@@ -120,7 +127,8 @@ export const yolKarvon = () => "/oyinlar/karvon";
 export const yolJadval = () => "/oyinlar/jadval";
 
 /** Do'st bilan bellashuv — chaqiruv yasash. */
-export const yolDuel = () => "/oyinlar/duel";
+export const yolDuel = (oyin?: string) =>
+  oyin ? `/oyinlar/duel?oyin=${encodeURIComponent(oyin)}` : "/oyinlar/duel";
 
 /** Chaqiruv havolasi. ATAYLAB qisqa (`/duel/<kod>`): u Telegramda
  *  ulashiladi va uzun manzil xabarni ikki qatorga bo'lib yuboradi. */

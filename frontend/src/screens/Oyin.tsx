@@ -24,6 +24,7 @@ import { YigirmaTort } from "../components/oyin/YigirmaTort";
 import { Yakun } from "../components/oyin/Sahna";
 import { bugunOynalgan, natijaniYoz, rekord, tangaHisobi } from "../lib/oyin/rekord";
 import { useProgress } from "../lib/progress";
+import { useFaollik } from "../lib/faollik";
 import type { Daraja, Oyin as OyinTur, OyinNatija } from "../lib/oyin/tur";
 
 interface Natija {
@@ -52,6 +53,11 @@ export function Oyin({ oyin, daraja, onChiq, onDaraja }: {
    * eski taymer o'chmay, yangi o'yinni birinchi soniyadayoq tugatardi.
    */
   const [urinish, setUrinish] = useState(0);
+
+  // "Shu o'yindaman" — o'yinlar ekranidagi `• 2` va duel ro'yxatidagi
+  // "Jadval o'ynayapti" shundan. Natija ekranida signal to'xtaydi: o'sha
+  // paytda odam bo'sh va uni chaqirsa bo'ladi.
+  useFaollik(natija ? null : { joy: "oyin", nom: oyin.id });
 
   const tugadi = (n: OyinNatija) => {
     // Bonus rekord YOZILISHIDAN OLDIN o'qiladi: yozuv bugungi sanani

@@ -392,6 +392,38 @@ XABAR: dict[str, dict[str, str]] = {
             "Если сегодня не позанимаешься, она прервётся — хватит всего 6 вопросов."
         ),
     },
+    # Talabaga — o'z tilida. "Yulduz yig'mading" degan bolalar matni
+    # talabani ilovadan uzoqlashtiradi; unga nazorat va fan muhim.
+    "eslatmaTalaba0": {
+        "uz": (
+            "📘 <b>{ism}</b>, bugun oliy matematikadan bitta dars qilamizmi?\n\n"
+            "15 daqiqa — va oraliq nazoratga bir qadam yaqinroq."
+        ),
+        "ru": (
+            "📘 <b>{ism}</b>, пройдём сегодня один урок высшей математики?\n\n"
+            "15 минут — и вы на шаг ближе к промежуточному контролю."
+        ),
+    },
+    "eslatmaTalaba1": {
+        "uz": (
+            "⏱ <b>{ism}</b>, sessiya variantini sinab ko'ring: 30 savol, 60 daqiqa.\n\n"
+            "Oxirida taxminiy baho va qaysi mavzuda qoqilganingiz chiqadi."
+        ),
+        "ru": (
+            "⏱ <b>{ism}</b>, попробуйте вариант сессии: 30 вопросов, 60 минут.\n\n"
+            "В конце — примерная оценка и темы, где были ошибки."
+        ),
+    },
+    "eslatmaTalaba2": {
+        "uz": (
+            "🧮 <b>{ism}</b>, limit, hosila, integral — bugun qaysi biri?\n\n"
+            "Formulalar ham bir joyda, yechim qadam-baqadam."
+        ),
+        "ru": (
+            "🧮 <b>{ism}</b>, пределы, производные, интегралы — что сегодня?\n\n"
+            "Формулы в одном месте, решение по шагам."
+        ),
+    },
     "eslatmaBirKun": {
         "uz": (
             "👋 <b>{ism}</b>, kecha zo'r ishlading!\n\n"

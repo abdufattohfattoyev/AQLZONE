@@ -101,6 +101,7 @@ def _user_json(pupil: Pupil) -> dict:
         # (darslar ro'yxati eng katta chiqish nuqtasi edi).
         "kim": pupil.kim or "",
         "bosqich": pupil.anketa_sinf if pupil.anketa_sinf is not None else -1,
+        "yonalish": pupil.yonalish or "",
         "profillar": [_profil_json(pr) for pr in pupil.profiles.all()],
     }
 
@@ -151,7 +152,11 @@ def _profil_tanla(request) -> Profile:
     xom = request.query_params.get("profileId") or (
         request.data.get("profileId") if hasattr(request.data, "get") else None
     )
-    if xom:
+    # Raqam bo'lmagan qiymat (eski ilova anketa javobini shu maydonga
+    # yuborib qo'ygan: `{"kim":"oquvchi",…}`) e'tiborsiz qoladi. Usiz
+    # baza so'rovi ValueError bilan yiqilib, `/me` va `/progress` 500
+    # qaytarardi — ya'ni ilova umuman ochilmasdi.
+    if xom and str(xom).isdigit():
         pr = request.user.profiles.filter(pk=str(xom)).first()
         if pr:
             return pr
@@ -597,7 +602,7 @@ MAX_REYTING = 100
 _hafta_boshi = L.hafta_boshi
 
 
-def _reyting_jami(limit: int):
+def _reyting_jami(limit: int, kim: str = ""):
     """
     Butun vaqt bo'yicha: yig'ilgan yulduzlar.
 
@@ -607,11 +612,13 @@ def _reyting_jami(limit: int):
     qs = Progress.objects.filter(
         stars__gt=0, profile__pupil__registered_at__isnull=False
     )
+    if kim:
+        qs = qs.filter(profile__pupil__kim=kim)
     top = list(qs.order_by("-stars", "updated_at").values("profile", "stars", "updated_at")[:limit])
     return qs, [(r["profile"], r["stars"]) for r in top]
 
 
-def _reyting_hafta(limit: int):
+def _reyting_hafta(limit: int, kim: str = ""):
     """
     Shu hafta yig'ilgani.
 
@@ -624,6 +631,7 @@ def _reyting_hafta(limit: int):
         LessonResult.objects.filter(
             created_at__gte=_hafta_boshi(),
             profile__pupil__registered_at__isnull=False,
+            **({"profile__pupil__kim": kim} if kim else {}),
         )
         .values("profile")
         .annotate(yulduz=Sum("stars"))
@@ -694,8 +702,13 @@ def leaderboard(request):
 
     Faqat ro'yxatdan o'tgan hisoblar qatnashadi — ismsiz qator jadvalni
     "Noma'lum" bilan to'ldirib tashlagan bo'lardi.
+
+    `?guruh=talaba` — faqat talabalar orasida. Talaba maktab o'quvchilari
+    bilan bitta jadvalda turganda 1-sinf darslaridan yulduz yig'gan bola
+    uning oldida bo'lardi — solishtirish ma'nosiz edi.
     """
     davr = "hafta" if request.query_params.get("davr") == "hafta" else "jami"
+    guruh = "talaba" if request.query_params.get("guruh") == "talaba" else ""
     try:
         limit = int(request.query_params.get("limit") or 50)
     except ValueError:
@@ -703,7 +716,7 @@ def leaderboard(request):
     limit = min(MAX_REYTING, max(1, limit))
 
     joriy = _profil_tanla(request)
-    qs, top = _reyting_jami(limit) if davr == "jami" else _reyting_hafta(limit)
+    qs, top = _reyting_jami(limit, guruh) if davr == "jami" else _reyting_hafta(limit, guruh)
 
     # --- o'z o'rnim ---
     # Top ichida bo'lsam qo'shimcha so'rov kerak emas.
@@ -1117,6 +1130,16 @@ def onlayn_royxat(request):
     })
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def oyinlar_jonli(request):
+    """
+    O'yinlar ekrani uchun sonlar: nechta odam o'yinda, nechtasi onlayn
+    va har o'yinda nechtasi (`onlayn.oyinlar_jonli`). Ismlar qaytmaydi.
+    """
+    return Response(ON.oyinlar_jonli(request.user))
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def tirik(request):
@@ -1526,6 +1549,16 @@ def duel_taklif_javob(request, pk: int):
         kod = 403 if sabab == "begona" else 410
         return Response({"detail": sabab, "sabab": sabab}, status=kod)
     return Response({"kod": d.kod, "qabul": qabul})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_taklif_bekor(request):
+    """Chaqirgan odam jonli taklifni bekor qiladi (`kod` — duel kodi)."""
+    d = Duel.objects.filter(kod=str(request.data.get("kod") or "")).first()
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    return Response({"bekor": D.taklif_bekor(d, _profil_tanla(request))})
 
 
 @api_view(["POST"])

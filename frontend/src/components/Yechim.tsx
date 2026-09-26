@@ -37,10 +37,16 @@ import { t } from "../lib/matn";
 import { yo } from "../lib/tarjima/yechim";
 import type { Qadam } from "../lib/activity";
 
-export function Yechim({ qadamlar, javob, onYop }: {
+export function Yechim({ qadamlar, javob, onYop, rangli = false }: {
   qadamlar: Qadam[];
   /** To'g'ri javob — oxirgi qator sifatida ajratib ko'rsatiladi. */
   javob: string;
+  /**
+   * Javob RANG (`#rrggbb`) — matn o'rniga rangli doira chiziladi.
+   * Ustoz rejimida 1-sinf savollari ham ochiladi va u yerda javob
+   * rang kodi: "#e53935" deb yozilgani o'qituvchiga hech narsa demaydi.
+   */
+  rangli?: boolean;
   onYop: () => void;
 }) {
   return (
@@ -109,7 +115,12 @@ export function Yechim({ qadamlar, javob, onYop }: {
         <div className="mt-1 flex shrink-0 items-center gap-2 rounded-2xl bg-brand-green/15 px-3.5 py-2.5">
           <Icon name="check" size={17} className="shrink-0 text-brand-green-d" />
           <span className="text-[12.5px] text-ink-dim">{t("yechimJavob")}</span>
-          <span className="ml-auto min-w-0 truncate font-display text-[16px] text-brand-green-d">{javob}</span>
+          {rangli ? (
+            <span aria-label={javob} className="ml-auto size-7 shrink-0 rounded-full ring-2 ring-karta"
+              style={{ background: javob }} />
+          ) : (
+            <span className="ml-auto min-w-0 truncate font-display text-[16px] text-brand-green-d">{javob}</span>
+          )}
         </div>
 
         <button type="button" onClick={onYop}

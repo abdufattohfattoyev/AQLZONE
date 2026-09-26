@@ -18,6 +18,8 @@ import { algebra10 } from "./algebra10";
 import { geometriya10 } from "./geometriya10";
 import { matematika11 } from "./matematika11";
 import { oliy1 } from "./oliy1";
+import { oliy2 } from "./oliy2";
+import { ehtimollik } from "./ehtimollik";
 
 export interface Course {
   id: string;
@@ -30,7 +32,9 @@ export interface Course {
    * 7–10     algebra
    * 11       matematika (11-sinfda darslik bitta, ikkala fan birga)
    * 107–110  geometriya (100 + sinf)
- * 301      oliy matematika, 1-kurs (talabalar) — `MAKTAB_KURSI` dan
+ * 301      oliy matematika, 1-kurs (talabalar)
+ * 302      oliy matematika, 2-kurs
+ * 303      ehtimollar nazariyasi va statistika — `MAKTAB_KURSI` dan
  *          tashqarida: "eng yuqori sinf" hisoblaganda olinmaydi
    *
    * Geometriya nega 100 dan boshlanadi. 7-sinfda algebra ham, geometriya
@@ -119,6 +123,12 @@ export const COURSES: Course[] = [
   build({ id: "oliy1", grade: OLIY_KOD, slug: "oliy-matematika", title: "Oliy matematika · 1-kurs",
     ic: "sqrt", color: "blue",
     desc: "Determinant, vektorlar, limit, hosila, integral, qatorlar", units: oliy1 }),
+  build({ id: "oliy2", grade: OLIY_KOD + 1, slug: "oliy-matematika-2", title: "Oliy matematika · 2-kurs",
+    ic: "cube", color: "purple",
+    desc: "Xususiy hosila, karrali integral, qatorlar, differensial tenglamalar", units: oliy2 }),
+  build({ id: "ehtimollik", grade: OLIY_KOD + 2, slug: "ehtimollar-nazariyasi", title: "Ehtimollar nazariyasi va statistika",
+    ic: "pie", color: "green",
+    desc: "Kombinatorika, ehtimollik, tasodifiy miqdorlar, statistika", units: ehtimollik }),
 ];
 
 /** Maktab kursimi (maktabgacha–11-sinf). Talabalar kursi — yo'q. */

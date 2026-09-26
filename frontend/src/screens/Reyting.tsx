@@ -25,8 +25,13 @@ import { getReyting } from "../lib/api";
 import type { Reyting as ReytingMa, ReytingQator } from "../lib/api";
 import { t } from "../lib/matn";
 import { useOrqaga } from "../lib/qobiq";
+import { useProfil } from "../lib/profil";
 
-type Davr = "liga" | "jami" | "hafta";
+/**
+ * "talabalar" — faqat talabalar orasidagi umumiy jadval. U faqat
+ * talabaga ko'rinadi: maktab o'quvchisiga bu yorliq begona.
+ */
+type Davr = "liga" | "jami" | "hafta" | "talabalar";
 
 /** Birinchi uchtaga medal. Qolganiga oddiy raqam. */
 const MEDAL: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
@@ -36,13 +41,15 @@ export function Reyting({ onBack }: { onBack: () => void }) {
   const [ma, setMa] = useState<ReytingMa | null>(null);
   const [yuklanyapti, setYuklanyapti] = useState(true);
   const ozStrelka = useOrqaga(onBack);
+  const talaba = useProfil()?.kim === "talaba";
 
   useEffect(() => {
     // Liga o'z ma'lumotini o'zi oladi — bu yerda so'rov yubormaymiz.
     if (davr === "liga") return;
     let bekor = false;
     setYuklanyapti(true);
-    getReyting(davr).then((d) => {
+    const so = davr === "talabalar" ? getReyting("jami", "talaba") : getReyting(davr);
+    so.then((d) => {
       if (bekor) return;
       setMa(d);
       setYuklanyapti(false);
@@ -88,6 +95,9 @@ export function Reyting({ onBack }: { onBack: () => void }) {
         <Tab faol={davr === "liga"} onClick={() => setDavr("liga")}>{t("reytingLiga")}</Tab>
         <Tab faol={davr === "jami"} onClick={() => setDavr("jami")}>{t("reytingJami")}</Tab>
         <Tab faol={davr === "hafta"} onClick={() => setDavr("hafta")}>{t("reytingHafta")}</Tab>
+        {talaba && (
+          <Tab faol={davr === "talabalar"} onClick={() => setDavr("talabalar")}>{t("reytingTalabalar")}</Tab>
+        )}
       </div>
 
       {davr === "liga" && <LigaJadval />}

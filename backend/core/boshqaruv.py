@@ -403,6 +403,8 @@ def sinf_nomi(grade) -> str:
         11       matematika
         107–110  geometriya (100 + sinf)
         301      oliy matematika (talabalar kursi)
+        302      oliy matematika, 2-kurs
+        303      ehtimollar nazariyasi va statistika
         200      kattalar uchun   } masalalar bo'limi, kurs dasturidan
         201      olimpiada        } tashqarida (`Masala.KATTALAR`)
 
@@ -425,6 +427,10 @@ def sinf_nomi(grade) -> str:
         return "Olimpiada"
     if grade == OLIY_MATEMATIKA:
         return "Oliy matematika"
+    if grade == OLIY_MATEMATIKA + 1:
+        return "Oliy matematika, 2-kurs"
+    if grade == OLIY_MATEMATIKA + 2:
+        return "Ehtimollar nazariyasi"
     if grade >= 100:
         return f"{grade - 100}-sinf geometriya"
     if 7 <= grade <= 10:

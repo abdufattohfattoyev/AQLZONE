@@ -134,8 +134,11 @@ def ism_tanla(profil, pupil, til: str = "uz") -> str:
 #: Har kuni bir xil xabar bir haftada ko'zga tashlanmay qoladi.
 VARIANT = ("eslatma0", "eslatma1", "eslatma2", "eslatma3")
 
+#: Talabaga alohida matnlar (anketada `kim = talaba`).
+TALABA_VARIANT = ("eslatmaTalaba0", "eslatmaTalaba1", "eslatmaTalaba2")
 
-def matn_yasa(ism: str, zanjir_kun: int, kun_raqami: int, til: str = "uz") -> str:
+
+def matn_yasa(ism: str, zanjir_kun: int, kun_raqami: int, til: str = "uz", kim: str = "") -> str:
     """
     Eslatma matni. Zanjiri borga boshqacha, yo'qqa boshqacha.
 
@@ -148,6 +151,8 @@ def matn_yasa(ism: str, zanjir_kun: int, kun_raqami: int, til: str = "uz") -> st
         return M("eslatmaZanjir", til, ism=ism, kun=zanjir_kun)
     if zanjir_kun == 1:
         return M("eslatmaBirKun", til, ism=ism)
+    if kim == "talaba":
+        return M(TALABA_VARIANT[kun_raqami % len(TALABA_VARIANT)], til, ism=ism)
     return M(VARIANT[kun_raqami % len(VARIANT)], til, ism=ism)
 
 
@@ -257,7 +262,8 @@ class Command(BaseCommand):
 
             til = tilni_tanla(pupil.til)
             ism = ism_tanla(qolganlar[0], pupil, til)
-            matn = matn_yasa(ism, zanjir(idlar, bugun, pupil.pk), kun_raqami, til)
+            matn = matn_yasa(ism, zanjir(idlar, bugun, pupil.pk), kun_raqami, til,
+                             getattr(pupil, "kim", "") or "")
 
             if sinov:
                 self.stdout.write(f"  → {kirish.external_id} ({ism}):")

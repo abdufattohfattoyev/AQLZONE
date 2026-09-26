@@ -198,8 +198,14 @@ function aralash<T>(a: T[]): T[] {
   return r;
 }
 
-/** Bitta manzil — generator bilan birga. */
-interface Manba {
+/**
+ * Bitta manzil — generator bilan birga.
+ *
+ * Tashqariga ochiq: milliy sertifikat varianti (`lib/sertifikat.ts`)
+ * ochiq javobli savolning a) va b) qismini BITTA bobdan olishi kerak,
+ * `blokYasa` esa savollarni ataylab boblar bo'ylab sochadi.
+ */
+export interface Manba {
   gen: Gen;
   kurs: string;
   kursId: string;
@@ -209,7 +215,7 @@ interface Manba {
 }
 
 /** Kursning bir yoki barcha boblaridagi generatorlar. */
-function manbalar(c: Course, units: Unit[], faqatUi?: number): Manba[] {
+export function manbalar(c: Course, units: Unit[], faqatUi?: number): Manba[] {
   const m: Manba[] = [];
   units.forEach((U, ui) => {
     if (faqatUi !== undefined && ui !== faqatUi) return;

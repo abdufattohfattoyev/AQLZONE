@@ -35,7 +35,7 @@ from . import views
 from . import masala_kanal as MK
 from . import models as MDL
 from .models import (
-    Duel, DuelTaklif, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
+    Duel, DuelTaklif, Faollik, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
     MasalaOvoz, MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul,
     Session, Xona,
 )
@@ -6098,6 +6098,86 @@ class OnlaynTest(TestCase):
         s.assert_not_called()
         self.assertFalse(r.json()["yuborildi"])
 
+    # ---- holat: kim hozir nima qilyapti ----
+
+    def faol(self, pupil: Pupil, joy: str, nom: str = "", eski: bool = False) -> None:
+        Faollik.objects.update_or_create(
+            profile=pupil.asosiy_profil(),
+            defaults={"joy": joy, "nom": nom, "updated_at": timezone.now() - timedelta(
+                seconds=600 if eski else 0)},
+        )
+
+    def qator(self, ism: str) -> dict:
+        return next(x for x in self.royxat() if x["ism"] == ism)
+
+    def test_holat_oyinda_va_qaysi_oyin(self):
+        p = self.tayyorla("dev-holat-oyin-0101", "Oyinchi", "900000101")
+        self.faol(p, Faollik.OYIN, "tezkor")
+        q = self.qator("Oyinchi")
+        self.assertEqual((q["holat"], q["oyin"]), ("oyinda", "tezkor"))
+        self.assertTrue(q["onlayn"])
+
+    def test_holat_duel_oqishdan_ustun(self):
+        p = self.tayyorla("dev-holat-duel-0102", "Duelchi", "900000102")
+        self.faol(p, Faollik.DUEL, "jadval")
+        self.assertEqual(self.qator("Duelchi")["holat"], "duelda")
+
+    def test_eski_faollik_hisobga_olinmaydi(self):
+        """Ilovani yopgan telefon "chiqdim" demaydi — signal eskiradi."""
+        p = self.tayyorla("dev-holat-eski-0103", "Eski", "900000103")
+        Session.objects.filter(pupil=p).update(last_seen=timezone.now())
+        self.faol(p, Faollik.OYIN, "tezkor", eski=True)
+        self.assertEqual(self.qator("Eski")["holat"], "bosh")
+
+    def test_yoq_holati(self):
+        p = self.tayyorla("dev-holat-yoq-0104", "Yoq", "900000104")
+        Session.objects.filter(pupil=p).update(last_seen=timezone.now() - timedelta(hours=3))
+        self.assertEqual(self.qator("Yoq")["holat"], "yoq")
+
+    def test_taklif_yopiq_royxatda_korinmaydi(self):
+        p = self.tayyorla("dev-holat-yopiq-0105", "Yopiq", "900000105")
+        Profile.objects.filter(pupil=p).update(taklif_yopiq=True)
+        self.assertNotIn("Yopiq", [x["ism"] for x in self.royxat()])
+
+    def test_oyinlar_jonli_sonlari(self):
+        a = self.tayyorla("dev-jonli-a-0106", "A", "900000106")
+        b = self.tayyorla("dev-jonli-b-0107", "B", "900000107")
+        self.faol(a, Faollik.OYIN, "tezkor")
+        self.faol(b, Faollik.DUEL, "tezkor")
+        # O'zim sanalmayman.
+        self.faol(self.men, Faollik.OYIN, "jadval")
+        r = self.client.get("/api/v1/oyinlar/jonli", **self.auth(self.token)).json()
+        self.assertEqual(r["oyinda"], 2)
+        self.assertEqual(r["duelda"], 1)
+        self.assertEqual(r["oyinlar"], {"tezkor": 2})
+        self.assertGreaterEqual(r["onlayn"], 2)
+
+    def test_faollik_oyin_joyini_qabul_qiladi(self):
+        r = self.client.post("/api/v1/faollik", {"joy": "oyin", "nom": "belgi"},
+                             content_type="application/json", **self.auth(self.token))
+        self.assertEqual(r.status_code, 200)
+        f = Faollik.objects.get(profile=self.men.asosiy_profil())
+        self.assertEqual((f.joy, f.nom), ("oyin", "belgi"))
+
+
+class ProfilIdXomTest(TestCase):
+    """
+    `profileId` o'rnida raqam bo'lmagan qiymat — 500 emas, asosiy profil.
+
+    Ilova bir muddat anketa javobini (`{"kim":"oquvchi","bosqich":5}`)
+    shu maydonga yuborib turgan (`frontend/src/lib/profil.ts`) va har
+    `/me` so'rovi yiqilardi.
+    """
+
+    def test_json_profileid_ilovani_yiqitmaydi(self):
+        r = self.client.post("/api/v1/auth/device",
+                             {"deviceId": "dev-xom-profil-000001", "platform": "web"},
+                             content_type="application/json")
+        auth = {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+        xom = '{"kim":"oquvchi","bosqich":5}'
+        self.assertEqual(self.client.get("/api/v1/me", {"profileId": xom}, **auth).status_code, 200)
+        self.assertEqual(self.client.get("/api/v1/progress", {"profileId": xom}, **auth).status_code, 200)
+
 
 class MasalaFiltrTest(TestCase):
     """
@@ -6769,6 +6849,22 @@ class DuelAdolatTaklifTest(TestCase):
         c = self.kir("dev-adolat-eeee3333ffff")
         t = DuelTaklif.objects.get(duel__kod=kod)
         self.assertEqual(self.post(f"/api/v1/duel/taklif/{t.pk}/javob", {"qabul": True}, c).status_code, 403)
+
+    def test_chaqirgan_bekor_qilsa_oyna_yopiladi_va_qayta_chaqira_oladi(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        kod = self.taklif(pb).json()["kod"]
+        t = DuelTaklif.objects.get(duel__kod=kod)
+
+        # Begona bekor qila olmaydi.
+        self.assertFalse(self.post("/api/v1/duel/taklif/bekor", {"kod": kod}, self.b).json()["bekor"])
+        self.assertTrue(self.post("/api/v1/duel/taklif/bekor", {"kod": kod}, self.a).json()["bekor"])
+
+        self.assertIsNone(self.client.get("/api/v1/duel/taklif", **self.b).json()["taklif"])
+        r = self.post(f"/api/v1/duel/taklif/{t.pk}/javob", {"qabul": True}, self.b)
+        self.assertEqual(r.json()["sabab"], "bekor")
+        # Bekor qilingan taklif "soatiga bitta" ga sanalmaydi.
+        self.assertEqual(self.taklif(pb).status_code, 201)
 
 
 class XonaTest(TestCase):
@@ -7865,6 +7961,7 @@ class KursKodiTest(TestCase):
         self.assertEqual(self._tekshir(107), 107)
         self.assertEqual(self._tekshir(110), 110)
         self.assertEqual(self._tekshir(301), 301)
+        self.assertEqual(self._tekshir(303), 303)
 
     def test_nomalum_kod_kesiladi(self):
         self.assertEqual(self._tekshir(55), 11)
@@ -7964,28 +8061,143 @@ class MatematikaKanalTest(TestCase):
         from core import matematika_kanal as MK
 
         for urug in range(300):
-            for savol, javob, _ in MK._misollar(R.Random(urug)):
-                if "7 ning" in savol:
-                    n = int(re.search(r"(\d+)-darajasi", savol).group(1))
-                    self.assertEqual(MK._yetti_oxiri(savol), str(pow(7, n, 10)))
-                    continue
-                m = re.fullmatch(r"(\d+) × (\d+) = \?", savol)
+            for kim, savol, javob, usul in MK._misollar(R.Random(urug)):
+                self.assertTrue(javob.isdigit(), savol)
+                self.assertRegex(kim, r"^\d–\d-sinf$")
+                self.assertTrue(usul.endswith(javob) or usul.endswith(javob + "."), usul)
+                m = re.search(r"7 ning (\d+)-darajasi", savol)
+                if m:
+                    self.assertEqual(javob, str(pow(7, int(m[1]), 10)))
+                m = re.fullmatch(r"Hisoblang: (\d+) × (\d+)", savol)
                 if m:
                     self.assertEqual(int(javob), int(m[1]) * int(m[2]))
-                m = re.fullmatch(r"(\d+)² = \?", savol)
+                m = re.match(r"Hisoblang: (\d+)²", savol)
                 if m:
                     self.assertEqual(int(javob), int(m[1]) ** 2)
-                m = re.fullmatch(r"(\d+) ning (\d+)% i = \?", savol)
+                self.assertIn(": ", savol)                   # rasmda shart va ifoda ajraladi
+                m = re.fullmatch(r"Foizini toping: (\d+) ning (\d+)% i", savol)
                 if m:
                     self.assertEqual(int(javob) * 100, int(m[1]) * int(m[2]))
-                self.assertTrue(javob.isdigit(), savol)
 
-    def test_misol_posti_javobni_yashiradi(self):
+    def test_misol_posti_javobsiz_va_tugmasiz(self):
+        from datetime import date
         from core import matematika_kanal as MK
 
-        post = MK.misol_posti(MK.bugungi_misol())
-        self.assertEqual(post.count("<tg-spoiler>"), 2)
+        misol = MK.bugungi_misol()
+        post = MK.misol_posti(misol)
+        self.assertNotIn("tg-spoiler", post)
+        self.assertNotIn(misol[3], post)                     # usul savolda yo'q
+        for m in MK._misollar(__import__("random").Random(1)):
+            self.assertTrue(MK.misol_rasmi(m).startswith(b"\xff\xd8"))
+        self.assertIn("izohda", post)
+        self.assertIn(MK.JAVOB_SOATI, post)
+        self.assertIn(misol[0], post)                        # kim uchun
         self.assertEqual(MK.bugungi_misol(), MK.bugungi_misol())   # bir kunda bir xil
+        # Seshanba → keyingisi payshanba.
+        self.assertIn("payshanba", MK.javob_posti(misol, date(2026, 9, 22)))
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
+    def test_misol_va_javob_bir_marta_ulanib_chiqadi(self):
+        from unittest import mock
+        from core.models import KanalYozuv
+
+        with mock.patch("core.xabar.kanal_matn", return_value=("yuborildi", "", 77)) as yub, \
+             mock.patch("core.xabar.rasm_yubor", return_value=("yuborildi", "", 77)) as rasm, \
+             mock.patch("core.xabar.yubor") as tugmali:
+            call_command("matematika_kanal", "misol", stdout=StringIO())
+            self.assertTrue(rasm.call_args[0][1].startswith(b"\xff\xd8"))   # JPEG
+            self.assertEqual(len(rasm.call_args[0]), 3)                       # tugmasiz
+            yub.assert_not_called()
+            call_command("matematika_kanal", "javob", stdout=StringIO())
+            self.assertEqual(yub.call_args.kwargs["javob_id"], 77)    # savolga ulanadi
+            self.assertIn("Qanday topiladi", yub.call_args[0][1])
+            call_command("matematika_kanal", "javob", stdout=StringIO())
+            self.assertEqual(yub.call_count, 1)                        # ikkinchi javob yo'q
+            tugmali.assert_not_called()
+        self.assertEqual(KanalYozuv.objects.filter(tur="misol").count(), 2)
+
+    def test_tez_test_savollari_togri_va_sigadi(self):
+        import random as R
+        import re
+        from core import matematika_kanal as MK
+
+        for urug in range(300):
+            for kim, savol, javob, usul, variantlar, togri in MK._testlar(R.Random(urug)):
+                self.assertEqual(len(variantlar), 4, savol)
+                self.assertEqual(len(set(variantlar)), 4, variantlar)
+                self.assertEqual(variantlar[togri], javob)
+                self.assertLessEqual(len(usul), 200, usul)            # quiz izohi cheklovi
+                self.assertLessEqual(len(savol), 300)
+                self.assertTrue(all(len(v) <= 100 for v in variantlar))
+                self.assertIn(": ", savol)
+                son = lambda s: int(re.sub(r"\D", "", s))
+                m = re.fullmatch(r"Hisoblang: (\d+) × (\d+)", savol)
+                if m:
+                    self.assertEqual(son(javob), int(m[1]) * int(m[2]))
+                m = re.fullmatch(r"Hisoblang: (\d+)² − (\d+)²", savol)
+                if m:
+                    self.assertEqual(son(javob), int(m[1]) ** 2 - int(m[2]) ** 2)
+                m = re.search(r"… \+ (\d+)$", savol)
+                if m:
+                    self.assertEqual(son(javob), sum(range(1, int(m[1]) + 1, 2)))
+                m = re.search(r"(\d+):(\d\d)$", savol)
+                if m:
+                    h, mi = int(m[1]), int(m[2])
+                    a = abs(30 * h + mi / 2 - 6 * mi)
+                    self.assertEqual(son(javob), min(a, 360 - a))
+        self.assertTrue(MK.test_rasmi(MK.bugungi_test()).startswith(b"\xff\xd8"))
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
+    def test_tez_test_rasm_ostiga_quiz_bir_marta(self):
+        from unittest import mock
+
+        with mock.patch("core.xabar.rasm_yubor", return_value=("yuborildi", "", 55)) as rasm, \
+             mock.patch("core.xabar.quiz_yubor", return_value=("yuborildi", "", 56)) as quiz:
+            call_command("matematika_kanal", "test", stdout=StringIO())
+            call_command("matematika_kanal", "test", stdout=StringIO())
+        self.assertEqual(rasm.call_count, 1)
+        self.assertEqual(quiz.call_count, 1)
+        self.assertEqual(quiz.call_args.kwargs["javob_id"], 55)      # rasm ostida
+        _, savol, variantlar, togri, _ = quiz.call_args[0]
+        self.assertEqual(len(variantlar), 4)
+        self.assertIn(togri, range(4))
+
+    def test_quiz_namunalari_cheklovga_sigadi(self):
+        from core import quiz_namuna as QN
+
+        self.assertEqual(len(QN.NAMUNALAR), 5)
+        for savol, variantlar, togri, izoh in QN.NAMUNALAR:
+            self.assertLessEqual(len(savol), 300)
+            self.assertLessEqual(len(izoh), 200, izoh)
+            self.assertLessEqual(izoh.count("\n"), 2)
+            self.assertEqual(len(set(variantlar)), 4)
+            self.assertIn(togri, range(4))
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x", ADMIN_TG=["111"])
+    def test_quiz_namuna_admin_tasdiqlasa_kanalga_bir_marta(self):
+        from unittest import mock
+        from core import quiz_namuna as QN
+
+        with mock.patch("core.xabar.quiz_yubor", return_value=("yuborildi", "", 9)) as quiz:
+            self.assertEqual(QN.adminlarga_yubor(QN.NAMUNALAR[:2]), 2)
+            self.assertEqual(quiz.call_args.args[0], "111")
+            self.assertFalse(quiz.call_args.kwargs["anonim"])
+            ok, yoq = [t["callback_data"] for t in quiz.call_args.kwargs["klaviatura"][0]]
+            self.assertEqual(QN.qaror(ok, "222"), "ruxsat_yoq")         # begona
+            quiz.reset_mock()
+            self.assertEqual(QN.qaror(ok, "111"), "yuborildi")
+            self.assertEqual(quiz.call_args.args[0], "@AqlZoneUz")
+            self.assertEqual(QN.qaror(ok, "111"), "eskirgan")           # ikkinchi bosish
+            self.assertEqual(QN.qaror(yoq, "111"), "eskirgan")          # bir namuna — bir qaror
+            self.assertEqual(quiz.call_count, 1)
+
+    @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
+    def test_misolsiz_kunda_javob_chiqmaydi(self):
+        from unittest import mock
+
+        with mock.patch("core.xabar.kanal_matn") as yub:
+            call_command("matematika_kanal", "javob", stdout=StringIO(), stderr=StringIO())
+            yub.assert_not_called()
 
     @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x", BOT_USERNAME="AqlZoneBot")
     def test_buyruq_yuboradi_va_belgilaydi(self):
@@ -8096,3 +8308,115 @@ class XatoKuzatuvTest(TestCase):
         with patch("core.xabar._sorov") as s:
             self.client.post("/api/v1/xato", {"matn": "x"}, content_type="application/json")
         s.assert_not_called()
+
+
+class TalabaEslatmaTest(TestCase):
+    """Talabaga kunlik eslatma o'z tilida boradi."""
+
+    def test_talaba_matni(self):
+        from core.management.commands.eslatma import matn_yasa
+
+        for kun in range(3):
+            m = matn_yasa("Aziz", 0, kun, "uz", "talaba")
+            self.assertIn("Aziz", m)
+            self.assertNotIn("yulduz", m.lower())
+        self.assertIn("Aziz", matn_yasa("Aziz", 0, 0, "ru", "talaba"))
+
+    def test_boshqalarga_ozgarmadi(self):
+        from core.management.commands.eslatma import matn_yasa
+
+        self.assertEqual(matn_yasa("Ali", 0, 3, "uz"), matn_yasa("Ali", 0, 3, "uz", "oquvchi"))
+        # Zanjir xabari hammaga bir xil — u eng kuchli sabab.
+        self.assertEqual(matn_yasa("Ali", 5, 0, "uz", "talaba"), matn_yasa("Ali", 5, 0, "uz"))
+
+
+class TalabaReytingTest(TestCase):
+    """`?guruh=talaba` — faqat talabalar."""
+
+    def test_guruh_filtri(self):
+        from core.views import _reyting_jami
+
+        def odam(kim, yulduz):
+            p = MDL.Pupil.objects.create(first_name=kim, kim=kim, registered_at=timezone.now())
+            pr = MDL.Profile.objects.create(pupil=p, name=kim)
+            MDL.Progress.objects.create(profile=pr, stars=yulduz)
+            return pr.pk
+
+        t = odam("talaba", 5)
+        o = odam("oquvchi", 50)
+        _, hammasi = _reyting_jami(10)
+        _, talabalar = _reyting_jami(10, "talaba")
+        self.assertEqual([p for p, _ in hammasi], [o, t])
+        self.assertEqual([p for p, _ in talabalar], [t])
+
+
+class SessiyaNatijaTest(TestCase):
+    """Talabaning sessiya natijalari serverda va DTM tarixidan alohida."""
+
+    def kir(self, device: str = "dev-sessiya-1111aaaa2222") -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def test_yoziladi_va_qaytadi(self):
+        h = self.kir()
+        d = {"urinishlar": [
+            {"kurs": "oliy-matematika-2", "variant": 4, "togri": 25, "jami": 30, "sekund": 1800, "vaqt": 2000},
+            {"kurs": "ehtimollar-nazariyasi", "variant": 1, "togri": 10, "jami": 30, "sekund": 900, "vaqt": 1000},
+        ]}
+        j = self.client.post("/api/v1/sessiya/natija", d, content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 2)
+        self.assertEqual([x["kurs"] for x in j["natijalar"]], ["oliy-matematika-2", "ehtimollar-nazariyasi"])
+        # Takror — yangi qator yo'q.
+        j = self.client.post("/api/v1/sessiya/natija", d, content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 0)
+        self.assertEqual(len(j["natijalar"]), 2)
+
+    def test_dtm_bilan_aralashmaydi(self):
+        h = self.kir()
+        self.client.post("/api/v1/sessiya/natija",
+                         {"kurs": "oliy-matematika", "variant": 1, "togri": 5, "jami": 30, "vaqt": 10},
+                         content_type="application/json", **h)
+        self.client.post("/api/v1/imtihon/natija",
+                         {"variant": 2, "togri": 20, "jami": 30, "vaqt": 20},
+                         content_type="application/json", **h)
+        dtm = self.client.get("/api/v1/imtihon/natija", **h).json()
+        ses = self.client.get("/api/v1/sessiya/natija", **h).json()
+        self.assertEqual(dtm["jami"], 1)
+        self.assertEqual(dtm["oxirgilar"][0]["variant"], 2)
+        self.assertEqual(len(ses["natijalar"]), 1)
+        self.assertEqual(ses["natijalar"][0]["kurs"], "oliy-matematika")
+
+    def test_begona_kurs_qabul_qilinmaydi(self):
+        h = self.kir()
+        j = self.client.post("/api/v1/sessiya/natija",
+                             {"kurs": "1-sinf", "variant": 1, "togri": 5, "jami": 30, "vaqt": 10},
+                             content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 0)
+        # DTM so'rovi orqali sessiya yozilmaydi va aksincha.
+        j = self.client.post("/api/v1/imtihon/natija",
+                             {"kurs": "oliy-matematika", "variant": 1, "togri": 5, "jami": 30, "vaqt": 11},
+                             content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 0)
+
+
+class YonalishTest(TestCase):
+    def test_saqlanadi_va_me_da_qaytadi(self):
+        from core import tahlil as TH
+
+        p = MDL.Pupil.objects.create(first_name="Talaba")
+        TH.anketa_yoz(p, {"kim": "talaba", "sinf": 102, "yonalish": "boshlangich"})
+        p.refresh_from_db()
+        self.assertEqual(p.yonalish, "boshlangich")
+        # Faqat yo'nalish (qisman) — boshqa javoblar o'chmaydi.
+        TH.anketa_yoz(p, {"yonalish": "iqtisod", "qisman": True})
+        p.refresh_from_db()
+        self.assertEqual((p.kim, p.anketa_sinf, p.yonalish), ("talaba", 102, "iqtisod"))
+
+    def test_nomalum_qiymat_yozilmaydi(self):
+        from core import tahlil as TH
+
+        p = MDL.Pupil.objects.create(first_name="Talaba")
+        TH.anketa_yoz(p, {"kim": "talaba", "yonalish": "kosmonavt"})
+        p.refresh_from_db()
+        self.assertEqual(p.yonalish, "")

@@ -133,7 +133,7 @@ function yubor() {
  * "tugmalar" ro'yxati minglab javoblar bilan to'lib ketardi. Bu
  * ekranlarda faqat nomi aniq berilgan boshqaruvlar yoziladi.
  */
-const SAVOL_EKRANI = /^\/(kurs\/[^/]+\/(dars|sinov|daftar|testlar)|oyinlar\/.+|toplam\/|masalalar\/:id|kichkintoy\/|xona\/)/;
+const SAVOL_EKRANI = /^\/(kurs\/[^/]+\/(dars|sinov|daftar|testlar)|oyinlar\/.+|toplam\/|masalalar\/:id|kichkintoy\/|xona\/|imtihon\/|sertifikat\/|sessiya\/)/;
 
 /** Bosilgan elementning odam o'qiydigan nomi. */
 function tugmaNomi(el: Element, yol: string): string {

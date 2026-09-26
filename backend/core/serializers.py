@@ -127,10 +127,10 @@ class ResultSerializer(serializers.ModelSerializer):
         ]
 
     #: Kurs kodlari 0–11 dan tashqarida ham bor (`boshqaruv.sinf_nomi`):
-    #: geometriya 107–110 va oliy matematika 301. Ilgari `grade` 0–11
+    #: geometriya 107–110 va talabalar kurslari 301–303. Ilgari `grade` 0–11
     #: ga KESILARDI va geometriya natijalari jimgina "11-sinf" bo'lib
     #: yozilardi — panelda 11-sinf va geometriya aralashib ketgan edi.
-    KURS_KODLARI = frozenset([*range(0, 12), *range(107, 111), 301])
+    KURS_KODLARI = frozenset([*range(0, 12), *range(107, 111), 301, 302, 303])
 
     def validate(self, data):
         try:

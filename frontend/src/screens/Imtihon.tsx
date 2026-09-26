@@ -12,13 +12,16 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import { Reveal } from "../components/Reveal";
+import { ImtihonTur } from "../components/ImtihonTur";
 import { t } from "../lib/matn";
 import { useOrqaga } from "../lib/qobiq";
 import { OLCHAM, VARIANTLAR, daraja, engYaxshi, foiz, natijalar, sinxronla } from "../lib/imtihon";
 import type { ServerTarix } from "../lib/imtihon";
 
-export function Imtihon({ onVariant, onChiq }: {
+export function Imtihon({ onVariant, onSertifikat, onChiq }: {
   onVariant: (n: number) => void;
+  /** Milliy sertifikat variantlariga o'tish (`components/ImtihonTur.tsx`). */
+  onSertifikat: () => void;
   onChiq: () => void;
 }) {
   useOrqaga(onChiq);
@@ -56,6 +59,8 @@ export function Imtihon({ onVariant, onChiq }: {
           </p>
         </div>
       </div>
+
+      <ImtihonTur joriy="dtm" onTanla={onSertifikat} />
 
       {/* ---- daraja ---- */}
       <Reveal kech={60}>
