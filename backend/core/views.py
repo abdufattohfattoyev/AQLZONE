@@ -555,7 +555,7 @@ def summary(request):
     xom = (
         LessonResult.objects.filter(profile=profil, created_at__date__gte=boshi)
         .values("created_at__date")
-        .annotate(savollar=Sum("asked"), darslar=Count("id"))
+        .annotate(savollar=Sum("asked"), darslar=Count("id"), vaqt=Sum("duration_ms"))
     )
     kunlar_map = {r["created_at__date"]: r for r in xom}
     hafta = []
@@ -566,6 +566,9 @@ def summary(request):
             "sana": kun.isoformat(),
             "savollar": (r or {}).get("savollar") or 0,
             "darslar": (r or {}).get("darslar") or 0,
+            # Ota-ona panelidagi haftalik ustunlar DAQIQADA (yangi dizayn):
+            # "bola necha daqiqa shug'ullandi" savol sonidan tushunarliroq.
+            "daqiqa": round(((r or {}).get("vaqt") or 0) / 60000),
         })
 
     # --- eng qiyin kelgan darslar ---
@@ -602,7 +605,19 @@ MAX_REYTING = 100
 _hafta_boshi = L.hafta_boshi
 
 
-def _reyting_jami(limit: int, kim: str = ""):
+#: "Sinfim" jadvali kimlarni sinf bo'yicha birlashtiradi — bola o'zi yoki
+#: uning ota-onasi anketada sinfni aytgan (`Pupil.anketa_sinf`).
+SINF_KIMLAR = ("oquvchi", "ota_ona")
+
+
+def _guruh_filtri(kim: str = "", sinf: int | None = None) -> dict:
+    """Reyting guruhi → so'rov filtri: talabalar yoki bir sinf (0–11)."""
+    if sinf is not None:
+        return {"profile__pupil__anketa_sinf": sinf, "profile__pupil__kim__in": SINF_KIMLAR}
+    return {"profile__pupil__kim": kim} if kim else {}
+
+
+def _reyting_jami(limit: int, kim: str = "", sinf: int | None = None):
     """
     Butun vaqt bo'yicha: yig'ilgan yulduzlar.
 
@@ -610,15 +625,13 @@ def _reyting_jami(limit: int, kim: str = ""):
     shuning uchun bu yerda qayta sanash shart emas.
     """
     qs = Progress.objects.filter(
-        stars__gt=0, profile__pupil__registered_at__isnull=False
+        stars__gt=0, profile__pupil__registered_at__isnull=False, **_guruh_filtri(kim, sinf)
     )
-    if kim:
-        qs = qs.filter(profile__pupil__kim=kim)
     top = list(qs.order_by("-stars", "updated_at").values("profile", "stars", "updated_at")[:limit])
     return qs, [(r["profile"], r["stars"]) for r in top]
 
 
-def _reyting_hafta(limit: int, kim: str = ""):
+def _reyting_hafta(limit: int, kim: str = "", sinf: int | None = None):
     """
     Shu hafta yig'ilgani.
 
@@ -631,7 +644,7 @@ def _reyting_hafta(limit: int, kim: str = ""):
         LessonResult.objects.filter(
             created_at__gte=_hafta_boshi(),
             profile__pupil__registered_at__isnull=False,
-            **({"profile__pupil__kim": kim} if kim else {}),
+            **_guruh_filtri(kim, sinf),
         )
         .values("profile")
         .annotate(yulduz=Sum("stars"))
@@ -706,9 +719,16 @@ def leaderboard(request):
     `?guruh=talaba` — faqat talabalar orasida. Talaba maktab o'quvchilari
     bilan bitta jadvalda turganda 1-sinf darslaridan yulduz yig'gan bola
     uning oldida bo'lardi — solishtirish ma'nosiz edi.
+
+    `?guruh=sinf` — "Sinfim": anketada o'sha sinfni aytganlar orasida
+    (o'quvchi yoki ota-ona). Sinf aytilmagan bo'lsa — butun jadval.
     """
     davr = "hafta" if request.query_params.get("davr") == "hafta" else "jami"
-    guruh = "talaba" if request.query_params.get("guruh") == "talaba" else ""
+    guruh_q = request.query_params.get("guruh")
+    guruh = "talaba" if guruh_q == "talaba" else ""
+    sinf = None
+    if guruh_q == "sinf" and request.user.kim in SINF_KIMLAR and 0 <= request.user.anketa_sinf <= 11:
+        sinf = request.user.anketa_sinf
     try:
         limit = int(request.query_params.get("limit") or 50)
     except ValueError:
@@ -716,7 +736,7 @@ def leaderboard(request):
     limit = min(MAX_REYTING, max(1, limit))
 
     joriy = _profil_tanla(request)
-    qs, top = _reyting_jami(limit, guruh) if davr == "jami" else _reyting_hafta(limit, guruh)
+    qs, top = (_reyting_jami if davr == "jami" else _reyting_hafta)(limit, guruh, sinf)
 
     # --- o'z o'rnim ---
     # Top ichida bo'lsam qo'shimcha so'rov kerak emas.

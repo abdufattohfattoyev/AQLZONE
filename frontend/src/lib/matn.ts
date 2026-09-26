@@ -357,6 +357,22 @@ const S = {
   sertXatolar: ["Xatolar", "Ошибки"],
   sertSavolRaqam: ["{n}-savol", "Вопрос {n}"],
 
+  /* ---------------- Reyting (yangi dizayn) ---------------- */
+  reytingSinfim: ["Sinfim", "Мой класс"],
+  reytingHamma: ["Hamma", "Все"],
+  reytingBuHafta: ["Bu hafta", "Эта неделя"],
+  reytingHammasi: ["Hammasi", "За всё время"],
+  reytingSiz: ["Siz — {ism}", "Вы — {ism}"],
+
+  /* ---------------- Ota-ona paneli (yangi dizayn) ---------------- */
+  otaKunFaol: ["kun faol", "дн. активности"],
+  otaDars: ["dars", "уроков"],
+  otaTogri: ["to'g'ri", "верно"],
+  otaHaftaDaqiqa: ["Oxirgi 7 kun, daqiqa", "Последние 7 дней, минуты"],
+  otaYordam: ["Yordam kerak bo'lgan mavzu", "Тема, где нужна помощь"],
+  otaYordamIzoh: ["{nom} — {jami} ta savoldan {togri} tasi to'g'ri.", "{nom} — верно {togri} из {jami}."],
+  otaDarsniOch: ["Darsni ochish", "Открыть урок"],
+
   /* ---------------- Men (`screens/Men.tsx`) ---------------- */
   menSarlavha: ["Men", "Я"],
   menMehmon: ["Mehmon", "Гость"],

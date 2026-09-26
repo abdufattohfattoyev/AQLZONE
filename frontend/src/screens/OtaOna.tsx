@@ -1,46 +1,42 @@
 /**
- * Ota-ona paneli.
+ * Ota-ona paneli (`manba/OtaOna.dc.html`).
  *
  * Bu ekran bolaga emas, KATTAGA yozilgan — shuning uchun uslubi ham
- * boshqacha: o'yin bezaklari yo'q, raqamlar oldinda.
+ * boshqacha: o'yin bezaklari yo'q, raqamlar oldinda. Tepadan pastga:
  *
- * Uchta savolga javob beradi va ular ataylab shu tartibda:
- *   1. Bola muntazam mashq qilyaptimi?   (haftalik ustunlar)
- *   2. Qayerda qiynalyapti?              (eng past aniqlikdagi darslar)
- *   3. Umumiy manzara qanday?            (jami ko'rsatkichlar)
+ *   farzand      bir nechta bola bo'lsa — tanlash chiplari
+ *   uch son      haftada necha kun faol, nechta dars, to'g'ri javob %
+ *   hafta        har kuni necha DAQIQA shug'ullangan (ustunlar)
+ *   yordam       eng past aniqlikdagi dars va "Darsni ochish"
+ *   daftar       takrorlash kutayotgan xatolar (qurilmada)
  *
- * Ma'lumot serverdan keladi. Internet bo'lmasa panel bo'sh qolmaydi —
- * qurilmadagi xatolar daftari baribir ko'rsatiladi, chunki u mahalliy.
+ * Ma'lumot serverdan keladi (`/summary`). Internet bo'lmasa panel bo'sh
+ * qolmaydi — qurilmadagi xatolar daftari baribir ko'rsatiladi.
+ *
+ * Dizayndagi "Haftalik hisobot Telegram'ga" o'chirgichi HALI YO'Q:
+ * serverda bunday yuborish yo'q va ishlamaydigan tugma qo'yilmadi.
  */
 import { useEffect, useState } from "react";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
-import { getXulosa } from "../lib/api";
-import type { Xulosa } from "../lib/api";
+import { getHisob, getXulosa, joriyProfil, profilniTanla } from "../lib/api";
+import type { Profil, QiyinDars, Xulosa } from "../lib/api";
 import { hammasi as daftarHammasi } from "../lib/daftar";
 import { courseBySlug, sinfNomi } from "../lib/curriculum";
 import { t } from "../lib/matn";
-import { useOrqaga } from "../lib/qobiq";
+import { tebrat, useOrqaga } from "../lib/qobiq";
 import { kursMatn } from "../lib/tarjima/kurs";
 
 interface Props {
   onBack: () => void;
+  /** Qiynalgan darsni ochish (sinf kodi, bob va dars indeksi). */
+  onDars: (d: QiyinDars) => void;
 }
 
-/** Millisekundni odam o'qiydigan ko'rinishga aylantiradi. */
-function vaqtMatn(ms: number): string {
-  const daqiqa = Math.round(ms / 60000);
-  if (daqiqa < 60) return t("daqiqa", { n: daqiqa });
-  return t("soatDaqiqa", { soat: Math.floor(daqiqa / 60), daqiqa: daqiqa % 60 });
-}
-
-/** Diagramma ostidagi qisqa kun nomlari. Yakshanbadan boshlanadi —
-    `Date.getDay()` shu tartibda qaytaradi. */
-const haftaKuni = () => t("haftaKunlari").split(",");
-
-export function OtaOna({ onBack }: Props) {
+export function OtaOna({ onBack, onDars }: Props) {
   const [xulosa, setXulosa] = useState<Xulosa | null>(null);
   const [yuklandi, setYuklandi] = useState(false);
+  const [bolalar, setBolalar] = useState<Profil[]>([]);
   const ozStrelka = useOrqaga(onBack);
 
   useEffect(() => {
@@ -50,161 +46,158 @@ export function OtaOna({ onBack }: Props) {
       setXulosa(x);
       setYuklandi(true);
     });
+    getHisob().then((h) => { if (!bekor) setBolalar(h?.profillar ?? []); });
     return () => { bekor = true; };
   }, []);
 
   // Xatolar daftari mahalliy — server bo'lmasa ham ko'rsatiladi.
   const daftar = daftarHammasi().slice(0, 6);
-
-  const eng = Math.max(1, ...(xulosa?.hafta ?? []).map((k) => k.savollar));
+  const hafta = xulosa?.hafta ?? [];
+  const faolKun = hafta.filter((k) => k.darslar > 0).length;
+  const haftaDars = hafta.reduce((a, k) => a + k.darslar, 0);
+  // Eski server `daqiqa` qaytarmasligi mumkin — o'shanda savollar soni.
+  const daqiqada = hafta.some((k) => typeof k.daqiqa === "number");
+  const qiymat = (k: Xulosa["hafta"][number]) => (daqiqada ? k.daqiqa ?? 0 : k.savollar);
+  const eng = Math.max(1, ...hafta.map(qiymat));
+  const qisqa = t("bugunQisqaKunlar").split(",");
+  const qiyin = xulosa?.qiyin[0];
+  const joriy = joriyProfil();
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16">
-      <div className="flex items-center gap-2">
-        {/* Telegram Mini App ichida bu strelka CHIZILMAYDI: u yerda
-            Telegram o'z sarlavhasida nativ `←` ni ko'rsatadi va ikkitasi
-            bir ekranda turganda odam har safar "qaysi biri to'g'ri?" deb
-            o'ylardi (`lib/qobiq.ts`). */}
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]">
+      <header className="flex min-h-12 items-center gap-3">
         {ozStrelka && (
-          <button type="button" onClick={onBack} title={t("ortga")}
-            className="clay-press grid size-[38px] place-items-center rounded-full bg-karta text-ink-soft shadow-clay-sm">
+          <button type="button" onClick={onBack} aria-label={t("ortga")}
+            className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta shadow-clay-sm">
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
         )}
-      </div>
+        <h1 className="min-w-0 flex-1 truncate font-display text-[23px]">{t("otaOnaPaneli")}</h1>
+      </header>
 
-      <div className="az-kirish mt-4">
-        <h1 className="text-[22px]">{t("otaOnaPaneli")}</h1>
-        <p className="mt-1 text-[13px] text-ink-soft">
-          {t("otaOnaIzoh")}
-        </p>
-      </div>
+      {/* ---- farzand tanlash — faqat bir nechta bola bo'lsa ---- */}
+      {bolalar.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {bolalar.map((b, i) => {
+            const bu = joriy ? String(b.id) === joriy : i === 0;
+            return (
+              <button key={b.id} type="button" aria-pressed={bu} data-tahlil="Ota-ona: farzand"
+                onClick={() => {
+                  if (bu) return;
+                  tebrat("tanlov");
+                  profilniTanla(b.id);
+                  // Profil almashsa hamma narsa (progress, daftar) boshqa —
+                  // `screens/Profillar.tsx` dagidek to'liq qayta yuklanadi.
+                  window.location.reload();
+                }}
+                className={`grid min-h-10 place-items-center rounded-full px-4 text-[14.5px] ${
+                  bu ? "bg-brand-blue font-bold text-white" : "bg-karta font-semibold text-ink-soft shadow-clay-sm"}`}>
+                {b.ism}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* ---- haftalik faollik ---- */}
       {xulosa && (
-        <section className="az-kirish mt-5 rounded-clay bg-karta p-4 shadow-clay-sm">
-          <h2 className="font-display text-[15px]">{t("oxirgi7Kun")}</h2>
-          {/* Ustun `items-stretch` bilan: qator `items-end` bo'lsa
-              ustunning balandligi MATNIGA teng bo'lib qoladi, ichkaridagi
-              `flex-1` esa nolga tushadi va butun diagramma ko'rinmay
-              qoladi — foizlar to'g'ri hisoblansa ham. */}
-          <div className="mt-3 flex h-24 items-stretch gap-1.5">
-            {xulosa.hafta.map((k) => {
-              const kun = new Date(`${k.sana}T00:00:00`);
-              const balandlik = Math.round((k.savollar / eng) * 100);
+        <div className="grid grid-cols-3 gap-2">
+          <Son qiymat={`${faolKun} / 7`} nom={t("otaKunFaol")} />
+          <Son qiymat={String(haftaDars)} nom={t("otaDars")} />
+          <Son qiymat={`${xulosa.jami.aniqlik}%`} nom={t("otaTogri")}
+            rang={xulosa.jami.savollar ? "text-brand-green-d" : ""} />
+        </div>
+      )}
+
+      {/* ---- haftalik ustunlar ---- */}
+      {xulosa && (
+        <section className="flex flex-col gap-2.5 rounded-[22px] bg-karta p-4 shadow-clay-sm">
+          <h2 className="font-display text-[18px]">{daqiqada ? t("otaHaftaDaqiqa") : t("oxirgi7Kun")}</h2>
+          {/* Ustun `items-stretch` bilan: qator `items-end` bo'lsa ustun
+              balandligi MATNIGA teng bo'lib, ichkaridagi `flex-1` nolga
+              tushardi va diagramma ko'rinmay qolardi. */}
+          <div className="grid h-[120px] grid-cols-7 items-stretch gap-1.5 min-[360px]:gap-2"
+            role="img" aria-label={hafta.map((k) => qiymat(k)).join(", ")}>
+            {hafta.map((k) => {
+              const m = qiymat(k);
               return (
-                <div key={k.sana} className="flex flex-1 flex-col items-center gap-1">
-                  <div className="flex w-full flex-1 items-end">
-                    <div
-                      className={`w-full rounded-t-lg transition-[height] duration-500
-                        ${k.savollar ? "bg-gradient-to-t from-brand-orange to-brand-gold" : "bg-track"}`}
-                      // Bo'sh kun ham ko'rinib tursin — 3px chiziq "o'ynamadi"
-                      // degan ma'noni beradi, yo'qlik esa chalkashtiradi.
-                      style={{ height: k.savollar ? `${Math.max(8, balandlik)}%` : "3px" }}
-                    />
-                  </div>
-                  <span className="text-[10.5px] text-ink-dim">{haftaKuni()[kun.getDay()]}</span>
+                <div key={k.sana} className="flex flex-col items-center justify-end gap-1">
+                  {m > 0 && <span className="text-[12px] font-bold text-ink-soft">{m}</span>}
+                  <span className={`block w-full rounded-lg ${m ? "bg-brand-blue" : "bg-track"}`}
+                    style={{ height: m ? `${Math.max(6, Math.round((m / eng) * 86))}px` : "6px" }} />
                 </div>
               );
             })}
           </div>
-        </section>
-      )}
-
-      {/* ---- jami ---- */}
-      {xulosa && xulosa.jami.darslar > 0 && (
-        <section className="az-kirish mt-3 grid grid-cols-2 gap-3">
-          <Katak nom={t("kDarslar")} qiymat={xulosa.jami.darslar} />
-          <Katak nom={t("kSavollar")} qiymat={xulosa.jami.savollar} />
-          <Katak nom={t("kAniqlik")} qiymat={`${xulosa.jami.aniqlik}%`}
-            rang={xulosa.jami.aniqlik >= 80 ? "text-brand-green-d" : "text-brand-orange-d"} />
-          <Katak nom={t("kVaqt")} qiymat={vaqtMatn(xulosa.jami.vaqt)} kichik />
-        </section>
-      )}
-
-      {/* ---- qiynalayotgan mavzular ---- */}
-      {xulosa && xulosa.qiyin.length > 0 && (
-        <section className="az-kirish mt-3 rounded-clay bg-karta p-4 shadow-clay-sm">
-          <h2 className="font-display text-[15px]">{t("engQiyin")}</h2>
-          <p className="mt-0.5 text-[12px] text-ink-dim">
-            {t("engQiyinIzoh")}
-          </p>
-          <div className="mt-3 space-y-2">
-            {xulosa.qiyin.map((d, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <span className="min-w-0 flex-1 truncate text-[13px]">
-                  {d.lesson_name
-                    ? kursMatn(d.lesson_name)
-                    : t("sinfBob", { sinf: sinfNomi(d.grade), n: d.unit + 1 })}
-                </span>
-                <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-track">
-                  <span
-                    className={`block h-full rounded-full ${
-                      d.aniqlik >= 80 ? "bg-brand-green" : d.aniqlik >= 60 ? "bg-brand-orange" : "bg-brand-red"
-                    }`}
-                    style={{ width: `${d.aniqlik}%` }}
-                  />
-                </span>
-                <span className="w-9 shrink-0 text-right text-[12px] text-ink-dim">{d.aniqlik}%</span>
-              </div>
+          <div className="grid grid-cols-7 gap-1.5 text-center text-[12.5px] text-ink-dim min-[360px]:gap-2">
+            {hafta.map((k) => (
+              <span key={k.sana}>{qisqa[(new Date(`${k.sana}T00:00:00`).getDay() + 6) % 7]}</span>
             ))}
           </div>
         </section>
       )}
 
+      {/* ---- yordam kerak bo'lgan mavzu ---- */}
+      {qiyin && (
+        <section className="flex flex-col gap-2 rounded-[22px] bg-karta p-4 shadow-clay-sm">
+          <h2 className="font-display text-[18px]">{t("otaYordam")}</h2>
+          <p className="text-[15px] leading-snug text-ink-soft">
+            {t("otaYordamIzoh", {
+              nom: qiyin.lesson_name ? kursMatn(qiyin.lesson_name).split(" · ")[0] ?? ""
+                : t("sinfBob", { sinf: sinfNomi(qiyin.grade), n: qiyin.unit + 1 }),
+              jami: qiyin.savollar, togri: qiyin.togri,
+            })}
+          </p>
+          <button type="button" onClick={() => onDars(qiyin)} data-tahlil="Ota-ona: darsni ochish"
+            className="clay-press grid min-h-10 place-items-center self-start rounded-xl bg-brand-blue/10 px-3.5
+                       text-[14.5px] font-bold text-brand-blue-t">
+            {t("otaDarsniOch")}
+          </button>
+        </section>
+      )}
+
       {/* ---- xatolar daftari (mahalliy) ---- */}
       {daftar.length > 0 && (
-        <section className="az-kirish mt-3 rounded-clay bg-karta p-4 shadow-clay-sm">
-          <h2 className="font-display text-[15px]">{t("takrorlashKutayotgan")}</h2>
-          <div className="mt-2.5 space-y-1.5">
-            {daftar.map((y, i) => {
-              const c = courseBySlug(y.kurs);
-              const dars = c?.units[y.ui]?.lessons[y.li];
-              return (
-                <div key={i} className="flex items-center gap-2 text-[13px]">
-                  <span className="min-w-0 flex-1 truncate">
-                    {dars ? kursMatn(dars.n).split(" · ")[0] : t("bobRaqam", { n: y.ui + 1 })}
-                  </span>
-                  <span className="shrink-0 rounded-full bg-brand-red/15 px-2 py-0.5 text-[11.5px] text-brand-red">
-                    {t("xatoSoni", { n: y.xato })}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+        <section className="flex flex-col gap-2 rounded-[22px] bg-karta p-4 shadow-clay-sm">
+          <h2 className="font-display text-[18px]">{t("takrorlashKutayotgan")}</h2>
+          {daftar.map((y, i) => {
+            const c = courseBySlug(y.kurs);
+            const dars = c?.units[y.ui]?.lessons[y.li];
+            return (
+              <div key={i} className="flex items-center gap-2 text-[14.5px]">
+                <span className="min-w-0 flex-1 truncate">
+                  {dars ? kursMatn(dars.n).split(" · ")[0] : t("bobRaqam", { n: y.ui + 1 })}
+                </span>
+                <span className="shrink-0 text-[13px] text-ink-dim">{t("xatoSoni", { n: y.xato })}</span>
+              </div>
+            );
+          })}
         </section>
       )}
 
       {/* ---- ma'lumot yo'q holatlari ---- */}
       {yuklandi && !xulosa && (
-        <div className="az-kirish mt-5 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
+        <div className="rounded-clay bg-karta p-5 text-center shadow-clay-sm">
           <EmojiBelgi e="📶" olcham={30} className="mx-auto" />
-          <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
-            {t("hisobotAloqaYoq")}
-          </p>
+          <p className="mt-2 text-[14px] leading-snug text-ink-soft">{t("hisobotAloqaYoq")}</p>
         </div>
       )}
-
       {yuklandi && xulosa && xulosa.jami.darslar === 0 && (
-        <div className="az-kirish mt-5 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
+        <div className="rounded-clay bg-karta p-5 text-center shadow-clay-sm">
           <EmojiBelgi e="🌱" olcham={30} className="mx-auto" />
-          <p className="mt-2 text-[13.5px] leading-snug text-ink-soft">
-            {t("hisobotBosh")}
-          </p>
+          <p className="mt-2 text-[14px] leading-snug text-ink-soft">{t("hisobotBosh")}</p>
         </div>
       )}
     </div>
   );
 }
 
-function Katak({ nom, qiymat, rang = "", kichik = false }:
-  { nom: string; qiymat: string | number; rang?: string; kichik?: boolean }) {
+function Son({ qiymat, nom, rang = "" }: { qiymat: string; nom: string; rang?: string }) {
   return (
-    <div className="rounded-clay bg-karta p-4 shadow-clay-sm">
-      <div className={`font-display leading-tight ${kichik ? "text-[15px]" : "text-[22px]"} ${rang}`}>
+    <div className="flex min-w-0 flex-col gap-0.5 rounded-[18px] bg-karta p-3 shadow-clay-sm">
+      <span className={`truncate font-display text-[22px] leading-tight font-bold min-[360px]:text-[24px] ${rang}`}>
         {qiymat}
-      </div>
-      <div className="mt-0.5 text-[11.5px] text-ink-dim">{nom}</div>
+      </span>
+      <span className="truncate text-[13px] text-ink-dim">{nom}</span>
     </div>
   );
 }

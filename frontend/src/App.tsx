@@ -557,7 +557,14 @@ function OtaOnaSahifasi() {
   const { c, slug } = useKurs();
 
   if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
-  return <OtaOna onBack={() => nav(yolMen())} />;
+  return (
+    <OtaOna onBack={() => nav(yolMen())}
+      onDars={(d) => {
+        const k = COURSES.find((x) => x.grade === d.grade);
+        // Dars yopiq bo'lsa `DarsSahifasi` o'zi kurs xaritasiga qaytaradi.
+        if (k) nav(yolDars(k, d.unit, d.lesson));
+      }} />
+  );
 }
 
 /**

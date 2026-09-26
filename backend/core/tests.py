@@ -195,6 +195,19 @@ class ApiTest(TestCase):
         j = self.client.get("/api/v1/summary", **self.auth(t)).json()["jami"]
         self.assertEqual((j["darslar"], j["savollar"], j["togri"], j["aniqlik"]), (2, 12, 9, 75))
 
+    def test_summary_haftada_kunlik_daqiqa(self):
+        t = self.kir()
+        for ms in (5 * 60000, 3 * 60000):
+            self.client.post(
+                "/api/v1/results",
+                {"grade": 1, "unit": 0, "lesson": 0, "asked": 6, "correct": 6, "stars": 3, "durationMs": ms},
+                content_type="application/json", **self.auth(t),
+            )
+        hafta = self.client.get("/api/v1/summary", **self.auth(t)).json()["hafta"]
+        self.assertEqual(len(hafta), 7)
+        self.assertEqual(hafta[-1]["daqiqa"], 8)   # bugun — 5 + 3 daqiqa
+        self.assertEqual(hafta[0]["daqiqa"], 0)
+
 
     # --------------------------------------------------------- Telegram
 
@@ -8348,6 +8361,43 @@ class TalabaReytingTest(TestCase):
         _, talabalar = _reyting_jami(10, "talaba")
         self.assertEqual([p for p, _ in hammasi], [o, t])
         self.assertEqual([p for p, _ in talabalar], [t])
+
+
+class SinfReytingTest(TestCase):
+    """`?guruh=sinf` — "Sinfim": anketadagi sinf bo'yicha."""
+
+    def odam(self, kim, sinf, yulduz):
+        p = MDL.Pupil.objects.create(first_name=f"{kim}{sinf}", kim=kim, anketa_sinf=sinf,
+                                     registered_at=timezone.now())
+        pr = MDL.Profile.objects.create(pupil=p, name=kim)
+        MDL.Progress.objects.create(profile=pr, stars=yulduz)
+        return pr.pk
+
+    def test_filtr(self):
+        from core.views import _reyting_jami
+
+        uch = self.odam("oquvchi", 3, 10)
+        ota = self.odam("ota_ona", 3, 20)
+        tort = self.odam("oquvchi", 4, 50)
+        self.odam("ustoz", 3, 70)  # ustoz sinf jadvaliga kirmaydi
+        _, sinf3 = _reyting_jami(10, sinf=3)
+        self.assertEqual([p for p, _ in sinf3], [ota, uch])
+        _, hammasi = _reyting_jami(10)
+        self.assertIn(tort, [p for p, _ in hammasi])
+
+    def test_sorov(self):
+        r = self.client.post("/api/v1/auth/device", {"deviceId": "dev-sinf-reyting-1234", "platform": "web"},
+                             content_type="application/json")
+        h = {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+        self.odam("oquvchi", 3, 10)
+        self.odam("oquvchi", 4, 50)
+        # Sinf aytilmagan — butun jadval.
+        j = self.client.get("/api/v1/leaderboard?guruh=sinf", **h).json()
+        self.assertEqual(j["qatnashchilar"], 2)
+        # So'rovchi — ro'yxatdan o'tmagan qurilma hisobi (yuqoridagilar o'tgan).
+        MDL.Pupil.objects.filter(registered_at__isnull=True).update(kim="oquvchi", anketa_sinf=3)
+        j = self.client.get("/api/v1/leaderboard?guruh=sinf", **h).json()
+        self.assertEqual(j["qatnashchilar"], 1)
 
 
 class SessiyaNatijaTest(TestCase):

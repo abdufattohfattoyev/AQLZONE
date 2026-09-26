@@ -664,7 +664,8 @@ export interface Xulosa {
     xatolar: number; vaqt: number; aniqlik: number;
   };
   sinflar: { grade: number; darslar: number; savollar: number; togri: number }[];
-  hafta: { sana: string; savollar: number; darslar: number }[];
+  /** `daqiqa` — shu kuni shug'ullangan vaqt (yangi server; eskisida yo'q). */
+  hafta: { sana: string; savollar: number; darslar: number; daqiqa?: number }[];
   qiyin: QiyinDars[];
   oson: QiyinDars[];
 }
