@@ -113,6 +113,9 @@ export const yolSonOvi = () => "/oyinlar/son-ovi";
 /** DTM tayyorgarlik — variantlar ro'yxati va bitta variant. */
 export const yolImtihon = () => "/imtihon";
 export const yolImtihonVariant = (n: number) => `/imtihon/${n}`;
+/** Milliy sertifikat — xuddi shu qolipda (`lib/sertifikat.ts`). */
+export const yolSertifikat = () => "/sertifikat";
+export const yolSertifikatVariant = (n: number) => `/sertifikat/${n}`;
 
 /** Tulki shaharchasi; `pid` bilan — sherikning shaharchasiga mehmonga. */
 export const yolShaharcha = (pid?: number) => (pid ? `/oyinlar/shaharcha/${pid}` : "/oyinlar/shaharcha");

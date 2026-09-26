@@ -45,6 +45,8 @@ const Maydon = lazy(() => import("./screens/Maydon").then((m) => ({ default: m.M
 const KunlikSon = lazy(() => import("./screens/KunlikSon").then((m) => ({ default: m.KunlikSon })));
 const SonOvi = lazy(() => import("./screens/SonOvi").then((m) => ({ default: m.SonOvi })));
 const Imtihon = lazy(() => import("./screens/Imtihon").then((m) => ({ default: m.Imtihon })));
+const Sertifikat = lazy(() => import("./screens/Sertifikat").then((m) => ({ default: m.Sertifikat })));
+const SertifikatTest = lazy(() => import("./screens/SertifikatTest").then((m) => ({ default: m.SertifikatTest })));
 const Sessiya = lazy(() => import("./screens/Sessiya").then((m) => ({ default: m.Sessiya })));
 const BlokEkran = lazy(() => import("./screens/Blok").then((m) => ({ default: m.Blok })));
 const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel })));
@@ -83,7 +85,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
+  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolBosh, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
 } from "./lib/yollar";
@@ -93,6 +95,7 @@ import { t } from "./lib/matn";
 import { kursMatn } from "./lib/tarjima/kurs";
 import { useTirik } from "./lib/tirik";
 import { useTahlil } from "./lib/tahlil";
+import { oxirgiTur } from "./lib/imtihonTur";
 
 export default function App() {
   // Panel `Routes` dan TASHQARIDA turadi va shu sabab marshrut
@@ -164,6 +167,8 @@ function Yollar() {
       <Route path="/oyinlar/son-ovi" element={<SonOviSahifasi />} />
       <Route path="/imtihon" element={<ImtihonSahifasi />} />
       <Route path="/imtihon/:n" element={<ImtihonVariantSahifasi />} />
+      <Route path="/sertifikat" element={<SertifikatSahifasi />} />
+      <Route path="/sertifikat/:n" element={<SertifikatVariantSahifasi />} />
       <Route path="/sessiya" element={<SessiyaSahifasi />} />
       <Route path="/sessiya/:slug/:n" element={<SessiyaVariantSahifasi />} />
       <Route path="/oyinlar/shaharcha" element={<ShaharchaSahifasi />} />
@@ -255,6 +260,7 @@ function TestSinfSahifasi() {
   return (
     <TestSinf
       onSinf={(c) => nav(yolTestlar(c))}
+      onImtihon={() => nav(yolSertifikat())}
       onToplam={(id) => nav(yolToplam(id))}
       onBack={() => nav(yolBosh())}
     />
@@ -727,7 +733,30 @@ function SonOviSahifasi() {
 function ImtihonSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
-  return <Imtihon onVariant={(n) => nav(yolImtihonVariant(n))} onChiq={() => nav(yolKurslar())} />;
+  // Hamma eshik (`/imtihon`) shu yerga olib keladi. Oxirgi marta
+  // sertifikat tanlangan bo'lsa — to'g'ri o'sha yerga: tayyorlanayotgan
+  // odam har safar almashtirgichni bosib o'tirmasin.
+  if (oxirgiTur() === "sertifikat") return <Navigate to={yolSertifikat()} replace />;
+  return <Imtihon onVariant={(n) => nav(yolImtihonVariant(n))}
+    onSertifikat={() => nav(yolSertifikat(), { replace: true })} onChiq={() => nav(yolKurslar())} />;
+}
+
+/** Milliy sertifikat — variantlar ro'yxati (`lib/sertifikat.ts`). */
+function SertifikatSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Sertifikat onVariant={(n) => nav(yolSertifikatVariant(n))}
+    onDtm={() => nav(yolImtihon(), { replace: true })} onChiq={() => nav(yolKurslar())} />;
+}
+
+function SertifikatVariantSahifasi() {
+  const nav = useNavigate();
+  const { n } = useParams();
+  useTema("bosh");
+  const raqam = Number(n);
+  if (!Number.isInteger(raqam) || raqam < 1) return <Navigate to={yolSertifikat()} replace />;
+  // `key` — boshqa variantga o'tilsa holat butunlay yangidan boshlansin.
+  return <SertifikatTest key={raqam} n={raqam} onExit={() => nav(yolSertifikat())} />;
 }
 
 /**

@@ -86,6 +86,9 @@ const YOPIQ = [
   // DTM varianti — bir soatlik imtihon. Pastdagi tugmani bexosdan
   // bosish butun urinishni yo'qotardi.
   /^\/imtihon\/\d+$/,
+  // Sertifikat varianti — o'zining "Oldingi / Keyingi" tugmalari pastda
+  // turadi va panel ularni yopib qo'yardi.
+  /^\/sertifikat\/\d+$/,
   // Sessiya varianti — xuddi shunday, bir soatlik nazorat.
   /^\/sessiya\/[^/]+\/\d+$/,
   // Kunlik son — o'z klaviaturasi pastda, panel uni yopib qo'yardi.
