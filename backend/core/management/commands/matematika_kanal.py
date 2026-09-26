@@ -119,7 +119,8 @@ class Command(BaseCommand):
             kalit=kalit, tur=KanalYozuv.MISOL, sarlavha=savol[:300],
             manba=str(rasm_id), joylangan_at=timezone.now(),
         )
-        holat, izoh, _ = X.quiz_yubor(kanal, savol, variantlar, togri, usul, javob_id=rasm_id)
+        holat, izoh, _ = X.quiz_yubor(
+            kanal, MK.QUIZ_SAVOLI, MK.quiz_variantlari(test), togri, usul, javob_id=rasm_id)
         if holat != "yuborildi":
             self.stderr.write(self.style.ERROR(f"so'rovnoma yuborilmadi: {holat} {izoh}"))
             return

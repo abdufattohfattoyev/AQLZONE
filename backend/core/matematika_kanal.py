@@ -460,7 +460,8 @@ def _qatorlarga(d, matn: str, shrift, kenglik: int) -> list[str]:
     return qatorlar + ([joriy] if joriy else [])
 
 
-def misol_rasmi(misol: tuple, rukn: str = "OG'ZAKI MISOL", pastki: str = "") -> bytes:
+def misol_rasmi(misol: tuple, rukn: str = "OG'ZAKI MISOL", pastki: str = "",
+                variantlar: list[str] | None = None) -> bytes:
     """
     Savol kartasi — JPEG baytlari (kanalga `sendPhoto` bilan chiqadi).
 
@@ -506,20 +507,37 @@ def misol_rasmi(misol: tuple, rukn: str = "OG'ZAKI MISOL", pastki: str = "") -> 
 
     # O'rta: shart (kichik) va ifoda (katta). Ifoda sig'guncha shrift
     # kichrayadi; blok butunligicha 200–820 oralig'ida markazlanadi.
+    #
+    # Variantlar bilan (tez test) — savol BUTUNLIGICHA bitta oq blok
+    # bo'lib 200–590 da, pastida 2×2 variant kartalari: rasmning o'zi
+    # to'liq savol, ostidagi yozuv qisqa bo'lishi mumkin.
     kenglik = EN * S - 2 * ichki
     shart, _, ifoda = savol.partition(": ")
-    if not ifoda:
+    if not ifoda or variantlar:
         shart, ifoda = "", savol
     shart_sh = _shrift(40 * S, False)
     shart_q = _qatorlarga(d, shart, shart_sh, kenglik) if shart else []
-    for px in (132, 116, 100, 88, 76, 66):
+    olchamlar, sigim, maydon = (132, 116, 100, 88, 76, 66), 2, 620
+    if variantlar:
+        olchamlar, sigim, maydon = (72, 64, 58, 52, 46), 5, 390
+    for px in olchamlar:
         shrift = _shrift(px * S)
         qatorlar = _qatorlarga(d, ifoda, shrift, kenglik)
-        if len(qatorlar) <= 2:
+        if len(qatorlar) <= sigim and int(px * 1.25) * len(qatorlar) <= maydon:
             break
     shart_qadam, qadam = 56 * S, int(px * S * 1.25)
     boshi = shart_qadam * len(shart_q) + (40 * S if shart_q else 0)
-    y = 200 * S + (620 * S - boshi - qadam * len(qatorlar)) // 2
+    y = 200 * S + (maydon * S - boshi - qadam * len(qatorlar)) // 2
+    if variantlar:
+        vsh = _shrift(40 * S)
+        en_v, bo_y, oraliq = (kenglik - 24 * S) // 2, 96 * S, 20 * S
+        for n, v in enumerate(variantlar[:4]):
+            x0 = ichki + (n % 2) * (en_v + 24 * S)
+            y0 = 620 * S + (n // 2) * (bo_y + oraliq)
+            d.rounded_rectangle([x0, y0, x0 + en_v, y0 + bo_y], radius=24 * S, outline=_XIRA, width=2 * S)
+            harf = f"{'ABCD'[n]}) "
+            d.text((x0 + 28 * S, y0 + 24 * S), harf, font=vsh, fill=_KOK)
+            d.text((x0 + 28 * S + d.textlength(harf, font=vsh), y0 + 24 * S), v, font=vsh, fill=_OQ)
     for q in shart_q:
         d.text(((EN * S - d.textlength(q, font=shart_sh)) / 2, y), q, font=shart_sh, fill=_XIRA)
         y += shart_qadam
@@ -707,14 +725,19 @@ def bugungi_test(kun=None) -> tuple[str, str, str, str, list[str], int]:
 
 
 def test_posti(test) -> str:
-    """Rasm ostidagi yozuv. Savol rasmda, variantlar — pastdagi so'rovnomada."""
-    return (
-        "🎯 <b>Tez test</b> — kattalar uchun, sal qiyinroq\n"
-        "⏱ 30 soniyada o'ylab, pastdagi variantni belgilang.\n"
-        "💡 Belgilashingiz bilan to'g'ri javob va yechim chiqadi.\n\n"
-        "Birinchi xayolga kelgan javobga shoshilmang 😉"
-    )
+    """Rasm ostidagi yozuv — QISQA: savol ham, variantlar ham rasmda."""
+    return "🎯 <b>Tez test</b> · javobni pastda belgilang 👇"
+
+
+#: So'rovnomaning o'z savoli — to'liq savol rasmda turibdi.
+QUIZ_SAVOLI = "Javobingiz qaysi? 👆 Savol rasmda"
+
+
+def quiz_variantlari(test) -> list[str]:
+    """"A) 72 km/soat" — rasmdagi harflar bilan bir xil."""
+    return [f"{'ABCD'[n]}) {v}" for n, v in enumerate(test[4])]
 
 
 def test_rasmi(test) -> bytes:
-    return misol_rasmi(test, rukn="TEZ TEST", pastki="30 soniya · variantni pastda belgilang")
+    return misol_rasmi(test, rukn="TEZ TEST", pastki="30 soniya · javobni pastda belgilang",
+                       variantlar=test[4])
