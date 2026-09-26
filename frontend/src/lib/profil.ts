@@ -232,3 +232,21 @@ export function kichkintoyKerak(p: Profil | null): boolean {
   if (p.kim === "kattalar") return p.bosqich !== BOSQICH.oliyDaraja;
   return false;
 }
+
+/**
+ * "Hozirgi kurs" — kursga bog'liq joylar qaysi kursni ochadi (Men ›
+ * Do'kon, Bugun › Bugungi sinov, O'qish tabi).
+ *
+ * Oliy yo'lda profilning o'z kursi USTUN: tahlil ko'rsatdiki, talabalar
+ * 1–4-sinf kurslarini ham ochadi va o'shanda "bugungi sinov" 1-sinfga
+ * bog'lanib qolardi. Qolganlarga — oxirgi ochilgan kurs (odam qayerda
+ * o'qiyotgan bo'lsa), u ham bo'lmasa profil sinfi, u ham bo'lmasa birinchi kurs.
+ * `oxirgi` — `lib/oxirgi.ts` dagi `oxirgiKurs()` natijasi (bu fayl `api` ga
+ * bog'lanmasin deb parametr qilib beriladi).
+ */
+export function joriyKurs(p: Profil | null, oxirgi: string): Course {
+  return (yolOf(p) === "oliy" ? profilKursi(p) : null)
+    ?? COURSES.find((c) => c.slug === oxirgi)
+    ?? profilKursi(p)
+    ?? COURSES[0]!;
+}

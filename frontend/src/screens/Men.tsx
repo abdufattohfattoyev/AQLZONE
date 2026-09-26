@@ -18,7 +18,6 @@
  */
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
-import { COURSES, courseBySlug } from "../lib/curriculum";
 import { getHisob, getReyting, joriyProfil, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
 import { Icon } from "../lib/icons";
@@ -26,7 +25,7 @@ import { t } from "../lib/matn";
 import type { Kalit } from "../lib/matn";
 import { nishonlar, olingan } from "../lib/nishon";
 import { oxirgiKurs } from "../lib/oxirgi";
-import { profilKursi, profilNomi, useProfil, yolOf } from "../lib/profil";
+import { joriyKurs, profilNomi, useProfil } from "../lib/profil";
 import { useProgress } from "../lib/progress";
 import { tgIsm, tebrat } from "../lib/qobiq";
 import { TILLAR, til, tilniAlmashtir } from "../lib/til";
@@ -35,7 +34,6 @@ import type { Yoruglik } from "../lib/yoruglik";
 import {
   yolAnketa, yolDokon, yolNishon, yolOtaOna, yolReyting, yolSozlama,
 } from "../lib/yollar";
-import type { Course } from "../lib/curriculum";
 import { Tanlov, TanlovVaraq } from "../components/Varaq";
 
 interface Props {
@@ -70,11 +68,7 @@ export function Men({ onYol }: Props) {
     return () => { bekor = true; };
   }, []);
 
-  const kurs: Course =
-    (yolOf(prof) === "oliy" ? profilKursi(prof) : null) ??
-    courseBySlug(oxirgiKurs()) ??
-    profilKursi(prof) ??
-    COURSES[0]!;
+  const kurs = joriyKurs(prof, oxirgiKurs());
 
   const p = progressOf(kurs);
   const nishon = useMemo(() => {

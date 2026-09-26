@@ -86,9 +86,9 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolReyting, yolSinov, yolSozlama,
+  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOtaOna, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
-  yolAnketa, yolMen, yolBosh, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
+  yolMen, yolBosh, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -214,11 +214,9 @@ function Yollar() {
 }
 
 /**
- * Bosh sahifa — ilovaning xaritasi.
- *
- * Beshta bo'lim eshigi va "davom etish". Kurslar ro'yxati bu
- * yerda EMAS: u `/darslar` ga ko'chdi va sabab `lib/yollar.ts`
- * dagi izohda yozilgan.
+ * "Bugun" — bugungi uch vazifa, zanjir va keyingi dars
+ * (`screens/Bosh.tsx`). Kurslar ro'yxati bu yerda EMAS: u `/darslar`
+ * da (O'qish tabi).
  */
 function BoshSahifasi() {
   const { progressOf } = useProgress();
@@ -227,25 +225,20 @@ function BoshSahifasi() {
   return (
     <Bosh
       progressOf={progressOf}
-      onKichkintoy={() => nav(yolKichkintoy())}
       onDarslar={() => nav(yolKurslar())}
       onMasalalar={() => nav(yolMasalalar())}
       onTestlar={() => nav(yolTestSinf())}
-      onOyinlar={() => nav(yolOyinlar())}
       // "Davom etish" darsning O'ZIGA olib boradi, kurs xaritasiga
       // emas: qaytib kelgan odam aynan o'sha darsni ochish uchun
       // kelgan va uni yana bir marta bosishga majburlash ortiqcha.
       onDavom={(c, ui, li) => nav(yolDars(c, ui, li))}
+      onSinov={(c) => nav(yolSinov(c))}
       onKunlikSon={() => nav(yolKunlikSon())}
       onFormulalar={() => nav(yolFormulalar(
         COURSES.filter((c) => c.grade > 0 && maktabKursi(c)).slice(-1)[0] ?? COURSES[0]))}
       onImtihon={() => nav(yolImtihon())}
       onQidiruv={() => nav(yolQidiruv())}
-      onReyting={() => nav(yolReyting())}
-      onSozlama={() => nav(yolSozlama())}
-      onProfillar={() => nav("/profillar")}
       onKurs={(c) => nav(yolKurs(c))}
-      onProfil={() => nav(yolAnketa())}
     />
   );
 }

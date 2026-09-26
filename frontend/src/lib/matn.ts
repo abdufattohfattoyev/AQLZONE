@@ -189,6 +189,80 @@ const S = {
   tabMen: ["Men", "Я"],
   tabBolimlar: ["Asosiy bo'limlar", "Основные разделы"],
 
+  /* ---------------- Bugun (`screens/Bosh.tsx`, yangi dizayn) ---------------- */
+  bugun_tong: ["Xayrli tong", "Доброе утро"],
+  bugun_kun: ["Xayrli kun", "Добрый день"],
+  bugun_kech: ["Xayrli kech", "Добрый вечер"],
+  /* Vergul bilan ajratilgan ro'yxatlar — `Intl` ning o'zbekchasi eski
+     Telegram WebView'da yo'q va "Friday" bo'lib chiqardi. */
+  bugunHaftaKunlari: [
+    "Yakshanba,Dushanba,Seshanba,Chorshanba,Payshanba,Juma,Shanba",
+    "Воскресенье,Понедельник,Вторник,Среда,Четверг,Пятница,Суббота",
+  ],
+  bugunQisqaKunlar: ["Du,Se,Ch,Pa,Ju,Sh,Ya", "Пн,Вт,Ср,Чт,Пт,Сб,Вс"],
+  bugunOylar: [
+    "yanvar,fevral,mart,aprel,may,iyun,iyul,avgust,sentabr,oktabr,noyabr,dekabr",
+    "января,февраля,марта,апреля,мая,июня,июля,августа,сентября,октября,ноября,декабря",
+  ],
+  bugunSana: ["{kun} · {n}-{oy}", "{kun} · {n} {oy}"],
+  bugunReja: ["Bugungi reja", "План на сегодня"],
+  bugunBajarildi: ["bajarildi", "готово"],
+  bugunBittaDars: ["Bitta dars", "Один урок"],
+  bugunSinov: ["Bugungi sinov", "Тест дня"],
+  bugunKunlikSon: ["Kunlik son #{n}", "Число дня #{n}"],
+  bugunDaqiqa: ["{n} daq", "{n} мин"],
+  bugunSoat: ["{n} soat", "{n} ч"],
+  bugunZanjir: ["{n} kun ketma-ket", "{n} дн. подряд"],
+  bugunZanjirYoq: ["Zanjirni bugun boshlang", "Начните серию сегодня"],
+  bugunRekord: ["Rekord: {n}", "Рекорд: {n}"],
+  bugunKeyingiDars: ["Keyingi dars", "Следующий урок"],
+  bugunBobJoy: ["{bob}-bob · {dars} / {jami}", "Гл. {bob} · {dars} / {jami}"],
+  bugunBirinchiQadam: ["Birinchi qadam", "Первый шаг"],
+  bugunBoshlash: ["O'rganishni boshlash", "Начать учиться"],
+  bugunMaslahat: ["Aql maslahati", "Совет от Aql"],
+  /* Aql maslahatlari — kun bo'yicha almashadi (`lib/bugun.ts` → yilKuni).
+     Qisqa va bitta misol bilan: bola ularni bir qarashda o'qiydi. */
+  maslahat0: [
+    "Sonlarni taqqoslashda avval eng katta xonaga qara: 486 va 512 da 4 < 5, demak 512 katta.",
+    "Сравнивая числа, смотри сначала на старший разряд: в 486 и 512 4 < 5, значит 512 больше.",
+  ],
+  maslahat1: [
+    "9 ga ko'paytirish oson: 10 ga ko'paytirib, sonning o'zini ayir. 9 × 7 = 70 − 7 = 63.",
+    "Умножать на 9 легко: умножь на 10 и вычти само число. 9 × 7 = 70 − 7 = 63.",
+  ],
+  maslahat2: [
+    "Xato qilgan savol daftarga tushadi. Ertaga takrorlasang, uni endi unutmaysan.",
+    "Вопрос с ошибкой попадает в тетрадь. Повтори его завтра — и больше не забудешь.",
+  ],
+  maslahat3: [
+    "5 ga ko'paytirish: 10 ga ko'paytirib, ikkiga bo'l. 5 × 18 = 180 : 2 = 90.",
+    "Умножить на 5: умножь на 10 и раздели на 2. 5 × 18 = 180 : 2 = 90.",
+  ],
+  maslahat4: [
+    "Kasrlarni qo'shishdan oldin maxrajlarni tenglashtir: 1/2 + 1/3 = 3/6 + 2/6 = 5/6.",
+    "Перед сложением дробей приведи знаменатели: 1/2 + 1/3 = 3/6 + 2/6 = 5/6.",
+  ],
+  maslahat5: [
+    "Son 3 ga bo'linadimi? Raqamlarini qo'sh: 123 → 1 + 2 + 3 = 6, demak bo'linadi.",
+    "Делится ли число на 3? Сложи цифры: 123 → 1 + 2 + 3 = 6, значит делится.",
+  ],
+  maslahat6: [
+    "Masalani o'qib bo'lgach, nima so'ralganini bir so'z bilan ayt — yechish osonlashadi.",
+    "Прочитав задачу, назови одним словом, что спрашивают, — решать станет проще.",
+  ],
+  maslahat7: [
+    "Har kuni 10 daqiqa — haftasiga bir soatdan ko'p. Kichik qadamlar katta natija beradi.",
+    "10 минут в день — больше часа в неделю. Маленькие шаги дают большой результат.",
+  ],
+  maslahat8: [
+    "Javobni teskari amal bilan tekshir: 56 : 7 = 8, chunki 8 × 7 = 56.",
+    "Проверяй ответ обратным действием: 56 : 7 = 8, потому что 8 × 7 = 56.",
+  ],
+  maslahat9: [
+    "Ikki xonali sonni 11 ga ko'paytirish: raqamlarni yoy, o'rtasiga yig'indisini qo'y. 11 × 36 = 396.",
+    "Умножить двузначное число на 11: раздвинь цифры и поставь между ними их сумму. 11 × 36 = 396.",
+  ],
+
   /* ---------------- Men (`screens/Men.tsx`) ---------------- */
   menSarlavha: ["Men", "Я"],
   menMehmon: ["Mehmon", "Гость"],

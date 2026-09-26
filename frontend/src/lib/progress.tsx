@@ -20,6 +20,7 @@ import type { Progress } from "./types";
 import * as api from "./api";
 import { kunKaliti, kunOldin, tiklangan, tiklashTaklifi } from "./zanjir";
 import type { TiklashTaklifi } from "./zanjir";
+import { darsBugunYoz } from "./bugun";
 
 export const BOSH: Progress = { stars: 0, coins: 0, done: {}, savollar: 0, olingan: [], kiygan: "" };
 
@@ -373,6 +374,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         };
       });
       setKunlik((k) => kunlikYangila(k, r.asked));
+      // "Bugun" ekranidagi "bitta dars" vazifasi (`lib/bugun.ts`).
+      darsBugunYoz();
       api.postResult({
         grade: c.grade, unit: ui, lesson: li,
         lessonName: c.units[ui].lessons[li].n,
