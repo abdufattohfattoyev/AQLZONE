@@ -444,15 +444,16 @@ function asosiyAmal({ davom, prof, onDarslar, onMasalalar, onDavom, onKurs, onIm
  * Ilgari butun karta ko'k edi va "bugungi reja" dan PASTDA turardi:
  * ekrandagi eng muhim narsa uchinchi bo'lib o'qilardi. Endi u birinchi,
  * qaysi dars ekani va bobdagi yo'l (chiziq + "12 tadan 4 tasi") aniq
- * yozilgan. Butun karta bosiladi — nishon katta bo'lsin.
+ * yozilgan. Faqat oq tugma bosiladi: kartaning qolgan qismi o'qish
+ * uchun — tasodifan tegib ketilgan barmoq darsni ochib yubormasin.
  */
 function AsosiyKarta({ amal }: { amal: Amal }) {
   const otilgan = amal.yol?.filter((h) => h === "otilgan").length ?? 0;
   const jami = amal.yol?.length ?? 0;
   const belgi: HajmliNom = amal.yol ? "raketa" : "bitiruv";
   return (
-    <button type="button" onClick={amal.on} data-tahlil={amal.tahlil}
-      className="tugma-3d relative flex w-full flex-col gap-3.5 overflow-hidden rounded-[26px] bg-brand-blue p-4
+    <section
+      className="relative flex w-full flex-col gap-3.5 overflow-hidden rounded-[26px] bg-brand-blue p-4
                  text-left text-white shadow-[0_5px_0_var(--color-brand-blue-d)] min-[360px]:p-[18px] md:p-[22px]">
       {/* Bezak: ikki yumshoq doira — karta tekis ko'k dog' bo'lib qolmasin. */}
       <span aria-hidden className="pointer-events-none absolute -top-16 -right-12 size-48 rounded-full bg-white/10" />
@@ -478,11 +479,12 @@ function AsosiyKarta({ amal }: { amal: Amal }) {
           <span className="text-[13px] text-white/85">{t("bugunBobYoli", { n: otilgan, jami })}</span>
         </span>
       )}
-      <span className="relative grid min-h-[52px] w-full place-items-center rounded-2xl bg-white font-display
-                       text-[19px] font-bold text-brand-blue-d shadow-[0_4px_0_rgb(0_0_0/0.12)]">
+      <button type="button" onClick={amal.on} data-tahlil={amal.tahlil}
+        className="tugma-3d relative grid min-h-[52px] w-full place-items-center rounded-2xl bg-white font-display
+                   text-[19px] font-bold text-brand-blue-d shadow-[0_4px_0_rgb(0_0_0/0.12)]">
         {amal.tugma}
-      </span>
-    </button>
+      </button>
+    </section>
   );
 }
 
