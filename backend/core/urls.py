@@ -74,6 +74,8 @@ urlpatterns = [
 
     # DTM tayyorgarlik — natijalar tarixi (`core/imtihon.py`).
     path("imtihon/natija", kunlik_views.imtihon_natija, name="imtihon-natija"),
+    # Talabaning sessiya urinishlari (`core/imtihon.py` → sessiya_royxat).
+    path("sessiya/natija", kunlik_views.sessiya_natija, name="sessiya-natija"),
     path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),
     path("shaharcha/qur", shaharcha_views.shaharcha_qur, name="shaharcha-qur"),
     path("shaharcha/oshir", shaharcha_views.shaharcha_oshir, name="shaharcha-oshir"),

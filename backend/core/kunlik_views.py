@@ -98,3 +98,25 @@ def imtihon_natija(request):
         javob["yangi"] = yangi
         return Response(javob)
     return Response(IM.royxat(profil))
+
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def sessiya_natija(request):
+    """
+    Talabaning sessiya urinishlari — telefon almashsa ham yo'qolmaydi.
+
+    POST — qurilmadagi hamma urinish (takror jimgina tashlanadi) va
+    javobda serverdagi to'liq ro'yxat. GET — faqat ro'yxat.
+    """
+    from . import imtihon as IM
+
+    profil = _profil_tanla(request)
+    if request.method == "POST":
+        d = request.data if hasattr(request.data, "get") else {}
+        yangi = IM.yoz(profil, d.get("urinishlar", d), sessiya=True)
+        javob = IM.sessiya_royxat(profil)
+        javob["yangi"] = yangi
+        return Response(javob)
+    return Response(IM.sessiya_royxat(profil))

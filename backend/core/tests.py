@@ -8227,3 +8227,75 @@ class TalabaReytingTest(TestCase):
         _, talabalar = _reyting_jami(10, "talaba")
         self.assertEqual([p for p, _ in hammasi], [o, t])
         self.assertEqual([p for p, _ in talabalar], [t])
+
+
+class SessiyaNatijaTest(TestCase):
+    """Talabaning sessiya natijalari serverda va DTM tarixidan alohida."""
+
+    def kir(self, device: str = "dev-sessiya-1111aaaa2222") -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def test_yoziladi_va_qaytadi(self):
+        h = self.kir()
+        d = {"urinishlar": [
+            {"kurs": "oliy-matematika-2", "variant": 4, "togri": 25, "jami": 30, "sekund": 1800, "vaqt": 2000},
+            {"kurs": "ehtimollar-nazariyasi", "variant": 1, "togri": 10, "jami": 30, "sekund": 900, "vaqt": 1000},
+        ]}
+        j = self.client.post("/api/v1/sessiya/natija", d, content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 2)
+        self.assertEqual([x["kurs"] for x in j["natijalar"]], ["oliy-matematika-2", "ehtimollar-nazariyasi"])
+        # Takror — yangi qator yo'q.
+        j = self.client.post("/api/v1/sessiya/natija", d, content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 0)
+        self.assertEqual(len(j["natijalar"]), 2)
+
+    def test_dtm_bilan_aralashmaydi(self):
+        h = self.kir()
+        self.client.post("/api/v1/sessiya/natija",
+                         {"kurs": "oliy-matematika", "variant": 1, "togri": 5, "jami": 30, "vaqt": 10},
+                         content_type="application/json", **h)
+        self.client.post("/api/v1/imtihon/natija",
+                         {"variant": 2, "togri": 20, "jami": 30, "vaqt": 20},
+                         content_type="application/json", **h)
+        dtm = self.client.get("/api/v1/imtihon/natija", **h).json()
+        ses = self.client.get("/api/v1/sessiya/natija", **h).json()
+        self.assertEqual(dtm["jami"], 1)
+        self.assertEqual(dtm["oxirgilar"][0]["variant"], 2)
+        self.assertEqual(len(ses["natijalar"]), 1)
+        self.assertEqual(ses["natijalar"][0]["kurs"], "oliy-matematika")
+
+    def test_begona_kurs_qabul_qilinmaydi(self):
+        h = self.kir()
+        j = self.client.post("/api/v1/sessiya/natija",
+                             {"kurs": "1-sinf", "variant": 1, "togri": 5, "jami": 30, "vaqt": 10},
+                             content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 0)
+        # DTM so'rovi orqali sessiya yozilmaydi va aksincha.
+        j = self.client.post("/api/v1/imtihon/natija",
+                             {"kurs": "oliy-matematika", "variant": 1, "togri": 5, "jami": 30, "vaqt": 11},
+                             content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 0)
+
+
+class YonalishTest(TestCase):
+    def test_saqlanadi_va_me_da_qaytadi(self):
+        from core import tahlil as TH
+
+        p = MDL.Pupil.objects.create(first_name="Talaba")
+        TH.anketa_yoz(p, {"kim": "talaba", "sinf": 102, "yonalish": "boshlangich"})
+        p.refresh_from_db()
+        self.assertEqual(p.yonalish, "boshlangich")
+        # Faqat yo'nalish (qisman) — boshqa javoblar o'chmaydi.
+        TH.anketa_yoz(p, {"yonalish": "iqtisod", "qisman": True})
+        p.refresh_from_db()
+        self.assertEqual((p.kim, p.anketa_sinf, p.yonalish), ("talaba", 102, "iqtisod"))
+
+    def test_nomalum_qiymat_yozilmaydi(self):
+        from core import tahlil as TH
+
+        p = MDL.Pupil.objects.create(first_name="Talaba")
+        TH.anketa_yoz(p, {"kim": "talaba", "yonalish": "kosmonavt"})
+        p.refresh_from_db()
+        self.assertEqual(p.yonalish, "")

@@ -9,7 +9,7 @@ import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import type { Kalit } from "../lib/matn";
 import { sorov } from "../lib/api";
-import { profilKurslari, useProfil } from "../lib/profil";
+import { pedagogmi, profilKurslari, useProfil } from "../lib/profil";
 import { kursMatn } from "../lib/tarjima/kurs";
 import type { Course } from "../lib/curriculum";
 import type { Progress } from "../lib/types";
@@ -97,8 +97,11 @@ export function Dashboard({
   // turmasdan ro'yxat darrov qayta tiziladi.
   const [javob, setJavob] = useState(kim ?? "");
   useEffect(() => { if (kim) setJavob(kim); }, [kim]);
-  const kattalarAvval = KATTALAR.includes(javob);
-  const ozim = profilKurslari(useProfil());
+  const prof = useProfil();
+  // Pedagogika talabasi (boshlang'ich ta'lim) — "talaba" bo'lsa ham
+  // unga sinf kurslari kerak, formulalar va DTM emas.
+  const kattalarAvval = KATTALAR.includes(javob) && !pedagogmi(prof);
+  const ozim = profilKurslari(prof);
 
   const savolBer = (kod: string) => {
     setJavob(kod);

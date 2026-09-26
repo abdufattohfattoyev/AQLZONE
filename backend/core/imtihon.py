@@ -22,6 +22,14 @@ from .models import ImtihonNatija, Profile
 
 #: Variantlar soni — mijozdagi `VARIANTLAR` bilan bir xil.
 VARIANTLAR = 12
+
+#: Sessiya fanlari — talabalar kurslarining manzili
+#: (`frontend/src/lib/curriculum/index.ts`). Boshqa qiymat qabul
+#: qilinmaydi: bu maydon ro'yxatlarda guruhlash kaliti bo'ladi.
+SESSIYA_KURSLAR = {"oliy-matematika", "oliy-matematika-2", "ehtimollar-nazariyasi"}
+
+#: Sessiya ro'yxatida qancha urinish qaytariladi.
+SESSIYA_OXIRGI = 200
 #: Bitta variantda eng ko'p savol (ehtiyot chegarasi).
 MAX_SAVOL = 60
 #: Eng uzoq urinish — ikki soat (variant bir soatlik).
@@ -53,11 +61,14 @@ def _toza(d: dict) -> dict | None:
     if togri is None or vaqt is None:
         return None
     sekund = _butun(d.get("sekund"), 0, MAX_SEKUND)
-    return {"variant": variant, "jami": jami, "togri": togri,
+    kurs = str(d.get("kurs") or "")
+    if kurs and kurs not in SESSIYA_KURSLAR:
+        return None
+    return {"variant": variant, "jami": jami, "togri": togri, "kurs": kurs,
             "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt}
 
 
-def yoz(profil: Profile, urinishlar) -> int:
+def yoz(profil: Profile, urinishlar, sessiya: bool = False) -> int:
     """
     Urinishlarni yozadi. Nechta YANGI qator qo'shilganini qaytaradi.
 
@@ -71,7 +82,9 @@ def yoz(profil: Profile, urinishlar) -> int:
     yangi = 0
     for d in urinishlar[:MAX_BIR_YOLA]:
         t = _toza(d)
-        if not t:
+        # DTM so'rovi faqat DTM urinishini, sessiya so'rovi faqat
+        # sessiyanikini yozadi — biri ikkinchisining tarixiga tushmasin.
+        if not t or bool(t["kurs"]) != sessiya:
             continue
         try:
             with transaction.atomic():
@@ -88,7 +101,7 @@ def _foiz(togri: int, jami: int) -> int:
 
 def royxat(profil: Profile) -> dict:
     """O'z natijalari: oxirgilar, har variantdagi eng yaxshisi va o'rtacha."""
-    qs = ImtihonNatija.objects.filter(profile=profil).order_by("-mijoz_vaqt")
+    qs = ImtihonNatija.objects.filter(profile=profil, kurs="").order_by("-mijoz_vaqt")
     oxirgilar = [{
         "variant": n.variant, "togri": n.togri, "jami": n.jami,
         "sekund": n.sekund, "vaqt": n.mijoz_vaqt,
@@ -108,3 +121,19 @@ def royxat(profil: Profile) -> dict:
         "ortacha": ortacha,
         "jami": qs.count(),
     }
+
+
+def sessiya_royxat(profil: Profile) -> dict:
+    """
+    Sessiya urinishlari — hamma fan bo'yicha, eng yangisi tepada.
+
+    Mijoz o'z qurilmasidagi nusxani shu ro'yxat bilan ALMASHTIRADI
+    (`frontend/src/lib/sessiya.ts`): eng yaxshi natija va baho u yerda
+    hisoblanadi, shuning uchun bu yerda faqat xom ro'yxat.
+    """
+    qs = (ImtihonNatija.objects.filter(profile=profil).exclude(kurs="")
+          .order_by("-mijoz_vaqt")[:SESSIYA_OXIRGI])
+    return {"natijalar": [{
+        "kurs": n.kurs, "variant": n.variant, "togri": n.togri, "jami": n.jami,
+        "sekund": n.sekund, "vaqt": n.mijoz_vaqt,
+    } for n in qs]}

@@ -101,6 +101,7 @@ def _user_json(pupil: Pupil) -> dict:
         # (darslar ro'yxati eng katta chiqish nuqtasi edi).
         "kim": pupil.kim or "",
         "bosqich": pupil.anketa_sinf if pupil.anketa_sinf is not None else -1,
+        "yonalish": pupil.yonalish or "",
         "profillar": [_profil_json(pr) for pr in pupil.profiles.all()],
     }
 

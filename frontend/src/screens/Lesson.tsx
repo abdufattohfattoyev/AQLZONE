@@ -16,6 +16,7 @@ import { takrorlandi, xatoQoshildi } from "../lib/daftar";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
+import { ustozRejimi, useProfil } from "../lib/profil";
 
 /** Bir dars nechta savoldan iborat. */
 const SAVOL = 6;
@@ -127,6 +128,13 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
   const [shuXato, setShuXato] = useState(0);
   /** Yechim varag'i ochiqmi. */
   const [yechimda, setYechimda] = useState(false);
+  /**
+   * USTOZ REJIMI (`lib/profil.ts` → ustozRejimi): javob va yechim
+   * savol ochilgan zahoti ko'rinadi. O'qituvchi darsni sinfga
+   * ko'rsatadi yoki unga tayyorlanadi — savolni o'zi taxmin qilib
+   * yechish unga kerak emas.
+   */
+  const ustoz = ustozRejimi(useProfil());
   const [tugadi, setTugadi] = useState(false);
   /** Har to'g'ri javobda oshadi va konfetti portlashini boshlaydi. */
   const [portlash, setPortlash] = useState(0);
@@ -445,7 +453,15 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
 
              Faqat `yechim` bergan savollarda — quyi sinflarda bu tugma
              umuman chizilmaydi. */
-          shuXato > 0 && A.yechim && (
+          ustoz ? (
+            <button type="button" onClick={() => { setYechimda(true); tebrat("tanlov"); }}
+              data-tahlil="Dars: ustoz javob"
+              className="az-xabar clay-press flex items-center gap-1.5 rounded-full bg-karta px-4 py-2
+                         font-display text-[14px] leading-none text-ink-soft shadow-clay-sm">
+              <Icon name="check" size={16} className="text-brand-blue" />
+              {t("ustozJavob")}
+            </button>
+          ) : shuXato > 0 && A.yechim && (
             <button type="button" onClick={() => { setYechimda(true); tebrat("tanlov"); }}
               className="az-xabar clay-press flex items-center gap-1.5 rounded-full bg-karta px-4 py-2
                          font-display text-[14px] leading-none text-ink-soft shadow-clay-sm">
@@ -458,8 +474,11 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
 
       <div className="mt-1 text-center text-[12px] text-ink-dim">{kursMatn(unit.u)}</div>
 
-      {yechimda && A.yechim && (
-        <Yechim qadamlar={A.yechim} javob={String(A.answer)} onYop={() => setYechimda(false)} />
+      {/* Ustoz rejimida yechimsiz savolda ham (quyi sinflar) varaq
+          ochiladi — unda faqat to'g'ri javob turadi. */}
+      {yechimda && (A.yechim || ustoz) && (
+        <Yechim qadamlar={A.yechim ?? []} javob={String(A.answer)} rangli={A.kind === "rang"}
+          onYop={() => setYechimda(false)} />
       )}
 
       {oyna}

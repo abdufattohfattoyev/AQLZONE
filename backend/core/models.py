@@ -175,6 +175,11 @@ class Pupil(models.Model):
     #: (0 maktabgacha, 1..11 sinf, 101..105 kurs, 120..141, -1 javobsiz).
     anketa_sinf = models.SmallIntegerField(default=-1)
     viloyat = models.CharField(max_length=24, default="", blank=True)
+    #: Talabaning yo'nalishi (`tahlil.YONALISH_NOMI`). Faqat talabadan
+    #: so'raladi. Nega kerak: talabalar ko'pi 1–4-sinf darslarini
+    #: ochyapti — ular bo'lajak boshlang'ich sinf o'qituvchisimi yoki
+    #: boshqami, faqat shu javob aytadi va ilova shunga moslashadi.
+    yonalish = models.CharField(max_length=12, default="", blank=True)
     #: Anketa ko'rsatildimi (javob bergan YOKI o'tkazib yuborgan).
     #: Ikkinchi marta so'ralmasin.
     anketa_at = models.DateTimeField(null=True, blank=True, default=None)
@@ -1967,6 +1972,11 @@ class ImtihonNatija(models.Model):
     """
 
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="imtihon_natijalari")
+    #: Bo'sh — DTM varianti. Aks holda talabalar kursining manzili
+    #: (`oliy-matematika`, …) — sessiya varianti (`core/imtihon.py`).
+    #: Alohida jadval emas: urinishning tuzilishi AYNAN bir xil va
+    #: tekshirilgan mantiqni ikki marta yozish kerak bo'lmasin.
+    kurs = models.CharField(max_length=40, default="", blank=True)
     variant = models.SmallIntegerField()
     togri = models.SmallIntegerField()
     jami = models.SmallIntegerField()

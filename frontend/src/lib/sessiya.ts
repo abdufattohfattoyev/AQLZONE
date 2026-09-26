@@ -14,13 +14,17 @@
  * Variant raqami bo'yicha yasaladi — DTM variantlari kabi har safar
  * bir xil chiqadi, natijani solishtirish mumkin (`lib/imtihon.ts`).
  *
- * Natija faqat qurilmada saqlanadi: bu mashq, reyting emas.
+ * Natija SERVERDA saqlanadi (`/api/v1/sessiya/natija`) — telefon
+ * almashsa ham tarix qoladi. Qurilmadagi nusxa faqat internet yo'q
+ * paytda ekranni bo'sh qoldirmaslik uchun: ilgari tarix FAQAT shu
+ * yerda edi va ilovani o'chirgan talaba hammasini yo'qotardi.
  */
 import { blokYasa, sinfOf } from "./blok";
 import type { Blok } from "./blok";
 import type { Course } from "./curriculum";
 import { OLIY_KURSLAR, courseBySlug } from "./curriculum";
 import { kunUrugi, urugBilan } from "./oyin/urug";
+import { bilanProfil, sorov } from "./api";
 
 export const SESSIYA_VARIANTLAR = 10;
 export const SESSIYA_OLCHAM = { savol: 30, daqiqa: 60 };
@@ -77,3 +81,26 @@ export function sessiyaEng(kurs: string, variant: number): SessiyaNatija | null 
 
 export const foizi = (n: Pick<SessiyaNatija, "togri" | "jami">): number =>
   (n.jami ? Math.round((100 * n.togri) / n.jami) : 0);
+
+/* ------------------------------------------------------------ server */
+
+/**
+ * Qurilmadagi HAMMA urinishni yuboradi va serverdagi to'liq ro'yxat
+ * bilan qurilma nusxasini ALMASHTIRADI. Server takrorni `vaqt` bo'yicha
+ * o'zi tashlaydi — ya'ni internetsiz ishlangan variant keyingi
+ * ochilishda yetib boradi, eski telefondagi tarix esa bir marta ko'chadi.
+ */
+export async function sessiyaSinxronla(): Promise<SessiyaNatija[]> {
+  const j = await sorov<{ natijalar: SessiyaNatija[] }>(
+    "/api/v1/sessiya/natija", bilanProfil({ urinishlar: sessiyaNatijalari() }));
+  const royxat = Array.isArray(j?.natijalar) ? j.natijalar : [];
+  try {
+    localStorage.setItem(KALIT, JSON.stringify(royxat.slice(0, 60)));
+  } catch { /* xotira to'lgan — ekran baribir serverdagini ko'rsatadi */ }
+  return royxat;
+}
+
+/** Bitta tugagan urinish. Xato bo'lsa jim — keyingi sinxronlash yetkazadi. */
+export function sessiyaServerga(n: SessiyaNatija): void {
+  void sorov("/api/v1/sessiya/natija", bilanProfil({ ...n })).catch(() => {});
+}

@@ -67,7 +67,7 @@ import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
 import { useFaollik } from "../lib/faollik";
 import { natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa } from "../lib/imtihon";
-import { baho, sessiyaSaqla, sessiyaYasa } from "../lib/sessiya";
+import { baho, sessiyaSaqla, sessiyaServerga, sessiyaYasa } from "../lib/sessiya";
 
 /** Bitta berilgan javob. `null` — ulgurilmadi. */
 interface Javob {
@@ -365,14 +365,17 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
 
     // Sessiya varianti — faqat qurilmaga (`lib/sessiya.ts`).
     if (sessiya) {
-      sessiyaSaqla({
+      const urinish = {
         kurs: sessiya.slug,
         variant: sessiya.n,
         togri: toliq.filter((x) => x.togri).length,
         jami: toliq.length,
         sekund: Math.round((Date.now() - boshlandi.current) / 1000),
         vaqt: Date.now(),
-      });
+      };
+      // Avval qurilmaga (internet bo'lmasa ham yo'qolmasin), keyin serverga.
+      sessiyaSaqla(urinish);
+      sessiyaServerga(urinish);
       return;
     }
 

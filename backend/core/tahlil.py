@@ -69,6 +69,15 @@ KIM_NOMI = {
     "kattalar": "Boshqa (kattalar)",
 }
 
+#: Talabaning yo'nalishi (`Pupil.yonalish`).
+YONALISH_NOMI = {
+    "boshlangich": "Boshlang'ich ta'lim",
+    "mat_ustoz": "Matematika o'qituvchiligi",
+    "texnika": "Texnika / IT",
+    "iqtisod": "Iqtisodiyot",
+    "boshqa": "Boshqa yo'nalish",
+}
+
 #: `Pupil.anketa_sinf` — BOSQICH. Nomi tarixiy ("sinf"), lekin endi u
 #: har bir turning o'z bosqichini saqlaydi:
 #:
@@ -177,11 +186,15 @@ def anketa_yoz(pupil: Pupil, d: dict) -> None:
     viloyat = str(d.get("viloyat") or "")
     if viloyat in VILOYAT_NOMI:
         pupil.viloyat = viloyat
+    yonalish = str(d.get("yonalish") or "")
+    if yonalish in YONALISH_NOMI:
+        pupil.yonalish = yonalish
+    maydonlar = ["kim", "anketa_sinf", "viloyat", "yonalish"]
     if qisman:
-        pupil.save(update_fields=["kim", "anketa_sinf", "viloyat"])
+        pupil.save(update_fields=maydonlar)
         return
     pupil.anketa_at = timezone.now()
-    pupil.save(update_fields=["kim", "anketa_sinf", "viloyat", "anketa_at"])
+    pupil.save(update_fields=[*maydonlar, "anketa_at"])
 
 
 def tozala() -> int:
@@ -571,6 +584,10 @@ def statistika(kunlar: int = 30) -> dict:
         "kim_taqsimot": _taqsimot(hisoblar, "kim", KIM_NOMI, anketali),
         "sinf_taqsimot": _taqsimot(hisoblar, "anketa_sinf", {}, anketali),
         "viloyat_taqsimot": _taqsimot(hisoblar, "viloyat", VILOYAT_NOMI, anketali),
+        "yonalish_taqsimot": _taqsimot(
+            hisoblar.filter(kim="talaba"), "yonalish", YONALISH_NOMI,
+            hisoblar.filter(kim="talaba").exclude(yonalish="").count(),
+        ),
         "qurilma_taqsimot": _taqsimot(
             hisoblar, "qurilma", qurilmalar, hisoblar.exclude(qurilma="").count(),
         ),

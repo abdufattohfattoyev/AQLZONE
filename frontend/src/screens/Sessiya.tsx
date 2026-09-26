@@ -5,7 +5,7 @@
  * variantlari. Profilga mos fan boshdan tanlangan: 2-kurs talabasiga
  * 2-kurs dasturi. Har variant yonida eng yaxshi natija va taxminiy baho.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { useOrqaga } from "../lib/qobiq";
@@ -13,6 +13,7 @@ import { kursMatn } from "../lib/tarjima/kurs";
 import { profilKursi, useProfil } from "../lib/profil";
 import {
   SESSIYA_OLCHAM, SESSIYA_VARIANTLAR, baho, foizi, sessiyaEng, sessiyaKurslari, sessiyaNatijalari,
+  sessiyaSinxronla,
 } from "../lib/sessiya";
 
 export function Sessiya({ onVariant, onChiq }: {
@@ -24,6 +25,15 @@ export function Sessiya({ onVariant, onChiq }: {
   const oz = profilKursi(useProfil());
   const [slug, setSlug] = useState(() =>
     (oz && kurslar.includes(oz) ? oz : kurslar[0])?.slug ?? "");
+
+  // Tarix serverdan: telefon almashsa ham yo'qolmaydi. Javob kelguncha
+  // qurilmadagi nusxa ko'rinadi, kelgach ekran qayta chiziladi.
+  const [, setYangilandi] = useState(0);
+  useEffect(() => {
+    let tirik = true;
+    sessiyaSinxronla().then(() => { if (tirik) setYangilandi((n) => n + 1); }).catch(() => {});
+    return () => { tirik = false; };
+  }, []);
 
   const oxirgilar = sessiyaNatijalari().filter((x) => x.kurs === slug).slice(0, 3);
 

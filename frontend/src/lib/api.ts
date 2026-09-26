@@ -743,6 +743,8 @@ export interface Hisob {
   kim?: string;
   /** Bosqich: 0–11 maktab, 101–105 OTM, 120–132 o'qituvchi, -1 javobsiz. */
   bosqich?: number;
+  /** Talabaning yo'nalishi (`lib/profil.ts` → Yonalish). */
+  yonalish?: string;
 }
 
 /**
