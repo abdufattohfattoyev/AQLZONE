@@ -127,6 +127,15 @@ class Pupil(models.Model):
     #: ya'ni hisob har tanaffus uchun alohida yuritiladi va bir yil ichida
     #: ikki marta yo'qolgan odam ikkala safar ham chaqiriladi.
     qaytarish_soni = models.PositiveSmallIntegerField(default=0)
+    #: Ota-ona "Haftalik hisobot Telegram'ga" ni yoqqanmi (Ota-ona paneli).
+    #:
+    #: ATAYLAB standart — o'chiq: bu eslatma emas, ota-ona o'zi so'ragan
+    #: xabar. So'ralmagan hisobot bir haftada bezovtaga aylanadi va bot
+    #: bloklanadi (`management/commands/haftalik_hisobot.py`).
+    haftalik_hisobot = models.BooleanField(default=False)
+    #: Oxirgi haftalik hisobot yuborilgan payt — bir haftada ikkinchisi
+    #: bormasin (rejalashtirgich qayta ishga tushsa ham).
+    hisobot_at = models.DateTimeField(null=True, blank=True, default=None)
     #: Foydalanuvchi tanlagan til: "uz" yoki "ru".
     #:
     #: Ilovaning o'ziga bu kerak emas — u tilni qurilmada (localStorage)

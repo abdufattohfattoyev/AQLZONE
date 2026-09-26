@@ -1342,6 +1342,9 @@ const S = {
 
   /* ---------------- reyting ---------------- */
   reytingLiga: ["Liga", "Лига"],
+  otaHisobot: ["Haftalik hisobot Telegram'ga", "Отчёт за неделю в Telegram"],
+  otaHisobotVaqt: ["Har yakshanba 20:00", "Каждое воскресенье в 20:00"],
+  otaHisobotTelegramsiz: ["Avval Telegram'ni ulang — Sozlamalar", "Сначала подключите Telegram — Настройки"],
   reytingDostlar: ["Do'stlar", "Друзья"],
   reytingDostYoq: [
     "Bu yerda duel o'ynagan do'stlaringiz chiqadi. Do'stingizni chaqiring — kim ko'proq yulduz yig'ishini ko'rasiz.",

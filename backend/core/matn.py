@@ -379,6 +379,35 @@ XABAR: dict[str, dict[str, str]] = {
     "muddatSoat": {"uz": "{n} soat", "ru": "{n} ч."},
     "muddatDaqiqa": {"uz": "{n} daqiqa", "ru": "{n} мин."},
 
+    # --------------------------------------------------- haftalik hisobot
+    # Ota-onaga har yakshanba (`haftalik_hisobot.py`). Kattaga yozilgan:
+    # o'yin so'zlari yo'q, raqamlar oldinda.
+    "hisobotSarlavha": {"uz": "📊 <b>Haftalik hisobot</b>", "ru": "📊 <b>Отчёт за неделю</b>"},
+    "hisobotProfil": {
+        "uz": (
+            "<b>{ism}</b>\n"
+            "Faol kunlar: {kun} / 7\n"
+            "Darslar: {dars} ta · {daqiqa} daqiqa\n"
+            "To'g'ri javoblar: {aniqlik}%"
+        ),
+        "ru": (
+            "<b>{ism}</b>\n"
+            "Активных дней: {kun} / 7\n"
+            "Уроков: {dars} · {daqiqa} мин.\n"
+            "Правильных ответов: {aniqlik}%"
+        ),
+    },
+    "hisobotZaif": {"uz": "Qiynalgan mavzu: {mavzu}", "ru": "Трудная тема: {mavzu}"},
+    "hisobotBosh": {
+        "uz": "<b>{ism}</b>\nBu hafta mashq qilinmadi.",
+        "ru": "<b>{ism}</b>\nНа этой неделе занятий не было.",
+    },
+    "hisobotOxiri": {
+        "uz": "Hisobotni ilovadagi Ota-ona panelida o'chirish mumkin.",
+        "ru": "Отчёт можно отключить в панели для родителей в приложении.",
+    },
+    "tHisobotOchish": {"uz": "Batafsil", "ru": "Подробнее"},
+
     # ------------------------------------------------------------- eslatma
     "eslatmaIsmsiz": {"uz": "Do'stim", "ru": "Друг"},
     "tMashqQilish": {"uz": "Mashq qilish", "ru": "Заниматься"},

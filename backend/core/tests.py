@@ -8443,6 +8443,82 @@ class DostReytingTest(TestCase):
         self.assertEqual(j["top"], [])
 
 
+class HaftalikHisobotTest(TestCase):
+    """Ota-onaga haftalik hisobot: faqat yoqqanlarga, haftada bir marta."""
+
+    def kim(self) -> str:
+        chiqish = StringIO()
+        call_command("haftalik_hisobot", "--sinov", stdout=chiqish)
+        return chiqish.getvalue()
+
+    def hisob(self, tg_id: str, ism: str, yoqilgan: bool = True):
+        pupil = Pupil.objects.create(first_name=ism, haftalik_hisobot=yoqilgan)
+        Identity.objects.create(pupil=pupil, provider="telegram", external_id=tg_id)
+        return pupil, pupil.asosiy_profil()
+
+    def natija(self, profil, kunlar_oldin: int, asked=10, correct=5, nom="Kasrlar"):
+        r = LessonResult.objects.create(profile=profil, asked=asked, correct=correct, stars=1,
+                                        duration_ms=120000, lesson_name=nom)
+        LessonResult.objects.filter(pk=r.pk).update(created_at=timezone.now() - timedelta(days=kunlar_oldin))
+
+    def test_raqamlar_panel_bilan_bir_xil(self):
+        _, profil = self.hisob("h1", "Ali")
+        self.natija(profil, 1)
+        self.natija(profil, 1)
+        self.natija(profil, 3)
+        self.natija(profil, 10)  # haftadan tashqarida
+        chiqdi = self.kim()
+        self.assertIn("Ali", chiqdi)
+        self.assertIn("2 / 7", chiqdi)
+        self.assertIn("3 ta · 6 daqiqa", chiqdi)
+        self.assertIn("50%", chiqdi)
+        self.assertIn("Qiynalgan mavzu: Kasrlar", chiqdi)
+
+    def test_yoqmaganga_yuborilmaydi(self):
+        _, profil = self.hisob("h2", "Zilola", yoqilgan=False)
+        self.natija(profil, 1)
+        self.assertNotIn("Zilola", self.kim())
+
+    def test_mashqsiz_hafta_ham_aytiladi(self):
+        self.hisob("h3", "Kamol")
+        self.assertIn("mashq qilinmadi", self.kim())
+
+    def test_haftada_bir_marta(self):
+        pupil, _ = self.hisob("h4", "Takror")
+        Pupil.objects.filter(pk=pupil.pk).update(hisobot_at=timezone.now() - timedelta(days=2))
+        self.assertNotIn("Takror", self.kim())
+        Pupil.objects.filter(pk=pupil.pk).update(hisobot_at=timezone.now() - timedelta(days=7))
+        self.assertIn("Takror", self.kim())
+
+    def test_boshqa_yozmang_deganga_yuborilmaydi(self):
+        pupil, _ = self.hisob("h5", "Yopiq")
+        Pupil.objects.filter(pk=pupil.pk).update(xabar_yopiq_at=timezone.now())
+        self.assertNotIn("Yopiq", self.kim())
+
+    def test_ruscha(self):
+        pupil, profil = self.hisob("h6", "Oleg")
+        Pupil.objects.filter(pk=pupil.pk).update(til="ru")
+        self.natija(profil, 1)
+        chiqdi = self.kim()
+        self.assertIn("Активных дней: 1 / 7", chiqdi)
+        self.assertNotIn("Kasrlar", chiqdi)
+
+    def test_api_telegramsiz_yoqilmaydi(self):
+        r = self.client.post("/api/v1/auth/device", {"deviceId": "dev-hisobot-12345678", "platform": "web"},
+                             content_type="application/json")
+        h = {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+        r = self.client.post("/api/v1/haftalik-hisobot", {"yoqilgan": True}, content_type="application/json", **h)
+        self.assertEqual(r.status_code, 409)
+        self.assertFalse(self.client.get("/api/v1/me", **h).json()["user"]["haftalikHisobot"])
+        pupil = Pupil.objects.get(identities__external_id="dev-hisobot-12345678")
+        Identity.objects.create(pupil=pupil, provider="telegram", external_id="h7")
+        r = self.client.post("/api/v1/haftalik-hisobot", {"yoqilgan": True}, content_type="application/json", **h)
+        self.assertEqual(r.json(), {"yoqilgan": True})
+        self.assertTrue(self.client.get("/api/v1/me", **h).json()["user"]["haftalikHisobot"])
+        r = self.client.post("/api/v1/haftalik-hisobot", {"yoqilgan": False}, content_type="application/json", **h)
+        self.assertEqual(r.json(), {"yoqilgan": False})
+
+
 class SessiyaNatijaTest(TestCase):
     """Talabaning sessiya natijalari serverda va DTM tarixidan alohida."""
 

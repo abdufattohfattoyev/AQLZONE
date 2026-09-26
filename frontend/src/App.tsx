@@ -90,7 +90,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov,
+  yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
 } from "./lib/yollar";
@@ -566,7 +566,7 @@ function OtaOnaSahifasi() {
 
   if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
   return (
-    <OtaOna onBack={() => nav(yolMen())}
+    <OtaOna onBack={() => nav(yolMen())} onSozlama={() => nav(yolSozlama())}
       onDars={(d) => {
         const k = COURSES.find((x) => x.grade === d.grade);
         // Dars yopiq bo'lsa `DarsSahifasi` o'zi kurs xaritasiga qaytaradi.

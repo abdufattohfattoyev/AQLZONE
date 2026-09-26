@@ -9,18 +9,21 @@
  *   hafta        har kuni necha DAQIQA shug'ullangan (ustunlar)
  *   yordam       eng past aniqlikdagi dars va "Darsni ochish"
  *   daftar       takrorlash kutayotgan xatolar (qurilmada)
+ *   hisobot      "Haftalik hisobot Telegram'ga" o'chirgichi
  *
  * Ma'lumot serverdan keladi (`/summary`). Internet bo'lmasa panel bo'sh
  * qolmaydi — qurilmadagi xatolar daftari baribir ko'rsatiladi.
  *
- * Dizayndagi "Haftalik hisobot Telegram'ga" o'chirgichi HALI YO'Q:
- * serverda bunday yuborish yo'q va ishlamaydigan tugma qo'yilmadi.
+ * Haftalik hisobotni server har yakshanba 20:00 da yuboradi
+ * (`haftalik_hisobot` buyrug'i) — faqat shu yerda YOQILGAN bo'lsa.
+ * Telegram bog'lanmagan hisobda yoqib bo'lmaydi: o'chirgich o'rniga
+ * Sozlamalarga (Telegram'ni ulash) olib boradi.
  */
 import { useEffect, useState } from "react";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
-import { getHisob, getXulosa, joriyProfil, profilniTanla } from "../lib/api";
-import type { Profil, QiyinDars, Xulosa } from "../lib/api";
+import { getHisob, getXulosa, haftalikHisobot, joriyProfil, profilniTanla } from "../lib/api";
+import type { Hisob, Profil, QiyinDars, Xulosa } from "../lib/api";
 import { hammasi as daftarHammasi } from "../lib/daftar";
 import { courseBySlug, sinfNomi } from "../lib/curriculum";
 import { t } from "../lib/matn";
@@ -31,12 +34,16 @@ interface Props {
   onBack: () => void;
   /** Qiynalgan darsni ochish (sinf kodi, bob va dars indeksi). */
   onDars: (d: QiyinDars) => void;
+  /** Telegram'ni ulash uchun Sozlamalar. */
+  onSozlama: () => void;
 }
 
-export function OtaOna({ onBack, onDars }: Props) {
+export function OtaOna({ onBack, onDars, onSozlama }: Props) {
   const [xulosa, setXulosa] = useState<Xulosa | null>(null);
   const [yuklandi, setYuklandi] = useState(false);
   const [bolalar, setBolalar] = useState<Profil[]>([]);
+  const [hisob, setHisob] = useState<Hisob | null>(null);
+  const [hisobot, setHisobot] = useState(false);
   const ozStrelka = useOrqaga(onBack);
 
   useEffect(() => {
@@ -46,7 +53,12 @@ export function OtaOna({ onBack, onDars }: Props) {
       setXulosa(x);
       setYuklandi(true);
     });
-    getHisob().then((h) => { if (!bekor) setBolalar(h?.profillar ?? []); });
+    getHisob().then((h) => {
+      if (bekor) return;
+      setBolalar(h?.profillar ?? []);
+      setHisob(h);
+      setHisobot(Boolean(h?.haftalikHisobot));
+    });
     return () => { bekor = true; };
   }, []);
 
@@ -62,6 +74,14 @@ export function OtaOna({ onBack, onDars }: Props) {
   const qisqa = t("bugunQisqaKunlar").split(",");
   const qiyin = xulosa?.qiyin[0];
   const joriy = joriyProfil();
+
+  const hisobotAlmashtir = () => {
+    if (!hisob?.telegram) { onSozlama(); return; }
+    const yangi = !hisobot;
+    tebrat("tanlov");
+    setHisobot(yangi);
+    haftalikHisobot(yangi).then((j) => { if (j !== yangi) setHisobot(!yangi); });
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]">
@@ -172,6 +192,35 @@ export function OtaOna({ onBack, onDars }: Props) {
             );
           })}
         </section>
+      )}
+
+      {/* ---- haftalik hisobot — eski server maydonni bermasa ko'rsatilmaydi ---- */}
+      {hisob && typeof hisob.haftalikHisobot === "boolean" && (
+        <div className="flex min-h-[60px] items-center gap-3 rounded-[20px] bg-karta py-2 pr-2 pl-4 shadow-clay-sm">
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-[15.5px] leading-snug font-bold">{t("otaHisobot")}</span>
+            <span className="text-[13px] leading-snug text-ink-dim">
+              {hisob.telegram ? t("otaHisobotVaqt") : t("otaHisobotTelegramsiz")}
+            </span>
+          </span>
+          {hisob.telegram ? (
+            <button type="button" role="switch" aria-checked={hisobot} aria-label={t("otaHisobot")}
+              onClick={hisobotAlmashtir} data-tahlil="Ota-ona: haftalik hisobot"
+              className="grid h-11 w-[60px] shrink-0 place-items-center">
+              <span className={`relative block h-[30px] w-[52px] rounded-full transition-colors ${
+                hisobot ? "bg-brand-green" : "bg-track"}`}>
+                <span className={`absolute top-[3px] size-6 rounded-full bg-white shadow-clay-sm transition-[left] ${
+                  hisobot ? "left-[25px]" : "left-[3px]"}`} />
+              </span>
+            </button>
+          ) : (
+            <button type="button" onClick={onSozlama} aria-label={t("otaHisobotTelegramsiz")}
+              data-tahlil="Ota-ona: hisobot uchun Telegram"
+              className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] text-ink-dim">
+              <Icon name="chevron" size={18} />
+            </button>
+          )}
+        </div>
       )}
 
       {/* ---- ma'lumot yo'q holatlari ---- */}

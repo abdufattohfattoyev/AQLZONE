@@ -82,6 +82,8 @@ def _user_json(pupil: Pupil) -> dict:
         "kirishUsullari": usullar,
         "telegram": Identity.TELEGRAM in usullar,
         "qurilma": Identity.QURILMA in usullar,
+        # Ota-ona panelidagi "Haftalik hisobot Telegram'ga" o'chirgichi.
+        "haftalikHisobot": pupil.haftalik_hisobot,
         # Ism ham, familiya ham to'ldirilganmi. Mijoz shu bayroqqa qarab
         # ro'yxat oynasini ko'rsatadi yoki ko'rsatmaydi.
         "royxatdan": pupil.royxatdan_otgan,
@@ -1586,6 +1588,25 @@ def duel_taklif_bekor(request):
     if d is None:
         return Response({"detail": "topilmadi"}, status=404)
     return Response({"bekor": D.taklif_bekor(d, _profil_tanla(request))})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def haftalik_hisobot(request):
+    """
+    Ota-ona paneli: "Haftalik hisobot Telegram'ga" (`{"yoqilgan": true}`).
+
+    Telegram bog'lanmagan hisobda YOQIB bo'lmaydi (409) — aks holda
+    o'chirgich yoniq turib, hech qachon xabar kelmasdi. O'chirish esa
+    doim mumkin.
+    """
+    yoq = bool(request.data.get("yoqilgan"))
+    pupil = request.user
+    if yoq and not pupil.identities.filter(provider=Identity.TELEGRAM).exists():
+        return Response({"detail": "telegram", "sabab": "telegram"}, status=409)
+    pupil.haftalik_hisobot = yoq
+    pupil.save(update_fields=["haftalik_hisobot"])
+    return Response({"yoqilgan": pupil.haftalik_hisobot})
 
 
 @api_view(["POST"])

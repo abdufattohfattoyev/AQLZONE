@@ -74,6 +74,13 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=18, minute=0),
         "args": ("eslatma",),
     },
+    # Haftalik hisobot ota-onaga — yakshanba kechqurun: hafta tugagan,
+    # ota-ona uyda va keyingi haftani rejalashtiradi. Faqat yoqqanlarga.
+    "haftalik-hisobot": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=20, minute=0, day_of_week=0),
+        "args": ("haftalik_hisobot",),
+    },
     # Kunlik masala kanalga — o'sha soatda.
     "kunlik-masala": {
         "task": "core.vazifalar.buyruq",

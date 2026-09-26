@@ -20,6 +20,7 @@ urlpatterns = [
     path("progress", views.progress, name="progress"),
     path("results", views.results, name="results"),
     path("summary", views.summary, name="summary"),
+    path("haftalik-hisobot", views.haftalik_hisobot, name="haftalik-hisobot"),
     path("leaderboard", views.leaderboard, name="leaderboard"),
     path("liga", views.liga, name="liga"),
     path("kanal", views.kanal, name="kanal"),

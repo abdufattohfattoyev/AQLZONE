@@ -712,6 +712,8 @@ export interface Hisob {
   kirishUsullari: string[];
   telegram: boolean;
   qurilma: boolean;
+  /** Ota-ona panelidagi "Haftalik hisobot Telegram'ga". Eski serverda yo'q. */
+  haftalikHisobot?: boolean;
   /** Ism ham, familiya ham to'ldirilganmi. Ro'yxat oynasi shunga qaraydi. */
   royxatdan: boolean;
   /** Shu hisobdagi bolalar. Sozlamalarda ro'yxat qilib ko'rsatiladi. */
@@ -1518,6 +1520,24 @@ export const kunlikRoyxat = (daraja?: number) =>
   xonaSorov<KunlikRoyxat>(`/api/v1/kunlik-son/royxat${daraja ? `?daraja=${daraja}` : ""}`);
 /** Natija kartochkasini botga yuboradi — odam uni guruhga o'zi yo'naltiradi. */
 export const kunlikUlash = () => xonaSorov<{ ok: boolean }>("/api/v1/kunlik-son/ulash", {});
+
+/**
+ * Haftalik hisobotni yoqish/o'chirish. Javob — serverdagi yangi holat;
+ * `"telegram"` — Telegram bog'lanmagan (yoqib bo'lmaydi), `null` — aloqa yo'q.
+ */
+export async function haftalikHisobot(yoqilgan: boolean): Promise<boolean | "telegram" | null> {
+  if (!(await signIn())) return null;
+  try {
+    const r = await fetch("/api/v1/haftalik-hisobot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ yoqilgan }),
+    });
+    if (r.status === 409) return "telegram";
+    if (!r.ok) return null;
+    return ((await r.json()) as { yoqilgan: boolean }).yoqilgan;
+  } catch { return null; }
+}
 
 /** "Meni jonli bellashuvga chaqirmasin". */
 export const duelSozlama = (yopiq: boolean): Promise<{ yopiq: boolean }> =>
