@@ -34,6 +34,7 @@ shubhali raqam yoki "aytishlaricha" darajasidagi rivoyat — yo'q.
 from __future__ import annotations
 
 import html
+import io
 import logging
 import random
 import re
@@ -42,6 +43,7 @@ import xml.etree.ElementTree as ET
 from datetime import timedelta
 from email.utils import parsedate_to_datetime
 
+from django.conf import settings
 from django.utils import timezone
 
 from core.models import KanalYozuv
@@ -333,7 +335,7 @@ def fakt_belgila(fakt: tuple[str, str]) -> None:
 # Qalam-qog'ozsiz, 30 soniyada yechiladigan misol va uning USULI.
 #
 # Ikki post bo'lib chiqadi:
-#   1. 15:00 — savol va KIM UCHUN. Javob yo'q, tugma yo'q: o'quvchi
+#   1. 15:00 — savol RASMI (`misol_rasmi`) va KIM UCHUN. Javob yo'q, tugma yo'q: o'quvchi
 #      javobini izohda yozadi. Javob oldindan ko'rinsa (spoiler ham)
 #      izohda bahs bo'lmaydi — hamma bosib ko'radi-yu, ketadi.
 #   2. JAVOB_SOATI da — to'g'ri javob va yechish usuli, savol postiga
@@ -349,11 +351,20 @@ JAVOB_SOATI = "17:00"
 MISOL_KUNLARI = {1: "seshanba", 3: "payshanba", 5: "shanba"}
 
 
+def _yuqori(n: int) -> str:
+    """31 → ³¹ — daraja rasmda ham, matnda ham darajadek ko'rinsin."""
+    return str(n).translate(str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹"))
+
+
 def _misollar(r: random.Random) -> list[tuple[str, str, str, str]]:
     """
     (kim uchun, savol, javob, usul) — har biri hisoblab yasaladi, qo'lda
     yozilmaydi. "Kim uchun" — o'sha usul maktabda o'tiladigan sinflar;
     kattaroqlar ham yecha oladi, lekin kichikroqqa og'ir bo'ladi.
+
+    Savol doim "SHART: IFODA" shaklida: rasmda shart kichik harf bilan
+    tepada, ifoda katta harf bilan o'rtada turadi (`misol_rasmi`) —
+    ilovadagi savol kartasi bilan bir xil.
     """
     k = r.randint(12, 39) * 4
     ab = r.choice([x for x in range(12, 99) if x % 10 + x // 10 < 10])
@@ -376,29 +387,29 @@ def _misollar(r: random.Random) -> list[tuple[str, str, str, str]]:
         ("4–6-sinf", f"Hisoblang: 11 × {ab}", str(11 * ab),
          f"Ikki xonali sonni 11 ga ko'paytirganda uning raqamlari orasiga ularning yig'indisi "
          f"yoziladi: {a} va {b} → {a}, {a} + {b} = {a + b}, {b}. Javob: {11 * ab}."),
-        ("5–7-sinf", f"1 dan {n} gacha bo'lgan barcha natural sonlar yig'indisi nechaga teng?",
+        ("5–7-sinf", f"1 dan {n} gacha sonlar yig'indisini toping: 1 + 2 + 3 + … + {n}",
          str(n * (n + 1) // 2),
          f"Gauss usuli: sonlarni chetdan juftlaymiz — 1 + {n}, 2 + {n - 1}, 3 + {n - 2}, … "
          f"Har bir juft {n + 1} ga teng, juftlar soni {n // 2} ta. "
          f"{n // 2} × {n + 1} = {n * (n + 1) // 2}."),
         ("4–6-sinf", f"Hisoblang: 99 × {d}", str(99 * d),
          f"99 = 100 − 1. Demak 99 × {d} = 100 × {d} − {d} = {100 * d} − {d} = {99 * d}."),
-        ("7–9-sinf", f"7 ning {daraja}-darajasi (7^{daraja}) qanday raqam bilan tugaydi?", str(oxiri),
+        ("7–9-sinf", f"7 ning {daraja}-darajasi qanday raqam bilan tugaydi: 7{_yuqori(daraja)}", str(oxiri),
          f"7 darajalarining oxirgi raqami har 4 qadamda takrorlanadi: 7, 9, 3, 1, 7, 9, 3, 1, … "
          f"{daraja} ni 4 ga bo'lsak, qoldiq {daraja % 4} — demak oxirgi raqam {oxiri}."),
-        ("6–8-sinf", f"Hisoblang: {beshli}²  (ya'ni {beshli} × {beshli})", str(beshli * beshli),
+        ("6–8-sinf", f"Hisoblang: {beshli}²", str(beshli * beshli),
          f"5 bilan tugagan sonni kvadratga ko'tarishda o'nliklar raqami keyingi songa "
          f"ko'paytiriladi: {bosh} × {bosh + 1} = {bosh * (bosh + 1)}, oxiriga 25 yoziladi. "
          f"Javob: {beshli * beshli}."),
-        ("8–9-sinf", f"{burchak} burchakli qavariq ko'pburchakning nechta diagonali bor?",
+        ("8–9-sinf", f"Qavariq n burchakning nechta diagonali bor: n = {burchak}",
          str(burchak * (burchak - 3) // 2),
          f"Har bir uchdan n − 3 ta diagonal chiqadi (o'ziga va ikki qo'shnisiga chiqmaydi), "
          f"har bir diagonal esa ikki marta sanaladi. n(n − 3) / 2 = "
          f"{burchak} × {burchak - 3} / 2 = {burchak * (burchak - 3) // 2}."),
-        ("5–7-sinf", f"{son} ning {foiz} foizi nechaga teng?", str(son * foiz // 100),
+        ("5–7-sinf", f"Foizini toping: {son} ning {foiz}% i", str(son * foiz // 100),
          f"Avval 1 foizini topamiz: {son} : 100 = {bir_foiz}. Keyin uni {foiz} ga ko'paytiramiz: "
          f"{bir_foiz} × {foiz} = {son * foiz // 100}."),
-        ("6–8-sinf", f"Qatorni davom ettiring: 2, 6, 12, 20, 30, … Uning {qator}-hadi nechaga teng?",
+        ("6–8-sinf", f"Qatorning {qator}-hadini toping: 2, 6, 12, 20, 30, …",
          str(qator * (qator + 1)),
          f"Har bir had — ketma-ket ikki sonning ko'paytmasi: 1 × 2, 2 × 3, 3 × 4, … "
          f"Demak {qator}-had = {qator} × {qator + 1} = {qator * (qator + 1)}."),
@@ -413,16 +424,112 @@ def bugungi_misol(kun=None) -> tuple[str, str, str, str]:
 
 
 def misol_posti(misol: tuple[str, str, str, str]) -> str:
-    kim, savol, _, _ = misol
+    """
+    Rasm ostidagi yozuv. Savolning o'zi RASMDA (`misol_rasmi`), bu yerda
+    esa faqat nima qilish kerakligi — savolni ikki marta yozish kerak emas.
+    """
+    kim, _, _, _ = misol
     e = html.escape
     return (
         "🧠 <b>Og'zaki misol</b> — qalamsiz, 30 soniyada\n"
         f"👥 Kim uchun: <b>{e(kim)}</b> (kattalar ham sinab ko'rsin)\n\n"
-        f"❓ <b>{e(savol)}</b>\n\n"
         "💬 Javobingizni <b>izohda</b> yozing — faqat sonni, yechimni emas, "
         "boshqalar ham o'ylab ko'rsin.\n"
         f"⏰ To'g'ri javob va yechish usuli bugun soat <b>{JAVOB_SOATI}</b> da chiqadi."
     )
+
+
+# Rasm ranglari — ilovaning qorong'i mavzusi va brend ranglari: kanal
+# postini ko'rgan odam ilovani ochganda o'sha ko'rinishni tanisin.
+_FON = (22, 28, 56)
+_KARTA = (34, 43, 84)
+_OQ = (244, 246, 255)
+_XIRA = (150, 160, 200)
+_KOK = (59, 111, 224)
+
+
+def _qatorlarga(d, matn: str, shrift, kenglik: int) -> list[str]:
+    qatorlar, joriy = [], ""
+    for soz in matn.split():
+        sinov = f"{joriy} {soz}".strip()
+        if joriy and d.textlength(sinov, font=shrift) > kenglik:
+            qatorlar.append(joriy)
+            joriy = soz
+        else:
+            joriy = sinov
+    return qatorlar + ([joriy] if joriy else [])
+
+
+def misol_rasmi(misol: tuple[str, str, str, str]) -> bytes:
+    """
+    Savol kartasi — JPEG baytlari (kanalga `sendPhoto` bilan chiqadi).
+
+    Nega rasm: kanal lentasida matnli post boshqa xabarlar orasida
+    ko'zdan qochadi, katta formula esa darhol ko'rinadi va uni
+    skrinshot qilib ulashish ham oson. Javob rasmda YO'Q — u izohlar
+    yig'ilgandan keyin alohida postda chiqadi.
+
+    Kvadrat: Telegram uni kesmasdan, to'liq ko'rsatadi. Shrift o'lchami
+    savol uzunligiga qarab tanlanadi — qisqa misol katta, uzun gap
+    kichikroq, lekin doim kartaga sig'adi.
+    """
+    from PIL import Image, ImageDraw
+
+    from .kunlik_kartochka import _shrift
+
+    kim, savol, _, _ = misol
+    S, EN = 2, 1080                                  # S — supersampling, chetlar silliq bo'lsin
+    t = Image.new("RGB", (EN * S, EN * S), _FON)
+    d = ImageDraw.Draw(t)
+    m = 60 * S
+    d.rounded_rectangle([m, m, EN * S - m, EN * S - m], radius=48 * S, fill=_KARTA)
+
+    # Tepa: rukn nomi va kim uchun.
+    ichki = 120 * S
+    sh = _shrift(34 * S)
+    d.text((ichki, 128 * S), "OG'ZAKI MISOL", font=sh, fill=_KOK)
+    en = d.textlength(kim, font=sh)
+    x2 = EN * S - ichki
+    d.rounded_rectangle([x2 - en - 44 * S, 112 * S, x2, 176 * S], radius=32 * S, outline=_XIRA, width=2 * S)
+    d.text((x2 - en - 22 * S, 128 * S), kim, font=sh, fill=_OQ)
+
+    # O'rta: shart (kichik) va ifoda (katta). Ifoda sig'guncha shrift
+    # kichrayadi; blok butunligicha 200–820 oralig'ida markazlanadi.
+    kenglik = EN * S - 2 * ichki
+    shart, _, ifoda = savol.partition(": ")
+    if not ifoda:
+        shart, ifoda = "", savol
+    shart_sh = _shrift(40 * S, False)
+    shart_q = _qatorlarga(d, shart, shart_sh, kenglik) if shart else []
+    for px in (132, 116, 100, 88, 76, 66):
+        shrift = _shrift(px * S)
+        qatorlar = _qatorlarga(d, ifoda, shrift, kenglik)
+        if len(qatorlar) <= 2:
+            break
+    shart_qadam, qadam = 56 * S, int(px * S * 1.25)
+    boshi = shart_qadam * len(shart_q) + (40 * S if shart_q else 0)
+    y = 200 * S + (620 * S - boshi - qadam * len(qatorlar)) // 2
+    for q in shart_q:
+        d.text(((EN * S - d.textlength(q, font=shart_sh)) / 2, y), q, font=shart_sh, fill=_XIRA)
+        y += shart_qadam
+    y += 40 * S if shart_q else 0
+    for q in qatorlar:
+        d.text(((EN * S - d.textlength(q, font=shrift)) / 2, y), q, font=shrift, fill=_OQ)
+        y += qadam
+
+    # Past: nima qilish kerak va kanal.
+    past = _shrift(32 * S, False)
+    yoz = f"Qalamsiz, 30 soniyada · javob {JAVOB_SOATI} da"
+    d.text(((EN * S - d.textlength(yoz, font=past)) / 2, 860 * S), yoz, font=past, fill=_XIRA)
+    kanal = (getattr(settings, "KANAL", "") or "").strip()
+    belgi = f"Aql Zone · {kanal if kanal.startswith('@') else '@' + kanal}" if kanal else "Aql Zone"
+    sh = _shrift(32 * S)
+    d.text(((EN * S - d.textlength(belgi, font=sh)) / 2, 912 * S), belgi, font=sh, fill=_KOK)
+
+    t = t.resize((EN, EN), Image.LANCZOS)
+    xotira = io.BytesIO()
+    t.save(xotira, format="JPEG", quality=90)
+    return xotira.getvalue()
 
 
 def _keyingi_misol_kuni(kun) -> str:

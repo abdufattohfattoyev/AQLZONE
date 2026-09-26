@@ -7974,7 +7974,8 @@ class MatematikaKanalTest(TestCase):
                 m = re.match(r"Hisoblang: (\d+)²", savol)
                 if m:
                     self.assertEqual(int(javob), int(m[1]) ** 2)
-                m = re.fullmatch(r"(\d+) ning (\d+) foizi nechaga teng\?", savol)
+                self.assertIn(": ", savol)                   # rasmda shart va ifoda ajraladi
+                m = re.fullmatch(r"Foizini toping: (\d+) ning (\d+)% i", savol)
                 if m:
                     self.assertEqual(int(javob) * 100, int(m[1]) * int(m[2]))
 
@@ -7986,6 +7987,8 @@ class MatematikaKanalTest(TestCase):
         post = MK.misol_posti(misol)
         self.assertNotIn("tg-spoiler", post)
         self.assertNotIn(misol[3], post)                     # usul savolda yo'q
+        for m in MK._misollar(__import__("random").Random(1)):
+            self.assertTrue(MK.misol_rasmi(m).startswith(b"\xff\xd8"))
         self.assertIn("izohda", post)
         self.assertIn(MK.JAVOB_SOATI, post)
         self.assertIn(misol[0], post)                        # kim uchun
@@ -7999,14 +8002,17 @@ class MatematikaKanalTest(TestCase):
         from core.models import KanalYozuv
 
         with mock.patch("core.xabar.kanal_matn", return_value=("yuborildi", "", 77)) as yub, \
+             mock.patch("core.xabar.rasm_yubor", return_value=("yuborildi", "", 77)) as rasm, \
              mock.patch("core.xabar.yubor") as tugmali:
             call_command("matematika_kanal", "misol", stdout=StringIO())
-            self.assertEqual(yub.call_args.kwargs["javob_id"], 0)
+            self.assertTrue(rasm.call_args[0][1].startswith(b"\xff\xd8"))   # JPEG
+            self.assertEqual(len(rasm.call_args[0]), 3)                       # tugmasiz
+            yub.assert_not_called()
             call_command("matematika_kanal", "javob", stdout=StringIO())
             self.assertEqual(yub.call_args.kwargs["javob_id"], 77)    # savolga ulanadi
             self.assertIn("Qanday topiladi", yub.call_args[0][1])
             call_command("matematika_kanal", "javob", stdout=StringIO())
-            self.assertEqual(yub.call_count, 2)                        # ikkinchi javob yo'q
+            self.assertEqual(yub.call_count, 1)                        # ikkinchi javob yo'q
             tugmali.assert_not_called()
         self.assertEqual(KanalYozuv.objects.filter(tur="misol").count(), 2)
 

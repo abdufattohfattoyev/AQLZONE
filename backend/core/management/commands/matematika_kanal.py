@@ -35,7 +35,7 @@ class Command(BaseCommand):
 
     def _misol(self, tur: str, sinov: bool) -> None:
         """
-        Og'zaki misol — tugmasiz: o'quvchi javobini izohda yozadi, to'g'ri
+        Og'zaki misol — rasm, tugmasiz: o'quvchi javobini izohda yozadi, to'g'ri
         javob `JAVOB_SOATI` da savol postiga javob bo'lib chiqadi.
 
         Savol postining raqami `KanalYozuv` ga yoziladi (`misol:<sana>`,
@@ -67,8 +67,11 @@ class Command(BaseCommand):
         if not kanal:
             return
 
-        ulanadi = int(savol_yozuv.manba or 0) if (tur == "javob" and savol_yozuv) else 0
-        holat, izoh, xabar_id = X.kanal_matn(kanal, matn, javob_id=ulanadi)
+        if tur == "misol":
+            holat, izoh, xabar_id = X.rasm_yubor(kanal, MK.misol_rasmi(misol), matn)
+        else:
+            ulanadi = int(savol_yozuv.manba or 0) if savol_yozuv else 0
+            holat, izoh, xabar_id = X.kanal_matn(kanal, matn, javob_id=ulanadi)
         if holat != "yuborildi":
             self.stderr.write(self.style.ERROR(f"yuborilmadi: {holat} {izoh}"))
             return
