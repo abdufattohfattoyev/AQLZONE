@@ -226,6 +226,31 @@ export function daraja(ball100: number): string | null {
   return DARAJALAR.find(([chegara]) => b >= chegara)?.[1] ?? null;
 }
 
+/**
+ * Daraja shkalasi 100 ballik (xom) o'lchovda — pastdan yuqoriga:
+ * C 61,3 · C+ 66,7 · B 73,3 · B+ 80 · A 86,7 · A+ 93,3.
+ *
+ * QO'LDA YOZILMAYDI: `DARAJALAR` 75 ballik va bu uning teskarisi
+ * (`chegara / 0,75`). Chegara o'zgarsa, ro'yxatdagi shkala ham,
+ * natijadagi "A darajaga 6,7 ball yetmadi" ham o'zi yangilanadi.
+ */
+export const DARAJA_SHKALA: { d: string; ball: number }[] = [...DARAJALAR]
+  .reverse()
+  .map(([chegara, d]) => ({ d, ball: yaxlit((chegara * 100) / 75) }));
+
+/**
+ * Keyingi darajagacha qancha ball yetmaydi. Eng yuqorisida (A+) —
+ * `null`. Sertifikatsiz bo'lsa — birinchi daraja (C) gacha.
+ */
+export function keyingiDaraja(ball100: number): { d: string; farq: number } | null {
+  const b = (ball100 * 75) / 100;
+  const k = [...DARAJALAR].reverse().find(([chegara]) => b < chegara);
+  if (!k) return null;
+  // Aniq chegaradan (61,33…) va YUQORIGA yaxlitlab: "11,3 ball yetmadi"
+  // deb aytib, 11,3 ball olgan odamga darajani bermaslik yolg'on bo'lardi.
+  return { d: k[1], farq: Math.ceil(((k[0] * 100) / 75 - ball100) * 10 - 1e-9) / 10 };
+}
+
 /* ------------------------------------------------------------ natija */
 
 export interface SNatija {

@@ -36,7 +36,7 @@ import { yolDars } from "../lib/yollar";
 import { useFaollik } from "../lib/faollik";
 import type { SJavob, SSavol, SVariant } from "../lib/sertifikat";
 import {
-  BALL, DAQIQA, HARFLAR, berilgan, daraja, joriyniOchir, joriyniOqi, joriyniSaqla,
+  BALL, DAQIQA, HARFLAR, berilgan, daraja, joriyniOchir, joriyniOqi, joriyniSaqla, keyingiDaraja,
   maksBall, natijaSaqla, savolBali, sonTogrimi, variantYasa, yaxlit,
 } from "../lib/sertifikat";
 
@@ -50,8 +50,8 @@ const SERT_JOY = 97;
 /** Natijada nechta eng zaif mavzu ko'rsatiladi. */
 const MAVZU_CHEK = 6;
 
-/** "67,4" — kasr vergul bilan. */
-const ballYoz = (b: number) => String(b).replace(".", ",");
+/** "67,4", "80,0" — doim bitta kasr xonasi, vergul bilan. */
+const ballYoz = (b: number) => b.toFixed(1).replace(".", ",");
 
 export function SertifikatTest({ n, onExit }: { n: number; onExit: () => void }) {
   const v = useMemo(() => variantYasa(n), [n]);
@@ -94,6 +94,8 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
   const [javoblar, setJavoblar] = useState<SJavob[]>(() => davom?.javoblar ?? Array(jami).fill(null));
   const [idx, setIdx] = useState(() => Math.min(davom?.idx ?? 0, jami - 1));
   const [tugadi, setTugadi] = useState(false);
+  /** Yakunlanganda — necha sekund ishlandi (natija sarlavhasida). */
+  const [sarflandi, setSarflandi] = useState(0);
   const [sorov, setSorov] = useState(false);
 
   // Soat — `Blok.tsx` dagidek: sanoq emas, TUGASH PAYTI eslanadi va
@@ -116,6 +118,7 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
     joriyniOchir();
     const ball = yaxlit(v.savollar.reduce((a, S, i) => a + savolBali(S, j[i]), 0));
     const sekund = Math.round((Date.now() - boshlandi.current) / 1000);
+    setSarflandi(sekund);
     natijaSaqla({ variant: v.n, ball, sekund, vaqt: Date.now() });
 
     // `/boshqaruv` ko'rsin — nechta variant ishlandi, qanday natija.
@@ -154,97 +157,102 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
     if (qolgan === 0 && !tugadi) yakunla(javoblar);
   }, [qolgan, tugadi, javoblar, yakunla]);
 
-  const ozStrelka = useOrqaga(onExit);
+  useOrqaga(onExit);
 
-  // Joriy savol raqami tasmada ko'rinib tursin.
-  const tasma = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    tasma.current?.querySelector(`[data-i="${idx}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
-  }, [idx]);
-
-  if (tugadi) return <Natija v={v} javoblar={javoblar} onQayta={onQayta} onExit={onExit} />;
+  if (tugadi) return <Natija v={v} javoblar={javoblar} sekund={sarflandi} onQayta={onQayta} onExit={onExit} />;
 
   const S = v.savollar[idx];
   const j = javoblar[idx];
   const qoy = (x: SJavob) => setJavoblar((a) => a.map((y, i) => (i === idx ? x : y)));
   const javobsiz = javoblar.filter((x) => !berilgan(x)).length;
   const oxirgi = idx === jami - 1;
+  // Oxirgi besh daqiqa — soat oltin rangda. Qizil ATAYLAB emas: u
+  // ilovada faqat xato javob uchun (dizayn qoidasi).
   const shoshilinch = qolgan <= 5 * 60;
 
-  const bolim = S.tur === "y1" ? t("sertBolimY1", { b: ballYoz(S.ball) })
-    : S.tur === "y2" ? t("sertBolimY2", { b: ballYoz(S.ball) })
-      : t("sertBolimO", { a: ballYoz(BALL.oA), b: ballYoz(BALL.oB) });
+  const chip = S.tur === "y1" ? t("sertChipTest", { b: ballYoz(S.ball) })
+    : S.tur === "y2" ? t("sertChipMoslash", { b: ballYoz(S.ball) })
+      : t("sertChipOchiq", { b: ballYoz(yaxlit(BALL.oA + BALL.oB)) });
+
+  // Bo'limlar chegarasi — xarita ostidagi yozuvlar uchun (1–32, 33–35, 36–45).
+  const oraliq = (tur: SSavol["tur"]) => {
+    const i = v.savollar.findIndex((x) => x.tur === tur);
+    const n = v.savollar.filter((x) => x.tur === tur).length;
+    return { a: i + 1, b: i + n };
+  };
 
   return (
-    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-4 pt-4 pb-6">
+    <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col gap-3 px-4 pt-4 pb-5 min-[360px]:px-[18px]">
       <div className="flex items-center gap-2">
-        {ozStrelka && (
-          <button type="button" onClick={onExit} title={t("ortga")}
-            className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl bg-karta text-ink-soft shadow-clay-sm">
-            <Icon name="chevron" size={20} className="rotate-180" />
-          </button>
-        )}
-        <div className={`flex items-center gap-1.5 rounded-2xl px-3 py-1.5 font-display text-[15px] shadow-clay-sm
-                         ${shoshilinch ? "bg-brand-red text-white" : "bg-karta"}`}>
-          <Icon name="clock" size={16} />
+        <button type="button" onClick={onExit} aria-label={t("sertChiqish")} title={t("sertChiqish")}
+          data-tahlil="Sertifikat: chiqish"
+          className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta shadow-clay-sm">
+          <Icon name="close" size={20} />
+        </button>
+        <div className={`flex flex-1 items-center justify-center gap-1.5 font-display text-[20px] font-bold tabular-nums
+                         ${shoshilinch ? "text-brand-gold-d" : ""}`}>
+          <Icon name="clock" size={18} />
           {soat(qolgan)}
         </div>
         <button type="button" onClick={() => { tebrat("tanlov"); setSorov(true); }}
           data-tahlil="Sertifikat: yakunlash"
-          className="clay-press ml-auto h-11 shrink-0 rounded-2xl bg-karta px-3.5 font-display text-[13.5px]
-                     text-ink-soft shadow-clay-sm">
+          className="clay-press h-11 shrink-0 rounded-[14px] bg-karta px-3.5 text-[14.5px] font-bold text-brand-blue-t
+                     shadow-clay-sm">
           {t("sertYakunla")}
         </button>
       </div>
 
-      {/* Savollar tasmasi — istalganiga o'tish mumkin. Javob berilgani
-          ko'k, joriysi chiziq bilan (`outline`: `ring` soya bo'lgani uchun
-          `shadow-clay-sm` uni bosib ketardi). Belgisiz holat — "hali javob yo'q". */}
-      <div ref={tasma} className="-mx-4 mt-2 flex gap-1.5 overflow-x-auto px-4 py-1.5 [scrollbar-width:none]">
-        {v.savollar.map((_, i) => (
-          <button key={i} type="button" data-i={i} onClick={() => setIdx(i)}
-            aria-label={t("imtihonVariant", { n: i + 1 })}
-            className={`grid h-9 min-w-9 shrink-0 place-items-center rounded-xl font-display text-[13px]
-                        ${berilgan(javoblar[i]) ? "bg-brand-blue text-white" : "bg-karta text-ink-soft shadow-clay-sm"}
-                        ${i === idx ? "outline-2 outline-offset-2 outline-brand-blue" : ""}`}>
-            {i + 1}
-          </button>
-        ))}
+      {/* 45 katakli xarita (15 ustun). Javob berilgani — ko'k, joriysi —
+          ko'k halqa (`outline`: `ring` soya bo'lgani uchun boshqa soyalar
+          uni bosib ketardi), bo'shi — xira. To'g'ri/xato ko'rsatilmaydi:
+          imtihon paytida belgi yo'q. */}
+      <div>
+        <div className="grid grid-cols-15 gap-1">
+          {v.savollar.map((_, i) => (
+            <button key={i} type="button" onClick={() => setIdx(i)}
+              aria-label={t("sertSavolRaqam", { n: i + 1 })} aria-current={i === idx ? "step" : undefined}
+              className={`h-3.5 rounded-[4px] min-[360px]:h-4 ${
+                i === idx ? "bg-karta outline-2 -outline-offset-2 outline-brand-blue outline-solid"
+                  : berilgan(javoblar[i]) ? "bg-brand-blue" : "bg-track"}`} />
+          ))}
+        </div>
+        <div className="mt-1.5 flex justify-between gap-2 text-[12px] font-semibold text-ink-dim">
+          <span>{t("sertXaritaTest", oraliq("y1"))}</span>
+          <span>{t("sertXaritaMoslash", oraliq("y2"))}</span>
+          <span>{t("sertXaritaOchiq", oraliq("o"))}</span>
+        </div>
       </div>
 
-      <div className="mt-3 flex items-baseline justify-between gap-2 px-1 text-[12px] text-ink-dim">
-        <span className="font-display text-[14px] text-ink">{idx + 1}<span className="text-ink-dim">/{jami}</span></span>
-        <span className="truncate">{bolim}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-display text-[17px] font-bold">
+          {idx + 1}<span className="text-ink-dim"> / {jami}</span>
+        </span>
+        <span className="truncate rounded-full bg-track px-3 py-1 text-[13px] font-semibold text-ink-soft">{chip}</span>
       </div>
 
       <div key={idx} className="az-savol flex flex-1 flex-col">
         {S.tur === "y1" && <Test S={S.s} tanlangan={typeof j === "string" ? j : null} onTanla={qoy} />}
         {S.tur === "y2" && (
-          <Moslash S={S.s} variantlar={v.y2.map(String)} tanlangan={typeof j === "string" ? j : null} onTanla={qoy} />
+          <Moslash S={S.s} variantlar={v.y2.map(String)} oraliq={oraliq("y2")}
+            tanlangan={typeof j === "string" ? j : null} onTanla={qoy} />
         )}
         {S.tur === "o" && (
           <Ochiq S={S} j={j && typeof j !== "string" ? j : { a: "", b: "" }} onYoz={qoy} />
         )}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2.5">
+      <div className="mt-2 grid grid-cols-2 gap-2.5">
         <button type="button" disabled={idx === 0} onClick={() => setIdx((i) => i - 1)}
-          className="clay-press h-12 rounded-3xl bg-track font-display text-[15px] text-ink-soft disabled:opacity-40">
+          className="clay-press min-h-[52px] rounded-2xl bg-karta font-display text-[17px] font-bold shadow-clay-sm
+                     disabled:opacity-40">
           {t("sertOldingi")}
         </button>
-        {oxirgi ? (
-          <button type="button" onClick={() => { tebrat("tanlov"); setSorov(true); }}
-            className="tugma-3d h-12 rounded-3xl bg-brand-green font-display text-[15px] text-white
-                       shadow-[0_5px_0_var(--color-brand-green-d)]">
-            {t("sertYakunla")}
-          </button>
-        ) : (
-          <button type="button" onClick={() => setIdx((i) => i + 1)}
-            className="tugma-3d h-12 rounded-3xl bg-brand-blue font-display text-[15px] text-white
-                       shadow-[0_5px_0_var(--color-brand-blue-d)]">
-            {t("sertKeyingi")}
-          </button>
-        )}
+        <button type="button"
+          onClick={oxirgi ? () => { tebrat("tanlov"); setSorov(true); } : () => setIdx((i) => i + 1)}
+          className="tugma-3d min-h-[52px] rounded-2xl bg-brand-blue font-display text-[17px] font-bold text-white
+                     shadow-[0_4px_0_var(--color-brand-blue-d)]">
+          {oxirgi ? t("sertYakunla") : t("sertKeyingi")}
+        </button>
       </div>
 
       {sorov && (
@@ -262,13 +270,13 @@ function Shart({ a, kichik = false }: { a: Activity; kichik?: boolean }) {
   return (
     <>
       {!shartSahnada(a) && (
-        <div className="mt-3 rounded-clay bg-karta p-4 text-center text-[15px] leading-snug shadow-clay-sm">
+        <div className="rounded-[20px] bg-karta px-[18px] py-4 text-[17px] leading-snug shadow-clay-sm">
           {a.prompt}
         </div>
       )}
       {sahnaBor(a) && (
-        <div className={`mt-3 flex items-center justify-center rounded-clay bg-sahna/85 p-4 ring-1 ring-track ring-inset
-                         ${kichik ? "[&_.font-display]:text-[24px]" : "min-h-[150px]"}`}>
+        <div className={`mt-2.5 flex items-center justify-center rounded-[20px] bg-karta p-4 shadow-clay-sm
+                         ${kichik ? "[&_.font-display]:text-[24px]" : "min-h-[130px]"}`}>
           <QuestionView a={a} />
         </div>
       )}
@@ -276,22 +284,28 @@ function Shart({ a, kichik = false }: { a: Activity; kichik?: boolean }) {
   );
 }
 
+/**
+ * TEST (Y-1) — to'rt variant ustma-ust, har birida harf belgisi.
+ *
+ * Tanlangani faqat KO'K (to'g'ri/xato imtihon oxirida ochiladi).
+ * Tanlanganini qayta bossa — javob olib tashlanadi: imtihonda ham
+ * belgini o'chirib, savolni bo'sh qoldirish mumkin.
+ */
 function Test({ S, tanlangan, onTanla }: { S: BlokSavol; tanlangan: string | null; onTanla: (x: SJavob) => void }) {
   return (
     <>
       <Shart a={S.a} />
-      <div className="mt-4 grid grid-cols-2 gap-2.5">
+      <div className="mt-3 flex flex-col gap-2.5">
         {S.a.choices.map((c, i) => {
           const bu = tanlangan === String(c);
           return (
             <button key={i} type="button" aria-pressed={bu}
-              // Tanlanganini qayta bossa — javob olib tashlanadi: imtihonda
-              // ham belgini o'chirib, savolni bo'sh qoldirish mumkin.
               onClick={() => { tebrat("tanlov"); onTanla(bu ? null : String(c)); }}
-              className={`tugma-3d flex min-h-14 items-center gap-2 rounded-3xl px-3 py-3 text-left shadow-clay
-                          ${bu ? "bg-brand-blue text-white" : "bg-karta text-ink"}`}>
-              <span className={`shrink-0 text-[13px] ${bu ? "text-white/85" : "text-ink-dim"}`}>{HARFLAR[i]})</span>
-              <span className="min-w-0 flex-1 font-display text-[19px] leading-tight break-words">{c}</span>
+              className={`clay-press flex min-h-14 items-center gap-3 rounded-[18px] bg-karta px-3 py-2 text-left
+                          shadow-clay-sm ${bu ? "bg-brand-blue/8 outline-2 outline-brand-blue outline-solid" : ""}`}>
+              <span className={`grid size-9 shrink-0 place-items-center rounded-xl font-display text-[15px] font-bold ${
+                bu ? "bg-brand-blue text-white" : "bg-track text-ink-soft"}`}>{HARFLAR[i]}</span>
+              <span className="min-w-0 flex-1 font-display text-[19px] leading-tight font-bold break-words">{c}</span>
             </button>
           );
         })}
@@ -307,29 +321,34 @@ function Test({ S, tanlangan, onTanla }: { S: BlokSavol; tanlangan: string | nul
  * ular bitta ramkada yonma-yon turadi, telefonda esa savollar alohida
  * ekranda — ro'yxatni qidirib orqaga qaytish kerak bo'lmasin.
  */
-function Moslash({ S, variantlar, tanlangan, onTanla }: {
-  S: BlokSavol; variantlar: string[]; tanlangan: string | null; onTanla: (x: SJavob) => void;
+function Moslash({ S, variantlar, oraliq, tanlangan, onTanla }: {
+  S: BlokSavol; variantlar: string[]; oraliq: { a: number; b: number };
+  tanlangan: string | null; onTanla: (x: SJavob) => void;
 }) {
   return (
     <>
-      <p className="mt-2 px-1 text-[12.5px] leading-snug text-ink-soft">{t("sertY2Izoh")}</p>
-      <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-clay bg-karta p-3 shadow-clay-sm">
-        {variantlar.map((x, i) => (
-          <div key={i} className={`truncate rounded-xl px-2 py-1.5 text-[14px]
-                                   ${tanlangan === x ? "bg-brand-blue/15 text-brand-blue" : ""}`}>
-            <span className="text-ink-dim">{HARFLAR[i]})</span> <span className="font-display">{x}</span>
-          </div>
-        ))}
+      <div className="rounded-[20px] bg-track p-3">
+        <div className="px-1 pb-2 text-[13px] font-bold text-ink-soft">{t("sertUmumiy", oraliq)}</div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {variantlar.map((x, i) => (
+            <div key={i} className={`flex min-h-10 items-center gap-1.5 truncate rounded-xl px-2.5 ${
+              tanlangan === x ? "bg-brand-blue text-white" : "bg-karta"}`}>
+              <span className={`text-[13px] font-bold ${tanlangan === x ? "text-white/85" : "text-ink-soft"}`}>{HARFLAR[i]}</span>
+              <span className="truncate font-display text-[16px] font-bold">{x}</span>
+            </div>
+          ))}
+        </div>
       </div>
-      <Shart a={S.a} kichik />
-      <div className="mt-4 grid grid-cols-6 gap-1.5">
+      <div className="mt-3"><Shart a={S.a} kichik /></div>
+      <p className="mt-3 px-1 text-[13.5px] text-ink-dim">{t("sertHarfTanla")}</p>
+      <div className="mt-2 grid grid-cols-6 gap-1.5">
         {variantlar.map((x, i) => {
           const bu = tanlangan === x;
           return (
-            <button key={i} type="button" aria-pressed={bu}
+            <button key={i} type="button" aria-pressed={bu} aria-label={`${HARFLAR[i]}) ${x}`}
               onClick={() => { tebrat("tanlov"); onTanla(bu ? null : x); }}
-              className={`tugma-3d h-12 rounded-2xl font-display text-[17px] shadow-clay
-                          ${bu ? "bg-brand-blue text-white" : "bg-karta text-ink"}`}>
+              className={`tugma-3d h-12 rounded-2xl font-display text-[18px] font-bold ${
+                bu ? "bg-brand-blue text-white shadow-[0_4px_0_var(--color-brand-blue-d)]" : "bg-karta shadow-clay-sm"}`}>
               {HARFLAR[i]}
             </button>
           );
@@ -358,14 +377,14 @@ function Ochiq({ S, j, onYoz }: {
       onYoz(yangi.a.trim() || yangi.b.trim() ? yangi : null);
     };
     return (
-      <div className="mt-3 rounded-clay bg-karta p-3.5 shadow-clay-sm">
-        <div className="flex items-baseline justify-between gap-2 text-[12px] text-ink-dim">
-          <span className="font-display text-[15px] text-ink">{q})</span>
-          <span>{t("sertBallQisqa", { b: ballYoz(ball) })}</span>
+      <div className="rounded-[20px] bg-karta p-4 shadow-clay-sm">
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-[16px] font-bold">{q})</span>
+          <span className="min-w-0 flex-1 text-[15.5px] leading-snug">{s.a.prompt}</span>
+          <span className="shrink-0 text-[12.5px] font-semibold text-ink-dim">{t("sertBallQisqa", { b: ballYoz(ball) })}</span>
         </div>
-        <div className="mt-1 text-[14px] leading-snug text-ink-soft">{s.a.prompt}</div>
         {"text" in s.a && (
-          <div className="mt-1 font-display text-[21px] leading-tight break-words">
+          <div className="mt-1.5 font-display text-[20px] leading-tight break-words">
             {s.a.text.split(/,?\s{3,}/).filter(Boolean).map((x, i) => <div key={i}>{x}</div>)}
           </div>
         )}
@@ -373,23 +392,25 @@ function Ochiq({ S, j, onYoz }: {
         <div className="mt-3 flex gap-2">
           <button type="button" aria-label={t("sertIshora")}
             onClick={() => yoz(qiymat.startsWith("−") || qiymat.startsWith("-") ? qiymat.slice(1) : `−${qiymat}`)}
-            className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl bg-track font-display text-[20px] text-ink-soft">
+            className="clay-press grid size-[52px] shrink-0 place-items-center rounded-2xl bg-track font-display text-[20px]
+                       font-bold text-ink-soft">
             ±
           </button>
           <input value={qiymat} onChange={(e) => yoz(e.target.value.slice(0, 16))}
             inputMode="decimal" autoComplete="off" enterKeyHint="done"
             placeholder={t("sertJavobJoy")} aria-label={`${q}) ${t("sertJavobJoy")}`}
-            className="h-11 min-w-0 flex-1 rounded-2xl bg-sahna px-3.5 font-display text-[18px] shadow-ichki
-                       outline-none focus:ring-2 focus:ring-brand-blue" />
+            className="h-[52px] min-w-0 flex-1 rounded-2xl border-2 border-track bg-karta px-4 font-display text-[20px]
+                       font-bold outline-none placeholder:text-ink-dim focus:border-brand-blue" />
         </div>
       </div>
     );
   };
   return (
-    <>
+    <div className="flex flex-col gap-3">
       {qism("a", S.a, BALL.oA)}
       {qism("b", S.b, BALL.oB)}
-    </>
+      <p className="px-1 text-[13px] text-ink-dim">{t("sertSonYoz")}</p>
+    </div>
   );
 }
 
@@ -437,16 +458,24 @@ interface Qism {
   berildi: boolean;
   /** Odam nima yozdi/tanladi — xatolar ro'yxatida ko'rsatiladi. */
   sizniki: string;
+  /** Shu qismning bali — "qayerda ball yo'qotildi" hisobi uchun. */
+  ball: number;
 }
 
-function Natija({ v, javoblar, onQayta, onExit }: {
-  v: SVariant; javoblar: SJavob[]; onQayta: () => void; onExit: () => void;
+/**
+ * NATIJA (`manba/SertNatija.dc.html`): katta ball, taxminiy daraja va
+ * keyingisigacha farq, uch bo'lim, ball yo'qotilgan mavzular, xatolar.
+ * Hisob o'zgarmadi (`lib/sertifikat.ts`) — faqat ko'rinish.
+ */
+function Natija({ v, javoblar, sekund, onQayta, onExit }: {
+  v: SVariant; javoblar: SJavob[]; sekund: number; onQayta: () => void; onExit: () => void;
 }) {
   const nav = useNavigate();
   const [yechimda, setYechimda] = useState<BlokSavol | null>(null);
 
   const ball = yaxlit(v.savollar.reduce((a, S, i) => a + savolBali(S, javoblar[i]), 0));
   const dr = daraja(ball);
+  const keyingi = keyingiDaraja(ball);
   useEffect(() => { if (dr) tebrat("yutuq"); }, [dr]);
 
   const qismlar = useMemo(() => {
@@ -455,19 +484,21 @@ function Natija({ v, javoblar, onQayta, onExit }: {
       const j = javoblar[i];
       if (S.tur === "o") {
         const o = j && typeof j !== "string" ? j : { a: "", b: "" };
-        r.push({ s: S.a, nom: `${i + 1}a`, togri: sonTogrimi(o.a, S.a.a.answer), berildi: o.a.trim() !== "", sizniki: o.a });
-        r.push({ s: S.b, nom: `${i + 1}b`, togri: sonTogrimi(o.b, S.b.a.answer), berildi: o.b.trim() !== "", sizniki: o.b });
+        r.push({ s: S.a, nom: `${i + 1}a`, togri: sonTogrimi(o.a, S.a.a.answer), berildi: o.a.trim() !== "",
+          sizniki: o.a, ball: BALL.oA });
+        r.push({ s: S.b, nom: `${i + 1}b`, togri: sonTogrimi(o.b, S.b.a.answer), berildi: o.b.trim() !== "",
+          sizniki: o.b, ball: BALL.oB });
       } else {
         const x = typeof j === "string" ? j : "";
         const harf = S.tur === "y2" ? HARFLAR[v.y2.map(String).indexOf(x)] : "";
         r.push({ s: S.s, nom: `${i + 1}`, togri: x === String(S.s.a.answer), berildi: x !== "",
-          sizniki: harf ? `${harf}) ${x}` : x });
+          sizniki: harf ? `${harf}) ${x}` : x, ball: S.ball });
       }
     });
     return r;
   }, [v, javoblar]);
 
-  /** Bo'limlar bo'yicha: nechta to'g'ri / nechta. */
+  /** Bo'limlar bo'yicha: nechta to'g'ri / nechta (ochiq savolda — qismlar). */
   const bolim = (tur: SSavol["tur"]) => {
     let togri = 0, jami = 0;
     v.savollar.forEach((S, i) => {
@@ -481,133 +512,138 @@ function Natija({ v, javoblar, onQayta, onExit }: {
         if (javoblar[i] === String(S.s.a.answer)) togri++;
       }
     });
-    return `${togri}/${jami}`;
+    return { togri, jami };
   };
   // Savol bo'yicha sanaladi, qism bo'yicha emas: yakunlash oynasi ham
   // shunday degan va "45 dan 52 tasi javobsiz" chalkashtirardi.
   const javobsiz = javoblar.filter((x) => !berilgan(x)).length;
 
-  /** Mavzular — xatosi ko'pi yuqorida (`Blok.tsx` dagi tahlil bilan bir xil mantiq). */
+  /** Mavzular — ko'p ball yo'qotilgani yuqorida. */
   const mavzular = useMemo(() => {
-    const m = new Map<string, { nom: string; kursId: string; ui: number; li: number; jami: number; xato: number }>();
+    const m = new Map<string, { nom: string; kursId: string; ui: number; li: number; xato: number; yoqotdi: number }>();
     for (const q of qismlar) {
+      if (q.togri) continue;
       const k = `${q.s.kursId}|${q.s.ui}`;
-      const bor = m.get(k) ?? { nom: q.s.mavzu, kursId: q.s.kursId, ui: q.s.ui, li: q.s.li, jami: 0, xato: 0 };
-      bor.jami++;
-      if (!q.togri) {
-        if (bor.xato === 0) bor.li = q.s.li;
-        bor.xato++;
-      }
+      const bor = m.get(k) ?? { nom: q.s.mavzu, kursId: q.s.kursId, ui: q.s.ui, li: q.s.li, xato: 0, yoqotdi: 0 };
+      bor.xato++;
+      bor.yoqotdi = yaxlit(bor.yoqotdi + q.ball);
       m.set(k, bor);
     }
-    // Faqat xato bo'lgan boblar va ko'pi bilan oltitasi. 45 topshiriq
-    // o'ttizga yaqin bobdan keladi va hammasi ro'yxatda tursa, "nimani
-    // takrorlay?" degan javob uzun tasma ichida yo'qolardi.
-    return [...m.values()].filter((x) => x.xato > 0).sort((a, b) => b.xato - a.xato).slice(0, MAVZU_CHEK);
+    // Ko'pi bilan oltitasi: 45 topshiriq o'ttizga yaqin bobdan keladi va
+    // hammasi ro'yxatda tursa, "nimani takrorlay?" javobi yo'qolardi.
+    return [...m.values()].sort((a, b) => b.yoqotdi - a.yoqotdi).slice(0, MAVZU_CHEK);
   }, [qismlar]);
 
   const xatolar = qismlar.filter((q) => !q.togri);
 
-  const Box = ({ v: qiymat, l }: { v: string; l: string }) => (
-    <div className="flex-1 rounded-2xl bg-track px-1 py-2 text-center">
-      <div className="font-display text-xl leading-tight">{qiymat}</div>
-      <div className="text-[11px] text-ink-dim">{l}</div>
-    </div>
-  );
-
   return (
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-5 pb-10">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]">
       {dr && <Konfetti />}
 
-      <div className="az-savol rounded-clay bg-karta p-5 text-center shadow-clay">
-        <div className="font-display text-[46px] leading-none text-brand-blue">
-          {ballYoz(ball)}
-          <span className="ml-1 text-[16px] text-ink-soft">{t("sertBallDan")}</span>
-        </div>
-        <div className="mt-2 font-display text-[15px]">
-          {dr ? t("sertDaraja", { d: dr }) : t("sertDarajaYoq")}
-        </div>
-
-        <div className="mt-4 flex gap-2">
-          <Box v={bolim("y1")} l={t("sertNatijaTest")} />
-          <Box v={bolim("y2")} l={t("sertNatijaMoslash")} />
-          <Box v={bolim("o")} l={t("sertNatijaOchiq")} />
-        </div>
-        {javobsiz > 0 && <p className="mt-2 text-[12px] text-ink-dim">{t("sertJavobsiz", { n: javobsiz })}</p>}
+      <div className="az-savol flex flex-col items-center gap-1.5 rounded-clay bg-karta px-4 py-5 text-center shadow-clay-sm">
+        <span className="text-[13px] font-bold tracking-[0.08em] text-ink-dim uppercase">
+          {t("sertNatijaBosh", { n: v.n, vaqt: soat(sekund) })}
+        </span>
+        <span className="font-display text-[52px] leading-none font-bold min-[360px]:text-[60px]">
+          {ballYoz(ball)}<span className="ml-1.5 text-[20px] text-ink-soft">{t("sertBallDan")}</span>
+        </span>
+        {dr ? (
+          <span className="rounded-full bg-brand-gold/20 px-4 py-1 font-display text-[17px] font-bold text-brand-gold-d">
+            {t("sertDaraja", { d: dr })}
+          </span>
+        ) : (
+          <span className="font-display text-[15px] text-ink-soft">{t("sertDarajaYoq")}</span>
+        )}
+        {keyingi && (
+          <span className="text-[13.5px] text-ink-dim">
+            {t("sertYetmadi", { d: keyingi.d, b: ballYoz(keyingi.farq) })}
+          </span>
+        )}
+        {javobsiz > 0 && <span className="text-[12.5px] text-ink-dim">{t("sertJavobsiz", { n: javobsiz })}</span>}
       </div>
 
-      {/* ---- eng zaif mavzular ---- */}
-      {mavzular.length > 0 && <h2 className="az-kirish mt-6 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
-        {t("blokTahlil")}
-      </h2>}
-      <div className="az-kirish space-y-2">
-        {mavzular.map((m) => {
-          const yaxshi = m.xato === 0;
-          const c = courseById(m.kursId);
-          return (
-            <div key={`${m.kursId}-${m.ui}`} className="flex items-center gap-3 rounded-clay bg-karta p-3 shadow-clay-sm">
-              <span className={`grid size-9 shrink-0 place-items-center rounded-2xl text-white
-                                ${yaxshi ? "bg-brand-green" : "bg-brand-red"}`}>
-                <Icon name={yaxshi ? "check" : "repeat"} size={17} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13.5px] leading-tight">{kursMatn(m.nom)}</span>
-                <span className="mt-0.5 block text-[11.5px] text-ink-dim">
-                  {t("blokMavzuHolat", { a: m.jami - m.xato, b: m.jami })}
-                </span>
-              </span>
-              {!yaxshi && c && (
-                <button type="button" onClick={() => nav(yolDars(c, m.ui, m.li))}
-                  className="clay-press shrink-0 rounded-2xl bg-track px-3 py-2 font-display text-[12px] text-ink-soft">
-                  {t("blokTakrorlash")}
+      <div className="grid grid-cols-3 gap-2">
+        <Bolim nom={t("sertNatijaTest")} {...bolim("y1")} />
+        <Bolim nom={t("sertNatijaMoslash")} {...bolim("y2")} />
+        <Bolim nom={t("sertNatijaOchiq")} {...bolim("o")} />
+      </div>
+
+      {mavzular.length > 0 && (
+        <>
+          <h2 className="mt-1 font-display text-[19px]">{t("sertYoqotildi")}</h2>
+          <div className="flex flex-col divide-y divide-track overflow-hidden rounded-[20px] bg-karta shadow-clay-sm">
+            {mavzular.map((m) => {
+              const c = courseById(m.kursId);
+              return (
+                <button key={`${m.kursId}-${m.ui}`} type="button" disabled={!c}
+                  onClick={() => c && nav(yolDars(c, m.ui, m.li))} data-tahlil="Sertifikat: mavzuni takrorlash"
+                  className="clay-press flex min-h-[52px] w-full items-center gap-3 px-4 text-left">
+                  <span className="min-w-0 flex-1 truncate text-[15px] font-bold">
+                    {kursMatn(m.nom).replace(/^\d+-bob\.\s*|^Глава \d+\.\s*/, "")}
+                  </span>
+                  <span className="shrink-0 text-[13px] text-ink-dim">{t("sertXatoSoni", { n: m.xato })}</span>
+                  <span className="w-11 shrink-0 text-right font-display text-[15px] font-bold">−{ballYoz(m.yoqotdi)}</span>
                 </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
-      {/* ---- xatolar ---- */}
       {xatolar.length > 0 && (
         <>
-          <h2 className="az-kirish mt-6 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
-            {t("blokXatolar")}
-          </h2>
-          <div className="az-kirish space-y-2">
+          <h2 className="mt-1 font-display text-[19px]">{t("sertXatolar")}</h2>
+          <div className="flex flex-col gap-2">
             {xatolar.map((q) => (
               <button key={q.nom} type="button" disabled={!q.s.a.yechim}
                 onClick={() => { setYechimda(q.s); tebrat("tanlov"); }}
-                className="flex w-full items-center gap-3 rounded-clay bg-karta p-3 text-left shadow-clay-sm disabled:opacity-80">
-                <span className="w-8 shrink-0 font-display text-[13px] text-ink-dim">{q.nom}</span>
+                className="flex w-full items-center gap-3 rounded-[18px] bg-karta p-3.5 text-left shadow-clay-sm">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-red/12 font-display
+                                 text-[15px] font-bold text-brand-red">{q.nom}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-display text-[13.5px] leading-tight">
+                  <span className="block truncate text-[15px] leading-tight">
                     {"text" in q.s.a ? q.s.a.text : q.s.a.prompt}
                   </span>
-                  <span className="mt-0.5 block truncate text-[11.5px]">
-                    <span className="text-brand-green-d">{t("sertTogriJavob", { j: String(q.s.a.answer) })}</span>
+                  <span className="mt-0.5 block truncate text-[13px]">
+                    <span className="font-bold text-brand-green-d">{t("sertTogriJavob", { j: String(q.s.a.answer) })}</span>
                     {q.berildi && <span className="text-ink-dim"> · {t("sertSizniki", { j: q.sizniki })}</span>}
                   </span>
                 </span>
-                {q.s.a.yechim && <Icon name="puzzle" size={18} className="shrink-0 text-brand-blue" />}
+                {q.s.a.yechim && <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />}
               </button>
             ))}
           </div>
         </>
       )}
 
-      <button type="button" onClick={onQayta}
-        className="tugma-3d mt-6 w-full rounded-3xl bg-brand-green py-3.5 font-display text-lg text-white
-                   shadow-[0_6px_0_var(--color-brand-green-d)]">
+      <button type="button" onClick={onQayta} data-tahlil="Sertifikat: qayta ishlash"
+        className="tugma-3d mt-3 min-h-[54px] w-full rounded-2xl bg-brand-blue font-display text-[18px] font-bold
+                   text-white shadow-[0_4px_0_var(--color-brand-blue-d)]">
         {t("sertQayta")}
       </button>
-      <button type="button" onClick={onExit}
-        className="clay-press mt-2.5 w-full rounded-3xl bg-track py-3 font-display text-[15px] text-ink-soft">
+      <button type="button" onClick={onExit} data-tahlil="Sertifikat: variantlarga"
+        className="clay-press min-h-11 w-full font-display text-[16px] font-semibold text-ink-soft">
         {t("sertVariantlarga")}
       </button>
 
       {yechimda?.a.yechim && (
         <Yechim qadamlar={yechimda.a.yechim} javob={String(yechimda.a.answer)} onYop={() => setYechimda(null)} />
       )}
+    </div>
+  );
+}
+
+/** Bo'lim kartasi: nom, "26/32" va kichik ko'k chiziq. */
+function Bolim({ nom, togri, jami }: { nom: string; togri: number; jami: number }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1 rounded-[18px] bg-karta p-3 shadow-clay-sm">
+      <span className="truncate text-[13px] font-semibold text-ink-dim">{nom}</span>
+      <span className="font-display text-[22px] leading-none font-bold">
+        {togri}<span className="text-[15px] text-ink-dim">/{jami}</span>
+      </span>
+      <span className="mt-1 h-1.5 overflow-hidden rounded-full bg-track">
+        <span className="block h-full rounded-full bg-brand-blue" style={{ width: `${jami ? (togri / jami) * 100 : 0}%` }} />
+      </span>
     </div>
   );
 }

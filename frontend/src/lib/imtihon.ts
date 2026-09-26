@@ -141,3 +141,45 @@ export async function sinxronla(): Promise<ServerTarix> {
 export function serverga(n: ImtihonNatija): void {
   void sorov("/api/v1/imtihon/natija", bilanProfil({ ...n })).catch(() => {});
 }
+
+/* ------------------------------------------------------ zaif mavzular */
+
+/**
+ * DTM varianti qaysi mavzularda xato qilindi — ro'yxatdagi "Ko'p xato
+ * qilinayotgan mavzular" chiplari uchun (`screens/Imtihon.tsx`).
+ *
+ * Natija yozuviga (`ImtihonNatija`) QO'SHILMADI: u serverga ham boradi
+ * va server bu maydonni kutmaydi. Shu sabab alohida, faqat qurilmadagi
+ * kalitda — oxirgi beshta urinish (o'rtacha ball ham beshtadan olinadi).
+ */
+export interface MavzuXato { mavzu: string; kursId: string; xato: number }
+
+const MAVZU_KALIT = "azapp_imtihon_mavzu_v1";
+const MAVZU_URINISH = 5;
+
+function mavzuOqi(): MavzuXato[][] {
+  try {
+    const x = JSON.parse(localStorage.getItem(MAVZU_KALIT) || "[]") as unknown;
+    return Array.isArray(x) ? x.filter(Array.isArray) as MavzuXato[][] : [];
+  } catch { return []; }
+}
+
+/** Bitta urinishning mavzular bo'yicha xatolari (nol xatolilari tushiriladi). */
+export function mavzuXatoYoz(urinish: MavzuXato[]): void {
+  const yangi = [urinish.filter((x) => x.xato > 0), ...mavzuOqi()].slice(0, MAVZU_URINISH);
+  try { localStorage.setItem(MAVZU_KALIT, JSON.stringify(yangi)); } catch { /* ko'rinmaydi, xolos */ }
+}
+
+/** Oxirgi urinishlarda eng ko'p xato qilingan mavzular — ko'pi bilan `n` ta. */
+export function zaifMavzular(n = 3): MavzuXato[] {
+  const m = new Map<string, MavzuXato>();
+  for (const urinish of mavzuOqi()) {
+    for (const x of urinish) {
+      if (!x || typeof x.mavzu !== "string" || typeof x.xato !== "number") continue;
+      const k = `${x.kursId}|${x.mavzu}`;
+      const bor = m.get(k);
+      m.set(k, { ...x, xato: (bor?.xato ?? 0) + x.xato });
+    }
+  }
+  return [...m.values()].sort((a, b) => b.xato - a.xato).slice(0, n);
+}

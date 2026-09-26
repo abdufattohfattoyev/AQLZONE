@@ -1,31 +1,36 @@
 /**
- * IMTIHON — DTM matematika blokiga tayyorgarlik.
+ * IMTIHON — DTM matematika blokiga tayyorgarlik (`manba/Dtm.dc.html`).
  *
  * Ekranning butun vazifasi bitta savolga javob berish: "imtihonga
- * tayyormanmi?". Shuning uchun tepada BALL turadi (oxirgi beshta
- * urinishning o'rtachasi), ostida esa variantlar.
+ * tayyormanmi?". Shuning uchun tepada natija turadi (oxirgi beshta
+ * urinishning o'rtachasi: "22 / 30 to'g'ri · 73%"), ostida variantlar.
  *
- * Nega ball o'rtacha: bitta natija hech narsa demaydi — omad ham,
- * charchoq ham bor. Beshta urinishning o'rtachasi esa haqiqatga
- * yaqin va aynan shu son o'sib borishi kerak (`lib/imtihon.ts`).
+ * Nega o'rtacha: bitta natija hech narsa demaydi — omad ham, charchoq
+ * ham bor. Beshta urinishning o'rtachasi esa haqiqatga yaqin va aynan
+ * shu son o'sib borishi kerak (`lib/imtihon.ts`).
+ *
+ * Yangi dizaynda natija ostida KO'P XATO QILINAYOTGAN MAVZULAR turadi
+ * (oxirgi urinishlardan, `zaifMavzular`) va "Shu mavzularni takrorlash"
+ * — eng zaif mavzu kursining bob testlariga olib boradi.
+ *
+ * DTM da javob har savoldan keyin darhol ko'rinadi (sertifikatdan farqi)
+ * va bu ekranning pastida yozilgan.
  */
 import { useEffect, useState } from "react";
-import { Icon } from "../lib/icons";
-import { Reveal } from "../components/Reveal";
-import { ImtihonTur } from "../components/ImtihonTur";
+import { ImtihonSarlavha } from "../components/ImtihonTur";
 import { t } from "../lib/matn";
-import { useOrqaga } from "../lib/qobiq";
-import { OLCHAM, VARIANTLAR, daraja, engYaxshi, foiz, natijalar, sinxronla } from "../lib/imtihon";
+import { kursMatn } from "../lib/tarjima/kurs";
+import { OLCHAM, VARIANTLAR, daraja, engYaxshi, sinxronla, zaifMavzular } from "../lib/imtihon";
 import type { ServerTarix } from "../lib/imtihon";
 
-export function Imtihon({ onVariant, onSertifikat, onChiq }: {
+export function Imtihon({ onVariant, onSertifikat, onChiq, onTakrorla }: {
   onVariant: (n: number) => void;
   /** Milliy sertifikat variantlariga o'tish (`components/ImtihonTur.tsx`). */
   onSertifikat: () => void;
   onChiq: () => void;
+  /** Zaif mavzu kursining bob testlari (kurs id'si). */
+  onTakrorla: (kursId: string) => void;
 }) {
-  useOrqaga(onChiq);
-
   // Tarix SERVERDAN: telefon almashsa ham yo'qolmaydi. Ochilganda
   // qurilmadagi urinishlar ham yuboriladi — eski tarix shu yo'l bilan
   // bir marta ko'chadi, internetsiz ishlangani keyinroq yetib boradi.
@@ -41,97 +46,77 @@ export function Imtihon({ onVariant, onSertifikat, onChiq }: {
   const d = tarix
     ? (tarix.ortacha === null ? null : { foiz: tarix.ortacha, urinish: tarix.jami })
     : daraja();
-  const oxirgilar = (tarix ? tarix.oxirgilar : natijalar()).slice(0, 3);
   const engi = (n: number) => (tarix ? tarix.eng_yaxshi[String(n)] ?? null : engYaxshi(n));
+  const [zaif] = useState(() => zaifMavzular());
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-4 pb-10 sm:max-w-[700px] sm:px-6">
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={onChiq} title={t("ortga")}
-          className="clay-press grid size-10 shrink-0 place-items-center rounded-full bg-karta
-                     text-ink-soft shadow-clay-sm">
-          <Icon name="chevron" size={20} className="rotate-180" />
-        </button>
-        <div className="min-w-0">
-          <h1 className="font-display text-[19px] leading-tight">{t("imtihonTitul")}</h1>
-          <p className="text-[12px] leading-snug text-ink-soft">
-            {t("imtihonIzoh", { savol: OLCHAM.savol, daqiqa: OLCHAM.daqiqa })}
-          </p>
-        </div>
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]
+                    sm:max-w-[560px]">
+      <ImtihonSarlavha joriy="dtm" onTanla={onSertifikat} onChiq={onChiq} />
+
+      <div className="flex flex-col gap-2.5 rounded-clay bg-karta p-4 shadow-clay-sm min-[360px]:p-[18px]">
+        {d ? (
+          <>
+            <div className="text-[13px] font-bold text-ink-dim">{t("imtOrtachaDtm")}</div>
+            <div className="flex items-baseline gap-2">
+              <span className="font-display text-[34px] leading-none font-bold">
+                {Math.round((d.foiz * OLCHAM.savol) / 100)}
+              </span>
+              <span className="flex-1 text-[16px] font-semibold text-ink-soft">
+                {t("imtDtmTogri", { n: OLCHAM.savol })}
+              </span>
+              <span className="font-display text-[22px] font-bold text-brand-blue-t">{d.foiz}%</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="font-display text-[18px] leading-tight">{t("imtihonBoshlang")}</div>
+            <p className="text-[14px] leading-snug text-ink-soft">{t("imtihonBoshlangIzoh")}</p>
+          </>
+        )}
+
+        {zaif.length > 0 && (
+          <>
+            <div className="mt-1 text-[13px] font-bold text-ink-dim">{t("imtZaif")}</div>
+            <div className="flex flex-wrap gap-2">
+              {zaif.map((m) => (
+                <span key={`${m.kursId}|${m.mavzu}`}
+                  className="rounded-full bg-track px-3 py-1.5 text-[13.5px] font-semibold text-ink-soft">
+                  {t("imtZaifXato", { mavzu: kursMatn(m.mavzu).replace(/^\d+-bob\.\s*|^Глава \d+\.\s*/, ""), n: m.xato })}
+                </span>
+              ))}
+            </div>
+            <button type="button" onClick={() => onTakrorla(zaif[0]!.kursId)} data-tahlil="DTM: mavzularni takrorlash"
+              className="clay-press mt-0.5 min-h-11 self-start rounded-xl bg-brand-blue/10 px-4 text-[14.5px] font-bold
+                         text-brand-blue-t">
+              {t("imtZaifTakrorla")}
+            </button>
+          </>
+        )}
       </div>
 
-      <ImtihonTur joriy="dtm" onTanla={onSertifikat} />
-
-      {/* ---- daraja ---- */}
-      <Reveal kech={60}>
-        <div className="az-kirish mt-4 rounded-clay bg-karta p-4 text-center shadow-clay-sm">
-          {d ? (
-            <>
-              <div className="font-display text-[34px] leading-none text-brand-blue">{d.foiz}%</div>
-              <div className="mt-1 text-[13px] text-ink-soft">
-                {t("imtihonDaraja", { n: d.urinish })}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="font-display text-[17px] leading-tight">{t("imtihonBoshlang")}</div>
-              <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">{t("imtihonBoshlangIzoh")}</p>
-            </>
-          )}
-        </div>
-      </Reveal>
-
-      {/* ---- variantlar ---- */}
-      <h2 className="az-kirish mt-5 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
-        {t("imtihonVariantlar")}
-      </h2>
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+      <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-3">
+        <h2 className="font-display text-[20px]">{t("imtihonVariantlar")}</h2>
+        <span className="text-[13px] text-ink-dim">
+          {t("imtDtmTuzilish", { savol: OLCHAM.savol, daqiqa: OLCHAM.daqiqa })}
+        </span>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
         {Array.from({ length: VARIANTLAR }, (_, i) => i + 1).map((n) => {
           const eng = engi(n);
           return (
-            <button key={n} type="button" onClick={() => onVariant(n)}
-              data-tahlil={`Imtihon: ${n}-variant`}
-              className="clay-press flex items-center gap-3 rounded-clay bg-karta p-3 text-left shadow-clay-sm">
-              <span className={`grid size-10 shrink-0 place-items-center rounded-2xl font-display
-                                text-[15px] ${eng ? "bg-brand-green/15 text-brand-green" : "bg-sahna text-ink-soft"}`}>
-                {n}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-display text-[13.5px] leading-tight">
-                  {t("imtihonVariant", { n })}
-                </span>
-                <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-soft">
-                  {eng ? `${eng.togri}/${eng.jami} · ${foiz(eng)}%` : t("imtihonIshlanmagan")}
-                </span>
-              </span>
+            <button key={n} type="button" onClick={() => onVariant(n)} data-tahlil={`Imtihon: ${n}-variant`}
+              aria-label={t("imtihonVariant", { n })}
+              className="clay-press flex min-h-[60px] flex-col items-center justify-center rounded-[16px] bg-karta
+                         shadow-clay-sm">
+              <span className="font-display text-[18px] leading-tight font-bold">{n}</span>
+              <span className="text-[12.5px] text-ink-dim">{eng ? `${eng.togri}/${eng.jami}` : "—"}</span>
             </button>
           );
         })}
       </div>
 
-      {/* ---- oxirgi urinishlar ---- */}
-      {oxirgilar.length > 0 && (
-        <>
-          <h2 className="az-kirish mt-6 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
-            {t("imtihonOxirgilar")}
-          </h2>
-          <ol className="grid gap-1.5">
-            {oxirgilar.map((x, i) => (
-              <li key={`${x.variant}-${x.vaqt}-${i}`}
-                className="flex items-center gap-2 rounded-clay bg-karta px-3 py-2 text-[13px] shadow-clay-sm">
-                <span className="min-w-0 flex-1 truncate">{t("imtihonVariant", { n: x.variant })}</span>
-                <span className="shrink-0 font-display text-ink-soft">
-                  {x.togri}/{x.jami} · {Math.round(x.sekund / 60)} {t("daqiqaQisqa")}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </>
-      )}
-
-      <p className="az-kirish mt-5 text-center text-[11.5px] leading-snug text-ink-soft/80">
-        {t("imtihonPastIzoh")}
-      </p>
+      <p className="text-[13px] leading-snug text-ink-dim">{t("imtDtmPast")}</p>
     </div>
   );
 }

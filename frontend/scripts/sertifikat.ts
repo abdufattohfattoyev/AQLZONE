@@ -8,6 +8,7 @@
  */
 import "./_xotira";
 import {
+  DARAJA_SHKALA, keyingiDaraja,
   BALL, TUZILISH, VARIANTLAR, daraja, maksBall, savolBali, sonTogrimi, variantYasa, yaxlit,
 } from "../src/lib/sertifikat";
 
@@ -60,6 +61,18 @@ t("ochiq: faqat a) to'g'ri — 1,5 ball",
 
 t("daraja: 100 → A+, 50 → yo'q", daraja(100) === "A+" && daraja(50) === null);
 t("daraja: 62 → C", daraja(62) === "C", String(daraja(62)));
+
+t("shkala: 75 ballikning teskarisi",
+  JSON.stringify(DARAJA_SHKALA.map((x) => [x.d, x.ball]))
+    === JSON.stringify([["C", 61.3], ["C+", 66.7], ["B", 73.3], ["B+", 80], ["A", 86.7], ["A+", 93.3]]),
+  JSON.stringify(DARAJA_SHKALA));
+t("shkala chegarasidan sal yuqorisi — o'sha daraja", DARAJA_SHKALA.every((x) => daraja(x.ball + 0.1) === x.d));
+t("keyingi: 80 (B+) → A ga 6,7", JSON.stringify(keyingiDaraja(80)) === JSON.stringify({ d: "A", farq: 6.7 }),
+  JSON.stringify(keyingiDaraja(80)));
+t("keyingi: 50 → C ga 11,4 (yuqoriga yaxlit)", JSON.stringify(keyingiDaraja(50)) === JSON.stringify({ d: "C", farq: 11.4 }),
+  JSON.stringify(keyingiDaraja(50)));
+t("keyingi: 95 (A+) → yo'q", keyingiDaraja(95) === null);
+t("keyingi: 50 + farq — haqiqatan C", daraja(50 + keyingiDaraja(50)!.farq) === "C");
 
 if (xato) {
   console.log(`\n${xato} ta xato`);

@@ -66,7 +66,8 @@ import { yolDars } from "../lib/yollar";
 import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
 import { useFaollik } from "../lib/faollik";
-import { natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa } from "../lib/imtihon";
+import { mavzuXatoYoz, natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa } from "../lib/imtihon";
+import type { MavzuXato } from "../lib/imtihon";
 import { baho, sessiyaSaqla, sessiyaServerga, sessiyaYasa } from "../lib/sessiya";
 
 /** Bitta berilgan javob. `null` — ulgurilmadi. */
@@ -394,6 +395,15 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
       // serverga. Server takrorni `vaqt` bo'yicha o'zi tashlaydi.
       imtihonSaqla(urinish);
       imtihonServerga(urinish);
+      // Mavzular bo'yicha xatolar — ro'yxatdagi "ko'p xato qilinayotgan
+      // mavzular" uchun (faqat qurilmada, `lib/imtihon.ts`).
+      const m = new Map<string, MavzuXato>();
+      blok.savollar.forEach((S, i) => {
+        if (toliq[i]?.togri) return;
+        const k = `${S.kursId}|${S.mavzu}`;
+        m.set(k, { mavzu: S.mavzu, kursId: S.kursId, xato: (m.get(k)?.xato ?? 0) + 1 });
+      });
+      mavzuXatoYoz([...m.values()]);
       return;
     }
 
@@ -401,7 +411,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
     // keyingi safar tugallangan test "davom etasizmi?" bo'lib
     // qaytib chiqardi.
     joriyniOchir();
-  }, [blok.savollar.length, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya]);
+  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya]);
 
   /*
    * Har o'zgarishda yarim qolgan test yoziladi.

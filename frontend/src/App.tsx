@@ -78,7 +78,7 @@ import { mavzuById } from "./lib/kichkintoy";
 import { oyinById } from "./lib/oyin";
 import { darajaniOqi } from "./lib/oyin/tur";
 import { ochiqmi } from "./lib/oyin/rekord";
-import { COURSES, courseBySlug, maktabKursi } from "./lib/curriculum";
+import { COURSES, courseById, courseBySlug, maktabKursi } from "./lib/curriculum";
 import { useProgress } from "./lib/progress";
 import type { LessonResult } from "./lib/progress";
 import { isUnlocked, lessonId } from "./lib/types";
@@ -777,7 +777,8 @@ function ImtihonSahifasi() {
   // odam har safar almashtirgichni bosib o'tirmasin.
   if (oxirgiTur() === "sertifikat") return <Navigate to={yolSertifikat()} replace />;
   return <Imtihon onVariant={(n) => nav(yolImtihonVariant(n))}
-    onSertifikat={() => nav(yolSertifikat(), { replace: true })} onChiq={() => nav(yolKurslar())} />;
+    onSertifikat={() => nav(yolSertifikat(), { replace: true })} onChiq={() => nav(yolTestSinf())}
+    onTakrorla={(id) => { const c = courseById(id); if (c) nav(yolTestlar(c)); }} />;
 }
 
 /** Milliy sertifikat — variantlar ro'yxati (`lib/sertifikat.ts`). */
@@ -785,7 +786,7 @@ function SertifikatSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
   return <Sertifikat onVariant={(n) => nav(yolSertifikatVariant(n))}
-    onDtm={() => nav(yolImtihon(), { replace: true })} onChiq={() => nav(yolKurslar())} />;
+    onDtm={() => nav(yolImtihon(), { replace: true })} onChiq={() => nav(yolTestSinf())} />;
 }
 
 function SertifikatVariantSahifasi() {
