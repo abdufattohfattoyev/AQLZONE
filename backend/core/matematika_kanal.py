@@ -476,6 +476,7 @@ def misol_rasmi(misol: tuple[str, str, str, str]) -> bytes:
     from PIL import Image, ImageDraw
 
     from .kunlik_kartochka import _shrift
+    from .tamga import _belgi
 
     kim, savol, _, _ = misol
     S, EN = 2, 1080                                  # S — supersampling, chetlar silliq bo'lsin
@@ -483,6 +484,16 @@ def misol_rasmi(misol: tuple[str, str, str, str]) -> bytes:
     d = ImageDraw.Draw(t)
     m = 60 * S
     d.rounded_rectangle([m, m, EN * S - m, EN * S - m], radius=48 * S, fill=_KARTA)
+
+    # Logotip — butun kartani egallaydi, lekin juda xira va MATN
+    # ORQASIDA: rasm skrinshot bo'lib tarqalganda ham kimniki ekani
+    # ko'rinib tursin, savolni o'qishga esa xalaqit bermasin.
+    belgi = _belgi(820 * S)
+    belgi.putalpha(belgi.getchannel("A").point(lambda a: a * 0.10))
+    t = t.convert("RGBA")
+    t.alpha_composite(belgi, ((EN * S - belgi.width) // 2, (EN * S - belgi.height) // 2 + 20 * S))
+    t = t.convert("RGB")
+    d = ImageDraw.Draw(t)
 
     # Tepa: rukn nomi va kim uchun.
     ichki = 120 * S
