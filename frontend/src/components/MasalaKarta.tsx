@@ -12,26 +12,17 @@
  * masalani YECHISH uchun kiradi, bu mayda belgilar esa ko'zni
  * chalg'itib, matnning o'zini ko'mib qo'yardi.
  *
- * Endi kartada uch qavat:
+ * Endi kartada uch qavat (`manba/Masalalar.dc.html`):
  *
- *   tepa   sinf va (bo'lsa) "yechgansiz" belgisi
+ *   tepa   muallif (bosh harflari va ismi) · sinf
  *   o'rta  masala matni va chizmasi — kartaning ASOSIY qismi
- *   past   muallif · mukofot · "Yechish"
+ *   past   bitta amal: "Yechish" — yoki yechgan bo'lsa "Yechgansiz ✓"
  *
- * Raqam, qiyinlik, statistika va ovozlar masalaning O'Z ekranida
- * qoldi — u yerda ular masalani tanlagandan keyin kerak bo'ladi.
- *
- * ─────────────── ICHIDA TUGMA YO'Q ───────────────
- *
- * Kartaning o'zi bitta katta tugma. Ichiga tugma joylash HTML'da ham
- * (`<button>` ichida `<button>`), ekran o'qigichda ham buziq chiqadi.
+ * Yangi dizaynda tanga belgisi ham kartadan tushdi: mukofot masala
+ * ekranida, "Tekshirish" tugmasining o'zida turadi.
  */
-import { avatarBelgi } from "../lib/dokon";
-import { EmojiBelgi } from "../lib/hajmli";
-import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { sinfNomi, sinfRangi } from "../lib/masalaSinf";
-import { ENG_KATTA_MUKOFOT } from "../lib/masalaTanga";
+import { sinfNomi } from "../lib/masalaSinf";
 import type { Masala } from "../lib/masala";
 
 interface Props {
@@ -46,63 +37,51 @@ export function MasalaKarta({ m, on, muallifBilan = true }: Props) {
 
   return (
     <button type="button" onClick={on} data-tahlil="Masala kartasi"
-      className="clay-press block w-full rounded-clay border border-track bg-karta p-4
-                 text-left shadow-clay-sm">
-      {/* ---- tepa: sinf va holat ---- */}
-      <div className="flex items-center gap-2">
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] leading-none
-                          ${sinfRangi(m.sinf)}`}>
-          {sinfNomi(m.sinf)}
-        </span>
-
-        {/* O'z masalasining holati — faqat muallifga kerak. */}
+      className="clay-press flex w-full flex-col gap-2.5 rounded-[22px] bg-karta p-4 text-left shadow-clay-sm">
+      {/* ---- tepa: muallif · sinf (o'z masalasida — holati) ---- */}
+      <span className="flex w-full items-center gap-2.5">
+        {muallifBilan && (
+          <>
+            <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-blue/12
+                                         text-[13px] font-bold text-brand-blue-t">
+              {bosHarflar(m.muallif.ism)}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-ink-soft">{m.muallif.ism}</span>
+          </>
+        )}
         {m.holat === "kutmoqda" && (
-          <span className="text-[11px] text-ink-dim">{t("masalaKutmoqda")}</span>
+          <span className={`text-[13px] text-ink-dim ${muallifBilan ? "" : "flex-1"}`}>{t("masalaKutmoqda")}</span>
         )}
         {m.holat === "rad" && (
-          <span className="text-[11px] text-brand-red">{t("masalaRad")}</span>
+          <span className={`text-[13px] text-brand-red ${muallifBilan ? "" : "flex-1"}`}>{t("masalaRad")}</span>
         )}
-
-        {/* Faqat YECHGANI belgilanadi. "Yechilmagan" yozuvi har
-            kartada turardi va hech narsa aytmasdi — odatiy holat
-            belgisiz bo'ladi. */}
-        {yechgan && (
-          <span className="ml-auto flex shrink-0 items-center gap-1 text-[11.5px]
-                           text-brand-green">
-            <Icon name="check" size={13} />
-            {t("masalaYechgansiz")}
-          </span>
-        )}
-      </div>
+        {!muallifBilan && m.holat === "tasdiq" && <span className="flex-1" />}
+        <span className="shrink-0 text-[13px] text-ink-dim">{sinfNomi(m.sinf)}</span>
+      </span>
 
       {/* ---- matn ---- */}
-      <p className="mt-2.5 line-clamp-3 font-display text-[15px] leading-snug">{m.matn}</p>
+      <span className="line-clamp-4 text-[16px] leading-[1.4]">{m.matn}</span>
 
       {m.rasm && (
         <img src={m.rasm} alt="" loading="lazy"
-          className="mt-3 max-h-52 w-full rounded-2xl bg-sahna object-contain" />
+          className="max-h-52 w-full rounded-2xl bg-sahna object-contain" />
       )}
 
-      {/* ---- past: muallif · mukofot · yechish ---- */}
-      <div className="mt-3 flex min-w-0 items-center gap-2 text-[12px]">
-        {muallifBilan && (
-          <span className="flex min-w-0 items-center gap-1.5 text-ink-dim">
-            <EmojiBelgi e={avatarBelgi(m.muallif.avatar)} olcham={14} />
-            <span className="truncate">{m.muallif.ism}</span>
-          </span>
-        )}
-        <span className="ml-auto flex shrink-0 items-center gap-3">
-          {!m.uringan && (
-            <span className="flex items-center gap-1 text-brand-gold-d">
-              <Icon name="coin" size={13} />+{ENG_KATTA_MUKOFOT}
-            </span>
-          )}
-          <span className="flex items-center gap-0.5 font-display text-[13px] text-brand-blue">
-            {t("masalaYechishTugma")}
-            <Icon name="chevron" size={14} />
-          </span>
+      {/* ---- past: bitta amal ----
+          Faqat YECHGANI belgilanadi — odatiy holat belgisiz. */}
+      {yechgan ? (
+        <span className="text-[14px] font-bold text-brand-green-d">{t("masalaYechgansiz")} ✓</span>
+      ) : (
+        <span className="grid min-h-10 place-items-center self-start rounded-xl bg-brand-blue/10 px-[18px]
+                         text-[15px] font-bold text-brand-blue-t">
+          {t("masalaYechishTugma")}
         </span>
-      </div>
+      )}
     </button>
   );
+}
+
+/** "Sardor Aliyev" → "SA". */
+function bosHarflar(ism: string): string {
+  return ism.split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join("") || "?";
 }

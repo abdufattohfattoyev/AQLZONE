@@ -381,24 +381,19 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pt-3 pb-10">
-      {/* Sarlavha qatori ro'yxat ekranidagi bilan bir xil turadi:
-          orqaga — yozuvsiz strelka, o'ng chetda esa sinf yorlig'i
-          (kartadagidek botiq). */}
-      <div className="flex items-center gap-2">
-        {!ozStrelka && (
+    <div className="mx-auto w-full max-w-[430px] px-4 pt-5 pb-10 min-[360px]:px-[18px] sm:max-w-2xl">
+      {/* Sarlavha qatori (`manba/Masala.dc.html`): orqaga · "Masala #12" ·
+          ulashish. Sinf endi kartaning muallif qatorida. Tanga hisobi
+          yo'q: tanga sarflash oynasi (`TangaSorov`) uni o'zi aytadi. */}
+      <div className="flex min-h-12 items-center gap-3">
+        {ozStrelka && (
           <button type="button" onClick={onBack} aria-label={t("ortga")}
-            className="clay-press -ml-1 grid size-10 shrink-0 place-items-center rounded-2xl
-                       text-ink-soft">
+            className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta shadow-clay-sm">
             <Icon name="chevron" size={20} className="rotate-180" />
           </button>
         )}
-        {/* Sarlavhada faqat raqam va sinf — oddiy matn, yorliq emas.
-            Tanga hisobi olib tashlandi: tanga sarflash oynasi
-            (`TangaSorov`) qancha borligini o'zi aytadi. */}
-        <h1 className="min-w-0 flex-1 truncate font-display text-[19px] leading-none">
+        <h1 className="min-w-0 flex-1 truncate font-display text-[21px] leading-none">
           {t("masalaShartSarlavha", { n: m.raqam })}
-          <span className="ml-2 text-[13px] text-ink-dim">{sinfNomi(m.sinf)}</span>
         </h1>
 
         {/* Ulashish FAQAT tasdiqlangan masalada: navbatda turgan yoki
@@ -406,9 +401,8 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
             degan ekranga tushardi. */}
         {m.holat === "tasdiq" && (
           <button type="button" onClick={() => void masalaniUlash(m.id, m.matn)}
-            aria-label={t("masalaUlash")} title={t("masalaUlash")}
-            className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl
-                       text-ink-soft">
+            aria-label={t("masalaUlash")} title={t("masalaUlash")} data-tahlil="Masala: ulashish"
+            className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta shadow-clay-sm">
             <Icon name="send" size={18} />
           </button>
         )}
@@ -425,8 +419,7 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
           yopib, yechimga tez o'tish uchun. `open` o'zgarmas qiymat —
           React uni qayta yozmaydi va foydalanuvchi yopgani saqlanadi. */}
       <details open
-        className="az-natija group mt-2.5 rounded-clay border border-track bg-karta p-4
-                   shadow-clay-sm">
+        className="az-natija group mt-4 rounded-clay bg-karta p-[18px] shadow-clay-sm">
         {/* Kartaning sarlavha qatori. Chapda masala raqami — odam
             uni do'stiga aytadi va kanaldagi post bilan solishtiradi;
             o'ngda qiyinlik — SO'Z bilan, chunki bu yerda joy bor va
@@ -456,8 +449,21 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
         {/* Yechilmagan holatda sarlavha qatori YO'Q — u ekran
             sarlavhasini takrorlardi. Karta to'g'ridan-to'g'ri shartdan
             boshlanadi. */}
-        <div className={yechildi ? "mt-3" : ""}>
-          <MasalaMatn matn={m.matn} />
+        {/* Muallif va sinf — kim yozgani va necha kishi yechgani. */}
+        <div className={`flex items-center gap-2.5 ${yechildi ? "mt-3" : ""}`}>
+          <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-blue/12
+                                       font-bold text-brand-blue-t">
+            {m.muallif.ism.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]!.toUpperCase()).join("") || "?"}
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-[15px] font-bold">{m.muallif.ism}</span>
+            <span className="truncate text-[13px] text-ink-dim">
+              {sinfNomi(m.sinf)}{m.yechganSoni > 0 ? ` · ${t("masalaNechaYechdi", { n: m.yechganSoni })}` : ""}
+            </span>
+          </span>
+        </div>
+        <div className="mt-3.5">
+          <MasalaMatn matn={m.matn} katta />
         </div>
 
         {/* Chizma matn bilan BIR kartada: u masalaning bir qismi,
@@ -595,17 +601,15 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
                Javob maydoni BOTIQ — kartalar ko'tarilgan, yoziladigan
                joy esa yuzaga o'yilgan. Shu farq "bu yerga yozing"
                degan yagona ishora bo'lib turadi. */
-            <label className="shadow-ichki flex items-center gap-2 rounded-clay bg-sahna
-                              px-3.5 py-3">
-              <Icon name="pencil" size={16} className="shrink-0 text-ink-dim" />
+            <label className="flex flex-col gap-2">
+              <span className="text-[15px] font-bold text-ink-soft">{t("masalaJavobJoy")}</span>
               <input
                 value={javob}
                 onChange={(e) => setJavob(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") void yubor(); }}
-                placeholder={t("masalaJavobJoy")}
                 maxLength={100}
-                className="min-w-0 flex-1 bg-transparent text-[15px] outline-none
-                           placeholder:text-ink-dim"
+                className="min-h-[60px] min-w-0 rounded-[18px] border-2 border-track bg-karta px-[18px] font-display
+                           text-[22px] font-bold outline-none focus:border-brand-blue"
               />
             </label>
           )}
@@ -631,9 +635,9 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               /* KO'K — ekranning asosiy amali. Ilgari yashil edi, ya'ni
                  javob berilmasdan oldin "to'g'ri" rangida turardi. */
               data-tahlil="Masala: tekshirish"
-              className="tugma-3d mt-2.5 flex min-h-12 w-full items-center gap-2 rounded-clay
-                         bg-brand-blue px-4 py-3 font-display text-[16px] text-white
-                         shadow-clay disabled:opacity-50">
+              className="tugma-3d mt-3 flex min-h-14 w-full items-center gap-2 rounded-[18px]
+                         bg-brand-blue px-4 py-3 font-display text-[19px] font-bold text-white
+                         shadow-[0_4px_0_var(--color-brand-blue-d)] disabled:opacity-50">
               <span className="min-w-0 flex-1 truncate text-left">
                 {yuborilmoqda ? t("yuklanyapti") : t("masalaTekshir")}
               </span>
@@ -653,9 +657,17 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
               esa ogohlantirish — "shoshmang". Yechilgandan keyin
               kerak emas va yo'qoladi. */}
           {urinishim === 0 && (
-            <p className="mt-2 text-center text-[12px] text-ink-dim">
+            <p className="mt-2 text-center text-[13px] text-ink-dim">
               {t("masalaBirinchiIzoh")}
             </p>
+          )}
+          {/* Yechim qulf ortida — javob berilmaguncha. Ilgari bu haqda
+              hech narsa yozilmasdi va odam yechim umuman yo'q deb o'ylardi. */}
+          {urinishim === 0 && !yechim && (
+            <div className="mt-3 flex min-h-14 items-center gap-3 rounded-[18px] bg-track px-3.5 py-2.5">
+              <Icon name="lock" size={18} className="shrink-0 text-ink-soft" />
+              <span className="min-w-0 flex-1 text-[14.5px] leading-snug text-ink-soft">{t("masalaYechimQulf")}</span>
+            </div>
           )}
         </div>
       )}
@@ -1076,7 +1088,7 @@ function Xabar(
 ) {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-3">
-      {!ozStrelka && (
+      {ozStrelka && (
         <button type="button" onClick={onBack} aria-label={t("ortga")}
           className="clay-press grid size-11 place-items-center rounded-2xl bg-karta
                      text-ink-soft shadow-clay-sm">

@@ -951,6 +951,7 @@ function MasalalarSahifasi() {
       onYangi={() => nav(yolMasalaYangi())}
       onMenikilar={() => nav(yolMasalalarim())}
       onBack={() => nav(yolKurslar())}
+      onQidiruv={() => nav(yolQidiruv())}
     />
   );
 }

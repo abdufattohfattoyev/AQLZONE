@@ -64,7 +64,7 @@ export function ToplamSahifa({ id, onBack }: { id: number; onBack: () => void })
 
   return (
     <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-4 pt-3 pb-10">
-      {!ozStrelka && (
+      {ozStrelka && (
         <button type="button" onClick={onBack} aria-label={t("ortga")}
           className="clay-press grid size-11 place-items-center rounded-2xl bg-karta text-ink-soft shadow-clay-sm">
           <Icon name="chevron" size={20} className="rotate-180" />

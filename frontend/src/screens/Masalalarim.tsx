@@ -46,7 +46,7 @@ export function Masalalarim({ onOch, onYangi, onBack }: Props) {
       {/* Sarlavha qatori ro'yxat ekranidagi bilan bir xil — ikkalasi
           bir-biriga o'tib turadi va boshqa turishi sakrab ko'rinardi. */}
       <div className="flex items-center gap-2">
-        {!ozStrelka && (
+        {ozStrelka && (
           <button type="button" onClick={onBack} aria-label={t("ortga")}
             className="clay-press -ml-1 grid size-10 shrink-0 place-items-center rounded-2xl
                        text-ink-soft">

@@ -688,6 +688,12 @@ const S = {
   masalaQiyinlar: ["Eng qiyin", "Самые сложные"],
   masalaZorlar: ["Eng zo'r", "Лучшие"],
   masalaKoplar: ["Ko'p yechilgan", "Часто решают"],
+  /* Yangi dizayn: ro'yxat tepasidagi chip — "ko'p yechilgan" saralashi. */
+  masalaOmmabop: ["Ommabop", "Популярные"],
+  masalaMenikilarTugma: ["Menikilar", "Мои"],
+  masalaYozish: ["Masala yozish", "Написать задачу"],
+  masalaNechaYechdi: ["{n} kishi yechdi", "решили: {n}"],
+  masalaYechimQulf: ["Yechim — javob berganingizdan keyin ochiladi", "Решение откроется после вашего ответа"],
   masalaHammaSinf: ["Hammasi", "Все"],
   // Tanlagich ustidagi yorliqlar. Ular qiymatdan ALOHIDA kerak:
   // uchta tanlagich yonma-yon turganda "Hammasi" ham sinfniki,

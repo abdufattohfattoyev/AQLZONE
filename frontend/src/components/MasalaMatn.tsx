@@ -67,7 +67,11 @@ const SOZ = /[\w'ʼ’]/;
 /** Xatboshi savolmi — oxirgisini ajratish uchun. */
 const savolmi = (s: string) => /[?？]\s*$/.test(s.trim());
 
-export function MasalaMatn({ matn }: { matn: string }) {
+/**
+ * `katta` — masalaning o'z ekrani (`manba/Masala.dc.html`: 19px). Ro'yxatda
+ * va muallif sahifasida odatiy o'lcham qoladi.
+ */
+export function MasalaMatn({ matn, katta = false }: { matn: string; katta?: boolean }) {
   const xatboshilar = matn.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
   const oxirgi = xatboshilar.length > 1 ? xatboshilar[xatboshilar.length - 1] : "";
   const savol = savolmi(oxirgi) ? oxirgi : "";
@@ -78,7 +82,8 @@ export function MasalaMatn({ matn }: { matn: string }) {
   return (
     <div className="space-y-2.5">
       {asosiy.map((p, i) => (
-        <p key={i} className="text-[14.5px] leading-relaxed whitespace-pre-wrap">
+        <p key={i} className={`whitespace-pre-wrap ${katta
+          ? "text-[17px] leading-[1.45] min-[360px]:text-[19px]" : "text-[14.5px] leading-relaxed"}`}>
           {kop ? p : <Sonli matn={p} />}
         </p>
       ))}
@@ -87,7 +92,8 @@ export function MasalaMatn({ matn }: { matn: string }) {
         /* Savol shartning DAVOMI, alohida karta emas: ramka ichiga
            olinsa u boshqa bo'lim bo'lib ko'rinardi. Shuning uchun
            faqat belgi va og'irlik bilan ajratiladi. */
-        <p className="flex items-start gap-2 pt-0.5 font-display text-[15px] leading-snug">
+        <p className={`flex items-start gap-2 pt-0.5 font-display leading-snug ${
+          katta ? "text-[17px] min-[360px]:text-[19px]" : "text-[15px]"}`}>
           {/* Belgi ikonka emas, HARF: ikonkalar to'plamida savol
               belgisi yo'q va uni faqat shu joy uchun qo'shish —
               to'plamni bitta ekran uchun kengaytirish bo'lardi. */}

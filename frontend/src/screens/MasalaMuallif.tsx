@@ -53,7 +53,7 @@ export function MasalaMuallif({ profilId, onOch, onMenikilar, onBack }: Props) {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-3 pb-10">
       <div className="flex items-center gap-2.5">
-        {!ozStrelka && (
+        {ozStrelka && (
           <button type="button" onClick={onBack} aria-label={t("ortga")}
             className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl
                        bg-karta text-ink-soft shadow-clay-sm">

@@ -228,7 +228,7 @@ export function MasalaYangi({ onYuborildi, onBack }: Props) {
           Sarlavha va qadam raqami BIR qatorda: ro'yxat ekranidagidek
           past tepa qism, ikkinchi qavatsiz. */}
       <div className="flex items-center gap-2">
-        {!ozStrelka && (
+        {ozStrelka && (
           <button type="button" onClick={ortga} aria-label={t("ortga")}
             className="clay-press -ml-1 grid size-10 shrink-0 place-items-center rounded-2xl
                        text-ink-soft">
