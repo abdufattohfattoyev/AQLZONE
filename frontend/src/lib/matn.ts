@@ -1420,6 +1420,21 @@ const S = {
     "Ikkalangiz bir xil savollarni, bir xil tartibda olasiz.",
     "Вы оба получите одинаковые вопросы в одном порядке.",
   ],
+  /* 2026-09-26: soddalashgan chaqiruv ekrani — kim bilan, o'yin, tugma. */
+  duelKimBilan: ["Kim bilan?", "С кем?"],
+  duelHavolaBilan: ["Havola", "Ссылка"],
+  duelHavolaIzoh: [
+    "Havolani istalgan do'stingizga yuborasiz",
+    "Отправите ссылку любому другу",
+  ],
+  duelOdamniChaqir: ["{ism}ni chaqirish", "Позвать: {ism}"],
+  duelJonliBilan: ["{ism} bilan jonli", "Вживую: {ism}"],
+  duelSozlamaQator: [
+    "{savollar} savol · {vaqt} s · {daraja}",
+    "{savollar} вопр. · {vaqt} с · {daraja}",
+  ],
+  duelOzgartirish: ["O'zgartirish", "Изменить"],
+  duelYopish: ["Yopish", "Свернуть"],
   duelShartYakun: [
     "{oyin} · {savollar} savol · {vaqt} s",
     "{oyin} · вопросов: {savollar} · {vaqt} с",

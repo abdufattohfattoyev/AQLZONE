@@ -177,54 +177,59 @@ export function Oyinlar({ onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onSha
 
           {/* Son ovi — qoidasi bitta jumla, lekin soatlab o'ynaladi.
               Kunlik son bilan yonma-yon emas, alohida qatorda: u
-              "bugun bir marta" emas, istagancha o'ynaladigan o'yin. */}
-          <button type="button" onClick={onSonOvi} data-tahlil="O'yinlar: son ovi"
-            className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay bg-brand-purple p-3
-                       text-left text-white shadow-clay">
-            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
-              <EmojiBelgi e="🎯" olcham={28} jonli />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
-                {t("sonOvi")}
-                <span className="rounded-full bg-white/25 px-2 py-0.5 text-[10px]">{t("karvonYangi")}</span>
+              "bugun bir marta" emas, istagancha o'ynaladigan o'yin.
+              Uchala katta o'yin telefonda ustma-ust, kengroq ekranda esa
+              bitta qatorda — ilgari planshetda ular butun enga cho'zilib,
+              ichi bo'sh uzun lentaga aylanardi. */}
+          <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
+            <button type="button" onClick={onSonOvi} data-tahlil="O'yinlar: son ovi"
+              className="az-kirish tugma-3d flex w-full items-center gap-3 rounded-clay bg-brand-purple p-3
+                         text-left text-white shadow-clay">
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
+                <EmojiBelgi e="🎯" olcham={28} jonli />
               </span>
-              <span className="block text-[11.5px] leading-snug opacity-90">
-                {sonOviBugun() > 0 ? t("sonOviBugun", { n: sonOviBugun() }) : t("sonOviIzoh")}
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
+                  {t("sonOvi")}
+                  <span className="rounded-full bg-white/25 px-2 py-0.5 text-[10px]">{t("karvonYangi")}</span>
+                </span>
+                <span className="block text-[11.5px] leading-snug opacity-90">
+                  {sonOviBugun() > 0 ? t("sonOviBugun", { n: sonOviBugun() }) : t("sonOviIzoh")}
+                </span>
               </span>
-            </span>
-            <span className="font-display text-[20px] opacity-90">24</span>
-          </button>
-
-          {/* Karvon yo'li — eng katta yakka o'yin: xarita, to'siqlar, bozor. */}
-          <button type="button" onClick={onKarvon} data-tahlil="O'yinlar: karvon yo'li"
-            className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay p-3 text-left text-white shadow-clay"
-            style={{ background: "linear-gradient(120deg,#2B1D14,#6B3A1C 55%,#D96528)" }}>
-            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/15">
-              <EmojiBelgi e="🐫" olcham={28} jonli />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
-                {t("karvonTitul")}
-                <span className="rounded-full bg-[#E5A93C] px-2 py-0.5 text-[10px] text-[#2A1B06]">{t("karvonYangi")}</span>
+              <span className="font-display text-[20px] opacity-90">24</span>
+            </button>
+  
+            {/* Karvon yo'li — eng katta yakka o'yin: xarita, to'siqlar, bozor. */}
+            <button type="button" onClick={onKarvon} data-tahlil="O'yinlar: karvon yo'li"
+              className="az-kirish tugma-3d flex w-full items-center gap-3 rounded-clay p-3 text-left text-white shadow-clay"
+              style={{ background: "linear-gradient(120deg,#2B1D14,#6B3A1C 55%,#D96528)" }}>
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/15">
+                <EmojiBelgi e="🐫" olcham={28} jonli />
               </span>
-              <span className="block text-[11.5px] leading-snug opacity-90">{t("karvonIzoh")}</span>
-            </span>
-          </button>
-
-          {/* Tulki shaharchasi — tangani sarflaydigan joy va har kuni qaytish sababi. */}
-          <button type="button" onClick={onShaharcha} data-tahlil="O'yinlar: shaharcha"
-            className="az-kirish tugma-3d mt-2.5 flex w-full items-center gap-3 rounded-clay bg-brand-orange p-3
-                       text-left text-white shadow-clay">
-            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
-              <EmojiBelgi e="🦊" olcham={28} jonli />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block font-display text-[15px] leading-tight">{t("shTitul")}</span>
-              <span className="block text-[11.5px] opacity-90">{t("shIzoh")}</span>
-            </span>
-            <span className="text-[22px]">🏠🌳🏪</span>
-          </button>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 font-display text-[15px] leading-tight">
+                  {t("karvonTitul")}
+                  <span className="rounded-full bg-[#E5A93C] px-2 py-0.5 text-[10px] text-[#2A1B06]">{t("karvonYangi")}</span>
+                </span>
+                <span className="block text-[11.5px] leading-snug opacity-90">{t("karvonIzoh")}</span>
+              </span>
+            </button>
+  
+            {/* Tulki shaharchasi — tangani sarflaydigan joy va har kuni qaytish sababi. */}
+            <button type="button" onClick={onShaharcha} data-tahlil="O'yinlar: shaharcha"
+              className="az-kirish tugma-3d flex w-full items-center gap-3 rounded-clay bg-brand-orange p-3
+                         text-left text-white shadow-clay">
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/20">
+                <EmojiBelgi e="🦊" olcham={28} jonli />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[15px] leading-tight">{t("shTitul")}</span>
+                <span className="block text-[11.5px] opacity-90">{t("shIzoh")}</span>
+              </span>
+              <span className="text-[22px] sm:hidden lg:inline">🏠🌳🏪</span>
+            </button>
+          </div>
 
           <h2 className="az-kirish mt-6 mb-1.5 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
             {t("maydonMashq")}
