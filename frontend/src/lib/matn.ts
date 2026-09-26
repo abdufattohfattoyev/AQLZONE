@@ -1654,6 +1654,7 @@ const S = {
 
   /* ---------------- topilmadi ---------------- */
   buSahifa: ["Bu sahifa", "Эта страница"],
+  bundayOyin: ["Bunday o'yin", "Такая игра"],
   bundayDars: ["Bunday dars", "Такой урок"],
   kursTopilmadi: ['"{slug}" kursi', 'курс «{slug}»'],
   topilmadi: ["{nima} topilmadi", "{nima} не найдена"],

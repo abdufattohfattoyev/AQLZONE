@@ -139,8 +139,14 @@ export const yolShaharcha = (pid?: number) => (pid ? `/oyinlar/shaharcha/${pid}`
 /** Karvon yo'li — Ipak yo'li bo'ylab sarguzasht. */
 export const yolKarvon = () => "/oyinlar/karvon";
 
-/** Jamoaviy o'yinlar: daraja va haftalik jadval. */
-export const yolJadval = () => "/oyinlar/jadval";
+/**
+ * Jamoaviy o'yinlar: daraja va haftalik jadval.
+ *
+ * `/oyinlar/jadval` EMAS: u "Ko'paytirish jadvali" o'yinining manzili
+ * (`yolOyin("jadval")`). Ilgari ikkalasi bir manzilda edi va o'yin
+ * kartasi reytingni ochib qo'yardi.
+ */
+export const yolJadval = () => "/oyinlar/reyting-jadval";
 
 /** Do'st bilan bellashuv — chaqiruv yasash. */
 export const yolDuel = (oyin?: string) =>
