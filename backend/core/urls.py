@@ -51,6 +51,8 @@ urlpatterns = [
     path("duel/dostlar", views.duel_dostlar, name="duel-dostlar"),
     path("duel/taklif", views.duel_taklif, name="duel-taklif"),
     path("duel/taklif/<int:pk>/javob", views.duel_taklif_javob, name="duel-taklif-javob"),
+    # Chaqirgan odam kutishdan voz kechdi — do'stidagi oyna yopiladi.
+    path("duel/taklif/bekor", views.duel_taklif_bekor, name="duel-taklif-bekor"),
     path("duel/sozlama", views.duel_sozlama, name="duel-sozlama"),
     # Jamoaviy o'yin xonalari: Son kartalari, Hisob Royale, Son kodlari.
     # Tulki shaharchasi.

@@ -6846,6 +6846,22 @@ class DuelAdolatTaklifTest(TestCase):
         t = DuelTaklif.objects.get(duel__kod=kod)
         self.assertEqual(self.post(f"/api/v1/duel/taklif/{t.pk}/javob", {"qabul": True}, c).status_code, 403)
 
+    def test_chaqirgan_bekor_qilsa_oyna_yopiladi_va_qayta_chaqira_oladi(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        kod = self.taklif(pb).json()["kod"]
+        t = DuelTaklif.objects.get(duel__kod=kod)
+
+        # Begona bekor qila olmaydi.
+        self.assertFalse(self.post("/api/v1/duel/taklif/bekor", {"kod": kod}, self.b).json()["bekor"])
+        self.assertTrue(self.post("/api/v1/duel/taklif/bekor", {"kod": kod}, self.a).json()["bekor"])
+
+        self.assertIsNone(self.client.get("/api/v1/duel/taklif", **self.b).json()["taklif"])
+        r = self.post(f"/api/v1/duel/taklif/{t.pk}/javob", {"qabul": True}, self.b)
+        self.assertEqual(r.json()["sabab"], "bekor")
+        # Bekor qilingan taklif "soatiga bitta" ga sanalmaydi.
+        self.assertEqual(self.taklif(pb).status_code, 201)
+
 
 class XonaTest(TestCase):
     """

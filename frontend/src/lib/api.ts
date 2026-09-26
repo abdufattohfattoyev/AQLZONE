@@ -965,7 +965,7 @@ export type DuelDaraja = 1 | 2 | 3;
 
 /** Jonli taklifning chaqirgan tomondagi holati. `otdi` — javobsiz, muddati tugadi. */
 export interface DuelTaklifHolati {
-  holat: "kutyapti" | "qabul" | "rad" | "otdi";
+  holat: "kutyapti" | "qabul" | "rad" | "otdi" | "bekor";
   qolgan: number;
 }
 
@@ -1338,6 +1338,10 @@ export const duelTaklifJavob = (
   id: number, qabul: boolean, daraja?: DuelDaraja,
 ): Promise<{ kod: string; qabul: boolean }> =>
   duelPost(`/api/v1/duel/taklif/${id}/javob`, { qabul, ...(daraja ? { daraja } : {}) });
+
+/** Chaqirgan odam jonli taklifni bekor qiladi — do'stidagi oyna yopiladi. */
+export const duelTaklifBekor = (kod: string): Promise<{ bekor: boolean }> =>
+  duelPost("/api/v1/duel/taklif/bekor", { kod });
 
 /* ================= JAMOAVIY O'YINLAR — xonalar ================= */
 

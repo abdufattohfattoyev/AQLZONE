@@ -935,7 +935,11 @@ class DuelTaklif(models.Model):
     """
 
     KUTYAPTI, QABUL, RAD = "kutyapti", "qabul", "rad"
-    HOLATLAR = [(KUTYAPTI, "kutyapti"), (QABUL, "qabul"), (RAD, "rad")]
+    #: Chaqirgan odam o'zi bekor qildi (2026-09-26). Rad chegarasiga
+    #: ham, "soatiga bitta" ga ham SANALMAYDI: bu chaqirganning qarori,
+    #: do'stning emas — o'yinni almashtirib qayta chaqira olsin.
+    BEKOR = "bekor"
+    HOLATLAR = [(KUTYAPTI, "kutyapti"), (QABUL, "qabul"), (RAD, "rad"), (BEKOR, "bekor")]
 
     #: Taklif shuncha soniyadan keyin o'z-o'zidan yopiladi.
     MUDDAT_SONIYA = 15

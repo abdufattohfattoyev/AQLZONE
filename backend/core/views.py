@@ -1528,6 +1528,16 @@ def duel_taklif_javob(request, pk: int):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+def duel_taklif_bekor(request):
+    """Chaqirgan odam jonli taklifni bekor qiladi (`kod` — duel kodi)."""
+    d = Duel.objects.filter(kod=str(request.data.get("kod") or "")).first()
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    return Response({"bekor": D.taklif_bekor(d, _profil_tanla(request))})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def duel_sozlama(request):
     """"Meni jonli bellashuvga chaqirmasin" — sozlamalardagi tugma."""
     profil = _profil_tanla(request)

@@ -892,7 +892,7 @@ def taklif_mumkinmi(kimdan: Profile, kimga: Profile,
     if DuelTaklif.objects.filter(
         kimdan=kimdan, kimga=kimga,
         created_at__gte=hozir - timedelta(minutes=TAKLIF_ORALIQ_DAQIQA),
-    ).exists():
+    ).exclude(holat=DuelTaklif.BEKOR).exists():
         return False, "soatiga"
 
     kun_boshi = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -977,6 +977,8 @@ def taklif_javob(taklif: DuelTaklif, profil: Profile, qabul: bool,
     t = DuelTaklif.objects.select_for_update().get(pk=taklif.pk)
     if t.kimga_id != profil.pk:
         return None, "begona"
+    if t.holat == DuelTaklif.BEKOR:
+        return None, "bekor"
     if t.holat != DuelTaklif.KUTYAPTI:
         return None, "javob_berilgan"
 
@@ -994,3 +996,24 @@ def taklif_javob(taklif: DuelTaklif, profil: Profile, qabul: bool,
     t.holat = DuelTaklif.QABUL
     t.save(update_fields=["holat", "javob_at"])
     return tayyorlash(t.duel, profil, chaqirganmi=False, daraja=daraja), ""
+
+
+@transaction.atomic
+def taklif_bekor(duel: Duel, profil: Profile) -> bool:
+    """
+    Chaqirgan odam kutishdan voz kechdi — "Bekor qilish".
+
+    Faqat hali javob berilmagan taklif bekor bo'ladi: qabul qilingan
+    bo'lsa sanoq allaqachon ketgan, rad etilgan bo'lsa bekor qiladigan
+    narsa yo'q. Duelning o'zi o'chirilmaydi — u o'ynalmagan chaqiruv
+    bo'lib qoladi va muddati o'tib o'zi yopiladi.
+    """
+    if duel.chaqirgan_id != profil.pk:
+        return False
+    t = duel.takliflar.select_for_update().filter(holat=DuelTaklif.KUTYAPTI).first()
+    if t is None:
+        return False
+    t.holat = DuelTaklif.BEKOR
+    t.javob_at = timezone.now()
+    t.save(update_fields=["holat", "javob_at"])
+    return True
