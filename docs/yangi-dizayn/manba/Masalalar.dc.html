@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Masalalar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Baloo+2:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:'Baloo 2',system-ui,sans-serif;color:#1a2450}
+a{color:inherit;text-decoration:none}a:hover{color:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #f4f6fb; display: flex; flex-direction: column; font-family: 'Baloo 2', system-ui, sans-serif; color: #1a2450; overflow: hidden; position: relative;">
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 14px; padding: 20px 18px 12px; overflow: hidden;">
+    <header style="display: flex; align-items: center; gap: 10px; min-height: 48px;">
+      <h1 style="margin: 0; flex-grow: 1; font-family: 'Fredoka', sans-serif; font-size: 26px;">Masalalar</h1>
+      <a href="Masalalar.dc.html" style="display: grid; place-items: center; min-height: 44px; padding: 0 12px; border-radius: 14px; font-size: 15px; font-weight: 700; color: #2c56b8;">Menikilar</a>
+      <a href="Qidiruv.dc.html" aria-label="Qidiruv" style="width: 44px; height: 44px; border-radius: 14px; background: #ffffff; display: grid; place-items: center; box-shadow: 0 3px 0 #c4d2f0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a2450" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      </a>
+    </header>
+
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span style="display: grid; place-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #3b6fe0; color: #ffffff; font-size: 14.5px; font-weight: 700;">3-sinf</span>
+      <span style="display: grid; place-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #ffffff; font-size: 14.5px; font-weight: 600; color: #4d5a86; box-shadow: 0 2px 0 #c4d2f0;">Yangi</span>
+      <span style="display: grid; place-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #ffffff; font-size: 14.5px; font-weight: 600; color: #4d5a86; box-shadow: 0 2px 0 #c4d2f0;">Ommabop</span>
+      <button type="button" aria-label="Saralash" style="margin-left: auto; width: 44px; height: 44px; border: 0; border-radius: 14px; background: #ffffff; display: grid; place-items: center; box-shadow: 0 2px 0 #c4d2f0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a2450" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+      </button>
+    </div>
+
+    <sc-for list="{{masalalar}}" as="m" hint-placeholder-count="3">
+      <a href="Masala.dc.html" style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 22px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="width: 32px; height: 32px; border-radius: 50%; background: rgba(59,111,224,0.12); color: #2c56b8; display: grid; place-items: center; font-weight: 700; font-size: 14px;">{{m.bosh}}</span>
+          <span style="flex-grow: 1; font-size: 14px; font-weight: 700; color: #4d5a86;">{{m.muallif}}</span>
+          <span style="font-size: 13px; color: #5f6d8e;">{{m.sinf}}</span>
+        </div>
+        <p style="margin: 0; font-size: 16px; line-height: 1.4;">{{m.matn}}</p>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <sc-if value="{{m.yechgan}}" hint-placeholder-val="{{false}}">
+            <span style="font-size: 14px; font-weight: 700; color: #178a52;">Yechgansiz ✓</span>
+          </sc-if>
+          <sc-if value="{{m.yechmagan}}" hint-placeholder-val="{{true}}">
+            <span style="display: grid; place-items: center; min-height: 40px; padding: 0 18px; border-radius: 12px; background: rgba(59,111,224,0.1); color: #2c56b8; font-size: 15px; font-weight: 700;">Yechish</span>
+          </sc-if>
+        </div>
+      </a>
+    </sc-for>
+  </div>
+  <a href="Masala.dc.html" style="position: absolute; right: 18px; bottom: 100px; display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 0 22px; border-radius: 20px; background: #3b6fe0; color: #ffffff; font-family: 'Fredoka', sans-serif; font-size: 17px; font-weight: 700; box-shadow: 0 4px 0 #2c56b8, 0 14px 26px -10px rgba(44,86,184,0.6);">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+    Masala yozish
+  </a>
+  <dc-import name="Tab" faol="masalalar" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const M = [
+      { bosh: 'SA', muallif: 'Sardor A.', sinf: '3-sinf', matn: "Bog'da 124 ta olma bor edi. Bolalar 38 tasini terishdi. Nechta olma qoldi?", yechgan: false },
+      { bosh: 'UF', muallif: 'Ustoz Fattoyev', sinf: '3-sinf', matn: "Avtobusda 45 kishi bor edi. Bekatda 17 kishi tushib, 9 kishi chiqdi. Endi nechta?", yechgan: true },
+      { bosh: 'MK', muallif: 'Madina K.', sinf: '3-sinf', matn: "Uch xonali eng katta toq son qaysi?", yechgan: false },
+    ];
+    return { masalalar: M.map((m) => ({ ...m, yechmagan: !m.yechgan })) };
+  }
+}
+</script>
+</body>
+</html>

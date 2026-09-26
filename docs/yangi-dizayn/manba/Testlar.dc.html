@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>O'qish — testlar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Baloo+2:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:'Baloo 2',system-ui,sans-serif;color:#1a2450}
+a{color:inherit;text-decoration:none}a:hover{color:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #f4f6fb; display: flex; flex-direction: column; font-family: 'Baloo 2', system-ui, sans-serif; color: #1a2450; overflow: hidden;">
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 14px; padding: 20px 18px 12px; overflow: hidden;">
+    <header style="display: flex; align-items: center; gap: 10px; min-height: 48px;">
+      <h1 style="margin: 0; flex-grow: 1; font-family: 'Fredoka', sans-serif; font-size: 26px;">O'qish</h1>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 14px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0; font-family: 'Fredoka', sans-serif; font-size: 16px; font-weight: 600; color: #1a2450;">
+        9-sinf
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a2450" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <a href="Qidiruv.dc.html" aria-label="Qidiruv" style="width: 44px; height: 44px; border-radius: 14px; background: #ffffff; display: grid; place-items: center; box-shadow: 0 3px 0 #c4d2f0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a2450" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      </a>
+    </header>
+    <nav aria-label="O'qish bo'limlari" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 16px; background: rgba(26,40,90,0.07);">
+      <a href="Oqish.dc.html" style="display: grid; place-items: center; min-height: 40px; border-radius: 12px; font-size: 14px; font-weight: 600; color: #4d5a86;">Darslar</a>
+      <a href="Testlar.dc.html" style="display: grid; place-items: center; min-height: 40px; border-radius: 12px; background: #ffffff; font-size: 14px; font-weight: 700; color: #2c56b8; box-shadow: 0 2px 0 #c4d2f0;">Testlar</a>
+      <a href="Oqish.dc.html" style="display: grid; place-items: center; min-height: 40px; border-radius: 12px; font-size: 14px; font-weight: 600; color: #4d5a86;">Formulalar</a>
+      <a href="Oqish.dc.html" style="display: grid; place-items: center; min-height: 40px; border-radius: 12px; font-size: 14px; font-weight: 600; color: #4d5a86;">Xatolar</a>
+    </nav>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 24px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <img src="/belgi/chart.webp" alt="" style="width: 44px; height: 44px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column;"><span style="font-family: 'Fredoka', sans-serif; font-size: 19px; font-weight: 700;">9-sinf blok testi</span><span style="font-size: 14px; color: #5f6d8e;">Algebra va geometriya · aralash</span></span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <span style="padding: 4px 12px; border-radius: 999px; background: rgba(26,40,90,0.07); font-size: 14px; font-weight: 600; color: #4d5a86;">30 savol</span>
+        <span style="padding: 4px 12px; border-radius: 999px; background: rgba(26,40,90,0.07); font-size: 14px; font-weight: 600; color: #4d5a86;">45 daqiqa</span>
+      </div>
+      <button type="button" style="min-height: 52px; border: 0; border-radius: 16px; background: #3b6fe0; color: #ffffff; font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; box-shadow: 0 4px 0 #2c56b8;">Testni boshlash</button>
+    </div>
+
+    <h2 style="margin: 4px 0 0; font-family: 'Fredoka', sans-serif; font-size: 20px;">Boshqa testlar</h2>
+    <sc-for list="{{testlar}}" as="t" hint-placeholder-count="4">
+      <a href="{{t.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 14px; border-radius: 18px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0;">
+        <img src="{{t.ic}}" alt="" style="width: 32px; height: 32px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column;"><span style="font-size: 16px; font-weight: 700;">{{t.nom}}</span><span style="font-size: 13px; color: #5f6d8e;">{{t.izoh}}</span></span>
+        <span style="font-size: 14px; font-weight: 700; color: {{t.rang}};">{{t.natija}}</span>
+      </a>
+    </sc-for>
+  </div>
+  <dc-import name="Tab" faol="oqish" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      testlar: [
+        { nom: 'Milliy sertifikat va DTM', izoh: 'Imtihon formatidagi variantlar, vaqt bilan', natija: 'B', rang: '#8a6200', ic: '/belgi/miya.webp', href: 'Sertifikat.dc.html' },
+        { nom: "Mavzu bo'yicha test", izoh: 'Kvadrat tenglamalar', natija: '86%', rang: '#178a52', ic: '/belgi/savol.webp', href: 'Testlar.dc.html' },
+        { nom: 'Test to\'plamlari', izoh: "Ustozlar tuzgan to'plamlar", natija: '', rang: '#4d5a86', ic: '/belgi/xarita.webp', href: 'Testlar.dc.html' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

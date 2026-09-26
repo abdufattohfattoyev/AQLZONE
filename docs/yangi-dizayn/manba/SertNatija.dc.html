@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Sertifikat — natija</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Baloo+2:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:'Baloo 2',system-ui,sans-serif;color:#1a2450}
+a{color:inherit;text-decoration:none}a:hover{color:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #f4f6fb; display: flex; flex-direction: column; gap: 14px; padding: 22px 18px 22px; font-family: 'Baloo 2', system-ui, sans-serif; color: #1a2450; overflow: hidden;">
+  <section style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 20px 16px 18px; border-radius: 26px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0, 0 16px 30px -18px rgba(30,50,110,0.35); text-align: center;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5f6d8e;">2-variant · 2:41:10</span>
+    <span style="font-family: 'Fredoka', sans-serif; font-size: 56px; font-weight: 700; line-height: 1;">80,0<span style="font-size: 20px; color: #5f6d8e;"> / 100 ball</span></span>
+    <span style="margin-top: 6px; display: flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 999px; background: rgba(245,179,1,0.16); color: #8a6200; font-family: 'Fredoka', sans-serif; font-size: 17px; font-weight: 700;">Taxminiy daraja: B+</span>
+    <span style="margin-top: 4px; font-size: 13px; color: #5f6d8e;">A darajaga 6,7 ball yetmadi</span>
+  </section>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+    <sc-for list="{{bolimlar}}" as="b" hint-placeholder-count="3">
+      <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 18px; background: #ffffff; box-shadow: 0 2px 0 #c4d2f0;">
+        <span style="font-size: 12.5px; font-weight: 700; color: #5f6d8e;">{{b.nom}}</span>
+        <span style="font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; line-height: 1;">{{b.togri}}<span style="font-size: 14px; color: #5f6d8e;">/{{b.jami}}</span></span>
+        <span style="display: block; height: 6px; border-radius: 3px; background: rgba(26,40,90,0.08); overflow: hidden;"><span style="display: block; height: 100%; width: {{b.foiz}}; background: #3b6fe0;"></span></span>
+      </div>
+    </sc-for>
+  </div>
+
+  <section style="display: flex; flex-direction: column; gap: 8px;">
+    <h2 style="margin: 0; font-family: 'Fredoka', sans-serif; font-size: 18px;">Qayerda ball yo'qotildi</h2>
+    <div style="display: flex; flex-direction: column; border-radius: 20px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0; overflow: hidden;">
+      <sc-for list="{{mavzular}}" as="m" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border-top: {{m.chiziq}};">
+          <span style="flex-grow: 1; font-size: 15.5px; font-weight: 700;">{{m.nom}}</span>
+          <span style="font-size: 14px; color: #4d5a86;">{{m.xato}}</span>
+          <span style="font-size: 14px; font-weight: 700; color: #1a2450; font-variant-numeric: tabular-nums;">−{{m.ball}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 8px;">
+    <h2 style="margin: 0; font-family: 'Fredoka', sans-serif; font-size: 18px;">Xatolar</h2>
+    <div style="display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 8px 14px; border-radius: 18px; background: #ffffff; box-shadow: 0 2px 0 #c4d2f0;">
+      <span style="width: 34px; height: 34px; border-radius: 10px; background: rgba(229,72,77,0.12); color: #b4262b; display: grid; place-items: center; font-family: 'Fredoka', sans-serif; font-weight: 700;">7</span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column;"><span style="font-size: 15px;">log₂ 32 + log₃ 9 = ?</span><span style="font-size: 13px;"><b style="color: #178a52;">To'g'ri: 7</b> <span style="color: #5f6d8e;">· siz: 8</span></span></span>
+    </div>
+  </section>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+    <a href="SertTest.dc.html" style="display: grid; place-items: center; min-height: 54px; border-radius: 16px; background: #3b6fe0; box-shadow: 0 4px 0 #2c56b8; font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">Qayta ishlash</a>
+    <a href="Sertifikat.dc.html" style="display: grid; place-items: center; min-height: 48px; font-family: 'Fredoka', sans-serif; font-size: 16px; font-weight: 600; color: #4d5a86;">Variantlarga qaytish</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const B = [['Test', 26, 32], ['Moslash', 2, 3], ['Ochiq javob', 16, 20]];
+    const M = [['Logarifmlar', '2 xato', '4,4'], ['Kvadrat tengsizlik', 'ochiq · a) va b)', '3,2'], ['Trigonometriya', '2 xato', '3,5']];
+    return {
+      bolimlar: B.map(([nom, togri, jami]) => ({ nom, togri, jami, foiz: Math.round(togri / jami * 100) + '%' })),
+      mavzular: M.map(([nom, xato, ball], i) => ({ nom, xato, ball, chiziq: i ? '1px solid rgba(26,40,90,0.08)' : '0' })),
+    };
+  }
+}
+</script>
+</body>
+</html>

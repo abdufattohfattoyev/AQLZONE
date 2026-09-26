@@ -1,0 +1,240 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Bugun.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "1 · Bugun",
+      "w": 390,
+      "x": 0,
+      "y": 1400
+    },
+    "Dars.dc.html": {
+      "h": 844,
+      "title": "Dars: savol",
+      "w": 390,
+      "x": 0,
+      "y": 2664
+    },
+    "Duel.dc.html": {
+      "h": 844,
+      "title": "Tez o'yin: raqib qidirish",
+      "w": 390,
+      "x": 0,
+      "y": 3928
+    },
+    "Kichkintoy.dc.html": {
+      "h": 844,
+      "title": "Kichkintoy rejimi (2–5 yosh)",
+      "w": 390,
+      "x": 470,
+      "y": 5192
+    },
+    "Main.dc.html": {
+      "h": 980,
+      "title": "Xarita: nima qayerda",
+      "w": 1760,
+      "x": 0,
+      "y": 0
+    },
+    "Masala.dc.html": {
+      "h": 844,
+      "title": "Bitta masala",
+      "w": 390,
+      "x": 470,
+      "y": 3928
+    },
+    "Masalalar.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "4 · Masalalar",
+      "w": 390,
+      "x": 1410,
+      "y": 1400
+    },
+    "Men.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "5 · Men",
+      "w": 390,
+      "x": 1880,
+      "y": 1400
+    },
+    "Oqish.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "2 · O'qish",
+      "w": 390,
+      "x": 470,
+      "y": 1400
+    },
+    "OtaOna.dc.html": {
+      "h": 844,
+      "title": "Ota-ona paneli",
+      "w": 390,
+      "x": 1410,
+      "y": 3928
+    },
+    "Oyin.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "3 · O'yin",
+      "w": 390,
+      "x": 940,
+      "y": 1400
+    },
+    "Qidiruv.dc.html": {
+      "h": 844,
+      "title": "Qidiruv",
+      "w": 390,
+      "x": 0,
+      "y": 5192
+    },
+    "Reyting.dc.html": {
+      "h": 844,
+      "title": "Reyting",
+      "w": 390,
+      "x": 940,
+      "y": 3928
+    },
+    "Tab.dc.html": {
+      "h": 84,
+      "title": "Komponent: pastki panel",
+      "w": 390,
+      "x": 940,
+      "y": 5192
+    },
+    "Testlar.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "O'qish › Testlar",
+      "w": 390,
+      "x": 470,
+      "y": 2664
+    },
+    "Dtm.dc.html": {
+      "x": 940,
+      "y": 2664,
+      "w": 390,
+      "h": 844,
+      "title": "DTM — variantlar",
+      "is_interactive": true
+    },
+    "Sertifikat.dc.html": {
+      "x": 1410,
+      "y": 2664,
+      "w": 390,
+      "h": 844,
+      "title": "Milliy sertifikat — variantlar",
+      "is_interactive": true
+    },
+    "SertTest.dc.html": {
+      "x": 1880,
+      "y": 2664,
+      "w": 390,
+      "h": 844,
+      "title": "Sertifikat · test (1–32)",
+      "is_interactive": true
+    },
+    "SertMoslash.dc.html": {
+      "x": 2350,
+      "y": 2664,
+      "w": 390,
+      "h": 844,
+      "title": "Sertifikat · moslashtirish (33–35)",
+      "is_interactive": true
+    },
+    "SertOchiq.dc.html": {
+      "x": 2820,
+      "y": 2664,
+      "w": 390,
+      "h": 844,
+      "title": "Sertifikat · ochiq javob (36–45)",
+      "is_interactive": true
+    },
+    "SertNatija.dc.html": {
+      "x": 3290,
+      "y": 2664,
+      "w": 390,
+      "h": 844,
+      "title": "Sertifikat · natija",
+      "is_interactive": true
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-26T16:40:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "t0": {
+      "kind": "title1",
+      "maxW": 1760,
+      "text": "Aql Zone — yangi tuzilma",
+      "w": 240,
+      "x": 0,
+      "y": -260
+    },
+    "t1": {
+      "kind": "title1",
+      "maxW": 2270,
+      "text": "Asosiy 5 bo'lim — pastki panel",
+      "w": 240,
+      "x": 0,
+      "y": 1140
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 3680,
+      "text": "O'qish va imtihon",
+      "w": 240,
+      "x": 0,
+      "y": 2404
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 1800,
+      "text": "O'yin, masala va profil",
+      "w": 240,
+      "x": 0,
+      "y": 3668
+    },
+    "t4": {
+      "kind": "title1",
+      "maxW": 1330,
+      "text": "Umumiy",
+      "w": 240,
+      "x": 0,
+      "y": 4932
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Bugun.dc.html",
+    "Oqish.dc.html",
+    "Oyin.dc.html",
+    "Masalalar.dc.html",
+    "Men.dc.html",
+    "Dars.dc.html",
+    "Testlar.dc.html",
+    "Dtm.dc.html",
+    "Sertifikat.dc.html",
+    "SertTest.dc.html",
+    "SertMoslash.dc.html",
+    "SertOchiq.dc.html",
+    "SertNatija.dc.html",
+    "Duel.dc.html",
+    "Masala.dc.html",
+    "Reyting.dc.html",
+    "OtaOna.dc.html",
+    "Qidiruv.dc.html",
+    "Kichkintoy.dc.html",
+    "Tab.dc.html"
+  ],
+  "pages": [],
+  "title": "Aql Zone — yangi dizayn"
+}

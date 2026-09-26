@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Sertifikat — test savoli</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Baloo+2:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:'Baloo 2',system-ui,sans-serif;color:#1a2450}
+a{color:inherit;text-decoration:none}a:hover{color:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #f4f6fb; display: flex; flex-direction: column; gap: 14px; padding: 20px 18px 22px; font-family: 'Baloo 2', system-ui, sans-serif; color: #1a2450; overflow: hidden;">
+  <header style="display: flex; align-items: center; gap: 10px; min-height: 48px;">
+    <a href="Sertifikat.dc.html" aria-label="Chiqish — javoblar saqlanadi" style="width: 44px; height: 44px; border-radius: 14px; background: #ffffff; display: grid; place-items: center; box-shadow: 0 3px 0 #c4d2f0;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a2450" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </a>
+    <span style="flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'Fredoka', sans-serif; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a2450" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 2M9 2h6"></path></svg>
+      1:34:12
+    </span>
+    <a href="SertNatija.dc.html" style="display: grid; place-items: center; min-height: 44px; padding: 0 12px; border-radius: 14px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0; font-size: 14.5px; font-weight: 700; color: #2c56b8;">Yakunlash</a>
+  </header>
+
+  <div role="img" aria-label="45 topshiriqdan 23 tasiga javob berilgan, hozir 12-topshiriq" style="display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 3px;">
+    <sc-for list="{{katak}}" as="k" hint-placeholder-count="45">
+      <span style="{{k}}"></span>
+    </sc-for>
+  </div>
+  <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #5f6d8e;">
+    <span>Test · 1–32</span><span>Moslash · 33–35</span><span>Ochiq · 36–45</span>
+  </div>
+
+  <div style="display: flex; align-items: baseline; justify-content: space-between;">
+    <span style="font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;">12 <span style="color: #5f6d8e; font-size: 15px;">/ 45</span></span>
+    <span style="padding: 3px 10px; border-radius: 999px; background: rgba(26,40,90,0.07); font-size: 13px; font-weight: 700; color: #4d5a86;">Test · 2,2 ball</span>
+  </div>
+
+  <div style="padding: 20px 18px; border-radius: 24px; background: #ffffff; box-shadow: inset 0 0 0 1.5px rgba(26,40,90,0.08);">
+    <p style="margin: 0; font-size: 18px; line-height: 1.5;">x² − 5x + 6 = 0 tenglama ildizlarining yig'indisini toping.</p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <sc-for list="{{variantlar}}" as="v" hint-placeholder-count="4">
+      <button type="button" aria-pressed="{{v.tanlangan}}" style="{{v.uslub}}">
+        <span style="{{v.harfUslub}}">{{v.harf}}</span>
+        <span style="font-family: 'Fredoka', sans-serif; font-size: 20px; font-weight: 700;">{{v.qiymat}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="margin-top: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+    <button type="button" style="min-height: 54px; border: 0; border-radius: 16px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0; font-family: 'Fredoka', sans-serif; font-size: 17px; font-weight: 600; color: #1a2450;">Oldingi</button>
+    <a href="SertMoslash.dc.html" style="display: grid; place-items: center; min-height: 54px; border-radius: 16px; background: #3b6fe0; box-shadow: 0 4px 0 #2c56b8; font-family: 'Fredoka', sans-serif; font-size: 17px; font-weight: 700; color: #ffffff;">Keyingi</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Imtihon paytida to'g'ri/xato KO'RSATILMAYDI: faqat javob berilgan-berilmagani.
+    const berilgan = new Set([1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,18,19,20,22,23,24,33,36]);
+    const katak = Array.from({ length: 45 }, (_, i) => {
+      const n = i + 1;
+      const asos = 'display: block; height: 14px; border-radius: 4px; ';
+      if (n === 12) return asos + 'background: #ffffff; box-shadow: inset 0 0 0 2.5px #3b6fe0;';
+      return asos + (berilgan.has(n) ? 'background: #3b6fe0;' : 'background: rgba(26,40,90,0.1);');
+    });
+    const V = [['A', '−5'], ['B', '5'], ['C', '6'], ['D', '1']];
+    const tan = 'B';
+    return {
+      katak,
+      variantlar: V.map(([harf, qiymat]) => {
+        const t = harf === tan;
+        return {
+          harf, qiymat, tanlangan: t ? 'true' : 'false',
+          uslub: 'display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 0 14px; border: 0; border-radius: 18px; text-align: left; color: #1a2450; '
+            + (t ? 'background: rgba(59,111,224,0.1); box-shadow: 0 0 0 2.5px #3b6fe0;' : 'background: #ffffff; box-shadow: 0 3px 0 #c4d2f0;'),
+          harfUslub: 'width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-family: Fredoka, sans-serif; font-weight: 700; font-size: 16px; '
+            + (t ? 'background: #3b6fe0; color: #ffffff;' : 'background: rgba(26,40,90,0.07); color: #4d5a86;'),
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

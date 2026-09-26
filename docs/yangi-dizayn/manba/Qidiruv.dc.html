@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Qidiruv</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Baloo+2:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:'Baloo 2',system-ui,sans-serif;color:#1a2450}
+a{color:inherit;text-decoration:none}a:hover{color:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #f4f6fb; display: flex; flex-direction: column; gap: 16px; padding: 20px 18px 24px; font-family: 'Baloo 2', system-ui, sans-serif; color: #1a2450; overflow: hidden;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <label for="q" style="flex-grow: 1; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; border-radius: 18px; background: #ffffff; box-shadow: 0 0 0 2px #3b6fe0;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a2450" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input id="q" type="search" value="kasr" aria-label="Qidiruv" style="flex-grow: 1; border: 0; outline: none; background: transparent; font-family: 'Baloo 2', sans-serif; font-size: 18px; font-weight: 600; color: #1a2450; min-width: 0;">
+    </label>
+    <a href="Bugun.dc.html" style="display: grid; place-items: center; min-height: 44px; padding: 0 6px; font-size: 15px; font-weight: 700; color: #2c56b8;">Bekor</a>
+  </div>
+
+  <sc-for list="{{guruhlar}}" as="g" hint-placeholder-count="3">
+    <section style="display: flex; flex-direction: column; gap: 8px;">
+      <h2 style="margin: 0; padding-left: 4px; display: flex; gap: 8px; align-items: baseline; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #5f6d8e;">{{g.nom}} <span style="letter-spacing: 0;">{{g.son}}</span></h2>
+      <div style="display: flex; flex-direction: column; border-radius: 20px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0; overflow: hidden;">
+        <sc-for list="{{g.natija}}" as="n" hint-placeholder-count="2">
+          <a href="{{n.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 6px 14px; border-top: {{n.chiziq}};">
+            <img src="{{g.ic}}" alt="" style="width: 28px; height: 28px;">
+            <span style="flex-grow: 1; display: flex; flex-direction: column;"><span style="font-size: 15.5px; font-weight: 700;">{{n.nom}}</span><span style="font-size: 13px; color: #5f6d8e;">{{n.yol}}</span></span>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const G = [
+      { nom: 'Darslar', son: '3', ic: '/belgi/map.webp', natija: [
+        { nom: 'Oddiy kasrlar', yol: "O'qish › 5-sinf › 4-bob", href: 'Dars.dc.html' },
+        { nom: "Kasrlarni qo'shish", yol: "O'qish › 5-sinf › 4-bob", href: 'Dars.dc.html' },
+        { nom: "O'nli kasrlar", yol: "O'qish › 5-sinf › 6-bob", href: 'Dars.dc.html' },
+      ] },
+      { nom: 'Formulalar', son: '1', ic: '/belgi/xarita.webp', natija: [
+        { nom: "Kasrning asosiy xossasi", yol: "O'qish › Formulalar", href: 'Oqish.dc.html' },
+      ] },
+      { nom: 'Masalalar', son: '2', ic: '/belgi/pencil.webp', natija: [
+        { nom: "Pitsaning 3/8 qismi", yol: 'Masalalar › 5-sinf', href: 'Masala.dc.html' },
+        { nom: "Kasr va foiz", yol: 'Masalalar › 6-sinf', href: 'Masala.dc.html' },
+      ] },
+    ];
+    return {
+      guruhlar: G.map((g) => ({ ...g, natija: g.natija.map((n, i) => ({ ...n, chiziq: i ? '1px solid rgba(26,40,90,0.08)' : '0' })) })),
+    };
+  }
+}
+</script>
+</body>
+</html>

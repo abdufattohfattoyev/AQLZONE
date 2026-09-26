@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>DTM — variantlar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Baloo+2:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:'Baloo 2',system-ui,sans-serif;color:#1a2450}
+a{color:inherit;text-decoration:none}a:hover{color:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #f4f6fb; display: flex; flex-direction: column; gap: 14px; padding: 20px 18px 22px; font-family: 'Baloo 2', system-ui, sans-serif; color: #1a2450; overflow: hidden;">
+  <header style="display: flex; align-items: center; gap: 12px; min-height: 48px;">
+    <a href="Testlar.dc.html" aria-label="Orqaga" style="width: 44px; height: 44px; border-radius: 14px; background: #ffffff; display: grid; place-items: center; box-shadow: 0 3px 0 #c4d2f0;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a2450" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <h1 style="margin: 0; flex-grow: 1; font-family: 'Fredoka', sans-serif; font-size: 22px;">Imtihonga tayyorgarlik</h1>
+  </header>
+
+  <nav aria-label="Imtihon turi" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 16px; background: rgba(26,40,90,0.07);">
+    <a href="Dtm.dc.html" aria-current="page" style="display: grid; place-items: center; min-height: 40px; border-radius: 12px; background: #ffffff; font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 700; color: #1a2450; box-shadow: 0 2px 0 #c4d2f0;">DTM</a>
+    <a href="Sertifikat.dc.html" style="display: grid; place-items: center; min-height: 40px; border-radius: 12px; font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 600; color: #4d5a86;">Milliy sertifikat</a>
+  </nav>
+
+  <section style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 24px; background: #ffffff; box-shadow: 0 3px 0 #c4d2f0;">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+      <div style="display: flex; flex-direction: column;">
+        <span style="font-size: 13px; font-weight: 700; color: #5f6d8e;">O'rtacha · oxirgi 5 variant</span>
+        <span style="font-family: 'Fredoka', sans-serif; font-size: 34px; font-weight: 700; line-height: 1.05;">22 <span style="font-size: 16px; color: #5f6d8e;">/ 30 to'g'ri</span></span>
+      </div>
+      <span style="font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; color: #2c56b8;">73%</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 13px; font-weight: 700; color: #5f6d8e;">Ko'p xato qilinayotgan mavzular</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+        <span style="padding: 5px 12px; border-radius: 999px; background: rgba(26,40,90,0.07); font-size: 13.5px; font-weight: 700;">Logarifmlar · 4 xato</span>
+        <span style="padding: 5px 12px; border-radius: 999px; background: rgba(26,40,90,0.07); font-size: 13.5px; font-weight: 700;">Trigonometriya · 3</span>
+        <span style="padding: 5px 12px; border-radius: 999px; background: rgba(26,40,90,0.07); font-size: 13.5px; font-weight: 700;">Progressiya · 2</span>
+      </div>
+      <a href="Oqish.dc.html" style="align-self: flex-start; display: grid; place-items: center; min-height: 40px; padding: 0 14px; border-radius: 12px; background: rgba(59,111,224,0.1); color: #2c56b8; font-size: 14.5px; font-weight: 700;">Shu mavzularni takrorlash</a>
+    </div>
+  </section>
+
+  <div style="display: flex; align-items: baseline; justify-content: space-between;">
+    <h2 style="margin: 0; font-family: 'Fredoka', sans-serif; font-size: 19px;">Variantlar</h2>
+    <span style="font-size: 13px; color: #5f6d8e;">30 savol · 60 daqiqa</span>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">
+    <sc-for list="{{variantlar}}" as="v" hint-placeholder-count="12">
+      <a href="Dtm.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 58px; border-radius: 16px; background: #ffffff; box-shadow: 0 2px 0 #c4d2f0;">
+        <span style="font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;">{{v.n}}</span>
+        <span style="font-size: 12px; font-weight: 700; color: {{v.rang}};">{{v.yozuv}}</span>
+      </a>
+    </sc-for>
+  </div>
+  <p style="margin: 0; font-size: 12.5px; line-height: 1.4; color: #5f6d8e;">Har variant 7–11-sinf dasturidan aralash. Har savoldan keyin to'g'ri yoki xato darhol ko'rsatiladi.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const eng = { 1: 19, 2: 21, 3: 24, 4: 22, 5: 23, 6: 21 };
+    return {
+      variantlar: Array.from({ length: 12 }, (_, i) => {
+        const b = eng[i + 1];
+        return { n: i + 1, yozuv: b ? b + '/30' : '—', rang: b ? '#4d5a86' : '#8a93ad' };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>
