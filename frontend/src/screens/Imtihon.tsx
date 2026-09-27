@@ -18,18 +18,26 @@
  */
 import { useEffect, useState } from "react";
 import { ImtihonSarlavha } from "../components/ImtihonTur";
+import { ImtEshiklar } from "../components/HaftalikReyting";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { OLCHAM, VARIANTLAR, daraja, engYaxshi, sinxronla, zaifMavzular } from "../lib/imtihon";
 import type { ServerTarix } from "../lib/imtihon";
 
-export function Imtihon({ onVariant, onSertifikat, onChiq, onTakrorla }: {
+export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, onKorish }: {
   onVariant: (n: number) => void;
   /** Milliy sertifikat variantlariga o'tish (`components/ImtihonTur.tsx`). */
   onSertifikat: () => void;
   onChiq: () => void;
-  /** Zaif mavzu kursining bob testlari (kurs id'si). */
-  onTakrorla: (kursId: string) => void;
+  /**
+   * Zaif mavzular mashqi. Ilgari "takrorlash" eng zaif mavzu KURSINING
+   * bob testlari ro'yxatiga olib borardi — u yerda odam bobni yana o'zi
+   * qidirardi va boshqa zaif mavzular umuman kirmasdi.
+   */
+  onMashq: () => void;
+  onReyting: () => void;
+  /** Oxirgi urinishni ko'rib chiqish (variant raqami). */
+  onKorish: (n: number) => void;
 }) {
   // Tarix SERVERDAN: telefon almashsa ham yo'qolmaydi. Ochilganda
   // qurilmadagi urinishlar ham yuboriladi — eski tarix shu yo'l bilan
@@ -58,6 +66,8 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onTakrorla }: {
         <ImtihonSarlavha joriy="dtm" onTanla={onSertifikat} onChiq={onChiq} />
       </div>
 
+      {/* Chap ustun: natija va natijadan keyingi eshiklar (reyting, ko'rib chiqish). */}
+      <div className="contents kom:flex kom:flex-col kom:gap-3.5">
       <div className="flex flex-col gap-2.5 rounded-clay bg-karta p-4 shadow-clay-sm min-[360px]:p-[18px]">
         {d ? (
           <>
@@ -90,13 +100,16 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onTakrorla }: {
                 </span>
               ))}
             </div>
-            <button type="button" onClick={() => onTakrorla(zaif[0]!.kursId)} data-tahlil="DTM: mavzularni takrorlash"
+            <button type="button" onClick={onMashq} data-tahlil="DTM: mavzularni takrorlash"
               className="clay-press mt-0.5 min-h-11 self-start rounded-xl bg-brand-blue/10 px-4 text-[14.5px] font-bold
                          text-brand-blue-t">
-              {t("imtZaifTakrorla")}
+              {t("zaifMashqTugma")}
             </button>
           </>
         )}
+      </div>
+
+      <ImtEshiklar tur="dtm" onReyting={onReyting} onKorish={onKorish} />
       </div>
 
       <div className="contents kom:flex kom:flex-col kom:gap-3.5">

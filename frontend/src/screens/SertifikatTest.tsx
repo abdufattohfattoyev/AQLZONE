@@ -32,13 +32,18 @@ import { courseById } from "../lib/curriculum";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
-import { yolDars } from "../lib/yollar";
+import { yolDars, yolImtMashq, yolImtReyting } from "../lib/yollar";
 import { useFaollik } from "../lib/faollik";
 import type { SJavob, SSavol, SVariant } from "../lib/sertifikat";
 import {
   BALL, DAQIQA, HARFLAR, berilgan, daraja, joriyniOchir, joriyniOqi, joriyniSaqla, keyingiDaraja,
-  maksBall, natijaSaqla, savolBali, sonTogrimi, variantYasa, yaxlit,
+  maksBall, natijaSaqla, savolBali, serverga, sonTogrimi, variantYasa, yaxlit,
 } from "../lib/sertifikat";
+import { javobSaqla, mavzuXatoYoz } from "../lib/imtihon";
+import type { MavzuXato } from "../lib/imtihon";
+import { sertSavollari } from "../lib/korish";
+import { KoribChiqish } from "../components/KoribChiqish";
+import { ReytingKarta } from "../components/HaftalikReyting";
 
 /**
  * Natija serverda qaysi "bob/dars" bo'lib yoziladi. Blok test 98,
@@ -97,6 +102,10 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
   /** Yakunlanganda — necha sekund ishlandi (natija sarlavhasida). */
   const [sarflandi, setSarflandi] = useState(0);
   const [sorov, setSorov] = useState(false);
+  /** Natijadan keyin "Ko'rib chiqish" — orqaga tugmasi avval uni yopadi (`Blok.tsx` dagidek). */
+  const [korish, setKorish] = useState(false);
+  /** Serverga yozilgani — reyting kartasi shundan keyin so'raladi. */
+  const [yozildi, setYozildi] = useState<{ tayyor: Promise<void>; vaqt: number } | null>(null);
 
   // Soat — `Blok.tsx` dagidek: sanoq emas, TUGASH PAYTI eslanadi va
   // qolgan vaqt har safar `Date.now()` dan hisoblanadi (fondagi yorliq
@@ -119,11 +128,24 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
     const ball = yaxlit(v.savollar.reduce((a, S, i) => a + savolBali(S, j[i]), 0));
     const sekund = Math.round((Date.now() - boshlandi.current) / 1000);
     setSarflandi(sekund);
-    natijaSaqla({ variant: v.n, ball, sekund, vaqt: Date.now() });
+    const vaqt = Date.now();
+    natijaSaqla({ variant: v.n, ball, sekund, vaqt });
 
     // `/boshqaruv` ko'rsin — nechta variant ishlandi, qanday natija.
     // Yulduz yo'q: bu o'lchov, mukofot emas (`Blok.tsx` dagi sabab).
     const toliq = v.savollar.filter((S, i) => savolBali(S, j[i]) === maksBall(S)).length;
+
+    // Serverga — haftalik reyting va tarix; javoblar — keyingi ko'rib
+    // chiqish uchun; zaif mavzular — ro'yxat va mashq uchun.
+    setYozildi({ tayyor: serverga({ variant: v.n, ball, sekund, vaqt, togri: toliq, jami }), vaqt });
+    javobSaqla("sert", v.n, j);
+    const m = new Map<string, MavzuXato>();
+    sertSavollari(v, j).forEach((q) => {
+      if (q.togri) return;
+      const k = `${q.s.kursId}|${q.s.mavzu}`;
+      m.set(k, { mavzu: q.s.mavzu, kursId: q.s.kursId, ui: q.s.ui, xato: (m.get(k)?.xato ?? 0) + 1 });
+    });
+    mavzuXatoYoz([...m.values()], "sert");
     api.postResult({
       grade: 11,
       unit: SERT_JOY,
@@ -157,9 +179,19 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
     if (qolgan === 0 && !tugadi) yakunla(javoblar);
   }, [qolgan, tugadi, javoblar, yakunla]);
 
-  useOrqaga(onExit);
+  useOrqaga(korish ? () => setKorish(false) : onExit);
 
-  if (tugadi) return <Natija v={v} javoblar={javoblar} sekund={sarflandi} onQayta={onQayta} onExit={onExit} />;
+  if (tugadi && korish) {
+    return (
+      <KoribChiqish sarlavha={`${t("imtihonTurSert")} · ${t("imtihonVariant", { n: v.n })}`}
+        savollar={sertSavollari(v, javoblar)} onYop={() => setKorish(false)} />
+    );
+  }
+  if (tugadi) {
+    return <Natija v={v} javoblar={javoblar} sekund={sarflandi} yozildi={yozildi}
+      onKorish={() => { tebrat("tanlov"); setKorish(true); window.scrollTo(0, 0); }}
+      onQayta={onQayta} onExit={onExit} />;
+  }
 
   const S = v.savollar[idx];
   const j = javoblar[idx];
@@ -467,8 +499,10 @@ interface Qism {
  * keyingisigacha farq, uch bo'lim, ball yo'qotilgan mavzular, xatolar.
  * Hisob o'zgarmadi (`lib/sertifikat.ts`) — faqat ko'rinish.
  */
-function Natija({ v, javoblar, sekund, onQayta, onExit }: {
-  v: SVariant; javoblar: SJavob[]; sekund: number; onQayta: () => void; onExit: () => void;
+function Natija({ v, javoblar, sekund, yozildi, onKorish, onQayta, onExit }: {
+  v: SVariant; javoblar: SJavob[]; sekund: number;
+  yozildi: { tayyor: Promise<void>; vaqt: number } | null;
+  onKorish: () => void; onQayta: () => void; onExit: () => void;
 }) {
   const nav = useNavigate();
   const [yechimda, setYechimda] = useState<BlokSavol | null>(null);
@@ -568,6 +602,20 @@ function Natija({ v, javoblar, sekund, onQayta, onExit }: {
         <Bolim nom={t("sertNatijaOchiq")} {...bolim("o")} />
       </div>
 
+      {yozildi && (
+        <ReytingKarta tur="sert" variant={v.n} tayyor={yozildi.tayyor} urinishVaqt={yozildi.vaqt}
+          onOch={() => nav(yolImtReyting("sert", v.n))} />
+      )}
+
+      {/* Hamma 45 topshiriq — shart, belgilangani va to'g'risi, yechim. */}
+      <button type="button" onClick={onKorish} data-tahlil="Sertifikat: ko'rib chiqish"
+        className="clay-press flex min-h-[52px] w-full items-center gap-3 rounded-[20px] bg-karta px-4 text-left
+                   shadow-clay-sm">
+        <Icon name="search" size={20} className="shrink-0 text-brand-blue-t" />
+        <span className="min-w-0 flex-1 font-display text-[16px]">{t("korishTugma")}</span>
+        <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+      </button>
+
       {mavzular.length > 0 && (
         <>
           <h2 className="mt-1 font-display text-[19px]">{t("sertYoqotildi")}</h2>
@@ -587,6 +635,15 @@ function Natija({ v, javoblar, sekund, onQayta, onExit }: {
               );
             })}
           </div>
+          <button type="button" onClick={() => nav(yolImtMashq("sert"))} data-tahlil="Sertifikat: zaif mavzular mashqi"
+            className="clay-press flex min-h-[52px] w-full items-center gap-3 rounded-[20px] bg-brand-blue/10 px-4
+                       text-left text-brand-blue-t">
+            <Icon name="repeat" size={19} className="shrink-0" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-display text-[15.5px]">{t("zaifMashqTugma")}</span>
+              <span className="block text-[12.5px] opacity-80">{t("zaifMashqIzoh")}</span>
+            </span>
+          </button>
         </>
       )}
 

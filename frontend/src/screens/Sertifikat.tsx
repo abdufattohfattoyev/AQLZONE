@@ -15,11 +15,14 @@
  * qaysi darajada ekanini va keyingisigacha qancha qolganini ko'radi.
  * Chegaralar qo'lda yozilmaydi — `DARAJA_SHKALA` dan (`lib/sertifikat.ts`).
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ImtihonSarlavha } from "../components/ImtihonTur";
+import { ImtEshiklar } from "../components/HaftalikReyting";
+import { zaifMavzular } from "../lib/imtihon";
 import { t } from "../lib/matn";
+import { kursMatn } from "../lib/tarjima/kurs";
 import {
-  DAQIQA, DARAJA_SHKALA, TUZILISH, VARIANTLAR, berilgan, daraja, engYaxshi, joriyniOqi, ortacha,
+  DAQIQA, DARAJA_SHKALA, TUZILISH, VARIANTLAR, berilgan, daraja, engYaxshi, joriyniOqi, ortacha, sinxronla,
 } from "../lib/sertifikat";
 
 const SAVOL_SONI = TUZILISH.y1 + TUZILISH.y2 + TUZILISH.o;
@@ -31,13 +34,21 @@ const ballYoz = (b: number) => b.toFixed(1).replace(".", ",");
 const POGONA = ["bg-brand-blue/25", "bg-brand-blue/35", "bg-brand-blue/50", "bg-brand-blue/65",
   "bg-brand-blue/80", "bg-brand-blue"];
 
-export function Sertifikat({ onVariant, onDtm, onChiq }: {
+export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKorish }: {
   onVariant: (n: number) => void;
   onDtm: () => void;
   onChiq: () => void;
+  /** Zaif mavzular mashqi (`screens/ImtihonQoshimcha.tsx`). */
+  onMashq: () => void;
+  onReyting: () => void;
+  onKorish: (n: number) => void;
 }) {
   // Bir marta o'qiladi: ekran ochiq turganda variant o'zgarmaydi.
   const [joriy] = useState(joriyniOqi);
+  const [zaif] = useState(() => zaifMavzular(3, "sert"));
+  // Qurilmadagi urinishlar serverga — yangilanishdan oldin ishlanganlari
+  // ham "birinchi urinish" bo'lib reytingni aldamasin (`lib/sertifikat.ts`).
+  useEffect(() => { void sinxronla(); }, []);
   const o = ortacha();
   const d = o ? daraja(o.ball) : null;
 
@@ -81,6 +92,26 @@ export function Sertifikat({ onVariant, onDtm, onChiq }: {
             <Shkala />
           </>
         )}
+
+        {/* Ko'p ball yo'qotilayotgan mavzular — DTM ro'yxatidagidek (`Imtihon.tsx`). */}
+        {zaif.length > 0 && (
+          <>
+            <div className="mt-1 text-[13px] font-bold text-ink-dim">{t("imtZaif")}</div>
+            <div className="flex flex-wrap gap-2">
+              {zaif.map((m) => (
+                <span key={`${m.kursId}|${m.mavzu}`}
+                  className="rounded-full bg-track px-3 py-1.5 text-[13.5px] font-semibold text-ink-soft">
+                  {t("imtZaifXato", { mavzu: kursMatn(m.mavzu).replace(/^\d+-bob\.\s*|^Глава \d+\.\s*/, ""), n: m.xato })}
+                </span>
+              ))}
+            </div>
+            <button type="button" onClick={onMashq} data-tahlil="Sertifikat: mavzularni takrorlash"
+              className="clay-press mt-0.5 min-h-11 self-start rounded-xl bg-brand-blue/10 px-4 text-[14.5px] font-bold
+                         text-brand-blue-t">
+              {t("zaifMashqTugma")}
+            </button>
+          </>
+        )}
       </div>
 
       {/* ---- yarim qolgan variant ---- */}
@@ -106,6 +137,7 @@ export function Sertifikat({ onVariant, onDtm, onChiq }: {
         </button>
       )}
 
+      <ImtEshiklar tur="sert" onReyting={onReyting} onKorish={onKorish} />
       </div>
       <div className="contents kom:flex kom:flex-col kom:gap-3.5">
       {/* ---- variantlar ---- */}

@@ -29,6 +29,7 @@
  * o'zgartiriladi.
  */
 import type { Answer } from "./activity";
+import { bilanProfil, sorov } from "./api";
 import { imtihonKurslari, manbalar, sinfOf, blokYasa } from "./blok";
 import type { BlokSavol, Manba } from "./blok";
 import { courseById } from "./curriculum";
@@ -274,6 +275,25 @@ export function natijaSaqla(n: SNatija): void {
   try {
     localStorage.setItem(KALIT, JSON.stringify([n, ...natijalar()].slice(0, CHEK)));
   } catch { /* xotira to'lgan — natija faqat ekranda qoladi */ }
+}
+
+/**
+ * Serverga — haftalik reyting va telefon almashganda tarix uchun
+ * (`core/imtihon.sert_yoz`). Ilgari natija faqat qurilmada edi.
+ * `togri`/`jami` — to'liq ball olingan topshiriqlar, ixtiyoriy.
+ */
+export function serverga(n: SNatija & { togri?: number; jami?: number }): Promise<void> {
+  return sorov("/api/v1/sertifikat/natija", bilanProfil({ ...n })).then(() => {}, () => {});
+}
+
+/**
+ * Qurilmadagi hamma urinishni yuboradi (takrorni server tashlaydi).
+ * Ro'yxat ochilganda chaqiriladi: yangilanishdan oldin ishlangan
+ * variantlar ham serverga yetadi va "birinchi urinish" qoidasi ularni
+ * ham biladi.
+ */
+export function sinxronla(): Promise<void> {
+  return sorov("/api/v1/sertifikat/natija", bilanProfil({ urinishlar: natijalar() })).then(() => {}, () => {});
 }
 
 export function engYaxshi(variant: number): SNatija | null {

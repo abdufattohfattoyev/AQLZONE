@@ -103,6 +103,37 @@ def imtihon_natija(request):
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
+def sertifikat_natija(request):
+    """Milliy sertifikat urinishlari — `imtihon_natija` ning ballik egizagi."""
+    from . import imtihon as IM
+
+    profil = _profil_tanla(request)
+    if request.method == "POST":
+        d = request.data if hasattr(request.data, "get") else {}
+        yangi = IM.sert_yoz(profil, d.get("urinishlar", d))
+        javob = IM.sert_royxat(profil)
+        javob["yangi"] = yangi
+        return Response(javob)
+    return Response(IM.sert_royxat(profil))
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def imtihon_reyting(request):
+    """Haftalik jadval: `?tur=dtm|sert` va ixtiyoriy `&variant=5`."""
+    from . import imtihon as IM
+
+    try:
+        variant = int(request.query_params.get("variant") or 0)
+    except ValueError:
+        variant = 0
+    variant = variant if 1 <= variant <= IM.VARIANTLAR else None
+    return Response(IM.haftalik_reyting(request.query_params.get("tur") or "dtm", variant,
+                                        _profil_tanla(request)))
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
 def sessiya_natija(request):
     """
     Talabaning sessiya urinishlari — telefon almashsa ham yo'qolmaydi.

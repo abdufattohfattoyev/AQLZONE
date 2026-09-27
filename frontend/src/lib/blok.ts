@@ -85,7 +85,14 @@ export const dtmBormi = (sinf: number): boolean => sinf === 11;
 export type Qamrov =
   | { tur: "hammasi" }
   | { tur: "bob"; kursId: string; ui: number }
-  | { tur: "imtihon" };
+  | { tur: "imtihon" }
+  /**
+   * Bir nechta bob — DTM yoki sertifikatdan keyingi ZAIF MAVZULAR
+   * mashqi (`screens/ZaifMashq.tsx`). Boblar turli sinf va kurslardan
+   * bo'lishi mumkin: imtihonda 8-sinf tenglamasi bilan 11-sinf
+   * logarifmi yonma-yon yiqitadi.
+   */
+  | { tur: "mavzular"; boblar: { kursId: string; ui: number }[] };
 
 /**
  * IMTIHON QAMROVI — qaysi sinflardan savol olinadi.
@@ -253,11 +260,18 @@ export function blokYasa(
    */
   boshqa?: { savol: number; daqiqa: number },
 ): Blok | null {
-  const kurslar = qamrov.tur === "imtihon" ? imtihonKurslari() : sinfKurslari(sinf);
+  const kurslar = qamrov.tur === "imtihon" ? imtihonKurslari()
+    : qamrov.tur === "mavzular" ? COURSES.filter((c) => qamrov.boblar.some((b) => b.kursId === c.id))
+      : sinfKurslari(sinf);
   if (!kurslar.length) return null;
 
   const hammasi: Manba[] = [];
-  if (qamrov.tur === "bob") {
+  if (qamrov.tur === "mavzular") {
+    for (const b of qamrov.boblar) {
+      const c = kurslar.find((x) => x.id === b.kursId);
+      if (c) hammasi.push(...manbalar(c, c.units, b.ui));
+    }
+  } else if (qamrov.tur === "bob") {
     const c = kurslar.find((x) => x.id === qamrov.kursId);
     if (!c) return null;
     hammasi.push(...manbalar(c, c.units, qamrov.ui));

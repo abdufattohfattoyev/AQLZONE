@@ -74,6 +74,8 @@ const YOPIQ = [
   // Sertifikat varianti — o'zining "Oldingi / Keyingi" tugmalari pastda
   // turadi va panel ularni yopib qo'yardi.
   /^\/sertifikat\/\d+$/,
+  // Zaif mavzular mashqi — soatli blok test, javob tugmalari pastda.
+  /^\/(imtihon|sertifikat)\/mashq$/,
   // Sessiya varianti — xuddi shunday, bir soatlik nazorat.
   /^\/sessiya\/[^/]+\/\d+$/,
   // Kunlik son — o'z klaviaturasi pastda, panel uni yopib qo'yardi.

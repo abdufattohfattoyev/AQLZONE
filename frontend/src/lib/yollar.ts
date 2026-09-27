@@ -136,6 +136,17 @@ export const yolImtihonVariant = (n: number) => `/imtihon/${n}`;
 export const yolSertifikat = () => "/sertifikat";
 export const yolSertifikatVariant = (n: number) => `/sertifikat/${n}`;
 
+/**
+ * DTM/sertifikat atrofidagi uch sahifa — ikkalasida bir xil tuzilish,
+ * shuning uchun `tur` bilan: haftalik reyting, zaif mavzular mashqi va
+ * oxirgi urinishni ko'rib chiqish. Bo'lim tabi ("O'qish") o'zgarmaydi.
+ */
+const imtBosh = (tur: "dtm" | "sert") => (tur === "dtm" ? "/imtihon" : "/sertifikat");
+export const yolImtReyting = (tur: "dtm" | "sert", variant?: number) =>
+  `${imtBosh(tur)}/reyting${variant ? `?variant=${variant}` : ""}`;
+export const yolImtMashq = (tur: "dtm" | "sert") => `${imtBosh(tur)}/mashq`;
+export const yolImtKorish = (tur: "dtm" | "sert", n: number) => `${imtBosh(tur)}/${n}/tahlil`;
+
 /** Tulki shaharchasi; `pid` bilan — sherikning shaharchasiga mehmonga. */
 export const yolShaharcha = (pid?: number) => (pid ? `/oyinlar/shaharcha/${pid}` : "/oyinlar/shaharcha");
 

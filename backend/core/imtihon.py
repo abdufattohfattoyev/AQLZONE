@@ -13,10 +13,16 @@ Ikki so'rov:
                ham shu yo'l bilan bir marta ko'chiriladi)
     royxat     o'z natijalari: oxirgi urinishlar, har variantdagi eng
                yaxshisi va oxirgi beshtaning o'rtachasi
+    reyting    shu haftaning jadvali — DTM yoki milliy sertifikat,
+               bitta variant yoki hammasi (`haftalik_reyting`)
 """
 from __future__ import annotations
 
+from datetime import datetime, time, timedelta
+
 from django.db import IntegrityError, transaction
+from django.db.models import Exists, OuterRef
+from django.utils import timezone
 
 from .models import ImtihonNatija, Profile
 
@@ -101,7 +107,7 @@ def _foiz(togri: int, jami: int) -> int:
 
 def royxat(profil: Profile) -> dict:
     """O'z natijalari: oxirgilar, har variantdagi eng yaxshisi va o'rtacha."""
-    qs = ImtihonNatija.objects.filter(profile=profil, kurs="").order_by("-mijoz_vaqt")
+    qs = ImtihonNatija.objects.filter(profile=profil, kurs="", tur="").order_by("-mijoz_vaqt")
     oxirgilar = [{
         "variant": n.variant, "togri": n.togri, "jami": n.jami,
         "sekund": n.sekund, "vaqt": n.mijoz_vaqt,
@@ -137,3 +143,163 @@ def sessiya_royxat(profil: Profile) -> dict:
         "kurs": n.kurs, "variant": n.variant, "togri": n.togri, "jami": n.jami,
         "sekund": n.sekund, "vaqt": n.mijoz_vaqt,
     } for n in qs]}
+
+
+# ------------------------------------------------------------ sertifikat
+#
+# Milliy sertifikat varianti (`frontend/src/lib/sertifikat.ts`). Jadval
+# o'sha (`tur="sert"`): urinishning tuzilishi deyarli bir xil, faqat
+# natija 100 ballik va kasr — savollarning og'irligi har xil (1,3 / 2,2 /
+# 1,5 / 1,7). `togri` — to'liq ball olingan topshiriqlar soni.
+
+#: Sertifikat varianti uch soatlik — ehtiyot bilan to'rt soatgacha.
+SERT_MAX_SEKUND = 4 * 3600
+
+
+def _sert_toza(d: dict) -> dict | None:
+    if not isinstance(d, dict):
+        return None
+    variant = _butun(d.get("variant"), 1, VARIANTLAR)
+    vaqt = _butun(d.get("vaqt"), 1, 10 ** 14)
+    try:
+        ball = round(float(d.get("ball")), 1)
+    except (TypeError, ValueError):
+        return None
+    if variant is None or vaqt is None or not 0 <= ball <= 100:
+        return None
+    jami = _butun(d.get("jami"), 1, MAX_SAVOL) or 45
+    togri = _butun(d.get("togri"), 0, jami) or 0
+    sekund = _butun(d.get("sekund"), 0, SERT_MAX_SEKUND)
+    return {"variant": variant, "jami": jami, "togri": togri, "ball": ball, "tur": "sert",
+            "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt}
+
+
+def sert_yoz(profil: Profile, urinishlar) -> int:
+    """Sertifikat urinishlarini yozadi (takror `vaqt` jimgina tashlanadi)."""
+    if isinstance(urinishlar, dict):
+        urinishlar = [urinishlar]
+    if not isinstance(urinishlar, list):
+        return 0
+    yangi = 0
+    for d in urinishlar[:MAX_BIR_YOLA]:
+        t = _sert_toza(d)
+        if not t:
+            continue
+        try:
+            with transaction.atomic():
+                ImtihonNatija.objects.create(profile=profil, **t)
+            yangi += 1
+        except IntegrityError:
+            continue
+    return yangi
+
+
+def sert_royxat(profil: Profile) -> dict:
+    """O'z sertifikat natijalari — `royxat` ning ballik egizagi."""
+    qs = ImtihonNatija.objects.filter(profile=profil, tur="sert").order_by("-mijoz_vaqt")
+    oxirgilar = [{"variant": n.variant, "ball": n.ball or 0, "sekund": n.sekund, "vaqt": n.mijoz_vaqt}
+                 for n in qs[:OXIRGI]]
+    eng: dict[int, float] = {}
+    for n in qs.only("variant", "ball"):
+        if (n.ball or 0) > eng.get(n.variant, -1):
+            eng[n.variant] = n.ball or 0
+    besh = oxirgilar[:5]
+    ortacha = round(sum(x["ball"] for x in besh) / len(besh), 1) if besh else None
+    return {"oxirgilar": oxirgilar, "eng_yaxshi": {str(k): v for k, v in eng.items()},
+            "ortacha": ortacha, "jami": qs.count()}
+
+
+# ------------------------------------------------------------ haftalik reyting
+#
+# "Shu hafta kim qanday ishladi" — variant bo'yicha va umumiy.
+#
+# FAQAT BIRINCHI URINISH. Variant raqamdan yasaladi va har safar bir xil
+# chiqadi: ikkinchi urinishda odam javoblarni allaqachon ko'rgan (natija
+# ekranida hammasi ochiladi). Oxirgi yoki eng yaxshi urinish hisoblansa,
+# jadval "kim ko'proq qayta ishladi" degan ro'yxatga aylanardi. Test
+# to'plamida ham shunday (`TestIshlash`).
+#
+# Hafta — dushanba 00:00 dan (Toshkent vaqti). Har dushanba jadval
+# bo'shaydi: yangi kelgan ham birinchi bo'la oladi.
+
+#: Jadvalda nechta qator qaytariladi. "Men" bu yerga sig'masa — alohida.
+REYTING_QATOR = 50
+TURLAR = {"dtm": "", "sert": "sert"}
+
+
+def hafta_boshi(hozir: datetime | None = None) -> datetime:
+    mahalliy = timezone.localtime(hozir or timezone.now())
+    dushanba = mahalliy.date() - timedelta(days=mahalliy.weekday())
+    return timezone.make_aware(datetime.combine(dushanba, time.min), mahalliy.tzinfo)
+
+
+def _birinchilar(tur: str, boshi: datetime):
+    """Shu hafta yozilgan va o'z variantidagi BIRINCHI bo'lgan urinishlar."""
+    oldingi = ImtihonNatija.objects.filter(
+        profile=OuterRef("profile"), variant=OuterRef("variant"), tur=tur, kurs="",
+        mijoz_vaqt__lt=OuterRef("mijoz_vaqt"))
+    return (ImtihonNatija.objects.filter(tur=tur, kurs="", created_at__gte=boshi)
+            .annotate(oldin=Exists(oldingi)).filter(oldin=False).select_related("profile"))
+
+
+def _kalit(n: ImtihonNatija) -> tuple:
+    """Saralash: ball (sertifikat) yoki foiz (DTM) — ko'pi oldin, keyin tezrog'i."""
+    natija = n.ball if n.tur == "sert" else (n.togri / n.jami if n.jami else 0)
+    return (-(natija or 0), n.sekund, n.mijoz_vaqt)
+
+
+def haftalik_reyting(tur_nomi: str, variant: int | None, men: Profile) -> dict:
+    from .duel import OZIM_NOMLARI
+
+    def ism(p: Profile) -> str:
+        # Standart nom ("Men") — bo'sh: mijoz o'z tilida "Ishtirokchi"
+        # yozadi. `korinadigan_ism` dagi "Do'stingiz" duelga mos, lekin
+        # umumiy jadvalda notanish odamni "do'stingiz" deb atardi.
+        nom = (p.name or "").strip()
+        return "" if nom.lower() in OZIM_NOMLARI else nom
+
+    tur_nomi = tur_nomi if tur_nomi in TURLAR else "dtm"
+    tur = TURLAR[tur_nomi]
+    boshi = hafta_boshi()
+    hammasi = list(_birinchilar(tur, boshi))
+
+    # Qaysi variantda nechta odam — jadval ustidagi tanlov uchun.
+    variantlar: dict[str, int] = {}
+    for n in hammasi:
+        variantlar[str(n.variant)] = variantlar.get(str(n.variant), 0) + 1
+
+    if variant:
+        tanlangan = [n for n in hammasi if n.variant == variant]
+    else:
+        # Umumiy: har odamning shu haftadagi ENG YAXSHI birinchi urinishi.
+        eng: dict[int, ImtihonNatija] = {}
+        for n in hammasi:
+            bor = eng.get(n.profile_id)
+            if bor is None or _kalit(n) < _kalit(bor):
+                eng[n.profile_id] = n
+        tanlangan = list(eng.values())
+    tanlangan.sort(key=_kalit)
+
+    def qator(i: int, n: ImtihonNatija) -> dict:
+        q = {
+            "orin": i + 1, "ism": ism(n.profile), "variant": n.variant,
+            "togri": n.togri, "jami": n.jami, "ball": n.ball, "sekund": n.sekund,
+            "men": n.profile_id == men.pk,
+        }
+        # O'zimniki — qaysi urinish jadvalga kirgani: natija ekrani
+        # "bu qayta ishlash, hisobga birinchisi kirdi" deb ayta olsin.
+        if q["men"]:
+            q["vaqt"] = n.mijoz_vaqt
+        return q
+
+    meniki = next((qator(i, n) for i, n in enumerate(tanlangan) if n.profile_id == men.pk), None)
+    return {
+        "tur": tur_nomi,
+        "variant": variant,
+        "hafta_boshi": boshi.date().isoformat(),
+        "ishlagan": len(tanlangan),
+        "variantlar": variantlar,
+        "qatorlar": [qator(i, n) for i, n in enumerate(tanlangan[:REYTING_QATOR])],
+        # O'z o'rni — jadvalga sig'masa ham ko'rinsin.
+        "meniki": meniki,
+    }

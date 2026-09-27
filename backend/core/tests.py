@@ -7773,6 +7773,92 @@ class ImtihonNatijaTest(TestCase):
         self.assertIsNone(j["ortacha"])
 
 
+class ImtihonReytingTest(TestCase):
+    """Sertifikat natijasi serverda va DTM/sertifikatning haftalik jadvali."""
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def dtm(self, h, variant, togri, vaqt, sekund=1000):
+        return self.client.post("/api/v1/imtihon/natija",
+                                {"variant": variant, "togri": togri, "jami": 30, "sekund": sekund, "vaqt": vaqt},
+                                content_type="application/json", **h)
+
+    def sert(self, h, variant, ball, vaqt, sekund=5000):
+        return self.client.post("/api/v1/sertifikat/natija",
+                                {"variant": variant, "ball": ball, "togri": 30, "jami": 45, "sekund": sekund,
+                                 "vaqt": vaqt},
+                                content_type="application/json", **h)
+
+    def reyting(self, h, tur="dtm", variant=None):
+        q = f"?tur={tur}" + (f"&variant={variant}" if variant else "")
+        return self.client.get(f"/api/v1/imtihon/reyting{q}", **h).json()
+
+    def test_sertifikat_serverda_va_dtm_tarixiga_aralashmaydi(self):
+        h = self.kir("dev-sert-aaaa1111bbbb")
+        j = self.sert(h, 4, 76.84, 100).json()
+        self.assertEqual(j["yangi"], 1)
+        self.assertEqual(j["eng_yaxshi"]["4"], 76.8)
+        self.assertEqual(j["ortacha"], 76.8)
+        self.assertEqual(self.client.get("/api/v1/imtihon/natija", **h).json()["jami"], 0)
+
+    def test_sertifikat_yaroqsiz_ball_tashlanadi(self):
+        h = self.kir("dev-sert-cccc2222dddd")
+        self.assertEqual(self.sert(h, 1, 140, 1).json()["yangi"], 0)
+        self.assertEqual(self.sert(h, 1, "abc", 2).json()["yangi"], 0)
+        self.assertEqual(self.sert(h, 13, 50, 3).json()["yangi"], 0)
+
+    def test_variant_jadvali_birinchi_urinish_bilan(self):
+        """Qayta ishlangan (javobi ko'rilgan) urinish jadvalni o'zgartirmaydi."""
+        a, b = self.kir("dev-rey-aaaa1111bbbb"), self.kir("dev-rey-cccc2222dddd")
+        self.dtm(a, 5, 20, 10)
+        self.dtm(a, 5, 30, 20)          # qayta ishlash — hisobga kirmaydi
+        self.dtm(b, 5, 25, 15)
+        j = self.reyting(a, variant=5)
+        self.assertEqual(j["ishlagan"], 2)
+        self.assertEqual([q["togri"] for q in j["qatorlar"]], [25, 20])
+        self.assertEqual(j["meniki"]["orin"], 2)
+        self.assertEqual(j["meniki"]["vaqt"], 10)
+        self.assertEqual(j["variantlar"], {"5": 2})
+
+    def test_teng_ballda_tezrog_i_oldin(self):
+        a, b = self.kir("dev-rey-eeee3333ffff"), self.kir("dev-rey-gggg4444hhhh")
+        self.dtm(a, 2, 20, 1, sekund=3000)
+        self.dtm(b, 2, 20, 2, sekund=1500)
+        j = self.reyting(a, variant=2)
+        self.assertEqual([q["sekund"] for q in j["qatorlar"]], [1500, 3000])
+
+    def test_umumiy_jadvalda_har_kim_bir_marta(self):
+        a = self.kir("dev-rey-iiii5555jjjj")
+        self.sert(a, 1, 60.5, 1)
+        self.sert(a, 2, 81.2, 2)
+        j = self.reyting(a, tur="sert")
+        self.assertEqual(j["ishlagan"], 1)
+        self.assertEqual(j["qatorlar"][0]["ball"], 81.2)
+        self.assertEqual(j["variantlar"], {"1": 1, "2": 1})
+
+    def test_otgan_hafta_hisoblanmaydi(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        a = self.kir("dev-rey-kkkk6666llll")
+        self.dtm(a, 3, 22, 1)
+        MDL.ImtihonNatija.objects.update(created_at=timezone.now() - timedelta(days=8))
+        self.assertEqual(self.reyting(a, variant=3)["ishlagan"], 0)
+        # O'tgan haftada ishlangan variantni bu hafta qayta ishlash ham
+        # "birinchi" emas — javoblar allaqachon ko'rilgan.
+        self.dtm(a, 3, 30, 2)
+        self.assertEqual(self.reyting(a, variant=3)["ishlagan"], 0)
+
+    def test_hafta_dushanbadan(self):
+        from datetime import datetime
+        from django.utils import timezone
+        from core import imtihon as IM
+        payshanba = timezone.make_aware(datetime(2026, 10, 1, 15, 0))
+        self.assertEqual(IM.hafta_boshi(payshanba).date().isoformat(), "2026-09-28")
+
+
 class KunlikSonPortTest(TestCase):
     """
     Serverdagi jumboq mijozdagisi bilan AYNAN bir xilmi.

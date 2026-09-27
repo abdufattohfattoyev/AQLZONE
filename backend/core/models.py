@@ -2033,9 +2033,17 @@ class ImtihonNatija(models.Model):
     #: Alohida jadval emas: urinishning tuzilishi AYNAN bir xil va
     #: tekshirilgan mantiqni ikki marta yozish kerak bo'lmasin.
     kurs = models.CharField(max_length=40, default="", blank=True)
+    #: Bo'sh — DTM (yoki sessiya, `kurs` bilan). "sert" — milliy
+    #: sertifikat varianti: 45 topshiriq, natija 100 BALLIK va kasr
+    #: (`ball`), chunki savollarning og'irligi har xil. Ilgari sertifikat
+    #: natijasi faqat telefonda edi — haftalik reyting uchun serverga
+    #: ko'chdi.
+    tur = models.CharField(max_length=8, default="", blank=True)
     variant = models.SmallIntegerField()
     togri = models.SmallIntegerField()
     jami = models.SmallIntegerField()
+    #: Faqat sertifikatda: 0–100, bir kasr xonasi bilan.
+    ball = models.FloatField(null=True, blank=True)
     sekund = models.IntegerField(default=0)
     mijoz_vaqt = models.BigIntegerField()
     created_at = models.DateTimeField(default=timezone.now)
@@ -2045,7 +2053,11 @@ class ImtihonNatija(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["profile", "mijoz_vaqt"], name="imtihon_bir_urinish"),
         ]
-        indexes = [models.Index(fields=["profile", "-mijoz_vaqt"])]
+        indexes = [
+            models.Index(fields=["profile", "-mijoz_vaqt"]),
+            # Haftalik reyting — "shu hafta, shu turdagi urinishlar".
+            models.Index(fields=["tur", "kurs", "created_at"]),
+        ]
 
 
 class KanalYozuv(models.Model):

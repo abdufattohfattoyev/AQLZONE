@@ -37,6 +37,11 @@ tekshir("/sertifikat", "oqish");
 tekshir("/sertifikat/5", "oqish");
 tekshir("/sessiya", "oqish");
 tekshir("/sessiya/oliy-1/2", "oqish");
+// DTM/sertifikat atrofidagi sahifalar ham "O'qish" bo'limida qoladi.
+tekshir("/imtihon/reyting", "oqish");
+tekshir("/sertifikat/reyting", "oqish");
+tekshir("/imtihon/5/tahlil", "oqish");
+tekshir("/sertifikat/mashq", "oqish");
 
 tekshir("/oyinlar", "oyin");
 tekshir("/oyinlar/tezkor", "oyin");

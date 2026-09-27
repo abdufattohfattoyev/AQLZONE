@@ -24,8 +24,9 @@
  * hamma bitta testni ishlashi kerak. Savollar bazada saqlanmaydi —
  * faqat urug', qolganini generatorlar qiladi.
  */
-import { bilanProfil, sorov } from "./api";
+import { bilanProfil, profilQuery, sorov } from "./api";
 import { blokYasa } from "./blok";
+import { courseById } from "./curriculum";
 import type { Blok } from "./blok";
 import { kunUrugi, urugBilan } from "./oyin/urug";
 
@@ -137,9 +138,98 @@ export async function sinxronla(): Promise<ServerTarix> {
   return sorov<ServerTarix>("/api/v1/imtihon/natija", bilanProfil({ urinishlar: natijalar() }));
 }
 
-/** Bitta tugagan urinishni yuboradi. Xato bo'lsa jim — keyingi `sinxronla` yetkazadi. */
-export function serverga(n: ImtihonNatija): void {
-  void sorov("/api/v1/imtihon/natija", bilanProfil({ ...n })).catch(() => {});
+/**
+ * Bitta tugagan urinishni yuboradi. Xato bo'lsa jim — keyingi
+ * `sinxronla` yetkazadi. Promise qaytadi: natija ekranidagi reyting
+ * kartasi urinish yozilgandan KEYIN so'raladi, aks holda odam o'zini
+ * jadvalda ko'rmasdi.
+ */
+export function serverga(n: ImtihonNatija): Promise<void> {
+  return sorov("/api/v1/imtihon/natija", bilanProfil({ ...n })).then(() => {}, () => {});
+}
+
+/* ------------------------------------------------------ haftalik reyting */
+
+/** Qaysi imtihon: DTM varianti yoki milliy sertifikat. */
+export type ImtTur = "dtm" | "sert";
+
+export interface ReytingQator {
+  orin: number;
+  ism: string;
+  variant: number;
+  togri: number;
+  jami: number;
+  /** Faqat sertifikatda — 100 ballik. */
+  ball: number | null;
+  sekund: number;
+  men: boolean;
+  /** O'zimnikida: jadvalga kirgan urinishning vaqti (`ImtihonNatija.vaqt`). */
+  vaqt?: number;
+}
+
+export interface Reyting {
+  tur: ImtTur;
+  variant: number | null;
+  hafta_boshi: string;
+  ishlagan: number;
+  /** Variant raqami → shu hafta nechta odam ishladi. */
+  variantlar: Record<string, number>;
+  qatorlar: ReytingQator[];
+  meniki: ReytingQator | null;
+}
+
+/**
+ * Shu haftaning jadvali (`core/imtihon.haftalik_reyting`). `variant`
+ * berilmasa — umumiy: har odamning eng yaxshi natijasi. Hisobga har
+ * variantning BIRINCHI urinishi kiradi.
+ */
+export function haftalikReyting(tur: ImtTur, variant?: number | null): Promise<Reyting> {
+  const v = variant ? `&variant=${variant}` : "";
+  return sorov<Reyting>(`/api/v1/imtihon/reyting?tur=${tur}${v}${profilQuery("&")}`);
+}
+
+/* -------------------------------------------- javoblar — ko'rib chiqish */
+
+/**
+ * OXIRGI URINISHNING JAVOBLARI — variant bo'yicha, faqat qurilmada.
+ *
+ * Nega kerak: natija ekrani yopilgach, "qaysi savolda nima deb
+ * belgiladim?" degan savolga javob yo'q edi. Savollarni saqlash shart
+ * emas — variant raqamdan har safar AYNAN o'shanday yasaladi. Faqat
+ * javoblar yoziladi, ularning ustiga savollar qayta quriladi.
+ */
+export interface SaqlanganJavob<J> {
+  variant: number;
+  javoblar: J[];
+  vaqt: number;
+}
+
+const javobKalit = (tur: ImtTur) => `azapp_${tur}_javob_v1`;
+
+function javobXarita<J>(tur: ImtTur): Record<string, SaqlanganJavob<J>> {
+  try {
+    const x = JSON.parse(localStorage.getItem(javobKalit(tur)) || "{}") as unknown;
+    return x && typeof x === "object" && !Array.isArray(x) ? x as Record<string, SaqlanganJavob<J>> : {};
+  } catch { return {}; }
+}
+
+export function javobSaqla<J>(tur: ImtTur, variant: number, javoblar: J[]): void {
+  const x = javobXarita<J>(tur);
+  x[String(variant)] = { variant, javoblar, vaqt: Date.now() };
+  try { localStorage.setItem(javobKalit(tur), JSON.stringify(x)); } catch { /* ko'rib chiqish bo'lmaydi, xolos */ }
+}
+
+export function javobOqi<J>(tur: ImtTur, variant: number): SaqlanganJavob<J> | null {
+  const j = javobXarita<J>(tur)[String(variant)];
+  return j && Array.isArray(j.javoblar) ? j : null;
+}
+
+/** Eng oxirgi ishlangan variant — ro'yxatdagi "Ko'rib chiqish" qatori uchun. */
+export function oxirgiJavob(tur: ImtTur): { variant: number; vaqt: number } | null {
+  const hammasi = Object.values(javobXarita<unknown>(tur)).filter((x) => x && typeof x.vaqt === "number");
+  if (!hammasi.length) return null;
+  const o = hammasi.reduce((a, b) => (b.vaqt > a.vaqt ? b : a));
+  return { variant: o.variant, vaqt: o.vaqt };
 }
 
 /* ------------------------------------------------------ zaif mavzular */
@@ -152,28 +242,54 @@ export function serverga(n: ImtihonNatija): void {
  * va server bu maydonni kutmaydi. Shu sabab alohida, faqat qurilmadagi
  * kalitda — oxirgi beshta urinish (o'rtacha ball ham beshtadan olinadi).
  */
-export interface MavzuXato { mavzu: string; kursId: string; xato: number }
+export interface MavzuXato {
+  mavzu: string;
+  kursId: string;
+  xato: number;
+  /**
+   * Bobning tartib raqami — zaif mavzular MASHQI shu bobdan savol
+   * yig'adi (`Qamrov` "mavzular"). Eski yozuvlarda yo'q: u holda bob
+   * nomidan topiladi (`mashqBoblari`).
+   */
+  ui?: number;
+}
 
-const MAVZU_KALIT = "azapp_imtihon_mavzu_v1";
+/**
+ * DTM va sertifikatning zaif mavzulari ALOHIDA saqlanadi: sertifikatda
+ * ochiq javobli savollar bor va bir xil mavzu ikki imtihonda har xil
+ * yiqitadi. Eski DTM kaliti o'zgarmadi — yig'ilgan tarix yo'qolmasin.
+ */
+const mavzuKalit = (tur: ImtTur) => (tur === "dtm" ? "azapp_imtihon_mavzu_v1" : "azapp_sert_mavzu_v1");
 const MAVZU_URINISH = 5;
 
-function mavzuOqi(): MavzuXato[][] {
+function mavzuOqi(tur: ImtTur): MavzuXato[][] {
   try {
-    const x = JSON.parse(localStorage.getItem(MAVZU_KALIT) || "[]") as unknown;
+    const x = JSON.parse(localStorage.getItem(mavzuKalit(tur)) || "[]") as unknown;
     return Array.isArray(x) ? x.filter(Array.isArray) as MavzuXato[][] : [];
   } catch { return []; }
 }
 
 /** Bitta urinishning mavzular bo'yicha xatolari (nol xatolilari tushiriladi). */
-export function mavzuXatoYoz(urinish: MavzuXato[]): void {
-  const yangi = [urinish.filter((x) => x.xato > 0), ...mavzuOqi()].slice(0, MAVZU_URINISH);
-  try { localStorage.setItem(MAVZU_KALIT, JSON.stringify(yangi)); } catch { /* ko'rinmaydi, xolos */ }
+export function mavzuXatoYoz(urinish: MavzuXato[], tur: ImtTur = "dtm"): void {
+  const yangi = [urinish.filter((x) => x.xato > 0), ...mavzuOqi(tur)].slice(0, MAVZU_URINISH);
+  try { localStorage.setItem(mavzuKalit(tur), JSON.stringify(yangi)); } catch { /* ko'rinmaydi, xolos */ }
+}
+
+/**
+ * Zaif mavzular mashqi uchun boblar — ko'pi bilan uchta eng zaifi.
+ * `ui` yo'q eski yozuvda bob nomi bo'yicha qidiriladi.
+ */
+export function mashqBoblari(tur: ImtTur): { kursId: string; ui: number }[] {
+  return zaifMavzular(3, tur).flatMap((m) => {
+    const ui = m.ui ?? courseById(m.kursId)?.units.findIndex((U) => U.u === m.mavzu) ?? -1;
+    return ui >= 0 ? [{ kursId: m.kursId, ui }] : [];
+  });
 }
 
 /** Oxirgi urinishlarda eng ko'p xato qilingan mavzular — ko'pi bilan `n` ta. */
-export function zaifMavzular(n = 3): MavzuXato[] {
+export function zaifMavzular(n = 3, tur: ImtTur = "dtm"): MavzuXato[] {
   const m = new Map<string, MavzuXato>();
-  for (const urinish of mavzuOqi()) {
+  for (const urinish of mavzuOqi(tur)) {
     for (const x of urinish) {
       if (!x || typeof x.mavzu !== "string" || typeof x.xato !== "number") continue;
       const k = `${x.kursId}|${x.mavzu}`;

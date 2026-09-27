@@ -51,6 +51,9 @@ const Imtihon = lazy(() => import("./screens/Imtihon").then((m) => ({ default: m
 const Sertifikat = lazy(() => import("./screens/Sertifikat").then((m) => ({ default: m.Sertifikat })));
 const SertifikatTest = lazy(() => import("./screens/SertifikatTest").then((m) => ({ default: m.SertifikatTest })));
 const Sessiya = lazy(() => import("./screens/Sessiya").then((m) => ({ default: m.Sessiya })));
+const ImtReyting = lazy(() => import("./screens/ImtihonQoshimcha").then((m) => ({ default: m.ImtReyting })));
+const ZaifMashq = lazy(() => import("./screens/ImtihonQoshimcha").then((m) => ({ default: m.ZaifMashq })));
+const ImtKorish = lazy(() => import("./screens/ImtihonQoshimcha").then((m) => ({ default: m.ImtKorish })));
 const BlokEkran = lazy(() => import("./screens/Blok").then((m) => ({ default: m.Blok })));
 const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel })));
 const DuelQabul = lazy(() => import("./screens/Duel").then((m) => ({ default: m.DuelQabul })));
@@ -79,7 +82,7 @@ import { mavzuById } from "./lib/kichkintoy";
 import { oyinById } from "./lib/oyin";
 import { darajaniOqi } from "./lib/oyin/tur";
 import { ochiqmi } from "./lib/oyin/rekord";
-import { COURSES, courseById, courseBySlug, maktabKursi } from "./lib/curriculum";
+import { COURSES, courseBySlug, maktabKursi } from "./lib/curriculum";
 import { useProgress } from "./lib/progress";
 import type { LessonResult } from "./lib/progress";
 import { isUnlocked, lessonId } from "./lib/types";
@@ -93,6 +96,7 @@ import {
   yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
+  yolImtKorish, yolImtMashq, yolImtReyting,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -181,8 +185,15 @@ function Yollar() {
       <Route path="/oyinlar/kunlik-son" element={<KunlikSonSahifasi />} />
       <Route path="/oyinlar/son-ovi" element={<SonOviSahifasi />} />
       <Route path="/imtihon" element={<ImtihonSahifasi />} />
+      {/* `reyting`, `mashq` — `:n` dan ustun (aniq yo'l doim oldin tanlanadi). */}
+      <Route path="/imtihon/reyting" element={<ImtReytingSahifasi tur="dtm" />} />
+      <Route path="/imtihon/mashq" element={<ZaifMashqSahifasi tur="dtm" />} />
+      <Route path="/imtihon/:n/tahlil" element={<ImtKorishSahifasi tur="dtm" />} />
       <Route path="/imtihon/:n" element={<ImtihonVariantSahifasi />} />
       <Route path="/sertifikat" element={<SertifikatSahifasi />} />
+      <Route path="/sertifikat/reyting" element={<ImtReytingSahifasi tur="sert" />} />
+      <Route path="/sertifikat/mashq" element={<ZaifMashqSahifasi tur="sert" />} />
+      <Route path="/sertifikat/:n/tahlil" element={<ImtKorishSahifasi tur="sert" />} />
       <Route path="/sertifikat/:n" element={<SertifikatVariantSahifasi />} />
       <Route path="/sessiya" element={<SessiyaSahifasi />} />
       <Route path="/sessiya/:slug/:n" element={<SessiyaVariantSahifasi />} />
@@ -815,7 +826,8 @@ function ImtihonSahifasi() {
   if (oxirgiTur() === "sertifikat") return <Navigate to={yolSertifikat()} replace />;
   return <Imtihon onVariant={(n) => nav(yolImtihonVariant(n))}
     onSertifikat={() => nav(yolSertifikat(), { replace: true })} onChiq={() => nav(yolTestSinf())}
-    onTakrorla={(id) => { const c = courseById(id); if (c) nav(yolTestlar(c)); }} />;
+    onMashq={() => nav(yolImtMashq("dtm"))} onReyting={() => nav(yolImtReyting("dtm"))}
+    onKorish={(n) => nav(yolImtKorish("dtm", n))} />;
 }
 
 /** Milliy sertifikat — variantlar ro'yxati (`lib/sertifikat.ts`). */
@@ -823,7 +835,39 @@ function SertifikatSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
   return <Sertifikat onVariant={(n) => nav(yolSertifikatVariant(n))}
-    onDtm={() => nav(yolImtihon(), { replace: true })} onChiq={() => nav(yolTestSinf())} />;
+    onDtm={() => nav(yolImtihon(), { replace: true })} onChiq={() => nav(yolTestSinf())}
+    onMashq={() => nav(yolImtMashq("sert"))} onReyting={() => nav(yolImtReyting("sert"))}
+    onKorish={(n) => nav(yolImtKorish("sert", n))} />;
+}
+
+/** DTM/sertifikat — haftalik reyting. `?variant=5` bo'lsa o'sha variant ochiq. */
+function ImtReytingSahifasi({ tur }: { tur: "dtm" | "sert" }) {
+  const nav = useNavigate();
+  const [qidiruv] = useSearchParams();
+  useTema("bosh");
+  const v = Number(qidiruv.get("variant"));
+  const ortga = tur === "dtm" ? yolImtihon() : yolSertifikat();
+  return <ImtReyting tur={tur} variant={Number.isInteger(v) && v >= 1 ? v : null}
+    onChiq={() => nav(ortga)}
+    onVariant={(n) => nav(tur === "dtm" ? yolImtihonVariant(n) : yolSertifikatVariant(n))} />;
+}
+
+/** Zaif mavzular mashqi — oxirgi urinishlarda qoqilgan boblardan. */
+function ZaifMashqSahifasi({ tur }: { tur: "dtm" | "sert" }) {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <ZaifMashq tur={tur} onChiq={() => nav(tur === "dtm" ? yolImtihon() : yolSertifikat())} />;
+}
+
+/** Oxirgi urinishni ko'rib chiqish — ro'yxatdan ochiladi. */
+function ImtKorishSahifasi({ tur }: { tur: "dtm" | "sert" }) {
+  const nav = useNavigate();
+  const { n } = useParams();
+  useTema("bosh");
+  const raqam = Number(n);
+  const ortga = tur === "dtm" ? yolImtihon() : yolSertifikat();
+  if (!Number.isInteger(raqam) || raqam < 1) return <Navigate to={ortga} replace />;
+  return <ImtKorish key={raqam} tur={tur} n={raqam} onChiq={() => nav(ortga)} />;
 }
 
 function SertifikatVariantSahifasi() {

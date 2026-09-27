@@ -62,11 +62,16 @@ import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 import { tovush } from "../lib/ovoz";
-import { yolDars } from "../lib/yollar";
+import { yolDars, yolImtMashq, yolImtReyting } from "../lib/yollar";
+import { KoribChiqish } from "../components/KoribChiqish";
+import { ReytingKarta } from "../components/HaftalikReyting";
+import { dtmSavollari } from "../lib/korish";
 import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
 import { useFaollik } from "../lib/faollik";
-import { mavzuXatoYoz, natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa } from "../lib/imtihon";
+import {
+  javobSaqla, mavzuXatoYoz, natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa,
+} from "../lib/imtihon";
 import type { MavzuXato } from "../lib/imtihon";
 import { baho, sessiyaSaqla, sessiyaServerga, sessiyaYasa } from "../lib/sessiya";
 
@@ -135,9 +140,12 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, 
    * yangisini yasashdan oldin "davom etasizmi?" so'raladi. Javob
    * berilgach bu qiymat ahamiyatsiz bo'lib qoladi (`tanlov`).
    */
-  const [yarim] = useState(() => (toplam || imtihon || sessiya ? null : joriyniOqi()));
+  // Zaif mavzular mashqi ham "yarim qolgan test" kalitini egallamaydi
+  // (to'plamdagi sabab): u oddiy testning davomini yashirib qo'yardi.
+  const alohida = Boolean(toplam || imtihon || sessiya) || qamrov.tur === "mavzular";
+  const [yarim] = useState(() => (alohida ? null : joriyniOqi()));
   const [tanlov, setTanlov] = useState<"sora" | "davom" | "yangi">(() => {
-    const bor = !toplam && !imtihon && !sessiya && joriyniOqi() !== null;
+    const bor = !alohida && joriyniOqi() !== null;
     if (!bor) return "yangi";
     return davomEt ? "davom" : "sora";
   });
@@ -174,7 +182,8 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, 
     blok={davom ? { savollar: davom.savollar, daqiqa: davom.daqiqa } : blok}
     davom={davom}
     sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam} imtihon={imtihon} sessiya={sessiya}
-    onQayta={() => { joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
+    alohida={alohida}
+    onQayta={() => { if (!alohida) joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
 }
 
@@ -247,10 +256,12 @@ function Bosh({ onExit }: { onExit: () => void }) {
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, onQayta, onExit }: {
+function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, alohida, onQayta, onExit }: {
   toplam?: Toplam;
   imtihon?: number;
   sessiya?: { slug: string; n: number };
+  /** "Yarim qolgan test" saqlanmaydi (to'plam, variant, zaif mavzular mashqi). */
+  alohida: boolean;
   blok: Blok;
   /** Yarim qolgan testdan davom etilyaptimi. Yo'q bo'lsa — yangi test. */
   davom: Joriy | null;
@@ -267,6 +278,17 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
   const [chiqishSorovi, setChiqishSorovi] = useState(false);
   /** To'plam natijasi serverdan qaytgach — boshqalar bilan solishtirish. */
   const [stat, setStat] = useState<(Statistika & { birinchi: boolean }) | null>(null);
+  /**
+   * Natijadan keyin "Ko'rib chiqish" ochiqmi. Holat SHU YERDA, natija
+   * ichida emas: orqaga tugmasi (Telegram'niki ham) avval ko'rib
+   * chiqishni yopishi kerak, testdan chiqarib yubormasligi.
+   */
+  const [korish, setKorish] = useState(false);
+  /**
+   * DTM varianti serverga yozilgani — reyting kartasi shundan keyin
+   * so'raladi. `urinishVaqt` — "bu qayta ishlashmi?" degan savol uchun.
+   */
+  const [yozildi, setYozildi] = useState<{ tayyor: Promise<void>; vaqt: number } | null>(null);
 
   /**
    * Test qachon tugaydi — SOAT bo'yicha, sanoq bo'yicha emas.
@@ -394,24 +416,26 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
       // Avval qurilmaga (internet bo'lmasa ham yo'qolmasin), keyin
       // serverga. Server takrorni `vaqt` bo'yicha o'zi tashlaydi.
       imtihonSaqla(urinish);
-      imtihonServerga(urinish);
+      setYozildi({ tayyor: imtihonServerga(urinish), vaqt: urinish.vaqt });
+      // Javoblar — keyinroq ro'yxatdan "Ko'rib chiqish" ochilsin.
+      javobSaqla("dtm", imtihon, toliq.map((x) => (x.tanlangan === null ? null : String(x.tanlangan))));
       // Mavzular bo'yicha xatolar — ro'yxatdagi "ko'p xato qilinayotgan
-      // mavzular" uchun (faqat qurilmada, `lib/imtihon.ts`).
+      // mavzular" va zaif mavzular mashqi uchun (faqat qurilmada).
       const m = new Map<string, MavzuXato>();
       blok.savollar.forEach((S, i) => {
         if (toliq[i]?.togri) return;
         const k = `${S.kursId}|${S.mavzu}`;
-        m.set(k, { mavzu: S.mavzu, kursId: S.kursId, xato: (m.get(k)?.xato ?? 0) + 1 });
+        m.set(k, { mavzu: S.mavzu, kursId: S.kursId, ui: S.ui, xato: (m.get(k)?.xato ?? 0) + 1 });
       });
-      mavzuXatoYoz([...m.values()]);
+      mavzuXatoYoz([...m.values()], "dtm");
       return;
     }
 
     // Test tugadi — yarim qolgan nusxa endi keraksiz. Qoldirilsa,
     // keyingi safar tugallangan test "davom etasizmi?" bo'lib
-    // qaytib chiqardi.
-    joriyniOchir();
-  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya]);
+    // qaytib chiqardi. Mashq o'z nusxasini yozmagan — begonasini o'chirmaydi.
+    if (!alohida) joriyniOchir();
+  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, alohida]);
 
   /*
    * Har o'zgarishda yarim qolgan test yoziladi.
@@ -422,7 +446,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
    * Yagona ishonchli payt — javob berilgan zahoti.
    */
   useEffect(() => {
-    if (tugadi || toplam || imtihon || sessiya) return;
+    if (tugadi || alohida) return;
     joriyniSaqla({
       sinf, uzunlik, bobNomi,
       savollar: blok.savollar,
@@ -432,7 +456,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
       tugash: tugash.current,
       boshlandi: boshlandi.current,
     });
-  }, [idx, javoblar, tugadi, blok.savollar, blok.daqiqa, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya]);
+  }, [idx, javoblar, tugadi, blok.savollar, blok.daqiqa, sinf, uzunlik, bobNomi, alohida]);
 
   /*
    * Soat.
@@ -468,9 +492,10 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
   }, [qolgan, tugadi, javoblar, yakunla]);
 
   const chiqmoqchi = useCallback(() => {
-    if (tugadi || idx === 0) onExit();
+    if (korish) setKorish(false);
+    else if (tugadi || idx === 0) onExit();
     else setChiqishSorovi(true);
-  }, [tugadi, idx, onExit]);
+  }, [korish, tugadi, idx, onExit]);
   const ozStrelka = useOrqaga(chiqmoqchi);
 
   function javobBer(v: Answer) {
@@ -502,9 +527,19 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, o
     <Chiqish javob={idx} onDavom={() => setChiqishSorovi(false)} onChiq={onExit} />
   );
 
+  if (tugadi && korish) {
+    return (
+      <KoribChiqish
+        sarlavha={imtihon ? `DTM · ${t("imtihonVariant", { n: imtihon })}` : toplam ? toplam.nom : bobNomi ?? `${sinf}-sinf`}
+        savollar={dtmSavollari(blok, javoblar.map((x) => (x.tanlangan === null ? null : String(x.tanlangan))))}
+        onYop={() => setKorish(false)} />
+    );
+  }
+
   if (tugadi) {
     return <>
       <Natija blok={blok} javoblar={javoblar} toplam={toplam} stat={stat} sessiya={Boolean(sessiya)}
+        imtihon={imtihon} yozildi={yozildi} onKorish={() => { tebrat("tanlov"); setKorish(true); window.scrollTo(0, 0); }}
         onQayta={onQayta} onExit={onExit} />
       {oyna}
     </>;
@@ -619,9 +654,14 @@ interface Mavzu {
   ulgurmadi: number;
 }
 
-function Natija({ blok, javoblar, toplam, stat, sessiya = false, onQayta, onExit }: {
+function Natija({ blok, javoblar, toplam, stat, sessiya = false, imtihon, yozildi, onKorish, onQayta, onExit }: {
   /** Sessiya — foiz yonida 5 ballik taxminiy baho. */
   sessiya?: boolean;
+  /** DTM varianti — haftalik reyting kartasi va zaif mavzular mashqi. */
+  imtihon?: number;
+  yozildi: { tayyor: Promise<void>; vaqt: number } | null;
+  /** Hamma savolni to'liq ko'rib chiqish (`components/KoribChiqish.tsx`). */
+  onKorish: () => void;
   blok: Blok;
   javoblar: Javob[];
   toplam?: Toplam;
@@ -701,6 +741,39 @@ function Natija({ blok, javoblar, toplam, stat, sessiya = false, onQayta, onExit
       </div>
 
       {toplam && <Solishtirish toplam={toplam} stat={stat} />}
+
+      {imtihon && yozildi && (
+        <div className="mt-3">
+          <ReytingKarta tur="dtm" variant={imtihon} tayyor={yozildi.tayyor} urinishVaqt={yozildi.vaqt}
+            onOch={() => nav(yolImtReyting("dtm", imtihon))} />
+        </div>
+      )}
+
+      {/* Hamma savol — shart, variantlar, tanlangani va to'g'risi. Xato
+          ro'yxati pastda qisqa turadi; bu yerda to'liq ko'rinish. */}
+      <button type="button" onClick={onKorish} data-tahlil="Blok: ko'rib chiqish"
+        className="clay-press mt-3 flex min-h-[52px] w-full items-center gap-3 rounded-[20px] bg-karta px-4 text-left
+                   shadow-clay-sm">
+        <Icon name="search" size={20} className="shrink-0 text-brand-blue-t" />
+        <span className="min-w-0 flex-1 font-display text-[16px]">{t("korishTugma")}</span>
+        <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+      </button>
+
+      {/* Zaif mavzular MASHQI — bitta-bitta darsga qaytishdan tezroq:
+          qoqilgan boblardan aralash 10 savol (`ImtihonQoshimcha.ZaifMashq`).
+          Mavzular ro'yxatidan OLDIN: ro'yxat 20 qatorgacha cho'ziladi va
+          pastda tugma ko'rinmay qolardi. */}
+      {imtihon && mavzular.some((m) => m.xato > 0) && (
+        <button type="button" onClick={() => nav(yolImtMashq("dtm"))} data-tahlil="DTM: zaif mavzular mashqi"
+          className="clay-press mt-2.5 flex min-h-[52px] w-full items-center gap-3 rounded-[20px] bg-brand-blue/10 px-4
+                     py-2 text-left text-brand-blue-t">
+          <Icon name="repeat" size={19} className="shrink-0" />
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-[15.5px]">{t("zaifMashqTugma")}</span>
+            <span className="block text-[12.5px] opacity-80">{t("zaifMashqIzoh")}</span>
+          </span>
+        </button>
+      )}
 
       {/* ---- mavzular bo'yicha tahlil ---- */}
       <h2 className="az-kirish mt-6 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
