@@ -882,6 +882,25 @@ class BotTest(TestCase):
         ]
         self.assertEqual(ichki[0]["web_app"]["url"], "https://aql-zone.uz/oyinlar")
 
+    @override_settings(**ILOVA)
+    def test_start_ikkinchi_xabar_faqat_yangi_odamga(self):
+        """
+        Birinchi ochilish uchun yashil inline tugma — faqat ilovani Telegram
+        ichida hali ochmaganga. Qaytgan odamga bitta xabar ketadi.
+        """
+        def xabarlar():
+            return [x for x in self.yuborilgan if "text" in x]   # menyu tugmasi sozlamasi emas
+
+        self.bot.yangilikni_qayta_ishla(self.xabar("/start"))
+        self.assertEqual(len(xabarlar()), 2)
+
+        from core.auth import issue_token
+        issue_token(Pupil.objects.get(), "tg")        # ilova Telegram'da ochildi
+        self.yuborilgan.clear()
+        self.bot.yangilikni_qayta_ishla(self.xabar("/start"))
+        self.assertEqual(len(xabarlar()), 1)
+        self.assertTrue(xabarlar()[0]["reply_markup"].get("keyboard"))
+
     @override_settings(MINI_APP_URL="", SAYT_URL="https://aql-zone.uz")
     def test_ilovasiz_klaviatura_chizilmaydi(self):
         """Yarim ishlaydigan tugmalar — yo'qidan yomonroq."""

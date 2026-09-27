@@ -488,6 +488,13 @@ def salom_yubor(
     api("sendMessage", chat_id=chat_id,
         text=salom + M("pastdagiTugma", til),
         parse_mode="HTML", reply_markup=klaviatura)
+    # Ikkinchi xabar FAQAT ilovani hali Telegram ichida ochmaganga.
+    # Ilgari har `/start` da ikkala xabar kelardi va qaytgan odam uchun
+    # ikkinchisi ortiqcha edi: uning qurilmasida hisob allaqachon bor
+    # (`platform="tg"` sessiyasi — `auth_telegram`), klaviatura tugmalari
+    # to'g'ri hisobga tushadi.
+    if pupil.sessions.filter(platform="tg").exists():
+        return f"{tg_id}: /start — javob berildi, bitta xabar (hisob #{pupil.pk})"
     api("sendMessage", chat_id=chat_id,
         text=M("birinchiOchish", til),
         parse_mode="HTML", reply_markup={"inline_keyboard": tugmalar})
