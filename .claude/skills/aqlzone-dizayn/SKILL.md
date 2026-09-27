@@ -12,7 +12,7 @@ Har yangi narsa qo'shishdan oldin so'ra: "Bu odamga HOZIR, SHU ekranda kerakmi?"
 
 | Rang | Token | Ma'nosi — faqat shu |
 |---|---|---|
-| Ko'k `#3b6fe0` | `brand-blue` (`-d` to'q) | asosiy amal, tanlangan holat, havola |
+| Ko'k `#4677ef` | `brand-blue` (`-d` to'q) | asosiy amal, tanlangan holat, havola |
 | Yashil `#22b06b` | `brand-green` | to'g'ri javob, tugadi, "davom etish" |
 | Oltin `#f5b301` | `brand-gold` (matnda `brand-gold-d`) | tanga, yulduz, mukofot, reyting |
 

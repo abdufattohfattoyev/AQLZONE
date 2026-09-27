@@ -53,15 +53,17 @@
      yo'qolardi. Eski nomlar (`brand-purple`, `brand-orange`) o'chirilmadi:
      ular yuzlab joyda ishlatiladi. Ular endi uchtadan biriga TENG —
      binafsha → ko'k, to'q sariq → oltin. */
-  --color-brand-blue: #3b6fe0;
-  --color-brand-blue-d: #2c56b8;
+  /* 2026-09: ko'k sal ochroq va yorqinroq (#3b6fe0 → #4677ef) — zamonaviyroq.
+     Oq yozuv bilan kontrast ~4.2: yirik (≥18px qalin) tugma yozuviga yetadi. */
+  --color-brand-blue: #4677ef;
+  --color-brand-blue-d: #3360d4;
   --color-brand-green: #22b06b;
   --color-brand-green-d: #1a8a53;
   --color-brand-gold: #f5b301;
   --color-brand-gold-d: #d09400;
 
-  --color-brand-purple: #3b6fe0;
-  --color-brand-purple-d: #2c56b8;
+  --color-brand-purple: #4677ef;
+  --color-brand-purple-d: #3360d4;
   --color-brand-orange: #f5b301;
   --color-brand-orange-d: #d09400;
   --color-brand-red: #e5484d;
@@ -106,7 +108,7 @@
      qiyinlik qatori, ovoz tugmalari). Ko'tarilgan `shadow-clay` ning
      teskarisi: ikkalasi birga kartaga chuqurlik beradi. */
   --az-ichki: inset 0 2px 4px rgb(0 0 0 / 0.35);
-  --az-body: #0f1436;
+  --az-body: #131a2a;
 
   /*
    * EKRAN O'LCHAMI VA XAVFSIZ CHETLAR.
@@ -234,24 +236,24 @@
 
 /* ---------------- 2–4-sinf: chuqur ko'k, shishasimon ---------------- */
 :root[data-tema="katta"] {
-  --az-body: #141b34;
-  --color-sahna: #1a2247;
-  --color-karta: #232c52;
-  --color-track: rgb(255 255 255 / 0.13);
+  --az-body: #131a2a;
+  --color-sahna: #182031;
+  --color-karta: #1d2638;
+  --color-track: rgb(255 255 255 / 0.1);
   --color-yol: rgb(255 255 255 / 0.1);
   --color-yol-chiziq: rgb(255 255 255 / 0.35);
 
   --color-ink: #eef2ff;
-  --color-ink-soft: #b7c2e6;
-  --color-ink-dim: #8b97c2;
+  --color-ink-soft: #b9c3dc;
+  --color-ink-dim: #8d9abb;
   --color-brand-blue-t: color-mix(in srgb, var(--color-brand-blue) 55%, white);
   /* Quyuq fonda "loy" soyasi ham quyuq bo'ladi — shundagina karta
      yuzadan ko'tarilgandek ko'rinadi. */
-  --color-clay: #10152e;
-  --color-locked: #46508a;
+  --color-clay: #0b101c;
+  --color-locked: #435070;
 
-  --az-soya: 0 5px 0 var(--color-clay), 0 16px 32px -8px rgb(0 0 0 / 0.55);
-  --az-soya-sm: 0 3px 0 var(--color-clay), 0 10px 20px -6px rgb(0 0 0 / 0.45);
+  --az-soya: inset 0 0 0 1px rgb(255 255 255 / 0.07), 0 5px 0 var(--color-clay), 0 16px 32px -8px rgb(0 0 0 / 0.55);
+  --az-soya-sm: inset 0 0 0 1px rgb(255 255 255 / 0.06), 0 3px 0 var(--color-clay), 0 10px 20px -6px rgb(0 0 0 / 0.45);
   --az-soya-node: 0 6px 0 rgb(0 0 0 / 0.4), 0 14px 26px rgb(0 0 0 / 0.4);
   --radius-clay: 20px;
 
@@ -367,27 +369,30 @@
 :root[data-tema][data-yoruglik="oq"] .az-pb-faol { filter: saturate(1) opacity(1); }
 :root[data-tema][data-yoruglik="oq"] .az-logo { --az-logo-nur-korin: 0; }
 
-/* ---------- QORA ---------- */
+/* ---------- QORA ----------
+   2026-09: siyohrang-ko'k (#141b34 / #232c52) o'rniga sokin, sal ochroq
+   "slate" (#131a2a / #1d2638) va kartalarda 1px yorug' chegara — ko'z
+   charchamaydi, kartalar fonda aniqroq ajraladi. */
 
 :root[data-tema][data-yoruglik="qora"] {
-  --az-body: #141b34;
+  --az-body: #131a2a;
 
-  --color-karta: #232c52;
-  --color-sahna: #1a2247;
-  --color-track: rgb(255 255 255 / 0.13);
+  --color-karta: #1d2638;
+  --color-sahna: #182031;
+  --color-track: rgb(255 255 255 / 0.1);
   --color-yol: rgb(255 255 255 / 0.1);
   --color-yol-chiziq: rgb(255 255 255 / 0.35);
 
   --color-ink: #eef2ff;
-  --color-ink-soft: #b7c2e6;
-  --color-ink-dim: #8b97c2;
+  --color-ink-soft: #b9c3dc;
+  --color-ink-dim: #8d9abb;
   --color-brand-blue-t: color-mix(in srgb, var(--color-brand-blue) 55%, white);
   /* Quyuq fonda "loy" soyasi ham quyuq — shundagina karta ko'tarilgandek. */
-  --color-clay: #10152e;
-  --color-locked: #46508a;
+  --color-clay: #0b101c;
+  --color-locked: #435070;
 
-  --az-soya: 0 5px 0 var(--color-clay), 0 16px 32px -8px rgb(0 0 0 / 0.55);
-  --az-soya-sm: 0 3px 0 var(--color-clay), 0 10px 20px -6px rgb(0 0 0 / 0.45);
+  --az-soya: inset 0 0 0 1px rgb(255 255 255 / 0.07), 0 5px 0 var(--color-clay), 0 16px 32px -8px rgb(0 0 0 / 0.55);
+  --az-soya-sm: inset 0 0 0 1px rgb(255 255 255 / 0.06), 0 3px 0 var(--color-clay), 0 10px 20px -6px rgb(0 0 0 / 0.45);
   --az-soya-node: 0 6px 0 rgb(0 0 0 / 0.4), 0 14px 26px rgb(0 0 0 / 0.4);
   /* Botiq yuza ham yorug'lik tanloviga ergashishi SHART: tema
      yorug' (`bosh`), tanlov esa qora bo'lganda quyuq karta ichida

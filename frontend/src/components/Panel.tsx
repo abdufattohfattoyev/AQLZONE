@@ -37,7 +37,9 @@ import { Logo } from "./Logo";
 import { TilTugma } from "./TilTugma";
 import { YoruglikTugma } from "./YoruglikTugma";
 import { faolTab, type TabId } from "../lib/tab";
-import { yolBosh, yolKurslar, yolMasalalar, yolMen, yolOyinlar, yolQidiruv } from "../lib/yollar";
+import {
+  yolBosh, yolImtihon, yolKurslar, yolMasalalar, yolMen, yolOyinlar, yolQidiruv, yolReyting, yolSertifikat,
+} from "../lib/yollar";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
 
@@ -131,12 +133,19 @@ export function Panel() {
   if (kompyuter) {
     return (
       <YonPanel>
+        <YonGuruh nom={t("yonBolimlar")} />
         {tablar.map((x) => (
           <YonTugma key={x.id} ic={x.ic} nom={x.nom} faol={faol === x.id} on={yur(x.yol)} />
         ))}
-        {/* Telefonda qidiruv har bo'lim sarlavhasidagi lupada. Kompyuterda
-            yon panelda joy bor va u HAR sahifadan bir bosishda ochilsin. */}
-        <div className="my-2 h-px bg-track" />
+        {/* Imtihonlar va reyting — kompyuterda joy bor, ular ichkaridan
+            qidirilmasin: abituriyent DTM ni bir bosishda topsin. Telefonda
+            qidiruv har bo'lim sarlavhasidagi lupada. */}
+        <YonGuruh nom={t("yonImtihonlar")} />
+        <YonSatr ik="clock" nom={t("yonDtm")} faol={pathname.startsWith(yolImtihon())}
+          on={yur(yolImtihon())} />
+        <YonSatr ik="trophy" nom={t("yonSertifikat")} faol={pathname.startsWith(yolSertifikat())}
+          on={yur(yolSertifikat())} />
+        <YonSatr ik="chart" nom={t("reyting")} faol={pathname === yolReyting()} on={yur(yolReyting())} />
         <YonSatr ik="search" nom={t("qidiruvNom")} faol={pathname === yolQidiruv()}
           on={yur(yolQidiruv())} />
       </YonPanel>
@@ -229,11 +238,14 @@ function YonPanel({ children }: { children: ReactNode }) {
   return (
     <nav data-tur="panel"
       className="az-yon fixed inset-y-0 left-0 z-30 flex w-[var(--az-yon)] flex-col
-                 gap-1 overflow-y-auto bg-karta px-3 py-4">
+                 gap-1 overflow-y-auto bg-sahna px-3 py-4">
       <button type="button" onClick={() => nav(yolBosh())} data-tahlil="Yon: logo"
         className="clay-press mb-3 flex items-center gap-2.5 rounded-2xl px-2 py-1.5 text-left">
         <Logo size={40} jonli={false} />
-        <span className="font-display text-[20px] leading-none">Aql Zone</span>
+        <span className="flex flex-col">
+          <span className="font-display text-[20px] leading-none">Aql Zone</span>
+          <span className="mt-1 text-[12px] leading-none font-semibold text-ink-dim">{t("yonShior")}</span>
+        </span>
       </button>
       {children}
       <div className="mt-auto flex items-center justify-between gap-2 pt-4">
@@ -254,12 +266,12 @@ function YonTugma({ ic, nom, on, faol }: {
   return (
     <button type="button" onClick={on} data-tahlil={`Yon: ${ic}`}
       aria-current={faol ? "page" : undefined}
+      /* Faol bo'lim — TO'LDIRILGAN ko'k tabletka (2026-09): ilgari yumshoq
+         yostiq edi va qaysi sahifada turgani bir qarashda bilinmasdi. */
       className={`clay-press relative flex h-12 w-full items-center gap-3 rounded-2xl px-3
                   text-left text-[15px] transition-colors duration-200
-                  ${faol ? "font-bold text-brand-blue-t" : "text-ink-soft hover:bg-sahna"}`}>
-      <span aria-hidden
-        className={`az-tab-yostiq absolute inset-0 rounded-2xl
-                    ${faol ? "opacity-100" : "opacity-0"}`} />
+                  ${faol ? "bg-brand-blue font-bold text-white shadow-[0_4px_14px_-4px_var(--color-brand-blue)]"
+                    : "font-semibold text-ink-soft hover:bg-karta"}`}>
       <span className="relative">
         <PanelBelgi nom={ic} faol={faol} size={26} />
       </span>
@@ -268,13 +280,18 @@ function YonTugma({ ic, nom, on, faol }: {
   );
 }
 
+/** Guruh sarlavhasi: "BO'LIMLAR", "IMTIHONLAR". */
+function YonGuruh({ nom }: { nom: string }) {
+  return <span className="mt-3 mb-0.5 px-3 text-[11.5px] font-bold tracking-[0.08em] text-ink-dim uppercase">{nom}</span>;
+}
+
 /** Ikkinchi darajali satr — chiziqli belgi, yostiqsiz. */
 function YonSatr({ ik, nom, on, faol }: { ik: IconName; nom: string; on: () => void; faol: boolean }) {
   return (
     <button type="button" onClick={on} data-tahlil={`Yon: ${ik}`}
       aria-current={faol ? "page" : undefined}
       className={`clay-press flex h-11 w-full items-center gap-3 rounded-2xl px-3.5 text-left
-                  text-[14px] ${faol ? "bg-sahna text-brand-blue" : "text-ink-soft hover:bg-sahna"}`}>
+                  text-[14px] font-semibold ${faol ? "bg-karta text-brand-blue-t" : "text-ink-soft hover:bg-karta"}`}>
       <Icon name={ik} size={18} className="shrink-0" />
       <span className="truncate">{nom}</span>
     </button>
