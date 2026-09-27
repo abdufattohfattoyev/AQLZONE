@@ -139,7 +139,7 @@ export function Qidiruv({ progressOf, onOch, onBack }: Props) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 px-4 pt-5 pb-10 min-[360px]:px-[18px] sm:max-w-2xl">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 px-4 pt-5 pb-10 min-[360px]:px-[18px] sm:max-w-2xl kom:max-w-[760px] kom:px-8 kom:pt-8">
       {/* Maydon sarlavhaning O'RNIDA turadi: bu ekranning yagona ishi —
           qidirish. O'ngda "Bekor" — orqaga. */}
       <div className="flex items-center gap-2">

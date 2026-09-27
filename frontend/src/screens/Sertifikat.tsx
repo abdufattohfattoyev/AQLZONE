@@ -46,9 +46,13 @@ export function Sertifikat({ onVariant, onDtm, onChiq }: {
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]
-                    sm:max-w-[560px]">
-      <ImtihonSarlavha joriy="sertifikat" onTanla={onDtm} onChiq={onChiq} />
+                    sm:max-w-[560px] kom:grid kom:max-w-[1040px] kom:grid-cols-2 kom:items-start
+                    kom:gap-x-6 kom:gap-y-5 kom:px-8 kom:pt-8">
+      {/* Kompyuterda ikki ustun: chapda natija, o'ngda variantlar. Telefonda
+          o'rovchi bloklar `contents` — ya'ni ular yo'qdek, tartib o'zgarmaydi. */}
+      <div className="contents kom:col-span-2 kom:block"><ImtihonSarlavha joriy="sertifikat" onTanla={onDtm} onChiq={onChiq} /></div>
 
+      <div className="contents kom:flex kom:flex-col kom:gap-3.5">
       {/* ---- o'rtacha va shkala ---- */}
       <div className="flex flex-col gap-3 rounded-clay bg-karta p-4 shadow-clay-sm min-[360px]:p-[18px]">
         {o ? (
@@ -102,6 +106,8 @@ export function Sertifikat({ onVariant, onDtm, onChiq }: {
         </button>
       )}
 
+      </div>
+      <div className="contents kom:flex kom:flex-col kom:gap-3.5">
       {/* ---- variantlar ---- */}
       <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-3">
         <h2 className="font-display text-[20px]">{t("imtihonVariantlar")}</h2>
@@ -128,6 +134,7 @@ export function Sertifikat({ onVariant, onDtm, onChiq }: {
       </div>
 
       <p className="text-[13px] leading-snug text-ink-dim">{t("sertPastIzoh")}</p>
+      </div>
     </div>
   );
 }

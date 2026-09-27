@@ -1,6 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700;800&display=swap');
 @import "tailwindcss";
 
+/* KOMPYUTER — chap yon panel chiqqan maket (`lib/maket.ts` → html[data-maket]).
+   `lg:` dan farqi: Telegram Mini App keng planshetda ham telefon maketida
+   qoladi, `kom:` esa faqat haqiqiy kompyuter ko'rinishiga qo'llanadi. */
+@custom-variant kom (&:where([data-maket="kompyuter"] *));
+
 /* ============================================================
    Aql Zone — dizayn tizimi
 

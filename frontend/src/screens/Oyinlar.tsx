@@ -87,7 +87,7 @@ export function Oyinlar({
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3 px-4 pt-5 pb-3
-                    min-[360px]:px-[18px] sm:max-w-[700px] lg:max-w-[1020px]">
+                    min-[360px]:px-[18px] sm:max-w-[700px] lg:max-w-[1020px] kom:max-w-[1040px] kom:px-8 kom:pt-8">
       <header className="flex min-h-12 items-center gap-2.5">
         <h1 className="min-w-0 flex-1 truncate font-display text-[23px] min-[360px]:text-[26px]">{t("tabOyin")}</h1>
         <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand-gold/16 px-3 py-1.5 font-display

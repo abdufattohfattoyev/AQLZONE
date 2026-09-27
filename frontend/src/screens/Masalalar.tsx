@@ -185,7 +185,7 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack, onQidiruv }: Pr
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3 px-3.5 pt-3.5 pb-24 min-[360px]:gap-4 min-[360px]:px-[18px] min-[360px]:pt-5
-                    sm:max-w-2xl">
+                    sm:max-w-2xl kom:max-w-[1040px] kom:px-8 kom:pt-8">
       {/* ---- sarlavha: nom · sinf · qidiruv (Masalalar kanvasi) ----
           Sinf tanlagichi sarlavhaga ko'chdi, "Menikilar" esa pastdagi
           almashtirgichga: 320px ekranda ham bir qatorda sig'adi.
@@ -289,7 +289,8 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack, onQidiruv }: Pr
 
       {bosh && <Bosh katta={butunlayBosh} onYangi={onYangi} />}
 
-      <div className="space-y-2.5">
+      {/* Kompyuterda kartalar ikki ustunda — bir qarashda ko'proq masala. */}
+      <div className="space-y-2.5 kom:grid kom:grid-cols-2 kom:items-start kom:gap-3 kom:space-y-0">
         {royxat.map((m) => (
           <MasalaKarta key={m.id} m={m} on={() => onOch(m.id)} />
         ))}

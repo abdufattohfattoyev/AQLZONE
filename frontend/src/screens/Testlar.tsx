@@ -138,7 +138,7 @@ export function Testlar({ sinf, onBack, onHisobot, boshlaToliq = false }: {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-10">
+    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-10 kom:max-w-[760px] kom:px-8 kom:pt-8">
       <div className="flex items-center gap-3">
         {ozStrelka && (
           <button type="button" onClick={onBack} title={t("ortga")}

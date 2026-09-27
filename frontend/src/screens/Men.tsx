@@ -92,7 +92,9 @@ export function Men({ onYol }: Props) {
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-3
-                    min-[360px]:px-[18px] sm:max-w-[560px]">
+                    min-[360px]:px-[18px] sm:max-w-[560px] kom:grid kom:max-w-[1040px] kom:grid-cols-2
+                    kom:items-start kom:gap-5 kom:px-8 kom:pt-8">
+      {/* Kompyuterda ikki ustun: profil va sonlar yonma-yon, bo'limlar ostida. */}
       <h1 className="sr-only">{t("menSarlavha")}</h1>
 
       {/* ---- profil kartasi ---- */}

@@ -38,7 +38,7 @@ export function Dokon({ progress, onSotibOl, onKiy, onBack }: Props) {
   const kiyilgan = kiygan ? buyumTop(kiygan) : undefined;
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16">
+    <div className="mx-auto w-full max-w-[430px] px-4 pt-4 pb-16 kom:max-w-[760px] kom:px-8 kom:pt-8">
       <div className="flex items-center gap-2">
         {/* Telegram ichida strelka chizilmaydi — u yerda nativi bor
             (`lib/qobiq.ts`). Tanga hisobi `ml-auto` bilan o'ng chetda

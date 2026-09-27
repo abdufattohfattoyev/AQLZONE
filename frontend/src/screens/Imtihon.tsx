@@ -51,8 +51,12 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onTakrorla }: {
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]
-                    sm:max-w-[560px]">
-      <ImtihonSarlavha joriy="dtm" onTanla={onSertifikat} onChiq={onChiq} />
+                    sm:max-w-[560px] kom:grid kom:max-w-[1040px] kom:grid-cols-2 kom:items-start
+                    kom:gap-x-6 kom:gap-y-5 kom:px-8 kom:pt-8">
+      {/* Kompyuterda ikki ustun (`Sertifikat.tsx` dagidek): chapda natija, o'ngda variantlar. */}
+      <div className="contents kom:col-span-2 kom:block">
+        <ImtihonSarlavha joriy="dtm" onTanla={onSertifikat} onChiq={onChiq} />
+      </div>
 
       <div className="flex flex-col gap-2.5 rounded-clay bg-karta p-4 shadow-clay-sm min-[360px]:p-[18px]">
         {d ? (
@@ -95,6 +99,7 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onTakrorla }: {
         )}
       </div>
 
+      <div className="contents kom:flex kom:flex-col kom:gap-3.5">
       <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-3">
         <h2 className="font-display text-[20px]">{t("imtihonVariantlar")}</h2>
         <span className="text-[13px] text-ink-dim">
@@ -117,6 +122,7 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onTakrorla }: {
       </div>
 
       <p className="text-[13px] leading-snug text-ink-dim">{t("imtDtmPast")}</p>
+      </div>
     </div>
   );
 }

@@ -382,7 +382,8 @@ export function Masala({ id, onMuallif, onBack, onKeyingi }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-3.5 pb-10 min-[360px]:px-[18px] min-[360px]:pt-5 sm:max-w-2xl">
+    <div className="mx-auto w-full max-w-[430px] px-3.5 pt-3.5 pb-10 min-[360px]:px-[18px] min-[360px]:pt-5 sm:max-w-2xl
+                    kom:max-w-[760px] kom:px-8 kom:pt-8">
       {/* Sarlavha qatori (`manba/Masala.dc.html`): orqaga · "Masala #12" ·
           ulashish. Sinf endi kartaning muallif qatorida. Tanga hisobi
           yo'q: tanga sarflash oynasi (`TangaSorov`) uni o'zi aytadi. */}

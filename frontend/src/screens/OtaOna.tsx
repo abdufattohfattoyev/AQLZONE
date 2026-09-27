@@ -84,7 +84,8 @@ export function OtaOna({ onBack, onDars, onSozlama }: Props) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]
+                    kom:max-w-[760px] kom:px-8 kom:pt-8">
       <header className="flex min-h-12 items-center gap-3">
         {ozStrelka && (
           <button type="button" onClick={onBack} aria-label={t("ortga")}
