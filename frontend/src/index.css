@@ -19,6 +19,10 @@
      [data-tema="katta"]    2–4-sinf — tog' tuni: yulduzlar, oy, aurora,
                             ko'l aksi. Shishasimon kartalar.
 
+   2026-09: RANGLAR endi hamma temada bir xil (yorug' — sovuq neytral,
+   qorong'i — sokin slate, asosiy ko'k #4677ef). Temalar faqat shakl va
+   kayfiyatda farq qiladi: burchak radiusi, soya qalinligi, fon bezagi.
+
    Buning sababi oddiy: 4-sinf o'quvchisi "kichkinalar o'yini" ni yoqtirmaydi,
    1-sinf bolasi esa unga o'ta jiddiy ko'ringan ekranda o'zini yo'qotadi.
    Bosh sahifa esa ikkalasiga ham tegishli emas — u umumiy vitrina.
@@ -75,19 +79,18 @@
 
   /* --- temaga qarab o'zgaradigan tokenlar (standarti: bolalar) --- */
   --color-karta: #ffffff;            /* karta yuzasi */
-  --color-track: rgb(0 0 0 / 0.08);  /* to'ldirilmagan chiziq, xira yuza */
-  --color-yol: rgb(90 75 50 / 0.13); /* dars yo'li */
+  --color-track: rgb(20 30 60 / 0.08);  /* to'ldirilmagan chiziq, xira yuza */
+  --color-yol: rgb(20 30 60 / 0.1); /* dars yo'li */
   --color-yol-chiziq: rgb(255 255 255 / 0.5);
 
-  --color-ink: #3a2e22;
-  --color-ink-soft: #6b5a41;
-  /* Xira matn kartadagi "6 dars" kabi yozuvlar uchun. #9a9285 da oq
-     kartada kontrast 3.08 edi — 12px matn uchun kerakli 4.5 dan past.
-     #797163 da 4.82. */
-  --color-ink-dim: #797163;
-  --color-clay: #e2cba2;             /* 3D soyaning rangi */
-  --color-locked: #c2bbae;
-  --color-sahna: #fffdf6;            /* savol turadigan maydon */
+  --color-ink: #172033;
+  --color-ink-soft: #465068;
+  /* Xira matn kartadagi "6 dars" kabi yozuvlar uchun — oq kartada
+     kontrast ~5.6 (kichik matn uchun kerakli 4.5 dan yuqori). */
+  --color-ink-dim: #5b6680;
+  --color-clay: #d5dcea;             /* 3D soyaning rangi */
+  --color-locked: #c3cad8;
+  --color-sahna: #ffffff;            /* savol turadigan maydon */
 
   --radius-clay: 26px;
 }
@@ -174,64 +177,64 @@
    va yashil yumshoq nurlar — logoning o'z ranglari. Qorong'i kayfiyat
    "katta" temada (2–4-sinf) qoldi, u yerda u o'rinli. */
 :root[data-tema="bosh"] {
-  --az-body: #f4f6fb;
+  --az-body: #f3f5f9;
 
   --color-karta: #ffffff;
-  --color-track: rgb(26 40 90 / 0.1);
-  --color-yol: rgb(26 40 90 / 0.12);
+  --color-track: rgb(20 30 60 / 0.08);
+  --color-yol: rgb(20 30 60 / 0.1);
   --color-yol-chiziq: rgb(255 255 255 / 0.65);
 
-  --color-ink: #1a2450;
-  --color-ink-soft: #4d5a86;
+  --color-ink: #172033;
+  --color-ink-soft: #465068;
   /* Xira matn ham O'QILADIGAN bo'lishi shart: kurs tavsifi shu rangda va
-     o'lchami 12.5px. #7e8cb2 da oq kartada kontrast 3.34 edi — kichik matn
-     uchun kerakli 4.5 dan past. #5f6d8e da 5.17. */
-  --color-ink-dim: #5f6d8e;
-  --color-clay: #c4d2f0;             /* 3D soyaning rangi */
-  --color-locked: #b6c1de;
+     o'lchami 12.5px. #5b6680 oq kartada ~5.6 kontrast beradi. */
+  --color-ink-dim: #5b6680;
+  --color-clay: #d5dcea;             /* 3D soyaning rangi */
+  --color-locked: #c3cad8;
   --color-sahna: #ffffff;
 
-  --az-soya: 0 4px 0 var(--color-clay), 0 18px 34px -12px rgb(30 50 110 / 0.26);
-  --az-soya-sm: 0 3px 0 var(--color-clay), 0 10px 20px -8px rgb(30 50 110 / 0.22);
+  --az-soya: inset 0 0 0 1px rgb(20 30 60 / 0.06), 0 4px 0 var(--color-clay), 0 18px 34px -14px rgb(20 30 60 / 0.22);
+  --az-soya-sm: inset 0 0 0 1px rgb(20 30 60 / 0.06), 0 3px 0 var(--color-clay), 0 10px 20px -10px rgb(20 30 60 / 0.2);
   /* Oq kartada quyuq botiq soya iflos ko'rinadi — bu yerda u ko'kimtir
      va ancha yengil. */
   --az-ichki: inset 0 2px 5px rgb(30 50 110 / 0.16);
   --az-soya-node: 0 6px 0 rgb(163 183 224 / 0.8), 0 14px 26px rgb(30 50 110 / 0.18);
   --radius-clay: 24px;
 
-  --az-maqsad-1: #dce7ff;
-  --az-maqsad-2: #c8daf8;
+  --az-maqsad-1: #e0e8fd;
+  --az-maqsad-2: #cfdcfb;
 }
 
-/* ---------------- 1-sinf: quyoshli, yumshoq, katta ---------------- */
+/* ---------------- 1-sinf: yumshoq, katta ----------------
+   2026-09: ranglar butun loyiha bilan BIR XIL (ilgari issiq sarg'ish qog'oz
+   edi va kichkintoy kurslari boshqa ilovadek ko'rinardi). Farqi faqat
+   shaklda qoldi: kattaroq burchak va qalinroq "o'yinchoq" soya. */
 :root[data-tema="bolalar"] {
-  --az-body: #eaf5ff;
+  --az-body: #f3f5f9;
   --color-karta: #ffffff;
-  --color-track: rgb(0 0 0 / 0.08);
-  --color-yol: rgb(90 75 50 / 0.13);
+  --color-track: rgb(20 30 60 / 0.08);
+  --color-yol: rgb(20 30 60 / 0.1);
   --color-yol-chiziq: rgb(255 255 255 / 0.55);
 
-  --color-ink: #3a2e22;
-  --color-ink-soft: #6b5a41;
-  /* Xira matn kartadagi "6 dars" kabi yozuvlar uchun. #9a9285 da oq
-     kartada kontrast 3.08 edi — 12px matn uchun kerakli 4.5 dan past.
-     #797163 da 4.82. */
-  --color-ink-dim: #797163;
-  --color-clay: #e8cea0;
-  --color-locked: #cfc7b6;
-  /* Savol maydoni ataylab qog'oz rangida: osmondan ham, ichidagi oq
-     kartachalardan ham farq qilib tursin. */
-  --color-sahna: #fffcf2;
+  --color-ink: #172033;
+  --color-ink-soft: #465068;
+  /* Xira matn kartadagi "6 dars" kabi yozuvlar uchun — oq kartada
+     kontrast ~5.6 (kichik matn uchun kerakli 4.5 dan yuqori). */
+  --color-ink-dim: #5b6680;
+  --color-clay: #d5dcea;
+  --color-locked: #c3cad8;
+  /* Savol maydoni ham oq — butun loyihadagidek. */
+  --color-sahna: #ffffff;
 
   /* Bu yoshda tugma "bosiladigan o'yinchoq"dek bo'lishi kerak: qalin,
      yumaloq, ostida qalin soya. */
-  --az-soya: 0 8px 0 var(--color-clay), 0 14px 24px rgb(0 0 0 / 0.12);
-  --az-soya-sm: 0 5px 0 var(--color-clay), 0 8px 14px rgb(0 0 0 / 0.1);
-  --az-ichki: inset 0 2px 4px rgb(90 75 50 / 0.14);
+  --az-soya: inset 0 0 0 1px rgb(20 30 60 / 0.06), 0 7px 0 var(--color-clay), 0 14px 24px rgb(20 30 60 / 0.1);
+  --az-soya-sm: inset 0 0 0 1px rgb(20 30 60 / 0.06), 0 4px 0 var(--color-clay), 0 8px 14px rgb(20 30 60 / 0.08);
+  --az-ichki: inset 0 2px 4px rgb(20 30 60 / 0.12);
   --radius-clay: 32px;
 
-  --az-maqsad-1: #ffe0ad;
-  --az-maqsad-2: #ffcf88;
+  --az-maqsad-1: #e0e8fd;
+  --az-maqsad-2: #cfdcfb;
 }
 
 /* ---------------- 2–4-sinf: chuqur ko'k, shishasimon ---------------- */
@@ -327,30 +330,30 @@
 
 :root[data-tema][data-yoruglik="oq"] {
   --color-brand-blue-t: var(--color-brand-blue-d);
-  --az-body: #f4f6fb;
+  --az-body: #f3f5f9;
 
   --color-karta: #ffffff;
   --color-sahna: #ffffff;
-  --color-track: rgb(26 40 90 / 0.1);
-  --color-yol: rgb(26 40 90 / 0.12);
+  --color-track: rgb(20 30 60 / 0.08);
+  --color-yol: rgb(20 30 60 / 0.1);
   --color-yol-chiziq: rgb(255 255 255 / 0.65);
 
-  --color-ink: #1a2450;
-  --color-ink-soft: #4d5a86;
+  --color-ink: #172033;
+  --color-ink-soft: #465068;
   /* Xira matn ham O'QILADIGAN bo'lishi shart: kurs tavsifi shu rangda
-     va o'lchami 12,5px. #5f6d8e oq kartada 5.17 kontrast beradi. */
-  --color-ink-dim: #5f6d8e;
-  --color-clay: #c4d2f0;
-  --color-locked: #b6c1de;
+     va o'lchami 12,5px. #5b6680 oq kartada ~5.6 kontrast beradi. */
+  --color-ink-dim: #5b6680;
+  --color-clay: #d5dcea;
+  --color-locked: #c3cad8;
 
-  --az-soya: 0 5px 0 var(--color-clay), 0 14px 28px -10px rgb(26 40 90 / 0.28);
-  --az-soya-sm: 0 3px 0 var(--color-clay), 0 9px 18px -8px rgb(26 40 90 / 0.22);
+  --az-soya: inset 0 0 0 1px rgb(20 30 60 / 0.06), 0 5px 0 var(--color-clay), 0 14px 28px -12px rgb(20 30 60 / 0.24);
+  --az-soya-sm: inset 0 0 0 1px rgb(20 30 60 / 0.06), 0 3px 0 var(--color-clay), 0 9px 18px -10px rgb(20 30 60 / 0.2);
   --az-soya-node: 0 6px 0 rgb(26 40 90 / 0.18), 0 12px 22px rgb(26 40 90 / 0.18);
   /* Oq kartada quyuq o'yiq iflos ko'rinadi — ko'kimtir va yengil. */
   --az-ichki: inset 0 2px 5px rgb(26 40 90 / 0.16);
 
-  --az-maqsad-1: #dfe8ff;
-  --az-maqsad-2: #eef2ff;
+  --az-maqsad-1: #e0e8fd;
+  --az-maqsad-2: #cfdcfb;
 }
 
 /* Qavariq chekka va panel soyasi — oq yuzada yumshoqroq bo'lishi kerak.
