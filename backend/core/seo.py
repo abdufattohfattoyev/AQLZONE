@@ -265,6 +265,13 @@ SEO_USLUB = (
     "html[data-yoruglik=qora] #az-seo a,html[data-yoruglik=qora] #az-seo summary{color:#8fb4ff}"
     "html[data-yoruglik=qora] #az-seo td,html[data-yoruglik=qora] #az-seo th{border-color:#34406b}"
     "html[data-yoruglik=qora] #az-seo th{background:#1f2a4d}"
+    # Mazmun ROBOT uchun. JS ishlaydigan brauzerda (`index.html` boshida
+    # `data-js` qo'yiladi) u yashirin: aks holda yangilashda matn bir
+    # lahza chiqib, React uni almashtirganda yo'qolardi. O'rniga oddiy
+    # yuklanish belgisi turadi. Statik sahifada React ulanmaydi — u yerda
+    # aksincha, mazmun ko'rinadi va belgi yashiriladi.
+    "html[data-js]:not([data-statik]) #az-seo{display:none}"
+    "html:not([data-js]) #az-boshlash,html[data-statik] #az-boshlash{display:none}"
     "</style>"
 )
 
@@ -301,9 +308,11 @@ def boyit(html: str, yol: str) -> str:
         # Faqat server sahifasi — ilovada unga mos ekran yo'q. React
         # ulanmaydi (`main.tsx`), aks holda u "topilmadi" chizardi.
         html = _html_atribut(html, "data-statik", "1")
-    # Yuklanish belgisi o'rniga — haqiqiy mazmun (u ham `#root` ichida, React uni almashtiradi).
+    # Yuklanish belgisidan KEYIN — haqiqiy mazmun (ikkalasi ham `#root`
+    # ichida, React ularni almashtiradi). Qaysi biri ko'rinishini
+    # `SEO_USLUB` oxiridagi qoida hal qiladi.
     return re.sub(r'<div id="az-boshlash">.*?</div>\s*</div>',
-                  lambda _: _mazmun(s), html, count=1, flags=re.S)
+                  lambda m: m.group(0) + _mazmun(s), html, count=1, flags=re.S)
 
 
 # ------------------------------------------------------------------ sitemap

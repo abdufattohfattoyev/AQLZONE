@@ -14,6 +14,9 @@
     -->
     <script>
       (function () {
+        // JS ishlayapti — server qo'shgan SEO matni (`#az-seo`) yashirinsin,
+        // o'rniga yuklanish belgisi tursin (`backend/core/seo.py`).
+        document.documentElement.dataset.js = "1";
         try {
           var m = /kurs\/(\d+)-sinf/.exec(location.pathname + location.hash);
           document.documentElement.dataset.tema =

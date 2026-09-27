@@ -8701,7 +8701,11 @@ class SeoTest(TestCase):
         self.assertIn('content="DTM &lt;variantlar&gt;"', h)
         self.assertIn('href="https://aql-zone.uz/imtihon"', h)
         self.assertIn("<h1>DTM</h1>", h)
-        self.assertNotIn("az-boshlash", h.split("</head>")[1])
+        # Yuklanish belgisi QOLADI, mazmun undan keyin: JS bor brauzerda
+        # matn yashirin (React yuklanguncha miltillamasin), robotga — ochiq.
+        tana = h.split("</head>")[1]
+        self.assertLess(tana.index("az-boshlash"), tana.index('<main id="az-seo">'))
+        self.assertIn("html[data-js]:not([data-statik]) #az-seo{display:none}", h)
         self.assertTrue(h.rstrip().endswith("</div></body></html>"))  # #root yopilgan
         self.assertIn("<\\/script>x", h)  # JSON-LD skriptni yopmaydi
         self.assertIn("index, follow", h)
