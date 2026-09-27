@@ -189,6 +189,10 @@ OYIN_YOLI = "/oyinlar"
 DUEL_YOLI = "/oyinlar/duel"
 MAYDON_YOLI = "/oyinlar/maydon"
 REYTING_YOLI = "/reyting"
+#: DTM — `/imtihon` oxirgi tanlangan turga (DTM yoki sertifikat) o'zi o'tadi.
+DTM_YOLI = "/imtihon"
+SERTIFIKAT_YOLI = "/sertifikat"
+MASALALAR_YOLI = "/masalalar"
 
 
 def ilova_url(yol: str = "") -> str:
@@ -249,32 +253,43 @@ def asosiy_klaviatura(til: str) -> dict | None:
             # inline tugma yoki havola orqali) tokeni SHU qurilmada
             # saqlanadi va keyingi ochilishlarda `initData` kerak
             # bo'lmaydi — ya'ni bu tugmalar ham to'g'ri hisobga tushadi.
+            # ─────────── TUGMALAR TANLOVI (2026-09) ───────────
+            #
+            # Ilgari: Darslar · Bellashuv, Bugungi maydon · O'yinlar,
+            # Reyting · Yordam. Ilovaning eng ko'p kerak bo'ladigan ikki
+            # bo'limi — DTM/sertifikat va masalalar — botda umuman yo'q
+            # edi (kelganlarning ko'pi talaba va abituriyent), ularning
+            # o'rnini ilova ichida ikkinchi darajali Maydon va Reyting
+            # egallab turardi. Ikkalasi ham ilovada qoldi ("O'yin" va
+            # "Men" bo'limlarida), buyruqlari ham ishlaydi.
+            #
+            # "Darslar" endi "Ilovani ochish": tugma darslarni emas,
+            # bosh sahifani ("Bugun") ochadi — nomi ishiga mos bo'lsin.
             [tugma_yasa(M("tIlova", til), YASHIL,
                         web_app={"url": ilova_url()})],
             [
-                tugma_yasa(M("tDuel", til), KOK,
-                           web_app={"url": ilova_url(DUEL_YOLI)}),
-                tugma_yasa(M("tMaydon", til), KOK,
-                           web_app={"url": ilova_url(MAYDON_YOLI)}),
+                tugma_yasa(M("tDtm", til), KOK,
+                           web_app={"url": ilova_url(DTM_YOLI)}),
+                tugma_yasa(M("tMasalalar", til), KOK,
+                           web_app={"url": ilova_url(MASALALAR_YOLI)}),
             ],
             [
                 tugma_yasa(M("tOyinlar", til), KOK,
                            web_app={"url": ilova_url(OYIN_YOLI)}),
-                tugma_yasa(M("tReyting", til), KOK,
-                           web_app={"url": ilova_url(REYTING_YOLI)}),
+                tugma_yasa(M("tDuel", til), KOK,
+                           web_app={"url": ilova_url(DUEL_YOLI)}),
             ],
             # To'rtinchi qator — ilovani OCHMAYDIGAN yagona tugma.
             #
             # "Raqam" bu yerdan OLIB TASHLANDI: raqam bir marta beriladi
-            # va undan keyin bu tugma hech qachon kerak bo'lmaydi, lekin
-            # ekranning sakkizdan birini egallab turardi. U hamon
-            # `/raqam` buyrug'i bo'lib qoladi — ya'ni kerak bo'lganda
-            # topiladi, lekin yo'lda turmaydi.
+            # va undan keyin bu tugma hech qachon kerak bo'lmaydi. U
+            # `/raqam` buyrug'i bo'lib qoladi.
             #
-            # "Yordam" QIZIL: u ilovaga olib bormaydi, balki ishlar
-            # yurishmaganda bosiladi. Rang uni qolganidan ajratib turadi
-            # va chalg'igan odam uni ko'zi bilan darrov topadi.
-            [tugma_yasa(M("tYordamTugma", til), QIZIL)],
+            # "Yordam" NEYTRAL (rangsiz). Ilgari qizil edi — ajralib
+            # tursin deb. Lekin qizil ilovada faqat XATO ma'nosida va
+            # yordam xato emas; rangsiz tugma rangli to'rttasi orasida
+            # baribir ajralib turadi.
+            [tugma_yasa(M("tYordamTugma", til))],
         ],
         "resize_keyboard": True,
     }
@@ -756,17 +771,15 @@ def yangilikni_qayta_ishla(u: dict) -> str:
             bolimni_yubor(chat_id, til, f"/xona/{kod}", "xonaChaqiruvBot")
             return f"{tg_id}: xona havolasi ({kod})"
 
-    # Kanaldagi post tugmasi: `/start masala_<id>` va `/start masalalar`.
+    # `/start masala_<id>` va `/start masalalar` — ZAXIRA yo'l.
     #
-    # NEGA `?startapp=` EMAS. U bir bosishda ilovani ochadi, lekin
-    # botda "Main Mini App" yoqilgan bo'lishini talab qiladi va
-    # yoqilmagan botda Telegram BOT_INVALID deb javob beradi — kanal
-    # tugmasi shu sabab ishlamay turgan edi. `?start=` esa har qanday
-    # botda ishlaydi.
-    #
-    # Yon foydasi ham bor va u kichik emas: bu yo'l bilan kelgan odam
-    # bot bilan SUHBAT ochadi, ya'ni unga keyin eslatma yuborish
-    # mumkin bo'ladi. `?startapp=` da suhbat ochilmaydi.
+    # Kanal tugmalari hozir `?startapp=` bilan ilovani BIR bosishda
+    # ochadi (`masala_kanal.havola`, `test_toplam`): botda "Main Mini
+    # App" yoqilgan. U o'chirilsa Telegram `BOT_INVALID` beradi — bir
+    # marta shunday bo'lgan. O'shanda `?start=` havolalari (eski postlar,
+    # duel ulashish havolasi `duel.havola`) shu yerga tushadi va bot
+    # ilovani ochadigan tugma yuboradi. Yon foydasi: bu yo'l bilan kelgan
+    # odam bot bilan SUHBAT ochadi va unga keyin eslatma yuborish mumkin.
     if matn.startswith("/start masala_"):
         # `-k` (kanal belgisi) raqamdan ajratiladi.
         xom = matn.split("masala_", 1)[1].strip()[:12].split("-")[0]
@@ -800,6 +813,16 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         bolimni_yubor(chat_id, til, "/masalalar", "masalalarBot")
         return f"{tg_id}: masalalar bo'limi"
 
+    # DTM va milliy sertifikat — ulashilgan reyting yoki kanal posti.
+    # `/start dtm_reyting` kabi davomi bo'lsa ham shu bo'lim ochiladi.
+    if matn.startswith("/start dtm"):
+        bolimni_yubor(chat_id, til, DTM_YOLI, "dtmHaqida")
+        return f"{tg_id}: DTM havolasi"
+
+    if matn.startswith("/start sertifikat"):
+        bolimni_yubor(chat_id, til, SERTIFIKAT_YOLI, "sertifikatHaqida")
+        return f"{tg_id}: sertifikat havolasi"
+
     if matn.startswith("/start"):
         # Odam o'zi yozdi — demak xabarlarga qarshi emas. "Boshqa
         # yozmang" belgisi olib tashlanadi, aks holda u eslatmalardan
@@ -823,7 +846,7 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     # Tekshiruv SHU YERDA, har bir yuboruvchi funksiyada emas: ular
     # to'rtta va biriga qo'shishni unutsak, darvozada teshik qolardi.
     if raqami_yoq(tg_id) and (
-        matn.startswith(("/oyinlar", "/duel", "/maydon", "/reyting"))
+        matn.startswith(("/oyinlar", "/duel", "/maydon", "/reyting", "/dtm", "/sertifikat", "/masalalar"))
         or matn in barcha("tOyinlar")
     ):
         raqam_sora(chat_id, M("raqamNegaKerak", til), til)
@@ -860,6 +883,18 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     if matn.startswith("/reyting"):
         bolimni_yubor(chat_id, til, REYTING_YOLI, "reytingHaqida")
         return f"{tg_id}: /reyting"
+
+    if matn.startswith("/dtm") or matn in barcha("tDtm"):
+        bolimni_yubor(chat_id, til, DTM_YOLI, "dtmHaqida")
+        return f"{tg_id}: /dtm"
+
+    if matn.startswith("/sertifikat"):
+        bolimni_yubor(chat_id, til, SERTIFIKAT_YOLI, "sertifikatHaqida")
+        return f"{tg_id}: /sertifikat"
+
+    if matn.startswith("/masalalar") or matn in barcha("tMasalalar"):
+        bolimni_yubor(chat_id, til, MASALALAR_YOLI, "masalalarBot")
+        return f"{tg_id}: /masalalar"
 
     if matn in barcha("tRaqamTugma"):
         raqam_sora(chat_id, M("raqamSora", til), til)
@@ -927,12 +962,15 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     return f"{tg_id}: boshqa xabar"
 
 
-#: "/" tugmasi ostidagi ro'yxat. Tartib — foydalanish chastotasi bo'yicha.
+#: "/" tugmasi ostidagi ro'yxat — klaviatura tartibida. `/maydon` ro'yxatdan
+#: chiqdi (klaviaturadan ham), lekin buyruq sifatida ishlayveradi.
 BUYRUQLAR = (
     ("start", "buyruqStart"),
+    ("dtm", "buyruqDtm"),
+    ("sertifikat", "buyruqSertifikat"),
+    ("masalalar", "buyruqMasalalar"),
     ("oyinlar", "buyruqOyinlar"),
     ("duel", "buyruqDuel"),
-    ("maydon", "buyruqMaydon"),
     ("reyting", "buyruqReyting"),
     ("raqam", "buyruqRaqam"),
     ("help", "buyruqYordam"),

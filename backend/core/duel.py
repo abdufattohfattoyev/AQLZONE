@@ -268,18 +268,17 @@ def chaqiruv_xabari(duel: Duel, raqib: Profile) -> bool:
     if not bot:
         return False
 
-    ism = html.escape(_ism(duel.chaqirgan))
-    matn = (
-        f"⚔️ <b>{ism} sizni bellashuvga chaqirdi!</b>\n\n"
-        "Ikkalangiz bir xil savollarni yechasiz — kim tezroq va "
-        "aniqroq javob bersa, o'sha yutadi."
-    )
+    from .matn import M, tilni_tanla
+
+    # Raqibning o'z tilida (ilovada tanlagani).
+    til = tilni_tanla(raqib.pupil.til)
+    matn = M("duelChaqiruv", til, ism=html.escape(_ism(duel.chaqirgan)))
     havola = f"https://t.me/{bot}?startapp={duel.kod}"
 
     # Xabar NAVBATGA qo'yiladi, oqimga emas. Farqi: oqim konteyner
     # qayta ishga tushganda jimgina yo'qolardi va chaqiruv hech
     # qayerga yetib bormasdi — chaqirgan odam esa kutib turardi.
-    fonda(telegram_xabar, tg_id, matn, tugma="⚔️ Qabul qilish", havola=havola)
+    fonda(telegram_xabar, tg_id, matn, tugma=M("tQabulQilish", til), havola=havola)
     return True
 
 
@@ -305,20 +304,27 @@ def natija_xabari(duel: Duel) -> None:
         if not chaqirgan_tg and not qabul_tg:
             return
 
+        from .matn import M, tilni_tanla
+
         ch_ism = html.escape(_ism(duel.chaqirgan))
         qa_ism = html.escape(_ism(duel.qabul)) if duel.qabul else "Raqib"
         hisob_ch = f"{duel.chaqirgan_ball}:{duel.qabul_ball}"
         hisob_qa = f"{duel.qabul_ball}:{duel.chaqirgan_ball}"
+        # Har tomon o'z tilida (ilgari ikkalasiga ham o'zbekcha ketardi).
+        ch_til = tilni_tanla(duel.chaqirgan.pupil.til)
+        qa_til = tilni_tanla(duel.qabul.pupil.til) if duel.qabul else ch_til
+
+        def xabar(kalit: str, til: str, raqib: str, hisob: str) -> str:
+            return M(kalit, til, raqib=raqib, hisob=hisob)
 
         if duel.golib == "durang":
-            ch_matn = f"🤝 <b>Durang!</b>\n\n{qa_ism} bilan {hisob_ch} — teng chiqdingiz."
-            qa_matn = f"🤝 <b>Durang!</b>\n\n{ch_ism} bilan {hisob_qa} — teng chiqdingiz."
+            ch_kalit, qa_kalit = "duelDurang", "duelDurang"
         elif duel.golib == "chaqirgan":
-            ch_matn = f"🏆 <b>Siz yutdingiz!</b>\n\n{qa_ism} — {hisob_ch}"
-            qa_matn = f"😔 <b>{ch_ism} sizni yutdi</b>\n\nHisob: {hisob_qa}"
+            ch_kalit, qa_kalit = "duelYutdingiz", "duelYutqazdingiz"
         else:
-            ch_matn = f"😔 <b>{qa_ism} sizni yutdi</b>\n\nHisob: {hisob_ch}"
-            qa_matn = f"🏆 <b>Siz yutdingiz!</b>\n\n{ch_ism} — {hisob_qa}"
+            ch_kalit, qa_kalit = "duelYutqazdingiz", "duelYutdingiz"
+        ch_matn = xabar(ch_kalit, ch_til, qa_ism, hisob_ch)
+        qa_matn = xabar(qa_kalit, qa_til, ch_ism, hisob_qa)
 
         # "Javob berish" duel ekraniga olib boradi, bosh sahifaga emas:
         # zanjir uzilmasligi kerak, odam esa chaqiruvni yana qidirib
@@ -334,7 +340,7 @@ def natija_xabari(duel: Duel) -> None:
     # Har tomonga ALOHIDA vazifa. Bittasida yig'ilsa, birinchisi
     # yiqilganda ikkinchisi ham qayta yuborilardi va g'olib
     # "siz yutdingiz" xabarini ikki marta olardi.
-    for tg_id, matn in ((chaqirgan_tg, ch_matn), (qabul_tg, qa_matn)):
+    for tg_id, matn, til in ((chaqirgan_tg, ch_matn, ch_til), (qabul_tg, qa_matn, qa_til)):
         if not tg_id:
             continue
         fonda(
@@ -342,7 +348,7 @@ def natija_xabari(duel: Duel) -> None:
             # "Javob berish" — duel zanjirini davom ettiradi. Bitta
             # zarbadan keyin tugaydigan bellashuv qaytish sababi
             # yaratmaydi.
-            tugma="⚔️ Javob berish", havola=ilova, ilovada=ilovada,
+            tugma=M("tJavobBerish", til), havola=ilova, ilovada=ilovada,
         )
 
 

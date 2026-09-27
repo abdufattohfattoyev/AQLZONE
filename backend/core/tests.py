@@ -864,7 +864,8 @@ class BotTest(TestCase):
         k = self.klaviatura()
         matnlar = [t["text"] for qator in k for t in qator]
         self.assertIn("🎮 O'yinlar", matnlar)
-        self.assertIn("🎓 Darslar", matnlar)
+        self.assertIn("🎓 Ilovani ochish", matnlar)
+        self.assertIn("📝 DTM · Sertifikat", matnlar)
 
         # Tugma ILOVANI O'ZI ochadi — oraliq "Ochish" xabari yo'q.
         oyin = next(t for qator in k for t in qator if "O'yinlar" in t["text"])
@@ -3192,12 +3193,13 @@ class BotKlaviaturaTest(TestCase):
         """
         kutilgan = {
             M("tIlova", "uz"): "https://aql-zone.uz",
+            M("tDtm", "uz"): "https://aql-zone.uz/imtihon",
+            M("tMasalalar", "uz"): "https://aql-zone.uz/masalalar",
             M("tOyinlar", "uz"): "https://aql-zone.uz/oyinlar",
             M("tDuel", "uz"): "https://aql-zone.uz/oyinlar/duel",
-            M("tMaydon", "uz"): "https://aql-zone.uz/oyinlar/maydon",
-            M("tReyting", "uz"): "https://aql-zone.uz/reyting",
         }
         tugmalar = {t["text"]: t for t in self.tugmalar()}
+        self.assertEqual(len(tugmalar), len(kutilgan) + 1)       # + Yordam
         for matn, manzil in kutilgan.items():
             self.assertEqual(tugmalar[matn]["web_app"]["url"], manzil, matn)
 
@@ -3215,8 +3217,11 @@ class BotKlaviaturaTest(TestCase):
 
         kutilgan = {
             "tIlova": "https://aql-zone.uz",
+            "tDtm": "https://aql-zone.uz/imtihon",
+            "tMasalalar": "https://aql-zone.uz/masalalar",
             "tOyinlar": "https://aql-zone.uz/oyinlar",
             "tDuel": "https://aql-zone.uz/oyinlar/duel",
+            # Klaviaturadan chiqdi, lekin eski ekranda qolgan tugma ishlaydi.
             "tMaydon": "https://aql-zone.uz/oyinlar/maydon",
             "tReyting": "https://aql-zone.uz/reyting",
         }
@@ -3289,7 +3294,26 @@ class BotKlaviaturaTest(TestCase):
         from core.management.commands import bot as B
 
         nomlar = {c for c, _ in B.BUYRUQLAR}
-        self.assertTrue({"duel", "maydon", "reyting"} <= nomlar)
+        self.assertTrue({"dtm", "sertifikat", "masalalar", "duel", "reyting"} <= nomlar)
+
+    @patch("core.management.commands.bot.api")
+    def test_dtm_va_sertifikat_buyruqlari(self, api):
+        """`/dtm`, `/sertifikat`, `/start sertifikat` — AYNAN o'sha ekran."""
+        from core.management.commands import bot as B
+
+        pupil = Pupil.objects.create(first_name="Ali")
+        Identity.objects.create(pupil=pupil, provider=Identity.TELEGRAM, external_id="778")
+        Identity.objects.create(pupil=pupil, provider=Identity.TELEFON, external_id="+998900000778")
+        for matn, manzil in (("/dtm", "/imtihon"), ("/sertifikat", "/sertifikat"),
+                             ("/start sertifikat", "/sertifikat"), ("/start dtm", "/imtihon"),
+                             ("/masalalar", "/masalalar")):
+            api.reset_mock()
+            with self.settings(MINI_APP_URL="https://aql-zone.uz"):
+                B.yangilikni_qayta_ishla({"message": {
+                    "chat": {"id": 1}, "from": {"id": 778, "language_code": "uz"}, "text": matn,
+                }})
+            tugma = api.call_args[1]["reply_markup"]["inline_keyboard"][0][0]
+            self.assertEqual(tugma["web_app"]["url"], "https://aql-zone.uz" + manzil, matn)
 
 
 class BotTugmaRangiTest(TestCase):
@@ -3302,12 +3326,15 @@ class BotTugmaRangiTest(TestCase):
             k = B.asosiy_klaviatura("uz")
         return {t["text"]: t.get("style") for q in k["keyboard"] for t in q}
 
-    def test_hamma_tugma_rangli(self):
-        self.assertTrue(all(self.tugmalar().values()), self.tugmalar())
-
-    def test_yordam_qizil_darslar_yashil(self):
+    def test_ilovaga_olib_boradigan_tugmalar_rangli(self):
         r = self.tugmalar()
-        self.assertEqual(r[M("tYordamTugma", "uz")], "danger")
+        r.pop(M("tYordamTugma", "uz"))
+        self.assertTrue(all(r.values()), r)
+
+    def test_yordam_neytral_ilova_yashil(self):
+        """Qizil — faqat xato ma'nosida; yordam xato emas, u rangsiz."""
+        r = self.tugmalar()
+        self.assertIsNone(r[M("tYordamTugma", "uz")])
         self.assertEqual(r[M("tIlova", "uz")], "success")
 
 

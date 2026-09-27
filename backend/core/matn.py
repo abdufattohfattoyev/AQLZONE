@@ -43,16 +43,21 @@ XABAR: dict[str, dict[str, str]] = {
     # ---------------------------------------------------------- bot: /start
     "salom": {
         "uz": (
+            # Ilgari faqat "bola darslik boblari bo'ylab yuradi" edi. Lekin
+            # kelganlarning ko'pi talaba va abituriyent — ularga DTM,
+            # sertifikat va oliy matematika borligini birinchi xabar aytsin.
             "Assalomu alaykum{ism}! 👋\n\n"
-            "<b>Aql Zone</b> — 1–11-sinf matematikasi, algebra va geometriya.\n"
-            "Bola darslik boblari bo'ylab yuradi, yulduz yig'adi va "
-            "har safar yangi savollar yechadi."
+            "<b>Aql Zone</b> — matematika bir joyda:\n"
+            "🎓 1–11-sinf darslari, algebra va geometriya\n"
+            "📝 DTM va Milliy sertifikat variantlari — xato tahlili bilan\n"
+            "🧩 Masalalar, 🎮 o'yinlar va do'st bilan bellashuv"
         ),
         "ru": (
             "Здравствуйте{ism}! 👋\n\n"
-            "<b>Aql Zone</b> — математика 1–11 классов, алгебра и геометрия.\n"
-            "Ребёнок идёт по главам учебника, собирает звёзды и каждый раз "
-            "решает новые задания."
+            "<b>Aql Zone</b> — вся математика в одном месте:\n"
+            "🎓 уроки 1–11 классов, алгебра и геометрия\n"
+            "📝 варианты ДТМ и Нац. сертификата — с разбором ошибок\n"
+            "🧩 задачи, 🎮 игры и дуэли с друзьями"
         ),
     },
     "saytYoq": {
@@ -104,7 +109,10 @@ XABAR: dict[str, dict[str, str]] = {
     #
     # Yozuvlar QISQA: ikkitasi bir qatorga sig'ishi kerak va ruschasi
     # o'zbekchasidan uzun bo'lishi mumkin.
-    "tIlova": {"uz": "🎓 Darslar", "ru": "🎓 Уроки"},
+    # "Darslar" emas: tugma bosh sahifani ("Bugun") ochadi, darslar ro'yxatini emas.
+    "tIlova": {"uz": "🎓 Ilovani ochish", "ru": "🎓 Открыть приложение"},
+    "tDtm": {"uz": "📝 DTM · Sertifikat", "ru": "📝 ДТМ · Сертификат"},
+    "tMasalalar": {"uz": "🧩 Masalalar", "ru": "🧩 Задачи"},
     "tOyinlar": {"uz": "🎮 O'yinlar", "ru": "🎮 Игры"},
     "tDuel": {"uz": "⚔️ Bellashuv", "ru": "⚔️ Дуэль"},
     "tMaydon": {"uz": "🏟 Bugungi maydon", "ru": "🏟 Арена дня"},
@@ -142,7 +150,36 @@ XABAR: dict[str, dict[str, str]] = {
     # Telegram'dagi "/" tugmasi ostidagi ro'yxat (`setMyCommands`). Uni
     # o'rnatmagunimizcha ro'yxat BO'SH turardi va odam bot nima
     # qilishini umuman bilmasdi — buyruqni faqat taxmin qilib topardi.
-    "buyruqStart": {"uz": "Boshlash va saytga kirish", "ru": "Начать и войти на сайт"},
+    # Ilgari "Boshlash va saytga kirish" — `/start` endi sayt havolasini
+    # emas, ilovani ochadigan tugmani beradi.
+    "buyruqStart": {"uz": "Boshlash — ilovani ochish", "ru": "Начать — открыть приложение"},
+    "buyruqDtm": {"uz": "DTM variantlari — 30 savol, 60 daqiqa", "ru": "Варианты ДТМ — 30 вопросов, 60 минут"},
+    "buyruqSertifikat": {"uz": "Milliy sertifikat — 45 topshiriq", "ru": "Нац. сертификат — 45 заданий"},
+    "buyruqMasalalar": {"uz": "Masalalar — yeching va yozing", "ru": "Задачи — решайте и публикуйте"},
+    "dtmHaqida": {
+        "uz": (
+            "📝 <b>DTM va Milliy sertifikat</b>\n\n"
+            "12 tadan variant, haqiqiy imtihon vaqti bilan. Oxirida — qaysi "
+            "mavzuda yiqilganingiz, har savolning yechimi va shu haftaning reytingi."
+        ),
+        "ru": (
+            "📝 <b>ДТМ и Национальный сертификат</b>\n\n"
+            "По 12 вариантов, с реальным временем экзамена. В конце — темы с "
+            "ошибками, решение каждого вопроса и рейтинг недели."
+        ),
+    },
+    "sertifikatHaqida": {
+        "uz": (
+            "🏅 <b>Milliy sertifikat</b>\n\n"
+            "Rasmiy formatda: 45 topshiriq, 100 ball, 3 soat. Natijada taxminiy "
+            "daraja, ball yo'qotilgan mavzular va har topshiriqning yechimi."
+        ),
+        "ru": (
+            "🏅 <b>Национальный сертификат</b>\n\n"
+            "В официальном формате: 45 заданий, 100 баллов, 3 часа. В результате — "
+            "примерный уровень, темы с потерянными баллами и решения."
+        ),
+    },
     "buyruqOyinlar": {"uz": "Matematik o'yinlar", "ru": "Математические игры"},
     "buyruqDuel": {"uz": "Do'st bilan bellashuv", "ru": "Дуэль с другом"},
     "buyruqMaydon": {"uz": "Bugungi maydon — 3 bosqich", "ru": "Арена дня — 3 этапа"},
@@ -335,17 +372,30 @@ XABAR: dict[str, dict[str, str]] = {
     # -------------------------------------------------------- bot: qolganlar
     "yordam": {
         "uz": (
-            "/start — saytga kirish havolasini olish\n"
+            # Ilgari "/start — saytga kirish havolasi" va "tugmalar doim
+            # shu yerda" deyilardi: ikkalasi ham endi to'g'ri emas
+            # (klaviatura ataylab yig'iladi).
+            "/start — ilovani ochish\n"
+            "/dtm — DTM variantlari\n"
+            "/sertifikat — Milliy sertifikat\n"
+            "/masalalar — masalalar\n"
             "/oyinlar — matematik o'yinlar\n"
+            "/duel — do'st bilan bellashuv\n"
+            "/reyting — reyting\n"
             "/raqam — telefon raqamini bog'lash\n\n"
-            "Pastdagi tugmalar doim shu yerda turadi.\n"
+            "Pastdagi tugmalar yashirinsa — yozish maydonidagi klaviatura belgisini bosing.\n"
             "Savollar bo'lsa shu yerga yozing."
         ),
         "ru": (
-            "/start — получить ссылку для входа на сайт\n"
+            "/start — открыть приложение\n"
+            "/dtm — варианты ДТМ\n"
+            "/sertifikat — Национальный сертификат\n"
+            "/masalalar — задачи\n"
             "/oyinlar — математические игры\n"
+            "/duel — дуэль с другом\n"
+            "/reyting — рейтинг\n"
             "/raqam — привязать номер телефона\n\n"
-            "Кнопки внизу всегда на месте.\n"
+            "Если кнопки скрылись — нажмите значок клавиатуры в поле ввода.\n"
             "Если есть вопросы — напишите сюда."
         ),
     },
@@ -362,12 +412,14 @@ XABAR: dict[str, dict[str, str]] = {
     # o'z o'rnida qoladi.
     "boshlaTugma": {
         "uz": (
-            "Quyidagi tugmalardan birini tanlang 👇\n\n"
-            "🎓 Darslar · 🎮 O'yinlar · 📱 Raqam · ❓ Yordam"
+            # Ilgari bu yerda klaviaturada YO'Q "📱 Raqam" sanalardi.
+            # Endi ro'yxat yo'q — tugmalar shu xabar bilan birga keladi
+            # va o'zi ko'rinib turadi; qo'lda yozilgan ro'yxat esa har
+            # safar klaviatura o'zgarganda eskirib qolardi.
+            "Quyidagi tugmalardan birini tanlang 👇"
         ),
         "ru": (
-            "Выберите одну из кнопок ниже 👇\n\n"
-            "🎓 Уроки · 🎮 Игры · 📱 Номер · ❓ Помощь"
+            "Выберите одну из кнопок ниже 👇"
         ),
     },
     "boshlaStart": {
@@ -406,7 +458,39 @@ XABAR: dict[str, dict[str, str]] = {
         "uz": "Hisobotni ilovadagi Ota-ona panelida o'chirish mumkin.",
         "ru": "Отчёт можно отключить в панели для родителей в приложении.",
     },
-    "tHisobotOchish": {"uz": "Batafsil", "ru": "Подробнее"},
+    # ------------------------------------------------------------- duel
+    # Ilgari `core/duel.py` da faqat o'zbekcha yozilgan edi — ruscha
+    # foydalanuvchi chaqiruv va natijani o'zbekcha olardi.
+    "duelChaqiruv": {
+        "uz": (
+            "⚔️ <b>{ism} sizni bellashuvga chaqirdi!</b>\n\n"
+            "Ikkalangiz bir xil savollarni yechasiz — kim tezroq va "
+            "aniqroq javob bersa, o'sha yutadi."
+        ),
+        "ru": (
+            "⚔️ <b>{ism} вызывает вас на дуэль!</b>\n\n"
+            "Вы оба решаете одни и те же вопросы — побеждает тот, "
+            "кто ответит быстрее и точнее."
+        ),
+    },
+    "tQabulQilish": {"uz": "⚔️ Qabul qilish", "ru": "⚔️ Принять"},
+    "duelDurang": {
+        "uz": "🤝 <b>Durang!</b>\n\n{raqib} bilan {hisob} — teng chiqdingiz.",
+        "ru": "🤝 <b>Ничья!</b>\n\n{raqib} — {hisob}, поровну.",
+    },
+    "duelYutdingiz": {
+        "uz": "🏆 <b>Siz yutdingiz!</b>\n\n{raqib} — {hisob}",
+        "ru": "🏆 <b>Вы победили!</b>\n\n{raqib} — {hisob}",
+    },
+    "duelYutqazdingiz": {
+        "uz": "😔 <b>{raqib} sizni yutdi</b>\n\nHisob: {hisob}",
+        "ru": "😔 <b>Победа за {raqib}</b>\n\nСчёт: {hisob}",
+    },
+    "tJavobBerish": {"uz": "⚔️ Javob berish", "ru": "⚔️ Ответить"},
+    "tKunlikSon": {"uz": "Bugungi sonni yechish", "ru": "Решить число дня"},
+
+    # Ilgari "Batafsil" — nima ochilishini aytmasdi.
+    "tHisobotOchish": {"uz": "📊 Hisobotni ochish", "ru": "📊 Открыть отчёт"},
 
     # ------------------------------------------------------------- eslatma
     "eslatmaIsmsiz": {"uz": "Do'stim", "ru": "Друг"},

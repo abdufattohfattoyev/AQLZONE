@@ -33,6 +33,7 @@ from django.utils import timezone
 
 from core import kunlik_son as KS
 from core import xabar as X
+from core.matn import M, tilni_tanla
 from core.models import Identity, KunlikSonNatija, Pupil
 
 #: Shuncha kundan beri umuman o'ynamaganga yozmaymiz — u qaytmaydi,
@@ -43,23 +44,29 @@ FAOL_KUN = 21
 CHEKLOV = 5000
 
 
-def matn_yasa(zanjir: int, raqam: int, bugun_urinildi: bool) -> str:
+def matn_yasa(zanjir: int, raqam: int, bugun_urinildi: bool, til: str = "uz") -> str:
     """
-    Xabar matni — holatga qarab.
+    Xabar matni — holatga qarab, odamning tilida (ilgari faqat o'zbekcha edi).
 
     Uch xil holat, uch xil sabab: zanjirni YO'QOTMASLIK, boshlangan
     ishni TUGATISH va oddiy taklif.
     """
+    ru = til == "ru"
     if bugun_urinildi:
-        return (f"<b>Kunlik son #{raqam}</b> yarim qoldi.\n"
+        return (f"<b>Число дня #{raqam}</b> не доделано.\nПопытки на месте — завершите." if ru else
+                f"<b>Kunlik son #{raqam}</b> yarim qoldi.\n"
                 "Urinishlaringiz joyida turibdi — yakunlab qo'ying.")
     if zanjir >= 2:
-        return (f"Zanjiringiz — <b>{zanjir} kun</b>.\n"
+        return (f"Ваша серия — <b>{zanjir} дн.</b>\nЧисло дня #{raqam} ещё не решено. Хватит двух минут." if ru else
+                f"Zanjiringiz — <b>{zanjir} kun</b>.\n"
                 f"Bugungi son #{raqam} hali yechilmagan. Ikki daqiqa yetadi.")
     if zanjir == 1:
-        return (f"Kecha yechdingiz — zanjir boshlandi.\n"
+        return (f"Вчера решили — серия началась.\nЧисло дня #{raqam} продлит её до <b>2 дней</b>." if ru else
+                f"Kecha yechdingiz — zanjir boshlandi.\n"
                 f"Bugungi son #{raqam} uni <b>2 kunga</b> uzaytiradi.")
-    return (f"<b>Kunlik son #{raqam}</b> tayyor.\n"
+    return (f"<b>Число дня #{raqam}</b> готово.\nШесть попыток, одно скрытое равенство. "
+            "Сегодня все решают эту загадку." if ru else
+            f"<b>Kunlik son #{raqam}</b> tayyor.\n"
             "Olti urinish, bitta yashirin tenglik. Hamma bugun shu jumboqni yechyapti.")
 
 
@@ -125,7 +132,8 @@ class Command(BaseCommand):
                 continue                                   # bugun yechilgan
 
             profil = next((p for p in profillar if p.pk in oynaganlar), profillar[0])
-            matn = matn_yasa(KS.zanjir(profil, bugun), raqam, bool(set(idlar) & bugun_urindi))
+            til = tilni_tanla(pupil.til)
+            matn = matn_yasa(KS.zanjir(profil, bugun), raqam, bool(set(idlar) & bugun_urindi), til)
 
             if sinov:
                 self.stdout.write(f"  → {kirish.external_id}: "
@@ -133,7 +141,7 @@ class Command(BaseCommand):
                 yuborildi += 1
             else:
                 holat, sabab = X.yubor(
-                    kirish.external_id, matn, tugma="Bugungi sonni yechish",
+                    kirish.external_id, matn, tugma=M("tKunlikSon", til),
                     havola=X.manba_bilan(havola, "kunlik"), ilovada=True,
                 )
                 if holat == "yuborildi":
