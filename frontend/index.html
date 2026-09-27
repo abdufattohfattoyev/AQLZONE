@@ -39,6 +39,12 @@
         // keyin o'zgarsa, birinchi kadr noto'g'ri til qoidalari bilan
         // chiziladi.
         try {
+          // `/ru/...` — ruscha manzil (Google'dan kelganlar): til shu
+          // yerdayoq ruschaga qo'yiladi va saqlanadi, React ham undan
+          // o'qiydi. O'zbekchaga qaytilsa, `til.ts` `/ru` ni olib tashlaydi.
+          if (/^\/ru(\/|$)/.test(location.pathname)) localStorage.setItem("azapp_til", "ru");
+        } catch (e) { /* xotira bloklangan */ }
+        try {
           var t = localStorage.getItem("azapp_til");
           if (t !== "ru" && t !== "uz") {
             t = (navigator.language || "").toLowerCase().indexOf("ru") === 0 ? "ru" : "uz";

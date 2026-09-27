@@ -8676,7 +8676,18 @@ class SeoTest(TestCase):
                          "ld": [{"@type": "Thing", "name": "</script>x"}], "muhim": 0.9},
             "/kurs/x/formulalar": {"sarlavha": "F", "tavsif": "F", "h1": "F", "matn": [], "havolalar": [],
                                    "ld": [], "kanonik": "/formulalar"},
-        }}), "utf-8")
+            "/kurs/x/1-bob/1-dars": {"sarlavha": "D", "tavsif": "D", "h1": "D", "matn": [], "havolalar": [], "ld": [],
+                                     "misollar": [{"s": "Hisobla", "k": "2 + 3", "v": [4, 5], "j": 5, "y": ["2 + 3 = 5"],
+                                                   "jt": "Javob"}],
+                                     "muqobil": {"uz": "/kurs/x/1-bob/1-dars", "ru": "/ru/kurs/x/1-bob/1-dars"}},
+            "/ru/kurs/x/1-bob/1-dars": {"sarlavha": "Д", "tavsif": "Д", "h1": "Д", "matn": [], "havolalar": [],
+                                        "ld": [], "til": "ru",
+                                        "muqobil": {"uz": "/kurs/x/1-bob/1-dars", "ru": "/ru/kurs/x/1-bob/1-dars"}},
+            "/kopaytirish-jadvali": {"sarlavha": "J", "tavsif": "J", "h1": "J", "matn": [], "havolalar": [], "ld": [],
+                                     "statik": True, "jadval": {"nom": "T", "bosh": ["×", 1], "qatorlar": [[1, 1]]}},
+            "/masalalar": {"sarlavha": "M", "tavsif": "M", "h1": "M", "matn": [], "havolalar": [], "ld": []},
+        }, "yollar": ["/", "/sozlamalar", "/masalalar/:id", "/kurs/:slug", "/kurs/:slug/:bob/:dars", "*"],
+            "kurslar": ["x"]}), "utf-8")
         self.ozgar = override_settings(FRONTEND_DIST=d)
         self.ozgar.enable()
 
@@ -8714,6 +8725,41 @@ class SeoTest(TestCase):
         self.assertNotIn("MAXFIY", h)
         Masala.objects.filter(pk=m.pk).update(holat=Masala.KUTMOQDA)
         self.assertIn("noindex", self.client.get(f"/masalalar/{m.pk}").content.decode())
+
+    def test_yoq_manzil_404(self):
+        """Soft 404 bo'lmasin: noma'lum manzil — 404, ilova marshruti — 200."""
+        self.assertEqual(self.client.get("/bunday-sahifa-yoq").status_code, 404)
+        self.assertEqual(self.client.get("/kurs/yoq-kurs").status_code, 404)
+        self.assertEqual(self.client.get("/ru/nimadir/boshqa").status_code, 404)
+        self.assertEqual(self.client.get("/sozlamalar").status_code, 200)
+        self.assertEqual(self.client.get("/kurs/x").status_code, 200)
+        self.assertEqual(self.client.get("/ru/kurs/x/2-bob/1-dars").status_code, 200)
+        self.assertEqual(self.client.get("/masalalar/999").status_code, 200)
+
+    def test_dars_savollari_va_hreflang(self):
+        h = self.client.get("/kurs/x/1-bob/1-dars").content.decode()
+        self.assertIn("2 + 3", h)
+        self.assertIn("<summary>Javob</summary>", h)
+        self.assertIn('hreflang="ru" href="https://aql-zone.uz/ru/kurs/x/1-bob/1-dars"', h)
+        self.assertIn('hreflang="x-default" href="https://aql-zone.uz/kurs/x/1-bob/1-dars"', h)
+        r = self.client.get("/ru/kurs/x/1-bob/1-dars").content.decode()
+        self.assertIn('<html lang="ru"', r)
+        self.assertIn('content="ru_RU"', r)
+
+    def test_statik_sahifa(self):
+        h = self.client.get("/kopaytirish-jadvali").content.decode()
+        self.assertIn('data-statik="1"', h)
+        self.assertIn("<table>", h)
+
+    def test_masalalar_royxati_havolalar(self):
+        m = Masala.objects.create(muallif=Pupil.objects.create(first_name="C").asosiy_profil(), sinf=6,
+                                  matn="Uchburchak burchaklari yig'indisi?", javob="180", holat=Masala.TASDIQ)
+        Masala.objects.create(muallif=Pupil.objects.create(first_name="D").asosiy_profil(), sinf=6,
+                              matn="YASHIRIN kutilayotgan", javob="1", holat=Masala.KUTMOQDA)
+        h = self.client.get("/masalalar").content.decode()
+        self.assertIn(f'href="/masalalar/{m.pk}"', h)
+        self.assertIn("6-sinf", h)
+        self.assertNotIn("YASHIRIN", h)
 
     def test_sitemap_va_robots(self):
         m = Masala.objects.create(muallif=Pupil.objects.create(first_name="B").asosiy_profil(), sinf=5,

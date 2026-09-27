@@ -77,13 +77,23 @@ maketniUlash();
  */
 const Router = import.meta.env.VITE_ROUTER === "hash" ? HashRouter : BrowserRouter;
 
-createRoot(document.getElementById("root")!).render(
+/**
+ * Ruscha manzillar — `/ru/kurs/5-sinf`. Ular Google uchun (`core/seo.py`),
+ * ilova ichida esa odatdagi marshrutlar ishlaydi: `/ru` shunchaki asos
+ * bo'ladi va ichki havolalar ham shu asos bilan qoladi. Til esa
+ * `index.html` dagi skriptda ruschaga qo'yilgan.
+ */
+const ASOS_YOL = import.meta.env.VITE_ROUTER !== "hash" && /^\/ru(\/|$)/.test(location.pathname) ? "/ru" : undefined;
+
+// Faqat server sahifasi (ko'paytirish jadvali, formulalar bo'limi) —
+// ilovada ekrani yo'q. React ulansa, u o'rniga "topilmadi" chizardi.
+if (!document.documentElement.dataset.statik) createRoot(document.getElementById("root")!).render(
   <StrictMode>
     {/* Fon xato ushlagichdan TASHQARIDA: u shunchaki bezak, unga tegishli
         xato butun ilovani to'xtatmasligi kerak. */}
     <Fon />
     <XatoUshlagich qayer="ilova">
-      <Router>
+      <Router basename={ASOS_YOL}>
         <ProgressProvider>
           {/* Chaqiruv havolasidan kelgan kod ENG BIRINCHI o'qiladi —
               `Tanishuv` dan ham oldin. U til so'ralayotgan paytda

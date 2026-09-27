@@ -1,0 +1,433 @@
+/**
+ * 7–11-sinf kurslarining ruscha matnlari: kurs nomi, tavsifi, boblar,
+ * bob kirishlari va darslar.
+ *
+ * Alohida faylda, chunki `kurs.ts` dagi lug'at boshlang'ich sinflar va
+ * oliy matematika bilan to'lgan edi, 7–11-sinf esa tarjimasiz qolgan:
+ * ruscha interfeysda bu kurslar butunlay o'zbekcha ko'rinardi, ruscha
+ * SEO sahifalari (`/ru/kurs/...`) ham yarim o'zbekcha chiqardi.
+ *
+ * Kalit — o'zbekcha matn AYNAN dasturdagidek (`curriculum/*.ts`).
+ * Bob nomi "N-bob." qismisiz yoziladi — uni `kursMatn` o'zi ajratadi.
+ */
+export const RU_YUQORI: Record<string, string> = {
+  /* ---- maktabgacha: qolib ketganlari ---- */
+  "Qayerda ko'p?": "Где больше?",
+  '"+" belgisi': "Знак «+»",
+  '"−" belgisi': "Знак «−»",
+
+  /* =============== 7-sinf algebra =============== */
+  "7-sinf Algebra": "Алгебра 7 класс",
+  "Algebraik ifodalar, tenglama, ko'phad, kasrlar": "Алгебраические выражения, уравнения, многочлены, дроби",
+  "Algebraik ifodalar": "Алгебраические выражения",
+  "Harf bilan yozilgan matematika": "Математика, записанная буквами",
+  "Son o'rniga harf turadi. Harfga qiymat bersang — oddiy misolga aylanadi.":
+    "Вместо числа стоит буква. Подставь значение — и получится обычный пример.",
+  "Sonli ifodalar": "Числовые выражения",
+  "Tengliklar va formulalar": "Равенства и формулы",
+  "Qavslarni ochish": "Раскрытие скобок",
+  "Birinchi darajali tenglamalar": "Уравнения первой степени",
+  "Tenglama — tarozi": "Уравнение — это весы",
+  "Ikki tomon teng. Bir tomonga nima qilsang, ikkinchisiga ham shuni qil.":
+    "Обе части равны. Что делаешь с одной частью — делай и с другой.",
+  "Tenglama va uning ildizlari": "Уравнение и его корни",
+  "Masalalarni tenglama bilan yechish": "Решение задач с помощью уравнений",
+  "Birhad va ko'phadlar": "Одночлены и многочлены",
+  "Daraja va ko'phad": "Степень и многочлен",
+  "Bir xil asosli darajalarni ko'paytirsang, ko'rsatkichlar qo'shiladi.":
+    "При умножении степеней с одинаковым основанием показатели складываются.",
+  "Natural ko'rsatkichli daraja": "Степень с натуральным показателем",
+  "Darajaning xossalari": "Свойства степени",
+  "Birhadlarni ko'paytirish": "Умножение одночленов",
+  "O'xshash hadlarni ixchamlash": "Приведение подобных слагаемых",
+  "Ko'phadlarni qo'shish va ayirish": "Сложение и вычитание многочленов",
+  "Ko'phadni birhadga ko'paytirish": "Умножение многочлена на одночлен",
+  "Ko'phadni ko'phadga ko'paytirish": "Умножение многочлена на многочлен",
+  "Birhadga bo'lish": "Деление на одночлен",
+  "Ko'paytuvchilarga ajratish": "Разложение на множители",
+  "Teskari yo'l": "Обратный путь",
+  "Ko'paytirishni bilsang, uni orqaga qaytarish ham qo'lingdan keladi.":
+    "Если умеешь умножать, сможешь проделать это и в обратную сторону.",
+  "Umumiy ko'paytuvchini chiqarish": "Вынесение общего множителя",
+  "Yig'indi va ayirmaning kvadrati": "Квадрат суммы и разности",
+  "Kvadratlar ayirmasi": "Разность квадратов",
+  "Usullarni birgalikda qo'llash": "Комбинирование способов",
+  "Algebraik kasrlar": "Алгебраические дроби",
+  "Maxrajda ham harf bor": "Буква и в знаменателе",
+  "Oddiy kasrdagi hamma qoida bu yerda ham ishlaydi — faqat son o'rnida ifoda.":
+    "Все правила обыкновенных дробей работают и здесь — только вместо чисел выражения.",
+  "Qo'shish va ayirish": "Сложение и вычитание",
+  "Birgalikda bajariladigan amallar": "Совместные действия",
+  "Nechta usul bor?": "Сколько способов?",
+  "Sanashning o'zi ham alohida fan. Ko'paytirish qoidasi shu yerdan boshlanadi.":
+    "Подсчёт — отдельная наука. С правила умножения всё и начинается.",
+  "Kombinatorikaning asosiy qoidasi": "Основное правило комбинаторики",
+  "O'rin almashtirish": "Перестановки",
+  "7-sinf algebra kursini takrorlash": "Повторение курса алгебры 7 класса",
+
+  /* =============== 7-sinf geometriya =============== */
+  "7-sinf Geometriya": "Геометрия 7 класс",
+  "Burchak, uchburchak, parallel chiziqlar": "Углы, треугольники, параллельные прямые",
+  "Boshlang'ich ma'lumotlar": "Начальные сведения",
+  "Nuqta, chiziq, kesma": "Точка, прямая, отрезок",
+  "Geometriya shu uchtadan boshlanadi. Qolgan hamma narsa ularning ustiga quriladi.":
+    "Геометрия начинается с этих трёх понятий. Всё остальное строится на них.",
+  "Kesma va uning uzunligi": "Отрезок и его длина",
+  "Aylana va doira": "Окружность и круг",
+  "Kesmalarni taqqoslash": "Сравнение отрезков",
+  "Burchak": "Угол",
+  "Burchak va uning o'lchovi": "Угол и его мера",
+  "Burchak gradusda o'lchanadi. To'g'ri burchak — 90°, yoyiq burchak — 180°.":
+    "Угол измеряется в градусах. Прямой угол — 90°, развёрнутый — 180°.",
+  "Burchak turlari": "Виды углов",
+  "Bissektrisa": "Биссектриса",
+  "Qo'shni burchaklar": "Смежные углы",
+  "Vertikal burchaklar": "Вертикальные углы",
+  "Ko'pburchak va uchburchak": "Многоугольник и треугольник",
+  "Uchburchak — asosiy shakl": "Треугольник — главная фигура",
+  "Ikki uchburchak teng ekanini uchta alomatdan biri bilan isbotlaymiz.":
+    "Равенство двух треугольников доказываем по одному из трёх признаков.",
+  "Uchburchak turlari": "Виды треугольников",
+  "Ko'pburchak burchaklari": "Углы многоугольника",
+  "Tenglik alomatlari": "Признаки равенства",
+  "Teng yonli uchburchak": "Равнобедренный треугольник",
+  "Parallel to'g'ri chiziqlar": "Параллельные прямые",
+  "Parallel chiziqlar va kesuvchi": "Параллельные прямые и секущая",
+  "Kesuvchi sakkizta burchak hosil qiladi. Ular orasida faqat ikki xil qiymat bor.":
+    "Секущая образует восемь углов, но среди них всего два разных значения.",
+  "Kesuvchi hosil qilgan burchaklar": "Углы при секущей",
+  "Parallellik alomatlari": "Признаки параллельности",
+  "Tomonlar va burchaklar": "Стороны и углы",
+  "Uchburchakning ichida nima bor": "Что внутри треугольника",
+  "Uchala burchakning yig'indisi har doim 180°. Bu — butun bobning kaliti.":
+    "Сумма трёх углов всегда 180°. Это ключ ко всей главе.",
+  "Ichki burchaklar yig'indisi": "Сумма внутренних углов",
+  "Tashqi burchak": "Внешний угол",
+  "To'g'ri burchakli uchburchak": "Прямоугольный треугольник",
+  "Uchburchak tengsizligi": "Неравенство треугольника",
+  "Takrorlash": "Повторение",
+  "Hammasi birga": "Всё вместе",
+  "Yil davomida o'rganilgan hamma narsa aralash keladi.": "Всё, что изучено за год, вперемешку.",
+  "Hisoblashga doir masalalar": "Задачи на вычисление",
+  "Yakuniy sinov": "Итоговый тест",
+
+  /* =============== 8-sinf algebra =============== */
+  "8-sinf Algebra": "Алгебра 8 класс",
+  "Kvadrat ildiz, tengsizliklar, kvadrat tenglamalar": "Квадратный корень, неравенства, квадратные уравнения",
+  "Kasr ustida amallar": "Действия с дробями",
+  "Umumiy maxraj, qisqartirish, ko'paytirish — hammasi 7-sinfdagidek, faqat chuqurroq.":
+    "Общий знаменатель, сокращение, умножение — всё как в 7 классе, только глубже.",
+  "Umumiy maxrajga keltirish": "Приведение к общему знаменателю",
+  "y = k/x funksiya": "Функция y = k/x",
+  "Kvadrat ildiz": "Квадратный корень",
+  "Ildizning xossalari": "Свойства корня",
+  "Ratsional ko'rsatkichli daraja": "Степень с рациональным показателем",
+  "Tengsizliklar": "Неравенства",
+  "Tenglik emas, taqqoslash": "Не равенство, а сравнение",
+  "Manfiy songa ko'paytirsang — ishora teskari o'giriladi. Butun bobning kaliti shu.":
+    "При умножении на отрицательное число знак неравенства меняется. В этом ключ всей главы.",
+  "Sonli tengsizliklar": "Числовые неравенства",
+  "Bir noma'lumli tengsizlik": "Неравенство с одной переменной",
+  "Sonli oraliqlar": "Числовые промежутки",
+  "Sonning moduli": "Модуль числа",
+  "Taqribiy hisoblash va yaxlitlash": "Приближённые вычисления и округление",
+  "Kvadrat tenglamalar": "Квадратные уравнения",
+  "Diskriminant nechta ildiz borligini aytadi: musbat bo'lsa ikkita, nol bo'lsa bitta.":
+    "Дискриминант показывает число корней: положительный — два, ноль — один.",
+  "Chala kvadrat tenglamalar": "Неполные квадратные уравнения",
+  "Diskriminant": "Дискриминант",
+  "Nechta ildiz bor": "Сколько корней",
+  "Ildizlarni topish": "Нахождение корней",
+  "Viyet teoremasi": "Теорема Виета",
+  "Kvadrat uchhadni ajratish": "Разложение квадратного трёхчлена",
+  "Bikvadrat tenglama": "Биквадратное уравнение",
+  "Sonlar to'plamini o'qish": "Как читать набор чисел",
+  "O'rtacha qiymat, moda va mediana — uchtasi uchta boshqa savolga javob beradi.":
+    "Среднее, мода и медиана — три ответа на три разных вопроса.",
+  "O'rta arifmetik qiymat": "Среднее арифметическое",
+  "Moda": "Мода",
+  "Mediana": "Медиана",
+  "Kombinatorik masalalar": "Комбинаторные задачи",
+  "8-sinf algebra kursini takrorlash": "Повторение курса алгебры 8 класса",
+
+  /* =============== 8-sinf geometriya =============== */
+  "8-sinf Geometriya": "Геометрия 8 класс",
+  "To'rtburchaklar, Pifagor, vektorlar, yuz": "Четырёхугольники, Пифагор, векторы, площадь",
+  "To'rtburchaklar": "Четырёхугольники",
+  "Parallelogramm oilasi": "Семейство параллелограмма",
+  "To'g'ri to'rtburchak, romb va kvadrat — hammasi parallelogrammning bolalari.":
+    "Прямоугольник, ромб и квадрат — все они частные случаи параллелограмма.",
+  "Parallelogramm burchaklari": "Углы параллелограмма",
+  "Parallelogramm perimetri": "Периметр параллелограмма",
+  "Romb va kvadrat": "Ромб и квадрат",
+  "Trapetsiya": "Трапеция",
+  "O'rta chiziq. Fales teoremasi": "Средняя линия. Теорема Фалеса",
+  "Pifagor va trigonometriya": "Пифагор и тригонометрия",
+  "Ikki katetni bilsang gipotenuzani topasan. Burchakni bilsang — tomonlar nisbatini.":
+    "Зная два катета, найдёшь гипотенузу. Зная угол — отношение сторон.",
+  "Pifagor teoremasi": "Теорема Пифагора",
+  "Sinus, kosinus, tangens": "Синус, косинус, тангенс",
+  "30°, 45°, 60° burchaklar": "Углы 30°, 45°, 60°",
+  "To'g'ri burchakli uchburchakni yechish": "Решение прямоугольного треугольника",
+  "Koordinatalar va vektorlar": "Координаты и векторы",
+  "Geometriya sonlar bilan": "Геометрия в числах",
+  "Har bir nuqta — ikkita son. Shundan keyin geometriya masalasi hisobga aylanadi.":
+    "Каждая точка — два числа. После этого геометрическая задача превращается в вычисление.",
+  "Kesma o'rtasining koordinatalari": "Координаты середины отрезка",
+  "Ikki nuqta orasidagi masofa": "Расстояние между двумя точками",
+  "Vektorlarni qo'shish": "Сложение векторов",
+  "Yuz": "Площадь",
+  "Yuzni hisoblash": "Вычисление площади",
+  "Har shaklning o'z formulasi bor, lekin hammasi to'g'ri to'rtburchakdan chiqadi.":
+    "У каждой фигуры своя формула, но все они выводятся из площади прямоугольника.",
+  "To'rtburchak va uchburchak yuzi": "Площадь прямоугольника и треугольника",
+  "Romb va trapetsiya yuzi": "Площадь ромба и трапеции",
+  "Yuzga doir masalalar": "Задачи на площадь",
+  "Aylana": "Окружность",
+  "Aylanadagi burchaklar": "Углы в окружности",
+  "Ichki chizilgan burchak markaziy burchakning yarmiga teng — bob shu qoidaga tayanadi.":
+    "Вписанный угол равен половине центрального — на этом правиле держится вся глава.",
+  "Ichki chizilgan burchak": "Вписанный угол",
+  "Diametrga tiralgan burchak": "Угол, опирающийся на диаметр",
+  "8-sinf geometriya kursini takrorlash": "Повторение курса геометрии 8 класса",
+
+  /* =============== 9-sinf algebra =============== */
+  "9-sinf Algebra": "Алгебра 9 класс",
+  "Kvadrat funksiya, trigonometriya, progressiyalar": "Квадратичная функция, тригонометрия, прогрессии",
+  "Kvadrat funksiya": "Квадратичная функция",
+  "Parabola": "Парабола",
+  "a musbat bo'lsa tarmoqlar yuqoriga, manfiy bo'lsa pastga qaraydi.":
+    "Если a положительно, ветви направлены вверх, если отрицательно — вниз.",
+  "Tarmoqlar yo'nalishi": "Направление ветвей",
+  "Parabola uchi": "Вершина параболы",
+  "Funksiya qiymati": "Значение функции",
+  "Funksiyaning nollari": "Нули функции",
+  "Kvadrat tengsizlik": "Квадратное неравенство",
+  "Aniqlanish sohasi": "Область определения",
+  "Juft va toq funksiyalar": "Чётные и нечётные функции",
+  "Sistemalar": "Системы",
+  "Ikkita tenglama birga": "Два уравнения вместе",
+  "Yechim — ikkala tenglamani bir vaqtda to'g'ri qiladigan (x; y) juftligi.":
+    "Решение — пара (x; y), которая обращает оба уравнения в верные равенства одновременно.",
+  "Chiziqli sistemalar": "Линейные системы",
+  "Sistemalarni yechish usullari": "Способы решения систем",
+  "Trigonometriya elementlari": "Элементы тригонометрии",
+  "Burchak va aylana": "Угол и окружность",
+  "Burchak endi 180° dan katta ham bo'ladi. Uni radianda ham o'lchaymiz.":
+    "Теперь угол может быть больше 180°. Измеряем его и в радианах.",
+  "Radian o'lchovi": "Радианная мера",
+  "Choraklar bo'yicha ishoralar": "Знаки по четвертям",
+  "Asosiy trigonometrik ayniyat": "Основное тригонометрическое тождество",
+  "Keltirish formulalari": "Формулы приведения",
+  "Qo'shish formulalari": "Формулы сложения",
+  "Ikkilangan burchak": "Двойной угол",
+  "Progressiyalar": "Прогрессии",
+  "Sonlar zanjiri": "Цепочка чисел",
+  "Arifmetikda har had oldingisiga d qo'shiladi, geometrikda q ga ko'paytiriladi.":
+    "В арифметической к предыдущему члену прибавляют d, в геометрической — умножают на q.",
+  "Sonli ketma-ketliklar": "Числовые последовательности",
+  "Arifmetik progressiya hadi": "Член арифметической прогрессии",
+  "Arifmetik progressiya yig'indisi": "Сумма арифметической прогрессии",
+  "Geometrik progressiya hadi": "Член геометрической прогрессии",
+  "Geometrik progressiya yig'indisi": "Сумма геометрической прогрессии",
+  "Cheksiz kamayuvchi progressiya": "Бесконечно убывающая прогрессия",
+  "Ehtimolliklar nazariyasi": "Теория вероятностей",
+  "Tasodif ham hisoblanadi": "Случайность тоже считается",
+  "Qulay hollar sonini barcha hollar soniga bo'lamiz — mana shu ehtimollik.":
+    "Делим число благоприятных исходов на число всех исходов — это и есть вероятность.",
+  "Hodisaning ehtimolligi": "Вероятность события",
+  "Nisbiy chastota": "Относительная частота",
+  "9-sinf algebra kursini takrorlash": "Повторение курса алгебры 9 класса",
+
+  /* =============== 9-sinf geometriya =============== */
+  "9-sinf Geometriya": "Геометрия 9 класс",
+  "O'xshashlik, sinuslar teoremasi, aylana uzunligi": "Подобие, теорема синусов, длина окружности",
+  "O'xshashlik": "Подобие",
+  "Shakli bir xil, o'lchami boshqa": "Форма та же, размер другой",
+  "Tomonlar k marta katta bo'lsa, yuz k² marta katta bo'ladi.":
+    "Если стороны больше в k раз, площадь больше в k² раз.",
+  "O'xshashlik koeffitsiyenti": "Коэффициент подобия",
+  "O'xshash uchburchak tomonlari": "Стороны подобных треугольников",
+  "O'xshash shakllar yuzi": "Площади подобных фигур",
+  "O'xshashlik alomatlari": "Признаки подобия",
+  "Sinuslar va kosinuslar teoremasi": "Теоремы синусов и косинусов",
+  "Har qanday uchburchak": "Любой треугольник",
+  "Endi to'g'ri burchak shart emas — bu ikki teorema hamma uchburchakda ishlaydi.":
+    "Прямой угол больше не нужен — эти две теоремы работают в любом треугольнике.",
+  "Yuzni sinus orqali hisoblash": "Площадь через синус",
+  "Sinuslar teoremasi": "Теорема синусов",
+  "Kosinuslar teoremasi": "Теорема косинусов",
+  "Uchburchaklarni yechish": "Решение треугольников",
+  "π keladi": "Появляется π",
+  "Aylana uzunligi ham, doira yuzi ham bitta songa — π ga bog'liq.":
+    "И длина окружности, и площадь круга зависят от одного числа — π.",
+  "Muntazam ko'pburchaklar": "Правильные многоугольники",
+  "Aylana uzunligi": "Длина окружности",
+  "Yoy uzunligi": "Длина дуги",
+  "Sektor yuzi": "Площадь сектора",
+  "Metrik munosabatlar": "Метрические соотношения",
+  "Proporsional kesmalar": "Пропорциональные отрезки",
+  "To'g'ri burchakli uchburchakda balandlik ikki proyeksiyaning o'rta proporsionali.":
+    "В прямоугольном треугольнике высота — среднее пропорциональное двух проекций.",
+  "9-sinf geometriya kursini takrorlash": "Повторение курса геометрии 9 класса",
+
+  /* =============== 10-sinf algebra =============== */
+  "10-sinf Algebra": "Алгебра 10 класс",
+  "Funksiyalar, logarifm, trigonometrik tenglamalar": "Функции, логарифмы, тригонометрические уравнения",
+  "9-sinfdan nima qoldi": "Что осталось с 9 класса",
+  "Kvadrat funksiya, trigonometriya va progressiyalar — yangi mavzular shularga tayanadi.":
+    "Квадратичная функция, тригонометрия и прогрессии — на них опираются новые темы.",
+  "Kvadrat funksiya va grafigi": "Квадратичная функция и её график",
+  "Trigonometrik ayniyatlar": "Тригонометрические тождества",
+  "Arifmetik va geometrik progressiyalar": "Арифметическая и геометрическая прогрессии",
+  "Elementar funksiyalar": "Элементарные функции",
+  "Funksiya nima qiladi": "Что делает функция",
+  "Har bir x ga bitta y mos keladi. Funksiyaning butun mohiyati shu jumlada.":
+    "Каждому x соответствует один y. В этой фразе вся суть функции.",
+  "Murakkab funksiya": "Сложная функция",
+  "Teskari funksiya": "Обратная функция",
+  "Davriy funksiyalar": "Периодические функции",
+  "Ratsional va irratsional tenglamalar": "Рациональные и иррациональные уравнения",
+  "Maxrajda va ildiz ostida": "В знаменателе и под корнем",
+  "Ikkalasida ham tekshirish shart: maxraj nolga aylanmasin, ildiz ostidagi manfiy bo'lmasin.":
+    "В обоих случаях нужна проверка: знаменатель не равен нулю, подкоренное выражение не отрицательно.",
+  "Ratsional tenglamalar": "Рациональные уравнения",
+  "Irratsional tenglamalar": "Иррациональные уравнения",
+  "Ratsional tengsizliklar": "Рациональные неравенства",
+  "Ko'rsatkichli va logarifmik funksiyalar": "Показательная и логарифмическая функции",
+  "Daraja va uning teskarisi": "Степень и обратная к ней",
+  "Logarifm — «asosni qaysi darajaga ko'tarsak shu son chiqadi» degan savolning javobi.":
+    "Логарифм — ответ на вопрос «в какую степень нужно возвести основание, чтобы получить это число».",
+  "Ko'rsatkichli tenglamalar": "Показательные уравнения",
+  "Logarifm tushunchasi": "Понятие логарифма",
+  "Logarifm xossalari": "Свойства логарифмов",
+  "Logarifmik tenglamalar": "Логарифмические уравнения",
+  "Ko'rsatkichli tengsizliklar": "Показательные неравенства",
+  "Murakkab foiz": "Сложные проценты",
+  "Trigonometrik tenglamalar": "Тригонометрические уравнения",
+  "Cheksiz ko'p yechim": "Бесконечно много решений",
+  "Trigonometrik tenglamaning yechimi bitta son emas — butun oila.":
+    "Решение тригонометрического уравнения — не одно число, а целое семейство.",
+  "Sodda trigonometrik tenglamalar": "Простейшие тригонометрические уравнения",
+  "Trigonometrik qiymatlar": "Значения тригонометрических функций",
+  "Yechish usullari": "Способы решения",
+  "Ehtimollar nazariyasi": "Теория вероятностей",
+  "Ehtimollik 0 dan 1 gacha. 0 — hech qachon, 1 — har doim.": "Вероятность от 0 до 1. 0 — никогда, 1 — всегда.",
+  "Ehtimollik ta'riflari": "Определения вероятности",
+  "10-sinf kursini takrorlash": "Повторение курса 10 класса",
+
+  /* =============== 10-sinf geometriya =============== */
+  "10-sinf Geometriya": "Геометрия 10 класс",
+  "Stereometriya: fazoda chiziq va tekisliklar": "Стереометрия: прямые и плоскости в пространстве",
+  "Planimetriyani takrorlash": "Повторение планиметрии",
+  "Tekislikdagi geometriya": "Геометрия на плоскости",
+  "Fazoga chiqishdan oldin tekislikdagi hamma narsa mustahkam turishi kerak.":
+    "Прежде чем выйти в пространство, всё на плоскости должно быть прочно усвоено.",
+  "Uchburchak va to'rtburchaklar": "Треугольники и четырёхугольники",
+  "Yuz va aylana": "Площадь и окружность",
+  "Stereometriyaga kirish": "Введение в стереометрию",
+  "Uchinchi o'lcham": "Третье измерение",
+  "Endi shakl qog'ozda emas, fazoda. Nuqta, chiziq va tekislik — asosiy uch tushuncha.":
+    "Теперь фигура не на бумаге, а в пространстве. Точка, прямая и плоскость — три основных понятия.",
+  "Fazoda to'g'ri chiziqlar joylashuvi": "Взаимное расположение прямых в пространстве",
+  "Ko'pyoqlar va ularning elementlari": "Многогранники и их элементы",
+  "Eyler formulasi": "Формула Эйлера",
+  "Fazoda parallellik": "Параллельность в пространстве",
+  "Parallel va ayqash": "Параллельные и скрещивающиеся",
+  "Fazoda kesishmagan ikki chiziq parallel bo'lishi SHART EMAS — ayqash bo'lishi ham mumkin.":
+    "Две непересекающиеся прямые в пространстве НЕ обязательно параллельны — они могут быть скрещивающимися.",
+  "Ayqash to'g'ri chiziqlar": "Скрещивающиеся прямые",
+  "Tekisliklarning o'zaro joylashuvi": "Взаимное расположение плоскостей",
+  "Fazoda perpendikulyarlik": "Перпендикулярность в пространстве",
+  "Perpendikulyar va masofa": "Перпендикуляр и расстояние",
+  "Nuqtadan tekislikkacha masofa — perpendikulyarning uzunligi, og'maniki emas.":
+    "Расстояние от точки до плоскости — длина перпендикуляра, а не наклонной.",
+  "Fazoda ikki nuqta orasidagi masofa": "Расстояние между точками в пространстве",
+  "Parallelepipedning diagonali": "Диагональ параллелепипеда",
+  "Fazoviy vektorlar": "Векторы в пространстве",
+  "Yil yakuni": "Итоги года",
+  "Fazoviy tasavvur va hisob — ikkalasi birga.": "Пространственное воображение и вычисления — вместе.",
+  "Takrorlashga doir masalalar": "Задачи на повторение",
+
+  /* =============== 11-sinf =============== */
+  "11-sinf Matematika": "Математика 11 класс",
+  "Hosila, integral, fazoviy jismlar, ehtimollik": "Производная, интеграл, тела вращения, вероятность",
+  "Hosila": "Производная",
+  "O'zgarish tezligi": "Скорость изменения",
+  "Hosila funksiya qanchalik tez o'zgarayotganini aytadi. Grafikda — urinmaning qiyaligi.":
+    "Производная показывает, как быстро меняется функция. На графике — наклон касательной.",
+  "Limit haqida tushuncha": "Понятие предела",
+  "Darajaning hosilasi": "Производная степени",
+  "Ko'phadning hosilasi": "Производная многочлена",
+  "Hosilalar jadvali": "Таблица производных",
+  "Nuqtadagi hosila": "Производная в точке",
+  "Hosilaning tatbiqlari": "Применение производной",
+  "Hosila nima uchun kerak": "Зачем нужна производная",
+  "Urinma tenglamasi, o'sish oralig'i va ekstremum — hammasi hosiladan chiqadi.":
+    "Уравнение касательной, промежутки возрастания и экстремумы — всё выводится из производной.",
+  "Urinmaning burchak koeffitsiyenti": "Угловой коэффициент касательной",
+  "Ekstremum nuqtalari": "Точки экстремума",
+  "O'sish va kamayish oraliqlari": "Промежутки возрастания и убывания",
+  "Ekstremal masalalar": "Задачи на экстремум",
+  "Integral": "Интеграл",
+  "Hosilaning teskarisi": "Обратное к производной",
+  "Hosilasi berilgan funksiyani topish — integrallash. U yuza hisoblashga olib keladi.":
+    "Найти функцию по её производной — значит проинтегрировать. Это ведёт к вычислению площадей.",
+  "Boshlang'ich funksiya": "Первообразная",
+  "Integrallar jadvali": "Таблица интегралов",
+  "Aniq integral. Nyuton–Leybnis": "Определённый интеграл. Ньютон–Лейбниц",
+  "Egri chiziqli trapetsiya yuzi": "Площадь криволинейной трапеции",
+  "Prizma va silindr": "Призма и цилиндр",
+  "Hajm va sirt": "Объём и поверхность",
+  "Prizma va silindr bir xil qoidaga bo'ysunadi: asos yuzini balandlikka ko'paytir.":
+    "Призма и цилиндр подчиняются одному правилу: площадь основания умножить на высоту.",
+  "Fazoda vektorlar": "Векторы в пространстве",
+  "Prizma hajmi": "Объём призмы",
+  "Parallelepiped hajmi va sirti": "Объём и поверхность параллелепипеда",
+  "Silindr hajmi": "Объём цилиндра",
+  "Silindr sirti": "Поверхность цилиндра",
+  "Piramida, konus, shar": "Пирамида, конус, шар",
+  "Uchdan bir va shar": "Одна треть и шар",
+  "Uchi bor jismlarda hajm uchdan bir marta kichik. Sharning o'z formulasi bor.":
+    "У тел с вершиной объём составляет одну треть. У шара своя формула.",
+  "Piramida hajmi": "Объём пирамиды",
+  "Konus hajmi": "Объём конуса",
+  "Konus yon sirti": "Боковая поверхность конуса",
+  "Shar hajmi": "Объём шара",
+  "Sfera sirtining yuzi": "Площадь сферы",
+  "Formulalarni tanish": "Узнай формулу",
+  "Ma'lumotlar tahlili va ehtimollik": "Анализ данных и вероятность",
+  "Kombinatorika va statistika": "Комбинаторика и статистика",
+  "Nechta usul bor, qanday ehtimollik bilan va ma'lumotlar qanchalik tarqoq.":
+    "Сколько способов, с какой вероятностью и насколько разбросаны данные.",
+  "Kombinatsiyalar": "Сочетания",
+  "Nyuton binomi": "Бином Ньютона",
+  "Ehtimollik": "Вероятность",
+  "O'rtacha kvadratik chetlanish": "Среднее квадратическое отклонение",
+  "Yakuniy takrorlash": "Итоговое повторение",
+
+  /* ---- oliy matematika: bob kirishlari ---- */
+  "Ikki o'zgaruvchi — ikki yo'nalish": "Две переменные — два направления",
+  "Xususiy hosila: bitta o'zgaruvchi o'zgaradi, qolgani o'zgarmas turadi.":
+    "Частная производная: меняется одна переменная, остальные постоянны.",
+  "Hajm va yuza integrali": "Интеграл для объёма и площади",
+  "Ikki karrali integral ketma-ket ikkita oddiy integral sifatida hisoblanadi.":
+    "Двойной интеграл вычисляется как два обычных интеграла подряд.",
+  "Cheksiz yig'indilar": "Бесконечные суммы",
+  "Qator qachon yaqinlashadi, darajali qator qayerda ishlaydi va funksiyani qatorga yoyish.":
+    "Когда ряд сходится, где работает степенной ряд и как разложить функцию в ряд.",
+  "Noma'lum — funksiya": "Неизвестное — функция",
+  "O'zgaruvchilari ajraladigan tenglamalar va o'zgarmas koeffitsiyentli ikkinchi tartibli tenglamalar.":
+    "Уравнения с разделяющимися переменными и уравнения второго порядка с постоянными коэффициентами.",
+  "Sanashning uch qoidasi": "Три правила подсчёта",
+  "Tartib muhimmi va takrorlanish bormi — shu ikki savol formulani tanlaydi.":
+    "Важен ли порядок и есть ли повторения — эти два вопроса определяют формулу.",
+  "Ehtimollik — qulay hollar ulushi": "Вероятность — доля благоприятных исходов",
+  "Klassik ta'rif, ko'paytirish teoremasi va to'la ehtimollik formulasi.":
+    "Классическое определение, теорема умножения и формула полной вероятности.",
+  "O'rtacha va tarqoqlik": "Среднее и разброс",
+  "Diskret tasodifiy miqdorning kutilmasi va binomial taqsimot parametrlari.":
+    "Математическое ожидание дискретной случайной величины и параметры биномиального распределения.",
+  "Tanlanma nimani aytadi": "О чём говорит выборка",
+  "Tanlanmaning o'rta qiymati, medianasi va kengligi.": "Среднее значение, медиана и размах выборки.",
+};

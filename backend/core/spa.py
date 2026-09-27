@@ -72,7 +72,10 @@ def spa(request, rel: str = ""):
     # teglari va mazmuni bilan to'ldiriladi (`core/seo.py`): Google JS'siz
     # ham har sahifani alohida ko'rsin.
     html = SEO.boyit(index.read_text("utf-8"), rel)
-    javob = HttpResponse(html, content_type="text/html; charset=utf-8")
+    # Ilovada yo'q manzil — 404 (ko'rinishi baribir ilovaning "topilmadi"
+    # ekrani). 200 bo'lsa Google uni "Soft 404" deb belgilardi.
+    javob = HttpResponse(html, content_type="text/html; charset=utf-8",
+                         status=200 if SEO.mavjud(rel) else 404)
     javob["Cache-Control"] = KESH_YOQ
     return javob
 

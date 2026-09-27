@@ -83,7 +83,16 @@ export function tilniQoy(t: Til, qaytaYukla = true): void {
     /* xotira bloklangan — shu seansda ishlaydi, keyin taxmin qaytadi */
   }
   document.documentElement.lang = t;
-  if (qaytaYukla && ozgardi) window.location.reload();
+  if (!qaytaYukla || !ozgardi) return;
+  // Ruscha manzildan (`/ru/...`) o'zbekchaga o'tilsa — manzil ham
+  // o'zbekchasiga. Aks holda `index.html` sahifa yuklanishida tilni yana
+  // ruschaga qaytarib qo'yardi.
+  const p = window.location.pathname;
+  if (t === "uz" && /^\/ru(\/|$)/.test(p)) {
+    window.location.replace((p.slice(3) || "/") + window.location.search + window.location.hash);
+    return;
+  }
+  window.location.reload();
 }
 
 /**

@@ -17,6 +17,7 @@
  * bilan birga o'n marta takrorlanardi.
  */
 import { til } from "../til";
+import { RU_YUQORI } from "./kursYuqori";
 
 const RU: Record<string, string> = {
   /* =============== boblar =============== */
@@ -777,10 +778,10 @@ export function kursMatn(s: string): string {
   const m = BOB.exec(s);
   if (m) {
     const qolgan = s.slice(m[0].length);
-    return `Глава ${m[1]}. ${RU[qolgan] ?? qolgan}`;
+    return `Глава ${m[1]}. ${RU[qolgan] ?? RU_YUQORI[qolgan] ?? qolgan}`;
   }
 
-  return RU[s] ?? s;
+  return RU[s] ?? RU_YUQORI[s] ?? s;
 }
 
 /**
