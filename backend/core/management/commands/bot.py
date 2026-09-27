@@ -292,6 +292,9 @@ def asosiy_klaviatura(til: str) -> dict | None:
             [tugma_yasa(M("tYordamTugma", til))],
         ],
         "resize_keyboard": True,
+        # Yozish maydonidagi "Сообщение…" o'rniga — brend nomi (64 belgigacha).
+        # Telegram uni klaviatura OCHIQ turganda ko'rsatadi.
+        "input_field_placeholder": "Aql Zone",
     }
 
 

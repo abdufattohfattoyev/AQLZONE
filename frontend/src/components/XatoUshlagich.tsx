@@ -19,7 +19,7 @@ import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { Hajmli } from "../lib/hajmli";
 import { t } from "../lib/matn";
-import { xatoniYubor } from "../lib/xatoKuzatuv";
+import { eskiVersiyami, xatoniYubor, yangiVersiyagaOt } from "../lib/xatoKuzatuv";
 
 interface Props {
   children: ReactNode;
@@ -39,6 +39,9 @@ export class XatoUshlagich extends Component<Props, State> {
   }
 
   componentDidCatch(xato: Error, info: ErrorInfo) {
+    // Bo'lim ochilmadi, chunki yangi versiya chiqqan (`lib/xatoKuzatuv.ts`,
+    // "ESKI VERSIYA") — xato ekrani o'rniga sahifa jimgina yangilanadi.
+    if (eskiVersiyami(xato) && yangiVersiyagaOt()) return;
     // Konsolga yozamiz — ishlab chiquvchi uchun yagona iz shu.
     console.error("Aql Zone — kutilmagan xato:", xato, info.componentStack);
     // Admin ham bilsin — bola bu haqda hech kimga aytmaydi.
