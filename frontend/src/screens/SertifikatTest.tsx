@@ -44,6 +44,7 @@ import type { MavzuXato } from "../lib/imtihon";
 import { sertSavollari } from "../lib/korish";
 import { KoribChiqish } from "../components/KoribChiqish";
 import { ReytingKarta } from "../components/HaftalikReyting";
+import { NatijaSarlavha } from "../components/NatijaSarlavha";
 
 /**
  * Natija serverda qaysi "bob/dars" bo'lib yoziladi. Blok test 98,
@@ -179,7 +180,7 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
     if (qolgan === 0 && !tugadi) yakunla(javoblar);
   }, [qolgan, tugadi, javoblar, yakunla]);
 
-  useOrqaga(korish ? () => setKorish(false) : onExit);
+  const strelka = useOrqaga(korish ? () => setKorish(false) : onExit);
 
   if (tugadi && korish) {
     return (
@@ -188,7 +189,7 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
     );
   }
   if (tugadi) {
-    return <Natija v={v} javoblar={javoblar} sekund={sarflandi} yozildi={yozildi}
+    return <Natija v={v} javoblar={javoblar} sekund={sarflandi} yozildi={yozildi} strelka={strelka}
       onKorish={() => { tebrat("tanlov"); setKorish(true); window.scrollTo(0, 0); }}
       onQayta={onQayta} onExit={onExit} />;
   }
@@ -499,9 +500,11 @@ interface Qism {
  * keyingisigacha farq, uch bo'lim, ball yo'qotilgan mavzular, xatolar.
  * Hisob o'zgarmadi (`lib/sertifikat.ts`) — faqat ko'rinish.
  */
-function Natija({ v, javoblar, sekund, yozildi, onKorish, onQayta, onExit }: {
+function Natija({ v, javoblar, sekund, yozildi, strelka, onKorish, onQayta, onExit }: {
   v: SVariant; javoblar: SJavob[]; sekund: number;
   yozildi: { tayyor: Promise<void>; vaqt: number } | null;
+  /** O'z orqaga strelkasi (Telegram tashqarisida) — `NatijaSarlavha`. */
+  strelka: boolean;
   onKorish: () => void; onQayta: () => void; onExit: () => void;
 }) {
   const nav = useNavigate();
@@ -568,15 +571,26 @@ function Natija({ v, javoblar, sekund, yozildi, onKorish, onQayta, onExit }: {
     return [...m.values()].sort((a, b) => b.yoqotdi - a.yoqotdi).slice(0, MAVZU_CHEK);
   }, [qismlar]);
 
-  const xatolar = qismlar.filter((q) => !q.togri);
+  // Faqat BELGILANGAN xatolar: javobsizlar soni tepada yozilgan va ular
+  // ro'yxatga qo'shilsa, bo'sh qoldirilgan 39 savol haqiqiy xatolarni
+  // yashirib qo'yardi. Hammasi birga — "Ko'rib chiqish" da.
+  const xatolar = qismlar.filter((q) => !q.togri && q.berildi);
+  /**
+   * Natijada faqat birinchi beshtasi. Ilgari hammasi (40 tagacha) shu
+   * yerda turardi va "Variantlarga qaytish" sahifaning eng tagida qolardi.
+   * To'liq ro'yxat — "Ko'rib chiqish" da, u yerda shart ham, yechim ham bor.
+   */
+  const XATO_CHEK = 5;
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pb-10 min-[360px]:px-[18px]
+                    sm:max-w-[560px]">
       {dr && <Konfetti />}
+      <NatijaSarlavha nom={t("natijaVariant", { n: v.n })} strelka={strelka} onChiq={onExit} />
 
       <div className="az-savol flex flex-col items-center gap-1.5 rounded-clay bg-karta px-4 py-5 text-center shadow-clay-sm">
         <span className="text-[13px] font-bold tracking-[0.08em] text-ink-dim uppercase">
-          {t("sertNatijaBosh", { n: v.n, vaqt: soat(sekund) })}
+          {t("natijaVaqt", { vaqt: soat(sekund) })}
         </span>
         <span className="font-display text-[52px] leading-none font-bold min-[360px]:text-[60px]">
           {ballYoz(ball)}<span className="ml-1.5 text-[20px] text-ink-soft">{t("sertBallDan")}</span>
@@ -651,7 +665,7 @@ function Natija({ v, javoblar, sekund, yozildi, onKorish, onQayta, onExit }: {
         <>
           <h2 className="mt-1 font-display text-[19px]">{t("sertXatolar")}</h2>
           <div className="flex flex-col gap-2">
-            {xatolar.map((q) => (
+            {xatolar.slice(0, XATO_CHEK).map((q) => (
               <button key={q.nom} type="button" disabled={!q.s.a.yechim}
                 onClick={() => { setYechimda(q.s); tebrat("tanlov"); }}
                 className="flex w-full items-center gap-3 rounded-[18px] bg-karta p-3.5 text-left shadow-clay-sm">
@@ -669,6 +683,12 @@ function Natija({ v, javoblar, sekund, yozildi, onKorish, onQayta, onExit }: {
                 {q.s.a.yechim && <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />}
               </button>
             ))}
+            {xatolar.length > XATO_CHEK && (
+              <button type="button" onClick={onKorish} data-tahlil="Sertifikat: qolgan xatolar"
+                className="clay-press min-h-11 rounded-[18px] px-3 text-left text-[14.5px] font-bold text-brand-blue-t">
+                {t("korishYanaXato", { n: xatolar.length - XATO_CHEK })}
+              </button>
+            )}
           </div>
         </>
       )}

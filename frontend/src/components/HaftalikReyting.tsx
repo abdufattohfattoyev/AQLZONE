@@ -235,11 +235,11 @@ function Qator({ q, umumiy }: { q: ReytingQator; umumiy: boolean }) {
         {q.orin}
       </span>
       <span className="min-w-0 flex-1">
-        {/* O'zim — "Siz" (profil nomi ko'pincha standart "Men" bo'ladi).
-            Nomsiz odam — neytral "Ishtirokchi": server bo'sh qaytaradi,
-            chunki boshqa ekranlardagi "Do'stingiz" jadvalda noto'g'ri o'qiladi. */}
+        {/* To'liq ism (`core/imtihon.haftalik_reyting`). O'zimniki — ism
+            va "siz"; ismsiz odam — neytral "Ishtirokchi" (server bo'sh
+            qaytaradi: "Do'stingiz" jadvalda notanishni do'st deb atardi). */}
         <span className={`block truncate text-[15px] ${q.men ? "font-bold text-brand-blue-t" : "font-semibold"}`}>
-          {q.men ? t("hrSiz") : q.ism || t("hrAnonim")}
+          {q.men ? (q.ism ? `${q.ism} · ${t("siz")}` : t("hrSiz")) : q.ism || t("hrAnonim")}
         </span>
         {umumiy && <span className="block text-[12.5px] text-ink-dim">{t("hrVariantQisqa", { n: q.variant })}</span>}
       </span>

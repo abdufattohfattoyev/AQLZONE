@@ -65,6 +65,7 @@ import { tovush } from "../lib/ovoz";
 import { yolDars, yolImtMashq, yolImtReyting } from "../lib/yollar";
 import { KoribChiqish } from "../components/KoribChiqish";
 import { ReytingKarta } from "../components/HaftalikReyting";
+import { NatijaSarlavha } from "../components/NatijaSarlavha";
 import { dtmSavollari } from "../lib/korish";
 import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
@@ -539,7 +540,8 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, a
   if (tugadi) {
     return <>
       <Natija blok={blok} javoblar={javoblar} toplam={toplam} stat={stat} sessiya={Boolean(sessiya)}
-        imtihon={imtihon} yozildi={yozildi} onKorish={() => { tebrat("tanlov"); setKorish(true); window.scrollTo(0, 0); }}
+        imtihon={imtihon} yozildi={yozildi} strelka={ozStrelka}
+        nom={imtihon ? t("natijaVariant", { n: imtihon }) : toplam ? toplam.nom : bobNomi ?? t("natijaSarlavha")} onKorish={() => { tebrat("tanlov"); setKorish(true); window.scrollTo(0, 0); }}
         onQayta={onQayta} onExit={onExit} />
       {oyna}
     </>;
@@ -654,7 +656,12 @@ interface Mavzu {
   ulgurmadi: number;
 }
 
-function Natija({ blok, javoblar, toplam, stat, sessiya = false, imtihon, yozildi, onKorish, onQayta, onExit }: {
+function Natija({
+  blok, javoblar, toplam, stat, sessiya = false, imtihon, yozildi, strelka, nom, onKorish, onQayta, onExit,
+}: {
+  /** Tepadagi yopishqoq sarlavha (`NatijaSarlavha`) — orqaga tugma doim ko'rinsin. */
+  strelka: boolean;
+  nom: string;
   /** Sessiya — foiz yonida 5 ballik taxminiy baho. */
   sessiya?: boolean;
   /** DTM varianti — haftalik reyting kartasi va zaif mavzular mashqi. */
@@ -710,6 +717,17 @@ function Natija({ blok, javoblar, toplam, stat, sessiya = false, imtihon, yozild
   /** Xato qilingan savollar — yechimini ko'rish uchun. */
   const xatolar = blok.savollar.filter((_, i) => !javoblar[i].togri);
 
+  /**
+   * Natijada ro'yxatlar QISQA: mavzulardan eng zaif oltitasi (qolgani
+   * tugma bilan ochiladi), xatolardan beshtasi (qolgani — "Ko'rib
+   * chiqish" da). Ilgari DTM da 20+ mavzu va 20+ xato ketma-ket turardi
+   * va chiqish tugmasi sahifaning eng tagida qolardi.
+   */
+  const [hammaMavzu, setHammaMavzu] = useState(false);
+  const MAVZU_CHEK = 6;
+  const XATO_CHEK = 5;
+  const korinadiganMavzu = hammaMavzu ? mavzular : mavzular.slice(0, MAVZU_CHEK);
+
   const Box = ({ v, l, c = "" }: { v: string | number; l: string; c?: string }) => (
     <div className="flex-1 rounded-2xl bg-track px-1 py-2 text-center">
       <div className={`font-display text-xl leading-tight ${c}`}>{v}</div>
@@ -718,8 +736,9 @@ function Natija({ blok, javoblar, toplam, stat, sessiya = false, imtihon, yozild
   );
 
   return (
-    <div className="mx-auto w-full max-w-[430px] px-4 pt-5 pb-10">
+    <div className="mx-auto w-full max-w-[430px] px-4 pb-10 min-[360px]:px-[18px] sm:max-w-[560px]">
       {f >= 80 && <Konfetti />}
+      <div className="mb-2"><NatijaSarlavha nom={nom} strelka={strelka} onChiq={onExit} /></div>
 
       <div className="az-savol rounded-clay bg-karta p-5 text-center shadow-clay">
         <div className="font-display text-[46px] leading-none text-brand-green-d">{f}%</div>
@@ -780,7 +799,7 @@ function Natija({ blok, javoblar, toplam, stat, sessiya = false, imtihon, yozild
         {t("blokTahlil")}
       </h2>
       <div className="az-kirish space-y-2" style={{ "--az-kech": "60ms" } as React.CSSProperties}>
-        {mavzular.map((m) => {
+        {korinadiganMavzu.map((m) => {
           const yaxshi = m.xato === 0 && m.ulgurmadi === 0;
           const c = courseById(m.kursId);
           return (
@@ -809,6 +828,12 @@ function Natija({ blok, javoblar, toplam, stat, sessiya = false, imtihon, yozild
             </div>
           );
         })}
+        {!hammaMavzu && mavzular.length > MAVZU_CHEK && (
+          <button type="button" onClick={() => setHammaMavzu(true)} data-tahlil="Blok: hamma mavzular"
+            className="clay-press min-h-11 px-3 text-[14px] font-bold text-brand-blue-t">
+            {t("korishYanaMavzu", { n: mavzular.length - MAVZU_CHEK })}
+          </button>
+        )}
       </div>
 
       {/* ---- xato qilingan savollarning yechimi ---- */}
@@ -818,7 +843,7 @@ function Natija({ blok, javoblar, toplam, stat, sessiya = false, imtihon, yozild
             {t("blokXatolar")}
           </h2>
           <div className="az-kirish space-y-2">
-            {xatolar.map((S, i) => (
+            {xatolar.slice(0, XATO_CHEK).map((S, i) => (
               <button key={i} type="button"
                 disabled={!S.a.yechim}
                 onClick={() => { setYechimda(S); tebrat("tanlov"); }}
@@ -837,6 +862,12 @@ function Natija({ blok, javoblar, toplam, stat, sessiya = false, imtihon, yozild
                 )}
               </button>
             ))}
+            {xatolar.length > XATO_CHEK && (
+              <button type="button" onClick={onKorish} data-tahlil="Blok: qolgan xatolar"
+                className="clay-press min-h-11 px-3 text-[14px] font-bold text-brand-blue-t">
+                {t("korishYanaXato", { n: xatolar.length - XATO_CHEK })}
+              </button>
+            )}
           </div>
         </>
       )}

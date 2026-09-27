@@ -239,7 +239,7 @@ def _birinchilar(tur: str, boshi: datetime):
         profile=OuterRef("profile"), variant=OuterRef("variant"), tur=tur, kurs="",
         mijoz_vaqt__lt=OuterRef("mijoz_vaqt"))
     return (ImtihonNatija.objects.filter(tur=tur, kurs="", created_at__gte=boshi)
-            .annotate(oldin=Exists(oldingi)).filter(oldin=False).select_related("profile"))
+            .annotate(oldin=Exists(oldingi)).filter(oldin=False).select_related("profile__pupil"))
 
 
 def _kalit(n: ImtihonNatija) -> tuple:
@@ -249,19 +249,33 @@ def _kalit(n: ImtihonNatija) -> tuple:
 
 
 def haftalik_reyting(tur_nomi: str, variant: int | None, men: Profile) -> dict:
+    from django.db.models import Count
+
     from .duel import OZIM_NOMLARI
 
-    def ism(p: Profile) -> str:
-        # Standart nom ("Men") — bo'sh: mijoz o'z tilida "Ishtirokchi"
-        # yozadi. `korinadigan_ism` dagi "Do'stingiz" duelga mos, lekin
-        # umumiy jadvalda notanish odamni "do'stingiz" deb atardi.
-        nom = (p.name or "").strip()
-        return "" if nom.lower() in OZIM_NOMLARI else nom
-
     tur_nomi = tur_nomi if tur_nomi in TURLAR else "dtm"
-    tur = TURLAR[tur_nomi]
+    hammasi = list(_birinchilar(TURLAR[tur_nomi], hafta_boshi()))
+    # Bir hisobda nechta profil — oilaviy hisobda bolaning ismi ham kerak.
+    profillar_soni = dict(Profile.objects.filter(pupil_id__in={n.profile.pupil_id for n in hammasi})
+                          .values_list("pupil").annotate(n=Count("id")))
+
+    def ism(p: Profile) -> str:
+        """
+        TO'LIQ ISM — asosiy reytingdagi bilan bir manba (`Pupil.toliq_ism`,
+        `views._odam_json`). Ilgari profil nomi olinardi va u ko'pincha
+        standart "Men" bo'lib, jadvalda hamma "Do'stingiz" bo'lib turardi.
+        Oilaviy hisobda bolaning ismi qavsda: qaysi bola ishlagani bilinsin.
+        Hech narsa bo'lmasa — bo'sh, mijoz "Ishtirokchi" yozadi.
+        """
+        profil_nomi = (p.name or "").strip()
+        if profil_nomi.lower() in OZIM_NOMLARI:
+            profil_nomi = ""
+        toliq = p.pupil.toliq_ism if p.pupil_id else ""
+        if profil_nomi and profillar_soni.get(p.pupil_id, 1) > 1:
+            return f"{toliq} ({profil_nomi})" if toliq else profil_nomi
+        return toliq or profil_nomi
+
     boshi = hafta_boshi()
-    hammasi = list(_birinchilar(tur, boshi))
 
     # Qaysi variantda nechta odam — jadval ustidagi tanlov uchun.
     variantlar: dict[str, int] = {}

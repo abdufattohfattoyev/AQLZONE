@@ -7823,6 +7823,18 @@ class ImtihonReytingTest(TestCase):
         self.assertEqual(j["meniki"]["vaqt"], 10)
         self.assertEqual(j["variantlar"], {"5": 2})
 
+    def test_jadvalda_toliq_ism(self):
+        """Profil nomi standart "Men" — jadvalda hisob egasining to'liq ismi turadi."""
+        a, b = self.kir("dev-rey-mmmm7777nnnn"), self.kir("dev-rey-oooo8888pppp")
+        self.dtm(a, 4, 20, 1)
+        self.dtm(b, 4, 10, 2)
+        p = MDL.ImtihonNatija.objects.get(mijoz_vaqt=1).profile.pupil
+        p.first_name, p.last_name = "Farida", "Boqijonova"
+        p.save(update_fields=["first_name", "last_name"])
+        j = self.reyting(b, variant=4)
+        self.assertEqual(j["qatorlar"][0]["ism"], "Farida Boqijonova")
+        self.assertEqual(j["qatorlar"][1]["ism"], "")      # ismsiz — mijoz "Ishtirokchi" yozadi
+
     def test_teng_ballda_tezrog_i_oldin(self):
         a, b = self.kir("dev-rey-eeee3333ffff"), self.kir("dev-rey-gggg4444hhhh")
         self.dtm(a, 2, 20, 1, sekund=3000)

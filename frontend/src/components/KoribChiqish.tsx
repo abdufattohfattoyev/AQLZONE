@@ -64,9 +64,12 @@ export function KoribChiqish({ sarlavha, savollar, onYop }: {
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3 px-4 pt-4 pb-10 min-[360px]:px-[18px]
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3 px-4 pb-10 min-[360px]:px-[18px]
                     sm:max-w-[560px] kom:max-w-[720px]">
-      <div className="flex items-center gap-2">
+      {/* Yopishqoq: ro'yxat 45 kartagacha cho'ziladi, yopish doim qo'l ostida bo'lsin
+          (`NatijaSarlavha` dagi sabab). */}
+      <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 bg-[var(--az-body)] px-4 py-2.5
+                      min-[360px]:-mx-[18px] min-[360px]:px-[18px]">
         <button type="button" onClick={onYop} aria-label={t("yop")} title={t("yop")} data-tahlil="Ko'rib chiqish: yopish"
           className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta shadow-clay-sm">
           <Icon name="close" size={20} />
