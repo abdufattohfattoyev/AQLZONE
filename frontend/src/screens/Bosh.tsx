@@ -65,6 +65,12 @@ import {
   darsBugunmi, hafta, joriyZanjir, rekordniYangila, salomVaqti, yilKuni,
 } from "../lib/bugun";
 import { kunlikSonBugun } from "./KunlikSon";
+import { FORMULALAR } from "../lib/formulalar";
+import { VARIANTLAR as DTM_VARIANT } from "../lib/imtihon";
+import { VARIANTLAR as SERT_VARIANT } from "../lib/sertifikat";
+import {
+  yolFormulalarUmumiy, yolImtihon, yolKurslar, yolMasalalar, yolOyinlar, yolSertifikat,
+} from "../lib/yollar";
 
 interface Props {
   progressOf: (c: Course) => Progress;
@@ -81,6 +87,8 @@ interface Props {
   onImtihon: () => void;
   /** Profildagi sinfning o'z kursi. */
   onKurs: (c: Course) => void;
+  /** Bo'limlar to'ri va tez o'tish tugmalari uchun. */
+  onYol: (yol: string) => void;
 }
 
 /** Maslahatlar soni — `matn.ts` dagi `maslahat0…` kalitlari. */
@@ -128,7 +136,7 @@ function joriyBola(h: Hisob | null) {
 
 export function Bosh({
   progressOf, onDarslar, onMasalalar, onTestlar, onDavom, onSinov, onKunlikSon,
-  onQidiruv, onFormulalar, onImtihon, onKurs,
+  onQidiruv, onImtihon, onKurs, onYol,
 }: Props) {
   const [hisob, setHisob] = useState<Hisob | null>(null);
   // Kunlik son SERVERDA ham yuritiladi (boshqa qurilmada yechilgan
@@ -142,7 +150,7 @@ export function Bosh({
     return () => { bekor = true; };
   }, []);
 
-  const { kunlik, jamiTanga, tiklash, zanjirniTikla } = useProgress();
+  const { kunlik, jamiTanga, jamiYulduz, tiklash, zanjirniTikla } = useProgress();
   const prof = useProfil();
   const kompyuter = useKompyuter();
   const bugun = kunKaliti();
@@ -193,7 +201,6 @@ export function Bosh({
   const qisqa = t("bugunQisqaKunlar").split(",");
 
   const amal = asosiyAmal({ davom, prof, onDarslar, onMasalalar, onDavom, onKurs, onImtihon, onTestlar });
-  const kattalar = yolOf(prof) !== "maktab";
 
   const bugunQilingan = kunlik.sana === bugun && kunlik.kunlar > 0;
   const haftaIzoh = zanjir === 0
@@ -202,14 +209,20 @@ export function Bosh({
       ? t("bugunHaftaBajarildi", { n: zanjir })
       : t("bugunHaftaDavom", { n: zanjir, m: zanjir + 1 });
 
+  /* ─── Sarlavha (testmakon uslubida): kichik salom, katta sarlavha, o'ngda
+     kompyuterda tez o'tish tugmalari. Zanjir — olovli kichik belgi. ─── */
   const sarlavha = (
     <header className="flex min-h-[52px] items-center gap-2">
       <div className="flex min-w-0 flex-1 flex-col leading-tight">
-        <span className="truncate text-[13px] font-bold text-ink-dim">{sana}</span>
-        {/* Qisqartirilmaydi: "Добрый вечер" 320px da sig'masa ikkinchi qatorga o'tadi. */}
-        <h1 className="font-display text-[21px] leading-[1.15] min-[360px]:text-[26px] md:text-[30px]">
-          {salom}
+        <span className="truncate text-[13.5px] font-bold text-ink-dim">{salom} 👋</span>
+        <h1 className="font-display text-[23px] leading-[1.15] min-[360px]:text-[27px] md:text-[30px]">
+          {t("bugunSarlavha")}
         </h1>
+        <span className="sr-only">{sana}</span>
+      </div>
+      <div className="hidden items-center gap-2 kom:flex">
+        <TezTugma ik="trophy" nom={t("yonSertifikat")} on={() => onYol(yolSertifikat())} tahlil="Bugun: sertifikat" />
+        <TezTugma ik="clock" nom={t("yonDtm")} on={() => onYol(yolImtihon())} tahlil="Bugun: DTM" />
       </div>
       <span aria-label={t("bugunZanjir", { n: zanjir })} title={t("bugunZanjir", { n: zanjir })}
         className={`flex min-h-11 shrink-0 items-center gap-1 rounded-[14px] bg-karta pr-3 pl-2.5 font-display
@@ -224,42 +237,84 @@ export function Bosh({
     </header>
   );
 
-  /* Bugungi reja — UCH PLITKA yonma-yon (ilgari ro'yxat edi). Har birida
-     3D belgi, nomi va bitta qisqa yozuv; bajarilgani yashil bo'lib
-     burchagida belgi chiqadi. Uch vazifa bir qarashda ko'rinadi va
-     qaysi biri qolgani rangdan bilinadi — o'qish shart emas. */
+  /* ─── Bugungi reja: halqa (necha foiz bajarildi), uch vazifa va uch son. ─── */
   const bajarilgan = vazifalar.filter((v) => v.bajarildi).length;
+  const foiz = Math.round((bajarilgan / vazifalar.length) * 100);
   const reja = (
-    <section aria-label={t("bugunReja")} className="flex flex-col gap-3 rounded-[24px] bg-karta p-3.5 shadow-clay-sm
-                                                     min-[360px]:p-4">
-      <div className="flex items-center gap-2">
-        <h2 className="min-w-0 flex-1 font-display text-[18px]">{t("bugunReja")}</h2>
-        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-bold ${
-          bajarilgan === vazifalar.length ? "bg-brand-green/15 text-brand-green-d" : "bg-track text-ink-soft"}`}>
-          {bajarilgan} / {vazifalar.length}
-        </span>
+    <section aria-label={t("bugunReja")} className="flex flex-col gap-4 rounded-[24px] bg-karta p-4 shadow-clay-sm
+                                                     min-[360px]:p-5">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-[19px]">{t("bugunReja")}</h2>
+          <p className="text-[13.5px] text-ink-dim">{t("bugunRejaHolat", { n: bajarilgan, jami: vazifalar.length })}</p>
+        </div>
+        <Halqa foiz={foiz} />
       </div>
-      <div className="grid grid-cols-3 gap-2 min-[360px]:gap-2.5">
+      <ul className="flex flex-col gap-2">
         {vazifalar.map((v) => (
-          <button key={v.tahlil} type="button" onClick={v.on} disabled={!v.on} data-tahlil={v.tahlil}
-            aria-label={`${v.nom}. ${v.izoh ?? ""}${v.bajarildi ? ` · ${t("bugunBajarildi")}` : ""}`}
-            className={`clay-press relative flex min-h-[132px] min-w-0 flex-col items-center gap-1.5 rounded-[18px]
-                        px-1.5 pt-3 pb-2.5 text-center transition-colors disabled:cursor-default ${
-              v.bajarildi ? "bg-brand-green/12 ring-[1.5px] ring-brand-green/40 ring-inset"
-                : v.on ? "bg-brand-blue/8 ring-[1.5px] ring-brand-blue/20 ring-inset" : "bg-track opacity-70"}`}>
-            {v.bajarildi && (
-              <span className="absolute top-1.5 right-1.5 grid size-[22px] place-items-center rounded-full bg-brand-green
-                               text-white shadow-clay-sm">
-                <Icon name="check" size={13} />
+          <li key={v.tahlil}>
+            <button type="button" onClick={v.on} disabled={!v.on} data-tahlil={v.tahlil}
+              aria-label={`${v.nom}. ${v.izoh ?? ""}${v.bajarildi ? ` · ${t("bugunBajarildi")}` : ""}`}
+              className={`clay-press flex min-h-[60px] w-full items-center gap-3 rounded-[16px] px-3 text-left
+                          disabled:cursor-default ${v.bajarildi ? "bg-brand-green/10" : "bg-sahna"}
+                          ring-[1.5px] ring-inset ${v.bajarildi ? "ring-brand-green/35" : "ring-track"}`}>
+              <Hajmli nom={v.bel} olcham={36} jonli={!v.bajarildi && Boolean(v.on)} />
+              <span className="flex min-w-0 flex-1 flex-col leading-snug">
+                <span className={`text-[15px] font-bold ${v.bajarildi ? "text-brand-green-d" : ""}`}>{v.nom}</span>
+                <span className="truncate text-[12.5px] text-ink-dim">{v.qisqa}</span>
               </span>
-            )}
-            {!v.on && !v.bajarildi && (
-              <span className="absolute top-2 right-2 text-ink-dim"><Icon name="lock" size={14} /></span>
-            )}
-            <Hajmli nom={v.bel} olcham={44} jonli={!v.bajarildi && Boolean(v.on)} />
-            <span className={`line-clamp-2 text-[13.5px] leading-[1.15] font-bold min-[360px]:text-[14.5px] ${
-              v.bajarildi ? "text-brand-green-d" : ""}`}>{v.nom}</span>
-            <span className="mt-auto line-clamp-2 text-[12px] leading-tight text-ink-dim">{v.qisqa}</span>
+              {v.bajarildi ? (
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-green text-white">
+                  <Icon name="check" size={14} />
+                </span>
+              ) : v.on ? (
+                <Icon name="chevron" size={16} className="shrink-0 text-ink-dim" />
+              ) : (
+                <Icon name="lock" size={15} className="shrink-0 text-ink-dim" />
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="grid grid-cols-3 divide-x divide-track border-t border-track pt-3 text-center">
+        <Son n={String(jamiYulduz)} nom={t("menYulduz")} />
+        <Son n={String(zanjir)} nom={t("menZanjir")} />
+        <Son n={String(rekord)} nom={t("bugunRekordQisqa")} />
+      </div>
+    </section>
+  );
+
+  /* ─── Bo'limni tanlang — testmakon'dagi "Fan tanlang" kabi: 3D belgi, nom
+     va nechta narsa borligi. Telefonda 2, kengroqda 3 ustun. ─── */
+  const bolimlar: { bel: HajmliNom; nom: string; izoh: string; yol: string }[] = [
+    { bel: "kitob", nom: t("bolimDarslar"), izoh: t("bolimDarslarIzoh", { n: COURSES.reduce((a, c) => a + c.units.reduce((b, u) => b + u.lessons.length, 0), 0) }), yol: yolKurslar() },
+    { bel: "nishon", nom: t("yonDtm"), izoh: t("bolimVariant", { n: DTM_VARIANT }), yol: yolImtihon() },
+    { bel: "medal", nom: t("yonSertifikat"), izoh: t("bolimVariant", { n: SERT_VARIANT }), yol: yolSertifikat() },
+    { bel: "goya", nom: t("masalalar"), izoh: t("bolimMasalaIzoh"), yol: yolMasalalar() },
+    { bel: "kubok", nom: t("bolimOyinlar"), izoh: t("bolimOyinIzoh"), yol: yolOyinlar() },
+    { bel: "diagramma", nom: t("kattalarFormula"), izoh: t("bolimFormulaIzoh", { n: FORMULALAR.reduce((a, b) => a + b.lar.length, 0) }), yol: yolFormulalarUmumiy() },
+  ];
+  const bolimTori = (
+    <section aria-label={t("bolimSarlavha")} className="flex flex-col gap-3">
+      <div>
+        <h2 className="font-display text-[20px]">{t("bolimSarlavha")}</h2>
+        <p className="text-[13.5px] text-ink-dim">{t("bolimIzoh")}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5 min-[360px]:gap-3 md:grid-cols-3 md:gap-4">
+        {bolimlar.map((b) => (
+          <button key={b.yol} type="button" onClick={() => onYol(b.yol)} data-tahlil={`Bugun: bo'lim ${b.nom}`}
+            /* Telefonda belgi tepada, yozuv ostida — tor ustunda nom bo'linmasin;
+               kengda yonma-yon (namunadagi "fan" kartasidek). */
+            className="clay-press group flex min-h-[104px] flex-col items-start gap-2 rounded-[20px] bg-karta p-3.5
+                       text-left shadow-clay-sm transition-transform min-[360px]:p-4 md:min-h-[110px] md:flex-row
+                       md:items-center md:gap-3 kom:hover:-translate-y-0.5">
+            <span className="shrink-0 transition-transform kom:group-hover:scale-110">
+              <Hajmli nom={b.bel} olcham={40} />
+            </span>
+            <span className="flex min-w-0 flex-col leading-snug">
+              <span className="font-display text-[15.5px] font-bold min-[360px]:text-[17px]">{b.nom}</span>
+              <span className="text-[12.5px] text-ink-dim min-[360px]:text-[13.5px]">{b.izoh}</span>
+            </span>
           </button>
         ))}
       </div>
@@ -295,23 +350,15 @@ export function Bosh({
     </section>
   );
 
-  // Uzilgan zanjirni tanga bilan tiklash yoki "qaytdingiz" — faqat
-  // kerakli kuni chiqadi.
+  // Uzilgan zanjirni tanga bilan tiklash yoki "qaytdingiz" — faqat kerakli kuni.
   const ogoh = tiklash ? (
     <div className="[&>*]:mt-0"><ZanjirTiklash taklif={tiklash} jamiTanga={jamiTanga} onTikla={zanjirniTikla} /></div>
   ) : qaytish(kunlik) > 0 && (
     <div className="[&>*]:mt-0"><Qaytish kun={qaytish(kunlik)} /></div>
   );
 
-  const kattalarBlok = kattalar && (
-    <div className="grid grid-cols-2 gap-2.5">
-      <KattaEshik ik="sqrt" nom={t("kattalarFormula")} izoh={t("kattalarFormulaIzoh")} on={onFormulalar} />
-      <KattaEshik ik="clock" nom={t("kattalarDtm")} izoh={t("kattalarDtmIzoh")} on={onImtihon} />
-    </div>
-  );
-
   const maslahat = (
-    <aside className="flex items-start gap-3 rounded-[20px] px-4 py-3.5 ring-[1.5px] ring-track ring-inset">
+    <aside className="flex items-start gap-3 rounded-[22px] px-4 py-3.5 ring-[1.5px] ring-track ring-inset">
       <Logo size={30} jonli={false} className="mt-0.5 shrink-0" />
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-[12.5px] font-bold text-ink-dim">{t("bugunMaslahat")}</span>
@@ -322,26 +369,61 @@ export function Bosh({
     </aside>
   );
 
-  /* Bitta tartib hamma o'lchamda: telefonda ustma-ust, keng ekranda
-     (md+, planshet va kompyuter) ikki ustun. O'qish tartibi o'zgarmaydi. */
+  /* Tartib hamma o'lchamda bir xil: sarlavha → hero + reja → bo'limlar →
+     hafta + maslahat. Telefonda ustma-ust, md+ da ikki ustun. */
   return (
-    <div className={`mx-auto flex w-full max-w-[430px] flex-col gap-3 px-3.5 pt-3.5 pb-4 min-[360px]:gap-4
-                     min-[360px]:px-[18px] min-[360px]:pt-5 sm:max-w-[560px] md:max-w-[1040px] md:gap-5 md:px-8
+    <div className={`mx-auto flex w-full max-w-[430px] flex-col gap-4 px-3.5 pt-3.5 pb-4 min-[360px]:gap-5
+                     min-[360px]:px-[18px] min-[360px]:pt-5 sm:max-w-[560px] md:max-w-[1120px] md:gap-6 md:px-8
                      md:pt-7 ${kompyuter ? "pb-14" : ""}`}>
       {sarlavha}
-      <div className="grid items-start gap-3 min-[360px]:gap-4 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-5">
-        <div className="flex min-w-0 flex-col gap-3 min-[360px]:gap-4 md:gap-5">
-          <AsosiyKarta amal={amal} />
-          {reja}
-          {ogoh}
-        </div>
-        <div className="flex min-w-0 flex-col gap-3 min-[360px]:gap-4 md:gap-5">
-          {haftaBlok}
-          {kattalarBlok}
-          {maslahat}
-        </div>
+      <div className="grid items-stretch gap-4 min-[360px]:gap-5 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] md:gap-6">
+        <AsosiyKarta amal={amal} zanjir={zanjir} ikkinchi={{ nom: t("bolimDarslar"), on: onDarslar }} />
+        {reja}
+      </div>
+      {ogoh}
+      {bolimTori}
+      <div className="grid items-start gap-4 min-[360px]:gap-5 md:grid-cols-2 md:gap-6">
+        {haftaBlok}
+        {maslahat}
       </div>
     </div>
+  );
+}
+
+/** Halqa: bugungi reja necha foiz bajarilgani. */
+function Halqa({ foiz }: { foiz: number }) {
+  const r = 30, uz = 2 * Math.PI * r;
+  return (
+    <span className="relative grid size-[76px] shrink-0 place-items-center" role="img" aria-label={`${foiz}%`}>
+      <svg viewBox="0 0 72 72" className="absolute inset-0 size-full -rotate-90" aria-hidden>
+        <circle cx="36" cy="36" r={r} fill="none" strokeWidth="7" className="stroke-track" />
+        <circle cx="36" cy="36" r={r} fill="none" strokeWidth="7" strokeLinecap="round"
+          className={foiz === 100 ? "stroke-brand-green" : "stroke-brand-blue"}
+          style={{ strokeDasharray: uz, strokeDashoffset: uz * (1 - foiz / 100), transition: "stroke-dashoffset .6s" }} />
+      </svg>
+      <span className="font-display text-[18px] font-bold">{foiz}%</span>
+    </span>
+  );
+}
+
+function Son({ n, nom }: { n: string; nom: string }) {
+  return (
+    <span className="flex flex-col px-1">
+      <span className="font-display text-[19px] leading-tight font-bold">{n}</span>
+      <span className="truncate text-[12px] text-ink-dim">{nom}</span>
+    </span>
+  );
+}
+
+/** Sarlavhadagi tez o'tish tugmasi (faqat kompyuterda). */
+function TezTugma({ ik, nom, on, tahlil }: { ik: IconName; nom: string; on: () => void; tahlil: string }) {
+  return (
+    <button type="button" onClick={on} data-tahlil={tahlil}
+      className="clay-press flex min-h-11 items-center gap-2 rounded-[14px] bg-karta px-4 text-[14px] font-bold
+                 text-ink-soft shadow-clay-sm hover:text-ink">
+      <Icon name={ik} size={17} className="text-brand-blue-t" />
+      {nom}
+    </button>
   );
 }
 
@@ -365,9 +447,9 @@ interface Vazifa {
 }
 
 /** Zanjir yonidagi olov — oltin (mukofot rangi), emoji emas: har qurilmada bir xil. */
-function Olov({ yoniq }: { yoniq: boolean }) {
+function Olov({ yoniq, kichik }: { yoniq: boolean; kichik?: boolean }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden strokeWidth="1.8" strokeLinejoin="round"
+    <svg width={kichik ? 15 : 20} height={kichik ? 15 : 20} viewBox="0 0 24 24" aria-hidden strokeWidth="1.8" strokeLinejoin="round"
       className={`shrink-0 ${yoniq ? "fill-brand-gold stroke-brand-gold-d" : "fill-none stroke-ink-dim"}`}>
       <path d="M12 2c1 4 5 5.5 5 11a5 5 0 0 1-10 0c0-3 2-4.5 2-7 1.5 1 2.5 2.5 3-4z" />
     </svg>
@@ -447,59 +529,65 @@ function asosiyAmal({ davom, prof, onDarslar, onMasalalar, onDavom, onKurs, onIm
  * yozilgan. Faqat oq tugma bosiladi: kartaning qolgan qismi o'qish
  * uchun — tasodifan tegib ketilgan barmoq darsni ochib yubormasin.
  */
-function AsosiyKarta({ amal }: { amal: Amal }) {
+function AsosiyKarta({ amal, zanjir, ikkinchi }: {
+  amal: Amal; zanjir: number; ikkinchi: { nom: string; on: () => void };
+}) {
   const otilgan = amal.yol?.filter((h) => h === "otilgan").length ?? 0;
   const jami = amal.yol?.length ?? 0;
   const belgi: HajmliNom = amal.yol ? "raketa" : "bitiruv";
   return (
-    <section
-      className="relative flex w-full flex-col gap-3.5 overflow-hidden rounded-[26px] bg-brand-blue p-4
-                 text-left text-white shadow-[0_5px_0_var(--color-brand-blue-d)] min-[360px]:p-[18px] md:p-[22px]">
-      {/* Bezak: ikki yumshoq doira — karta tekis ko'k dog' bo'lib qolmasin. */}
-      <span aria-hidden className="pointer-events-none absolute -top-16 -right-12 size-48 rounded-full bg-white/10" />
-      <span aria-hidden className="pointer-events-none absolute -bottom-20 -left-10 size-40 rounded-full bg-white/[0.06]" />
-      <span className="relative flex items-start gap-3">
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-bold">
-            <span className="rounded-full bg-white/20 px-2.5 py-0.5">{amal.yorliq}</span>
-            {amal.joy && <span className="text-white/80">{amal.joy}</span>}
-          </span>
-          <span className="font-display text-[21px] leading-[1.18] font-bold min-[360px]:text-[23px] md:text-[26px]">
-            {amal.nom}
-          </span>
-          {amal.izoh && <span className="text-[14.5px] leading-snug text-white/85">{amal.izoh}</span>}
+    /* Testmakon uslubidagi hero: karta rangidagi yuza, burchakda ko'k nur,
+       o'ngda katta suzuvchi 3D rasm. Ikki tugma — asosiy (ko'k) va
+       ikkinchi darajali (xira). */
+    <section className="relative flex min-h-[240px] flex-col justify-center gap-3.5 overflow-hidden rounded-[26px] bg-karta
+                        p-5 shadow-clay md:p-7">
+      <span aria-hidden className="pointer-events-none absolute -top-24 -right-16 size-72 rounded-full
+                                   bg-brand-blue/20 blur-3xl" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-24 left-10 size-56 rounded-full
+                                   bg-brand-gold/10 blur-3xl" />
+      {/* Rasm o'lchamga qarab BITTA: telefonda burchakda kichik, kengda katta. */}
+      <span className="az-suzish pointer-events-none absolute top-4 right-4 md:hidden">
+        <Hajmli nom={belgi} olcham={56} jonli />
+      </span>
+      <span className="az-suzish pointer-events-none absolute right-8 hidden md:block">
+        <Hajmli nom={belgi} olcham={128} jonli />
+      </span>
+      <span className="relative flex flex-wrap items-center gap-2 pr-20 md:pr-40">
+        <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-bold ${
+          zanjir ? "bg-brand-gold/15 text-brand-gold-d" : "bg-track text-ink-soft"}`}>
+          <Olov yoniq={zanjir > 0} kichik /> {t("bugunZanjir", { n: zanjir })}
         </span>
-        <span className="az-suzish shrink-0"><Hajmli nom={belgi} olcham={68} jonli /></span>
+        {amal.joy && <span className="text-[13px] font-bold text-ink-dim">{amal.joy}</span>}
+      </span>
+      <span className="relative flex flex-col gap-1.5 pr-16 md:pr-40">
+        <span className="text-[13px] font-bold text-brand-blue-t">{amal.yorliq}</span>
+        <span className="font-display text-[24px] leading-[1.12] font-bold min-[360px]:text-[27px] md:text-[32px]">
+          {amal.nom}
+        </span>
+        {amal.izoh && <span className="text-[14.5px] leading-snug text-ink-soft md:text-[15.5px]">{amal.izoh}</span>}
       </span>
       {jami > 0 && (
-        <span className="relative flex flex-col gap-1.5">
-          <span className="block h-2 overflow-hidden rounded-full bg-white/25" aria-hidden>
-            <span className="block h-full rounded-full bg-white" style={{ width: `${Math.max(4, Math.round((otilgan / jami) * 100))}%` }} />
+        <span className="relative flex max-w-md flex-col gap-1.5">
+          <span className="block h-2 overflow-hidden rounded-full bg-track" aria-hidden>
+            <span className="block h-full rounded-full bg-brand-blue"
+              style={{ width: `${Math.max(4, Math.round((otilgan / jami) * 100))}%` }} />
           </span>
-          <span className="text-[13px] text-white/85">{t("bugunBobYoli", { n: otilgan, jami })}</span>
+          <span className="text-[13px] text-ink-dim">{t("bugunBobYoli", { n: otilgan, jami })}</span>
         </span>
       )}
-      <button type="button" onClick={amal.on} data-tahlil={amal.tahlil}
-        className="tugma-3d relative grid min-h-[52px] w-full place-items-center rounded-2xl bg-white font-display
-                   text-[19px] font-bold text-brand-blue-d shadow-[0_4px_0_rgb(0_0_0/0.12)]">
-        {amal.tugma}
-      </button>
+      <span className="relative mt-1 flex flex-wrap items-center gap-2.5">
+        <button type="button" onClick={amal.on} data-tahlil={amal.tahlil}
+          className="tugma-3d flex min-h-[52px] items-center gap-2 rounded-[16px] bg-brand-blue px-6 font-display
+                     text-[18px] font-bold text-white shadow-[0_4px_0_var(--color-brand-blue-d),0_12px_24px_-10px_var(--color-brand-blue)]">
+          {amal.tugma}
+          <Icon name="chevron" size={18} />
+        </button>
+        <button type="button" onClick={ikkinchi.on} data-tahlil="Bugun: barcha darslar"
+          className="clay-press flex min-h-[52px] items-center justify-center rounded-[16px] bg-track px-5 text-[15px] font-bold
+                     text-ink-soft hover:text-ink">
+          {ikkinchi.nom}
+        </button>
+      </span>
     </section>
-  );
-}
-
-/** Kattalar yo'lidagi kichik eshik — formulalar va DTM. */
-function KattaEshik({ ik, nom, izoh, on }: { ik: IconName; nom: string; izoh: string; on: () => void }) {
-  return (
-    <button type="button" onClick={on} data-tahlil={`Bugun: ${nom}`}
-      className="clay-press flex flex-col items-start gap-2 rounded-clay bg-karta p-3 text-left shadow-clay-sm">
-      <span className="grid size-9 place-items-center rounded-2xl bg-track text-brand-blue">
-        <Icon name={ik} size={18} />
-      </span>
-      <span className="min-w-0">
-        <span className="block font-display text-[14px] leading-tight">{nom}</span>
-        <span className="mt-0.5 block text-[12px] leading-snug text-ink-dim">{izoh}</span>
-      </span>
-    </button>
   );
 }

@@ -28,7 +28,10 @@
  * edi (yashil uy, binafsha planshet) va panel kamalakka aylanardi —
  * dizayn qoidasi esa tanlangan holat uchun faqat ko'kni beradi.
  */
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { getHisob } from "../lib/api";
+import { tgIsm } from "../lib/qobiq";
+import { yolSozlama } from "../lib/yollar";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { PanelBelgi, type PanelBelgiNom } from "../lib/chizma/panelBelgi";
 import { Icon, type IconName } from "../lib/icons";
@@ -248,11 +251,40 @@ function YonPanel({ children }: { children: ReactNode }) {
         </span>
       </button>
       {children}
-      <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-        <YoruglikTugma />
-        <TilTugma />
+      <div className="mt-auto flex flex-col gap-2.5 pt-4">
+        <div className="flex items-center justify-between gap-2">
+          <YoruglikTugma />
+          <TilTugma />
+        </div>
+        <FoydalanuvchiKarta />
       </div>
     </nav>
+  );
+}
+
+/**
+ * Yon panel pastidagi foydalanuvchi kartasi: kim kirgani va sozlamalar.
+ * Kompyuterda "qaysi hisobda turibman?" savoli tez-tez bo'ladi (bir
+ * nechta bola) — javob doim ko'z oldida.
+ */
+function FoydalanuvchiKarta() {
+  const nav = useNavigate();
+  const [ism, setIsm] = useState(() => tgIsm());
+  useEffect(() => {
+    let bekor = false;
+    getHisob().then((h) => { if (!bekor && h?.ism) setIsm(h.toliqIsm || h.ism); }).catch(() => {});
+    return () => { bekor = true; };
+  }, []);
+  const nom = ism || "Aql Zone";
+  const bosh = nom.split(/\s+/).filter(Boolean).slice(0, 2).map((x: string) => x[0]!.toUpperCase()).join("") || "?";
+  return (
+    <button type="button" onClick={() => nav(yolSozlama())} data-tahlil="Yon: foydalanuvchi"
+      className="clay-press flex min-h-14 w-full items-center gap-2.5 rounded-2xl bg-karta px-2.5 text-left shadow-clay-sm">
+      <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-blue text-[13px]
+                                   font-bold text-white">{bosh}</span>
+      <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{nom}</span>
+      <Icon name="menu" size={17} className="shrink-0 text-ink-dim" />
+    </button>
   );
 }
 

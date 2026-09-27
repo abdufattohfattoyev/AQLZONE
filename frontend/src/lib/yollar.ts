@@ -32,6 +32,9 @@ export const yolBosh = () => "/";
  */
 export const yolKurslar = () => "/darslar";
 
+/** Barcha formulalar — kursdan tashqari (Google uchun kanonik sahifa ham shu). */
+export const yolFormulalarUmumiy = () => "/formulalar";
+
 /**
  * Testlar — sinf tanlash.
  *

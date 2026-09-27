@@ -241,6 +241,7 @@ function BoshSahifasi() {
   return (
     <Bosh
       progressOf={progressOf}
+      onYol={(yol) => nav(yol)}
       onDarslar={() => nav(yolKurslar())}
       onMasalalar={() => nav(yolMasalalar())}
       onTestlar={() => nav(yolTestSinf())}
