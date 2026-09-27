@@ -134,23 +134,29 @@ export function Panel() {
   ];
 
   if (kompyuter) {
+    // Pastki satrlardan biri faol bo'lsa (DTM, sertifikat, reyting,
+    // qidiruv) — faqat O'SHA yonadi. Ilgari `/imtihon` da "O'qish" ham
+    // to'liq ko'k turardi va DTM satri uning yonida ko'rinmay qolardi.
+    const satrlar = [
+      { ik: "clock" as const, nom: t("yonDtm"), yol: yolImtihon(), faol: pathname.startsWith(yolImtihon()) },
+      { ik: "trophy" as const, nom: t("yonSertifikat"), yol: yolSertifikat(), faol: pathname.startsWith(yolSertifikat()) },
+      { ik: "chart" as const, nom: t("reyting"), yol: yolReyting(), faol: pathname === yolReyting() },
+      { ik: "search" as const, nom: t("qidiruvNom"), yol: yolQidiruv(), faol: pathname === yolQidiruv() },
+    ];
+    const satrFaol = satrlar.some((s) => s.faol);
     return (
       <YonPanel>
         <YonGuruh nom={t("yonBolimlar")} />
         {tablar.map((x) => (
-          <YonTugma key={x.id} ic={x.ic} nom={x.nom} faol={faol === x.id} on={yur(x.yol)} />
+          <YonTugma key={x.id} ic={x.ic} nom={x.nom} faol={!satrFaol && faol === x.id} on={yur(x.yol)} />
         ))}
         {/* Imtihonlar va reyting — kompyuterda joy bor, ular ichkaridan
             qidirilmasin: abituriyent DTM ni bir bosishda topsin. Telefonda
             qidiruv har bo'lim sarlavhasidagi lupada. */}
         <YonGuruh nom={t("yonImtihonlar")} />
-        <YonSatr ik="clock" nom={t("yonDtm")} faol={pathname.startsWith(yolImtihon())}
-          on={yur(yolImtihon())} />
-        <YonSatr ik="trophy" nom={t("yonSertifikat")} faol={pathname.startsWith(yolSertifikat())}
-          on={yur(yolSertifikat())} />
-        <YonSatr ik="chart" nom={t("reyting")} faol={pathname === yolReyting()} on={yur(yolReyting())} />
-        <YonSatr ik="search" nom={t("qidiruvNom")} faol={pathname === yolQidiruv()}
-          on={yur(yolQidiruv())} />
+        {satrlar.map((s) => (
+          <YonSatr key={s.yol} ik={s.ik} nom={s.nom} faol={s.faol} on={yur(s.yol)} />
+        ))}
       </YonPanel>
     );
   }
@@ -317,13 +323,19 @@ function YonGuruh({ nom }: { nom: string }) {
   return <span className="mt-3 mb-0.5 px-3 text-[11.5px] font-bold tracking-[0.08em] text-ink-dim uppercase">{nom}</span>;
 }
 
-/** Ikkinchi darajali satr — chiziqli belgi, yostiqsiz. */
+/**
+ * Ikkinchi darajali satr — chiziqli belgi, yostiqsiz. Faol bo'lsa
+ * asosiy tugma kabi to'ldirilgan ko'k: "qayerdaman?" bir qarashda
+ * bilinsin (ilgari `bg-karta` edi va qora rejimda deyarli ko'rinmasdi).
+ */
 function YonSatr({ ik, nom, on, faol }: { ik: IconName; nom: string; on: () => void; faol: boolean }) {
   return (
     <button type="button" onClick={on} data-tahlil={`Yon: ${ik}`}
       aria-current={faol ? "page" : undefined}
-      className={`clay-press flex h-11 w-full items-center gap-3 rounded-2xl px-3.5 text-left
-                  text-[14px] font-semibold ${faol ? "bg-karta text-brand-blue-t" : "text-ink-soft hover:bg-karta"}`}>
+      className={`clay-press flex h-11 w-full items-center gap-3 rounded-2xl px-3.5 text-left text-[14px]
+                  transition-colors duration-200
+                  ${faol ? "bg-brand-blue font-bold text-white shadow-[0_4px_14px_-4px_var(--color-brand-blue)]"
+                    : "font-semibold text-ink-soft hover:bg-karta"}`}>
       <Icon name={ik} size={18} className="shrink-0" />
       <span className="truncate">{nom}</span>
     </button>
