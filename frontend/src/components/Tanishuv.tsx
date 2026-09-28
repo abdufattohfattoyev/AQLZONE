@@ -231,7 +231,8 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   if (taklif !== null && !miniAppda()) {
     return (
       <Kirish
-        izoh={taklif === 3 ? t("taklifUchYulduz") : t("taklifYulduz", { n: taklif })}
+        izoh={taklif === 0 ? t("taklifNatija")                  // test tugadi (`sinov.ishTugadi`)
+          : taklif === 3 ? t("taklifUchYulduz") : t("taklifYulduz", { n: taklif })}
         xabar={t("taklifXabar")}
         tugma={t("telegramBilanSaqlash")}
         onKeyinroq={() => setTaklif(null)}

@@ -67,6 +67,7 @@ import { KoribChiqish } from "../components/KoribChiqish";
 import { ReytingKarta } from "../components/HaftalikReyting";
 import { NatijaSarlavha } from "../components/NatijaSarlavha";
 import { NatijaUlash } from "../components/NatijaUlash";
+import { ishTugadi } from "../lib/sinov";
 import { dtmSavollari } from "../lib/korish";
 import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
@@ -291,6 +292,14 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, a
    * so'raladi. `urinishVaqt` — "bu qayta ishlashmi?" degan savol uchun.
    */
   const [yozildi, setYozildi] = useState<{ tayyor: Promise<void>; vaqt: number } | null>(null);
+
+  // Saytda kirmagan odamga "natijani saqlang" taklifi (`lib/sinov.ts`) —
+  // TUGAGAN test ekranidan CHIQQANDA. Taklif butun ekranni egallaydi:
+  // test tugashi bilan chiqsa odam natijasini, "Ko'rib chiqish" da
+  // chiqsa — savollarni ko'rolmay qolardi.
+  const tugadiRef = useRef(false);
+  useEffect(() => { tugadiRef.current = tugadi; }, [tugadi]);
+  useEffect(() => () => { if (tugadiRef.current) ishTugadi(); }, []);
 
   /**
    * Test qachon tugaydi — SOAT bo'yicha, sanoq bo'yicha emas.

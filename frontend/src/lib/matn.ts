@@ -442,6 +442,10 @@ const S = {
   hrXato: ["Reytingni yuklab bo'lmadi", "Не удалось загрузить рейтинг"],
   hrKirishIzoh: ["Shu hafta ishlaganlar bilan solishtiring", "Сравните себя с решавшими на этой неделе"],
   hrSiz: ["Siz", "Вы"],
+  taklifNatija: [
+    "Natijangiz va tarixingiz saqlansin — reyting, ko'rib chiqish va har kungi eslatma Telegram bilan ishlaydi",
+    "Сохраните результат и историю — рейтинг, разбор и ежедневные напоминания работают через Telegram",
+  ],
   ulashTugma: ["Natijani do'stlarga yuborish", "Отправить результат друзьям"],
   ulashIzoh: ["Karta Telegram'ingizga keladi — guruhga yuboring", "Карточка придёт в ваш Telegram — перешлите в группу"],
   ulashYuborildi: ["Karta Telegram'ingizda", "Карточка в вашем Telegram"],

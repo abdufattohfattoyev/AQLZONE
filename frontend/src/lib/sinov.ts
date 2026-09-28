@@ -89,6 +89,24 @@ export function taklifgaObuna(f: Tinglovchi): () => void {
  * Ro'yxatdan o'tganlarda hech narsa qilmaydi.
  */
 export function darsTugadi(yulduz: number): void {
+  sana(yulduz);
+}
+
+/**
+ * Test tugadi (to'plam, blok, DTM, sertifikat) — dars bilan BIR XIL sanoq.
+ *
+ * Ilgari taklif faqat DARSdan keyin chiqardi. Qidiruvdan kelganlar esa
+ * ko'pincha to'g'ridan-to'g'ri TEST sahifasiga tushadi (o'sish
+ * hisobotida saytdan kelganlarning faqat 9% i qaytgan, eng ko'p
+ * tashlab ketilgan ekranlardan biri — `/toplam/:id`) va darsga
+ * yetmasdan ketadi: ularga kirish taklifi umuman ko'rsatilmasdi.
+ * `0` — yulduz emas, NATIJA haqida gapiradigan matn (`Tanishuv`).
+ */
+export function ishTugadi(): void {
+  sana(0);
+}
+
+function sana(yulduz: number): void {
   if (royxatdan) return;
 
   const n = sinovDarslari() + 1;

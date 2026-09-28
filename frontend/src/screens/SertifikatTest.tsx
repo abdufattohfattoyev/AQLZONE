@@ -46,6 +46,7 @@ import { KoribChiqish } from "../components/KoribChiqish";
 import { ReytingKarta } from "../components/HaftalikReyting";
 import { NatijaSarlavha } from "../components/NatijaSarlavha";
 import { NatijaUlash } from "../components/NatijaUlash";
+import { ishTugadi } from "../lib/sinov";
 
 /**
  * Natija serverda qaysi "bob/dars" bo'lib yoziladi. Blok test 98,
@@ -108,6 +109,11 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
   const [korish, setKorish] = useState(false);
   /** Serverga yozilgani — reyting kartasi shundan keyin so'raladi. */
   const [yozildi, setYozildi] = useState<{ tayyor: Promise<void>; vaqt: number } | null>(null);
+
+  // Saytda — "natijani saqlang" taklifi TUGAGAN variantdan chiqqanda (`Blok.tsx` dagi sabab).
+  const tugadiRef = useRef(false);
+  useEffect(() => { tugadiRef.current = tugadi; }, [tugadi]);
+  useEffect(() => () => { if (tugadiRef.current) ishTugadi(); }, []);
 
   // Soat — `Blok.tsx` dagidek: sanoq emas, TUGASH PAYTI eslanadi va
   // qolgan vaqt har safar `Date.now()` dan hisoblanadi (fondagi yorliq
