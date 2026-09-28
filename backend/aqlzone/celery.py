@@ -140,6 +140,13 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=9, minute=5, day_of_week=1),
         "args": ("osish_hisobot",),
     },
+    # O'tgan haftaning DTM/sertifikat reytingi kanalga — dushanba 12:00
+    # (`reyting_post`): ijtimoiy isbot, yangi haftaga taklif bilan.
+    "reyting-post": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=12, minute=0, day_of_week=1),
+        "args": ("reyting_post",),
+    },
     # Kanaldagi postlar joyidami — kuniga bir marta yetarli.
     "kanal-tekshiruvi": {
         "task": "core.vazifalar.buyruq",

@@ -7978,6 +7978,39 @@ class OsishTahliliTest(TestCase):
         self.assertLess(len(m), 4096)
 
 
+class ReytingPostTest(TestCase):
+    """Kanaldagi o'tgan hafta reytingi — qisqa ismlar, faqat o'sha hafta."""
+
+    def test_qisqa_ism(self):
+        from core.management.commands.reyting_post import qisqa_ism
+        self.assertEqual(qisqa_ism("Jasur Olimov"), "Jasur O.")
+        self.assertEqual(qisqa_ism("Jasur Olimov (Ali)"), "Jasur O.")
+        self.assertEqual(qisqa_ism("Aziza"), "Aziza")
+        self.assertEqual(qisqa_ism(""), "Ishtirokchi")
+
+    def test_otgan_hafta_posti(self):
+        from datetime import timedelta
+        from core import imtihon as IM
+        from core.management.commands.reyting_post import post_matni
+        boshi = IM.hafta_boshi() - timedelta(days=7)
+        for i, (ism, togri) in enumerate((("Jasur Olimov", 26), ("Aziza Karimova", 22), ("", 18))):
+            p = Pupil.objects.create(first_name=ism.split(" ")[0] if ism else "",
+                                     last_name=ism.split(" ")[1] if ism else "")
+            pr = MDL.Profile.objects.create(pupil=p, name="Men")
+            MDL.ImtihonNatija.objects.create(profile=pr, variant=1, togri=togri, jami=30,
+                                             mijoz_vaqt=i + 1, created_at=boshi + timedelta(days=2))
+        # Joriy haftadagi natija o'tgan hafta postiga kirmaydi.
+        p = Pupil.objects.create(first_name="Yangi")
+        MDL.ImtihonNatija.objects.create(profile=MDL.Profile.objects.create(pupil=p, name="Men"),
+                                         variant=1, togri=30, jami=30, mijoz_vaqt=99)
+        matn, jami = post_matni(boshi)
+        self.assertEqual(jami, 3)
+        self.assertIn("🥇 Jasur O. — 26/30", matn)
+        self.assertIn("Ishtirokchi — 18/30", matn)
+        self.assertNotIn("Yangi", matn)
+        self.assertNotIn("Olimov", matn)
+
+
 class OlimpiadaBankTest(TestCase):
     """
     Kanaldagi «Kun masalasi» banki — HAR javob qayta hisoblanadi.

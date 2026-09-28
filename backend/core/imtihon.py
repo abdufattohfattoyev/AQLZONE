@@ -233,13 +233,15 @@ def hafta_boshi(hozir: datetime | None = None) -> datetime:
     return timezone.make_aware(datetime.combine(dushanba, time.min), mahalliy.tzinfo)
 
 
-def _birinchilar(tur: str, boshi: datetime):
-    """Shu hafta yozilgan va o'z variantidagi BIRINCHI bo'lgan urinishlar."""
+def _birinchilar(tur: str, boshi: datetime, oxiri: datetime | None = None):
+    """[boshi, oxiri) da yozilgan va o'z variantidagi BIRINCHI bo'lgan urinishlar."""
     oldingi = ImtihonNatija.objects.filter(
         profile=OuterRef("profile"), variant=OuterRef("variant"), tur=tur, kurs="",
         mijoz_vaqt__lt=OuterRef("mijoz_vaqt"))
-    return (ImtihonNatija.objects.filter(tur=tur, kurs="", created_at__gte=boshi)
-            .annotate(oldin=Exists(oldingi)).filter(oldin=False).select_related("profile__pupil"))
+    qs = ImtihonNatija.objects.filter(tur=tur, kurs="", created_at__gte=boshi)
+    if oxiri is not None:
+        qs = qs.filter(created_at__lt=oxiri)
+    return qs.annotate(oldin=Exists(oldingi)).filter(oldin=False).select_related("profile__pupil")
 
 
 def _kalit(n: ImtihonNatija) -> tuple:
@@ -248,13 +250,21 @@ def _kalit(n: ImtihonNatija) -> tuple:
     return (-(natija or 0), n.sekund, n.mijoz_vaqt)
 
 
-def haftalik_reyting(tur_nomi: str, variant: int | None, men: Profile) -> dict:
+def haftalik_reyting(tur_nomi: str, variant: int | None, men: Profile | None,
+                     boshi: datetime | None = None) -> dict:
+    """
+    `boshi` berilsa — O'SHA hafta (dushanbadan 7 kun): kanaldagi "o'tgan
+    hafta reytingi" posti uchun (`reyting_post`). Aks holda joriy hafta.
+    `men` bo'lmasa — hech kim "men" deb belgilanmaydi.
+    """
     from django.db.models import Count
 
     from .duel import OZIM_NOMLARI
 
     tur_nomi = tur_nomi if tur_nomi in TURLAR else "dtm"
-    hammasi = list(_birinchilar(TURLAR[tur_nomi], hafta_boshi()))
+    boshi = boshi or hafta_boshi()
+    hammasi = list(_birinchilar(TURLAR[tur_nomi], boshi, boshi + timedelta(days=7)))
+    men_id = men.pk if men else None
     # Bir hisobda nechta profil — oilaviy hisobda bolaning ismi ham kerak.
     profillar_soni = dict(Profile.objects.filter(pupil_id__in={n.profile.pupil_id for n in hammasi})
                           .values_list("pupil").annotate(n=Count("id")))
@@ -274,8 +284,6 @@ def haftalik_reyting(tur_nomi: str, variant: int | None, men: Profile) -> dict:
         if profil_nomi and profillar_soni.get(p.pupil_id, 1) > 1:
             return f"{toliq} ({profil_nomi})" if toliq else profil_nomi
         return toliq or profil_nomi
-
-    boshi = hafta_boshi()
 
     # Qaysi variantda nechta odam — jadval ustidagi tanlov uchun.
     variantlar: dict[str, int] = {}
@@ -298,7 +306,7 @@ def haftalik_reyting(tur_nomi: str, variant: int | None, men: Profile) -> dict:
         q = {
             "orin": i + 1, "ism": ism(n.profile), "variant": n.variant,
             "togri": n.togri, "jami": n.jami, "ball": n.ball, "sekund": n.sekund,
-            "men": n.profile_id == men.pk,
+            "men": n.profile_id == men_id,
         }
         # O'zimniki — qaysi urinish jadvalga kirgani: natija ekrani
         # "bu qayta ishlash, hisobga birinchisi kirdi" deb ayta olsin.
@@ -306,7 +314,7 @@ def haftalik_reyting(tur_nomi: str, variant: int | None, men: Profile) -> dict:
             q["vaqt"] = n.mijoz_vaqt
         return q
 
-    meniki = next((qator(i, n) for i, n in enumerate(tanlangan) if n.profile_id == men.pk), None)
+    meniki = next((qator(i, n) for i, n in enumerate(tanlangan) if n.profile_id == men_id), None)
     return {
         "tur": tur_nomi,
         "variant": variant,
