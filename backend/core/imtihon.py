@@ -54,6 +54,22 @@ def _butun(x, eng_kam: int, eng_kop: int) -> int | None:
     return n if eng_kam <= n <= eng_kop else None
 
 
+def _mavzular(x) -> list[dict]:
+    """
+    `[{"m": nom, "x": xato}]` — tekshirilgan, qisqartirilgan. Buzuq kelsa
+    bo'sh ro'yxat: mavzular natijani rad etish sababi emas.
+    """
+    if not isinstance(x, list):
+        return []
+    r = []
+    for q in x[:40]:
+        if isinstance(q, dict) and isinstance(q.get("m"), str):
+            xato = _butun(q.get("x"), 1, 60)
+            if xato:
+                r.append({"m": q["m"][:120], "x": xato})
+    return r
+
+
 def _toza(d: dict) -> dict | None:
     """Bitta urinishni tekshiradi. Yaroqsiz bo'lsa — `None` (jimgina tashlanadi)."""
     if not isinstance(d, dict):
@@ -71,7 +87,8 @@ def _toza(d: dict) -> dict | None:
     if kurs and kurs not in SESSIYA_KURSLAR:
         return None
     return {"variant": variant, "jami": jami, "togri": togri, "kurs": kurs,
-            "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt}
+            "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt,
+            "mavzular": _mavzular(d.get("mavzular"))}
 
 
 def yoz(profil: Profile, urinishlar, sessiya: bool = False) -> int:
@@ -171,7 +188,8 @@ def _sert_toza(d: dict) -> dict | None:
     togri = _butun(d.get("togri"), 0, jami) or 0
     sekund = _butun(d.get("sekund"), 0, SERT_MAX_SEKUND)
     return {"variant": variant, "jami": jami, "togri": togri, "ball": ball, "tur": "sert",
-            "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt}
+            "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt,
+            "mavzular": _mavzular(d.get("mavzular"))}
 
 
 def sert_yoz(profil: Profile, urinishlar) -> int:

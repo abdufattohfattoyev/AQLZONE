@@ -42,6 +42,11 @@ tekshir("/imtihon/reyting", "oqish");
 tekshir("/sertifikat/reyting", "oqish");
 tekshir("/imtihon/5/tahlil", "oqish");
 tekshir("/sertifikat/mashq", "oqish");
+tekshir("/marafon", "oqish");
+tekshir("/marafon/bugun", "oqish");
+tekshir("/sinflar", "men");
+tekshir("/sinf/12", "men");
+tekshir("/sinf/qoshil/ABC234", "men");
 
 tekshir("/oyinlar", "oyin");
 tekshir("/oyinlar/tezkor", "oyin");

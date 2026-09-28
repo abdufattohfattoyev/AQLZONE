@@ -843,6 +843,18 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         bolimni_yubor(chat_id, til, SERTIFIKAT_YOLI, "sertifikatHaqida")
         return f"{tg_id}: sertifikat havolasi"
 
+    # DTM marafoni — kanaldagi e'lon tugmasi (`core/marafon.py`).
+    if matn.startswith("/start marafon"):
+        bolimni_yubor(chat_id, til, "/marafon", "marafonHaqida")
+        return f"{tg_id}: marafon havolasi"
+
+    # O'qituvchi bergan sinf kodi: `/start sinf_ABC234` (`core/sinf.py`).
+    if matn.startswith("/start sinf_"):
+        kod = matn.split("sinf_", 1)[1].strip()[:8].upper()
+        if kod.isalnum():
+            bolimni_yubor(chat_id, til, f"/sinf/qoshil/{kod}", "sinfBot")
+            return f"{tg_id}: sinf kodi ({kod})"
+
     if matn.startswith("/start"):
         # Odam o'zi yozdi — demak xabarlarga qarshi emas. "Boshqa
         # yozmang" belgisi olib tashlanadi, aks holda u eslatmalardan
@@ -931,6 +943,10 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     if matn.startswith("/sertifikat"):
         bolimni_yubor(chat_id, til, SERTIFIKAT_YOLI, "sertifikatHaqida")
         return f"{tg_id}: /sertifikat"
+
+    if matn.startswith("/marafon"):
+        bolimni_yubor(chat_id, til, "/marafon", "marafonHaqida")
+        return f"{tg_id}: /marafon"
 
     if matn.startswith("/masalalar") or matn in barcha("tMasalalar"):
         bolimni_yubor(chat_id, til, MASALALAR_YOLI, "masalalarBot")

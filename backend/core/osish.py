@@ -44,13 +44,14 @@ START_MANBA = [
     ("duel_", "duel"), ("xona_", "xona"), ("masala_", "masala"), ("masalalar", "masala"),
     ("test_", "test"), ("testlar", "test"), ("kunlik", "kunlik_son"), ("karvon", "karvon"),
     ("dtm", "dtm"), ("sertifikat", "sertifikat"), ("ref_", "taklif"),
+    ("marafon", "marafon"), ("sinf_", "sinf"),
 ]
 
 MANBA_NOMI = {
     "": "to'g'ridan (/start)", "duel": "duel chaqiruvi", "xona": "jamoaviy xona",
     "masala": "masala posti", "test": "test to'plami", "kunlik_son": "kunlik son ulashish",
     "karvon": "karvon ulashish", "dtm": "DTM havolasi", "sertifikat": "sertifikat havolasi",
-    "taklif": "taklif havolasi", "boshqa": "boshqa havola",
+    "taklif": "taklif havolasi", "marafon": "marafon", "sinf": "sinf kodi", "boshqa": "boshqa havola",
 }
 
 

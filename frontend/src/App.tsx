@@ -54,6 +54,11 @@ const Sessiya = lazy(() => import("./screens/Sessiya").then((m) => ({ default: m
 const ImtReyting = lazy(() => import("./screens/ImtihonQoshimcha").then((m) => ({ default: m.ImtReyting })));
 const ZaifMashq = lazy(() => import("./screens/ImtihonQoshimcha").then((m) => ({ default: m.ZaifMashq })));
 const ImtKorish = lazy(() => import("./screens/ImtihonQoshimcha").then((m) => ({ default: m.ImtKorish })));
+const MarafonEkran = lazy(() => import("./screens/Marafon").then((m) => ({ default: m.Marafon })));
+const MarafonKun = lazy(() => import("./screens/Marafon").then((m) => ({ default: m.MarafonKun })));
+const Sinflar = lazy(() => import("./screens/Sinf").then((m) => ({ default: m.Sinflar })));
+const SinfQoshil = lazy(() => import("./screens/Sinf").then((m) => ({ default: m.SinfQoshil })));
+const SinfSahifa = lazy(() => import("./screens/Sinf").then((m) => ({ default: m.SinfSahifa })));
 const BlokEkran = lazy(() => import("./screens/Blok").then((m) => ({ default: m.Blok })));
 const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel })));
 const DuelQabul = lazy(() => import("./screens/Duel").then((m) => ({ default: m.DuelQabul })));
@@ -195,6 +200,12 @@ function Yollar() {
       <Route path="/sertifikat/mashq" element={<ZaifMashqSahifasi tur="sert" />} />
       <Route path="/sertifikat/:n/tahlil" element={<ImtKorishSahifasi tur="sert" />} />
       <Route path="/sertifikat/:n" element={<SertifikatVariantSahifasi />} />
+      {/* DTM marafoni (`core/marafon.py`) va o'qituvchi sinfi (`core/sinf.py`). */}
+      <Route path="/marafon" element={<MarafonSahifasi />} />
+      <Route path="/marafon/bugun" element={<MarafonKunSahifasi />} />
+      <Route path="/sinflar" element={<SinflarSahifasi />} />
+      <Route path="/sinf/qoshil/:kod" element={<SinfQoshilSahifasi />} />
+      <Route path="/sinf/:id" element={<SinfSahifasi />} />
       <Route path="/sessiya" element={<SessiyaSahifasi />} />
       <Route path="/sessiya/:slug/:n" element={<SessiyaVariantSahifasi />} />
       <Route path="/oyinlar/shaharcha" element={<ShaharchaSahifasi />} />
@@ -827,7 +838,7 @@ function ImtihonSahifasi() {
   return <Imtihon onVariant={(n) => nav(yolImtihonVariant(n))}
     onSertifikat={() => nav(yolSertifikat(), { replace: true })} onChiq={() => nav(yolTestSinf())}
     onMashq={() => nav(yolImtMashq("dtm"))} onReyting={() => nav(yolImtReyting("dtm"))}
-    onKorish={(n) => nav(yolImtKorish("dtm", n))} />;
+    onKorish={(n) => nav(yolImtKorish("dtm", n))} onMarafon={() => nav("/marafon")} />;
 }
 
 /** Milliy sertifikat — variantlar ro'yxati (`lib/sertifikat.ts`). */
@@ -838,6 +849,42 @@ function SertifikatSahifasi() {
     onDtm={() => nav(yolImtihon(), { replace: true })} onChiq={() => nav(yolTestSinf())}
     onMashq={() => nav(yolImtMashq("sert"))} onReyting={() => nav(yolImtReyting("sert"))}
     onKorish={(n) => nav(yolImtKorish("sert", n))} />;
+}
+
+function MarafonSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <MarafonEkran onBoshla={() => nav("/marafon/bugun")} onChiq={() => nav(yolImtihon())} />;
+}
+
+function MarafonKunSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <MarafonKun onChiq={() => nav("/marafon", { replace: true })} />;
+}
+
+function SinflarSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Sinflar onOch={(id) => nav(`/sinf/${id}`)} onKod={(kod) => nav(`/sinf/qoshil/${kod}`)}
+    onChiq={() => nav(yolMen())} />;
+}
+
+function SinfQoshilSahifasi() {
+  const nav = useNavigate();
+  const { kod } = useParams();
+  useTema("bosh");
+  return <SinfQoshil kod={(kod ?? "").toUpperCase()} onQoshildi={(id) => nav(`/sinf/${id}`, { replace: true })}
+    onChiq={() => nav("/sinflar")} />;
+}
+
+function SinfSahifasi() {
+  const nav = useNavigate();
+  const { id } = useParams();
+  useTema("bosh");
+  const n = Number(id);
+  if (!Number.isInteger(n) || n < 1) return <Navigate to="/sinflar" replace />;
+  return <SinfSahifa key={n} id={n} onChiq={() => nav("/sinflar")} />;
 }
 
 /** DTM/sertifikat — haftalik reyting. `?variant=5` bo'lsa o'sha variant ochiq. */

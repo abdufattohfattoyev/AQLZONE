@@ -68,6 +68,8 @@ import { ReytingKarta } from "../components/HaftalikReyting";
 import { NatijaSarlavha } from "../components/NatijaSarlavha";
 import { NatijaUlash } from "../components/NatijaUlash";
 import { ishTugadi } from "../lib/sinov";
+import { marafonBlok, marafonYubor } from "../lib/marafon";
+import type { MarafonHolat } from "../lib/marafon";
 import { dtmSavollari } from "../lib/korish";
 import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
@@ -84,7 +86,14 @@ interface Javob {
   togri: boolean;
 }
 
-export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, sessiya, onExit }: {
+export function Blok({
+  sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, sessiya, marafon, onExit,
+}: {
+  /**
+   * DTM MARAFONI kuni — savollar kun urug'idan (`lib/marafon.ts`), natija
+   * marafonga yoziladi (hisobga birinchi urinish kiradi, `core/marafon.py`).
+   */
+  marafon?: { id: number; kun: number; savol: number; daqiqa: number };
   /**
    * SESSIYA varianti — talabalar kursi bo'yicha (`lib/sessiya.ts`).
    * DTM variantidek bir o'tirishda ishlanadi, natija oxirida 5 ballik
@@ -145,7 +154,7 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, 
    */
   // Zaif mavzular mashqi ham "yarim qolgan test" kalitini egallamaydi
   // (to'plamdagi sabab): u oddiy testning davomini yashirib qo'yardi.
-  const alohida = Boolean(toplam || imtihon || sessiya) || qamrov.tur === "mavzular";
+  const alohida = Boolean(toplam || imtihon || sessiya || marafon) || qamrov.tur === "mavzular";
   const [yarim] = useState(() => (alohida ? null : joriyniOqi()));
   const [tanlov, setTanlov] = useState<"sora" | "davom" | "yangi">(() => {
     const bor = !alohida && joriyniOqi() !== null;
@@ -154,11 +163,12 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, 
   });
 
   const blok = useMemo(
-    () => (imtihon ? variantYasa(imtihon)
-      : sessiya ? sessiyaYasa(sessiya.slug, sessiya.n)
-        : toplam ? toplamYasa(toplam) : blokYasa(sinf, uzunlik, qamrov)),
+    () => (marafon ? marafonBlok(marafon.id, marafon.kun, marafon.savol, marafon.daqiqa)
+      : imtihon ? variantYasa(imtihon)
+        : sessiya ? sessiyaYasa(sessiya.slug, sessiya.n)
+          : toplam ? toplamYasa(toplam) : blokYasa(sinf, uzunlik, qamrov)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sinf, uzunlik, qamrov, urinish, imtihon, sessiya?.slug, sessiya?.n],
+    [sinf, uzunlik, qamrov, urinish, imtihon, sessiya?.slug, sessiya?.n, marafon?.id, marafon?.kun],
   );
 
   // Material topilmadi. Amalda bu deyarli bo'lmaydi (test qulfsiz va
@@ -185,7 +195,7 @@ export function Blok({ sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, 
     blok={davom ? { savollar: davom.savollar, daqiqa: davom.daqiqa } : blok}
     davom={davom}
     sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam} imtihon={imtihon} sessiya={sessiya}
-    alohida={alohida}
+    marafon={marafon} alohida={alohida}
     onQayta={() => { if (!alohida) joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
 }
@@ -259,10 +269,11 @@ function Bosh({ onExit }: { onExit: () => void }) {
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, alohida, onQayta, onExit }: {
+function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, alohida, onQayta, onExit }: {
   toplam?: Toplam;
   imtihon?: number;
   sessiya?: { slug: string; n: number };
+  marafon?: { id: number; kun: number; savol: number; daqiqa: number };
   /** "Yarim qolgan test" saqlanmaydi (to'plam, variant, zaif mavzular mashqi). */
   alohida: boolean;
   blok: Blok;
@@ -292,6 +303,8 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, a
    * so'raladi. `urinishVaqt` — "bu qayta ishlashmi?" degan savol uchun.
    */
   const [yozildi, setYozildi] = useState<{ tayyor: Promise<void>; vaqt: number } | null>(null);
+  /** Marafon kuni yozilgach — yangi holat (ball, o'rin, zanjir). */
+  const [marafonHolati, setMarafonHolati] = useState<MarafonHolat | null | "xato">(null);
 
   // Saytda kirmagan odamga "natijani saqlang" taklifi (`lib/sinov.ts`) —
   // TUGAGAN test ekranidan CHIQQANDA. Taklif butun ekranni egallaydi:
@@ -413,10 +426,28 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, a
       return;
     }
 
+    // Marafon kuni — natija marafonga (hisobga birinchi urinish kiradi).
+    if (marafon) {
+      marafonYubor(marafon, marafon.kun, toliq.filter((x) => x.togri).length, toliq.length,
+        Math.round((Date.now() - boshlandi.current) / 1000))
+        .then(setMarafonHolati, () => setMarafonHolati("xato"));
+      return;
+    }
+
     // Imtihon varianti — natija variant raqami bilan saqlanadi:
     // ro'yxatda "eng yaxshi natija" va o'rtacha daraja shundan
     // hisoblanadi (`lib/imtihon.ts`).
     if (imtihon) {
+      // Mavzular bo'yicha xatolar — ro'yxatdagi "ko'p xato qilinayotgan
+      // mavzular" va zaif mavzular mashqi uchun (qurilmada) va
+      // o'qituvchi paneli uchun (serverda, `core/sinf.py`).
+      const m = new Map<string, MavzuXato>();
+      blok.savollar.forEach((S, i) => {
+        if (toliq[i]?.togri) return;
+        const k = `${S.kursId}|${S.mavzu}`;
+        m.set(k, { mavzu: S.mavzu, kursId: S.kursId, ui: S.ui, xato: (m.get(k)?.xato ?? 0) + 1 });
+      });
+      mavzuXatoYoz([...m.values()], "dtm");
       const urinish = {
         variant: imtihon,
         togri: toliq.filter((x) => x.togri).length,
@@ -427,18 +458,12 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, a
       // Avval qurilmaga (internet bo'lmasa ham yo'qolmasin), keyin
       // serverga. Server takrorni `vaqt` bo'yicha o'zi tashlaydi.
       imtihonSaqla(urinish);
-      setYozildi({ tayyor: imtihonServerga(urinish), vaqt: urinish.vaqt });
+      setYozildi({
+        tayyor: imtihonServerga({ ...urinish, mavzular: [...m.values()].map((x) => ({ m: x.mavzu, x: x.xato })) }),
+        vaqt: urinish.vaqt,
+      });
       // Javoblar — keyinroq ro'yxatdan "Ko'rib chiqish" ochilsin.
       javobSaqla("dtm", imtihon, toliq.map((x) => (x.tanlangan === null ? null : String(x.tanlangan))));
-      // Mavzular bo'yicha xatolar — ro'yxatdagi "ko'p xato qilinayotgan
-      // mavzular" va zaif mavzular mashqi uchun (faqat qurilmada).
-      const m = new Map<string, MavzuXato>();
-      blok.savollar.forEach((S, i) => {
-        if (toliq[i]?.togri) return;
-        const k = `${S.kursId}|${S.mavzu}`;
-        m.set(k, { mavzu: S.mavzu, kursId: S.kursId, ui: S.ui, xato: (m.get(k)?.xato ?? 0) + 1 });
-      });
-      mavzuXatoYoz([...m.values()], "dtm");
       return;
     }
 
@@ -446,7 +471,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, a
     // keyingi safar tugallangan test "davom etasizmi?" bo'lib
     // qaytib chiqardi. Mashq o'z nusxasini yozmagan — begonasini o'chirmaydi.
     if (!alohida) joriyniOchir();
-  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, alohida]);
+  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, alohida]);
 
   /*
    * Har o'zgarishda yarim qolgan test yoziladi.
@@ -551,7 +576,10 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, a
     return <>
       <Natija blok={blok} javoblar={javoblar} toplam={toplam} stat={stat} sessiya={Boolean(sessiya)}
         imtihon={imtihon} yozildi={yozildi} strelka={ozStrelka}
-        nom={imtihon ? t("natijaVariant", { n: imtihon }) : toplam ? toplam.nom : bobNomi ?? t("natijaSarlavha")} onKorish={() => { tebrat("tanlov"); setKorish(true); window.scrollTo(0, 0); }}
+        marafon={marafon ? { kun: marafon.kun, holat: marafonHolati } : undefined}
+        nom={marafon ? t("marafonKunNom", { n: marafon.kun })
+          : imtihon ? t("natijaVariant", { n: imtihon }) : toplam ? toplam.nom : bobNomi ?? t("natijaSarlavha")}
+        onKorish={() => { tebrat("tanlov"); setKorish(true); window.scrollTo(0, 0); }}
         onQayta={onQayta} onExit={onExit} />
       {oyna}
     </>;
@@ -667,8 +695,10 @@ interface Mavzu {
 }
 
 function Natija({
-  blok, javoblar, toplam, stat, sessiya = false, imtihon, yozildi, strelka, nom, onKorish, onQayta, onExit,
+  blok, javoblar, toplam, stat, sessiya = false, imtihon, yozildi, strelka, nom, marafon, onKorish, onQayta, onExit,
 }: {
+  /** Marafon kuni: yozilgan holat (ball, o'rin, zanjir) yoki kutilmoqda/xato. */
+  marafon?: { kun: number; holat: MarafonHolat | null | "xato" };
   /** Tepadagi yopishqoq sarlavha (`NatijaSarlavha`) — orqaga tugma doim ko'rinsin. */
   strelka: boolean;
   nom: string;
@@ -770,6 +800,8 @@ function Natija({
       </div>
 
       {toplam && <Solishtirish toplam={toplam} stat={stat} />}
+
+      {marafon && <MarafonKarta kun={marafon.kun} holat={marafon.holat} onOch={onExit} />}
 
       {imtihon && yozildi && (
         <div className="mt-3">
@@ -883,21 +915,65 @@ function Natija({
         </>
       )}
 
-      <button type="button" onClick={onQayta}
-        className="az-yaltir tugma-3d mt-6 w-full rounded-3xl bg-brand-green py-3.5 font-display text-lg
-                   text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
-        {t("blokYana")}
-      </button>
-      <button type="button" onClick={onExit}
-        className="clay-press mt-2.5 w-full rounded-3xl bg-track py-3 font-display text-[15px] text-ink-soft">
-        {t("blokChiqish")}
-      </button>
+      {/* Marafonda "Yana topshirish" YO'Q: qayta ishlash hisobga kirmaydi va
+          javobi ko'rilgan variantni yana ishlatish chalg'itardi. */}
+      {marafon ? (
+        <button type="button" onClick={onExit} data-tahlil="Marafon: qaytish"
+          className="tugma-3d mt-6 w-full rounded-3xl bg-brand-blue py-3.5 font-display text-lg text-white
+                     shadow-[0_6px_0_var(--color-brand-blue-d)]">
+          {t("marafonQaytish")}
+        </button>
+      ) : (
+        <>
+          <button type="button" onClick={onQayta}
+            className="az-yaltir tugma-3d mt-6 w-full rounded-3xl bg-brand-green py-3.5 font-display text-lg
+                       text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
+            {t("blokYana")}
+          </button>
+          <button type="button" onClick={onExit}
+            className="clay-press mt-2.5 w-full rounded-3xl bg-track py-3 font-display text-[15px] text-ink-soft">
+            {t("blokChiqish")}
+          </button>
+        </>
+      )}
 
       {yechimda?.a.yechim && (
         <Yechim qadamlar={yechimda.a.yechim} javob={String(yechimda.a.answer)}
           onYop={() => setYechimda(null)} />
       )}
     </div>
+  );
+}
+
+/* ==================== marafon kuni ==================== */
+
+/** Marafon natijasi: bugungi ball, jami ball, o'rin va zanjir. Bosilsa — marafon sahifasi. */
+function MarafonKarta({ kun, holat, onOch }: {
+  kun: number; holat: MarafonHolat | null | "xato"; onOch: () => void;
+}) {
+  if (holat === "xato") {
+    return <p className="mt-3 rounded-clay bg-karta p-4 text-center text-[13.5px] text-ink-dim shadow-clay-sm">
+      {t("marafonYozilmadi")}</p>;
+  }
+  const m = holat?.men;
+  return (
+    <button type="button" onClick={onOch} disabled={!holat} data-tahlil="Marafon: natija kartasi"
+      className="clay-press mt-3 flex w-full items-center gap-3 rounded-[20px] bg-karta p-3.5 text-left shadow-clay-sm">
+      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand-gold/20 text-brand-gold-d">
+        <Icon name="flame" size={22} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] font-bold text-ink-dim">{t("marafonKunNom", { n: kun })}</span>
+        <span className="block font-display text-[17px] leading-tight">
+          {!m ? t("hrYuklanmoqda")
+            : m.orin ? t("marafonKartaOrin", { b: m.ball, o: m.orin }) : t("marafonKartaBall", { b: m.ball })}
+        </span>
+        {m && m.zanjir > 0 && (
+          <span className="mt-0.5 block text-[12.5px] text-ink-dim">{t("marafonZanjir", { n: m.zanjir })}</span>
+        )}
+      </span>
+      <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+    </button>
   );
 }
 

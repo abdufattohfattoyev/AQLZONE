@@ -145,7 +145,6 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
 
     // Serverga — haftalik reyting va tarix; javoblar — keyingi ko'rib
     // chiqish uchun; zaif mavzular — ro'yxat va mashq uchun.
-    setYozildi({ tayyor: serverga({ variant: v.n, ball, sekund, vaqt, togri: toliq, jami }), vaqt });
     javobSaqla("sert", v.n, j);
     const m = new Map<string, MavzuXato>();
     sertSavollari(v, j).forEach((q) => {
@@ -154,6 +153,9 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
       m.set(k, { mavzu: q.s.mavzu, kursId: q.s.kursId, ui: q.s.ui, xato: (m.get(k)?.xato ?? 0) + 1 });
     });
     mavzuXatoYoz([...m.values()], "sert");
+    // Mavzular serverga ham — o'qituvchi paneli uchun (`core/sinf.py`).
+    const mavzular = [...m.values()].map((x) => ({ m: x.mavzu, x: x.xato }));
+    setYozildi({ tayyor: serverga({ variant: v.n, ball, sekund, vaqt, togri: toliq, jami, mavzular }), vaqt });
     api.postResult({
       grade: 11,
       unit: SERT_JOY,

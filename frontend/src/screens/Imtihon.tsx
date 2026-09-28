@@ -19,12 +19,15 @@
 import { useEffect, useState } from "react";
 import { ImtihonSarlavha } from "../components/ImtihonTur";
 import { ImtEshiklar } from "../components/HaftalikReyting";
+import { Icon } from "../lib/icons";
+import { marafonHolat } from "../lib/marafon";
+import type { MarafonHolat } from "../lib/marafon";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { OLCHAM, VARIANTLAR, daraja, engYaxshi, sinxronla, zaifMavzular } from "../lib/imtihon";
 import type { ServerTarix } from "../lib/imtihon";
 
-export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, onKorish }: {
+export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, onKorish, onMarafon }: {
   onVariant: (n: number) => void;
   /** Milliy sertifikat variantlariga o'tish (`components/ImtihonTur.tsx`). */
   onSertifikat: () => void;
@@ -38,7 +41,16 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
   onReyting: () => void;
   /** Oxirgi urinishni ko'rib chiqish (variant raqami). */
   onKorish: (n: number) => void;
+  /** DTM marafoni (`screens/Marafon.tsx`). */
+  onMarafon: () => void;
 }) {
+  // Marafon ketayotgan bo'lsa — ro'yxat tepasida: har kuni qaytish sababi.
+  const [marafon, setMarafon] = useState<MarafonHolat | null>(null);
+  useEffect(() => {
+    let tirik = true;
+    marafonHolat().then((x) => { if (tirik) setMarafon(x); }).catch(() => {});
+    return () => { tirik = false; };
+  }, []);
   // Tarix SERVERDAN: telefon almashsa ham yo'qolmaydi. Ochilganda
   // qurilmadagi urinishlar ham yuboriladi — eski tarix shu yo'l bilan
   // bir marta ko'chadi, internetsiz ishlangani keyinroq yetib boradi.
@@ -68,6 +80,23 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
 
       {/* Chap ustun: natija va natijadan keyingi eshiklar (reyting, ko'rib chiqish). */}
       <div className="contents kom:flex kom:flex-col kom:gap-3.5">
+      {marafon && marafon.kun && (
+        <button type="button" onClick={onMarafon} data-tahlil="DTM: marafon"
+          className="clay-press flex w-full items-center gap-3 rounded-clay bg-karta p-4 text-left shadow-clay-sm">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand-gold/20 text-brand-gold-d">
+            <Icon name="flame" size={22} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-[17px] leading-tight">{t("marafonKirish")}</span>
+            <span className="block text-[13px] text-ink-dim">
+              {marafon.men.bugun ? t("marafonBajarildi", { a: marafon.men.bugun.togri, b: marafon.men.bugun.jami })
+                : t("marafonKirishIzoh", { k: marafon.kun, n: marafon.kunlar })}
+            </span>
+          </span>
+          {!marafon.men.bugun && <span className="size-2.5 shrink-0 rounded-full bg-brand-blue" aria-hidden />}
+          <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+        </button>
+      )}
       <div className="flex flex-col gap-2.5 rounded-clay bg-karta p-4 shadow-clay-sm min-[360px]:p-[18px]">
         {d ? (
           <>

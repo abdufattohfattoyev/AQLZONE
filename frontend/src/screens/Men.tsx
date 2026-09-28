@@ -134,6 +134,8 @@ export function Men({ onYol }: Props) {
         <Qator ic="miya" nom={t("nishonlar")} qiymat={`${nishon.olingan} / ${nishon.jami}`}
           on={() => onYol(yolNishon(kurs))} />
         <Qator ic="palette" nom={t("tabDokon")} on={() => onYol(yolDokon(kurs))} />
+        {/* O'qituvchi sinfi — o'quvchi kod bilan qo'shiladi, o'qituvchi panel ochadi. */}
+        <Qator ic="map" nom={t("sinfSarlavha")} on={() => onYol("/sinflar")} />
         {/* Shaxsiy taklif havolasi (`core/taklif.py`) — Telegram "ulashish"
             oynasida; qiymat — shu havola bilan kelganlar soni. */}
         {taklif && (

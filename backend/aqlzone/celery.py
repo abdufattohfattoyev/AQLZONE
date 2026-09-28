@@ -140,6 +140,20 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=9, minute=5, day_of_week=1),
         "args": ("osish_hisobot",),
     },
+    # ── DTM marafoni (`core/marafon.py`) ──
+    # 19:00 — bugun hali ishlamagan qatnashchilarga (kunlik eslatmadan
+    # oldin emas, keyin: 18:00 dagisi umumiy, bu esa marafon zanjiri haqida).
+    "marafon-eslatma": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=19, minute=0),
+        "args": ("marafon", "eslatma"),
+    },
+    # Tugagan marafonning g'oliblari kanalga — bir marta (`elon_at`).
+    "marafon-yakun": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=10, minute=30),
+        "args": ("marafon", "yakun"),
+    },
     # O'tgan haftaning DTM/sertifikat reytingi kanalga — dushanba 12:00
     # (`reyting_post`): ijtimoiy isbot, yangi haftaga taklif bilan.
     "reyting-post": {

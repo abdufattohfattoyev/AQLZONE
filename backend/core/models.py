@@ -2054,6 +2054,11 @@ class ImtihonNatija(models.Model):
     jami = models.SmallIntegerField()
     #: Faqat sertifikatda: 0–100, bir kasr xonasi bilan.
     ball = models.FloatField(null=True, blank=True)
+    #: Qaysi mavzuda nechta xato: `[{"m": "4-bob. Progressiyalar", "x": 2}]`.
+    #: Ilgari faqat telefonda edi (`lib/imtihon.ts` → zaif mavzular) —
+    #: o'qituvchi paneli (`core/sinf.py`) sinfning zaif mavzularini
+    #: ko'rsatishi uchun serverga ham keladi.
+    mavzular = models.JSONField(default=list, blank=True)
     sekund = models.IntegerField(default=0)
     mijoz_vaqt = models.BigIntegerField()
     created_at = models.DateTimeField(default=timezone.now)
@@ -2135,6 +2140,85 @@ class KunlikOsish(models.Model):
     class Meta:
         db_table = "kunlik_osish"
         ordering = ["-sana"]
+
+
+class Sinf(models.Model):
+    """
+    O'qituvchining sinfi — kod bilan qo'shiladigan guruh (`core/sinf.py`).
+
+    ─────────────────── NEGA ───────────────────
+
+    Bitta o'qituvchi — o'ttizta o'quvchi: eng kuchli tarqatish yo'li.
+    O'qituvchiga esa bitta narsa kerak: "kim ishlayapti, kim qayerda
+    qiynalyapti" — shu ma'lumot bo'lsa u ilovani darsiga olib kiradi.
+
+    Kod 6 belgi, adashtiradigan harflarsiz (0/O, 1/I/L yo'q): u doskaga
+    yoziladi va og'zaki aytiladi.
+    """
+
+    nom = models.CharField(max_length=60)
+    kod = models.CharField(max_length=8, unique=True)
+    ustoz = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="sinflar")
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "sinf"
+
+
+class SinfAzo(models.Model):
+    """
+    Sinf a'zosi — PROFIL (bola), hisob emas: bir telefonda ikki farzand
+    turli sinflarda bo'lishi mumkin. O'quvchi o'zi qo'shiladi va o'zi
+    chiqadi; qo'shilishdan oldin "o'qituvchi natijalaringizni ko'radi"
+    deb aniq aytiladi.
+    """
+
+    sinf = models.ForeignKey(Sinf, on_delete=models.CASCADE, related_name="azolar")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="sinf_azoliklari")
+    qoshildi_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "sinf_azo"
+        constraints = [models.UniqueConstraint(fields=["sinf", "profile"], name="sinf_azo_bir")]
+
+
+class Marafon(models.Model):
+    """
+    DTM MARAFONI — N kun, har kuni bitta "kun varianti" (`core/marafon.py`).
+
+    Savollar mijozda urug'dan yasaladi (`lib/marafon.ts`), DTM variantidek:
+    shu kunning varianti hamma uchun bir xil. Hisobga har kunning BIRINCHI
+    urinishi kiradi (`MarafonNatija` da bir qator) — javobni ko'rib qayta
+    ishlagan odam jadvalni aldamasin.
+    """
+
+    nom = models.CharField(max_length=80)
+    boshlanish = models.DateField()
+    kunlar = models.SmallIntegerField(default=30)
+    savol = models.SmallIntegerField(default=10)
+    daqiqa = models.SmallIntegerField(default=20)
+    #: G'oliblar kanalga e'lon qilingan payt — ikki marta chiqmasin.
+    elon_at = models.DateTimeField(null=True, blank=True, default=None)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "marafon"
+        ordering = ["-boshlanish"]
+
+
+class MarafonNatija(models.Model):
+    marafon = models.ForeignKey(Marafon, on_delete=models.CASCADE, related_name="natijalar")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="marafon_natijalari")
+    #: 1 dan boshlab — marafonning nechanchi kuni.
+    kun = models.SmallIntegerField()
+    togri = models.SmallIntegerField()
+    jami = models.SmallIntegerField()
+    sekund = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "marafon_natija"
+        constraints = [models.UniqueConstraint(fields=["marafon", "profile", "kun"], name="marafon_kun_bir")]
 
 
 class BotHodisa(models.Model):

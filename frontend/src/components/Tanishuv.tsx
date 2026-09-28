@@ -233,7 +233,7 @@ export function Tanishuv({ children }: { children: ReactNode }) {
       <Kirish
         izoh={taklif === 0 ? t("taklifNatija")                  // test tugadi (`sinov.ishTugadi`)
           : taklif === 3 ? t("taklifUchYulduz") : t("taklifYulduz", { n: taklif })}
-        xabar={t("taklifXabar")}
+        xabar={taklif === 0 ? t("taklifXabarNatija") : t("taklifXabar")}
         tugma={t("telegramBilanSaqlash")}
         onKeyinroq={() => setTaklif(null)}
       />

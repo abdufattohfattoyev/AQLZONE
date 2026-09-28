@@ -282,7 +282,9 @@ export function natijaSaqla(n: SNatija): void {
  * (`core/imtihon.sert_yoz`). Ilgari natija faqat qurilmada edi.
  * `togri`/`jami` — to'liq ball olingan topshiriqlar, ixtiyoriy.
  */
-export function serverga(n: SNatija & { togri?: number; jami?: number }): Promise<void> {
+export function serverga(
+  n: SNatija & { togri?: number; jami?: number; mavzular?: { m: string; x: number }[] },
+): Promise<void> {
   return sorov("/api/v1/sertifikat/natija", bilanProfil({ ...n })).then(() => {}, () => {});
 }
 

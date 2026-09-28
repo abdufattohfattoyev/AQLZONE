@@ -76,6 +76,8 @@ const YOPIQ = [
   /^\/sertifikat\/\d+$/,
   // Zaif mavzular mashqi — soatli blok test, javob tugmalari pastda.
   /^\/(imtihon|sertifikat)\/mashq$/,
+  // Marafonning bugungi varianti — soatli test.
+  /^\/marafon\/bugun$/,
   // Sessiya varianti — xuddi shunday, bir soatlik nazorat.
   /^\/sessiya\/[^/]+\/\d+$/,
   // Kunlik son — o'z klaviaturasi pastda, panel uni yopib qo'yardi.

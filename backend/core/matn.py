@@ -474,6 +474,29 @@ XABAR: dict[str, dict[str, str]] = {
     },
     "tMenHam": {"uz": "📝 Men ham ishlayman", "ru": "📝 Я тоже решу"},
 
+    # ------------------------------------------------------ marafon va sinf
+    "marafonHaqida": {
+        "uz": "🏃 <b>DTM marafoni</b>\n\nHar kuni bitta kun varianti — 10 ta DTM savoli, 20 daqiqa. "
+              "Ball to'g'ri javoblardan yig'iladi, har kunning birinchi urinishi hisoblanadi. "
+              "Yakunda g'oliblar kanalda e'lon qilinadi.",
+        "ru": "🏃 <b>Марафон ДТМ</b>\n\nКаждый день — вариант дня: 10 вопросов ДТМ, 20 минут. "
+              "Баллы — сумма верных ответов, засчитывается первая попытка дня. "
+              "Победителей объявим в канале.",
+    },
+    "marafonEslatma": {
+        "uz": "🏃 Marafonning <b>{kun}-kuni</b> ({kun}/{jami}) — bugungi variant sizni kutyapti.\n"
+              "Zanjiringiz: <b>{zanjir} kun</b>. 20 daqiqa yetadi — o'tkazib yuborilgan kun qaytmaydi.",
+        "ru": "🏃 <b>День {kun}</b> марафона ({kun}/{jami}) — сегодняшний вариант ждёт вас.\n"
+              "Ваша серия: <b>{zanjir} дн.</b> Хватит 20 минут — пропущенный день не вернуть.",
+    },
+    "tMarafon": {"uz": "🏃 Bugungi variant", "ru": "🏃 Вариант дня"},
+    "sinfBot": {
+        "uz": "👩‍🏫 <b>Sinfga qo'shilish</b>\n\nO'qituvchingiz sizni sinfga taklif qildi. "
+              "Qo'shilsangiz, o'qituvchi natijalaringizni ko'radi va sinf reytingida bo'lasiz.",
+        "ru": "👩‍🏫 <b>Вступление в класс</b>\n\nУчитель пригласил вас в класс. "
+              "После вступления учитель видит ваши результаты, а вы — рейтинг класса.",
+    },
+
     # ------------------------------------------------------------- duel
     # Ilgari `core/duel.py` da faqat o'zbekcha yozilgan edi — ruscha
     # foydalanuvchi chaqiruv va natijani o'zbekcha olardi.

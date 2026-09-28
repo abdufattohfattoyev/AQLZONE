@@ -144,7 +144,7 @@ export async function sinxronla(): Promise<ServerTarix> {
  * kartasi urinish yozilgandan KEYIN so'raladi, aks holda odam o'zini
  * jadvalda ko'rmasdi.
  */
-export function serverga(n: ImtihonNatija): Promise<void> {
+export function serverga(n: ImtihonNatija & { mavzular?: { m: string; x: number }[] }): Promise<void> {
   return sorov("/api/v1/imtihon/natija", bilanProfil({ ...n })).then(() => {}, () => {});
 }
 

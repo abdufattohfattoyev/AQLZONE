@@ -24,9 +24,9 @@ const MEN_KURSDA = /^\/kurs\/[^/]+\/(nishonlar|dokon|ota-ona|hisobot)$/;
 export function faolTab(yol: string): TabId | null {
   if (yol === "/") return "bugun";
   if (MEN_KURSDA.test(yol)) return "men";
-  if (/^\/(men|reyting|profillar|sozlamalar)(\/|$)/.test(yol)) return "men";
+  if (/^\/(men|reyting|profillar|sozlamalar|sinflar|sinf)(\/|$)/.test(yol)) return "men";
   if (/^\/(darslar|kurs|testlar|toplam|kichkintoy)(\/|$)/.test(yol)) return "oqish";
-  if (/^\/(imtihon|sertifikat|sessiya)(\/|$)/.test(yol)) return "oqish";
+  if (/^\/(imtihon|sertifikat|sessiya|marafon)(\/|$)/.test(yol)) return "oqish";
   if (/^\/(oyinlar|duel|xona)(\/|$)/.test(yol)) return "oyin";
   if (/^\/masalalar(\/|$)/.test(yol)) return "masalalar";
   return null;

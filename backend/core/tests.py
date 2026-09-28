@@ -7978,6 +7978,100 @@ class OsishTahliliTest(TestCase):
         self.assertLess(len(m), 4096)
 
 
+class SinfTest(TestCase):
+    """O'qituvchi sinfi: kod, qo'shilish, panel va maxfiylik (`core/sinf.py`)."""
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def test_toliq_oqim(self):
+        ustoz, oq, begona = (self.kir(f"dev-sinf-{x}-11112222") for x in ("ustoz", "oquvch", "begona"))
+        s = self.client.post("/api/v1/sinflar", {"nom": "9-A"}, content_type="application/json", **ustoz).json()
+        self.assertEqual(len(s["kod"]), 6)
+        self.assertTrue(set(s["kod"]) <= set("ABCDEFGHJKMNPQRSTUVWXYZ23456789"))
+
+        # Qo'shilishdan oldin — qaysi sinf ekani ko'rinadi.
+        oldin = self.client.get(f"/api/v1/sinf/kod/{s['kod'].lower()}", **oq).json()
+        self.assertEqual(oldin["nom"], "9-A")
+        self.assertFalse(oldin["azo_men"])
+        self.client.post("/api/v1/sinf/qoshil", {"kod": s["kod"]}, content_type="application/json", **oq)
+
+        # O'quvchining DTM natijasi mavzular bilan — panelda zaif mavzu.
+        self.client.post("/api/v1/imtihon/natija", {"variant": 1, "togri": 12, "jami": 30, "vaqt": 5,
+                                                    "mavzular": [{"m": "Progressiyalar", "x": 4}]},
+                         content_type="application/json", **oq)
+        p = self.client.get(f"/api/v1/sinf/{s['id']}", **ustoz).json()
+        self.assertEqual(len(p["oquvchilar"]), 1)
+        self.assertEqual(p["oquvchilar"][0]["dtm"], 1)
+        self.assertEqual(p["oquvchilar"][0]["dtm_eng"], 40)
+        self.assertEqual(p["zaif"][0]["mavzu"], "Progressiyalar")
+        self.assertEqual(p["faol_hafta"], 1)
+
+        # O'quvchi panelni emas, faqat sinf reytingini ko'radi; begona — hech narsa.
+        oquvchi = self.client.get(f"/api/v1/sinf/{s['id']}", **oq).json()
+        self.assertNotIn("oquvchilar", oquvchi)
+        self.assertTrue(oquvchi["reyting"][0]["men"])
+        self.assertEqual(self.client.get(f"/api/v1/sinf/{s['id']}", **begona).status_code, 403)
+        self.assertEqual(self.client.post(f"/api/v1/sinf/{s['id']}/ochir", **begona).status_code, 403)
+
+        # O'quvchi chiqsa — panelda ko'rinmaydi.
+        self.client.post(f"/api/v1/sinf/{s['id']}/chiq", **oq)
+        self.assertEqual(self.client.get(f"/api/v1/sinf/{s['id']}", **ustoz).json()["oquvchilar"], [])
+
+    def test_oz_sinfiga_qoshilolmaydi_va_notogri_kod(self):
+        ustoz = self.kir("dev-sinf-ozi-33334444")
+        s = self.client.post("/api/v1/sinflar", {"nom": "10-B"}, content_type="application/json", **ustoz).json()
+        r = self.client.post("/api/v1/sinf/qoshil", {"kod": s["kod"]}, content_type="application/json", **ustoz)
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(self.client.get("/api/v1/sinf/kod/XXXXXX", **ustoz).status_code, 404)
+
+
+class MarafonTest(TestCase):
+    """DTM marafoni: faqat bugungi kun, birinchi urinish, zanjir va reyting."""
+
+    def setUp(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        self.bugun = timezone.localdate()
+        self.m = MDL.Marafon.objects.create(nom="Sinov marafoni", boshlanish=self.bugun - timedelta(days=2))
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def yubor(self, h, kun, togri, sekund=600):
+        return self.client.post("/api/v1/marafon", {"marafon": self.m.pk, "kun": kun, "togri": togri,
+                                                    "jami": 10, "sekund": sekund},
+                                content_type="application/json", **h)
+
+    def test_bugungi_kun_va_birinchi_urinish(self):
+        h = self.kir("dev-marafon-aaaa1111")
+        holat = self.client.get("/api/v1/marafon", **h).json()
+        self.assertEqual(holat["kun"], 3)
+        self.assertEqual(self.yubor(h, 2, 10).status_code, 409)       # kechagi kun — yo'q
+        self.yubor(h, 3, 6)
+        j = self.yubor(h, 3, 10).json()                               # qayta — birinchisi qoladi
+        self.assertEqual(j["men"]["ball"], 6)
+        self.assertEqual(j["men"]["bugun"], {"togri": 6, "jami": 10})
+
+    def test_zanjir_va_reyting(self):
+        from core import marafon as MR
+        a, b = self.kir("dev-marafon-bbbb2222"), self.kir("dev-marafon-cccc3333")
+        self.yubor(a, 3, 7)
+        self.yubor(b, 3, 7, sekund=300)
+        pa = MDL.MarafonNatija.objects.order_by("pk").first().profile
+        MDL.MarafonNatija.objects.create(marafon=self.m, profile=pa, kun=2, togri=5, jami=10)
+        MDL.MarafonNatija.objects.create(marafon=self.m, profile=pa, kun=1, togri=5, jami=10)
+        self.assertEqual(MR.zanjir(self.m, pa), 3)
+        j = self.client.get("/api/v1/marafon", **a).json()
+        self.assertEqual(j["reyting"][0]["ball"], 17)
+        self.assertTrue(j["reyting"][0]["men"])
+        self.assertEqual(j["ishtirokchi"], 2)
+
+
 class TaklifTest(TestCase):
     """Shaxsiy havola, bog'lash qoidalari va natija kartasi (`core/taklif.py`)."""
 

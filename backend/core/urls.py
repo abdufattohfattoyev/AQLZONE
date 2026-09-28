@@ -6,6 +6,8 @@ from . import xona_views
 from . import shaharcha_views
 from . import karvon_views
 from . import kunlik_views
+from . import sinf_views
+from . import marafon_views
 
 urlpatterns = [
     path("auth/telegram", views.auth_telegram, name="auth-telegram"),
@@ -85,6 +87,14 @@ urlpatterns = [
     # Natija kartasi (Telegram'ga) va shaxsiy taklif havolasi (`core/taklif.py`).
     path("imtihon/ulash", kunlik_views.imtihon_ulash, name="imtihon-ulash"),
     path("taklif", kunlik_views.taklif_holati, name="taklif"),
+    # DTM marafoni (`core/marafon.py`).
+    path("marafon", marafon_views.marafon, name="marafon"),
+    # O'qituvchi sinfi (`core/sinf.py`).
+    path("sinflar", sinf_views.sinflar, name="sinflar"),
+    path("sinf/qoshil", sinf_views.sinf_qoshil, name="sinf-qoshil"),
+    path("sinf/kod/<str:kod>", sinf_views.sinf_kod, name="sinf-kod"),
+    path("sinf/<int:sid>", sinf_views.sinf_bitta, name="sinf"),
+    path("sinf/<int:sid>/<str:amal>", sinf_views.sinf_amal, name="sinf-amal"),
     # Talabaning sessiya urinishlari (`core/imtihon.py` → sessiya_royxat).
     path("sessiya/natija", kunlik_views.sessiya_natija, name="sessiya-natija"),
     path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),
