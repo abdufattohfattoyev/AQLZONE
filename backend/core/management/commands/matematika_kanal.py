@@ -111,6 +111,20 @@ class Command(BaseCommand):
         if not kanal:
             return
 
+        # BITTA post: rasm so'rovnomaning ichida (Bot API 2026-05, `media`).
+        # Ilgari rasm alohida post, so'rovnoma unga javob bo'lib chiqardi —
+        # lentada ikkita xabar. Yuborilmasa — eski ikki postli yo'l.
+        holat, izoh, _ = X.quiz_rasm_bilan(
+            kanal, f"🎯 {savol}", MK.quiz_variantlari(test), togri, MK.test_rasmi(test), usul)
+        if holat == "yuborildi":
+            KanalYozuv.objects.create(
+                kalit=kalit, tur=KanalYozuv.MISOL, sarlavha=savol[:300], manba="",
+                joylangan_at=timezone.now(),
+            )
+            self.stdout.write(self.style.SUCCESS("kanalga joylandi: test (bitta post)"))
+            return
+        self.stderr.write(f"rasmli so'rovnoma o'tmadi ({izoh}) — ikki postli yo'l")
+
         holat, izoh, rasm_id = X.rasm_yubor(kanal, MK.test_rasmi(test), MK.test_posti(test))
         if holat != "yuborildi":
             self.stderr.write(self.style.ERROR(f"rasm yuborilmadi: {holat} {izoh}"))

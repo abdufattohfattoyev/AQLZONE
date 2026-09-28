@@ -68,7 +68,11 @@ class Command(BaseCommand):
         elif o["kunlik"]:
             masala = MK.kunlik()
             if masala is None:
-                self.stdout.write("Joylanmagan masala qolmadi")
+                # Foydalanuvchi masalalari tugagan — kechki post BO'SH
+                # qolmasin: olimpiada bankidan «Kun masalasi» chiqadi.
+                from core import olimpiada as OL
+                holat, izoh = OL.kanalga(kanal, sinov=o["sinov"])
+                self.stdout.write(f"Joylanmagan masala qolmadi → kun masalasi: {holat} {izoh}")
                 return
         else:
             self.stderr.write("Masala raqami yoki --kunlik kerak")

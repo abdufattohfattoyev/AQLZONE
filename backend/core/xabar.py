@@ -238,6 +238,58 @@ def kanal_matn(chat_id: str, matn: str, javob_id: int = 0) -> tuple[str, str, in
 MAX_SOROVNOMA_SAVOL, MAX_VARIANT, MAX_QUIZ_IZOH = 300, 100, 200
 
 
+def quiz_rasm_bilan(
+    chat_id: str, savol: str, variantlar: list[str], togri: int, rasm: bytes, izoh: str = "",
+) -> tuple[str, str, int]:
+    """
+    Quiz so'rovnoma RASM BILAN — bitta postda (Bot API, 2026-05: `media`).
+
+    Ilgari rasm alohida post, so'rovnoma unga javob bo'lib chiqardi —
+    kanal lentasida ikkita xabar. Endi rasm so'rovnomaning ichida turadi:
+    bitta post, bitta ulashish, ko'rishlar bir joyda sanaladi.
+    Rasm `attach://` bilan multipart'da yuklanadi.
+    """
+    import uuid
+
+    maydon = {
+        "chat_id": chat_id,
+        "question": savol[:MAX_SOROVNOMA_SAVOL],
+        "options": json.dumps([{"text": v[:MAX_VARIANT]} for v in variantlar]),
+        "type": "quiz",
+        "is_anonymous": "true",
+        "correct_option_ids": json.dumps([int(togri)]),
+        "media": json.dumps({"type": "photo", "media": "attach://rasm"}),
+    }
+    if izoh:
+        maydon["explanation"] = izoh[:MAX_QUIZ_IZOH]
+    ch = uuid.uuid4().hex
+    tana = b"".join(
+        f'--{ch}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode()
+        for k, v in maydon.items()
+    )
+    tana += (f'--{ch}\r\nContent-Disposition: form-data; name="rasm"; filename="savol.jpg"\r\n'
+             "Content-Type: image/jpeg\r\n\r\n").encode() + rasm + f"\r\n--{ch}--\r\n".encode()
+    so_rov = urllib.request.Request(
+        f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPoll", data=tana,
+        headers={"Content-Type": f"multipart/form-data; boundary={ch}"},
+    )
+    try:
+        with urllib.request.urlopen(so_rov, timeout=30) as r:
+            javob = json.loads(r.read())
+            if not javob.get("ok"):
+                return "xato", "ok=false", 0
+            return "yuborildi", "", int(javob.get("result", {}).get("message_id") or 0)
+    except urllib.error.HTTPError as e:
+        izoh_ = ""
+        try:
+            izoh_ = str(json.loads(e.read()).get("description", ""))[:200]
+        except Exception:
+            pass
+        return "xato", izoh_ or f"HTTP {e.code}", 0
+    except Exception as e:                       # tarmoq uzilishi va boshqalar
+        return "xato", str(e)[:200], 0
+
+
 def quiz_yubor(
     chat_id: str, savol: str, variantlar: list[str], togri: int,
     izoh: str = "", javob_id: int = 0, anonim: bool = True, klaviatura: list | None = None,

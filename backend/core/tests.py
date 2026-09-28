@@ -7978,6 +7978,81 @@ class OsishTahliliTest(TestCase):
         self.assertLess(len(m), 4096)
 
 
+class OlimpiadaBankTest(TestCase):
+    """
+    Kanaldagi «Kun masalasi» banki — HAR javob qayta hisoblanadi.
+
+    Noto'g'ri javobli masala kanalda yuzlab odamga ko'rinadi: bu sinov
+    bank qo'lda yozilgani uchun kerak.
+    """
+
+    def togri(self, n: int) -> str:
+        from core.olimpiada import BANK
+        return BANK[n][1][BANK[n][2]]
+
+    def test_telegram_chegaralari(self):
+        from core.olimpiada import BANK
+        for n, (savol, var, togri, izoh) in enumerate(BANK):
+            self.assertLessEqual(len(savol), 300 - 3, n)       # "🧩 " prefiksi uchun joy
+            self.assertEqual(len(var), 4, n)
+            self.assertEqual(len(set(var)), 4, n)
+            self.assertIn(togri, range(4), n)
+            self.assertLessEqual(len(izoh), 200, n)
+
+    def test_javoblar_hisoblanadi(self):
+        import math
+        from fractions import Fraction as Fr
+        from itertools import combinations, product
+
+        hisob = {
+            0: str(pow(2, 2026, 7)),
+            1: str(sum(1 for k in range(1, 101) if k % 2 and k % 3 and k % 5)),
+            2: f"{abs(40 * 6 - (90 + 40 * 0.5)):.0f}°",
+            3: str(sum(len(str(k)) for k in range(1, 101))),
+            4: str(int(math.sqrt(21 * 8 * 7 * 6))),
+            5: str(len(str(math.factorial(100))) - len(str(math.factorial(100)).rstrip("0"))),
+            6: str(sum(1 for k in range(10, 100) if sum(map(int, str(k))) == 9)),
+            8: str(sum(str(k).count("1") for k in range(1, 101))),
+            10: str(111111 % 7),
+            12: str(round(math.log(64, 2))),
+            15: str(len(list(combinations(range(5), 3)))),
+            16: str(len(list(combinations(range(6), 2)))),
+            17: str(6 * 7),
+            18: str(pow(7, 100, 10)),
+            20: str(min(abs(x / 10 - 3) + abs(x / 10 + 2) for x in range(-100, 100))).rstrip("0").rstrip("."),
+            22: f"{180 * 3 // 6}°",
+            23: str(Fr(sum(1 for t in product((0, 1), repeat=3) if any(t)), 8)),
+            24: str(sum(1 for x in range(1, 20) for y in range(1, 20) if 2 * x + 3 * y == 20)),
+            25: str(11 * 6),
+            26: str(round((math.pi * 4) / math.pi)),
+            27: str(sum(Fr(1, k * (k + 1)) for k in range(1, 100))),
+            28: str({a - b for a in range(1, 10) for b in range(10) if (10 * a + b) - (10 * b + a) == 27}.pop()),
+            29: str(12 * (3 - 2)),
+        }
+        # a + b = 10, ab = 21 → a, b = 3, 7
+        hisob[9] = str(3 ** 2 + 7 ** 2)
+        # x + 1/x = 3 → x³ + 1/x³
+        x = (3 + math.sqrt(5)) / 2
+        hisob[13] = str(round(x ** 3 + 1 / x ** 3))
+        # cheksiz ildiz — ketma-ket yaqinlashish
+        y = 0.0
+        for _ in range(60):
+            y = math.sqrt(12 + y)
+        hisob[14] = str(round(y))
+        # Sutkada millar ustma-ust: minut va soat burchaklari teng bo'lgan daqiqalar (aniq kasr bilan)
+        hisob[19] = str(sum(1 for k in range(0, 24) if Fr(720 * k, 11) < 24 * 60))
+        for n, qiymat in hisob.items():
+            self.assertEqual(self.togri(n), qiymat, f"#{n}: {self.togri(n)} != {qiymat}")
+
+    def test_navbat_takrorlanmaydi(self):
+        from django.utils import timezone
+        from core import olimpiada as OL
+        n1, _ = OL.navbatdagi()
+        MDL.KanalYozuv.objects.create(kalit=f"olimp:{n1}", tur="misol", joylangan_at=timezone.now())
+        n2, _ = OL.navbatdagi()
+        self.assertNotEqual(n1, n2)
+
+
 class KunlikSonPortTest(TestCase):
     """
     Serverdagi jumboq mijozdagisi bilan AYNAN bir xilmi.
