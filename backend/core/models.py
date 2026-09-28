@@ -2097,3 +2097,60 @@ class KanalYozuv(models.Model):
 
     def __str__(self) -> str:
         return f"{self.tur}: {self.sarlavha[:60]}"
+
+
+class KunlikOsish(models.Model):
+    """
+    Kunning O'SISH SURATI — har kuni kechqurun bir qator (`core/osish.py`).
+
+    ─────────────────── NEGA KERAK ───────────────────
+
+    "Kanalda nechta obunachi bor?" degan savolga Telegram faqat HOZIRGI
+    sonni beradi — kechagi yoki o'tgan haftadagisini emas. Tarix yozib
+    borilmasa, "o'tgan hafta +40 bo'ldi" deb bo'lmaydi, ya'ni qaysi post
+    yoki o'zgarish odam olib kelganini ham bilib bo'lmaydi. Qolgan
+    raqamlar (hisoblar, faollar) bazadan qayta hisoblanishi mumkin, lekin
+    shu yerda bir joyda turgani haftalik hisobotni tez va barqaror qiladi.
+    """
+
+    sana = models.DateField(unique=True)
+    #: Telegram `getChatMemberCount` — o'qib bo'lmasa `None`.
+    kanal_azo = models.IntegerField(null=True, blank=True)
+    hisoblar = models.IntegerField(default=0)
+    yangi = models.IntegerField(default=0)
+    #: Shu kuni ilovada kamida bitta hodisasi bo'lgan hisoblar.
+    faol = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "kunlik_osish"
+        ordering = ["-sana"]
+
+
+class BotHodisa(models.Model):
+    """
+    Botdagi voronka — kun, tur va manba bo'yicha SANOQ (`core/osish.py`).
+
+    Ilova hodisalari (`Hodisa`) faqat ilova OCHILGANDAN keyin yoziladi.
+    Undan oldingi qadamlar esa botda o'tadi va umuman ko'rinmas edi:
+
+        start        `/start` bosildi — qaysi havoladan (`manba`)
+        kanal_shart  "kanalga a'zo bo'ling" ko'rsatildi
+        kanal_otdi   "A'zo bo'ldim" bosildi va a'zolik tasdiqlandi
+
+    Sanoq — har hodisa uchun qator emas: bot kuniga yuzlab `/start` olishi
+    mumkin, bizga esa faqat kunlik yig'indi kerak.
+    """
+
+    START = "start"
+    KANAL_SHART = "kanal_shart"
+    KANAL_OTDI = "kanal_otdi"
+
+    sana = models.DateField()
+    tur = models.CharField(max_length=16)
+    manba = models.CharField(max_length=24, default="", blank=True)
+    n = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "bot_hodisa"
+        constraints = [models.UniqueConstraint(fields=["sana", "tur", "manba"], name="bot_hodisa_bir")]

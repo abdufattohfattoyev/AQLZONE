@@ -125,6 +125,21 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=15, minute=0, day_of_week="1,3,5"),
         "args": ("matematika_kanal", "test"),
     },
+    # ── O'sish tahlili (`core/osish.py`) ──
+    # Kun oxiridagi surat: Telegram kanal obunachilarining TARIXINI
+    # bermaydi — yozib borilmasa "hafta davomida +40" deb bo'lmaydi.
+    "osish-surat": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=23, minute=55),
+        "args": ("osish_hisobot", "--surat"),
+    },
+    # Haftalik o'sish hisoboti adminlarga — dushanba ertalab, hafta
+    # boshida: nima ishlaganini ko'rib, yangi haftani rejalashtirish uchun.
+    "osish-hisobot": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=9, minute=5, day_of_week=1),
+        "args": ("osish_hisobot",),
+    },
     # Kanaldagi postlar joyidami — kuniga bir marta yetarli.
     "kanal-tekshiruvi": {
         "task": "core.vazifalar.buyruq",

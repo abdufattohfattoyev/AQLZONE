@@ -400,8 +400,8 @@ XABAR: dict[str, dict[str, str]] = {
         ),
     },
     "yordamAdmin": {
-        "uz": "\n/boshqaruv — hisobot paneli",
-        "ru": "\n/boshqaruv — панель отчётов",
+        "uz": "\n/boshqaruv — hisobot paneli\n/osish — haftalik o'sish hisoboti",
+        "ru": "\n/boshqaruv — панель отчётов\n/osish — отчёт о росте за неделю",
     },
     # Noma'lum xabarga javob — IKKI xil.
     #

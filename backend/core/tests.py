@@ -7917,6 +7917,67 @@ class ImtihonReytingTest(TestCase):
         self.assertEqual(IM.hafta_boshi(payshanba).date().isoformat(), "2026-09-28")
 
 
+class OsishTahliliTest(TestCase):
+    """Kanal → bot → ilova voronkasi va haftalik hisobot (`core/osish.py`)."""
+
+    def test_start_manbasi(self):
+        from core import osish as O
+        self.assertEqual(O.start_manbasi("/start"), "")
+        self.assertEqual(O.start_manbasi("/start masala_12-k"), "masala")
+        self.assertEqual(O.start_manbasi("/start duel_ab12"), "duel")
+        self.assertEqual(O.start_manbasi("/start sertifikat"), "sertifikat")
+        self.assertEqual(O.start_manbasi("/start nimadir"), "boshqa")
+
+    def test_bir_odam_kuniga_bir_marta_sanaladi(self):
+        from django.core.cache import cache
+        from core import osish as O
+        cache.clear()
+        for _ in range(3):
+            O.bot_hodisa(MDL.BotHodisa.START, "", kim="555")
+        O.bot_hodisa(MDL.BotHodisa.START, "", kim="556")
+        self.assertEqual(MDL.BotHodisa.objects.get(tur="start").n, 2)
+
+    @patch("core.management.commands.bot.api")
+    def test_bot_voronkasi_yoziladi(self, api):
+        """`/start` kanal shartidan OLDIN sanaladi — shartda ketganlar ham ko'rinadi."""
+        from django.core.cache import cache
+        from core.management.commands import bot as B
+        cache.clear()
+        with self.settings(KANAL_MAJBURIY=True, KANAL="@test"), \
+                patch("core.kanal.bot_otkazadimi", return_value=False):
+            B.yangilikni_qayta_ishla({"message": {
+                "chat": {"id": 1}, "from": {"id": 901, "language_code": "uz"}, "text": "/start dtm"}})
+        turlar = dict(MDL.BotHodisa.objects.values_list("tur", "manba"))
+        self.assertEqual(turlar.get("start"), "dtm")
+        self.assertIn("kanal_shart", turlar)
+
+    def test_surat_va_hafta(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        from core import osish as O
+        bugun = timezone.localdate()
+        MDL.KunlikOsish.objects.create(sana=bugun - timedelta(days=9), kanal_azo=100)
+        O.surat(bugun - timedelta(days=1), kanal_azo=130)
+        h = O.hafta(bugun - timedelta(days=7), bugun)
+        self.assertEqual(h["kanal"], 130)
+        self.assertEqual(h["kanal_osdi"], 30)
+
+    def test_hisobot_matni_va_xulosa(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        from core import osish as O
+        bugun = timezone.localdate()
+        MDL.BotHodisa.objects.create(sana=bugun - timedelta(days=2), tur="kanal_shart", n=20)
+        MDL.BotHodisa.objects.create(sana=bugun - timedelta(days=2), tur="kanal_otdi", n=5)
+        m = O.hisobot_matni(bugun)
+        self.assertIn("Haftalik o'sish", m)
+        self.assertIn("Kanal sharti: 20", m)
+        self.assertIn("25%", m)
+        # Masala zaxirasi bo'sh — kechki post bo'sh ketishi ogohlantiriladi.
+        self.assertIn("masala qolmadi", m)
+        self.assertLess(len(m), 4096)
+
+
 class KunlikSonPortTest(TestCase):
     """
     Serverdagi jumboq mijozdagisi bilan AYNAN bir xilmi.

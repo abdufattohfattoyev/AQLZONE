@@ -674,6 +674,8 @@ def kanal_shartini_yubor(chat_id: int, tg_id: str, til: str, matn: str) -> str:
     """
     from django.core.cache import cache
     from core import kanal as K
+    from core import osish as O
+    O.bot_hodisa(O.BotHodisa.KANAL_SHART, kim=tg_id)
     cache.set(f"kanal_kutilgan:{tg_id}", matn or "/start", 3600)
     api("sendMessage", chat_id=chat_id, text=M("kanalShart", til), parse_mode="HTML",
         reply_markup={"inline_keyboard": [
@@ -693,6 +695,8 @@ def kanal_tekshir_tugmasi(q: dict, tg_id: str, til: str) -> str:
             text=M("kanalHaliYoq", til), show_alert=True)
         return f"{tg_id}: hali a'zo emas"
     api("answerCallbackQuery", callback_query_id=q.get("id"), text=M("kanalRahmat", til))
+    from core import osish as O
+    O.bot_hodisa(O.BotHodisa.KANAL_OTDI, kim=tg_id)
     cache.set(f"kanal_azo:{tg_id}", 1, 12 * 3600)
     Pupil.objects.filter(
         identities__provider=Identity.TELEGRAM, identities__external_id=tg_id,
@@ -754,6 +758,12 @@ def yangilikni_qayta_ishla(u: dict) -> str:
 
     # --- matn keldi ---
     matn = (xabar.get("text") or "").strip()
+
+    # Voronkaning birinchi qadami — kanal shartidan OLDIN sanaladi:
+    # shart ko'rsatilgandan keyin sanalsa, u yerda ketganlar ko'rinmasdi.
+    if matn.startswith("/start"):
+        from core import osish as O
+        O.bot_hodisa(O.BotHodisa.START, O.start_manbasi(matn), kim=tg_id)
 
     # Majburiy kanal a'zoligi — ilovaga olib boradigan har qanday yo'ldan
     # OLDIN. Administratorlar (boshqaruv paneli) tekshirilmaydi.
@@ -942,6 +952,13 @@ def yangilikni_qayta_ishla(u: dict) -> str:
                            url=boshqaruv.havola_yasa(tg_id)),
             ]]})
         return f"{tg_id}: /boshqaruv — havola yuborildi"
+
+    # Haftalik o'sish hisoboti — istalgan payt, faqat adminga (`core/osish.py`).
+    if matn.startswith("/osish") and boshqaruv.admin_tg_mi(tg_id):
+        from core import osish as O
+        api("sendMessage", chat_id=chat_id, text=O.hisobot_matni(), parse_mode="HTML",
+            link_preview_options={"is_disabled": True})
+        return f"{tg_id}: /osish — hisobot yuborildi"
 
     if matn.startswith("/help"):
         yordam = M("yordam", til)
