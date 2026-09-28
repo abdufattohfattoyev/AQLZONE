@@ -7978,6 +7978,67 @@ class OsishTahliliTest(TestCase):
         self.assertLess(len(m), 4096)
 
 
+class TaklifTest(TestCase):
+    """Shaxsiy havola, bog'lash qoidalari va natija kartasi (`core/taklif.py`)."""
+
+    def test_havolani_ajratish(self):
+        from core import taklif as TK
+        self.assertEqual(TK.ajrat("/start ref_12"), (12, ""))
+        self.assertEqual(TK.ajrat("/start ref_12_dtm"), (12, "dtm"))
+        self.assertEqual(TK.ajrat("/start ref_x"), (None, ""))
+        self.assertEqual(TK.ajrat("/start dtm"), (None, ""))
+
+    def test_boglash_qoidalari(self):
+        from core import taklif as TK
+        a, b, c = (Pupil.objects.create(first_name=x) for x in "ABC")
+        self.assertIsNone(TK.boglash(a, a.pk))                  # o'zini o'zi
+        self.assertEqual(TK.boglash(b, a.pk), a)
+        b.refresh_from_db()
+        self.assertIsNone(TK.boglash(b, c.pk))                  # birinchi taklif o'zgarmaydi
+        self.assertIsNone(TK.boglash(c, 999999))                # yo'q hisob
+        self.assertEqual(TK.holat(a)["soni"], 1)
+
+    @patch("core.xabar.yubor", return_value=("yuborildi", ""))
+    @patch("core.management.commands.bot.api")
+    def test_bot_yangi_odamni_boglaydi(self, api, yubor):
+        from django.core.cache import cache
+        from core.management.commands import bot as B
+        cache.clear()
+        taklifchi = Pupil.objects.create(first_name="Ali")
+        Identity.objects.create(pupil=taklifchi, provider=Identity.TELEGRAM, external_id="700")
+        with self.settings(MINI_APP_URL="https://aql-zone.uz", SAYT_URL="https://aql-zone.uz"), \
+                patch("core.kanal.bot_otkazadimi", return_value=True):
+            B.yangilikni_qayta_ishla({"message": {
+                "chat": {"id": 1}, "from": {"id": 701, "first_name": "Vali", "language_code": "uz"},
+                "text": f"/start ref_{taklifchi.pk}_dtm"}})
+            # Mavjud odam qayta bossa — ikkinchi marta sanalmaydi.
+            B.yangilikni_qayta_ishla({"message": {
+                "chat": {"id": 1}, "from": {"id": 701, "first_name": "Vali", "language_code": "uz"},
+                "text": f"/start ref_{taklifchi.pk}"}})
+        yangi = Identity.objects.get(external_id="701").pupil
+        self.assertEqual(yangi.taklif_qilgan_id, taklifchi.pk)
+        self.assertEqual(yubor.call_count, 1)
+        self.assertEqual(yubor.call_args[0][0], "700")
+        # "_dtm" — DTM bo'limini ochadigan tugma ham yuborildi.
+        urllar = [t.get("web_app", {}).get("url", "") for c in api.call_args_list
+                  for q in (c[1].get("reply_markup") or {}).get("inline_keyboard", []) for t in q]
+        self.assertTrue(any(u.endswith("/imtihon") for u in urllar), urllar)
+
+    def test_karta_va_telegramsiz_ulash(self):
+        from core import taklif as TK
+        p = Pupil.objects.create(first_name="Ali")
+        pr = MDL.Profile.objects.create(pupil=p, name="Men")
+        n = MDL.ImtihonNatija.objects.create(profile=pr, tur="sert", variant=2, togri=30, jami=45,
+                                             ball=81.2, mijoz_vaqt=1)
+        rasm = TK.karta(n)
+        self.assertTrue(rasm.startswith(b"\xff\xd8"))            # JPEG
+        with self.assertRaises(TK.UlashXato) as x:
+            TK.ulash(pr, "sert", 2)
+        self.assertEqual(x.exception.sabab, "telegram_yoq")
+        self.assertIn(f"ref_{p.pk}_sertifikat", x.exception.havola)
+        self.assertEqual(TK.daraja(81.2), "B+")
+
+
 class ReytingPostTest(TestCase):
     """Kanaldagi o'tgan hafta reytingi — qisqa ismlar, faqat o'sha hafta."""
 

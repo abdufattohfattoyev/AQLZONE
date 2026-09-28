@@ -93,6 +93,16 @@ class Pupil(models.Model):
     #: chiqib ketsa ham qaytarib chaqirmaymiz — bir marta rad javob
     #: bergan odamni ta'qib qilish obuna qaytarmaydi, ilovadan bezdiradi.
     kanal_azo_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Kim TAKLIF QILDI — shaxsiy havola (`/start ref_<pk>`, `core/taklif.py`).
+    #:
+    #: Faqat YANGI hisobga yoziladi va bir marta: mavjud odam birovning
+    #: havolasini bossa, u "taklif qilingan" hisoblanmaydi — aks holda
+    #: sanoq yolg'on bo'lardi va eng faol odamlar bir-birini "taklif
+    #: qilib" chiqardi.
+    taklif_qilgan = models.ForeignKey(
+        "self", null=True, blank=True, default=None, on_delete=models.SET_NULL,
+        related_name="taklif_qilinganlar",
+    )
     #: Bot bloklangani ANIQLANGAN payt (Telegram 403 qaytargan).
     #:
     #: Keyingi e'lonlar bunday hisobni butunlay o'tkazib yuboradi. Busiz

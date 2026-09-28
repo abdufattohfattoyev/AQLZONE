@@ -28,7 +28,8 @@ import { oxirgiKurs } from "../lib/oxirgi";
 import { joriyKurs, kichkintoyKerak, profilNomi, useProfil } from "../lib/profil";
 import { rejimgaKir } from "../lib/kichkintoyRejim";
 import { useProgress } from "../lib/progress";
-import { tgIsm, tebrat } from "../lib/qobiq";
+import { havolaniOch, tgIsm, tebrat } from "../lib/qobiq";
+import { taklifHolati } from "../lib/imtihon";
 import { TILLAR, til, tilniAlmashtir } from "../lib/til";
 import { obuna, yoruglikniOqi, yoruglikniQoy } from "../lib/yoruglik";
 import type { Yoruglik } from "../lib/yoruglik";
@@ -59,6 +60,7 @@ export function Men({ onYol }: Props) {
   const [hisob, setHisob] = useState<Hisob | null>(null);
   const [orin, setOrin] = useState<number | null>(null);
   const [varaq, setVaraq] = useState<"til" | "yoruglik" | null>(null);
+  const [taklif, setTaklif] = useState<{ havola: string; soni: number } | null>(null);
 
   // Ikkala so'rov ham internetsiz `null` qaytaradi — ekran ularsiz ham
   // to'liq ishlaydi, faqat ism va reyting o'rni ko'rinmaydi.
@@ -66,6 +68,8 @@ export function Men({ onYol }: Props) {
     let bekor = false;
     getHisob().then((h) => { if (!bekor) setHisob(h); });
     getReyting("jami").then((r) => { if (!bekor) setOrin(r?.men?.orin ?? null); });
+    // Internetsiz taklif qatori ko'rinmaydi — havolasiz u hech narsa qilmaydi.
+    taklifHolati().then((x) => { if (!bekor) setTaklif(x); }).catch(() => {});
     return () => { bekor = true; };
   }, []);
 
@@ -130,6 +134,13 @@ export function Men({ onYol }: Props) {
         <Qator ic="miya" nom={t("nishonlar")} qiymat={`${nishon.olingan} / ${nishon.jami}`}
           on={() => onYol(yolNishon(kurs))} />
         <Qator ic="palette" nom={t("tabDokon")} on={() => onYol(yolDokon(kurs))} />
+        {/* Shaxsiy taklif havolasi (`core/taklif.py`) — Telegram "ulashish"
+            oynasida; qiymat — shu havola bilan kelganlar soni. */}
+        {taklif && (
+          <Qator ic="chaqmoq" nom={t("taklifSarlavha")} qiymat={taklif.soni ? String(taklif.soni) : ""}
+            on={() => havolaniOch(`https://t.me/share/url?url=${encodeURIComponent(taklif.havola)}`
+              + `&text=${encodeURIComponent(t("taklifMatn"))}`)} />
+        )}
       </Guruh>
 
       {!oziUchun && (

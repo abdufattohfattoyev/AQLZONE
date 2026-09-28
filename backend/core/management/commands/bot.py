@@ -852,7 +852,27 @@ def yangilikni_qayta_ishla(u: dict) -> str:
             identities__external_id=tg_id,
             xabar_yopiq_at__isnull=False,
         ).update(xabar_yopiq_at=None)
-        return salom_yubor(chat_id, tg_id, ism, familiya, til)
+
+        # Taklif havolasi (`/start ref_12[_dtm]`, `core/taklif.py`): hisob
+        # shu /start da YARATILSA — taklif qilganga bog'lanadi va u darhol
+        # xabar oladi. Mavjud odam birovning havolasini bossa sanalmaydi.
+        from core import taklif as TK
+        taklifchi_pk, bolim = TK.ajrat(matn)
+        yangi = taklifchi_pk is not None and not Identity.objects.filter(
+            provider=Identity.TELEGRAM, external_id=tg_id).exists()
+        javob = salom_yubor(chat_id, tg_id, ism, familiya, til)
+        if yangi:
+            kirish = Identity.objects.filter(provider=Identity.TELEGRAM, external_id=tg_id).first()
+            taklifchi = TK.boglash(kirish.pupil, taklifchi_pk) if kirish else None
+            if taklifchi:
+                TK.taklifchiga_xabar(taklifchi, kirish.pupil)
+                javob += f" · taklif: #{taklifchi.pk}"
+        # Kartadagi "Men ham ishlayman" — kelgan odam o'sha bo'limga tushsin.
+        if bolim == "dtm":
+            bolimni_yubor(chat_id, til, DTM_YOLI, "dtmHaqida")
+        elif bolim == "sertifikat":
+            bolimni_yubor(chat_id, til, SERTIFIKAT_YOLI, "sertifikatHaqida")
+        return javob
 
     # Doimiy klaviatura tugmasi bosilgan bo'lishi mumkin. Tugma oddiy
     # MATN yuboradi, shuning uchun uni buyruqlardan oldin taniymiz —

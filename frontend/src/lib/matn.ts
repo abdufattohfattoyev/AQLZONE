@@ -442,6 +442,16 @@ const S = {
   hrXato: ["Reytingni yuklab bo'lmadi", "Не удалось загрузить рейтинг"],
   hrKirishIzoh: ["Shu hafta ishlaganlar bilan solishtiring", "Сравните себя с решавшими на этой неделе"],
   hrSiz: ["Siz", "Вы"],
+  ulashTugma: ["Natijani do'stlarga yuborish", "Отправить результат друзьям"],
+  ulashIzoh: ["Karta Telegram'ingizga keladi — guruhga yuboring", "Карточка придёт в ваш Telegram — перешлите в группу"],
+  ulashYuborildi: ["Karta Telegram'ingizda", "Карточка в вашем Telegram"],
+  ulashYuborildiIzoh: ["Bot suhbatini oching va guruhga yuboring", "Откройте чат с ботом и перешлите в группу"],
+  ulashMatn: ["Men Aql Zone'da imtihon variantini ishladim — siz ham sinab ko'ring!", "Я решил экзаменационный вариант в Aql Zone — попробуйте и вы!"],
+  taklifSarlavha: ["Do'stlarni taklif qilish", "Пригласить друзей"],
+  taklifMatn: [
+    "Aql Zone — matematika: darslar, DTM va sertifikat variantlari, o'yinlar. Men shu yerda o'qiyapman — qo'shil!",
+    "Aql Zone — математика: уроки, варианты ДТМ и сертификата, игры. Я занимаюсь здесь — присоединяйся!",
+  ],
   hrAnonim: ["Ishtirokchi", "Участник"],
 
   /* ---------------- Reyting (yangi dizayn) ---------------- */

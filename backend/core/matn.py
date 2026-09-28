@@ -458,6 +458,22 @@ XABAR: dict[str, dict[str, str]] = {
         "uz": "Hisobotni ilovadagi Ota-ona panelida o'chirish mumkin.",
         "ru": "Отчёт можно отключить в панели для родителей в приложении.",
     },
+    # ------------------------------------------------------ taklif va karta
+    "taklifIsmsiz": {"uz": "Yangi o'quvchi", "ru": "Новый участник"},
+    "taklifQoshildi": {
+        "uz": "🎉 <b>{ism}</b> sizning havolangiz bilan Aql Zone'ga qo'shildi!\n\n"
+              "Siz taklif qilganlar: <b>{n}</b> kishi. Rahmat! 🙌",
+        "ru": "🎉 <b>{ism}</b> присоединился к Aql Zone по вашей ссылке!\n\n"
+              "Вы пригласили: <b>{n}</b>. Спасибо! 🙌",
+    },
+    "kartaIzoh": {
+        "uz": "📤 Natijangiz kartasi.\n\nUni do'stlaringizga yoki sinf guruhiga yuboring — "
+              "pastdagi tugma orqali kelganlar sizning taklifingiz bo'lib sanaladi.",
+        "ru": "📤 Карточка вашего результата.\n\nПерешлите её друзьям или в группу класса — "
+              "пришедшие по кнопке ниже засчитаются как ваши приглашения.",
+    },
+    "tMenHam": {"uz": "📝 Men ham ishlayman", "ru": "📝 Я тоже решу"},
+
     # ------------------------------------------------------------- duel
     # Ilgari `core/duel.py` da faqat o'zbekcha yozilgan edi — ruscha
     # foydalanuvchi chaqiruv va natijani o'zbekcha olardi.

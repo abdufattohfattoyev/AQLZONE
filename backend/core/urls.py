@@ -82,6 +82,9 @@ urlpatterns = [
     # Milliy sertifikat natijalari va ikkalasining haftalik jadvali.
     path("sertifikat/natija", kunlik_views.sertifikat_natija, name="sertifikat-natija"),
     path("imtihon/reyting", kunlik_views.imtihon_reyting, name="imtihon-reyting"),
+    # Natija kartasi (Telegram'ga) va shaxsiy taklif havolasi (`core/taklif.py`).
+    path("imtihon/ulash", kunlik_views.imtihon_ulash, name="imtihon-ulash"),
+    path("taklif", kunlik_views.taklif_holati, name="taklif"),
     # Talabaning sessiya urinishlari (`core/imtihon.py` → sessiya_royxat).
     path("sessiya/natija", kunlik_views.sessiya_natija, name="sessiya-natija"),
     path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),

@@ -66,6 +66,7 @@ import { yolDars, yolImtMashq, yolImtReyting } from "../lib/yollar";
 import { KoribChiqish } from "../components/KoribChiqish";
 import { ReytingKarta } from "../components/HaftalikReyting";
 import { NatijaSarlavha } from "../components/NatijaSarlavha";
+import { NatijaUlash } from "../components/NatijaUlash";
 import { dtmSavollari } from "../lib/korish";
 import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
@@ -765,6 +766,7 @@ function Natija({
         <div className="mt-3">
           <ReytingKarta tur="dtm" variant={imtihon} tayyor={yozildi.tayyor} urinishVaqt={yozildi.vaqt}
             onOch={() => nav(yolImtReyting("dtm", imtihon))} />
+          <div className="mt-3"><NatijaUlash tur="dtm" variant={imtihon} tayyor={yozildi.tayyor} /></div>
         </div>
       )}
 

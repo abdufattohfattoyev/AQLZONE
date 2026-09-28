@@ -188,6 +188,23 @@ export function haftalikReyting(tur: ImtTur, variant?: number | null): Promise<R
   return sorov<Reyting>(`/api/v1/imtihon/reyting?tur=${tur}${v}${profilQuery("&")}`);
 }
 
+/* ------------------------------------------------ ulashish va taklif */
+
+/**
+ * Natija kartasini odamning O'Z Telegram'iga yuboradi (`core/taklif.py`):
+ * u yerdan guruhga yo'naltiradi. Kartadagi tugma — shaxsiy taklif havolasi.
+ * Xato (Telegram'i yo'q, internet) — tashlanadi, chaqiruvchi oddiy
+ * "ulashish" oynasini ochadi.
+ */
+export function natijaniUlash(tur: ImtTur, variant: number): Promise<{ ok: boolean; havola: string }> {
+  return sorov("/api/v1/imtihon/ulash", bilanProfil({ tur, variant }));
+}
+
+/** Shaxsiy taklif havolasi va shu havola bilan kelganlar soni. */
+export function taklifHolati(): Promise<{ havola: string; soni: number }> {
+  return sorov(`/api/v1/taklif${profilQuery()}`);
+}
+
 /* -------------------------------------------- javoblar — ko'rib chiqish */
 
 /**

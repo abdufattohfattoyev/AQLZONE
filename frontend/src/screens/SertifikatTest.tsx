@@ -45,6 +45,7 @@ import { sertSavollari } from "../lib/korish";
 import { KoribChiqish } from "../components/KoribChiqish";
 import { ReytingKarta } from "../components/HaftalikReyting";
 import { NatijaSarlavha } from "../components/NatijaSarlavha";
+import { NatijaUlash } from "../components/NatijaUlash";
 
 /**
  * Natija serverda qaysi "bob/dars" bo'lib yoziladi. Blok test 98,
@@ -617,8 +618,11 @@ function Natija({ v, javoblar, sekund, yozildi, strelka, onKorish, onQayta, onEx
       </div>
 
       {yozildi && (
-        <ReytingKarta tur="sert" variant={v.n} tayyor={yozildi.tayyor} urinishVaqt={yozildi.vaqt}
-          onOch={() => nav(yolImtReyting("sert", v.n))} />
+        <>
+          <ReytingKarta tur="sert" variant={v.n} tayyor={yozildi.tayyor} urinishVaqt={yozildi.vaqt}
+            onOch={() => nav(yolImtReyting("sert", v.n))} />
+          <NatijaUlash tur="sert" variant={v.n} tayyor={yozildi.tayyor} />
+        </>
       )}
 
       {/* Hamma 45 topshiriq — shart, belgilangani va to'g'risi, yechim. */}

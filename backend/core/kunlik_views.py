@@ -132,6 +132,37 @@ def imtihon_reyting(request):
                                         _profil_tanla(request)))
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def imtihon_ulash(request):
+    """
+    DTM/sertifikat natija kartasi — odamning o'z Telegram'iga (`core/taklif.py`).
+    Telegram'i yo'q bo'lsa 409 va `havola`: ilova oddiy ulashish oynasini ochadi.
+    """
+    from . import taklif as TK
+
+    d = request.data if hasattr(request.data, "get") else {}
+    tur = "sert" if d.get("tur") == "sert" else "dtm"
+    try:
+        variant = int(d.get("variant") or 0)
+    except (TypeError, ValueError):
+        variant = 0
+    profil = _profil_tanla(request)
+    try:
+        return Response(TK.ulash(profil, tur, variant))
+    except TK.UlashXato as e:
+        return Response({"detail": e.sabab, "sabab": e.sabab, "havola": e.havola}, status=e.kod)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def taklif_holati(request):
+    """Shaxsiy taklif havolasi va shu havola bilan kelganlar soni."""
+    from . import taklif as TK
+
+    return Response(TK.holat(_profil_tanla(request).pupil))
+
+
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def sessiya_natija(request):
