@@ -73,6 +73,7 @@ const OqishTestlar = lazy(() => import("./screens/OqishTestlar").then((m) => ({ 
 const OqishXatolar = lazy(() => import("./screens/OqishXatolar").then((m) => ({ default: m.OqishXatolar })));
 const Testlar = lazy(() => import("./screens/Testlar").then((m) => ({ default: m.Testlar })));
 const Hisobot = lazy(() => import("./screens/Hisobot").then((m) => ({ default: m.Hisobot })));
+const Mavzu = lazy(() => import("./screens/Mavzu").then((m) => ({ default: m.Mavzu })));
 const Formulalar = lazy(() => import("./screens/Formulalar").then((m) => ({ default: m.Formulalar })));
 const Qidiruv = lazy(() => import("./screens/Qidiruv").then((m) => ({ default: m.Qidiruv })));
 const ToplamSahifa = lazy(() => import("./screens/ToplamSahifa").then((m) => ({ default: m.ToplamSahifa })));
@@ -101,7 +102,7 @@ import {
   yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
-  yolImtKorish, yolImtMashq, yolImtReyting,
+  yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
@@ -219,6 +220,10 @@ function Yollar() {
       <Route path="/xona/:kod" element={<XonaSahifasi />} />
       <Route path="/oyinlar/:id" element={<OyinDarajaSahifasi />} />
       <Route path="/oyinlar/:id/:daraja" element={<OyinSahifasi />} />
+      {/* Mavzu — bobning qoidasi, namunasi va mashqi (`screens/Mavzu.tsx`).
+          Kursdan TASHQARIDA: dars qulfiga bog'lanmagan. */}
+      <Route path="/mavzu/:slug/:bob" element={<MavzuSahifasi />} />
+      <Route path="/mavzu/:slug/:bob/mashq" element={<MavzuMashqSahifasi />} />
       <Route path="/kurs/:slug" element={<KursSahifasi />} />
       {/* Diqqat: "daftar" bob nomiga o'xshaydi, shuning uchun u
           /:bob/:dars dan OLDIN turishi shart — aks holda marshrut
@@ -408,6 +413,46 @@ function XatolarSahifasi() {
     <OqishQobiq yorliq="xatolar" kurs={c}>
       <OqishXatolar kurs={c} onMashq={() => nav(yolDaftar(c))} />
     </OqishQobiq>
+  );
+}
+
+/**
+ * Mavzu sahifasi. Imtihon natijasidan kelinganda `state` da xato soni
+ * va yo'qotilgan ball bo'ladi — sahifa "nega shu yerdaman" ni aytadi.
+ * Orqaga — kelgan joyga (natija ekrani), u bo'lmasa kurs sahifasiga.
+ */
+function MavzuSahifasi() {
+  const { slug, bob } = useParams();
+  const [qidiruv] = useSearchParams();
+  const { state } = useLocation() as { state: { xato?: number; ball?: string } | null };
+  const nav = useNavigate();
+  const c = courseBySlug(slug ?? "");
+  useTema(c ? temaOf(c.grade) : "bosh");
+
+  const ui = indeksniOqi(bob, "bob");
+  if (!c || ui === null || !c.units[ui]) return <NotFound nima={t("mavzuTopilmadi")} />;
+  const li = Number(qidiruv.get("dars")) - 1;
+  const orqaga = () => (window.history.state?.idx > 0 ? nav(-1) : nav(yolKurs(c)));
+
+  return (
+    <Mavzu kurs={c} ui={ui} ochiq={Number.isInteger(li) && li >= 0 ? li : undefined}
+      imtihon={state?.xato ? { xato: state.xato, ball: state.ball ?? "" } : undefined}
+      onMashq={() => nav(yolMavzuMashq(c, ui))} onChiq={orqaga} />
+  );
+}
+
+/** Bitta bob bo'yicha 10 savollik mashq — zaif mavzular mashqidagi `Blok`. */
+function MavzuMashqSahifasi() {
+  const { slug, bob } = useParams();
+  const nav = useNavigate();
+  const c = courseBySlug(slug ?? "");
+  useTema(c ? temaOf(c.grade) : "bosh");
+
+  const ui = indeksniOqi(bob, "bob");
+  if (!c || ui === null || !c.units[ui]) return <NotFound nima={t("mavzuTopilmadi")} />;
+  return (
+    <BlokEkran sinf={sinfOf(c.grade)} uzunlik="bob" qamrov={{ tur: "mavzular", boblar: [{ kursId: c.id, ui }] }}
+      bobNomi={kursMatn(c.units[ui].u)} onExit={() => nav(yolMavzu(c, ui), { replace: true })} />
   );
 }
 

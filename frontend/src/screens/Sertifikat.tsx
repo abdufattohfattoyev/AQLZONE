@@ -20,7 +20,7 @@ import { ImtihonSarlavha } from "../components/ImtihonTur";
 import { ImtEshiklar } from "../components/HaftalikReyting";
 import { zaifMavzular } from "../lib/imtihon";
 import { t } from "../lib/matn";
-import { kursMatn } from "../lib/tarjima/kurs";
+import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
 import {
   DAQIQA, DARAJA_SHKALA, TUZILISH, VARIANTLAR, berilgan, daraja, engYaxshi, joriyniOqi, ortacha, sinxronla,
 } from "../lib/sertifikat";
@@ -97,14 +97,7 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
         {zaif.length > 0 && (
           <>
             <div className="mt-1 text-[13px] font-bold text-ink-dim">{t("imtZaif")}</div>
-            <div className="flex flex-wrap gap-2">
-              {zaif.map((m) => (
-                <span key={`${m.kursId}|${m.mavzu}`}
-                  className="rounded-full bg-track px-3 py-1.5 text-[13.5px] font-semibold text-ink-soft">
-                  {t("imtZaifXato", { mavzu: kursMatn(m.mavzu).replace(/^\d+-bob\.\s*|^Глава \d+\.\s*/, ""), n: m.xato })}
-                </span>
-              ))}
-            </div>
+            <ZaifYorliqlar zaif={zaif} tahlil="Sertifikat: zaif mavzu" />
             <button type="button" onClick={onMashq} data-tahlil="Sertifikat: mavzularni takrorlash"
               className="clay-press mt-0.5 min-h-11 self-start rounded-xl bg-brand-blue/10 px-4 text-[14.5px] font-bold
                          text-brand-blue-t">

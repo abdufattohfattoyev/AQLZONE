@@ -213,6 +213,18 @@ export const yolFormulalar = (c: Course) => `/kurs/${c.slug}/formulalar`;
 export const yolDars = (c: Course, ui: number, li: number) =>
   `/kurs/${c.slug}/${ui + 1}-bob/${li + 1}-dars`;
 
+/**
+ * MAVZU sahifasi — bobning qoidasi, namunalari va mashqi
+ * (`screens/Mavzu.tsx`). Imtihon natijasidagi "zaif mavzu" shu yerga
+ * olib keladi, darsga emas: dars yopiq bo'lishi mumkin va u qoidani
+ * tushuntirmaydi, faqat yana misol beradi.
+ *
+ * `li` — qaysi dars ochiq turib kelsin (xato qilingan darsi).
+ */
+export const yolMavzu = (c: Course, ui: number, li?: number) =>
+  `/mavzu/${c.slug}/${ui + 1}-bob${li === undefined ? "" : `?dars=${li + 1}`}`;
+export const yolMavzuMashq = (c: Course, ui: number) => `/mavzu/${c.slug}/${ui + 1}-bob/mashq`;
+
 /** "3-bob" → 2 (kod indeksi). Noto'g'ri bo'lsa null. */
 export function indeksniOqi(qism: string | undefined, qoshimcha: string): number | null {
   if (!qism) return null;

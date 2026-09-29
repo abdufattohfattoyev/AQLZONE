@@ -62,7 +62,7 @@ import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 import { tovush } from "../lib/ovoz";
-import { yolDars, yolImtMashq, yolImtReyting } from "../lib/yollar";
+import { yolImtMashq, yolImtReyting, yolMavzu } from "../lib/yollar";
 import { KoribChiqish } from "../components/KoribChiqish";
 import { ReytingKarta } from "../components/HaftalikReyting";
 import { NatijaSarlavha } from "../components/NatijaSarlavha";
@@ -863,7 +863,8 @@ function Natija({
                   to'g'ri yechgan bobga qaytarish — vaqtni behuda
                   sarflash taklifi. */}
               {!yaxshi && c && (
-                <button type="button" onClick={() => nav(yolDars(c, m.ui, m.li))}
+                <button type="button" onClick={() => nav(yolMavzu(c, m.ui, m.li), { state: { xato: m.xato } })}
+                  data-tahlil="Blok: mavzuni takrorlash"
                   className="clay-press shrink-0 rounded-2xl bg-track px-3 py-2 font-display text-[12px] text-ink-soft">
                   {t("blokTakrorlash")}
                 </button>

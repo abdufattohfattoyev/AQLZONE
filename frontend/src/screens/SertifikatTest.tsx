@@ -32,7 +32,7 @@ import { courseById } from "../lib/curriculum";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
-import { yolDars, yolImtMashq, yolImtReyting } from "../lib/yollar";
+import { yolImtMashq, yolImtReyting, yolMavzu } from "../lib/yollar";
 import { useFaollik } from "../lib/faollik";
 import type { SJavob, SSavol, SVariant } from "../lib/sertifikat";
 import {
@@ -650,7 +650,8 @@ function Natija({ v, javoblar, sekund, yozildi, strelka, onKorish, onQayta, onEx
               const c = courseById(m.kursId);
               return (
                 <button key={`${m.kursId}-${m.ui}`} type="button" disabled={!c}
-                  onClick={() => c && nav(yolDars(c, m.ui, m.li))} data-tahlil="Sertifikat: mavzuni takrorlash"
+                  onClick={() => c && nav(yolMavzu(c, m.ui, m.li), { state: { xato: m.xato, ball: ballYoz(m.yoqotdi) } })}
+                  data-tahlil="Sertifikat: mavzuni takrorlash"
                   className="clay-press flex min-h-[52px] w-full items-center gap-3 px-4 text-left">
                   <span className="min-w-0 flex-1 truncate text-[15px] font-bold">
                     {kursMatn(m.nom).replace(/^\d+-bob\.\s*|^Глава \d+\.\s*/, "")}
