@@ -1,5 +1,5 @@
 /**
- * MAVZU NAZARIYASI — 7–11-sinf darslari uchun qisqa tushuntirish.
+ * MAVZU NAZARIYASI — 5–11-sinf darslari uchun qisqa tushuntirish.
  *
  * ─────────────────────── NEGA KERAK ───────────────────────
  *
@@ -973,7 +973,569 @@ export const NAZARIYA: Record<string, Nazariya> = {
     f: ["x̄ = Σxᵢ / n", "D = Σ(xᵢ − x̄)² / n", "σ = √D"],
     e: ["8, 10, 10, 12:  x̄ = 10,  D = 8/4 = 2,  σ = √2 ≈ 1,414.", "8, 10, 10, 12:  x̄ = 10,  D = 8/4 = 2,  σ = √2 ≈ 1,414."],
   },
+
+  /* ═══════════════════════ 5-sinf ═══════════════════════
+   * Til soddaroq: o'quvchi 10–11 yoshda. Har qoidada — bitta sonli
+   * namuna, chunki bu yoshda qoida misolsiz esda qolmaydi. */
+  "Ko'p xonali qo'shish va ayirish": {
+    q: ["Sonlarni ustun qilib, xonani xona ostiga yozing va o'ng tomondan — birliklardan boshlab hisoblang. 10 dan oshsa, bittasi keyingi xonaga o'tadi.",
+      "Запишите числа столбиком, разряд под разрядом, и считайте справа — с единиц. Если получилось больше 10, единица переходит в следующий разряд."],
+    f: ["4 567 + 4 425 = 8 992"],
+    e: ["Ayirishda xona yetmasa, chapdagi xonadan 1 ta o'nlik \"qarz\" olinadi — keyin o'sha xonadan 1 ni ayirishni unutmang.",
+      "Если при вычитании не хватает, занимаем десяток из соседнего разряда — не забудьте потом вычесть там 1."],
+  },
+  "Amallar tartibi": {
+    q: ["Avval qavs ichi, keyin ko'paytirish va bo'lish, eng oxirida qo'shish va ayirish.",
+      "Сначала действия в скобках, затем умножение и деление, в конце сложение и вычитание."],
+    f: ["( )  →  × ÷  →  + −", "(6 + 8) × 3 = 14 × 3 = 42", "6 + 8 × 3 = 6 + 24 = 30"],
+    e: ["Qavs bo'lmasa, ko'paytirish qo'shishdan OLDIN bajariladi.", "Без скобок умножение выполняется РАНЬШЕ сложения."],
+  },
+  "Kasr va kattaliklar": {
+    q: ["Maxrajlari teng kasrlarda faqat suratlar qo'shiladi, maxraj o'zgarmaydi.", "У дробей с одинаковыми знаменателями складываются только числители, знаменатель не меняется."],
+    f: ["3/5 + 2/5 = 5/5 = 1", "1 m = 100 sm,   1 kg = 1000 g,   1 soat = 60 daqiqa"],
+  },
+  "Natural sonlar qatori": {
+    q: ["Natural sonlar — sanashda ishlatiladigan sonlar: 1, 2, 3, … Eng kichigi 1, eng kattasi yo'q. Nol natural son emas.",
+      "Натуральные числа — числа для счёта: 1, 2, 3, … Наименьшее — 1, наибольшего нет. Ноль не натуральное число."],
+    f: ["1, 2, 3, 4, 5, …"],
+    e: ["Har bir natural sondan keyingisi 1 ta katta: n dan keyin n + 1.", "Каждое следующее натуральное число на 1 больше: после n идёт n + 1."],
+  },
+  "Shkalalar va sonlar nuri": {
+    q: ["Sonlar nurida bo'linmalar teng: qo'shni ikki belgi orasidagi farq — nurning \"qadami\". Avval qadamni toping, keyin tushib qolgan sonni.",
+      "На числовом луче деления равны: разница между соседними отметками — «шаг». Сначала найдите шаг, потом пропущенное число."],
+    f: ["170, 180, ?, 200   →   qadam 10,   ? = 190"],
+  },
+  "Natural sonlarni taqqoslash": {
+    q: ["Xonalari ko'p son katta. Xonalar soni teng bo'lsa, chapdan boshlab birinchi farq qiladigan raqam solishtiriladi.",
+      "Больше то число, у которого больше разрядов. Если разрядов поровну, сравниваем слева первую различающуюся цифру."],
+    f: ["474 118 > 466 117   (7 > 6)"],
+  },
+  "Natural sonlarni yaxlitlash": {
+    q: ["Yaxlitlanadigan xonadan keyingi raqamga qarang: 5 yoki undan katta bo'lsa — xona 1 ga oshadi, kichik bo'lsa — o'zgarmaydi. Keyingi raqamlar nolga aylanadi.",
+      "Смотрим на цифру после округляемого разряда: 5 и больше — разряд увеличивается на 1, меньше — не меняется. Следующие цифры заменяются нулями."],
+    f: ["70 350 ≈ 70 400   (yuzlikkacha)", "2 905 ≈ 2 900   (yuzlikkacha)"],
+  },
+  "Natural sonlarni qo'shish": {
+    q: ["Xonama-xona qo'shing: birliklar birliklarga, o'nliklar o'nliklarga. 10 dan oshgani keyingi xonaga o'tadi.",
+      "Складываем поразрядно: единицы с единицами, десятки с десятками. Лишний десяток переходит в следующий разряд."],
+    f: ["a + b = b + a", "87 928 + 15 622 = 103 550"],
+  },
+  "Natural sonlarni ayirish": {
+    q: ["Xonama-xona ayiring. Xona yetmasa, chapdagi xonadan bitta o'nlik olinadi.", "Вычитаем поразрядно. Если не хватает, занимаем десяток из соседнего разряда слева."],
+    f: ["25 809 − 15 093 = 10 716"],
+    e: ["Tekshirish: ayirma + ayriluvchi = kamayuvchi.", "Проверка: разность + вычитаемое = уменьшаемое."],
+  },
+  "Sonli va harfli ifodalar": {
+    q: ["Harf o'rniga berilgan sonni qo'ying va amallar tartibida hisoblang.", "Подставьте вместо буквы данное число и вычислите по порядку действий."],
+    f: ["109 + m × 8,   m = 30:   109 + 240 = 349"],
+    e: ["Avval ko'paytirish, keyin qo'shish.", "Сначала умножение, потом сложение."],
+  },
+  "Matematik masala va tenglamalar": {
+    q: ["Noma'lum hadni topish uchun amalning teskarisini qiling.", "Чтобы найти неизвестный компонент, выполните обратное действие."],
+    f: [["qo'shiluvchi = yig'indi − qo'shiluvchi", "слагаемое = сумма − слагаемое"],
+      ["ayriluvchi = kamayuvchi − ayirma", "вычитаемое = уменьшаемое − разность"],
+      ["kamayuvchi = ayirma + ayriluvchi", "уменьшаемое = разность + вычитаемое"]],
+    e: ["51 − x = 10  ⇒  x = 51 − 10 = 41. Tekshiring: 51 − 41 = 10.", "51 − x = 10  ⇒  x = 51 − 10 = 41. Проверка: 51 − 41 = 10."],
+  },
+  "Natural sonlarni ko'paytirish": {
+    q: ["Ustun shaklida: avval birliklar raqamiga, keyin o'nliklar raqamiga ko'paytiring (bir xona chapga surib), natijalarni qo'shing.",
+      "Столбиком: умножаем на цифру единиц, затем на цифру десятков (со сдвигом влево), результаты складываем."],
+    f: ["195 × 76 = 195 × 6 + 195 × 70 = 1 170 + 13 650 = 14 820"],
+  },
+  "Natural sonlarni bo'lish": {
+    q: ["Bo'lish — ko'paytirishning teskarisi: qaysi songa bo'luvchini ko'paytirsak, bo'linuvchi chiqadi.",
+      "Деление — обратное умножению: на какое число умножить делитель, чтобы получить делимое."],
+    f: ["2 560 ÷ 32 = 80,   chunki 32 × 80 = 2 560"],
+  },
+  "Qoldiqli bo'lish": {
+    q: ["Bo'linuvchi = bo'luvchi × to'liqsiz bo'linma + qoldiq. Qoldiq har doim bo'luvchidan kichik.",
+      "Делимое = делитель × неполное частное + остаток. Остаток всегда меньше делителя."],
+    f: ["a = b × q + r,   r < b", "1 354 = 17 × 79 + 11"],
+  },
+  "Qulay va tezkor hisoblash": {
+    q: ["Ko'paytuvchilarning o'rnini almashtirib, \"yumaloq\" juftlarni birga ko'paytiring: 2 × 5 = 10, 4 × 25 = 100.",
+      "Переставьте множители и перемножьте «круглые» пары: 2 × 5 = 10, 4 × 25 = 100."],
+    f: ["20 × 12 × 5 = (20 × 5) × 12 = 100 × 12 = 1 200", "a × (b + c) = a × b + a × c"],
+  },
+  "Ifodalarni soddalashtirish": {
+    q: ["Bir xil harfli hadlarning sonlarini qo'shamiz, harf o'zgarmaydi.", "У слагаемых с одной и той же буквой складываем коэффициенты, буква не меняется."],
+    f: ["6a + 4a = 10a", "7b − 2b = 5b"],
+  },
+  "To'rt amalga doir hisoblash": {
+    q: ["Qavs → ko'paytirish va bo'lish → qo'shish va ayirish. Bir xil darajali amallar chapdan o'ngga.",
+      "Скобки → умножение и деление → сложение и вычитание. Действия одного уровня — слева направо."],
+    f: ["120 ÷ 8 + 9 = 15 + 9 = 24"],
+  },
+  "Sonning kvadrati va kubi": {
+    q: ["Daraja — sonni o'ziga bir necha marta ko'paytirish. Kvadrat — 2 marta, kub — 3 marta.",
+      "Степень — умножение числа на себя несколько раз. Квадрат — 2 раза, куб — 3 раза."],
+    f: ["a² = a × a,   a³ = a × a × a", "3⁵ = 3 × 3 × 3 × 3 × 3 = 243"],
+    e: ["3² = 9, 6 emas: daraja ko'paytirish emas.", "3² = 9, а не 6: степень — не умножение на 2."],
+  },
+  "Daraja va amallar tartibi": {
+    q: ["Daraja ko'paytirishdan ham oldin bajariladi: qavs → daraja → × ÷ → + −.", "Степень вычисляется даже раньше умножения: скобки → степень → × ÷ → + −."],
+    f: ["2 × 3² = 2 × 9 = 18", "5⁴ = 625"],
+  },
+  "Qismlarga doir masalalar": {
+    q: ["Kichik qismni 1 qism deb oling. Jami qismlar sonini toping va umumiy miqdorni shunga bo'ling.",
+      "Примите меньшую часть за 1 часть. Найдите число всех частей и разделите на него общее количество."],
+    f: ["Jami 80, biri ikkinchisidan 3 marta katta:   1 + 3 = 4 qism,   80 ÷ 4 = 20"],
+  },
+  "Geometrik mazmundagi masalalar": {
+    q: ["Shaklni aniqlang va uning formulasini qo'llang. Yuza kvadrat birlikda (sm²), perimetr uzunlik birligida (sm).",
+      "Определите фигуру и примените её формулу. Площадь — в квадратных единицах (см²), периметр — в единицах длины (см)."],
+    f: ["S = a × b", "P = 2 × (a + b)"],
+  },
+  "Harakatga doir masalalar": {
+    q: ["Masofa, tezlik va vaqt bitta formula bilan bog'langan.", "Расстояние, скорость и время связаны одной формулой."],
+    f: ["s = v × t", "v = s ÷ t,   t = s ÷ v"],
+  },
+  "Ikki jism harakatiga doir masalalar": {
+    q: ["Qarama-qarshi harakatda tezliklar qo'shiladi (yaqinlashish tezligi), bir tomonga harakatda (quvishda) ayiriladi.",
+      "При движении навстречу скорости складываются (скорость сближения), при движении вдогонку — вычитаются."],
+    f: [["qarama-qarshi:  s = (v₁ + v₂) × t", "навстречу:  s = (v₁ + v₂) × t"], ["quvish:  s = (v₁ − v₂) × t", "вдогонку:  s = (v₁ − v₂) × t"]],
+  },
+  "Iqtisodiy mazmundagi masalalar": {
+    q: ["Qiymat = narx × miqdor. Qolgan ikkitasi bo'lish bilan topiladi.", "Стоимость = цена × количество. Остальные два находятся делением."],
+    f: [["qiymat = narx × miqdor", "стоимость = цена × количество"], ["narx = qiymat ÷ miqdor", "цена = стоимость ÷ количество"], "12 000 ÷ 6 = 2 000"],
+  },
+  "Bajarilgan ishga doir masalalar": {
+    q: ["Ish = unumdorlik × vaqt. Unumdorlik — bir soatda (kunda) qilingan ish.", "Работа = производительность × время. Производительность — работа за один час (день)."],
+    f: [["ish = unumdorlik × vaqt", "работа = производительность × время"], "13 × 4 = 52"],
+  },
+  "Burchaklar va ularning turlari": {
+    q: ["O'tkir burchak 90° dan kichik, to'g'ri burchak aynan 90°, o'tmas burchak 90° dan katta, lekin 180° dan kichik, yoyiq burchak 180°.",
+      "Острый угол меньше 90°, прямой — ровно 90°, тупой — больше 90°, но меньше 180°, развёрнутый — 180°."],
+  },
+  "Burchaklarni o'lchash va qo'shish": {
+    q: ["OB nur AOC burchakni ikkiga bo'lsa, butun burchak ikki bo'lagining yig'indisiga teng.", "Если луч OB делит угол AOC на два, весь угол равен сумме частей."],
+    f: ["∠AOC = ∠AOB + ∠BOC", "25° + 77° = 102°"],
+  },
+  "Siniq chiziq va uning uzunligi": {
+    q: ["Siniq chiziq uzunligi — uning barcha bo'g'inlari uzunliklarining yig'indisi.", "Длина ломаной — сумма длин всех её звеньев."],
+    f: ["3 + 18 + 13 + 15 = 49 sm"],
+  },
+  "Ko'pburchak perimetri": {
+    q: ["Perimetr — barcha tomonlar yig'indisi. Tomonlari teng bo'lsa, bitta tomonni tomonlar soniga ko'paytirish kifoya.",
+      "Периметр — сумма всех сторон. Если стороны равны, достаточно умножить одну сторону на их число."],
+    f: ["P = a + b + c + …", ["teng tomonli:  P = a × n", "равные стороны:  P = a × n"]],
+  },
+  "To'g'ri to'rtburchakning yuzi": {
+    q: ["Yuza — shakl ichidagi kvadrat birliklar soni: bo'yni eniga ko'paytiriladi.", "Площадь — число единичных квадратов внутри фигуры: длина умножается на ширину."],
+    f: ["S = a × b", ["kvadrat:  S = a × a", "квадрат:  S = a × a"]],
+    e: ["Yuza sm² da o'lchanadi, perimetr esa sm da — ikkalasini adashtirmang.", "Площадь измеряется в см², а периметр в см — не путайте."],
+  },
+  "Murakkab shakllarning yuzi": {
+    q: ["Shaklni to'g'ri to'rtburchaklarga bo'ling, har birining yuzini toping va qo'shing.",
+      "Разбейте фигуру на прямоугольники, найдите площадь каждого и сложите."],
+    f: ["11 × 7 + 9 × 5 = 77 + 45 = 122"],
+  },
+  "Yuz o'lchov birliklari": {
+    q: ["Uzunlik birligi 10 marta katta bo'lsa, yuz birligi 10 × 10 = 100 marta katta bo'ladi.",
+      "Если единица длины больше в 10 раз, единица площади больше в 10 × 10 = 100 раз."],
+    f: ["1 dm² = 100 sm²", "1 m² = 100 dm² = 10 000 sm²", "1 ga = 10 000 m²"],
+    e: ["1 m = 100 sm, lekin 1 m² = 10 000 sm², 100 emas.", "1 м = 100 см, но 1 м² = 10 000 см², а не 100."],
+  },
+  "Ulushlar va oddiy kasrlar": {
+    q: ["Maxraj — butun nechta teng qismga bo'linganini, surat — shulardan nechtasi olinganini ko'rsatadi.",
+      "Знаменатель показывает, на сколько равных частей разделили целое, числитель — сколько частей взяли."],
+    f: [["surat / maxraj", "числитель / знаменатель"], ["2/5 — 5 qismdan 2 tasi", "2/5 — 2 части из 5"]],
+  },
+  "Kasrlarni taqqoslash": {
+    q: ["Maxrajlari teng bo'lsa, surati katta kasr katta. Suratlari teng bo'lsa, maxraji kichik kasr katta.",
+      "При равных знаменателях больше дробь с большим числителем. При равных числителях больше дробь с меньшим знаменателем."],
+    f: ["4/7 < 6/7", "1/3 > 1/5"],
+  },
+  "To'g'ri va noto'g'ri kasrlar": {
+    q: ["Surati maxrajidan kichik kasr — to'g'ri kasr (1 dan kichik). Surati maxrajiga teng yoki katta bo'lsa — noto'g'ri kasr.",
+      "Дробь с числителем меньше знаменателя — правильная (меньше 1). Если числитель равен знаменателю или больше — неправильная."],
+    f: [["4/6 — to'g'ri,   7/5 — noto'g'ri", "4/6 — правильная,   7/5 — неправильная"]],
+    e: ["5/5 ham noto'g'ri kasr — u 1 ga teng.", "5/5 — тоже неправильная дробь, она равна 1."],
+  },
+  "Bir xil maxrajli kasrlarni qo'shish va ayirish": {
+    q: ["Suratlar qo'shiladi yoki ayiriladi, maxraj o'zgarmaydi. Oxirida kasrni qisqartiring.", "Числители складываются или вычитаются, знаменатель не меняется. В конце сократите дробь."],
+    f: ["a/c + b/c = (a + b)/c", "6/12 + 9/12 = 15/12 = 5/4"],
+    e: ["Maxrajlar qo'shilmaydi.", "Знаменатели не складываются."],
+  },
+  "Bo'lish va kasrlar": {
+    q: ["Kasr chizig'i — bu bo'lish belgisi: bo'linuvchi suratga, bo'luvchi maxrajga yoziladi.", "Черта дроби — это знак деления: делимое идёт в числитель, делитель — в знаменатель."],
+    f: ["a ÷ b = a/b", "3 ÷ 5 = 3/5"],
+  },
+  "Aralash sonlar": {
+    q: ["Noto'g'ri kasrdan butun qismni ajratish uchun suratni maxrajga qoldiqli bo'ling: bo'linma — butun qism, qoldiq — yangi surat.",
+      "Чтобы выделить целую часть, разделите числитель на знаменатель с остатком: частное — целая часть, остаток — новый числитель."],
+    f: ["23/8:   23 ÷ 8 = 2 (qoldiq 7)   →   2 7/8", "2 7/8 = (2 × 8 + 7)/8 = 23/8"],
+  },
+  "Aralash sonlarni qo'shish va ayirish": {
+    q: ["Butun qismlarni alohida, kasr qismlarni alohida qo'shing (ayiring).", "Целые части складывайте (вычитайте) отдельно, дробные — отдельно."],
+    f: ["8 3/4 − 4 1/2 = 4 + (3/4 − 2/4) = 4 1/4"],
+    e: ["Kasr qismlarning maxraji har xil bo'lsa, avval umumiy maxrajga keltiring.", "Если у дробных частей разные знаменатели, сначала приведите к общему."],
+  },
+  "Kasrlarga doir masalalar": {
+    q: ["Sonning kasr qismini topish uchun sonni maxrajga bo'lib, suratga ko'paytiring.", "Чтобы найти дробь от числа, разделите число на знаменатель и умножьте на числитель."],
+    f: ["39 ning 1/3 qismi = 39 ÷ 3 = 13", "a ning m/n qismi = a ÷ n × m"],
+  },
+  "Fazoviy shakllar. Ko'pyoqlar": {
+    q: ["Ko'pyoq — yoqlari ko'pburchak bo'lgan jism. Prizmaning ikki asosi teng va parallel, piramidaning bitta asosi va uchburchak yon yoqlari bor.",
+      "Многогранник — тело, грани которого многоугольники. У призмы два равных параллельных основания, у пирамиды одно основание и треугольные боковые грани."],
+    f: [["kub, parallelepiped, prizma, piramida", "куб, параллелепипед, призма, пирамида"]],
+  },
+  "Parallelepiped va kub": {
+    q: ["Parallelepiped va kubda 6 ta yoq, 8 ta uch va 12 ta qirra bor. Kubning hamma qirralari teng.",
+      "У параллелепипеда и куба 6 граней, 8 вершин и 12 рёбер. У куба все рёбра равны."],
+    f: [["yoq 6,   uch 8,   qirra 12", "граней 6,   вершин 8,   рёбер 12"]],
+  },
+  "Parallelepiped va kub hajmi": {
+    q: ["Hajm — uchala o'lchovning ko'paytmasi. Kubda uchala o'lchov teng.", "Объём — произведение трёх измерений. У куба все три измерения равны."],
+    f: ["V = a × b × c", ["kub:  V = a × a × a = a³", "куб:  V = a × a × a = a³"]],
+    e: ["Hajm kub birlikda: sm³, m³.", "Объём измеряется в кубических единицах: см³, м³."],
+  },
+  "O'nli kasrlar": {
+    q: ["Maxraji 10, 100, 1000 bo'lgan kasr vergul bilan yoziladi: verguldan keyingi birinchi raqam — o'ndan birlar, ikkinchisi — yuzdan birlar.",
+      "Дробь со знаменателем 10, 100, 1000 записывается через запятую: первая цифра после запятой — десятые, вторая — сотые."],
+    f: ["1 3/10 = 1,3", "7/100 = 0,07"],
+  },
+  "O'nli kasrlarni taqqoslash": {
+    q: ["Avval butun qismlarni solishtiring; teng bo'lsa — verguldan keyingi raqamlarni chapdan boshlab.",
+      "Сначала сравните целые части; если равны — цифры после запятой, начиная слева."],
+    f: ["89,1 > 78,1", "3,45 > 3,4   (3,45 va 3,40)"],
+    e: ["Raqami ko'p kasr katta degani emas: 0,5 > 0,49.", "Больше цифр — не значит больше: 0,5 > 0,49."],
+  },
+  "O'nli kasrlarni qo'shish va ayirish": {
+    q: ["Vergulni vergul ostiga qo'yib yozing va natural sonlardek hisoblang. Javobda vergul o'sha joyda turadi.",
+      "Запишите запятую под запятой и считайте как с натуральными числами. В ответе запятая стоит там же."],
+    f: ["19,3 + 25,1 = 44,4", "5,2 − 1,75 = 5,20 − 1,75 = 3,45"],
+  },
+  "Taqribiy qiymat va yaxlitlash": {
+    q: ["Yaxlitlanadigan xonadan keyingi raqam 5 yoki katta bo'lsa — xona 1 ga oshadi, kichik bo'lsa — o'zgarmaydi. Keyingi raqamlar tashlanadi.",
+      "Если цифра после округляемого разряда 5 или больше — разряд увеличивается на 1, меньше — не меняется. Остальные цифры отбрасываются."],
+    f: ["11,33 ≈ 11", "4,56 ≈ 4,6"],
+  },
+  "Natural songa ko'paytirish": {
+    q: ["Vergulga e'tibor bermay ko'paytiring, so'ng javobda o'ngdan kasrdagi kabi raqam sanab vergul qo'ying.",
+      "Умножьте, не обращая внимания на запятую, затем в ответе отделите справа столько цифр, сколько их было после запятой."],
+    f: ["11,9 × 2 = 23,8", "0,25 × 4 = 1,00 = 1"],
+  },
+  "Natural songa bo'lish": {
+    q: ["Natural sondek bo'ling; bo'linuvchida vergulga yetganda bo'linmaga ham vergul qo'ying.",
+      "Делите как натуральные числа; дойдя до запятой в делимом, поставьте запятую и в частном."],
+    f: ["133,7 ÷ 7 = 19,1"],
+  },
+  "O'nli kasrlarni ko'paytirish": {
+    q: ["Vergulsiz ko'paytiring, keyin ikkala ko'paytuvchida verguldan keyin nechta raqam bo'lsa, javobda shuncha raqam ajrating.",
+      "Умножьте без запятых, затем отделите в ответе столько цифр, сколько их после запятой в обоих множителях вместе."],
+    f: ["8,4 × 5,6:   84 × 56 = 4 704   →   47,04"],
+    e: ["Raqamlar QO'SHILADI: 1 + 1 = 2 ta raqam ajratiladi.", "Количества цифр СКЛАДЫВАЮТСЯ: 1 + 1 = 2 знака после запятой."],
+  },
+  "O'nli kasrni o'nli kasrga bo'lish": {
+    q: ["Bo'luvchi natural son bo'lguncha ikkala sondagi vergulni bir xil songa o'ngga suring, keyin natural songa bo'lgandek bo'ling.",
+      "Перенесите запятую в обоих числах вправо на одинаковое число знаков, пока делитель не станет натуральным, затем делите."],
+    f: ["32,8 ÷ 4,1 = 328 ÷ 41 = 8"],
+  },
+  "Foiz tushunchasi": {
+    q: ["1% — sonning yuzdan bir qismi. 100% — butun son.", "1% — одна сотая часть числа. 100% — всё число."],
+    f: ["1% = 1/100 = 0,01", "50% = 1/2,   25% = 1/4,   10% = 1/10"],
+  },
+  "Sonning foizini topish": {
+    q: ["Sonni 100 ga bo'lib 1% ini toping, so'ng kerakli foizga ko'paytiring.", "Разделите число на 100 — это 1%, затем умножьте на нужное количество процентов."],
+    f: ["a ning p% i = a ÷ 100 × p", "1 800 ning 25% i = 18 × 25 = 450"],
+  },
+  "Necha foiz ekanini topish": {
+    q: ["Qismni butunga bo'lib, 100 ga ko'paytiring.", "Разделите часть на целое и умножьте на 100."],
+    f: ["qism ÷ butun × 100%", "1 520 ÷ 1 900 × 100 = 80%"],
+  },
+  "O'rta arifmetik": {
+    q: ["Hamma sonlarni qo'shing va ularning soniga bo'ling.", "Сложите все числа и разделите на их количество."],
+    f: ["(26 + 24 + 22) ÷ 3 = 72 ÷ 3 = 24"],
+  },
+  "Ma'lumotlar qatori va uning tahlili": {
+    q: ["Qatorning eng katta va eng kichik qiymatini topish uchun sonlarni birma-bir solishtiring. Ular farqi — qator kengligi (qulochi).",
+      "Чтобы найти наибольшее и наименьшее значения, сравните числа по очереди. Их разность — размах ряда."],
+    f: ["4, 28, 13, 8, 15:   eng katta 28,   eng kichik 4,   quloch 24"],
+  },
+
+  /* ═══════════════════════ 6-sinf ═══════════════════════ */
+  "Natural sonlar bilan amallar": {
+    q: ["Ustun shaklida ko'paytirish: har bir raqamga alohida ko'paytirib, xona surib qo'shiladi. Amallar tartibi: qavs → × ÷ → + −.",
+      "Умножение столбиком: умножаем на каждую цифру отдельно, сдвигаем и складываем. Порядок действий: скобки → × ÷ → + −."],
+    f: ["386 × 75 = 386 × 5 + 386 × 70 = 1 930 + 27 020 = 28 950"],
+  },
+  "Oddiy kasrlar": {
+    q: ["Maxrajlari teng kasrlarda suratlar qo'shiladi, maxraj o'zgarmaydi.", "У дробей с одинаковыми знаменателями складываются числители, знаменатель не меняется."],
+    f: ["6/9 + 1/9 = 7/9"],
+  },
+  "Foiz va o'rta arifmetik": {
+    q: ["1% — sonning yuzdan biri. O'rta arifmetik — yig'indi sonlar soniga bo'linadi.", "1% — сотая часть числа. Среднее арифметическое — сумма, делённая на количество чисел."],
+    f: ["1 900 ning 10% i = 190", "(a + b + c) ÷ 3"],
+  },
+  "Sonning bo'luvchilari va karralilari": {
+    q: ["Bo'luvchi — sonni qoldiqsiz bo'ladigan son. Karrali — shu songa qoldiqsiz bo'linadigan son.",
+      "Делитель — число, на которое данное делится без остатка. Кратное — число, которое делится на данное без остатка."],
+    f: [["72 ning bo'luvchilari: 1, 2, 3, 4, 6, 8, 9, 12, 18, 24, 36, 72", "делители 72: 1, 2, 3, 4, 6, 8, 9, 12, 18, 24, 36, 72"],
+      ["6 ning karralilari: 6, 12, 18, 24, …", "кратные 6: 6, 12, 18, 24, …"]],
+    e: ["Bo'luvchilar soni chekli, karralilar esa cheksiz ko'p.", "Делителей конечное число, а кратных — бесконечно много."],
+  },
+  "10 ga, 5 ga va 2 ga bo'linish belgilari": {
+    q: ["Oxirgi raqamga qarang: 0 bo'lsa — 10 ga; 0 yoki 5 bo'lsa — 5 ga; juft (0, 2, 4, 6, 8) bo'lsa — 2 ga bo'linadi.",
+      "Смотрим на последнюю цифру: 0 — делится на 10; 0 или 5 — на 5; чётная (0, 2, 4, 6, 8) — на 2."],
+    f: [["10:  …0     5:  …0, …5     2:  …0, 2, 4, 6, 8", "10:  …0     5:  …0, …5     2:  …0, 2, 4, 6, 8"]],
+  },
+  "9 ga va 3 ga bo'linish belgilari": {
+    q: ["Raqamlar yig'indisini hisoblang: u 3 ga bo'linsa, son 3 ga; 9 ga bo'linsa, son 9 ga bo'linadi.",
+      "Посчитайте сумму цифр: если она делится на 3, число делится на 3; если на 9 — число делится на 9."],
+    f: ["75:   7 + 5 = 12   →   3 ga bo'linadi", "738:   7 + 3 + 8 = 18   →   9 ga bo'linadi"],
+    e: ["9 ga bo'linadigan son 3 ga ham bo'linadi, lekin aksincha emas.", "Число, делящееся на 9, делится и на 3, но не наоборот."],
+  },
+  "Tub va murakkab sonlar": {
+    q: ["Tub son faqat 1 ga va o'ziga bo'linadi. Bo'luvchisi ikkitadan ko'p bo'lsa — murakkab son. 1 tub ham, murakkab ham emas.",
+      "Простое число делится только на 1 и на себя. Если делителей больше двух — составное. 1 не простое и не составное."],
+    f: ["2, 3, 5, 7, 11, 13, 17, 19, 23, 29, …"],
+    e: ["2 — yagona juft tub son.", "2 — единственное чётное простое число."],
+  },
+  "Tub ko'paytuvchilarga ajratish": {
+    q: ["Sonni eng kichik tub sonlarga (2, 3, 5, …) navbat bilan bo'lib boring, bo'linma 1 bo'lguncha.",
+      "Делите число по очереди на наименьшие простые числа (2, 3, 5, …), пока частное не станет 1."],
+    f: ["18 = 2 · 9 = 2 · 3 · 3", "36 = 2 · 2 · 3 · 3"],
+  },
+  "Eng katta umumiy bo'luvchi": {
+    q: ["EKUB — ikkala son ham bo'linadigan eng katta son. Tub ko'paytuvchilarga ajratib, UMUMIY ko'paytuvchilarni ko'paytiring.",
+      "НОД — наибольшее число, на которое делятся оба числа. Разложите на простые множители и перемножьте ОБЩИЕ."],
+    f: ["28 = 2 · 2 · 7,   42 = 2 · 3 · 7", "EKUB (28; 42) = 2 · 7 = 14"],
+  },
+  "O'zaro tub sonlar": {
+    q: ["EKUBi 1 ga teng sonlar o'zaro tub. Ular o'zi tub bo'lishi shart emas.", "Числа, НОД которых равен 1, — взаимно простые. Сами они не обязаны быть простыми."],
+    f: ["9 = 3 · 3,   16 = 2 · 2 · 2 · 2   →   EKUB = 1"],
+  },
+  "Eng kichik umumiy karrali": {
+    q: ["EKUK — ikkala songa ham bo'linadigan eng kichik son. Kattaroq sonning karralilarini tekshirib chiqish eng tez usul.",
+      "НОК — наименьшее число, которое делится на оба числа. Быстрее всего перебрать кратные большего числа."],
+    f: ["EKUK (4; 8) = 8", "EKUK (11; 6) = 66", "a · b = EKUB · EKUK"],
+    e: ["O'zaro tub sonlarning EKUKi ularning ko'paytmasi.", "НОК взаимно простых чисел равен их произведению."],
+  },
+  "Kasrning asosiy xossasi": {
+    q: ["Surat va maxrajni bir xil songa ko'paytirsak yoki bo'lsak, kasr qiymati o'zgarmaydi.", "Если числитель и знаменатель умножить или разделить на одно и то же число, дробь не изменится."],
+    f: ["a/b = (a · k)/(b · k)", "3/8 = 15/40   (× 5)"],
+  },
+  "Kasrlarni umumiy maxrajga keltirish": {
+    q: ["Maxrajlarning EKUKini toping — u umumiy maxraj. Har bir kasrni qo'shimcha ko'paytuvchiga kengaytiring.",
+      "Найдите НОК знаменателей — это общий знаменатель. Домножьте каждую дробь на дополнительный множитель."],
+    f: ["1/3 va 1/2:   EKUK = 6   →   2/6 va 3/6"],
+  },
+  "Har xil maxrajli kasrlarni taqqoslash": {
+    q: ["Umumiy maxrajga keltiring, keyin suratlarni solishtiring.", "Приведите к общему знаменателю, затем сравните числители."],
+    f: ["2/9 va 5/12:   8/36 < 15/36   →   5/12 katta"],
+  },
+  "Har xil maxrajli kasrlarni qo'shish": {
+    q: ["Umumiy maxrajga keltiring, suratlarni qo'shing, oxirida qisqartiring.", "Приведите к общему знаменателю, сложите числители, в конце сократите."],
+    f: ["1/4 + 1/2 = 1/4 + 2/4 = 3/4"],
+    e: ["Suratni suratga, maxrajni maxrajga qo'shib bo'lmaydi: 1/4 + 1/2 ≠ 2/6.", "Нельзя складывать числитель с числителем и знаменатель со знаменателем: 1/4 + 1/2 ≠ 2/6."],
+  },
+  "Har xil maxrajli kasrlarni ayirish": {
+    q: ["Umumiy maxrajga keltiring va suratlarni ayiring.", "Приведите к общему знаменателю и вычтите числители."],
+    f: ["2/3 − 2/7 = 14/21 − 6/21 = 8/21"],
+  },
+  "Aralash sonlarni qo'shish": {
+    q: ["Butunni butunga, kasrni kasrga qo'shing. Kasr qismi 1 dan oshsa, bittasini butunga o'tkazing.",
+      "Целые складываем с целыми, дроби с дробями. Если дробная часть больше 1, переносим единицу в целую часть."],
+    f: ["4 1/2 + 4 3/4 = 8 + 5/4 = 9 1/4"],
+  },
+  "Aralash sonlarni ayirish": {
+    q: ["Butunni butundan, kasrni kasrdan ayiring. Kasr qismi yetmasa, butun qismdan bitta birlikni kasrga aylantiring.",
+      "Вычитаем целые из целых, дроби из дробей. Если дробной части не хватает, занимаем единицу у целой части."],
+    f: ["5 9/10 − 1 2/5 = 4 + (9/10 − 4/10) = 4 5/10 = 4 1/2", "3 1/4 − 1 3/4 = 2 5/4 − 1 3/4 = 1 2/4 = 1 1/2"],
+  },
+  "Oddiy kasrlarni ko'paytirish": {
+    q: ["Suratni suratga, maxrajni maxrajga ko'paytiring. Oldindan qisqartirsangiz, hisob osonlashadi.", "Умножьте числитель на числитель, знаменатель на знаменатель. Сокращение заранее упрощает счёт."],
+    f: ["a/b × c/d = (a × c)/(b × d)", "4/7 × 1/5 = 4/35"],
+  },
+  "Aralash sonlarni ko'paytirish": {
+    q: ["Aralash sonni avval noto'g'ri kasrga aylantiring, keyin ko'paytiring.", "Сначала переведите смешанное число в неправильную дробь, затем умножайте."],
+    f: ["2 1/3 = 7/3", "7/3 × 8 = 56/3 = 18 2/3"],
+    e: ["Butunni butunga, kasrni kasrga alohida ko'paytirish XATO.", "Умножать отдельно целые и дробные части — ОШИБКА."],
+  },
+  "Sonning qismini topish": {
+    q: ["Sonning kasr qismini topish uchun sonni shu kasrga ko'paytiring.", "Чтобы найти дробь от числа, умножьте число на эту дробь."],
+    f: ["a × m/n", "35 × 6/7 = 30"],
+  },
+  "Ko'paytirishning taqsimot qonuni": {
+    q: ["Yig'indini songa ko'paytirish uchun har bir qo'shiluvchini alohida ko'paytirib, natijalarni qo'shish mumkin.",
+      "Чтобы умножить сумму на число, можно умножить каждое слагаемое отдельно и сложить результаты."],
+    f: ["(a + b) × c = a × c + b × c", "(5/6 + 2/3) × 6 = 5 + 4 = 9"],
+  },
+  "O'zaro teskari sonlar": {
+    q: ["Ko'paytmasi 1 ga teng sonlar o'zaro teskari. Kasrga teskari sonni topish uchun uni \"ag'daring\".",
+      "Числа, произведение которых равно 1, — взаимно обратные. Чтобы найти обратное дроби, «переверните» её."],
+    f: ["a/b × b/a = 1", "5/7 → 7/5,   3 → 1/3"],
+  },
+  "Oddiy kasrlarni bo'lish": {
+    q: ["Kasrga bo'lish — unga teskari songa ko'paytirish.", "Деление на дробь — умножение на обратное ей число."],
+    f: ["a/b ÷ c/d = a/b × d/c", "1/4 ÷ 1/3 = 1/4 × 3/1 = 3/4"],
+    e: ["Ag'dariladigan — IKKINCHI kasr (bo'luvchi).", "Переворачивается ВТОРАЯ дробь (делитель)."],
+  },
+  "Qismiga ko'ra sonning o'zini topish": {
+    q: ["Sonning qismi ma'lum bo'lsa, butun sonni topish uchun o'sha qismni kasrga bo'ling.", "Если известна часть числа, чтобы найти всё число, разделите эту часть на дробь."],
+    f: ["son = qism ÷ m/n", "14 ÷ 1/3 = 42"],
+    e: ["\"Sonning qismi\" — ko'paytirish, \"qismiga ko'ra son\" — bo'lish. Ularni adashtirmang.",
+      "«Часть от числа» — умножение, «число по его части» — деление. Не путайте."],
+  },
+  "Nisbat tushunchasi": {
+    q: ["Nisbat — ikki sonning bo'linmasi. Kasr kabi uni ham qisqartirish mumkin.", "Отношение — частное двух чисел. Как и дробь, его можно сокращать."],
+    f: ["a : b = a/b", "24 : 15 = 8 : 5   (÷ 3)"],
+  },
+  "Proporsiyaning asosiy xossasi": {
+    q: ["Ikki teng nisbat — proporsiya. Chetki hadlar ko'paytmasi o'rta hadlar ko'paytmasiga teng.",
+      "Равенство двух отношений — пропорция. Произведение крайних членов равно произведению средних."],
+    f: ["a : b = c : d   ⇒   a · d = b · c", "5 : 8 = x : 72   ⇒   x = 5 · 72 ÷ 8 = 45"],
+  },
+  "To'g'ri proporsional miqdorlar": {
+    q: ["Bir miqdor necha marta ortsa, ikkinchisi ham shuncha marta ortadi.", "Во сколько раз увеличивается одна величина, во столько же раз увеличивается другая."],
+    f: ["4 ta — 8 000,   12 ta — ?   →   12 ÷ 4 = 3 marta   →   24 000"],
+  },
+  "Teskari proporsional miqdorlar": {
+    q: ["Bir miqdor necha marta ortsa, ikkinchisi shuncha marta kamayadi. Ularning ko'paytmasi o'zgarmaydi.",
+      "Во сколько раз увеличивается одна величина, во столько же раз уменьшается другая. Их произведение постоянно."],
+    f: ["2 ishchi — 24 kun:   2 × 24 = 48,   12 ishchi — 48 ÷ 12 = 4 kun"],
+    e: ["Ishchi ko'paysa kun kamayadi — to'g'ri proporsiya tuzsangiz, javob katta chiqib qoladi.",
+      "Рабочих больше — дней меньше; если составить прямую пропорцию, ответ получится слишком большим."],
+  },
+  "Masshtab": {
+    q: ["Masshtab — xaritadagi uzunlikning haqiqiy uzunlikka nisbati. 1 : 100 — xaritadagi 1 sm yerda 100 sm = 1 m.",
+      "Масштаб — отношение длины на карте к настоящей длине. 1 : 100 — 1 см на карте равен 100 см = 1 м на местности."],
+    f: ["1 : 100,   11 sm   →   1 100 sm = 11 m"],
+    e: ["Oxirida birlikni o'tkazing: 100 sm = 1 m, 100 000 sm = 1 km.", "В конце переведите единицы: 100 см = 1 м, 100 000 см = 1 км."],
+  },
+  "Musbat va manfiy sonlar": {
+    q: ["Noldan katta sonlar musbat, noldan kichiklari manfiy (−). Nol na musbat, na manfiy.",
+      "Числа больше нуля — положительные, меньше нуля — отрицательные (−). Ноль ни положительный, ни отрицательный."],
+    f: [["dengiz sathidan 32 m past  →  −32", "32 м ниже уровня моря  →  −32"], ["5° sovuq  →  −5°", "5° мороза  →  −5°"]],
+  },
+  "Koordinata to'g'ri chizig'i": {
+    q: ["Son o'qida o'ngdagi son har doim katta. Manfiy sonlar noldan chapda.", "На числовой прямой правее всегда большее число. Отрицательные числа — левее нуля."],
+    f: ["−41 < −29 < 0 < 5"],
+    e: ["Manfiy sonlarda moduli katta son KICHIK: −41 < −29.", "У отрицательных чисел больше модуль — МЕНЬШЕ число: −41 < −29."],
+  },
+  "Qarama-qarshi sonlar va modul": {
+    q: ["Faqat ishorasi bilan farq qiladigan sonlar qarama-qarshi. Modul — sonning noldan masofasi, u manfiy bo'lmaydi.",
+      "Числа, отличающиеся только знаком, — противоположные. Модуль — расстояние от нуля, он не бывает отрицательным."],
+    f: ["−31 ↔ 31", "|−31| = 31,   |31| = 31"],
+  },
+  "Sonlarni taqqoslash": {
+    q: ["Musbat son har qanday manfiy sondan katta. Ikki manfiy sondan moduli kichigi katta.",
+      "Положительное число больше любого отрицательного. Из двух отрицательных больше то, у которого модуль меньше."],
+    f: ["16 > −32", "−3 > −7"],
+  },
+  "Bir xil ishorali sonlarni qo'shish": {
+    q: ["Modullarni qo'shing va umumiy ishorani saqlang.", "Сложите модули и сохраните общий знак."],
+    f: ["−14 + (−5) = −(14 + 5) = −19"],
+  },
+  "Har xil ishorali sonlarni qo'shish": {
+    q: ["Kattasidan kichik modulni ayiring va moduli katta sonning ishorasini qo'ying.", "Из большего модуля вычтите меньший и поставьте знак числа с большим модулем."],
+    f: ["−18 + 21 = +(21 − 18) = 3", "18 + (−21) = −3"],
+  },
+  "Sonlarni ayirish": {
+    q: ["Ayirish — qarama-qarshi sonni qo'shish.", "Вычитание — это прибавление противоположного числа."],
+    f: ["a − b = a + (−b)", "−20 − 25 = −20 + (−25) = −45", "5 − (−3) = 5 + 3 = 8"],
+    e: ["Ikki minus yonma-yon kelsa, plyusga aylanadi: − (−3) = + 3.", "Два минуса подряд дают плюс: − (−3) = + 3."],
+  },
+  "Sonlarni ko'paytirish": {
+    q: ["Modullarni ko'paytiring. Ishoralar bir xil bo'lsa — javob musbat, har xil bo'lsa — manfiy.", "Перемножьте модули. Знаки одинаковые — ответ положительный, разные — отрицательный."],
+    f: ["(+) × (+) = +,   (−) × (−) = +", "(+) × (−) = −", "−10 × 8 = −80"],
+  },
+  "Sonlarni bo'lish": {
+    q: ["Ishora qoidasi ko'paytirishdagidek: bir xil — musbat, har xil — manfiy.", "Правило знаков такое же, как при умножении: одинаковые — плюс, разные — минус."],
+    f: ["−16 ÷ (−2) = 8", "20 ÷ (−4) = −5"],
+  },
+  "Daraja va kvadrat ildiz": {
+    q: ["Daraja — sonni o'ziga ko'paytirish. Kvadrat ildiz — kvadrati berilgan songa teng bo'lgan musbat son.",
+      "Степень — умножение числа на себя. Квадратный корень — положительное число, квадрат которого равен данному."],
+    f: ["5² = 25,   √25 = 5", "(−3)² = 9,   −3² = −9"],
+    e: ["Manfiy son juft darajada musbat, toq darajada manfiy: (−2)³ = −8.", "Отрицательное число в чётной степени положительно, в нечётной — отрицательно: (−2)³ = −8."],
+  },
+  "Qavslarni ochish qoidasi": {
+    q: ["Qavs oldida plyus bo'lsa — ishoralar o'zgarmaydi. Minus bo'lsa — qavs ichidagi HAR BIR ishora teskarisiga o'zgaradi.",
+      "Если перед скобкой плюс — знаки не меняются. Если минус — меняется знак КАЖДОГО слагаемого в скобке."],
+    f: ["a − (b + c) = a − b − c", "50 − (23 + 18) = 50 − 23 − 18 = 9"],
+  },
+  "Koeffitsiyent": {
+    q: ["Harf oldidagi son — koeffitsiyent. Ifodani ko'paytirishda sonlar o'zaro ko'paytiriladi, harf qoladi.", "Число перед буквой — коэффициент. При умножении числа перемножаются, буква остаётся."],
+    f: ["2b × (−7) = −14b", "−3a × (−4) = 12a"],
+  },
+  "Chiziqli tenglamalarni yechish": {
+    q: ["Noma'lumli hadlarni bir tomonga, sonlarni ikkinchi tomonga o'tkazing (ishora o'zgaradi) va x oldidagi songa bo'ling.",
+      "Перенесите слагаемые с неизвестным в одну часть, числа — в другую (знак меняется) и разделите на коэффициент при x."],
+    f: ["9x − 7 = −97   ⇒   9x = −90   ⇒   x = −10"],
+  },
+  "Kasr koeffitsiyentli tenglamalar": {
+    q: ["Ikkala tomonni maxrajga ko'paytirib, kasrdan qutuling.", "Умножьте обе части на знаменатель, чтобы избавиться от дроби."],
+    f: ["1/7 · x = 5   ⇒   x = 5 · 7 = 35", "2/3 · x = 8   ⇒   x = 8 ÷ 2/3 = 12"],
+  },
+  "Jadvallar va diagrammalar": {
+    q: ["Jadvalda qator va ustun kesishgan katak javobni beradi. Ustunli diagrammada ustun qanchalik baland bo'lsa, qiymat shuncha katta.",
+      "В таблице ответ — в клетке на пересечении строки и столбца. На столбчатой диаграмме чем выше столбец, тем больше значение."],
+  },
+  "Ma'lumotlar tahlili": {
+    q: ["O'rta arifmetik — yig'indi sonlar soniga bo'linadi; moda — eng ko'p takrorlangan son; quloch — eng katta va eng kichik qiymat farqi.",
+      "Среднее — сумма, делённая на количество; мода — самое частое значение; размах — разность наибольшего и наименьшего."],
+    f: ["(30 + 24 + 27) ÷ 3 = 27"],
+  },
+  "Kombinatorika elementlari": {
+    q: ["Ko'paytirish qoidasi: bir tanlov a usulda, ikkinchisi b usulda bo'lsa, ikkalasi birga a × b usulda.",
+      "Правило умножения: если один выбор — a способов, второй — b способов, то вместе — a × b способов."],
+    f: [["4 ko'ylak, 5 shim   →   4 × 5 = 20", "4 рубашки, 5 брюк   →   4 × 5 = 20"]],
+  },
+  "Uchburchak va uning turlari": {
+    q: ["Tomonlariga ko'ra: uchala tomoni teng — teng tomonli, ikkitasi teng — teng yonli, hammasi har xil — turli tomonli. Burchaklariga ko'ra: o'tkir, to'g'ri va o'tmas burchakli.",
+      "По сторонам: все равны — равносторонний, две равны — равнобедренный, все разные — разносторонний. По углам: остроугольный, прямоугольный, тупоугольный."],
+  },
+  "Uchburchak perimetri va burchaklari": {
+    q: ["Perimetr — uchala tomon yig'indisi. Uchburchak burchaklarining yig'indisi doim 180°.", "Периметр — сумма трёх сторон. Сумма углов треугольника всегда 180°."],
+    f: ["P = a + b + c", "∠A + ∠B + ∠C = 180°"],
+  },
+  "Uchburchakning yuzi": {
+    q: ["Uchburchak yuzi — asosi va unga tushirilgan balandlik ko'paytmasining yarmi.", "Площадь треугольника — половина произведения основания на высоту к нему."],
+    f: ["S = a × h ÷ 2", "14 × 4 ÷ 2 = 28 sm²"],
+    e: ["2 ga bo'lishni unutmang — uchburchak to'g'ri to'rtburchakning yarmi.", "Не забудьте разделить на 2 — треугольник это половина прямоугольника."],
+  },
+  "Katakli qog'ozda yuzlarni hisoblash": {
+    q: ["Butun kataklarni sanang. Yarim kataklarni ikkitasini bitta deb hisoblang.", "Посчитайте целые клетки. Две половинки клетки считайте за одну."],
+    f: [["S = butun kataklar + yarimlar ÷ 2", "S = целые клетки + половинки ÷ 2"]],
+  },
+  "Aylana uzunligi va doira yuzi": {
+    q: ["Aylana uzunligi va doira yuzi radiusga bog'liq; π ≈ 3,14.", "Длина окружности и площадь круга зависят от радиуса; π ≈ 3,14."],
+    f: ["C = 2 × π × r", "S = π × r²", "r = 8:   C = 2 × 3,14 × 8 = 50,24"],
+    e: ["Diametr berilsa, avval radiusni toping: r = d ÷ 2.", "Если дан диаметр, сначала найдите радиус: r = d ÷ 2."],
+  },
 };
 
-/** Darsning nazariyasi (nomi bo'yicha). Yo'q bo'lsa — `undefined`. */
-export const nazariya = (darsNomi: string): Nazariya | undefined => NAZARIYA[darsNomi];
+/**
+ * KURSGA XOS nazariya — bir xil nomli dars turli kursda turli narsani
+ * o'rgatganda. Masalan "Ko'paytirish va bo'lish" 5-sinfda natural sonlar
+ * haqida, 7–8-sinfda esa algebraik kasrlar haqida; umumiy yozuv
+ * 5-sinf o'quvchisiga x li kasrni ko'rsatardi. Kalit: "kursId|dars nomi".
+ */
+const KURSGA: Record<string, Nazariya> = {
+  // 6-sinfda bu takrorlash darsi va savollari qo'shish haqida.
+  "grade6|O'nli kasrlar": {
+    q: ["Maxraji 10, 100, 1000 bo'lgan kasr vergul bilan yoziladi. Qo'shish va ayirishda vergul vergul ostida turadi.",
+      "Дробь со знаменателем 10, 100, 1000 записывается через запятую. При сложении и вычитании запятая стоит под запятой."],
+    f: ["1 3/10 = 1,3", "84,2 + 1,4 = 85,6"],
+  },
+  "grade5|Ko'paytirish va bo'lish": {
+    q: ["Ko'p xonali sonlar ustun shaklida ko'paytiriladi: ikkinchi sonning har bir raqamiga alohida ko'paytirib, natijalar bir xona chapga surib qo'shiladi. Bo'lish — ko'paytirishning teskarisi.",
+      "Многозначные числа умножаются столбиком: умножаем на каждую цифру второго числа, результаты сдвигаем на разряд влево и складываем. Деление — действие, обратное умножению."],
+    f: ["59 × 79 = 59 × 9 + 59 × 70 = 531 + 4130 = 4661", "a × b = c   ⇒   c ÷ b = a"],
+    e: ["Ikkinchi qatorni bir xona chapga surishni unutmang — u o'nliklarga ko'paytma.",
+      "Не забудьте сдвинуть вторую строку на разряд влево — это умножение на десятки."],
+  },
+  "grade6|Kasrlarni qisqartirish": {
+    q: ["Surat va maxrajni ularning EKUBiga bo'lamiz — kasr qiymati o'zgarmaydi, lekin sonlar kichrayadi.",
+      "Делим числитель и знаменатель на их НОД — значение дроби не меняется, а числа становятся меньше."],
+    f: ["10/15 = (10 ÷ 5) / (15 ÷ 5) = 2/3", "24/36 = 2/3   (EKUB = 12)"],
+    e: ["Bo'lib bo'lmaydigan holatgacha qisqartiring: 12/18 → 6/9 hali oxiri emas, 2/3 gacha.",
+      "Сокращайте до несократимой дроби: 12/18 → 6/9 ещё не конец, нужно до 2/3."],
+  },
+};
+
+/** Darsning nazariyasi: avval kursga xosi, keyin nom bo'yicha umumiysi. */
+export const nazariya = (kursId: string, darsNomi: string): Nazariya | undefined =>
+  KURSGA[`${kursId}|${darsNomi}`] ?? NAZARIYA[darsNomi];

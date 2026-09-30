@@ -91,7 +91,7 @@ export function Mavzu({ kurs, ui, ochiq, imtihon, onMashq, onChiq }: {
       </div>
 
       {darslar.map(({ L, li }) => (
-        <DarsKarta key={li} L={L} ochiq={ochiqLi === li}
+        <DarsKarta key={li} kursId={kurs.id} L={L} ochiq={ochiqLi === li}
           onBos={() => { tebrat("tanlov"); setOchiqLi(ochiqLi === li ? null : li); }} />
       ))}
 
@@ -111,8 +111,8 @@ export function Mavzu({ kurs, ui, ochiq, imtihon, onMashq, onChiq }: {
 }
 
 /** Bitta dars: sarlavha (bosiladi), ochilganda — qoida, formulalar, e'tibor, namuna. */
-function DarsKarta({ L, ochiq, onBos }: { L: Lesson; ochiq: boolean; onBos: () => void }) {
-  const n = nazariya(L.n);
+function DarsKarta({ kursId, L, ochiq, onBos }: { kursId: string; L: Lesson; ochiq: boolean; onBos: () => void }) {
+  const n = nazariya(kursId, L.n);
   return (
     <section className="overflow-hidden rounded-clay bg-karta shadow-clay-sm">
       <button type="button" onClick={onBos} aria-expanded={ochiq} data-tahlil="Mavzu: dars"
