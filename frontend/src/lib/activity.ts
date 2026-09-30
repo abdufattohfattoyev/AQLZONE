@@ -145,10 +145,20 @@ export interface BelgiQ extends Base { type: "belgi"; belgi: string }
  */
 export interface AyirQ extends Base { type: "ayirvis"; n: number; k: number; emoji: string }
 
+/**
+ * Rasmiy imtihon topshirig'i (`lib/sertRasmiy.ts`) — savol AYNAN o'sha
+ * yozilishda, generator emas.
+ *
+ * `prompt` — nima so'ralgani; `kirish` — umumiy shart (ochiq savolning
+ * ikki qismi va moslashtirishning uch savoli uchun bitta); `text` —
+ * formula qatori; `rasm` — chizma (SVG matni, `lib/sertRasm.ts`).
+ */
+export interface RasmiyQ extends Base { type: "rasmiy"; kirish?: string; text?: string; rasm?: string }
+
 export type Activity =
   | Eqn | Column | NumRay | Frac | Clock | Perim | Area | ShapeQ | Groups | Coord | DataQ
   | RangQ | RasmQ | CountQ | CmpVis | OddQ | PosQ | TensQ
-  | NaqshQ | BelgiQ | AyirQ;
+  | NaqshQ | BelgiQ | AyirQ | RasmiyQ;
 
 export type ActivityType = Activity["type"];
 

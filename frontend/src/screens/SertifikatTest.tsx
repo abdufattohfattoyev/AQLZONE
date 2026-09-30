@@ -43,6 +43,7 @@ import { javobSaqla, mavzuXatoYoz } from "../lib/imtihon";
 import type { MavzuXato } from "../lib/imtihon";
 import { sertSavollari } from "../lib/korish";
 import { KoribChiqish } from "../components/KoribChiqish";
+import { boblargaYig, natijaYoz as ozlashYoz } from "../lib/ozlashtirish";
 import { ReytingKarta } from "../components/HaftalikReyting";
 import { NatijaSarlavha } from "../components/NatijaSarlavha";
 import { NatijaUlash } from "../components/NatijaUlash";
@@ -153,6 +154,9 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
       m.set(k, { mavzu: q.s.mavzu, kursId: q.s.kursId, ui: q.s.ui, xato: (m.get(k)?.xato ?? 0) + 1 });
     });
     mavzuXatoYoz([...m.values()], "sert");
+    // Aralash test — o'zlashtirish darajasiga (javobsizlar hisobga kirmaydi).
+    ozlashYoz(boblargaYig(sertSavollari(v, j).filter((q) => q.berildi)
+      .map((q) => ({ kursId: q.s.kursId, ui: q.s.ui, togri: q.togri }))), "aralash");
     // Mavzular serverga ham — o'qituvchi paneli uchun (`core/sinf.py`).
     const mavzular = [...m.values()].map((x) => ({ m: x.mavzu, x: x.xato }));
     setYozildi({ tayyor: serverga({ variant: v.n, ball, sekund, vaqt, togri: toliq, jami, mavzular }), vaqt });
@@ -307,22 +311,31 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
 
 /* ==================== savol turlari ==================== */
 
-/** Savol sharti: formulali savolda shart kartaning ichida (`QuestionView`). */
+/**
+ * Savol sharti: formulali savolda shart kartaning ichida (`QuestionView`).
+ *
+ * Rasmiy topshiriqda umumiy shart (`kirish`) bo'lsa — u savoldan OLDIN
+ * turadi: moslashtirishning uch savoli va ochiq savolning ikki qismi
+ * bitta shartga tayanadi, o'qish tartibi ham shunday.
+ */
 function Shart({ a, kichik = false }: { a: Activity; kichik?: boolean }) {
+  const shart = !shartSahnada(a) && (
+    <div className="rounded-[20px] bg-karta px-[18px] py-4 text-[17px] leading-snug whitespace-pre-line shadow-clay-sm">
+      {a.prompt}
+    </div>
+  );
+  const sahna = sahnaBor(a) && (
+    <div className={`flex items-center justify-center rounded-[20px] bg-karta p-4 shadow-clay-sm
+                     ${kichik ? "[&_.font-display]:text-[22px]" : a.type === "rasmiy" ? "" : "min-h-[130px]"}`}>
+      <QuestionView a={a} />
+    </div>
+  );
+  const oldin = a.type === "rasmiy" && Boolean(a.kirish);
   return (
-    <>
-      {!shartSahnada(a) && (
-        <div className="rounded-[20px] bg-karta px-[18px] py-4 text-[17px] leading-snug shadow-clay-sm">
-          {a.prompt}
-        </div>
-      )}
-      {sahnaBor(a) && (
-        <div className={`mt-2.5 flex items-center justify-center rounded-[20px] bg-karta p-4 shadow-clay-sm
-                         ${kichik ? "[&_.font-display]:text-[24px]" : "min-h-[130px]"}`}>
-          <QuestionView a={a} />
-        </div>
-      )}
-    </>
+    <div className="flex flex-col gap-2.5">
+      {oldin ? sahna : shart}
+      {oldin ? shart : sahna}
+    </div>
   );
 }
 
@@ -425,12 +438,12 @@ function Ochiq({ S, j, onYoz }: {
           <span className="min-w-0 flex-1 text-[15.5px] leading-snug">{s.a.prompt}</span>
           <span className="shrink-0 text-[12.5px] font-semibold text-ink-dim">{t("sertBallQisqa", { b: ballYoz(ball) })}</span>
         </div>
-        {"text" in s.a && (
+        {s.a.type === "eqn" && (
           <div className="mt-1.5 font-display text-[20px] leading-tight break-words">
             {s.a.text.split(/,?\s{3,}/).filter(Boolean).map((x, i) => <div key={i}>{x}</div>)}
           </div>
         )}
-        {s.a.type !== "eqn" && sahnaBor(s.a) && <div className="mt-2"><QuestionView a={s.a} /></div>}
+        {s.a.type !== "eqn" && s.a.type !== "rasmiy" && sahnaBor(s.a) && <div className="mt-2"><QuestionView a={s.a} /></div>}
         <div className="mt-3 flex gap-2">
           <button type="button" aria-label={t("sertIshora")}
             onClick={() => yoz(qiymat.startsWith("−") || qiymat.startsWith("-") ? qiymat.slice(1) : `−${qiymat}`)}
@@ -444,11 +457,25 @@ function Ochiq({ S, j, onYoz }: {
             className="h-[52px] min-w-0 flex-1 rounded-2xl border-2 border-track bg-karta px-4 font-display text-[20px]
                        font-bold outline-none placeholder:text-ink-dim focus:border-brand-blue" />
         </div>
+        {/* Rasmiy javob ifoda bo'lishi mumkin (π/14, √5/4): telefon klaviaturasida bu belgilar yo'q. */}
+        <div className="mt-2 flex gap-2">
+          {["π", "√", "/"].map((b) => (
+            <button key={b} type="button" aria-label={b}
+              onClick={() => yoz((qiymat + b).slice(0, 16))}
+              className="clay-press h-11 min-w-14 flex-1 rounded-xl bg-track font-display text-[18px] font-bold text-ink-soft">
+              {b}
+            </button>
+          ))}
+        </div>
       </div>
     );
   };
   return (
     <div className="flex flex-col gap-3">
+      {/* Rasmiy topshiriqda ikki qismga BITTA umumiy shart va chizma: ikki marta chizilmaydi. */}
+      {S.a.a.type === "rasmiy" && sahnaBor(S.a.a) && (
+        <div className="rounded-[20px] bg-karta p-4 shadow-clay-sm"><QuestionView a={S.a.a} /></div>
+      )}
       {qism("a", S.a, BALL.oA)}
       {qism("b", S.b, BALL.oB)}
       <p className="px-1 text-[13px] text-ink-dim">{t("sertSonYoz")}</p>
@@ -686,7 +713,7 @@ function Natija({ v, javoblar, sekund, yozildi, strelka, onKorish, onQayta, onEx
                                  text-[15px] font-bold text-brand-red">{q.nom}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] leading-tight">
-                    {"text" in q.s.a ? q.s.a.text : q.s.a.prompt}
+                    {q.s.a.type === "rasmiy" ? q.s.a.prompt : "text" in q.s.a ? q.s.a.text : q.s.a.prompt}
                   </span>
                   <span className="mt-0.5 block truncate text-[13px]">
                     <span className="font-bold text-brand-green-d">{t("sertTogriJavob", { j: String(q.s.a.answer) })}</span>

@@ -30,6 +30,18 @@
  * tushuntirilgan.
  */
 
+import { TOLAQ_ALGEBRA } from "./tolaqAlgebra";
+import { TOLAQ_ALGEBRA7 } from "./tolaqAlgebra7";
+import { TOLAQ_ALGEBRA8 } from "./tolaqAlgebra8";
+import { TOLAQ_ALGEBRA9 } from "./tolaqAlgebra9";
+import { TOLAQ_GEOMETRIYA7 } from "./tolaqGeometriya7";
+import { TOLAQ_GEOMETRIYA8 } from "./tolaqGeometriya8";
+import { TOLAQ_GEOMETRIYA9 } from "./tolaqGeometriya9";
+import { TOLAQ_KATTA } from "./tolaqKatta";
+import { TOLAQ_TAKROR } from "./tolaqTakror";
+import { TOLAQ_ANALIZ } from "./tolaqAnaliz";
+import { TOLAQ_GEOMETRIYA } from "./tolaqGeometriya";
+
 /** Ikki tildagi matn: [o'zbekcha, ruscha]. */
 export type Juft = [string, string];
 
@@ -1539,3 +1551,49 @@ const KURSGA: Record<string, Nazariya> = {
 /** Darsning nazariyasi: avval kursga xosi, keyin nom bo'yicha umumiysi. */
 export const nazariya = (kursId: string, darsNomi: string): Nazariya | undefined =>
   KURSGA[`${kursId}|${darsNomi}`] ?? NAZARIYA[darsNomi];
+
+/* ═══════════════════ TO'LIQ DARS (`lib/nazariyaTolaq.ts`) ═══════════════════ */
+
+/** Tilga bog'liq bo'lmagan satr (formula) yoki ikki tilli juftlik. */
+export type Matn = string | Juft;
+
+/** Qo'lda yechilgan misol: shart, qadamlar, javob. */
+export interface Misol { s: Matn; y: Matn[]; j: string }
+
+/**
+ * Mavzuni TO'LIQ o'rgatadigan qo'shimcha: tushuncha, nomli formulalar,
+ * yechish qadamlari, qo'lda yechilgan misollar va xatolar ro'yxati.
+ * Ixtiyoriy — bo'lmasa dars faqat `Nazariya` bilan chiqadi.
+ */
+export interface Tolaq {
+  t?: { h: Juft; p: Juft }[];
+  f?: { n: Juft; f: string }[];
+  s?: Juft[];
+  m?: Misol[];
+  x?: Juft[];
+}
+
+const TOLAQ: Record<string, Tolaq> = {
+  ...TOLAQ_GEOMETRIYA, ...TOLAQ_ALGEBRA, ...TOLAQ_ANALIZ,
+  ...TOLAQ_ALGEBRA7, ...TOLAQ_GEOMETRIYA7, ...TOLAQ_ALGEBRA8, ...TOLAQ_GEOMETRIYA8,
+  ...TOLAQ_ALGEBRA9, ...TOLAQ_GEOMETRIYA9, ...TOLAQ_KATTA, ...TOLAQ_TAKROR,
+};
+
+/** 7–11-sinf kurslari: `algebra7`, `geometriya10`, `matematika11`. Quyi sinflarda bir xil nomli dars boshqa narsa haqida. */
+const YUQORI = /^(algebra|geometriya|matematika)\d+$/;
+
+/**
+ * Darsning to'liq tushuntirishi (tushuncha, misollar, xatolar) — bo'lmasa `undefined`.
+ *
+ * Kalit ikki xil: "kursId|dars nomi" (faqat shu kurs uchun) yoki oddiy nom
+ * (hamma 7–11-sinf kurslari uchun). Bir xil nomli dars ikki kursda boshqa
+ * narsa haqida bo'lsa (masalan "Sinus, kosinus, tangens" 8-sinf geometriyasida
+ * to'g'ri burchakli uchburchak, 9-sinf algebrasida birlik aylana) —
+ * kurs kaliti ishlatiladi.
+ */
+export const tolaq = (kursId: string, darsNomi: string): Tolaq | undefined =>
+  TOLAQ[`${kursId}|${darsNomi}`] ?? (YUQORI.test(kursId) ? TOLAQ[darsNomi] : undefined);
+
+/** Sinov uchun: hamma kalitlar. */
+export const TOLAQ_KALITLAR = (): string[] => Object.keys(TOLAQ);
+export const tolaqKalit = (k: string): Tolaq | undefined => TOLAQ[k];

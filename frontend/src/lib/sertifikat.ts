@@ -34,6 +34,7 @@ import { imtihonKurslari, manbalar, sinfOf, blokYasa } from "./blok";
 import type { BlokSavol, Manba } from "./blok";
 import { courseById } from "./curriculum";
 import { kunUrugi, urugBilan } from "./oyin/urug";
+import { RASMIY_RAQAM, rasmiyVariant } from "./sertRasmiy";
 
 /** Nechta variant bor — DTM bilan bir xil. */
 export const VARIANTLAR = 12;
@@ -61,6 +62,8 @@ export interface SVariant {
   savollar: SSavol[];
   /** Moslashtirish savollarining umumiy javoblari, A–F tartibida. */
   y2: Answer[];
+  /** Rasmiy namuna (haqiqiy imtihon savollari), generator emas — `lib/sertRasmiy.ts`. */
+  rasmiy?: boolean;
 }
 
 /** Berilgan javob. Ochiq savolda ikki qism, qolganida tanlangan qiymat. */
@@ -118,6 +121,7 @@ function bobdan(guruh: Manba[], n: number, band: Set<string>, javobiFarqli = fal
  */
 export function variantYasa(n: number): SVariant | null {
   if (!Number.isInteger(n) || n < 1 || n > VARIANTLAR) return null;
+  if (n === RASMIY_RAQAM) return rasmiyVariant(n);
   return urugBilan(kunUrugi(`sertifikat-variant-${n}`, 7), () => yasa(n));
 }
 
@@ -182,16 +186,90 @@ function yasa(n: number): SVariant | null {
 /* ------------------------------------------------------------ baholash */
 
 /**
- * Yozilgan son to'g'rimi.
+ * Yozilgan javob to'g'rimi.
  *
  * Odam "−3" ni "-3" deb, "2,5" ni "2.5" deb yozadi — ikkalasi ham
  * to'g'ri. Son sifatida solishtiriladi, matn sifatida emas.
+ *
+ * Rasmiy javoblar ba'zan ifoda: "π/14", "√5/4", "12√2", "−3/2".
+ * Ular `ifodaQiymati` bilan songa aylantirib solishtiriladi: "3/2" va
+ * "1,5" bir xil, "√5/4" va "√5 / 4" ham.
  */
 export function sonTogrimi(yozildi: string, javob: Answer): boolean {
-  const son = (x: string) => Number(x.trim().replace(/\s+/g, "").replace(/[−–—]/g, "-").replace(",", "."));
-  const a = son(yozildi);
-  const b = son(String(javob));
-  return yozildi.trim() !== "" && Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) < 1e-9;
+  if (yozildi.trim() === "") return false;
+  const a = ifodaQiymati(yozildi);
+  const b = ifodaQiymati(String(javob));
+  return a !== null && b !== null && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b));
+}
+
+/**
+ * Javob yozuvini songa aylantiradi: son, o'nli kasr (vergul yoki nuqta),
+ * `a/b`, `π`, `√`, qavs, `+ − · × ^`, hamda yozilmagan ko'paytirish
+ * ("2√3", "3π"). Tushunilmasa — `null`. `eval` ishlatilmaydi.
+ */
+export function ifodaQiymati(matn: string): number | null {
+  const s = matn.trim().replace(/\s+/g, "").replace(/[−–—]/g, "-").replace(/(\d),(\d)/g, "$1.$2")
+    .replace(/[·×*]/g, "*").replace(/pi/gi, "π").replace(/sqrt/gi, "√");
+  let i = 0;
+  const kel = () => s[i];
+  const raqam = (c: string | undefined) => c !== undefined && /[\d.]/.test(c);
+
+  const ifoda = (): number | null => {
+    let x = had();
+    while (x !== null && (kel() === "+" || kel() === "-")) {
+      const op = s[i++];
+      const y = had();
+      x = y === null ? null : op === "+" ? x + y : x - y;
+    }
+    return x;
+  };
+  const had = (): number | null => {
+    let x = daraja();
+    while (x !== null && i < s.length) {
+      const c = kel();
+      if (c === "*" || c === "/") {
+        i++;
+        const y = daraja();
+        x = y === null ? null : c === "*" ? x * y : x / y;
+      } else if (c === "(" || c === "π" || c === "√" || raqam(c)) {
+        const y = daraja(); // yozilmagan ko'paytirish: 2√3, 3π
+        x = y === null ? null : x * y;
+      } else break;
+    }
+    return x;
+  };
+  const daraja = (): number | null => {
+    const x = ishora();
+    if (x !== null && kel() === "^") { i++; const y = ishora(); return y === null ? null : x ** y; }
+    return x;
+  };
+  const ishora = (): number | null => {
+    if (kel() === "-") { i++; const x = ishora(); return x === null ? null : -x; }
+    if (kel() === "+") { i++; return ishora(); }
+    return birlik();
+  };
+  const birlik = (): number | null => {
+    const c = kel();
+    if (c === "(") {
+      i++;
+      const x = ifoda();
+      if (kel() !== ")") return null;
+      i++;
+      return x;
+    }
+    if (c === "π") { i++; return Math.PI; }
+    if (c === "√") { i++; const x = birlik(); return x === null || x < 0 ? null : Math.sqrt(x); }
+    if (raqam(c)) {
+      const b = i;
+      while (raqam(kel())) i++;
+      const x = Number(s.slice(b, i));
+      return Number.isFinite(x) ? x : null;
+    }
+    return null;
+  };
+
+  const x = ifoda();
+  return x !== null && i === s.length && Number.isFinite(x) ? x : null;
 }
 
 /** Bitta savolning to'plagan balli. */

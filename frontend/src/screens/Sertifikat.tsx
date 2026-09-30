@@ -24,6 +24,7 @@ import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
 import {
   DAQIQA, DARAJA_SHKALA, TUZILISH, VARIANTLAR, berilgan, daraja, engYaxshi, joriyniOqi, ortacha, sinxronla,
 } from "../lib/sertifikat";
+import { RASMIY_RAQAM } from "../lib/sertRasmiy";
 
 const SAVOL_SONI = TUZILISH.y1 + TUZILISH.y2 + TUZILISH.o;
 
@@ -153,12 +154,16 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
               <span className={`text-[12.5px] ${bu ? "font-bold text-brand-blue-t" : "text-ink-dim"}`}>
                 {bu ? `${javobli}/${SAVOL_SONI}` : eng ? ballYoz(eng.ball) : "—"}
               </span>
+              {n === RASMIY_RAQAM && (
+                <span className="text-[11px] font-bold leading-tight text-brand-gold-d">{t("sertRasmiy")}</span>
+              )}
             </button>
           );
         })}
       </div>
 
       <p className="text-[13px] leading-snug text-ink-dim">{t("sertPastIzoh")}</p>
+      <p className="text-[13px] leading-snug text-ink-dim">{t("sertRasmiyIzoh")}</p>
       </div>
     </div>
   );

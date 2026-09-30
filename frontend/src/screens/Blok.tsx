@@ -64,6 +64,7 @@ import { tebrat, useOrqaga } from "../lib/qobiq";
 import { tovush } from "../lib/ovoz";
 import { yolImtMashq, yolImtReyting, yolMavzu } from "../lib/yollar";
 import { KoribChiqish } from "../components/KoribChiqish";
+import { boblargaYig, natijaYoz as ozlashYoz } from "../lib/ozlashtirish";
 import { ReytingKarta } from "../components/HaftalikReyting";
 import { NatijaSarlavha } from "../components/NatijaSarlavha";
 import { NatijaUlash } from "../components/NatijaUlash";
@@ -385,6 +386,15 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
      * bobning nomi ham yoziladi: hisobotda qaysi mavzu ekani
      * ko'rinsin.
      */
+    // O'zlashtirish darajasi (`lib/ozlashtirish.ts`): faqat mavzular
+    // mashqi — "mashq", qolgan hammasi — aralash test. Aralashda javob
+    // berilmagan (ulgurilmagan) savol hisobga kirmaydi: vaqt tugashi
+    // bilimsizlik emas.
+    const mashqmi = alohida && !toplam && !imtihon && !sessiya && !marafon;
+    ozlashYoz(boblargaYig(blok.savollar
+      .map((S, i) => ({ kursId: S.kursId, ui: S.ui, togri: Boolean(toliq[i]?.togri), berildi: toliq[i]?.tanlangan != null }))
+      .filter((x) => mashqmi || x.berildi)), mashqmi ? "mashq" : "aralash");
+
     api.postResult({
       grade: sinf,
       unit: BLOK_JOY,

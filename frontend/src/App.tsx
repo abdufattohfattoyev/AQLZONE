@@ -88,7 +88,7 @@ import { mavzuById } from "./lib/kichkintoy";
 import { oyinById } from "./lib/oyin";
 import { darajaniOqi } from "./lib/oyin/tur";
 import { ochiqmi } from "./lib/oyin/rekord";
-import { COURSES, courseBySlug, maktabKursi } from "./lib/curriculum";
+import { COURSES, courseById, courseBySlug, maktabKursi } from "./lib/curriculum";
 import { useProgress } from "./lib/progress";
 import type { LessonResult } from "./lib/progress";
 import { isUnlocked, lessonId } from "./lib/types";
@@ -435,7 +435,8 @@ function MavzuSahifasi() {
   const orqaga = () => (window.history.state?.idx > 0 ? nav(-1) : nav(yolKurs(c)));
 
   return (
-    <Mavzu kurs={c} ui={ui} ochiq={Number.isInteger(li) && li >= 0 ? li : undefined}
+    <Mavzu key={`${c.id}-${ui}`} kurs={c} ui={ui} ochiq={Number.isInteger(li) && li >= 0 ? li : undefined}
+      onAsos={(k, u) => { const ac = courseById(k); if (ac) nav(yolMavzu(ac, u)); }}
       imtihon={state?.xato ? { xato: state.xato, ball: state.ball ?? "" } : undefined}
       onMashq={() => nav(yolMavzuMashq(c, ui))} onChiq={orqaga} />
   );

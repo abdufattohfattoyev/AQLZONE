@@ -43,6 +43,17 @@ export function QuestionView({ a }: { a: Activity }) {
       );
     }
 
+    case "rasmiy":
+      // Rasmiy topshiriq (`lib/sertRasmiy.ts`): umumiy shart, formula, chizma.
+      // Chizma — o'zimizning qattiq yozilgan SVG (`lib/sertRasm.ts`), kiritma emas.
+      return (
+        <div className="flex w-full flex-col items-center gap-3.5">
+          {a.kirish && <p className="w-full text-left text-[15.5px] leading-snug whitespace-pre-line">{a.kirish}</p>}
+          {a.text && <div className="text-center font-display text-[24px] leading-tight break-words">{a.text}</div>}
+          {a.rasm && <div className="w-full text-ink" dangerouslySetInnerHTML={{ __html: a.rasm }} />}
+        </div>
+      );
+
     case "column":
       return (
         <div className="font-display text-[34px] leading-tight tabular-nums">
@@ -345,6 +356,7 @@ export function sahnaBor(a: Activity): boolean {
   if (a.type === "rasm") return Boolean(a.emoji);
   if (a.type === "rang") return Boolean(a.rang);
   if (a.type === "belgi") return Boolean(a.belgi);
+  if (a.type === "rasmiy") return Boolean(a.kirish || a.text || a.rasm);
   return true;
 }
 
