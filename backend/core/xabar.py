@@ -346,7 +346,8 @@ def quiz_yubor(
 MAX_SARLAVHA = 1024
 
 
-def _multipart(maydonlar: dict[str, str], rasm: bytes) -> tuple[bytes, str]:
+def _multipart(maydonlar: dict[str, str], rasm: bytes, fayl_maydon: str = "photo",
+               fayl_nomi: str = "masala.jpg", fayl_turi: str = "image/jpeg") -> tuple[bytes, str]:
     """
     Fayl yuborish uchun tana yasaydi.
 
@@ -366,8 +367,8 @@ def _multipart(maydonlar: dict[str, str], rasm: bytes) -> tuple[bytes, str]:
         )
     qism.append(
         f"--{chegara}\r\n"
-        f'Content-Disposition: form-data; name="photo"; filename="masala.jpg"\r\n'
-        f"Content-Type: image/jpeg\r\n\r\n".encode()
+        f'Content-Disposition: form-data; name="{fayl_maydon}"; filename="{fayl_nomi}"\r\n'
+        f"Content-Type: {fayl_turi}\r\n\r\n".encode()
     )
     qism.append(rasm)
     qism.append(f"\r\n--{chegara}--\r\n".encode())
@@ -416,10 +417,55 @@ def rasm_yubor(
         maydonlar["reply_markup"] = json.dumps({"inline_keyboard": qatorlar})
 
     tana, turi = _multipart(maydonlar, rasm)
-    url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto"
+    return _fayl_sorov("sendPhoto", tana, turi, 60)
+
+
+def video_yubor(
+    chat_id: str,
+    video: bytes,
+    sarlavha: str,
+    tugmalar: list[tuple[str, str, str]] | None = None,
+    en: int = 1080,
+    boy: int = 1920,
+    davom: int = 0,
+) -> tuple[str, str, int]:
+    """
+    Videoli xabar — kanalga reklama roligi (`rolik_post`).
+
+    `rasm_yubor` bilan bir xil shartnoma: `(holat, izoh, xabar_id)`.
+    O'lcham va davomiylik ATAYLAB beriladi: berilmasa Telegram
+    vertikal (9:16) videoni ba'zan kvadrat "prevyu" bilan ko'rsatadi va
+    lentada u kesilgan holda chiqadi. `supports_streaming` — video
+    to'liq yuklanmasdan o'ynay boshlasin.
+    """
+    maydonlar = {
+        "chat_id": chat_id,
+        "caption": sarlavha[:MAX_SARLAVHA],
+        "parse_mode": "HTML",
+        "width": str(en),
+        "height": str(boy),
+        "supports_streaming": "true",
+    }
+    if davom:
+        maydonlar["duration"] = str(davom)
+    qatorlar = [
+        [tugma_yasa(matn, uslub, url=havola)]
+        for matn, havola, uslub in (tugmalar or [])
+        if matn and havola
+    ]
+    if qatorlar:
+        maydonlar["reply_markup"] = json.dumps({"inline_keyboard": qatorlar})
+    tana, turi = _multipart(maydonlar, video, "video", "rolik.mp4", "video/mp4")
+    # 10 MB atrofidagi fayl — sekin tarmoqda bir daqiqadan oshishi mumkin.
+    return _fayl_sorov("sendVideo", tana, turi, 180)
+
+
+def _fayl_sorov(usul: str, tana: bytes, turi: str, kutish: int) -> tuple[str, str, int]:
+    """Faylli so'rov (`sendPhoto`/`sendVideo`) — javobni bir xil ko'rinishga keltiradi."""
+    url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/{usul}"
     so_rov = urllib.request.Request(url, data=tana, headers={"Content-Type": turi})
     try:
-        with urllib.request.urlopen(so_rov, timeout=60) as r:
+        with urllib.request.urlopen(so_rov, timeout=kutish) as r:
             javob = json.loads(r.read())
             if not javob.get("ok"):
                 return "xato", "ok=false", 0

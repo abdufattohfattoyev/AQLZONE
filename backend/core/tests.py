@@ -9243,3 +9243,63 @@ class SeoTest(TestCase):
         r = self.client.get("/robots.txt").content.decode()
         self.assertIn("Sitemap: https://aql-zone.uz/sitemap.xml", r)
         self.assertIn("Disallow: /api/", r)
+
+
+@override_settings(KANAL="AqlZoneUz", BOT_TOKEN=BOT, ADMIN_TG=["1"])
+class RolikPostTest(TestCase):
+    """Kunlik reklama roligi: navbat tartibi, kuniga bitta, xatoda navbatda qoladi."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        self.kok = tempfile.mkdtemp()
+        self.sozlama = override_settings(ROLIK_PAPKA=self.kok)
+        self.sozlama.enable()
+        self.navbat = Path(self.kok) / "navbat"
+        self.navbat.mkdir()
+        for nom in ("02-dtm", "01-sertifikat"):
+            (self.navbat / f"{nom}.mp4").write_bytes(b"video")
+            (self.navbat / f"{nom}.json").write_text(json.dumps(
+                {"matn": f"{nom} matni", "tugma": "Ochish", "havola": "https://t.me/x"}), encoding="utf-8")
+
+    def tearDown(self):
+        import shutil
+        self.sozlama.disable()
+        shutil.rmtree(self.kok, ignore_errors=True)
+
+    def _yur(self, javob=("yuborildi", "", 105)):
+        from django.core.management import call_command
+        from core import xabar as X
+        with patch.object(X, "video_yubor", return_value=javob) as v, \
+                patch.object(X, "yubor") as admin:
+            call_command("rolik_post", stdout=MagicMock())
+        return v, admin
+
+    def test_birinchisi_chiqadi_va_chiqdiga_kochadi(self):
+        v, _ = self._yur()
+        self.assertEqual(v.call_count, 1)
+        kanal, _video, matn, tugmalar = v.call_args.args
+        self.assertEqual(kanal, "@AqlZoneUz")
+        self.assertEqual(matn, "01-sertifikat matni")
+        self.assertEqual(tugmalar[0][:2], ("Ochish", "https://t.me/x"))
+        self.assertEqual(sorted(p.name for p in self.navbat.glob("*")), ["02-dtm.json", "02-dtm.mp4"])
+        chiqdi = list((self.navbat.parent / "chiqdi").glob("*.json"))
+        self.assertEqual(json.loads(chiqdi[0].read_text(encoding="utf-8"))["xabar_id"], 105)
+
+    def test_bir_kunda_ikkinchisi_chiqmaydi(self):
+        self._yur()
+        v, _ = self._yur()
+        self.assertEqual(v.call_count, 0)
+        self.assertTrue((self.navbat / "02-dtm.mp4").exists())
+
+    def test_xatoda_navbatda_qoladi_va_admin_biladi(self):
+        _, admin = self._yur(("xato", "Bad Request", 0))
+        self.assertTrue((self.navbat / "01-sertifikat.mp4").exists())
+        self.assertIn("chiqmadi", admin.call_args.args[1])
+
+    def test_bosh_navbat_adminga_aytiladi(self):
+        for p in self.navbat.glob("*"):
+            p.unlink()
+        v, admin = self._yur()
+        self.assertEqual(v.call_count, 0)
+        self.assertIn("bo'sh", admin.call_args.args[1])

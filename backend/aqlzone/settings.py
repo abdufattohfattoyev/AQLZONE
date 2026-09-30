@@ -367,6 +367,12 @@ MEDIA_ROOT = env("MEDIA_ROOT", str(Path("/data") / "media") if Path("/data").exi
                  else str(BASE_DIR / "media"))
 MEDIA_URL = "/media/"
 
+# Kanalga har kuni chiqadigan reklama roliklari (`rolik_post`).
+# `navbat/` — kutayotganlar, `chiqdi/` — joylanganlar. Volume'da:
+# haftalik to'plam joylash (qayta qurish) paytida yo'qolmasin.
+ROLIK_PAPKA = env("ROLIK_PAPKA", str(Path("/data") / "rolik") if Path("/data").exists()
+                  else str(BASE_DIR / "rolik"))
+
 #: Masala rasmining eng katta hajmi (bayt) — yuborishdan OLDIN tekshiriladi.
 #:
 #: 6 MB — zamonaviy telefon surati shu atrofda. Undan kattasi deyarli

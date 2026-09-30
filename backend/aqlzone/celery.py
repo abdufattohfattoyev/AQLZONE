@@ -148,6 +148,14 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=19, minute=0),
         "args": ("marafon", "eslatma"),
     },
+    # Reklama roligi kanalga — 19:00, haftalik to'plam navbatidan bittadan
+    # (`rolik_post`). Kechqurun: o'quvchi darsdan bo'shagan, kunlik masala
+    # (18:05) bilan bir soat oralig'i bor.
+    "rolik-post": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=19, minute=0),
+        "args": ("rolik_post",),
+    },
     # Tugagan marafonning g'oliblari kanalga — bir marta (`elon_at`).
     "marafon-yakun": {
         "task": "core.vazifalar.buyruq",
