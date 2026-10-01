@@ -7,7 +7,8 @@ Kanaldagi matematika rukni (`core/matematika_kanal.py`).
     python manage.py matematika_kanal misol           # og'zaki misol — savol, javob izohda
     python manage.py matematika_kanal javob           # o'sha misolning javobi va usuli
     python manage.py matematika_kanal test            # kattalar uchun tez test — rasm + quiz
-    python manage.py matematika_kanal avto --sinov    # yubormaydi, matnni ko'rsatadi
+    python manage.py matematika_kanal albom           # haftalik albom — suriladigan kartalar
+    python manage.py matematika_kanal avto --sinov   # yubormaydi, matnni ko'rsatadi
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from core import albom_kanal as AK
 from core import matematika_kanal as MK
 from core import xabar as X
 from core.models import KanalYozuv
@@ -24,7 +26,7 @@ class Command(BaseCommand):
     help = "Kanalga matematika yangiligi, qiziq fakt yoki og'zaki misol joylaydi"
 
     def add_arguments(self, parser):
-        parser.add_argument("tur", choices=["yigish", "avto", "fakt", "misol", "javob", "test"])
+        parser.add_argument("tur", choices=["yigish", "avto", "fakt", "misol", "javob", "test", "albom"])
         parser.add_argument("--sinov", action="store_true", help="yubormaydi, faqat ko'rsatadi")
 
     def _kanal(self) -> str:
@@ -140,8 +142,42 @@ class Command(BaseCommand):
             return
         self.stdout.write(self.style.SUCCESS("kanalga joylandi: test"))
 
+    def _albom(self, sinov: bool) -> None:
+        """
+        Haftalik albom — suriladigan kartalar (`core/albom_kanal.py`).
+        Kuniga bitta: jadval ikki marta ishlasa ham ikkinchisi chiqmaydi.
+        """
+        albom = AK.keyingi_albom()
+        if sinov:
+            self.stdout.write(AK.albom_posti(albom))
+            for nom, ifoda, pastki in albom["kartalar"]:
+                self.stdout.write(f"  ▫️ {nom}: {ifoda!r} — {pastki}")
+            self.stdout.write(self.style.SUCCESS("(sinov — yuborilmadi)"))
+            return
+        if AK.bugun_chiqdimi():
+            self.stdout.write("bugungi albom allaqachon chiqqan")
+            return
+        kanal = self._kanal()
+        if not kanal:
+            return
+
+        bot = (getattr(settings, "BOT_USERNAME", "") or "").lstrip("@")
+        havola = f"https://t.me/{bot}?startapp" if bot else X.ilova_havolasi()
+        holat, izoh, xabar_id = X.albom_yubor(
+            kanal, AK.albom_rasmlari(albom), AK.albom_posti(albom),
+            [("🧮 Mashq qilish", havola, X.KOK)])
+        if holat != "yuborildi":
+            self.stderr.write(self.style.ERROR(f"albom yuborilmadi: {holat} {izoh}"))
+            return
+        AK.albom_belgila(albom, xabar_id)
+        self.stdout.write(self.style.SUCCESS(f"kanalga joylandi: albom {albom['kalit']} ({xabar_id})"))
+
     def handle(self, *args, **o):
         tur, sinov = o["tur"], o["sinov"]
+
+        if tur == "albom":
+            self._albom(sinov)
+            return
 
         if tur == "test":
             self._test(sinov)

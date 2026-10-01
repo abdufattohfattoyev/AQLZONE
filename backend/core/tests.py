@@ -9361,3 +9361,73 @@ class AlbomPostTest(TestCase):
         ranglar = [Image.open(io.BytesIO(r)).getpixel((4, 4)) for r in rasmlar]
         self.assertGreater(ranglar[0][0], 200)      # 01.png — qizil, birinchi
         self.assertGreater(ranglar[1][2], 200)      # 02.png — ko'k
+
+
+@override_settings(KANAL="AqlZoneUz", BOT_TOKEN=BOT, BOT_USERNAME="aqlzone_bot")
+class HaftalikAlbomTest(TestCase):
+    """Haftalik albom: navbat tartibi, takrorlanmaslik, kartalar sig'ishi."""
+
+    def setUp(self):
+        from core.models import KanalYozuv
+        self.Yozuv = KanalYozuv
+
+    def _yur(self, javob=("yuborildi", "", 120)):
+        from django.core.management import call_command
+        from core import albom_kanal as AK
+        from core import xabar as X
+        with patch.object(X, "albom_yubor", return_value=javob) as a, \
+                patch.object(AK, "albom_rasmlari", return_value=[b"1", b"2"]):
+            call_command("matematika_kanal", "albom", stdout=MagicMock(), stderr=MagicMock())
+        return a
+
+    def test_navbat_tartibida_va_kuniga_bitta(self):
+        from core import albom_kanal as AK
+        a = self._yur()
+        kanal, _rasmlar, matn, tugmalar = a.call_args.args
+        self.assertEqual(kanal, "@AqlZoneUz")
+        self.assertIn(AK.ALBOMLAR[0]["sarlavha"], matn)
+        self.assertEqual(tugmalar[0][1], "https://t.me/aqlzone_bot?startapp")
+        self.assertEqual(self.Yozuv.objects.get(kalit="albom:qisqa-kopaytirish").manba, "120")
+        self.assertEqual(self._yur().call_count, 0)             # o'sha kuni ikkinchisi yo'q
+        self.assertEqual(AK.keyingi_albom()["kalit"], AK.ALBOMLAR[1]["kalit"])
+
+    def test_xatoda_belgilanmaydi(self):
+        self._yur(("xato", "Bad Request", 0))
+        self.assertFalse(self.Yozuv.objects.filter(kalit__startswith="albom:").exists())
+
+    def test_hammasi_chiqsa_eng_eskisi_qaytadi(self):
+        from datetime import timedelta
+        from core import albom_kanal as AK
+        for n, albom in enumerate(AK.ALBOMLAR):
+            AK.albom_belgila(albom)
+            self.Yozuv.objects.filter(kalit=f"albom:{albom['kalit']}").update(
+                joylangan_at=timezone.now() - timedelta(days=10 + (n == 3) * 50))
+        self.assertEqual(AK.keyingi_albom()["kalit"], AK.ALBOMLAR[3]["kalit"])
+
+    def test_kartalar_sigadi(self):
+        """Ifoda ko'pi bilan ikki qator va eng kichik shriftda kenglikka sig'adi; pastki — bir qator."""
+        from PIL import Image, ImageDraw
+        from core import albom_kanal as AK
+        from core.kunlik_kartochka import _shrift
+        d = ImageDraw.Draw(Image.new("RGB", (10, 10)))
+        kalitlar = [a["kalit"] for a in AK.ALBOMLAR]
+        self.assertEqual(len(kalitlar), len(set(kalitlar)))
+        for albom in AK.ALBOMLAR:
+            self.assertTrue(2 <= len(albom["kartalar"]) <= 10, albom["kalit"])
+            for nom, ifoda, pastki in albom["kartalar"]:
+                self.assertNotIn(": ", nom)
+                qatorlar = ifoda.split("\n")
+                self.assertLessEqual(len(qatorlar), 2, ifoda)
+                for q in qatorlar:
+                    self.assertLessEqual(d.textlength(q, font=_shrift(52)), 840, q)
+                self.assertLessEqual(d.textlength(pastki, font=_shrift(32, False)), 840, pastki)
+
+    def test_misollar_togri(self):
+        """Kartalardagi hisoblar — rasmga tushgan xatoni tahrirlab bo'lmaydi."""
+        self.assertEqual((31 ** 2, 49 ** 2, 47 * 53), (961, 2401, 2491))
+        self.assertEqual((35 * 11, 65 ** 2, 48 * 5, 36 * 25, 47 * 9), (385, 4225, 240, 900, 423))
+        self.assertEqual(1 + 12 ** 3, 9 ** 3 + 10 ** 3)
+        self.assertEqual((7641 - 1467, 142857 * 2, 1111 ** 2), (6174, 285714, 1234321))
+        self.assertEqual(sum(b for b in range(1, 28) if 28 % b == 0), 28)
+        self.assertEqual((738 % 3, 5316 % 4, 4527 % 9, 2728 % 11, 3475 % 25), (0, 0, 0, 0, 0))
+        self.assertEqual((200 * 15 // 100, 50 * 8 // 100, 8 * 50 // 100, 500 * 12 // 10), (30, 4, 4, 600))

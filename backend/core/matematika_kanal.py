@@ -449,15 +449,24 @@ _KOK = (59, 111, 224)
 
 
 def _qatorlarga(d, matn: str, shrift, kenglik: int) -> list[str]:
-    qatorlar, joriy = [], ""
-    for soz in matn.split():
-        sinov = f"{joriy} {soz}".strip()
-        if joriy and d.textlength(sinov, font=shrift) > kenglik:
+    """
+    Matnni kenglikka sig'adigan qatorlarga bo'ladi. `\\n` — MAJBURIY
+    uzilish: formula o'zi bo'linsa "(a +" bir qatorda, "b)(…" keyingisida
+    qolib ketadi, shuning uchun uzilish joyi ("=" dan keyin) qo'lda beriladi.
+    """
+    qatorlar: list[str] = []
+    for bolak in matn.split("\n"):
+        joriy = ""
+        for soz in bolak.split():
+            sinov = f"{joriy} {soz}".strip()
+            if joriy and d.textlength(sinov, font=shrift) > kenglik:
+                qatorlar.append(joriy)
+                joriy = soz
+            else:
+                joriy = sinov
+        if joriy:
             qatorlar.append(joriy)
-            joriy = soz
-        else:
-            joriy = sinov
-    return qatorlar + ([joriy] if joriy else [])
+    return qatorlar
 
 
 def misol_rasmi(misol: tuple, rukn: str = "OG'ZAKI MISOL", pastki: str = "",
@@ -517,13 +526,16 @@ def misol_rasmi(misol: tuple, rukn: str = "OG'ZAKI MISOL", pastki: str = "",
         shart, ifoda = "", savol
     shart_sh = _shrift(40 * S, False)
     shart_q = _qatorlarga(d, shart, shart_sh, kenglik) if shart else []
-    olchamlar, sigim, maydon = (132, 116, 100, 88, 76, 66), 2, 620
+    olchamlar, sigim, maydon = (132, 116, 100, 88, 76, 66, 58, 52), 2, 620
     if variantlar:
         olchamlar, sigim, maydon = (72, 64, 58, 52, 46), 5, 390
     for px in olchamlar:
         shrift = _shrift(px * S)
         qatorlar = _qatorlarga(d, ifoda, shrift, kenglik)
-        if len(qatorlar) <= sigim and int(px * 1.25) * len(qatorlar) <= maydon:
+        # Kenglik ham tekshiriladi: bo'linmaydigan uzun qator (majburiy
+        # uzilishli formula) kartadan chiqib ketmasin.
+        if (len(qatorlar) <= sigim and int(px * 1.25) * len(qatorlar) <= maydon
+                and all(d.textlength(q, font=shrift) <= kenglik for q in qatorlar)):
             break
     shart_qadam, qadam = 56 * S, int(px * S * 1.25)
     boshi = shart_qadam * len(shart_q) + (40 * S if shart_q else 0)

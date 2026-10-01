@@ -125,6 +125,14 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=15, minute=0, day_of_week="1,3,5"),
         "args": ("matematika_kanal", "test"),
     },
+    # Albom (suriladigan kartalar, `core/albom_kanal.py`) — yakshanba,
+    # o'sha 15:00 da: bu kuni misol ham, test ham yo'q, o'rin bo'sh.
+    # Haftada bitta: mazmuni qo'lda yozilgan va tez tugab qolmasin.
+    "matematika-albom": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=15, minute=0, day_of_week=0),
+        "args": ("matematika_kanal", "albom"),
+    },
     # ── O'sish tahlili (`core/osish.py`) ──
     # Kun oxiridagi surat: Telegram kanal obunachilarining TARIXINI
     # bermaydi — yozib borilmasa "hafta davomida +40" deb bo'lmaydi.
