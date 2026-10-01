@@ -9303,3 +9303,55 @@ class RolikPostTest(TestCase):
         v, admin = self._yur()
         self.assertEqual(v.call_count, 0)
         self.assertIn("bo'sh", admin.call_args.args[1])
+
+
+@override_settings(KANAL="AqlZoneUz", BOT_TOKEN=BOT)
+class AlbomPostTest(TestCase):
+    """Albom: bitta so'rov, yozuv faqat birinchi rasmda, raqam birinchisiniki."""
+
+    def test_bitta_sorovda_ketadi_va_yozuv_birinchisida(self):
+        from core import xabar as X
+        with patch("core.xabar.urllib.request.urlopen") as u:
+            u.return_value.__enter__.return_value.read.return_value = (
+                b'{"ok":true,"result":[{"message_id":41},{"message_id":42}]}'
+            )
+            natija = X.albom_yubor("@AqlZoneUz", [b"AAA", b"BBB"], "<b>Yozuv</b>")
+        self.assertEqual(natija, ("yuborildi", "", 41))
+        self.assertEqual(u.call_count, 1)
+        so_rov = u.call_args[0][0]
+        self.assertTrue(so_rov.full_url.endswith("/sendMediaGroup"))
+        tana = so_rov.data.decode("utf-8", "replace")
+        self.assertEqual(tana.count("<b>Yozuv</b>"), 1)
+        self.assertIn("attach://rasm0", tana)
+        self.assertIn('name="rasm1"; filename="rasm1.jpg"', tana)
+        self.assertNotIn("reply_markup", tana)
+
+    def test_bitta_rasm_albom_emas(self):
+        from core import xabar as X
+        with patch("core.xabar.urllib.request.urlopen") as u:
+            holat, _, xabar_id = X.albom_yubor("@AqlZoneUz", [b"AAA"], "")
+        u.assert_not_called()
+        self.assertEqual((holat, xabar_id), ("xato", 0))
+
+    def test_buyruq_rasmlarni_nom_tartibida_yuboradi(self):
+        import io
+        import shutil
+        import tempfile
+        from pathlib import Path
+        from django.core.management import call_command
+        from PIL import Image
+        from core import xabar as X
+
+        papka = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, papka, ignore_errors=True)
+        for nom, rang in (("02.png", (0, 0, 255)), ("01.png", (255, 0, 0))):
+            Image.new("RGB", (8, 8), rang).save(papka / nom)
+        (papka / "matn.txt").write_text("Kitob do'koni", encoding="utf-8")
+
+        with patch.object(X, "albom_yubor", return_value=("yuborildi", "", 9)) as a:
+            call_command("albom_post", str(papka), stdout=MagicMock())
+        kanal, rasmlar, matn = a.call_args.args
+        self.assertEqual((kanal, matn), ("@AqlZoneUz", "Kitob do'koni"))
+        ranglar = [Image.open(io.BytesIO(r)).getpixel((4, 4)) for r in rasmlar]
+        self.assertGreater(ranglar[0][0], 200)      # 01.png — qizil, birinchi
+        self.assertGreater(ranglar[1][2], 200)      # 02.png — ko'k

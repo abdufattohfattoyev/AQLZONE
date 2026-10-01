@@ -357,6 +357,12 @@ def _multipart(maydonlar: dict[str, str], rasm: bytes, fayl_maydon: str = "photo
     ustiga qurilgan va bitta funksiya uchun bog'liqlik ortdirish
     o'rinsiz.
     """
+    return _multipart_kop(maydonlar, [(fayl_maydon, fayl_nomi, fayl_turi, rasm)])
+
+
+def _multipart_kop(maydonlar: dict[str, str],
+                   fayllar: list[tuple[str, str, str, bytes]]) -> tuple[bytes, str]:
+    """Bir nechta faylli tana. `fayllar` — `(maydon, fayl_nomi, turi, baytlar)`."""
     chegara = f"----aqlzone{uuid.uuid4().hex}"
     qism: list[bytes] = []
     for kalit, qiymat in maydonlar.items():
@@ -365,13 +371,15 @@ def _multipart(maydonlar: dict[str, str], rasm: bytes, fayl_maydon: str = "photo
             f'Content-Disposition: form-data; name="{kalit}"\r\n\r\n'
             f"{qiymat}\r\n".encode()
         )
-    qism.append(
-        f"--{chegara}\r\n"
-        f'Content-Disposition: form-data; name="{fayl_maydon}"; filename="{fayl_nomi}"\r\n'
-        f"Content-Type: {fayl_turi}\r\n\r\n".encode()
-    )
-    qism.append(rasm)
-    qism.append(f"\r\n--{chegara}--\r\n".encode())
+    for maydon, nom, turi, baytlar in fayllar:
+        qism.append(
+            f"--{chegara}\r\n"
+            f'Content-Disposition: form-data; name="{maydon}"; filename="{nom}"\r\n'
+            f"Content-Type: {turi}\r\n\r\n".encode()
+        )
+        qism.append(baytlar)
+        qism.append(b"\r\n")
+    qism.append(f"--{chegara}--\r\n".encode())
     return b"".join(qism), f"multipart/form-data; boundary={chegara}"
 
 
@@ -460,6 +468,44 @@ def video_yubor(
     return _fayl_sorov("sendVideo", tana, turi, 180)
 
 
+#: Bitta albomdagi rasmlar soni (Telegram cheklovi).
+ALBOM_MIN, ALBOM_MAX = 2, 10
+
+
+def albom_yubor(chat_id: str, rasmlar: list[bytes], sarlavha: str) -> tuple[str, str, int]:
+    """
+    Albom — chapga-o'ngga suriladigan bir nechta rasmli BITTA post.
+
+    `rasm_yubor` bilan bir xil shartnoma: `(holat, izoh, xabar_id)`.
+    `xabar_id` — albomdagi BIRINCHI rasmniki: `t.me/<kanal>/<id>`
+    havolasi butun albomni ochadi.
+
+    Yozuv faqat birinchi rasmga qo'yiladi: shunda Telegram uni
+    albomning umumiy matni qilib ko'rsatadi. Har biriga yozilsa,
+    post ostida matn umuman chiqmaydi.
+
+    TUGMA YO'Q va bu Telegram cheklovi: `sendMediaGroup` da
+    `reply_markup` bo'lmaydi. Havola kerak bo'lsa, u yozuvning ichida
+    `<a href>` bo'lib ketadi.
+    """
+    if not ALBOM_MIN <= len(rasmlar) <= ALBOM_MAX:
+        return "xato", f"albomda {ALBOM_MIN}–{ALBOM_MAX} ta rasm bo'ladi", 0
+
+    media = []
+    for i in range(len(rasmlar)):
+        qism = {"type": "photo", "media": f"attach://rasm{i}"}
+        if i == 0 and sarlavha:
+            qism["caption"] = sarlavha[:MAX_SARLAVHA]
+            qism["parse_mode"] = "HTML"
+        media.append(qism)
+
+    tana, turi = _multipart_kop(
+        {"chat_id": chat_id, "media": json.dumps(media, ensure_ascii=False)},
+        [(f"rasm{i}", f"rasm{i}.jpg", "image/jpeg", r) for i, r in enumerate(rasmlar)],
+    )
+    return _fayl_sorov("sendMediaGroup", tana, turi, 180)
+
+
 def _fayl_sorov(usul: str, tana: bytes, turi: str, kutish: int) -> tuple[str, str, int]:
     """Faylli so'rov (`sendPhoto`/`sendVideo`) — javobni bir xil ko'rinishga keltiradi."""
     url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/{usul}"
@@ -469,7 +515,11 @@ def _fayl_sorov(usul: str, tana: bytes, turi: str, kutish: int) -> tuple[str, st
             javob = json.loads(r.read())
             if not javob.get("ok"):
                 return "xato", "ok=false", 0
-            xabar_id = int(javob.get("result", {}).get("message_id") or 0)
+            # Albomda `result` — xabarlar RO'YXATI; birinchisi olinadi.
+            natija = javob.get("result") or {}
+            if isinstance(natija, list):
+                natija = natija[0] if natija else {}
+            xabar_id = int(natija.get("message_id") or 0)
             return "yuborildi", "", xabar_id
     except urllib.error.HTTPError as e:
         izoh = ""

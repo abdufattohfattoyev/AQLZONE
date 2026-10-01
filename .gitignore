@@ -38,6 +38,9 @@ media/
 # qaytadan yasaladi va git`da o`nlab megabayt joy egallardi.
 .rolik/
 
+# Kanal albomlari — `albom_post` ga beriladigan tayyor rasmlar va matn.
+.albom/
+
 # Higgsfield asboblari — `npx skills add higgsfield-ai/skills` qo`ygan
 # ko`nikmalar va ularning qulfi. Kod emas, ASBOB: har dasturchi o`zi
 # o`rnatadi va versiyasi mashinasiga bog`liq bo`ladi.
