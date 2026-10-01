@@ -9307,24 +9307,30 @@ class RolikPostTest(TestCase):
 
 @override_settings(KANAL="AqlZoneUz", BOT_TOKEN=BOT)
 class AlbomPostTest(TestCase):
-    """Albom: bitta so'rov, yozuv faqat birinchi rasmda, raqam birinchisiniki."""
+    """Albom: suriladigan boy xabar — bitta so'rov, rasmlar slayd ichida."""
 
-    def test_bitta_sorovda_ketadi_va_yozuv_birinchisida(self):
+    def test_slayd_bolib_bitta_sorovda_ketadi(self):
         from core import xabar as X
         with patch("core.xabar.urllib.request.urlopen") as u:
             u.return_value.__enter__.return_value.read.return_value = (
-                b'{"ok":true,"result":[{"message_id":41},{"message_id":42}]}'
+                b'{"ok":true,"result":{"message_id":41}}'
             )
-            natija = X.albom_yubor("@AqlZoneUz", [b"AAA", b"BBB"], "<b>Yozuv</b>")
+            natija = X.albom_yubor("@AqlZoneUz", [b"AAA", b"BBB"], "<b>Sarlavha</b>\n\nBirinchi\nIkkinchi",
+                                   [("Ochish", "https://t.me/x", X.KOK)])
         self.assertEqual(natija, ("yuborildi", "", 41))
         self.assertEqual(u.call_count, 1)
         so_rov = u.call_args[0][0]
-        self.assertTrue(so_rov.full_url.endswith("/sendMediaGroup"))
+        # `sendMediaGroup` emas: u rasmlarni katakcha qilib teradi, surilmaydi.
+        self.assertTrue(so_rov.full_url.endswith("/sendRichMessage"))
         tana = so_rov.data.decode("utf-8", "replace")
-        self.assertEqual(tana.count("<b>Yozuv</b>"), 1)
-        self.assertIn("attach://rasm0", tana)
+        boy = json.loads(tana.split('name="rich_message"\r\n\r\n')[1].split("\r\n--")[0])
+        self.assertEqual(
+            boy["html"],
+            '<tg-slideshow><img src="tg://photo?id=rasm0"/><img src="tg://photo?id=rasm1"/></tg-slideshow>'
+            "<p><b>Sarlavha</b></p><p>Birinchi<br>Ikkinchi</p>")
+        self.assertEqual([m["media"]["media"] for m in boy["media"]], ["attach://rasm0", "attach://rasm1"])
         self.assertIn('name="rasm1"; filename="rasm1.jpg"', tana)
-        self.assertNotIn("reply_markup", tana)
+        self.assertIn("https://t.me/x", tana.split('name="reply_markup"')[1])
 
     def test_bitta_rasm_albom_emas(self):
         from core import xabar as X
@@ -9350,8 +9356,8 @@ class AlbomPostTest(TestCase):
 
         with patch.object(X, "albom_yubor", return_value=("yuborildi", "", 9)) as a:
             call_command("albom_post", str(papka), stdout=MagicMock())
-        kanal, rasmlar, matn = a.call_args.args
-        self.assertEqual((kanal, matn), ("@AqlZoneUz", "Kitob do'koni"))
+        kanal, rasmlar, matn, tugmalar = a.call_args.args
+        self.assertEqual((kanal, matn, tugmalar), ("@AqlZoneUz", "Kitob do'koni", []))
         ranglar = [Image.open(io.BytesIO(r)).getpixel((4, 4)) for r in rasmlar]
         self.assertGreater(ranglar[0][0], 200)      # 01.png — qizil, birinchi
         self.assertGreater(ranglar[1][2], 200)      # 02.png — ko'k

@@ -1,8 +1,9 @@
 """
 Albom — chapga-o'ngga suriladigan bir nechta rasmli post kanalga.
 
-    albom_post <papka>           papkadagi rasmlarni bitta post qilib yuboradi
-    albom_post <papka> --sinov   nima chiqishini aytadi, yubormaydi
+    albom_post <papka>              papkadagi rasmlarni bitta post qilib yuboradi
+    albom_post <papka> --sinov      nima chiqishini aytadi, yubormaydi
+    albom_post <papka> --kimga ID   kanal o'rniga shu chatga (ko'rib olish uchun)
 
 Papka ichida:
 
@@ -12,8 +13,8 @@ Papka ichida:
 Rasmlar JPEG ga o'giriladi: Telegram WebP ni rasm o'rnida ba'zan rad
 etadi (`rasm.jpeg_qil` dagi izohga qarang).
 
-Tugma yo'q — Telegram albomga tugma qo'ydirmaydi. Ilovaga havola
-`matn.txt` ichida `<a href="https://t.me/...">...</a>` bo'lib yoziladi.
+`matn.txt` da bo'sh qator — yangi band. Tugma kerak bo'lsa:
+`--tugma "Ilovani ochish" --havola https://t.me/...`.
 """
 from __future__ import annotations
 
@@ -34,11 +35,14 @@ def rasmlar(papka: Path) -> list[Path]:
 
 
 class Command(BaseCommand):
-    help = "Papkadagi rasmlarni kanalga bitta albom post qilib yuboradi"
+    help = "Papkadagi rasmlarni kanalga bitta suriladigan albom qilib yuboradi"
 
     def add_arguments(self, parser):
         parser.add_argument("papka")
         parser.add_argument("--sinov", action="store_true")
+        parser.add_argument("--kimga", default="")
+        parser.add_argument("--tugma", default="")
+        parser.add_argument("--havola", default="")
 
     def handle(self, *args, **o):
         papka = Path(o["papka"])
@@ -52,18 +56,19 @@ class Command(BaseCommand):
 
         matn_fayl = papka / "matn.txt"
         matn = matn_fayl.read_text(encoding="utf-8").strip() if matn_fayl.exists() else ""
-        if len(matn) > X.MAX_SARLAVHA:
-            raise CommandError(f"matn {len(matn)} belgi — {X.MAX_SARLAVHA} dan oshmasin")
+        tugmalar = [(o["tugma"], o["havola"], X.KOK)] if o["tugma"] and o["havola"] else []
 
         if o["sinov"]:
-            self.stdout.write(f"chiqadi: {', '.join(p.name for p in roy)}\n{matn}")
+            self.stdout.write(
+                f"chiqadi: {', '.join(p.name for p in roy)}\n{matn}\ntugma: {tugmalar}")
             return
 
         kanal = kanal_nomi()
-        if not kanal or not getattr(settings, "BOT_TOKEN", ""):
+        kimga = o["kimga"] or kanal
+        if not kimga or not getattr(settings, "BOT_TOKEN", ""):
             raise CommandError("KANAL yoki BOT_TOKEN sozlanmagan")
 
-        holat, izoh, xabar_id = X.albom_yubor(kanal, [jpeg_qil(p) for p in roy], matn)
+        holat, izoh, xabar_id = X.albom_yubor(kimga, [jpeg_qil(p) for p in roy], matn, tugmalar)
         self.stdout.write(f"albom: {len(roy)} ta rasm — {holat} {izoh} {xabar_id or ''}")
-        if holat == "yuborildi" and xabar_id:
+        if holat == "yuborildi" and xabar_id and kimga == kanal:
             self.stdout.write(f"https://t.me/{kanal.lstrip('@')}/{xabar_id}")

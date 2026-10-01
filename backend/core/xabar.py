@@ -16,6 +16,7 @@ Telegram'ning uchta o'ziga xosligi shu yerda, bitta joyda hal qilinadi:
 from __future__ import annotations
 
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -468,42 +469,62 @@ def video_yubor(
     return _fayl_sorov("sendVideo", tana, turi, 180)
 
 
-#: Bitta albomdagi rasmlar soni (Telegram cheklovi).
+#: Bitta albomdagi rasmlar soni. Yuqori chegara — o'zimizniki: Telegram
+#: 50 tagacha ruxsat beradi, lekin o'ntadan ortig'ini hech kim surmaydi.
 ALBOM_MIN, ALBOM_MAX = 2, 10
 
 
-def albom_yubor(chat_id: str, rasmlar: list[bytes], sarlavha: str) -> tuple[str, str, int]:
+def _boy_matn(matn: str) -> str:
     """
-    Albom — chapga-o'ngga suriladigan bir nechta rasmli BITTA post.
+    Oddiy post matnini (`<b>`, `<a>` va qator uzilishlari) boy xabar
+    HTML iga o'giradi: bo'sh qator — yangi `<p>`, oddiy uzilish — `<br>`.
+    Boy xabarda qator uzilishi o'z-o'zidan saqlanmaydi.
+    """
+    bandlar = [b.strip() for b in re.split(r"\n\s*\n", matn.strip()) if b.strip()]
+    return "".join(f"<p>{b.replace(chr(10), '<br>')}</p>" for b in bandlar)
+
+
+def albom_yubor(
+    chat_id: str,
+    rasmlar: list[bytes],
+    sarlavha: str,
+    tugmalar: list[tuple[str, str, str]] | None = None,
+) -> tuple[str, str, int]:
+    """
+    Albom — chapga-o'ngga SURILADIGAN bir nechta rasmli bitta post.
 
     `rasm_yubor` bilan bir xil shartnoma: `(holat, izoh, xabar_id)`.
-    `xabar_id` — albomdagi BIRINCHI rasmniki: `t.me/<kanal>/<id>`
-    havolasi butun albomni ochadi.
 
-    Yozuv faqat birinchi rasmga qo'yiladi: shunda Telegram uni
-    albomning umumiy matni qilib ko'rsatadi. Har biriga yozilsa,
-    post ostida matn umuman chiqmaydi.
+    Bu `sendMediaGroup` EMAS va farqi ko'rinishda: u rasmlarni bitta
+    xabarda mayda katakchalar qilib teradi — formula yozilgan kartani
+    o'qib bo'lmaydi. Suriladigan ko'rinish — boy xabarning
+    (`sendRichMessage`, Bot API 10.1+) `<tg-slideshow>` bloki: har bir
+    rasm to'liq kenglikda, ostida nuqtalar.
 
-    TUGMA YO'Q va bu Telegram cheklovi: `sendMediaGroup` da
-    `reply_markup` bo'lmaydi. Havola kerak bo'lsa, u yozuvning ichida
-    `<a href>` bo'lib ketadi.
+    Rasmlar `tg://photo?id=...` havolasi bilan ko'rsatiladi va shu
+    so'rovning o'zida `attach://` orqali yuklanadi.
     """
     if not ALBOM_MIN <= len(rasmlar) <= ALBOM_MAX:
         return "xato", f"albomda {ALBOM_MIN}–{ALBOM_MAX} ta rasm bo'ladi", 0
 
-    media = []
-    for i in range(len(rasmlar)):
-        qism = {"type": "photo", "media": f"attach://rasm{i}"}
-        if i == 0 and sarlavha:
-            qism["caption"] = sarlavha[:MAX_SARLAVHA]
-            qism["parse_mode"] = "HTML"
-        media.append(qism)
+    nomlar = [f"rasm{i}" for i in range(len(rasmlar))]
+    slayd = "".join(f'<img src="tg://photo?id={n}"/>' for n in nomlar)
+    boy = {
+        "html": f"<tg-slideshow>{slayd}</tg-slideshow>{_boy_matn(sarlavha)}",
+        "media": [{"id": n, "media": {"type": "photo", "media": f"attach://{n}"}} for n in nomlar],
+    }
+    maydonlar = {"chat_id": chat_id, "rich_message": json.dumps(boy, ensure_ascii=False)}
+    qatorlar = [
+        [tugma_yasa(matn, uslub, url=havola)]
+        for matn, havola, uslub in (tugmalar or [])
+        if matn and havola
+    ]
+    if qatorlar:
+        maydonlar["reply_markup"] = json.dumps({"inline_keyboard": qatorlar})
 
     tana, turi = _multipart_kop(
-        {"chat_id": chat_id, "media": json.dumps(media, ensure_ascii=False)},
-        [(f"rasm{i}", f"rasm{i}.jpg", "image/jpeg", r) for i, r in enumerate(rasmlar)],
-    )
-    return _fayl_sorov("sendMediaGroup", tana, turi, 180)
+        maydonlar, [(n, f"{n}.jpg", "image/jpeg", r) for n, r in zip(nomlar, rasmlar)])
+    return _fayl_sorov("sendRichMessage", tana, turi, 180)
 
 
 def _fayl_sorov(usul: str, tana: bytes, turi: str, kutish: int) -> tuple[str, str, int]:
@@ -515,11 +536,7 @@ def _fayl_sorov(usul: str, tana: bytes, turi: str, kutish: int) -> tuple[str, st
             javob = json.loads(r.read())
             if not javob.get("ok"):
                 return "xato", "ok=false", 0
-            # Albomda `result` — xabarlar RO'YXATI; birinchisi olinadi.
-            natija = javob.get("result") or {}
-            if isinstance(natija, list):
-                natija = natija[0] if natija else {}
-            xabar_id = int(natija.get("message_id") or 0)
+            xabar_id = int(javob.get("result", {}).get("message_id") or 0)
             return "yuborildi", "", xabar_id
     except urllib.error.HTTPError as e:
         izoh = ""
