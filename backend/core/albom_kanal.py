@@ -95,7 +95,7 @@ ALBOMLAR: list[dict] = [
             ("3 ga bo'linish", "Raqamlar yig'indisi\n3 ga bo'linsa", "738 → 7 + 3 + 8 = 18"),
             ("4 ga bo'linish", "Oxirgi ikki raqami\n4 ga bo'linsa", "5316 → 16 : 4 = 4"),
             ("9 ga bo'linish", "Raqamlar yig'indisi\n9 ga bo'linsa", "4527 → 4 + 5 + 2 + 7 = 18"),
-            ("11 ga bo'linish", "Raqamlarni + − + − bilan\nhisoblaganda 11 ga bo'linsa", "2728 → 2 − 7 + 2 − 8 = −11"),
+            ("11 ga bo'linish", "Raqamlarni + − + − qilib,\nnatija 11 ga bo'linsa", "2728 → 2 − 7 + 2 − 8 = −11"),
             ("25 ga bo'linish", "Oxiri 00, 25,\n50 yoki 75 bo'lsa", "3475 → 75"),
         ],
     },
@@ -180,7 +180,7 @@ def albom_rasmlari(albom: dict) -> list[bytes]:
     """Kartalar — kanaldagi og'zaki misol rasmi bilan bir xil ko'rinishda."""
     n = len(albom["kartalar"])
     return [
-        MK.misol_rasmi((f"{i} / {n}", f"{nom}: {ifoda}"), rukn=albom["rukn"], pastki=pastki)
+        MK.misol_rasmi((f"{i} / {n}", f"{nom}: {ifoda}"), rukn=albom["rukn"], pastki=pastki, qatiy=True)
         for i, (nom, ifoda, pastki) in enumerate(albom["kartalar"], 1)
     ]
 

@@ -9419,7 +9419,7 @@ class HaftalikAlbomTest(TestCase):
                 qatorlar = ifoda.split("\n")
                 self.assertLessEqual(len(qatorlar), 2, ifoda)
                 for q in qatorlar:
-                    self.assertLessEqual(d.textlength(q, font=_shrift(52)), 840, q)
+                    self.assertLessEqual(d.textlength(q, font=_shrift(46)), 840, q)
                 self.assertLessEqual(d.textlength(pastki, font=_shrift(32, False)), 840, pastki)
 
     def test_misollar_togri(self):

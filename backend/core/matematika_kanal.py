@@ -470,7 +470,7 @@ def _qatorlarga(d, matn: str, shrift, kenglik: int) -> list[str]:
 
 
 def misol_rasmi(misol: tuple, rukn: str = "OG'ZAKI MISOL", pastki: str = "",
-                variantlar: list[str] | None = None) -> bytes:
+                variantlar: list[str] | None = None, qatiy: bool = False) -> bytes:
     """
     Savol kartasi — JPEG baytlari (kanalga `sendPhoto` bilan chiqadi).
 
@@ -526,12 +526,15 @@ def misol_rasmi(misol: tuple, rukn: str = "OG'ZAKI MISOL", pastki: str = "",
         shart, ifoda = "", savol
     shart_sh = _shrift(40 * S, False)
     shart_q = _qatorlarga(d, shart, shart_sh, kenglik) if shart else []
-    olchamlar, sigim, maydon = (132, 116, 100, 88, 76, 66, 58, 52), 2, 620
+    olchamlar, sigim, maydon = (132, 116, 100, 88, 76, 66, 58, 52, 46), 2, 620
     if variantlar:
         olchamlar, sigim, maydon = (72, 64, 58, 52, 46), 5, 390
     for px in olchamlar:
         shrift = _shrift(px * S)
-        qatorlar = _qatorlarga(d, ifoda, shrift, kenglik)
+        # `qatiy` — qatorlar FAQAT `\n` da bo'linadi: formula o'zicha
+        # o'ralmaydi, sig'masa shrift kichrayadi. Aks holda keng shriftda
+        # "S = ½ · a ·" bir qatorda, "h" yolg'iz keyingisida qolardi.
+        qatorlar = ifoda.split("\n") if qatiy else _qatorlarga(d, ifoda, shrift, kenglik)
         # Kenglik ham tekshiriladi: bo'linmaydigan uzun qator (majburiy
         # uzilishli formula) kartadan chiqib ketmasin.
         if (len(qatorlar) <= sigim and int(px * 1.25) * len(qatorlar) <= maydon
