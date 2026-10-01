@@ -486,6 +486,7 @@ function DarsSahifasi() {
       unit={U}
       lesson={L}
       joy={{ kurs: c.slug, ui, li }}
+      kursId={c.id}
       hisob={{
         jami: progressOf(c).stars,
         oldin: progressOf(c).done[lessonId(ui, li)] ?? 0,

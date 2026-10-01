@@ -41,6 +41,7 @@ import { TOLAQ_KATTA } from "./tolaqKatta";
 import { TOLAQ_TAKROR } from "./tolaqTakror";
 import { TOLAQ_ANALIZ } from "./tolaqAnaliz";
 import { TOLAQ_GEOMETRIYA } from "./tolaqGeometriya";
+import { TOLAQ_OLIY } from "./tolaqOliy";
 
 /** Ikki tildagi matn: [o'zbekcha, ruscha]. */
 export type Juft = [string, string];
@@ -1576,7 +1577,7 @@ export interface Tolaq {
 const TOLAQ: Record<string, Tolaq> = {
   ...TOLAQ_GEOMETRIYA, ...TOLAQ_ALGEBRA, ...TOLAQ_ANALIZ,
   ...TOLAQ_ALGEBRA7, ...TOLAQ_GEOMETRIYA7, ...TOLAQ_ALGEBRA8, ...TOLAQ_GEOMETRIYA8,
-  ...TOLAQ_ALGEBRA9, ...TOLAQ_GEOMETRIYA9, ...TOLAQ_KATTA, ...TOLAQ_TAKROR,
+  ...TOLAQ_ALGEBRA9, ...TOLAQ_GEOMETRIYA9, ...TOLAQ_KATTA, ...TOLAQ_TAKROR, ...TOLAQ_OLIY,
 };
 
 /** 7–11-sinf kurslari: `algebra7`, `geometriya10`, `matematika11`. Quyi sinflarda bir xil nomli dars boshqa narsa haqida. */

@@ -5,6 +5,7 @@
  */
 import "./_xotira";
 import { imtihonKurslari } from "../src/lib/blok";
+import { COURSES } from "../src/lib/curriculum";
 import { TOLAQ_KALITLAR, tolaq, tolaqKalit } from "../src/lib/nazariya";
 
 let xato = 0;
@@ -19,6 +20,9 @@ for (const c of imtihonKurslari()) for (const U of c.units) for (const L of U.le
   darslar.add(L.n);
   kursDars.add(`${c.id}|${L.n}`);
 }
+// Kursga xos kalitlar ("oliy2|...") imtihon kurslaridan tashqarida ham
+// bo'ladi — oliy matematika va ehtimollar (`lib/tolaqOliy.ts`).
+for (const c of COURSES) for (const U of c.units) for (const L of U.lessons) kursDars.add(`${c.id}|${L.n}`);
 
 const hammasi: Record<string, NonNullable<ReturnType<typeof tolaqKalit>>> = {};
 for (const k of TOLAQ_KALITLAR()) hammasi[k] = tolaqKalit(k)!;

@@ -1436,6 +1436,22 @@ const S = {
   boshlaymiz: ["Boshlaymiz!", "Начинаем!"],
   otkazibYuborish: ["O'tkazib yuborish", "Пропустить"],
 
+  /* ---------------- darsga kirish (DarsKirish) ---------------- */
+  kirishAvval: ["Avval tushunamiz", "Сначала разберёмся"],
+  kirishQoida: ["Qoida", "Правило"],
+  kirishFormulaga: ["Formula va qadamlar", "Формулы и шаги"],
+  kirishNamunaga: ["Yechilgan misol", "Разобранный пример"],
+  kirishSinovga: ["Sinab ko'rish", "Попробовать"],
+  kirishJavobniKor: ["Javobni ko'rish", "Показать ответ"],
+  kirishSinov: ["Sinov mashqi", "Пробное задание"],
+  kirishSinovIzoh: ["Ballga ta'sir qilmaydi", "На результат не влияет"],
+  kirishTogri: ["To'g'ri!", "Верно!"],
+  kirishXato: ["Xato — mana qanday yechiladi", "Неверно — вот как решается"],
+  kirishTayyor: ["Tayyorsiz!", "Вы готовы!"],
+  kirishTayyorMatn: ["Qoidani ko'rdingiz va sinab ko'rdingiz. Endi dars savollari.", "Вы увидели правило и попробовали. Теперь вопросы урока."],
+  kirishSavollarga: ["Savollarga o'tish", "К вопросам"],
+  kirishTayyorIzoh: ["{n} ta savol — yulduz uchun", "{n} вопросов — на звёзды"],
+
   /* ---------------- o'git qadamlari ----------------
      `{ta}` — sanoq shakli: o'zbekchada "uchta", ruschada shunchaki "3".
      Ruscha shakl ATAYLAB raqam: "1 предмет", "2 предмета", "5 предметов"

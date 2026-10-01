@@ -4,6 +4,7 @@ import { EmojiMatn } from "../lib/hajmli";
 import { useFaollik } from "../lib/faollik";
 import { QuestionView, sahnaBor, shartSahnada } from "../components/QuestionView";
 import { Ogit } from "../components/Ogit";
+import { DarsKirish, kirishBormi } from "../components/DarsKirish";
 import { Rasm } from "../components/Rasm";
 import { Konfetti } from "../components/Konfetti";
 import { Chiqish } from "../components/Chiqish";
@@ -32,6 +33,12 @@ interface Props {
    * `A.joy` ichida olib yuradi, chunki savollar turli darslardan yig'iladi.
    */
   joy?: { kurs: string; ui: number; li: number };
+  /**
+   * Kurs kodi (`Course.id`) — darsga kirish (`DarsKirish`) qoidani shu
+   * bo'yicha topadi (`lib/nazariya.ts`). Takrorlash darsida berilmaydi:
+   * u bir nechta darsning aralashmasi, bitta qoidasi yo'q.
+   */
+  kursId?: string;
   /** Takrorlash darsimi — javob daftar narvonini suradi. */
   takrorlash?: boolean;
   /**
@@ -52,7 +59,7 @@ interface Props {
  * qiymatdan olinadi va `lesson` o'zgarishini alohida kuzatish shart emas.
  * O'sha `key` ni olib tashlasangiz, bu yerga effekt qo'shish kerak bo'ladi.
  */
-export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob }: Props) {
+export function Lesson({ unit, lesson, onExit, onFinish, joy, kursId, takrorlash, hisob }: Props) {
   // Hisob dars BOSHIDA qotiriladi. "Davom etish" bosilganda progress
   // yangilanadi va sahifa almashguncha natija ekrani yangi `jami` bilan
   // bir marta qayta chiziladi — o'shanda hisoblagich noldan qayta
@@ -111,6 +118,27 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
    * ikkinchi marta ko'rsatish uni faqat kutishga majbur qilardi.
    */
   const [ogitda, setOgitda] = useState(Boolean(lesson.ogit));
+
+  /**
+   * Darsga kirish (`components/DarsKirish.tsx`): tushuncha → formula →
+   * yechilgan misol → ballsiz sinov mashqi, savollar SHUNDAN KEYIN.
+   *
+   * Ilgari animatsiyasi yo'q hamma dars (1-sinfdan oliy matematikagacha)
+   * to'g'ridan-to'g'ri birinchi savoldan boshlanardi — qoidani ko'rmagan
+   * odam taxmin qilardi.
+   *
+   *   "toliq"  birinchi marta — sinov mashqi bilan
+   *   "qisqa"  savol paytida "Qoida" tugmasi bilan qayta ochilgan
+   *   null     yopiq
+   *
+   * Darsni avval tugatgan odamga (`hisob.oldin > 0`) o'zi chiqmaydi: u
+   * qoidani ko'rgan va qayta o'ynash uchun kelgan. "Yana o'ynash" da ham
+   * chiqmaydi (holat saqlanadi).
+   */
+  const kirishMumkin = Boolean(kursId) && !takrorlash && kirishBormi(lesson);
+  const [kirish, setKirish] = useState<"toliq" | "qisqa" | null>(
+    () => (kirishMumkin && (hisob?.oldin ?? 0) === 0 ? "toliq" : null));
+  const kirishToliq = kirish === "toliq";
 
   const [idx, setIdx] = useState(0);
   const [tanlangan, setTanlangan] = useState<Answer | null>(null);
@@ -190,8 +218,11 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
     setYechimda(false);
     // Tushuntirish ko'rsatilayotganda savol o'qilmasin — ikki ovoz
     // ustma-ust tushib, ikkalasi ham tushunarsiz bo'lib qolardi.
-    if (!ogitda) gapir(A.prompt);
-  }, [idx, A.prompt, ogitda]);
+    // Kirish ochiq turganda ham: u yerda o'z savollari bor.
+    // Bog'liqlik `kirishToliq`, `kirish` emas: "Qoida" ochib-yopilganda
+    // (qisqa ↔ null) savol holati tozalanmasin.
+    if (!ogitda && !kirishToliq) gapir(A.prompt);
+  }, [idx, A.prompt, ogitda, kirishToliq]);
 
   function qaytaBoshla() {
     boshlandi.current = performance.now();
@@ -261,6 +292,15 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
     return <Ogit o={lesson.ogit} nomi={kursMatn(lesson.n)} onBoshla={() => setOgitda(false)} />;
   }
 
+  if (kirish && kursId) {
+    return (
+      <DarsKirish kursId={kursId} unit={unit} lesson={lesson} qisqa={kirish === "qisqa"}
+        savolSoni={savollar.length} strelka={ozStrelka}
+        onChiq={kirish === "qisqa" ? () => setKirish(null) : onExit}
+        onBoshla={() => { setKirish(null); window.scrollTo(0, 0); }} />
+    );
+  }
+
   /* Tasdiq oynasi ikki ekranda ham kerak — dars ichida ham, natija
      ekranida ham. Natijada u yanada muhim: u yerdan tasdiqsiz chiqilsa
      endigina yig'ilgan yulduzlar yozilmay qolardi (`onFinish` faqat
@@ -325,6 +365,16 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, takrorlash, hisob 
                 ${i < idx ? "bg-brand-green" : i === idx ? "bg-brand-orange" : "bg-karta/60"}`} />
           ))}
         </div>
+
+        {/* "Qoida" — kirishni istalgan payt qayta ochadi (sinovsiz). Savolda
+            qotib qolgan odam javobni emas, QOIDANI ko'rib qaytsin. */}
+        {kirishMumkin && (
+          <button type="button" onClick={() => { tebrat("tanlov"); setKirish("qisqa"); }}
+            title={t("kirishQoida")} aria-label={t("kirishQoida")} data-tahlil="Dars: qoida"
+            className="clay-press grid size-11 shrink-0 place-items-center rounded-2xl bg-karta text-brand-blue-t shadow-clay-sm">
+            <Icon name="izoh" size={19} />
+          </button>
+        )}
 
         {/* Nechanchi savoldaligi ko'rinib tursin: chiziqchalar oralig'ini
             bola sanab o'tirmasin, ayniqsa kichik ekranda. */}
