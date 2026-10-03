@@ -29,6 +29,7 @@ from __future__ import annotations
 
 from django.utils import timezone
 
+from core.emoji import premium
 from core import matematika_kanal as MK
 from core.models import KanalYozuv
 
@@ -140,20 +141,11 @@ ALBOMLAR: list[dict] = [
     },
 ]
 
-# Animatsiyali (premium) emojilar — Telegramning rasmiy `RestrictedEmoji`
-# to'plamidan. Ichidagi oddiy belgi — zaxira: bot premium emojini
-# ishlata olmaydigan joyda (Fragment'da nomi yo'q bot kanalda) Telegram
-# o'shani ko'rsatadi, post baribir chiqadi.
-_EMOJI = {
-    "🧮": "5472404950673791399",
-    "✅": "5427009714745517609",
-    "👉": "5471978009449731768",
-    "🎓": "5375163339154399459",
-}
-
-
+# Animatsiyali (premium) emojilar — umumiy ro'yxatdan (`core/emoji.py`).
+# Ilgari to'rttasi shu yerda qo'lda turardi; endi kanalga ketadigan har
+# matn `xabar.py` da o'zi o'raladi, bu yerda faqat aniq joyga qo'yish uchun.
 def _e(belgi: str) -> str:
-    return f'<tg-emoji emoji-id="{_EMOJI[belgi]}">{belgi}</tg-emoji>'
+    return premium(belgi)
 
 
 def _kalit(albom: dict) -> str:

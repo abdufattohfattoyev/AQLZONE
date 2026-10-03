@@ -25,6 +25,8 @@ import uuid
 from django.conf import settings
 from django.utils import timezone
 
+from core.emoji import kanalmi, premium
+
 #: Bir soniyada nechta xabar. Telegram ~30 ga ruxsat beradi; 25 —
 #: chegaraga tegib ketmaslik uchun ataylab pastroq.
 TEZLIK = 25
@@ -37,6 +39,16 @@ STANDART_KUTISH = 3
 
 #: Bitta xabarning eng katta uzunligi (Telegram cheklovi).
 MAX_MATN = 4096
+
+
+def _kanal_matni(chat_id, matn: str) -> str:
+    """
+    Kanal postida emojilar premium (animatsiyali) bo'ladi — egasining
+    talabi, har postda (`core/emoji.py`). Kesishdan KEYIN o'raladi:
+    teglar matnni uzaytiradi va kesish ularni yarmidan bo'lib qo'yardi.
+    Shaxsiy xabarlarga tegilmaydi.
+    """
+    return premium(matn) if kanalmi(chat_id) else matn
 
 # ------------------------------------------------------- tugma ranglari
 #
@@ -161,7 +173,7 @@ def yubor(
     """
     payload = {
         "chat_id": chat_id,
-        "text": matn[:MAX_MATN],
+        "text": _kanal_matni(chat_id, matn[:MAX_MATN]),
         "parse_mode": "HTML",
         # Havolaning kartasi xabarni cho'zib, matnni pastga surib qo'yadi.
         "link_preview_options": {"is_disabled": True},
@@ -206,7 +218,7 @@ def kanal_matn(chat_id: str, matn: str, javob_id: int = 0) -> tuple[str, str, in
     """
     payload = {
         "chat_id": chat_id,
-        "text": matn[:MAX_MATN],
+        "text": _kanal_matni(chat_id, matn[:MAX_MATN]),
         "parse_mode": "HTML",
         "link_preview_options": {"is_disabled": True},
     }
@@ -414,7 +426,7 @@ def rasm_yubor(
     """
     maydonlar = {
         "chat_id": chat_id,
-        "caption": sarlavha[:MAX_SARLAVHA],
+        "caption": _kanal_matni(chat_id, sarlavha[:MAX_SARLAVHA]),
         "parse_mode": "HTML",
     }
     qatorlar = [
@@ -449,7 +461,7 @@ def video_yubor(
     """
     maydonlar = {
         "chat_id": chat_id,
-        "caption": sarlavha[:MAX_SARLAVHA],
+        "caption": _kanal_matni(chat_id, sarlavha[:MAX_SARLAVHA]),
         "parse_mode": "HTML",
         "width": str(en),
         "height": str(boy),
@@ -510,7 +522,7 @@ def albom_yubor(
     nomlar = [f"rasm{i}" for i in range(len(rasmlar))]
     slayd = "".join(f'<img src="tg://photo?id={n}"/>' for n in nomlar)
     boy = {
-        "html": f"<tg-slideshow>{slayd}</tg-slideshow>{_boy_matn(sarlavha)}",
+        "html": f"<tg-slideshow>{slayd}</tg-slideshow>{_boy_matn(_kanal_matni(chat_id, sarlavha))}",
         "media": [{"id": n, "media": {"type": "photo", "media": f"attach://{n}"}} for n in nomlar],
     }
     maydonlar = {"chat_id": chat_id, "rich_message": json.dumps(boy, ensure_ascii=False)}
@@ -641,9 +653,9 @@ def sarlavhani_yangila(
         "parse_mode": "HTML",
     }
     if rasmli:
-        payload["caption"] = sarlavha[:MAX_SARLAVHA]
+        payload["caption"] = _kanal_matni(chat_id, sarlavha[:MAX_SARLAVHA])
     else:
-        payload["text"] = sarlavha[:MAX_MATN]
+        payload["text"] = _kanal_matni(chat_id, sarlavha[:MAX_MATN])
         payload["link_preview_options"] = {"is_disabled": True}
 
     qatorlar = [

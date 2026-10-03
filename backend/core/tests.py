@@ -9431,3 +9431,32 @@ class HaftalikAlbomTest(TestCase):
         self.assertEqual(sum(b for b in range(1, 28) if 28 % b == 0), 28)
         self.assertEqual((738 % 3, 5316 % 4, 4527 % 9, 2728 % 11, 3475 % 25), (0, 0, 0, 0, 0))
         self.assertEqual((200 * 15 // 100, 50 * 8 // 100, 8 * 50 // 100, 500 * 12 // 10), (30, 4, 4, 600))
+
+
+class PremiumEmojiTest(TestCase):
+    """Kanal postida emojilar animatsiyali bo'ladi (`core/emoji.py`)."""
+
+    def test_emoji_oraladi_teg_ichiga_tegilmaydi(self):
+        from .emoji import premium
+        chiq = premium('📚 <b>694 dars</b> ⚡️ <a href="https://t.me/x">👇</a>')
+        self.assertIn('<tg-emoji emoji-id="5373098009640836781">📚</tg-emoji>', chiq)
+        self.assertIn('<tg-emoji emoji-id="5431449001532594346">⚡️</tg-emoji>', chiq)
+        self.assertIn('<a href="https://t.me/x"><tg-emoji', chiq)
+        self.assertIn("<b>694 dars</b>", chiq)
+
+    def test_ikki_marta_oralmaydi(self):
+        from .emoji import premium
+        bir = premium("✅ tayyor")
+        self.assertEqual(premium(bir), bir)
+
+    def test_variatsiya_belgisisiz_ham_topiladi(self):
+        from .emoji import premium
+        self.assertIn('emoji-id="5431449001532594346">⚡</tg-emoji>', premium("⚡ tez"))
+
+    def test_faqat_kanalga(self):
+        with patch.object(xabar, "_fayl_sorov", return_value=("yuborildi", "", 7)) as s:
+            xabar.video_yubor("@kanal", b"v", "🚀 boshla")
+            self.assertIn(b"<tg-emoji", s.call_args[0][1])
+        with patch.object(xabar, "_sorov", return_value=(True, 200, "")) as s:
+            xabar.yubor("12345", "🚀 boshla")
+            self.assertNotIn("<tg-emoji", s.call_args[0][1]["text"])
