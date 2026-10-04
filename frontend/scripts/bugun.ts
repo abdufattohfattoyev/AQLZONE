@@ -7,7 +7,7 @@
  *
  * `npm run tekshir` bilan birga ishlaydi.
  */
-import { hafta, joriyZanjir, salomVaqti, yilKuni } from "../src/lib/bugun";
+import { hafta, haftaYoli, joriyZanjir, salomVaqti, yilKuni } from "../src/lib/bugun";
 
 let xato = 0;
 const tekshir = (nom: string, kutilgan: unknown, keldi: unknown) => {
@@ -41,6 +41,18 @@ tekshir("yangi odam", "-----..", satr({ sana: "", kunlar: 0 }, JUMA));
 tekshir("dushanba — kelajak oltita", "+......", satr({ sana: "2026-09-21", kunlar: 1 }, "2026-09-21"));
 tekshir("yakshanba — kelajak yo'q", "-----++", satr({ sana: "2026-09-27", kunlar: 2 }, "2026-09-27"));
 tekshir("oy chegarasi (1-oktabr — payshanba)", "-+++...", satr({ sana: "2026-10-01", kunlar: 3 }, "2026-10-01"));
+
+console.log("\n--- haftalik yo'l ---");
+{
+  const yol = (z: { sana: string; kunlar: number }, faol: string[], bugun: string) =>
+    haftaYoli(z, faol, bugun).kunlar.map((k) => B[k.holat]).join("");
+  // Zanjir chorshanba kuni uzilgan, lekin dushanba va seshanba yozilgan.
+  tekshir("uzilgan zanjirdan oldingi kunlar qoladi", "++-++..",
+    yol({ sana: JUMA, kunlar: 2 }, ["2026-09-21", "2026-09-22"], JUMA));
+  tekshir("soni — to'rtta", 4, haftaYoli({ sana: JUMA, kunlar: 2 }, ["2026-09-21", "2026-09-22"], JUMA).soni);
+  tekshir("o'tgan hafta hisoblanmaydi", 1, haftaYoli({ sana: JUMA, kunlar: 1 }, ["2026-09-20", "2026-09-14"], JUMA).soni);
+  tekshir("dushanba kaliti", "2026-09-21", haftaYoli({ sana: "", kunlar: 0 }, [], JUMA).dushanba);
+}
 
 console.log("\n--- joriy zanjir ---");
 tekshir("bugun davom etgan", 5, joriyZanjir({ sana: JUMA, kunlar: 5 }, JUMA));

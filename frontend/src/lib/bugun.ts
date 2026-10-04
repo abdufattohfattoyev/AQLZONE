@@ -90,6 +90,83 @@ export function hafta(z: { sana: string; kunlar: number }, bugun = kunKaliti()):
   });
 }
 
+/* ------------------------------------------------------------- haftalik yo'l */
+
+/**
+ * HAFTALIK YO'L — haftada nechta kun mashq qilindi va sandiq.
+ *
+ * Zanjir bitta kun qoldirilsa nolga tushadi va 9 yoshli bola uchun bu
+ * "hammasi behuda ketdi" degani. Haftalik yo'l boshqacha savol beradi:
+ * "bu hafta necha kun?" Dushanba o'tkazib yuborilsa ham, qolgan besh
+ * kun bilan sandiq ochiladi — ya'ni bitta qoldirilgan kun haftani
+ * o'ldirmaydi.
+ *
+ * Nega 5, 7 emas: har kuni majburiy bo'lsa, birinchi qoldirilgan kundan
+ * keyin maqsad yetib bo'lmaydigan bo'ladi va bola qolgan kunlarda ham
+ * kirmaydi. Beshta esa "deyarli har kuni" va dam olish kuniga joy qoladi.
+ */
+export const HAFTA_MAQSAD = 5;
+/** Sandiqdan chiqadigan tanga. Bir kunlik sinovdan ko'p, do'kondagi arzon buyumdan kam. */
+export const HAFTA_TANGA = 30;
+
+const FAOL_KALIT = "azapp_faol_kunlar_v1";
+const SANDIQ_KALIT = "azapp_hafta_sandiq_v1";
+
+/** Mashq qilingan kunlarni o'qiydi ("2026-09-25" ro'yxati). */
+export function faolKunlar(): string[] {
+  try {
+    const x = JSON.parse(localStorage.getItem(FAOL_KALIT) || "[]");
+    return Array.isArray(x) ? x.filter((s): s is string => typeof s === "string") : [];
+  } catch { return []; }
+}
+
+/**
+ * Bugun mashq qilindi — haftalik yo'lga yoziladi.
+ *
+ * Nega zanjirdan chiqarib olinmaydi: zanjir uzilganda undan oldingi
+ * kunlar yo'qoladi (`hafta` izohi), haftalik yo'lda esa ular qolishi
+ * kerak. Oxirgi 21 kun saqlanadi — haftaga yetadi, xotira o'smaydi.
+ */
+export function faolKunYoz(bugun = kunKaliti()): void {
+  const eski = faolKunlar();
+  if (eski.includes(bugun)) return;
+  try { localStorage.setItem(FAOL_KALIT, JSON.stringify([...eski, bugun].slice(-21))); } catch { /* eslanmaydi */ }
+}
+
+export interface HaftaYoli {
+  kunlar: HaftaKuni[];
+  /** Shu hafta mashq qilingan kunlar. */
+  soni: number;
+  /** Haftaning dushanbasi — sandiq shu kalit bilan bir marta ochiladi. */
+  dushanba: string;
+}
+
+/**
+ * Hafta doiralari: zanjirdan kelgan kunlar + yozib qo'yilgan faol kunlar.
+ *
+ * Ikkalasi birlashtiriladi: faol kunlar bu xususiyat qo'shilgandan
+ * keyingina yozila boshlagan, zanjir esa avvaldan bor — eski kunlar
+ * shundan olinadi.
+ */
+export function haftaYoli(z: { sana: string; kunlar: number }, faol: string[], bugun = kunKaliti()): HaftaYoli {
+  const f = new Set(faol);
+  const kunlar = hafta(z, bugun).map((k) =>
+    k.holat === "oynamagan" && f.has(k.sana) ? { ...k, holat: "oynagan" as const } : k);
+  return { kunlar, soni: kunlar.filter((k) => k.holat === "oynagan").length, dushanba: kunlar[0]!.sana };
+}
+
+/** Shu haftaning sandig'i ochilganmi. */
+export function sandiqOchilganmi(dushanba: string): boolean {
+  try { return localStorage.getItem(SANDIQ_KALIT) === dushanba; } catch { return false; }
+}
+
+/** Sandiqni ochildi deb belgilaydi. `false` — allaqachon ochilgan (ikki marta bosilmasin). */
+export function sandiqniOch(dushanba: string): boolean {
+  if (sandiqOchilganmi(dushanba)) return false;
+  try { localStorage.setItem(SANDIQ_KALIT, dushanba); } catch { /* eslanmaydi, xolos */ }
+  return true;
+}
+
 /** Zanjir hozir tirikmi (bugun yoki kecha davom etgan). Tirik bo'lmasa 0. */
 export const joriyZanjir = (z: { sana: string; kunlar: number }, bugun = kunKaliti()): number =>
   z.sana && kunFarqi(z.sana, bugun) <= 1 ? z.kunlar : 0;

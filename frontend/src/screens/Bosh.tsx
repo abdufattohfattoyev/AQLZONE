@@ -46,7 +46,7 @@ import { COURSES } from "../lib/curriculum";
 import type { Course } from "../lib/curriculum";
 import { oxirgiKurs } from "../lib/oxirgi";
 import { useKompyuter } from "../lib/maket";
-import { tgIsm } from "../lib/qobiq";
+import { tebrat, tgIsm } from "../lib/qobiq";
 import {
   joriyKurs, pedagogmi, profilKursi, profilKurslari, sinfOfProfil, useProfil, yolOf,
 } from "../lib/profil";
@@ -62,8 +62,11 @@ import { bugungiSoni } from "../lib/takrorlash";
 import { kunKaliti, qaytish } from "../lib/zanjir";
 import { Qaytish, ZanjirTiklash } from "../components/Qaytish";
 import {
-  darsBugunmi, hafta, joriyZanjir, rekordniYangila, salomVaqti, yilKuni,
+  HAFTA_MAQSAD, HAFTA_TANGA, darsBugunmi, faolKunlar, haftaYoli, joriyZanjir, rekordniYangila,
+  salomVaqti, sandiqOchilganmi, sandiqniOch, yilKuni,
 } from "../lib/bugun";
+import { darajaKerakmi } from "../lib/daraja";
+import { tovush } from "../lib/ovoz";
 import { kunlikSonBugun } from "./KunlikSon";
 import { FORMULALAR } from "../lib/formulalar";
 import { VARIANTLAR as DTM_VARIANT } from "../lib/imtihon";
@@ -87,6 +90,8 @@ interface Props {
   onImtihon: () => void;
   /** Profildagi sinfning o'z kursi. */
   onKurs: (c: Course) => void;
+  /** Aql bilan tanishuv — daraja aniqlash (`screens/Daraja.tsx`). */
+  onDaraja: (c: Course) => void;
   /** Bo'limlar to'ri va tez o'tish tugmalari uchun. */
   onYol: (yol: string) => void;
 }
@@ -120,7 +125,9 @@ function davomJoyi(progressOf: (c: Course) => Progress, prof: Profil | null) {
   const nomzodlar = oxirgi ? [oxirgi, ...asos.filter((x) => x !== oxirgi)] : asos;
   for (const c of nomzodlar) {
     const p = progressOf(c);
-    if (!p.stars) continue;
+    // Daraja aniqlangan kurs ham "boshlangan": yulduz hali yo'q, lekin
+    // bola qaysi bobdan boshlashini allaqachon biladi.
+    if (!p.stars && p.boshBob === undefined) continue;
     const keyingi = keyingiDars(c.units, p);
     if (keyingi) return { c, p, ...keyingi };
   }
@@ -136,7 +143,7 @@ function joriyBola(h: Hisob | null) {
 
 export function Bosh({
   progressOf, onDarslar, onMasalalar, onTestlar, onDavom, onSinov, onKunlikSon,
-  onQidiruv, onImtihon, onKurs, onYol,
+  onQidiruv, onImtihon, onKurs, onDaraja, onYol,
 }: Props) {
   const [hisob, setHisob] = useState<Hisob | null>(null);
   // Kunlik son SERVERDA ham yuritiladi (boshqa qurilmada yechilgan
@@ -150,7 +157,7 @@ export function Bosh({
     return () => { bekor = true; };
   }, []);
 
-  const { kunlik, jamiTanga, jamiYulduz, tiklash, zanjirniTikla } = useProgress();
+  const { kunlik, jamiTanga, jamiYulduz, tiklash, zanjirniTikla, oyinTugadi } = useProgress();
   const prof = useProfil();
   const kompyuter = useKompyuter();
   const bugun = kunKaliti();
@@ -200,14 +207,29 @@ export function Bosh({
   const rekord = rekordniYangila(zanjir);
   const qisqa = t("bugunQisqaKunlar").split(",");
 
-  const amal = asosiyAmal({ davom, prof, onDarslar, onMasalalar, onDavom, onKurs, onImtihon, onTestlar });
+  // Bugungi qadam: reja bandlaridan birinchi bajarilmagani (`asosiyAmal`).
+  const qadam: Qadam = {
+    dars: vazifalar[0]!.bajarildi,
+    sinov: vazifalar[1]!.bajarildi ? undefined : vazifalar[1]!.on,
+    son: vazifalar[2]!.bajarildi ? undefined : vazifalar[2]!.on,
+  };
+  const amal = asosiyAmal({
+    davom, prof, qadam, progressOf, onDarslar, onMasalalar, onDavom, onKurs, onDaraja, onImtihon, onTestlar,
+  });
 
-  const bugunQilingan = kunlik.sana === bugun && kunlik.kunlar > 0;
-  const haftaIzoh = zanjir === 0
-    ? t("bugunHaftaBosh")
-    : bugunQilingan
-      ? t("bugunHaftaBajarildi", { n: zanjir })
-      : t("bugunHaftaDavom", { n: zanjir, m: zanjir + 1 });
+  // ---- haftalik yo'l ----
+  const yol = haftaYoli(kunlik, faolKunlar(), bugun);
+  const [sandiqOchiq, setSandiqOchiq] = useState(() => sandiqOchilganmi(yol.dushanba));
+  const sandiqTayyor = yol.soni >= HAFTA_MAQSAD;
+  const sandiqniOchish = () => {
+    if (!sandiqniOch(yol.dushanba)) { setSandiqOchiq(true); return; }
+    // Tanga o'yin mukofoti yo'li bilan tushadi: zanjirga ham, yulduzga
+    // ham tegmaydi (`progress.tsx` → oyinTugadi, savollar = 0).
+    oyinTugadi(HAFTA_TANGA, 0);
+    tovush("togri");
+    tebrat("yutuq");
+    setSandiqOchiq(true);
+  };
 
   /* ─── Sarlavha (testmakon uslubida): kichik salom, katta sarlavha, o'ngda
      kompyuterda tez o'tish tugmalari. Zanjir — olovli kichik belgi. ─── */
@@ -321,32 +343,63 @@ export function Bosh({
     </section>
   );
 
+  /* ─── Haftalik yo'l: yetti kun bitta yo'l bo'lib, oxirida sandiq. Zanjirdan
+     farqi — bitta qoldirilgan kun yo'lni o'chirmaydi (`lib/bugun.ts`).
+     Ilgari bu yerda "Bu hafta" — zanjirning o'zi edi va uzilgan kunda
+     butun hafta bo'm-bo'sh ko'rinardi. ─── */
   const haftaBlok = (
-    <section aria-label={t("menZanjir")}
+    <section aria-label={t("haftaYol")}
       className="flex flex-col gap-3 rounded-[22px] bg-karta p-4 shadow-clay-sm">
       <div className="flex items-baseline gap-2">
-        <h2 className="min-w-0 flex-1 font-display text-[18px]">{t("bugunBuHafta")}</h2>
-        {rekord > 0 && (
-          <span className="shrink-0 text-[13px] text-ink-dim">{t("bugunRekordKun", { n: rekord })}</span>
-        )}
+        <h2 className="min-w-0 flex-1 font-display text-[18px]">{t("haftaYol")}</h2>
+        <span className={`shrink-0 font-display text-[15px] font-bold ${yol.soni ? "text-brand-gold-d" : "text-ink-dim"}`}>
+          {t("haftaYolSoni", { n: Math.min(yol.soni, HAFTA_MAQSAD), m: HAFTA_MAQSAD })}
+        </span>
       </div>
-      <div className="grid grid-cols-7 gap-1">
-        {hafta(kunlik, bugun).map((k) => (
-          <div key={k.sana} className="flex flex-col items-center gap-1.5">
+      <div className="relative grid grid-cols-[repeat(7,minmax(0,1fr))_auto] items-start gap-1">
+        {/* Kunlarni bog'lovchi yo'l — doiralar markazidan o'tib, sandiqqa yetadi. */}
+        <span aria-hidden className="absolute top-[13px] right-5 left-[6%] h-1 rounded-full bg-track
+                                     min-[360px]:top-[15px]" />
+        {yol.kunlar.map((k) => (
+          <div key={k.sana} className="relative flex flex-col items-center gap-1.5">
             <span aria-hidden
-              /* O'ynagan kun — OLTIN: sarlavhadagi olov bilan bir xil (zanjir — mukofot). */
+              /* O'ynagan kun — OLTIN: sarlavhadagi olov bilan bir xil (mukofot rangi). */
               className={`grid size-[30px] place-items-center rounded-full text-ink min-[360px]:size-[34px] ${
-                k.holat === "oynagan" ? "bg-brand-gold shadow-[0_3px_0_var(--color-brand-gold-d)]" : "bg-track"} ${
+                k.holat === "oynagan" ? "bg-brand-gold shadow-[0_3px_0_var(--color-brand-gold-d)]"
+                  : k.holat === "kelajak" ? "bg-karta ring-[1.5px] ring-track ring-inset" : "bg-track"} ${
                 k.bugun && k.holat !== "oynagan" ? "ring-2 ring-brand-blue ring-inset" : ""}`}>
               {k.holat === "oynagan" && <Icon name="check" size={15} />}
             </span>
-            <span className={`text-[12.5px] ${k.bugun ? "font-bold text-brand-blue-t" : "font-semibold text-ink-dim"}`}>
+            <span className={`text-[12px] ${k.bugun ? "font-bold text-brand-blue-t" : "font-semibold text-ink-dim"}`}>
               {qisqa[k.indeks]}
             </span>
           </div>
         ))}
+        <div className="relative flex flex-col items-center gap-1.5 pl-1">
+          <span className={`grid size-[30px] place-items-center rounded-full min-[360px]:size-[34px] ${
+            sandiqTayyor && !sandiqOchiq ? "bg-brand-gold/20 ring-2 ring-brand-gold ring-inset" : "bg-karta ring-[1.5px] ring-track ring-inset"} ${
+            sandiqTayyor ? "" : "opacity-55 grayscale"}`}>
+            <Hajmli nom="tanga" olcham={22} jonli={sandiqTayyor && !sandiqOchiq} />
+          </span>
+          <span className="text-[12px] font-semibold text-ink-dim">{t("haftaYolSandiq")}</span>
+        </div>
       </div>
-      <p className="text-[14px] leading-snug text-ink-soft">{haftaIzoh}</p>
+      {sandiqTayyor && !sandiqOchiq ? (
+        <button type="button" onClick={sandiqniOchish} data-tahlil="Bugun: haftalik sandiq"
+          /* Oltin tugmada oq yozuv — ilovadagi boshqa oltin tugmalar kabi
+             (`KunlikSon`, `TangaOqim`); soya uni ochiq sariq ustida o'qitadi. */
+          className="tugma-3d flex min-h-12 items-center justify-center gap-2 rounded-[14px] bg-brand-gold font-display
+                     text-[16px] font-bold text-white shadow-[0_3px_0_var(--color-brand-gold-d)]
+                     [text-shadow:0_1px_1px_var(--color-brand-gold-d)]">
+          <Hajmli nom="tanga" olcham={22} />
+          {t("haftaYolOch", { t: HAFTA_TANGA })}
+        </button>
+      ) : (
+        <p className="text-[14px] leading-snug text-ink-soft">
+          {sandiqOchiq ? t("haftaYolOchildi")
+            : t("haftaYolQoldi", { n: HAFTA_MAQSAD - yol.soni, t: HAFTA_TANGA })}
+        </p>
+      )}
     </section>
   );
 
@@ -469,37 +522,75 @@ interface Amal {
   tugma: string;
 }
 
+/** Bugungi reja bandlarining holati — "Bugungi qadam" shundan tanlanadi. */
+interface Qadam {
+  /** Bugun bitta dars o'tildimi. */
+  dars: boolean;
+  /** Sinov bajarilmagan va ochiq bo'lsa — uni boshlash. */
+  sinov?: () => void;
+  /** Kunlik son bajarilmagan bo'lsa — uni ochish. */
+  son?: () => void;
+}
+
 /**
- * ASOSIY AMAL — ekrandagi yagona katta tugma.
+ * ASOSIY AMAL — ekrandagi yagona katta tugma, "Bugungi qadam".
  *
- *   qaytgan odam   → to'xtagan darsi ("Keyingi dars", "Davom etish")
- *   sinfi ma'lum   → o'sha sinf kursi
+ *   qaytgan odam   → reja bandlaridan BIRINCHI bajarilmagani: dars,
+ *                    keyin sinov, keyin kunlik son; hammasi bajarilsa —
+ *                    "Yana bitta dars". Ilgari tugma doim keyingi darsni
+ *                    ochardi va sinov bilan kunlik sonni bola pastdagi
+ *                    ro'yxatdan o'zi topishi kerak edi. Endi u nima
+ *                    qilishni o'ylamaydi — faqat bosadi
+ *   sinfi ma'lum   → kursda hali hech narsa yo'q — Aql bilan tanishuv
+ *                    (daraja aniqlash), aks holda o'sha sinf kursi
  *   abituriyent    → DTM variantlari
  *   o'qituvchi     → testlar (maktab)
  *   oliy yo'l      → oliy matematika kursi yoki masalalar
  *   profil yo'q    → sinf tanlash ("O'rganishni boshlash")
  */
-function asosiyAmal({ davom, prof, onDarslar, onMasalalar, onDavom, onKurs, onImtihon, onTestlar }: {
+function asosiyAmal({
+  davom, prof, qadam, progressOf, onDarslar, onMasalalar, onDavom, onKurs, onDaraja, onImtihon, onTestlar,
+}: {
   davom: ReturnType<typeof davomJoyi>;
   prof: Profil | null;
+  qadam: Qadam;
+  progressOf: (c: Course) => Progress;
   onDarslar: () => void;
   onMasalalar: () => void;
   onDavom: (c: Course, ui: number, li: number) => void;
   onKurs: (c: Course) => void;
+  onDaraja: (c: Course) => void;
   onImtihon: () => void;
   onTestlar: () => void;
 }): Amal {
   if (davom) {
     const U = davom.c.units[davom.ui]!;
-    return {
+    const dars: Amal = {
       tahlil: "Bugun: davom etish",
       on: () => onDavom(davom.c, davom.ui, davom.li),
-      yorliq: t("bugunKeyingiDars"),
+      yorliq: t("bugunQadam"),
       joy: t("bugunBobJoy", { bob: davom.ui + 1, dars: davom.li + 1, jami: U.lessons.length }),
       nom: kursMatn(U.lessons[davom.li]!.n).split(" · ")[0] ?? "",
       yol: U.lessons.map((_, li) =>
         li === davom.li ? "joriy" : davom.p.done[lessonId(davom.ui, li)] ? "otilgan" : "qolgan"),
       tugma: t("davomEtish"),
+    };
+    if (!qadam.dars) return dars;
+    if (qadam.sinov) {
+      return {
+        tahlil: "Bugun: qadam sinov", on: qadam.sinov, yorliq: t("bugunQadam"), nom: t("bugunSinov"),
+        izoh: t("bugunSinovIzoh", { n: SINOV_SAVOL, d: Math.ceil(SINOV_SAVOL / 2) }), tugma: t("bugunAmalYechish"),
+      };
+    }
+    if (qadam.son) {
+      return {
+        tahlil: "Bugun: qadam kunlik son", on: qadam.son, yorliq: t("bugunQadam"), nom: t("bugunKunlikSonQisqa"),
+        izoh: t("bugunSonIzoh", { soat: t("bugunSoat", { n: qolganSoat() }) }), tugma: t("bugunAmalOynash"),
+      };
+    }
+    return {
+      ...dars, tahlil: "Bugun: yana bitta dars", yorliq: t("bugunQadamTayyor"),
+      izoh: t("bugunQadamTayyorIzoh"), tugma: t("bugunYanaDars"),
     };
   }
   const boshla = (tahlil: string, on: () => void, nom: string, izoh: string): Amal => ({
@@ -511,6 +602,9 @@ function asosiyAmal({ davom, prof, onDarslar, onMasalalar, onDavom, onKurs, onIm
   if (kurs) {
     const s = sinfOfProfil(prof);
     if (s === null) return boshla("Bugun: oliy matematika", () => onKurs(kurs), kursMatn(kurs.title), kursMatn(kurs.desc));
+    if (darajaKerakmi(kurs, progressOf(kurs))) {
+      return boshla("Bugun: tanishuv", () => onDaraja(kurs), t("bugunTanishuv"), t("bugunTanishuvIzoh"));
+    }
     return boshla("Bugun: sinf darslari", () => onKurs(kurs),
       s === 0 ? t("boshMaktabgachaDarslari") : t("boshSinfDarslari", { n: s }), t("boshSinfDarslariIzoh"));
   }

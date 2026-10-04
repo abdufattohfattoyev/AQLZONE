@@ -186,6 +186,8 @@ export const yolDaftar = (c: Course) => `/kurs/${c.slug}/daftar`;
 export const yolXatolar = (c: Course) => `/kurs/${c.slug}/xatolar`;
 /** Kunlik sinov — faqat bugun ochiq. */
 export const yolSinov = (c: Course) => `/kurs/${c.slug}/sinov`;
+/** Daraja aniqlash — "Aql bilan tanishuv" (`screens/Daraja.tsx`). */
+export const yolDaraja = (c: Course) => `/kurs/${c.slug}/daraja`;
 /** Tangalar do'koni. */
 export const yolDokon = (c: Course) => `/kurs/${c.slug}/dokon`;
 /** Yutuq nishonlari. */

@@ -90,6 +90,15 @@ export interface Progress {
   olingan?: string[];
   /** Aqlga (brend belgisiga) kiydirilgan buyum. */
   kiygan?: string;
+  /**
+   * Daraja aniqlash natijasi — bola qaysi bobdan BOSHLAYDI
+   * (`lib/daraja.ts`, `screens/Daraja.tsx`).
+   *
+   * Undan oldingi boblar O'TILGAN deb yozilmaydi, faqat OCHIQ bo'ladi:
+   * yulduz o'qilmagan dars uchun berilmasin, bola esa xohlasa orqaga
+   * qaytib takrorlay olsin. `undefined` — test hali o'tkazilmagan.
+   */
+  boshBob?: number;
 }
 
 export const UNIT_COLORS: Record<UnitColor, { bg: string; ring: string; road: string }> = {
@@ -125,9 +134,14 @@ export function withReviews(units: Unit[]): Unit[] {
   });
 }
 
-/** Dars ochiqmi: oldingi dars tugagan bo'lishi kerak. */
+/**
+ * Dars ochiqmi: oldingi dars tugagan bo'lishi kerak.
+ *
+ * Istisno — daraja aniqlash (`boshBob`): boshlash bobigacha bo'lgan har
+ * bobning BIRINCHI darsi ochiq. Bob ichida esa tartib o'zgarmaydi.
+ */
 export function isUnlocked(units: Unit[], p: Progress, ui: number, li: number): boolean {
-  if (ui === 0 && li === 0) return true;
+  if (li === 0 && ui <= (p.boshBob ?? 0)) return true;
   if (li > 0) return Boolean(p.done[lessonId(ui, li - 1)]);
   const prev = units[ui - 1];
   return Boolean(p.done[lessonId(ui - 1, prev.lessons.length - 1)]);
@@ -148,9 +162,15 @@ export function nodeState(units: Unit[], p: Progress, ui: number, li: number): N
  *
  * Hammasi tugagan bo'lsa `null`: bunda tugma ko'rsatilmaydi, chunki
  * "davom etish" uchun joy qolmagan.
+ *
+ * Daraja aniqlangan bo'lsa (`boshBob`) qidiruv O'SHA bobdan boshlanadi:
+ * oldingi boblar ochiq, lekin o'tilmagan — bola ularga o'zi qaytadi.
+ * Oldinga hammasi tugagach esa o'sha qoldirilgan boblarga qaytiladi.
  */
 export function keyingiDars(units: Unit[], p: Progress): { ui: number; li: number } | null {
-  for (let ui = 0; ui < units.length; ui++) {
+  const bosh = Math.min(Math.max(0, p.boshBob ?? 0), Math.max(0, units.length - 1));
+  const tartib = [...units.keys()].slice(bosh).concat([...units.keys()].slice(0, bosh));
+  for (const ui of tartib) {
     for (let li = 0; li < units[ui].lessons.length; li++) {
       if (!p.done[lessonId(ui, li)]) return { ui, li };
     }

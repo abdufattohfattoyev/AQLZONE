@@ -24,6 +24,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../lib/icons";
+import { Hajmli } from "../lib/hajmli";
 import { Yolboshchi } from "../components/Yolboshchi";
 import { turKerakmi } from "../lib/tur";
 import { keyingiDars, lessonId, nodeState } from "../lib/types";
@@ -35,9 +36,15 @@ interface Props {
   units: Unit[];
   progress: Progress;
   onStart: (ui: number, li: number) => void;
+  /**
+   * Daraja aniqlash taklifi (`lib/daraja.ts` → darajaKerakmi). Faqat
+   * kursda hali hech narsa qilinmaganda beriladi: bitta dars o'tilgach
+   * bola o'z yo'lida va karta yo'qoladi.
+   */
+  onDaraja?: () => void;
 }
 
-export function Home({ units, progress, onStart }: Props) {
+export function Home({ units, progress, onStart, onDaraja }: Props) {
   const totals = useMemo(() => {
     const total = units.reduce((s, U) => s + U.lessons.length, 0);
     const done = units.reduce(
@@ -81,6 +88,22 @@ export function Home({ units, progress, onStart }: Props) {
           {t("oqishDarsSoni", { n: totals.done, jami: totals.total })}
         </span>
       </div>
+
+      {/* Daraja taklifi — boblar USTIDA, chunki "qayerdan boshlay?" degan
+          savol aynan ularga qarab turganda tug'iladi. Tugma ko'k emas:
+          ekrandagi asosiy amal hamon joriy darsning "Boshlash"i. */}
+      {onDaraja && (
+        <button type="button" onClick={onDaraja} data-tahlil="Darslar: daraja aniqlash"
+          className="clay-press flex min-h-[64px] w-full items-center gap-3 rounded-[18px] bg-karta px-3.5 py-3
+                     text-left shadow-clay-sm ring-[1.5px] ring-brand-blue/30 ring-inset">
+          <Hajmli nom="bayroq" olcham={36} />
+          <span className="flex min-w-0 flex-1 flex-col leading-snug">
+            <span className="text-[15px] font-bold">{t("darajaTaklif")}</span>
+            <span className="text-[13px] text-ink-dim">{t("darajaTaklifIzoh")}</span>
+          </span>
+          <span className="shrink-0 text-[14px] font-bold text-brand-blue-t">{t("darajaTaklifTugma")}</span>
+        </button>
+      )}
 
       <div data-tur="boblar" className="flex flex-col gap-3">
         {units.map((U, ui) => {

@@ -20,7 +20,7 @@ import type { Progress } from "./types";
 import * as api from "./api";
 import { kunKaliti, kunOldin, tiklangan, tiklashTaklifi } from "./zanjir";
 import type { TiklashTaklifi } from "./zanjir";
-import { darsBugunYoz } from "./bugun";
+import { darsBugunYoz, faolKunYoz } from "./bugun";
 
 export const BOSH: Progress = { stars: 0, coins: 0, done: {}, savollar: 0, olingan: [], kiygan: "" };
 
@@ -162,6 +162,7 @@ function oqi(key: string): Progress {
       savollar: d.savollar ?? 0,
       olingan: d.olingan ?? [],
       kiygan: d.kiygan ?? "",
+      ...(typeof d.boshBob === "number" ? { boshBob: d.boshBob } : {}),
     };
   } catch {
     return BOSH;
@@ -260,6 +261,11 @@ interface Ctx {
    * kursdan tashqarida — shu sabab jami hisobdan.
    */
   tangaYech: (narx: number) => boolean;
+  /**
+   * Daraja aniqlash natijasi — kurs shu bobdan boshlanadi
+   * (`Progress.boshBob`). Yulduz ham, tanga ham bermaydi.
+   */
+  darajaBelgila: (c: Course, bob: number) => void;
 }
 
 const ProgressCtx = createContext<Ctx | null>(null);
@@ -291,7 +297,14 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
             if (!raw) continue;
             try {
               const d = JSON.parse(raw) as Progress;
-              if ((d.stars ?? 0) > (yangi[c.key]?.stars ?? 0)) yangi[c.key] = d;
+              const mahalliy = yangi[c.key] ?? BOSH;
+              if ((d.stars ?? 0) > mahalliy.stars) yangi[c.key] = d;
+              // Daraja testi yulduz bermaydi, ya'ni yuqoridagi qoida uni
+              // hech qachon olib kelmasdi: yangi qurilmada bola yana
+              // 1-bobdan boshlab qolardi. Shuning uchun alohida olinadi.
+              else if (typeof d.boshBob === "number" && mahalliy.boshBob === undefined) {
+                yangi[c.key] = { ...mahalliy, boshBob: d.boshBob };
+              }
             } catch {
               /* buzuq qiymat — e'tiborsiz */
             }
@@ -374,8 +387,9 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         };
       });
       setKunlik((k) => kunlikYangila(k, r.asked));
-      // "Bugun" ekranidagi "bitta dars" vazifasi (`lib/bugun.ts`).
+      // "Bugun" ekranidagi "bitta dars" vazifasi va haftalik yo'l (`lib/bugun.ts`).
       darsBugunYoz();
+      faolKunYoz();
       api.postResult({
         grade: c.grade, unit: ui, lesson: li,
         lessonName: c.units[ui].lessons[li].n,
@@ -527,6 +541,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       };
     });
     setKunlik((k) => kunlikYangila(k, r.asked));
+    faolKunYoz();
     // Serverga ham boradi: liga va ota-ona paneli buni ko'rsin. `unit`
     // va `lesson` ataylab haqiqiy darslardan uzoq son — hisobotda u
     // o'z nomi bilan turadi va biror darsning natijasini buzmaydi.
@@ -570,7 +585,17 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         };
       });
     }
-    if (savollar > 0) setKunlik((k) => kunlikYangila(k, savollar));
+    if (savollar > 0) {
+      setKunlik((k) => kunlikYangila(k, savollar));
+      faolKunYoz();
+    }
+  }, []);
+
+  const darajaBelgila = useCallback((c: Course, bob: number) => {
+    setAll((p) => {
+      const cur = p[c.key] ?? BOSH;
+      return { ...p, [c.key]: { ...cur, boshBob: Math.max(0, Math.min(bob, c.units.length - 1)) } };
+    });
   }, []);
 
   return (
@@ -578,7 +603,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       value={{
         progressOf, darsTugadi, kunlik: kunlikKorinishi(kunlik), sotibOl, kiy,
         jamiTanga, jamiYulduz, tiklash, zanjirniTikla, sinovTugadi, oyinTugadi,
-        tangaYech,
+        tangaYech, darajaBelgila,
       }}
     >
       {children}

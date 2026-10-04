@@ -35,6 +35,7 @@ const Dashboard = lazy(() => import("./screens/Dashboard").then((m) => ({ defaul
 const TestSinf = lazy(() => import("./screens/TestSinf").then((m) => ({ default: m.TestSinf })));
 const Home = lazy(() => import("./screens/Home").then((m) => ({ default: m.Home })));
 const Lesson = lazy(() => import("./screens/Lesson").then((m) => ({ default: m.Lesson })));
+const Daraja = lazy(() => import("./screens/Daraja").then((m) => ({ default: m.Daraja })));
 const Dokon = lazy(() => import("./screens/Dokon").then((m) => ({ default: m.Dokon })));
 const Nishonlar = lazy(() => import("./screens/Nishonlar").then((m) => ({ default: m.Nishonlar })));
 const OtaOna = lazy(() => import("./screens/OtaOna").then((m) => ({ default: m.OtaOna })));
@@ -99,12 +100,13 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov,
+  yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
   yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
+import { darajaBormi, darajaKerakmi } from "./lib/daraja";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
 import { kursMatn } from "./lib/tarjima/kurs";
@@ -232,6 +234,7 @@ function Yollar() {
       {/* Kunlik sinov ham dars: shu sabab u `/:bob/:dars` dan OLDIN
           turadi, aks holda marshrut "sinov" ni bob nomi deb o'qirdi. */}
       <Route path="/kurs/:slug/sinov" element={<SinovSahifasi />} />
+      <Route path="/kurs/:slug/daraja" element={<DarajaSahifasi />} />
       <Route path="/kurs/:slug/xatolar" element={<XatolarSahifasi />} />
       <Route path="/kurs/:slug/dokon" element={<DokonSahifasi />} />
       <Route path="/kurs/:slug/nishonlar" element={<NishonSahifasi />} />
@@ -283,6 +286,7 @@ function BoshSahifasi() {
       onImtihon={() => nav(yolImtihon())}
       onQidiruv={() => nav(yolQidiruv())}
       onKurs={(c) => nav(yolKurs(c))}
+      onDaraja={(c) => nav(yolDaraja(c))}
     />
   );
 }
@@ -378,7 +382,8 @@ function KursSahifasi() {
 
   return (
     <OqishQobiq yorliq="darslar" kurs={c}>
-      <Home units={c.units} progress={progressOf(c)} onStart={(ui, li) => nav(yolDars(c, ui, li))} />
+      <Home units={c.units} progress={progressOf(c)} onStart={(ui, li) => nav(yolDars(c, ui, li))}
+        onDaraja={darajaKerakmi(c, progressOf(c)) ? () => nav(yolDaraja(c)) : undefined} />
     </OqishQobiq>
   );
 }
@@ -583,6 +588,30 @@ function SinovSahifasi() {
   );
 }
 
+
+/**
+ * Aql bilan tanishuv — daraja aniqlash (`screens/Daraja.tsx`).
+ *
+ * Testi yo'q kursda (maktabgacha, oliy) kurs sahifasiga qaytadi. Test
+ * AVVAL o'tkazilgan bo'lsa ham ochiladi va natija yangilanadi: bola
+ * yozgi ta'tildan keyin darajasini qayta aniqlamoqchi bo'lishi mumkin.
+ * O'tilgan darslar (`done`) tegilmaydi — faqat boshlash bobi o'zgaradi.
+ */
+function DarajaSahifasi() {
+  const nav = useNavigate();
+  const { darajaBelgila } = useProgress();
+  const { c, slug } = useKurs();
+  useEffect(() => { if (c) oxirginiYoz(c.slug); }, [c]);
+  if (!c) return <NotFound nima={t("kursTopilmadi", { slug: slug ?? "" })} />;
+  if (!darajaBormi(c)) return <Navigate to={yolKurs(c)} replace />;
+  return (
+    <Daraja kurs={c}
+      onNatija={(bob) => darajaBelgila(c, bob)}
+      // `replace` — darsdan orqaga bosilganda test qayta boshlanmasin.
+      onDars={(bob) => nav(yolDars(c, bob, 0), { replace: true })}
+      onKurs={() => nav(yolKurs(c), { replace: true })} />
+  );
+}
 
 /**
  * Kurs ichidagi yordamchi ekranlar bir xil qolipda: kursni topamiz,
