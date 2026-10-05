@@ -3767,6 +3767,18 @@ class OvozTest(TestCase):
             b = self.O.kalit("olma")
         self.assertNotEqual(a, b)
 
+    def test_ruscha_kalit_tezlikka_bogliq_emas(self):
+        """
+        Ruscha so'rovga tezlik, model va kayfiyat yuborilmaydi — ovoz
+        ulardan qat'i nazar bir xil. Ular kalitga kirsa, o'zbekcha tezlik
+        o'zgarganda ruscha fayllar bekorga qayta yasalardi (pul bilan).
+        """
+        with self.settings(AISHA_TEZLIK="0.9", AISHA_KAYFIYAT="Neutral"):
+            a = self.O.kalit("машина", "ru")
+        with self.settings(AISHA_TEZLIK="0", AISHA_KAYFIYAT="Cheerful"):
+            b = self.O.kalit("машина", "ru")
+        self.assertEqual(a, b)
+
     def test_maqtovning_kaliti_boshqa_tezlikda(self):
         """
         `kalit()` va `yasa()` BIR XIL tezlikni ko'rishi shart. Aks

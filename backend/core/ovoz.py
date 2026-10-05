@@ -120,7 +120,16 @@ def kalit(matn: str, til: str = "uz") -> str:
     # edi: `.env` da tezlikni o'zgartirsangiz, eski fayllar joyida
     # qolib, ilova eski tezlikda gapiraverardi — buni faqat quloq bilan
     # sezish mumkin, jurnalda hech narsa ko'rinmaydi.
-    xom = f"{til}|{ovoz}|{kayfiyat}|{tezligi(matn)}|{tozala(matn)}"
+    #
+    # Lekin FAQAT o'zbekchada: ruscha so'rovga model, kayfiyat va tezlik
+    # umuman yuborilmaydi (`yasa()`), ya'ni ruscha ovoz ulardan qat'i
+    # nazar bir xil. Ilgari ular ruscha kalitga ham kirardi va 2026-10-05
+    # da tezlik 0.9 → 0 ga o'zgarganda 121 ta ruscha fayl "yo'qolib",
+    # aynan o'sha ovozni qayta yasash uchun pul talab qilindi.
+    if til != "uz":
+        xom = f"{til}|{tozala(matn)}"
+    else:
+        xom = f"{til}|{ovoz}|{kayfiyat}|{tezligi(matn)}|{tozala(matn)}"
     return hashlib.sha1(xom.encode("utf-8")).hexdigest()[:20]
 
 
