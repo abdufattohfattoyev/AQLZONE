@@ -82,7 +82,7 @@ AISHA_KEY=...
 Kalit: <https://space.aisha.group/api-keys>
 
 Ixtiyoriy: `AISHA_MODEL` (standart `Gulnoza`), `AISHA_KAYFIYAT`
-(`Neutral`), `AISHA_TEZLIK` (`0.9`), `AISHA_TEZLIK_MAQTOV` (`0.8`),
+(`Neutral`), `AISHA_TEZLIK` (`0` — Aisha standarti), `AISHA_TEZLIK_MAQTOV` (`0.8`),
 `OVOZ_KESH`, `OVOZ_KUNLIK_BELGI`.
 
 **Kayfiyat `Neutral`, `Cheerful` emas.** Ikkalasi yonma-yon tinglab

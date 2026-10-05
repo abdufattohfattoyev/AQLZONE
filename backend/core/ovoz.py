@@ -311,7 +311,7 @@ def tezligi(matn: str) -> str:
     """
     if tozala(matn) in SEKIN:
         return getattr(settings, "AISHA_TEZLIK_MAQTOV", "") or "0.8"
-    return getattr(settings, "AISHA_TEZLIK", "") or "0.9"
+    return getattr(settings, "AISHA_TEZLIK", "") or "0"
 
 
 def tili(matn: str) -> str:

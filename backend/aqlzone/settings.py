@@ -342,8 +342,12 @@ AISHA_MODEL = env("AISHA_MODEL", "Gulnoza")
 # bilmaydi. "Neutral" esa tinch va tabiiy: bola nomni aniq eshitadi.
 AISHA_KAYFIYAT = env("AISHA_KAYFIYAT", "Neutral")
 
-# Bolalar uchun sekinroq. 1.0 — odatdagi tezlik.
-AISHA_TEZLIK = env("AISHA_TEZLIK", "0.9")
+# Tezlik — Aisha'ning STANDARTI ("0"). Ilgari bolalar uchun "0.9"
+# (sekinroq) edi, lekin 2026-10-05 da yonma-yon tinglanganda sun'iy
+# sekinlashtirilgan ovoz "o'zbekdek emas" eshitildi: unli cho'ziladi,
+# ohang buziladi. Standart tezlik tabiiyroq deb tanlandi.
+# 1.0 — odatdagi tezlikning qo'lda berilgani, 0 — xizmatning o'z tanlovi.
+AISHA_TEZLIK = env("AISHA_TEZLIK", "0")
 
 # Maqtov so'zi ("Barakalla!") undan ham sekin aytiladi.
 #
