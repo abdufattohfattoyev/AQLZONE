@@ -7,7 +7,8 @@
  */
 import { oyinById } from "./index";
 import { ochiqmi } from "./rekord";
-import { profil, sinfOfProfil } from "../profil";
+import { profil } from "../profil";
+import { oyinDarajasi } from "../moslash";
 import type { Daraja, OyinId } from "./tur";
 
 /**
@@ -21,12 +22,9 @@ import type { Daraja, OyinId } from "./tur";
  * hisobga olinadi.
  */
 function anketaDarajasi(): Daraja | null {
+  // Qoida bitta — `lib/moslash.ts` (o'yinlar, kunlik son, xona ham shundan).
   const p = profil();
-  if (!p) return null;
-  const sinf = sinfOfProfil(p);
-  if (sinf !== null) return sinf <= 4 ? 1 : sinf <= 9 ? 2 : 3;
-  // Ota-ona sinfsiz yoki ustoz/talaba/kattalar — katta odam.
-  return 3;
+  return p ? oyinDarajasi(p) : null;
 }
 
 /**

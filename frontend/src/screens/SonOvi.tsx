@@ -19,6 +19,8 @@
  * lekin qaytib kelishga sabab ham qoladi.
  */
 import { useEffect, useMemo, useState } from "react";
+import { oyinDarajasi } from "../lib/moslash";
+import { profil } from "../lib/profil";
 import type { CSSProperties } from "react";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
@@ -75,7 +77,7 @@ export function SonOvi({ onChiq }: { onChiq: () => void }) {
   const kun = kunKaliti();
 
   const [xotira, setXotira] = useState<Xotira>(oqi);
-  const [daraja, setDaraja] = useState<Daraja>(() => oqi().daraja ?? 2);
+  const [daraja, setDaraja] = useState<Daraja>(() => oqi().daraja ?? oyinDarajasi(profil()));
   const [qanday, setQanday] = useState(() => {
     try { return !localStorage.getItem(QANDAY_KALIT); } catch { return false; }
   });

@@ -14,6 +14,8 @@
  * alohida pul yasamaydi.
  */
 import { joriyProfil } from "../api";
+import { oyinDarajasi } from "../moslash";
+import { profil } from "../profil";
 import { kunKaliti } from "../zanjir";
 import { DARAJALAR } from "./tur";
 import type { Daraja, OyinId } from "./tur";
@@ -79,6 +81,10 @@ export const rekord = (id: OyinId, d: Daraja): number => yozuv(id, d).ball;
  */
 export function ochiqmi(id: OyinId, d: Daraja): boolean {
   if (d === 1) return true;
+  // Anketa bo'yicha mos daraja va undan pastlari — boshdan ochiq
+  // (`lib/moslash.ts`). 11-sinf o'quvchisi "6 + 5" da 30 ball yig'ib,
+  // keyin o'z darajasiga yetib borishi kerak emas.
+  if (d <= oyinDarajasi(profil())) return true;
   const oldingi = (d - 1) as Daraja;
   return rekord(id, oldingi) >= DARAJALAR[d - 1].ochish;
 }

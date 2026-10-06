@@ -36,6 +36,8 @@ import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import { useOrqaga } from "../lib/qobiq";
 import { useOyinlarJonli } from "../lib/oyinlarJonli";
+import { oyinDarajasi } from "../lib/moslash";
+import { profil, useProfil } from "../lib/profil";
 
 export function OyinDaraja({ oyin, onBack, onBoshla, onDuel }: {
   oyin: Oyin;
@@ -140,6 +142,9 @@ function Qator({ oyin, d, i, onBoshla }: {
 }) {
   const ochiq = ochiqmi(oyin.id, d.n);
   const qolgan = ochishgaQolgan(oyin.id, d.n);
+  // Anketa bo'yicha mos daraja — "Siz uchun". Faqat MASLAHAT: qolganlari
+  // ham ochiq, tanlov bolaning o'zida (`lib/moslash.ts`).
+  const sizUchun = useProfil() !== null && d.n === oyinDarajasi(profil());
   const r = rekord(oyin.id, d.n);
   const rang = UNIT_COLORS[d.rang];
 
@@ -158,7 +163,14 @@ function Qator({ oyin, d, i, onBoshla }: {
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block font-display text-[15.5px] leading-tight text-ink">{t(d.nom)}</span>
+        <span className="flex items-center gap-1.5 font-display text-[15.5px] leading-tight text-ink">
+          {t(d.nom)}
+          {sizUchun && (
+            <span className="rounded-full bg-brand-blue/12 px-2 py-0.5 font-sans text-[11px] font-bold text-brand-blue-t">
+              {t("oyinSizUchun")}
+            </span>
+          )}
+        </span>
         {/* Yosh — kichik va xira: u maslahat, shart emas. */}
         <span className="block text-[11.5px] leading-tight text-ink-soft">{t(d.yosh)}</span>
       </span>

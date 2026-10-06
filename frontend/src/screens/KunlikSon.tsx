@@ -9,6 +9,8 @@
  * ochilsa ham urinishlar joyida. Kuniga har darajada bitta o'yin.
  */
 import { useEffect, useMemo, useState } from "react";
+import { oyinDarajasi } from "../lib/moslash";
+import { profil } from "../lib/profil";
 import type { CSSProperties } from "react";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
@@ -124,7 +126,7 @@ export function KunlikSon({ onChiq }: { onChiq: () => void }) {
   const { oyinTugadi } = useProgress();
   const kun = kunKaliti();
   const [xotira, setXotira] = useState<Xotira>(oqi);
-  const [daraja, setDaraja] = useState<Daraja>(() => oqi().daraja ?? 2);
+  const [daraja, setDaraja] = useState<Daraja>(() => oqi().daraja ?? oyinDarajasi(profil()));
   const [joriy, setJoriy] = useState("");
   const [xato, setXato] = useState("");
   const [namunaQadam, setNamunaQadam] = useState(0);

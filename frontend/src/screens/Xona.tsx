@@ -18,6 +18,8 @@
  * uchun Royale'da keyingi savol so'rovni kutmasdan chiqadi.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { oyinDarajasi } from "../lib/moslash";
+import { profil } from "../lib/profil";
 import { Kutish } from "../components/Kutish";
 import { Konfetti } from "../components/Konfetti";
 import { Kartalar } from "../components/xona/Kartalar";
@@ -51,7 +53,8 @@ function saqlanganDaraja(): Daraja {
     const n = Number(localStorage.getItem(DARAJA_KALIT));
     if (n === 1 || n === 2 || n === 3) return n;
   } catch { /* jim */ }
-  return 2;
+  // Hali tanlamagan — anketa bo'yicha (`lib/moslash.ts`).
+  return oyinDarajasi(profil());
 }
 
 function darajaSaqla(d: Daraja) {

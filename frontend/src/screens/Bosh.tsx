@@ -42,7 +42,7 @@ import { Hajmli } from "../lib/hajmli";
 import type { HajmliNom } from "../lib/hajmli";
 import { getHisob, joriyProfil, kunlikHolat, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
-import { COURSES } from "../lib/curriculum";
+import { COURSES, OLIY_KURSLAR } from "../lib/curriculum";
 import type { Course } from "../lib/curriculum";
 import { oxirgiKurs } from "../lib/oxirgi";
 import { useKompyuter } from "../lib/maket";
@@ -72,10 +72,13 @@ import { FORMULALAR } from "../lib/formulalar";
 import { VARIANTLAR as DTM_VARIANT } from "../lib/imtihon";
 import { VARIANTLAR as SERT_VARIANT } from "../lib/sertifikat";
 import {
-  yolFormulalarUmumiy, yolImtihon, yolKurslar, yolMasalalar, yolMantiq, yolOyinlar, yolQabul, yolSertifikat,
+  yolFormulalarUmumiy, yolImtihon, yolKurslar, yolMasalalar, yolMantiq, yolOyinlar, yolQabul, yolSertifikat, yolSessiya,
 } from "../lib/yollar";
 import { QABUL_VARIANT } from "../lib/qabul";
 import { mantiqMavzular } from "../lib/mantiq";
+import { bolimlar as bolimRoyxati } from "../lib/moslash";
+import type { Bolim } from "../lib/moslash";
+import { SESSIYA_VARIANTLAR } from "../lib/sessiya";
 
 interface Props {
   progressOf: (c: Course) => Progress;
@@ -245,8 +248,13 @@ export function Bosh({
         <span className="sr-only">{sana}</span>
       </div>
       <div className="hidden items-center gap-2 kom:flex">
-        <TezTugma ik="trophy" nom={t("yonSertifikat")} on={() => onYol(yolSertifikat())} tahlil="Bugun: sertifikat" />
-        <TezTugma ik="clock" nom={t("yonDtm")} on={() => onYol(yolImtihon())} tahlil="Bugun: DTM" />
+        {/* Tez tugmalar ham anketaga bo'ysunadi: 3-sinf bolasiga DTM tugmasi kerak emas. */}
+        {bolimRoyxati(prof).includes("sertifikat") && (
+          <TezTugma ik="trophy" nom={t("yonSertifikat")} on={() => onYol(yolSertifikat())} tahlil="Bugun: sertifikat" />
+        )}
+        {bolimRoyxati(prof).includes("dtm") && (
+          <TezTugma ik="clock" nom={t("yonDtm")} on={() => onYol(yolImtihon())} tahlil="Bugun: DTM" />
+        )}
       </div>
       <span aria-label={t("bugunZanjir", { n: zanjir })} title={t("bugunZanjir", { n: zanjir })}
         className={`flex min-h-11 shrink-0 items-center gap-1 rounded-[14px] bg-karta pr-3 pl-2.5 font-display
@@ -310,25 +318,25 @@ export function Bosh({
 
   /* ─── Bo'limni tanlang — testmakon'dagi "Fan tanlang" kabi: 3D belgi, nom
      va nechta narsa borligi. Telefonda 2, kengroqda 3 ustun. ─── */
-  // Prezident maktabiga tayyorlov va Mantiq — 2–4-sinf bolasida (yoki
-  // uning ota-onasida) to'r BOSHIDA turadi: bu yoshda eng aniq maqsad shu.
-  // Ilgari Prezident maktabi keng karta edi; Mantiq qo'shilgach kartalar
-  // sakkizta bo'ldi va hammasi bir o'lchamda — to'r teng ikki ustunda yopiladi.
-  const ps = sinfOfProfil(prof);
-  const qabulKarta = { bel: "toj" as HajmliNom, nom: t("bolimQabul"), izoh: t("bolimQabulIzoh", { n: QABUL_VARIANT }), yol: yolQabul() };
-  const mantiqKarta = { bel: "miya" as HajmliNom, nom: t("bolimMantiq"), izoh: t("bolimMantiqIzoh", { n: mantiqMavzular().length }), yol: yolMantiq() };
-  const bolimlar: { bel: HajmliNom; nom: string; izoh: string; yol: string }[] = [
-    { bel: "kitob", nom: t("bolimDarslar"), izoh: t("bolimDarslarIzoh", { n: COURSES.reduce((a, c) => a + c.units.reduce((b, u) => b + u.lessons.length, 0), 0) }), yol: yolKurslar() },
-    { bel: "nishon", nom: t("yonDtm"), izoh: t("bolimVariant", { n: DTM_VARIANT }), yol: yolImtihon() },
-    { bel: "medal", nom: t("yonSertifikat"), izoh: t("bolimVariant", { n: SERT_VARIANT }), yol: yolSertifikat() },
-    { bel: "goya", nom: t("masalalar"), izoh: t("bolimMasalaIzoh"), yol: yolMasalalar() },
-    { bel: "kubok", nom: t("bolimOyinlar"), izoh: t("bolimOyinIzoh"), yol: yolOyinlar() },
-    { bel: "diagramma", nom: t("kattalarFormula"), izoh: t("bolimFormulaIzoh", { n: FORMULALAR.reduce((a, b) => a + b.lar.length, 0) }), yol: yolFormulalarUmumiy() },
-  ];
-  // To'r endi sakkizta (juft): telefonda 2 ustun, kengda — oxirgi qator ikkita.
-  // 2–4-sinfda Mantiq va Prezident maktabi BOSHDA turadi: shu yoshning maqsadi.
-  if (ps !== null && ps >= 2 && ps <= 4) bolimlar.unshift(qabulKarta, mantiqKarta);
-  else bolimlar.push(mantiqKarta, qabulKarta);
+  // QAYSI bo'limlar va QAYSI tartibda — anketa javobidan (`lib/moslash.ts`).
+  // Ilgari to'r hammaga bir xil edi: 2-sinf bolasi DTM va milliy
+  // sertifikatni, talaba esa Prezident maktabini ko'rardi. Ro'yxatda
+  // yo'q bo'lim yo'qolmaydi — pastki paneldan (O'qish, O'yin) ochiladi.
+  const KARTA: Record<Bolim, { bel: HajmliNom; nom: string; izoh: string; yol: string }> = {
+    // Oliy yo'lda "1–11-sinf" emas — talabaning o'z kurslari.
+    darslar: yolOf(prof) === "oliy"
+      ? { bel: "kitob", nom: t("bolimDarslar"), izoh: t("bolimDarslarOliyIzoh", { n: OLIY_KURSLAR().length }), yol: yolKurslar() }
+      : { bel: "kitob", nom: t("bolimDarslar"), izoh: t("bolimDarslarIzoh", { n: COURSES.reduce((a, c) => a + c.units.reduce((b, u) => b + u.lessons.length, 0), 0) }), yol: yolKurslar() },
+    dtm: { bel: "nishon", nom: t("yonDtm"), izoh: t("bolimVariant", { n: DTM_VARIANT }), yol: yolImtihon() },
+    sertifikat: { bel: "medal", nom: t("yonSertifikat"), izoh: t("bolimVariant", { n: SERT_VARIANT }), yol: yolSertifikat() },
+    masalalar: { bel: "goya", nom: t("masalalar"), izoh: t("bolimMasalaIzoh"), yol: yolMasalalar() },
+    oyinlar: { bel: "kubok", nom: t("bolimOyinlar"), izoh: t("bolimOyinIzoh"), yol: yolOyinlar() },
+    formulalar: { bel: "diagramma", nom: t("kattalarFormula"), izoh: t("bolimFormulaIzoh", { n: FORMULALAR.reduce((a, b) => a + b.lar.length, 0) }), yol: yolFormulalarUmumiy() },
+    qabul: { bel: "toj", nom: t("bolimQabul"), izoh: t("bolimQabulIzoh", { n: QABUL_VARIANT }), yol: yolQabul() },
+    mantiq: { bel: "miya", nom: t("bolimMantiq"), izoh: t("bolimMantiqIzoh", { n: mantiqMavzular().length }), yol: yolMantiq() },
+    sessiya: { bel: "bitiruv", nom: t("bolimSessiya"), izoh: t("bolimVariant", { n: SESSIYA_VARIANTLAR }), yol: yolSessiya() },
+  };
+  const bolimlar = bolimRoyxati(prof).map((b) => KARTA[b]);
   const bolimTori = (
     <section aria-label={t("bolimSarlavha")} className="flex flex-col gap-3">
       <div>

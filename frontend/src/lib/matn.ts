@@ -343,6 +343,8 @@ const S = {
   qabulNatijaBall: ["Ball", "Баллы"],
   qabulNatijaBallIzoh: ["Rasmiy shkala: 1,1 va 2,1 ballik topshiriqlar", "Официальная шкала: задания по 1,1 и 2,1 балла"],
   bolimQabul: ["Prezident maktabi", "Президентская школа"],
+  bolimSessiya: ["Sessiya", "Сессия"],
+  bolimDarslarOliyIzoh: ["Oliy matematika · {n} ta kurs", "Высшая математика · {n} курса"],
   bolimQabulIzoh: ["4-sinf uchun · {n} ta variant", "Для 4 класса · {n} вариантов"],
   /* Daraja aniqlash — "Aql bilan tanishuv" (`screens/Daraja.tsx`). */
   darajaSalom: ["Keling, qayerdan boshlashni birga topamiz", "Давай вместе найдём, с чего начать"],
@@ -2648,13 +2650,15 @@ const S = {
   darajaOson: ["Oson", "Лёгкий"],
   darajaOrta: ["O'rta", "Средний"],
   darajaQiyin: ["Qiyin", "Сложный"],
-  darajaOsonYosh: ["6–9 yosh · 1–3-sinf", "6–9 лет · 1–3 класс"],
-  darajaOrtaYosh: ["10–14 yosh · 4–8-sinf", "10–14 лет · 4–8 класс"],
-  darajaQiyinYosh: ["15+ · kattalar", "15+ · взрослым"],
+  /* Daraja yozuvlari `lib/moslash.ts` → oyinDarajasi bilan BIR XIL: 1–4, 5–9, 10+. */
+  darajaOsonYosh: ["6–10 yosh · 1–4-sinf", "6–10 лет · 1–4 класс"],
+  darajaOrtaYosh: ["11–15 yosh · 5–9-sinf", "11–15 лет · 5–9 класс"],
+  darajaQiyinYosh: ["10–11-sinf · kattalar", "10–11 класс · взрослым"],
   darajaQulf: [
     "Oldingi darajada yana {n} ball to'plang",
     "Наберите ещё {n} на предыдущем уровне",
   ],
+  oyinSizUchun: ["Siz uchun", "Для вас"],
   darajaYoshIzoh: [
     "Yosh — faqat maslahat. Istagan darajangni tanla.",
     "Возраст — только подсказка. Выбирай любой уровень.",

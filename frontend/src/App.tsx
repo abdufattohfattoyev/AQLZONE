@@ -110,6 +110,7 @@ import {
 import { blokBormi, sinfOf } from "./lib/blok";
 import { darajaBormi, darajaKerakmi } from "./lib/daraja";
 import { QABUL_VARIANT, qabulTurmi } from "./lib/qabul";
+import { formulaSinfi } from "./lib/moslash";
 import { MANTIQ_ID, mantiqDars, mantiqMavzu, mantiqYoz, mantiqYulduzlar } from "./lib/mantiq";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
@@ -748,11 +749,14 @@ function FormulalarSahifasi() {
  */
 function FormulalarUmumiySahifasi() {
   const nav = useNavigate();
-  const c = courseBySlug("11-sinf") ?? COURSES[COURSES.length - 1]!;
+  // O'quvchining o'z sinfi (5–11) ochiq turadi; sinfsiz yoki 5 dan kichik
+  // bo'lsa — 11-sinf, ya'ni to'liq varaq (`lib/moslash.ts` → formulaSinfi).
+  const s = formulaSinfi(useProfil());
+  const c = COURSES.find((x) => x.grade === s) ?? courseBySlug("11-sinf") ?? COURSES[COURSES.length - 1]!;
   useTema("bosh");
   return (
     <OqishQobiq yorliq="formulalar" kurs={c}>
-      <Formulalar ichki sinf={sinfOf(c.grade)} onBack={() => nav(yolKurs(c))} />
+      <Formulalar ichki sinf={s} onBack={() => nav(yolKurs(c))} />
     </OqishQobiq>
   );
 }
