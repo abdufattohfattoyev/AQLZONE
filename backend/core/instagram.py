@@ -9,11 +9,15 @@ Meta ilovasidan olingan uzoq muddatli kalit (60 kun).
 
 Uch qadam, Instagram talabi shunday:
 
-  1. Konteyner ochiladi (`media_type=REELS`, `upload_type=resumable`).
-  2. Fayl to'g'ridan-to'g'ri `rupload.facebook.com` ga yuklanadi.
-     Videoni ochiq havolaga qo'yish shart emas — server ichida turadi.
-  3. Instagram videoni qayta ishlaydi (bir necha daqiqa), tayyor
-     bo'lgach `media_publish` bilan joylanadi.
+  1. Rolik vaqtincha ochiq havolaga qo'yiladi (`core/ommaviy.py`).
+  2. Konteyner ochiladi (`media_type=REELS`, `video_url=<havola>`) —
+     Instagram videoni o'sha havoladan O'ZI yuklab oladi.
+  3. Qayta ishlashini kutamiz (bir necha daqiqa), tayyor bo'lgach
+     `media_publish` bilan joylanadi va havola yopiladi.
+
+Faylni to'g'ridan-to'g'ri yuklash (`upload_type=resumable`) bu yerda
+ishlamaydi: u faqat Facebook Login o'rnatgan ilovalarga ruxsat
+etilgan. Instagram Login da yagona yo'l — ochiq havola.
 
 ─────────────────── KALIT ───────────────────
 
@@ -35,8 +39,9 @@ from pathlib import Path
 
 from django.conf import settings
 
+from core import ommaviy
+
 API = "https://graph.instagram.com/v23.0"
-YUKLASH = "https://rupload.facebook.com/ig-api-upload/v23.0"
 
 #: Instagram videoni qayta ishlashini shuncha kutamiz (sekund).
 KUTISH = 600
@@ -127,25 +132,25 @@ def reels_joyla(video: Path, matn: str) -> tuple[str, str, str]:
     Videoni Reels qilib joylaydi. `(holat, izoh, media_id)` qaytaradi —
     holat "joylandi" yoki "xato".
     """
+    # Eng avval: havolasiz urinishdan ma'no yo'q.
+    if not settings.SAYT_URL.startswith("https://"):
+        return "xato", "SAYT_URL yo'q yoki https emas — Instagram videoni olmaydi", ""
     try:
         kalitni_yangila()
     except Exception:                            # noqa: BLE001 — eski kalit hali ishlaydi
         pass
     k = kalit()
+
+    havola, vaqtincha = ommaviy.ochib_ber(video)
     try:
         ig = akkaunt()["user_id"]
         kont = _sorov(f"{API}/{ig}/media", {
-            "media_type": "REELS", "upload_type": "resumable",
+            "media_type": "REELS", "video_url": havola,
             "caption": matn, "share_to_feed": "true", "access_token": k,
         }, usul="POST")
         kid = kont["id"]
 
-        tana = video.read_bytes()
-        _sorov(f"{YUKLASH}/{kid}", usul="POST", tana=tana, vaqt=300, sarlavhalar={
-            "Authorization": f"OAuth {k}", "offset": "0", "file_size": str(len(tana)),
-        })
-
-        holat = ""
+        holat = {}
         for _ in range(KUTISH // ORALIQ):
             time.sleep(ORALIQ)
             holat = _sorov(f"{API}/{kid}", {"fields": "status_code,status", "access_token": k})
@@ -160,3 +165,6 @@ def reels_joyla(video: Path, matn: str) -> tuple[str, str, str]:
         return "joylandi", "", j.get("id", "")
     except (RuntimeError, OSError, KeyError, ValueError) as e:
         return "xato", str(e), ""
+    finally:
+        # Havola o'z ishini qildi — ochiq qolib ketmasin.
+        ommaviy.yop(vaqtincha)

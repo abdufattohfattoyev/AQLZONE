@@ -19,6 +19,7 @@ from django.urls import include, path
 from core import boshqaruv, masala_hisobot
 from core.views import health
 from core.media import media_urlpatterns
+from core.ommaviy import rolik_urlpatterns
 from core.spa import spa_urlpatterns
 from core import seo
 
@@ -59,6 +60,10 @@ urlpatterns = [
     # (`docker-compose.yml` dagi izohga qarang). Rasmlar soni oz va
     # hajmi kichik — bu yuk sezilmaydi.
     *media_urlpatterns(),
+    # Instagram rolikni shu havoladan oladi (`core/ommaviy.py`). U ham
+    # SPA dan oldin: havola bir-ikki daqiqa yashaydi, lekin o'sha
+    # paytda React sahifasi emas, videoning o'zi kelishi kerak.
+    *rolik_urlpatterns(),
     # Qidiruv tizimlari uchun — SPA dan OLDIN (`core/seo.py`).
     path("sitemap.xml", seo.sitemap, name="sitemap"),
     path("robots.txt", seo.robots, name="robots"),

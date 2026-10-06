@@ -9342,6 +9342,40 @@ class RolikPostTest(TestCase):
         self.assertFalse((self.navbat / "01-sertifikat.mp4").exists())
         self.assertTrue(any("Instagram" in c.args[1] for c in admin.call_args_list))
 
+    @override_settings(INSTAGRAM_TOKEN="k", SAYT_URL="https://aql-zone.uz")
+    def test_ochiq_havola_ochiladi_va_yopiladi(self):
+        """Instagram videoni havoladan oladi — havola joylashdan keyin qolmasin."""
+        from core import instagram
+        korilgan = {}
+
+        def sorov(url, maydonlar=None, **_):
+            if url.endswith("/me"):
+                return {"user_id": "9"}
+            if maydonlar and "video_url" in maydonlar:
+                korilgan["havola"] = maydonlar["video_url"]
+                return {"id": "c1"}
+            if "creation_id" in (maydonlar or {}):
+                return {"id": "m1"}
+            return {"status_code": "FINISHED"}
+
+        with patch.object(instagram, "_sorov", side_effect=sorov), \
+                patch.object(instagram, "kalitni_yangila"), \
+                patch.object(instagram.time, "sleep"):
+            holat, izoh, mid = instagram.reels_joyla(self.navbat / "01-sertifikat.mp4", "matn")
+
+        self.assertEqual((holat, mid), ("joylandi", "m1"))
+        self.assertTrue(korilgan["havola"].startswith("https://aql-zone.uz/rolik/"))
+        from core.ommaviy import papka
+        self.assertEqual(list(papka().glob("*.mp4")), [])
+
+    @override_settings(INSTAGRAM_TOKEN="k", SAYT_URL="")
+    def test_sayt_urlsiz_urinilmaydi(self):
+        from core import instagram
+        with patch.object(instagram, "_sorov") as s:
+            holat, izoh, _ = instagram.reels_joyla(self.navbat / "01-sertifikat.mp4", "matn")
+        self.assertEqual((holat, s.call_count), ("xato", 0))
+        self.assertIn("SAYT_URL", izoh)
+
     def test_izoh_teglarsiz(self):
         from core.instagram import izoh
         self.assertEqual(
