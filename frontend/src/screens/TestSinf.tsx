@@ -55,11 +55,13 @@ interface Props {
   onSinf: (c: Course) => void;
   /** Imtihon variantlari — milliy sertifikat va DTM. */
   onImtihon: () => void;
+  /** Prezident va ixtisoslashtirilgan maktablarga tayyorlov (`screens/Qabul.tsx`). */
+  onQabul: () => void;
   onToplam: (id: number) => void;
   onBack: () => void;
 }
 
-export function TestSinf({ onSinf, onImtihon, onToplam, onBack }: Props) {
+export function TestSinf({ onSinf, onImtihon, onQabul, onToplam, onBack }: Props) {
   const ozStrelka = useOrqaga(onBack);
   // Anketadagi sinf eng oldinda va belgilangan: odam "nechanchi
   // sinfman" deb qidirib o'tirmasin (`lib/profil.ts`).
@@ -114,6 +116,23 @@ export function TestSinf({ onSinf, onImtihon, onToplam, onBack }: Props) {
         <span className="min-w-0 flex-1">
           <span className="block font-display text-[15px] leading-tight">{t("sertTestlar")}</span>
           <span className="mt-0.5 block truncate text-[12px] leading-snug text-ink-dim">{t("sertTestlarIzoh")}</span>
+        </span>
+        <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+      </button>
+
+      {/* ---- maktabga qabul ----
+          4-sinf bolasining ota-onasi uchun eng aniq maqsad. DTM qatori
+          bilan bir xil ko'rinishda: ikkalasi ham "imtihonga tayyorlov". */}
+      <button type="button" onClick={() => { tebrat("tanlov"); onQabul(); }}
+        data-tahlil="Testlar: Prezident maktabi"
+        className="az-kirish clay-press mt-2.5 flex w-full items-center gap-3 rounded-clay bg-karta p-3.5
+                   text-left shadow-clay-sm">
+        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-track text-brand-blue">
+          <Icon name="trophy" size={22} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-[15px] leading-tight">{t("qabulSarlavha")}</span>
+          <span className="mt-0.5 block truncate text-[12px] leading-snug text-ink-dim">{t("qabulIzoh")}</span>
         </span>
         <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
       </button>

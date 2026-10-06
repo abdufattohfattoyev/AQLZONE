@@ -36,6 +36,8 @@ const TestSinf = lazy(() => import("./screens/TestSinf").then((m) => ({ default:
 const Home = lazy(() => import("./screens/Home").then((m) => ({ default: m.Home })));
 const Lesson = lazy(() => import("./screens/Lesson").then((m) => ({ default: m.Lesson })));
 const Daraja = lazy(() => import("./screens/Daraja").then((m) => ({ default: m.Daraja })));
+const Qabul = lazy(() => import("./screens/Qabul").then((m) => ({ default: m.Qabul })));
+const Mantiq = lazy(() => import("./screens/Mantiq").then((m) => ({ default: m.Mantiq })));
 const Dokon = lazy(() => import("./screens/Dokon").then((m) => ({ default: m.Dokon })));
 const Nishonlar = lazy(() => import("./screens/Nishonlar").then((m) => ({ default: m.Nishonlar })));
 const OtaOna = lazy(() => import("./screens/OtaOna").then((m) => ({ default: m.OtaOna })));
@@ -102,11 +104,13 @@ import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
   yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
-  yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant,
+  yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant, yolQabul, yolQabulVariant, yolMantiq, yolMantiqMavzu,
   yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { darajaBormi, darajaKerakmi } from "./lib/daraja";
+import { QABUL_VARIANT, qabulTurmi } from "./lib/qabul";
+import { MANTIQ_ID, mantiqDars, mantiqMavzu, mantiqYoz, mantiqYulduzlar } from "./lib/mantiq";
 import { sinovBajarilgan, sinovDarsi, sinovniBelgila } from "./lib/kunlikSinov";
 import { t } from "./lib/matn";
 import { kursMatn } from "./lib/tarjima/kurs";
@@ -210,6 +214,10 @@ function Yollar() {
       <Route path="/sinf/qoshil/:kod" element={<SinfQoshilSahifasi />} />
       <Route path="/sinf/:id" element={<SinfSahifasi />} />
       <Route path="/sessiya" element={<SessiyaSahifasi />} />
+      <Route path="/qabul" element={<QabulSahifasi />} />
+      <Route path="/mantiq" element={<MantiqSahifasi />} />
+      <Route path="/mantiq/:id" element={<MantiqMavzuSahifasi />} />
+      <Route path="/qabul/:tur/:n" element={<QabulVariantSahifasi />} />
       <Route path="/sessiya/:slug/:n" element={<SessiyaVariantSahifasi />} />
       <Route path="/oyinlar/shaharcha" element={<ShaharchaSahifasi />} />
       <Route path="/oyinlar/shaharcha/:pid" element={<ShaharchaSahifasi />} />
@@ -305,6 +313,7 @@ function TestSinfSahifasi() {
     <TestSinf
       onSinf={(c) => nav(yolTestlar(c))}
       onImtihon={() => nav(yolSertifikat())}
+      onQabul={() => nav(yolQabul())}
       onToplam={(id) => nav(yolToplam(id))}
       onBack={() => nav(yolTestSinf())}
     />
@@ -1017,6 +1026,64 @@ function ImtihonVariantSahifasi() {
   return (
     <BlokEkran sinf={11} uzunlik="dtm" qamrov={{ tur: "imtihon" }} imtihon={raqam}
       onExit={() => nav(yolImtihon())} />
+  );
+}
+
+/** Prezident va ixtisoslashtirilgan maktablarga tayyorlov (`screens/Qabul.tsx`). */
+function QabulSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Qabul onVariant={(tur, n) => nav(yolQabulVariant(tur, n))} onChiq={() => nav(yolTestSinf())} />;
+}
+
+/**
+ * Qabul varianti — Blok ekrani (vaqt, javob, tahlil). `sinf={4}`: savollar
+ * 4-sinf dasturidan va "takrorlash" havolalari 4-sinf boblariga olib boradi.
+ */
+function QabulVariantSahifasi() {
+  const nav = useNavigate();
+  const { tur, n } = useParams();
+  useTema("bosh");
+  const raqam = Number(n);
+  if (!qabulTurmi(tur) || !Number.isInteger(raqam) || raqam < 1 || raqam > QABUL_VARIANT) {
+    return <Navigate to={yolQabul()} replace />;
+  }
+  return (
+    <BlokEkran key={`${tur}-${raqam}`} sinf={4} uzunlik="dtm" qamrov={{ tur: "hammasi" }}
+      qabul={{ tur, n: raqam }} onExit={() => nav(yolQabul())} />
+  );
+}
+
+/** Mantiq va fikrlash — mavzular ro'yxati (`screens/Mantiq.tsx`). */
+function MantiqSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Mantiq onMavzu={(id) => nav(yolMantiqMavzu(id))} onChiq={() => nav(yolBosh())} />;
+}
+
+/**
+ * Mantiq mavzusi — oddiy dars ekrani (`Lesson`): usul (darsga kirish,
+ * jonli namuna), keyin oltita savol. Yulduz mantiqning o'z ro'yxatiga,
+ * tanga va zanjir umumiy hisobga (`oyinTugadi` — kurs xaritasiga tegmaydi).
+ */
+function MantiqMavzuSahifasi() {
+  const nav = useNavigate();
+  const { id } = useParams();
+  const { oyinTugadi } = useProgress();
+  useTema("bosh");
+  const m = mantiqMavzu(id ?? "");
+  const dars = useMemo(() => (m ? mantiqDars(m) : null), [m?.id]);
+  if (!m || !dars) return <Navigate to={yolMantiq()} replace />;
+  const yulduzlar = mantiqYulduzlar();
+  return (
+    <Lesson key={m.id} unit={dars.unit} lesson={dars.lesson} kursId={MANTIQ_ID}
+      hisob={{ jami: Object.values(yulduzlar).reduce((a, b) => a + b, 0), oldin: yulduzlar[m.id] ?? 0 }}
+      onExit={() => nav(yolMantiq())}
+      onFinish={(r: LessonResult) => {
+        mantiqYoz(m.id, r.stars);
+        oyinTugadi(r.correct * 2, r.asked);
+        nav(yolMantiq());
+      }} />
   );
 }
 

@@ -72,8 +72,10 @@ import { FORMULALAR } from "../lib/formulalar";
 import { VARIANTLAR as DTM_VARIANT } from "../lib/imtihon";
 import { VARIANTLAR as SERT_VARIANT } from "../lib/sertifikat";
 import {
-  yolFormulalarUmumiy, yolImtihon, yolKurslar, yolMasalalar, yolOyinlar, yolSertifikat,
+  yolFormulalarUmumiy, yolImtihon, yolKurslar, yolMasalalar, yolMantiq, yolOyinlar, yolQabul, yolSertifikat,
 } from "../lib/yollar";
+import { QABUL_VARIANT } from "../lib/qabul";
+import { mantiqMavzular } from "../lib/mantiq";
 
 interface Props {
   progressOf: (c: Course) => Progress;
@@ -308,6 +310,13 @@ export function Bosh({
 
   /* ─── Bo'limni tanlang — testmakon'dagi "Fan tanlang" kabi: 3D belgi, nom
      va nechta narsa borligi. Telefonda 2, kengroqda 3 ustun. ─── */
+  // Prezident maktabiga tayyorlov va Mantiq — 2–4-sinf bolasida (yoki
+  // uning ota-onasida) to'r BOSHIDA turadi: bu yoshda eng aniq maqsad shu.
+  // Ilgari Prezident maktabi keng karta edi; Mantiq qo'shilgach kartalar
+  // sakkizta bo'ldi va hammasi bir o'lchamda — to'r teng ikki ustunda yopiladi.
+  const ps = sinfOfProfil(prof);
+  const qabulKarta = { bel: "toj" as HajmliNom, nom: t("bolimQabul"), izoh: t("bolimQabulIzoh", { n: QABUL_VARIANT }), yol: yolQabul() };
+  const mantiqKarta = { bel: "miya" as HajmliNom, nom: t("bolimMantiq"), izoh: t("bolimMantiqIzoh", { n: mantiqMavzular().length }), yol: yolMantiq() };
   const bolimlar: { bel: HajmliNom; nom: string; izoh: string; yol: string }[] = [
     { bel: "kitob", nom: t("bolimDarslar"), izoh: t("bolimDarslarIzoh", { n: COURSES.reduce((a, c) => a + c.units.reduce((b, u) => b + u.lessons.length, 0), 0) }), yol: yolKurslar() },
     { bel: "nishon", nom: t("yonDtm"), izoh: t("bolimVariant", { n: DTM_VARIANT }), yol: yolImtihon() },
@@ -316,6 +325,10 @@ export function Bosh({
     { bel: "kubok", nom: t("bolimOyinlar"), izoh: t("bolimOyinIzoh"), yol: yolOyinlar() },
     { bel: "diagramma", nom: t("kattalarFormula"), izoh: t("bolimFormulaIzoh", { n: FORMULALAR.reduce((a, b) => a + b.lar.length, 0) }), yol: yolFormulalarUmumiy() },
   ];
+  // To'r endi sakkizta (juft): telefonda 2 ustun, kengda — oxirgi qator ikkita.
+  // 2–4-sinfda Mantiq va Prezident maktabi BOSHDA turadi: shu yoshning maqsadi.
+  if (ps !== null && ps >= 2 && ps <= 4) bolimlar.unshift(qabulKarta, mantiqKarta);
+  else bolimlar.push(mantiqKarta, qabulKarta);
   const bolimTori = (
     <section aria-label={t("bolimSarlavha")} className="flex flex-col gap-3">
       <div>

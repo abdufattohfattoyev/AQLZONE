@@ -26,7 +26,7 @@ export function faolTab(yol: string): TabId | null {
   if (MEN_KURSDA.test(yol)) return "men";
   if (/^\/(men|reyting|profillar|sozlamalar|sinflar|sinf)(\/|$)/.test(yol)) return "men";
   if (/^\/(darslar|kurs|testlar|toplam|kichkintoy)(\/|$)/.test(yol)) return "oqish";
-  if (/^\/(imtihon|sertifikat|sessiya|marafon)(\/|$)/.test(yol)) return "oqish";
+  if (/^\/(imtihon|sertifikat|sessiya|marafon|qabul|mantiq)(\/|$)/.test(yol)) return "oqish";
   if (/^\/(oyinlar|duel|xona)(\/|$)/.test(yol)) return "oyin";
   if (/^\/masalalar(\/|$)/.test(yol)) return "masalalar";
   return null;

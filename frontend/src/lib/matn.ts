@@ -285,6 +285,65 @@ const S = {
     "Сундук этой недели открыт. С понедельника — новый путь.",
   ],
   haftaYolSandiq: ["Sandiq", "Сундук"],
+  /* Mantiq va fikrlash (`screens/Mantiq.tsx`). */
+  mantiqSarlavha: ["Mantiq va fikrlash", "Логика и мышление"],
+  mantiqIzoh: ["2–4-sinf · {n} ta usul", "2–4 класс · {n} приёмов"],
+  mantiqKeyingi: ["Keyingi mavzu", "Следующая тема"],
+  mantiqOtildi: ["{jami} tadan {n} tasi", "{n} из {jami}"],
+  mantiqMavzular: ["Mavzular", "Темы"],
+  bolimMantiq: ["Mantiq", "Логика"],
+  bolimMantiqIzoh: ["{n} ta usul · 2–4-sinf", "{n} приёмов · 2–4 класс"],
+  /* Jonli ko'rsatish — darsga kirishdagi namuna (`components/DarsKirish.tsx`). */
+  jonliKorsat: ["Jonli ko'rsatish", "Показать вживую"],
+  jonliToxtat: ["To'xtatish", "Пауза"],
+  jonliDavom: ["Davom etish", "Продолжить"],
+  jonliQadam: ["Bitta qadam", "Один шаг"],
+  jonliSen: ["Endi o'zingiz: javob qaysi?", "Теперь сами: какой ответ?"],
+  jonliTogri: ["To'g'ri! O'zingiz topdingiz.", "Верно! Вы нашли сами."],
+  jonliYana: ["Yana bir o'ylab ko'ring", "Подумайте ещё раз"],
+  /* Prezident va ixtisoslashtirilgan maktablarga tayyorlov (`screens/Qabul.tsx`). */
+  qabulSarlavha: ["Prezident maktablariga tayyorlov", "Подготовка в Президентские школы"],
+  qabulIzoh: ["5-sinfga qabul · 4-sinf bitiruvchilari uchun", "Приём в 5 класс · для выпускников 4 класса"],
+  qabulTur_prezident: ["Prezident · 1-bosqich", "Президентская · 1 этап"],
+  qabulTur_prezident2: ["Prezident · 2-bosqich", "Президентская · 2 этап"],
+  qabulTur_ixtisos: ["Ixtisoslashtirilgan", "Специализированная"],
+  qabulTuzilish: ["{savol} ta topshiriq · {daqiqa} daqiqa", "{savol} заданий · {daqiqa} мин"],
+  qabulTuzilishBall: ["{savol} ta topshiriq · {daqiqa} daqiqa · 51 ball", "{savol} заданий · {daqiqa} мин · 51 балл"],
+  qabulMazmun_prezident: [
+    "Sonlar va amallar — 10, algebra va funksiyalar — 12, statistika — 3, geometriya — 5.",
+    "Числа и действия — 10, алгебра и функции — 12, статистика — 3, геометрия — 5.",
+  ],
+  qabulMazmun_ixtisos: [
+    "Sonlar va amallar — 10, algebra va funksiyalar — 12, statistika — 3, geometriya — 5.",
+    "Числа и действия — 10, алгебра и функции — 12, статистика — 3, геометрия — 5.",
+  ],
+  qabulMazmun_prezident2: [
+    "Ma'lumotlarni tahlil qilish — 16, mantiqiy elementli matematika — 24.",
+    "Анализ информации — 16, математика с элементами логики — 24.",
+  ],
+  qabulManba_ixtisos: [
+    "Rasmiy test spetsifikatsiyasi (2026) asosida: har topshiriqning mavzusi, darajasi va bali imtihondagidek.",
+    "По официальной спецификации теста (2026): тема, уровень и балл каждого задания — как на экзамене.",
+  ],
+  qabulManba_prezident: [
+    "1-bosqich — matematika, 4-sinf dasturi bo'yicha. O'tish bali yo'q: o'rinlar reyting bo'yicha beriladi, shuning uchun natija foizda.",
+    "1 этап — математика по программе 4 класса. Проходного балла нет: места распределяются по рейтингу, поэтому результат в процентах.",
+  ],
+  qabulManba_prezident2: [
+    "2-bosqichning matematika (tanqidiy fikrlash) qismi. Ingliz tili qismi bu yerda yo'q. Vaqt rasmiy e'lon qilinmagan — mashq uchun 90 daqiqa.",
+    "Математическая часть 2 этапа (критическое мышление). Английского языка здесь нет. Время официально не объявлено — для тренировки 90 мин.",
+  ],
+  qabulOrtacha: ["Oxirgi urinishlar o'rtachasi", "Среднее за последние попытки"],
+  qabulBoshlang: ["Birinchi variantdan boshlang", "Начните с первого варианта"],
+  qabulBoshlangIzoh: [
+    "Haqiqiy imtihondagidek: vaqt bilan, 4 ta javob varianti, oxirida mavzular bo'yicha tahlil va har savolning yechimi.",
+    "Как на настоящем экзамене: на время, 4 варианта ответа, в конце — разбор по темам и решение каждого задания.",
+  ],
+  qabulKeyingi: ["{n}-variantni boshlash", "Начать вариант {n}"],
+  qabulNatijaBall: ["Ball", "Баллы"],
+  qabulNatijaBallIzoh: ["Rasmiy shkala: 1,1 va 2,1 ballik topshiriqlar", "Официальная шкала: задания по 1,1 и 2,1 балла"],
+  bolimQabul: ["Prezident maktabi", "Президентская школа"],
+  bolimQabulIzoh: ["4-sinf uchun · {n} ta variant", "Для 4 класса · {n} вариантов"],
   /* Daraja aniqlash — "Aql bilan tanishuv" (`screens/Daraja.tsx`). */
   darajaSalom: ["Keling, qayerdan boshlashni birga topamiz", "Давай вместе найдём, с чего начать"],
   darajaIzoh: [

@@ -80,6 +80,8 @@ import {
 } from "../lib/imtihon";
 import type { MavzuXato } from "../lib/imtihon";
 import { baho, sessiyaSaqla, sessiyaServerga, sessiyaYasa } from "../lib/sessiya";
+import { QABUL, ballYaxlit, qabulBallari, qabulSaqla, qabulYasa } from "../lib/qabul";
+import type { QabulTur } from "../lib/qabul";
 
 /** Bitta berilgan javob. `null` — ulgurilmadi. */
 interface Javob {
@@ -88,8 +90,14 @@ interface Javob {
 }
 
 export function Blok({
-  sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, sessiya, marafon, onExit,
+  sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, sessiya, marafon, qabul, onExit,
 }: {
+  /**
+   * MAKTABGA QABUL varianti — Prezident yoki ixtisoslashtirilgan maktab
+   * (`lib/qabul.ts`). Sessiya kabi bir o'tirishda ishlanadi; natija
+   * qurilmada saqlanadi, ixtisoslashtirilgan maktabda 51 ballik hisob bilan.
+   */
+  qabul?: { tur: QabulTur; n: number };
   /**
    * DTM MARAFONI kuni — savollar kun urug'idan (`lib/marafon.ts`), natija
    * marafonga yoziladi (hisobga birinchi urinish kiradi, `core/marafon.py`).
@@ -155,7 +163,7 @@ export function Blok({
    */
   // Zaif mavzular mashqi ham "yarim qolgan test" kalitini egallamaydi
   // (to'plamdagi sabab): u oddiy testning davomini yashirib qo'yardi.
-  const alohida = Boolean(toplam || imtihon || sessiya || marafon) || qamrov.tur === "mavzular";
+  const alohida = Boolean(toplam || imtihon || sessiya || marafon || qabul) || qamrov.tur === "mavzular";
   const [yarim] = useState(() => (alohida ? null : joriyniOqi()));
   const [tanlov, setTanlov] = useState<"sora" | "davom" | "yangi">(() => {
     const bor = !alohida && joriyniOqi() !== null;
@@ -165,11 +173,12 @@ export function Blok({
 
   const blok = useMemo(
     () => (marafon ? marafonBlok(marafon.id, marafon.kun, marafon.savol, marafon.daqiqa)
+      : qabul ? qabulYasa(qabul.tur, qabul.n)
       : imtihon ? variantYasa(imtihon)
         : sessiya ? sessiyaYasa(sessiya.slug, sessiya.n)
           : toplam ? toplamYasa(toplam) : blokYasa(sinf, uzunlik, qamrov)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sinf, uzunlik, qamrov, urinish, imtihon, sessiya?.slug, sessiya?.n, marafon?.id, marafon?.kun],
+    [sinf, uzunlik, qamrov, urinish, imtihon, sessiya?.slug, sessiya?.n, marafon?.id, marafon?.kun, qabul?.tur, qabul?.n],
   );
 
   // Material topilmadi. Amalda bu deyarli bo'lmaydi (test qulfsiz va
@@ -196,7 +205,7 @@ export function Blok({
     blok={davom ? { savollar: davom.savollar, daqiqa: davom.daqiqa } : blok}
     davom={davom}
     sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam} imtihon={imtihon} sessiya={sessiya}
-    marafon={marafon} alohida={alohida}
+    marafon={marafon} qabul={qabul} alohida={alohida}
     onQayta={() => { if (!alohida) joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
 }
@@ -270,7 +279,8 @@ function Bosh({ onExit }: { onExit: () => void }) {
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, alohida, onQayta, onExit }: {
+function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, alohida, onQayta, onExit }: {
+  qabul?: { tur: QabulTur; n: number };
   toplam?: Toplam;
   imtihon?: number;
   sessiya?: { slug: string; n: number };
@@ -342,7 +352,8 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
   // Natija ekranida signal to'xtaydi — test tugagan.
   useFaollik(tugadi ? null : {
     joy: toplam ? "toplam" : "blok",
-    nom: imtihon ? `${t("imtihonVariant", { n: imtihon })}`
+    nom: qabul ? `${t(`qabulTur_${qabul.tur}`)} · ${t("imtihonVariant", { n: qabul.n })}`
+      : imtihon ? `${t("imtihonVariant", { n: imtihon })}`
       : sessiya ? `${t("sessiya")} · ${t("imtihonVariant", { n: sessiya.n })}`
       : toplam ? toplam.nom
         : bobNomi ? `${sinf}-sinf · ${bobNomi}` : `${sinf}-sinf · ${uzunlik}`,
@@ -390,7 +401,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
     // mashqi — "mashq", qolgan hammasi — aralash test. Aralashda javob
     // berilmagan (ulgurilmagan) savol hisobga kirmaydi: vaqt tugashi
     // bilimsizlik emas.
-    const mashqmi = alohida && !toplam && !imtihon && !sessiya && !marafon;
+    const mashqmi = alohida && !toplam && !imtihon && !sessiya && !marafon && !qabul;
     ozlashYoz(boblargaYig(blok.savollar
       .map((S, i) => ({ kursId: S.kursId, ui: S.ui, togri: Boolean(toliq[i]?.togri), berildi: toliq[i]?.tanlangan != null }))
       .filter((x) => mashqmi || x.berildi)), mashqmi ? "mashq" : "aralash");
@@ -417,6 +428,22 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
         toliq.length,
         Math.round((Date.now() - boshlandi.current) / 1000),
       ).then(setStat).catch(() => {});
+      return;
+    }
+
+    // Maktabga qabul varianti — qurilmaga (`lib/qabul.ts`). Ball faqat
+    // ixtisoslashtirilgan maktabda: har topshiriqning o'z bali bor.
+    if (qabul) {
+      const ballar = qabulBallari(qabul.tur);
+      qabulSaqla({
+        tur: qabul.tur,
+        variant: qabul.n,
+        togri: toliq.filter((x) => x.togri).length,
+        jami: toliq.length,
+        ball: ballar ? ballYaxlit(ballar.reduce((s, b, i) => s + (toliq[i]?.togri ? b : 0), 0)) : null,
+        sekund: Math.round((Date.now() - boshlandi.current) / 1000),
+        vaqt: Date.now(),
+      });
       return;
     }
 
@@ -481,7 +508,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
     // keyingi safar tugallangan test "davom etasizmi?" bo'lib
     // qaytib chiqardi. Mashq o'z nusxasini yozmagan — begonasini o'chirmaydi.
     if (!alohida) joriyniOchir();
-  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, alohida]);
+  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, alohida]);
 
   /*
    * Har o'zgarishda yarim qolgan test yoziladi.
@@ -576,7 +603,8 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
   if (tugadi && korish) {
     return (
       <KoribChiqish
-        sarlavha={imtihon ? `DTM · ${t("imtihonVariant", { n: imtihon })}` : toplam ? toplam.nom : bobNomi ?? `${sinf}-sinf`}
+        sarlavha={qabul ? `${t(`qabulTur_${qabul.tur}`)} · ${t("imtihonVariant", { n: qabul.n })}`
+          : imtihon ? `DTM · ${t("imtihonVariant", { n: imtihon })}` : toplam ? toplam.nom : bobNomi ?? `${sinf}-sinf`}
         savollar={dtmSavollari(blok, javoblar.map((x) => (x.tanlangan === null ? null : String(x.tanlangan))))}
         onYop={() => setKorish(false)} />
     );
@@ -586,8 +614,10 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
     return <>
       <Natija blok={blok} javoblar={javoblar} toplam={toplam} stat={stat} sessiya={Boolean(sessiya)}
         imtihon={imtihon} yozildi={yozildi} strelka={ozStrelka}
+        ballar={qabul ? qabulBallari(qabul.tur) : null}
         marafon={marafon ? { kun: marafon.kun, holat: marafonHolati } : undefined}
-        nom={marafon ? t("marafonKunNom", { n: marafon.kun })
+        nom={qabul ? `${t(`qabulTur_${qabul.tur}`)} · ${t("imtihonVariant", { n: qabul.n })}`
+          : marafon ? t("marafonKunNom", { n: marafon.kun })
           : imtihon ? t("natijaVariant", { n: imtihon }) : toplam ? toplam.nom : bobNomi ?? t("natijaSarlavha")}
         onKorish={() => { tebrat("tanlov"); setKorish(true); window.scrollTo(0, 0); }}
         onQayta={onQayta} onExit={onExit} />
@@ -705,8 +735,10 @@ interface Mavzu {
 }
 
 function Natija({
-  blok, javoblar, toplam, stat, sessiya = false, imtihon, yozildi, strelka, nom, marafon, onKorish, onQayta, onExit,
+  blok, javoblar, toplam, stat, sessiya = false, imtihon, yozildi, strelka, nom, marafon, ballar = null, onKorish, onQayta, onExit,
 }: {
+  /** Maktabga qabul (ixtisoslashtirilgan) — har savolning rasmiy bali; foiz ostida "38,4 / 51". */
+  ballar?: number[] | null;
   /** Marafon kuni: yozilgan holat (ball, o'rin, zanjir) yoki kutilmoqda/xato. */
   marafon?: { kun: number; holat: MarafonHolat | null | "xato" };
   /** Tepadagi yopishqoq sarlavha (`NatijaSarlavha`) — orqaga tugma doim ko'rinsin. */
@@ -793,6 +825,14 @@ function Natija({
       <div className="az-savol rounded-clay bg-karta p-5 text-center shadow-clay">
         <div className="font-display text-[46px] leading-none text-brand-green-d">{f}%</div>
         <div className="mt-1 text-[13px] text-ink-dim">{t("blokNatija", { a: togri, b: jami })}</div>
+        {ballar && (
+          <div className="mt-2 text-[14px]">
+            {t("qabulNatijaBall")}: <b className="font-display text-[18px]">
+              {String(ballYaxlit(ballar.reduce((s, b, i) => s + (javoblar[i]?.togri ? b : 0), 0))).replace(".", ",")}
+            </b> / {QABUL.ixtisos.ball}
+            <span className="block text-[12px] text-ink-dim">{t("qabulNatijaBallIzoh")}</span>
+          </div>
+        )}
         {sessiya && (
           <div className="mt-2 text-[14px]">
             {t("sessiyaBaho")}: <b className="font-display text-[18px]">{baho(f)}</b>

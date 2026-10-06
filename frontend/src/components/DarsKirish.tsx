@@ -39,7 +39,7 @@
  * bir gap), namuna esa darsning o'z generatoridan olinadi. Ya'ni
  * kirish har darsda bor, faqat boyligi har xil.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../lib/icons";
 import { QuestionView, sahnaBor, shartSahnada } from "./QuestionView";
 import { Rasm } from "./Rasm";
@@ -52,7 +52,7 @@ import { til } from "../lib/til";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { yo } from "../lib/tarjima/yechim";
 import { tebrat } from "../lib/qobiq";
-import { tovush } from "../lib/ovoz";
+import { gapir, toxtat, tovush } from "../lib/ovoz";
 
 /** Sinov mashqida nechta savol — "ozroq": qizib olish uchun, charchatish uchun emas. */
 const SINOV = 2;
@@ -269,10 +269,19 @@ function Formula({ N, T }: { N: ReturnType<typeof nazariya>; T: ReturnType<typeo
 /* ─────────────────────────── namuna ─────────────────────────── */
 
 /**
- * 3. Yechilgan namuna. Qo'lda yozilgan misol bo'lsa (`Tolaq.m`) — o'sha,
- * bo'lmasa darsning o'z generatoridan (yechimi bori qidiriladi).
- * Qadamlar BITTADAN ochiladi: odam har qadamdan keyin "endi nima
- * bo'ladi" deb o'zi o'ylab ko'rsin.
+ * 3. Yechilgan namuna — JONLI KO'RSATISH. Qo'lda yozilgan misol bo'lsa
+ * (`Tolaq.m`) — o'sha, bo'lmasa darsning o'z generatoridan (yechimi
+ * bori qidiriladi).
+ *
+ * Ilgari qadamlar faqat tugma bilan bittadan ochilardi. Endi "Jonli
+ * ko'rsatish" ham bor: qadamlar o'zi birin-ketin chiqadi va ovoz ularni
+ * aytadi — video kabi, lekin video EMAS: har qadam matn bo'lib qoladi,
+ * istalgan joyda to'xtatib qaytadan o'qish mumkin va hech narsa
+ * yuklanmaydi.
+ *
+ * Eng muhimi — OXIRGI QADAMNI BOLA O'ZI qo'yadi: ko'rsatish javobdan
+ * oldin to'xtaydi va "Endi o'zingiz" deydi. Tomosha qilgan bola
+ * o'rganmaydi; o'zi bir qadam qo'ygan bola o'rganadi.
  */
 function Namuna({ lesson, misollar }: { lesson: Lesson; misollar?: Misol[] }) {
   const a = useMemo<Activity>(() => {
@@ -293,6 +302,10 @@ function Namuna({ lesson, misollar }: { lesson: Lesson; misollar?: Misol[] }) {
           <Qadamli
             shart={<Shart a={a} />}
             qadamlar={(a.yechim ?? []).map((q) => ({ izoh: yo(q.q), ifoda: q.if }))}
+            // "O'zingiz toping" — faqat matnli variantlarda: rang va rasm
+            // javobini ifoda qadamlaridan keyin tanlash ma'nosiz.
+            tanlov={(!a.kind || a.kind === "matn" || a.kind === "belgi") && a.choices.length > 1
+              ? { variantlar: a.choices.map(String), togri: String(a.answer) } : undefined}
             javob={a.kind === "rang" || a.kind === "emoji" ? undefined : String(a.answer)}
             javobKo={a.kind === "rang"
               ? <span className="size-8 rounded-full ring-2 ring-karta outline outline-2 outline-ink/15" style={{ background: String(a.answer) }} />
@@ -316,15 +329,104 @@ function Shart({ a }: { a: Activity }) {
   );
 }
 
-/** Shart + bittadan ochiladigan qadamlar + javob. */
-function Qadamli({ shart, qadamlar, javob, javobKo }: {
+/** Jonli ko'rsatishda bitta qadam ekranda kamida shuncha turadi (ovoz o'chiq bo'lsa ham o'qib ulgurilsin). */
+const QADAM_MS = 1900;
+
+/**
+ * Shart + qadamlar + javob.
+ *
+ *   tayyor   hech narsa ochilmagan: "Jonli ko'rsatish" yoki "Bitta qadam"
+ *   yurish   qadamlar o'zi chiqadi, ovoz aytadi; "To'xtatish" bor
+ *   pauza    "Davom etish" yoki qo'lda "Bitta qadam"
+ *   sen      javobdan oldin to'xtadi — bola variantdan o'zi tanlaydi
+ *   tugadi   javob yashil qatorda
+ */
+function Qadamli({ shart, qadamlar, javob, javobKo, tanlov }: {
   shart: React.ReactNode;
   qadamlar: { izoh?: string; ifoda?: string }[];
   javob?: string;
   javobKo?: React.ReactNode;
+  /** Berilsa — oxirgi qadamdan oldin bola javobni o'zi tanlaydi. */
+  tanlov?: { variantlar: string[]; togri: string };
 }) {
   const [ochiq, setOchiq] = useState(0);
+  const [holat, setHolat] = useState<"tayyor" | "yurish" | "pauza" | "sen">("tayyor");
+  const [xato, setXato] = useState<string | null>(null);
+  const [topdi, setTopdi] = useState(false);
   const tugadi = ochiq >= qadamlar.length + 1;     // +1 — javobning o'zi
+
+  /*
+   * Hamma qadam ko'rsatiladi, lekin JAVOB YASHIRIN: bola o'zi topguncha
+   * qadamlardagi natija "?" bo'lib turadi ("(26 − 2 · 8) : 2 = ?").
+   * Ilgari ko'rsatish oxirgi qadamdan oldin to'xtardi — lekin ko'p
+   * yechimda javob oxirgi EMAS, yagona qadamning ichida turadi va bola
+   * javobni ko'rib turib "javob qaysi?" degan savolga duch kelardi.
+   */
+  const toxtash = qadamlar.length;
+  const yashir = Boolean(tanlov) && !topdi && ochiq <= qadamlar.length;
+  const maskla = (x?: string) => {
+    if (!x || !yashir || !tanlov) return x;
+    // Sonlardagi uzilmas bo'sh joy (`son()` — "12 345") oddiysiga tenglanadi.
+    const oddiy = (s: string) => s.split(String.fromCharCode(160)).join(" ").trim();
+    const jv = oddiy(tanlov.togri), toza = oddiy(x);
+    if (toza === jv) return "?";
+    // Oxirgi "=" dan keyingi natija: "… = 5", "… = 90 g", "x = 30".
+    const k = toza.lastIndexOf("=");
+    if (k < 0) return toza;
+    const ong = toza.slice(k + 1).trim();
+    return ong === jv || ong.startsWith(`${jv} `) ? `${toza.slice(0, k)}= ?${ong.slice(jv.length)}` : toza;
+  };
+
+  /*
+   * Jonli ko'rsatish: ko'rsatilgan qadamning izohi aytiladi, ovoz tugashi
+   * VA kamida `QADAM_MS` o'tishi kutiladi, keyin navbatdagisi. Effekt
+   * har qadamda qayta ishga tushadi; `bekor` — to'xtatilgan yoki ekran
+   * yopilgan bo'lsa, eski kutish yangi qadam qo'shib yubormasin.
+   */
+  useEffect(() => {
+    if (holat !== "yurish") return;
+    let bekor = false;
+    (async () => {
+      const bosh = Date.now();
+      const q = qadamlar[ochiq - 1];
+      if (q?.izoh) await gapir(q.izoh);
+      await new Promise((r) => setTimeout(r, Math.max(400, (ochiq > 0 ? QADAM_MS : 300) - (Date.now() - bosh))));
+      if (bekor) return;
+      if (ochiq >= toxtash) {
+        if (tanlov && ochiq < qadamlar.length + 1) { setHolat("sen"); void gapir(t("jonliSen")); }
+        else { setOchiq(qadamlar.length + 1); setHolat("tayyor"); }
+        return;
+      }
+      setOchiq(ochiq + 1);
+    })();
+    return () => { bekor = true; };
+  }, [holat, ochiq, qadamlar, toxtash, tanlov]);
+
+  // Ekran yopilsa ovoz to'xtasin — keyingi bosqichda eski gap davom etmasin.
+  useEffect(() => () => toxtat(), []);
+
+  const bitta = () => {
+    tebrat("tanlov");
+    toxtat();
+    if (holat === "yurish") setHolat("pauza");
+    if (tanlov && ochiq >= toxtash && !topdi) { setHolat("sen"); return; }
+    setOchiq((x) => x + 1);
+  };
+
+  const tanla = (v: string) => {
+    if (!tanlov || topdi) return;
+    if (v === tanlov.togri) {
+      tovush("togri"); tebrat("togri");
+      setTopdi(true); setXato(null);
+      setOchiq(qadamlar.length + 1);
+      setHolat("tayyor");
+      void gapir(t("jonliTogri"));
+    } else {
+      tovush("xato"); tebrat("xato");
+      setXato(v);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3 rounded-clay bg-karta p-4 shadow-clay-sm">
       {shart}
@@ -332,28 +434,63 @@ function Qadamli({ shart, qadamlar, javob, javobKo }: {
         <ol className="flex flex-col gap-2.5">
           {qadamlar.slice(0, ochiq).map((q, k) => (
             <li key={k} className="az-savol flex gap-2.5">
-              <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-track font-display
-                               text-[12px] text-ink-soft">{k + 1}</span>
+              <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full font-display text-[12px] ${
+                holat === "yurish" && k === ochiq - 1 ? "bg-brand-blue text-white" : "bg-track text-ink-soft"}`}>{k + 1}</span>
               <div className="min-w-0 flex-1">
                 {q.izoh && <div className="text-[13.5px] leading-snug text-ink-dim">{q.izoh}</div>}
-                {q.ifoda && <div className="mt-0.5 font-display text-[16px] leading-snug break-words">{q.ifoda}</div>}
+                {q.ifoda && <div className="mt-0.5 font-display text-[16px] leading-snug break-words">{maskla(q.ifoda)}</div>}
               </div>
             </li>
           ))}
         </ol>
       )}
+
+      {/* "Endi o'zingiz" — javob variantlari. Xato tanlov qizarib turadi,
+          qolganlari bosilaveradi; to'g'risi topilgach javob ochiladi. */}
+      {holat === "sen" && tanlov && !tugadi && (
+        <div className="az-savol flex flex-col gap-2 rounded-2xl bg-sahna p-3 shadow-ichki">
+          <div className="text-[14px] font-bold">{t(xato ? "jonliYana" : "jonliSen")}</div>
+          <div className="grid grid-cols-2 gap-2">
+            {tanlov.variantlar.map((v) => (
+              <button key={v} type="button" onClick={() => tanla(v)} data-tahlil="Dars kirish: o'zim topaman"
+                className={`clay-press min-h-11 rounded-xl px-2 font-display text-[16px] break-words ${
+                  xato === v ? "az-silkin bg-brand-red text-white" : "bg-karta shadow-clay-sm"}`}>
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {tugadi ? (
         <div className="az-savol flex items-center gap-2 rounded-2xl bg-brand-green/15 px-3.5 py-2.5">
           <Icon name="check" size={17} className="shrink-0 text-brand-green-d" />
-          <span className="text-[13px] text-ink-dim">{t("mavzuJavob")}</span>
+          <span className="text-[13px] text-ink-dim">{t(topdi ? "jonliTogri" : "mavzuJavob")}</span>
           <span className="ml-auto min-w-0 font-display text-[16.5px] break-words text-brand-green-d">{javobKo ?? javob}</span>
         </div>
       ) : (
-        <button type="button" onClick={() => { tebrat("tanlov"); setOchiq((x) => x + 1); }} data-tahlil="Dars kirish: namuna qadami"
-          className="clay-press min-h-11 rounded-2xl bg-track px-4 font-display text-[15px] text-ink-soft">
-          {ochiq >= qadamlar.length ? t("kirishJavobniKor")
-            : ochiq === 0 ? t("mavzuBirinchiQadam") : t("mavzuKeyingiQadam", { a: ochiq, b: qadamlar.length })}
-        </button>
+        <div className="flex gap-2">
+          {/* Asosiy boshqaruv: ko'rsatish / to'xtatish / davom. Ko'k emas —
+              ekrandagi yagona ko'k tugma pastdagi "Keyingi". */}
+          {holat !== "sen" && (
+            <button type="button" data-tahlil={holat === "yurish" ? "Dars kirish: jonli to'xtatish" : "Dars kirish: jonli ko'rsatish"}
+              onClick={() => {
+                tebrat("tanlov");
+                if (holat === "yurish") { toxtat(); setHolat("pauza"); }
+                else setHolat("yurish");
+              }}
+              className="clay-press flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-brand-blue/12 px-3
+                         font-display text-[15px] text-brand-blue-t">
+              <Icon name={holat === "yurish" ? "pause" : "play"} size={16} />
+              {t(holat === "yurish" ? "jonliToxtat" : holat === "pauza" ? "jonliDavom" : "jonliKorsat")}
+            </button>
+          )}
+          <button type="button" onClick={holat === "sen" ? () => { tebrat("tanlov"); setOchiq(qadamlar.length + 1); setHolat("tayyor"); } : bitta}
+            data-tahlil="Dars kirish: namuna qadami"
+            className="clay-press min-h-11 shrink-0 rounded-2xl bg-track px-4 font-display text-[14.5px] text-ink-soft">
+            {holat === "sen" || ochiq >= qadamlar.length ? t("kirishJavobniKor") : t("jonliQadam")}
+          </button>
+        </div>
       )}
     </div>
   );

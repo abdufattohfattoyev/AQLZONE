@@ -101,6 +101,12 @@ export const yolReyting = () => "/reyting";
 /** Talabaning nazoratga tayyorgarligi (`screens/Sessiya.tsx`). */
 export const yolSessiya = () => "/sessiya";
 export const yolSessiyaVariant = (slug: string, n: number) => `/sessiya/${slug}/${n}`;
+/** Prezident va ixtisoslashtirilgan maktablarga tayyorlov (`screens/Qabul.tsx`). */
+export const yolQabul = () => "/qabul";
+/** Mantiq va fikrlash (`screens/Mantiq.tsx`). */
+export const yolMantiq = () => "/mantiq";
+export const yolMantiqMavzu = (id: string) => `/mantiq/${id}`;
+export const yolQabulVariant = (tur: string, n: number) => `/qabul/${tur}/${n}`;
 
 /**
  * Kichkintoylar bo'limi — kursdan TASHQARIDA va bu ataylab.
