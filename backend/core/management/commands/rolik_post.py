@@ -4,6 +4,11 @@ Reklama roligi kanalga — har kuni bittadan, navbat bo'yicha.
     rolik_post           navbatdagi birinchisini kanalga yuboradi
     rolik_post --sinov   nima chiqishini aytadi, yubormaydi
     rolik_post --holat   navbatni ko'rsatadi
+    rolik_post --instagram   Instagram kaliti ishlayaptimi
+
+INSTAGRAM_TOKEN berilgan bo'lsa, kanalga chiqqan rolik Reels'ga ham
+joylanadi (`core/instagram.py`). Izoh — json'dagi `instagram`, bo'lmasa
+`matn` dan teglarsiz yasaladi.
 
 ─────────────────── NAVBAT ───────────────────
 
@@ -43,6 +48,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from core import instagram
 from core import xabar as X
 from core.kanal import kanal_nomi
 
@@ -101,8 +107,17 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--sinov", action="store_true")
         parser.add_argument("--holat", action="store_true")
+        parser.add_argument("--instagram", action="store_true", help="Instagram kaliti ishlayaptimi")
 
     def handle(self, *args, **o):
+        if o["instagram"]:
+            if not instagram.sozlanganmi():
+                self.stdout.write("INSTAGRAM_TOKEN sozlanmagan")
+                return
+            a = instagram.akkaunt()
+            self.stdout.write(f"instagram: @{a.get('username')} ({a.get('user_id')}) — ishlayapti")
+            return
+
         roy = navbat()
         if o["holat"]:
             self.stdout.write(f"navbatda {len(roy)} ta:")
@@ -150,6 +165,19 @@ class Command(BaseCommand):
             json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
         shutil.move(str(video), chiqdi / f"{kun}_{video.name}")
         video.with_suffix(".json").unlink(missing_ok=True)
+
+        # O'sha rolik Instagram Reels'ga ham. Telegram'dan KEYIN: Instagram
+        # xatosi kanal postini to'xtatmasin, faqat admin bilsin.
+        if instagram.sozlanganmi():
+            ig_matn = m.get("instagram") or instagram.izoh(matn)
+            ig_holat, ig_izoh, ig_id = instagram.reels_joyla(chiqdi / f"{kun}_{video.name}", ig_matn)
+            self.stdout.write(f"instagram: {ig_holat} {ig_izoh} {ig_id}")
+            m["instagram_id"] = ig_id
+            (chiqdi / f"{kun}_{video.stem}.json").write_text(
+                json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
+            if ig_holat != "joylandi":
+                adminlarga(f"📸 <b>Rolik Instagram'ga chiqmadi</b>\n\n{html.escape(video.name)}: "
+                           f"{html.escape(ig_izoh)}")
 
         qoldi = len(roy) - 1
         if qoldi <= OGOHLANTIR:

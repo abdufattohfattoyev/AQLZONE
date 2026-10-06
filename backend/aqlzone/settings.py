@@ -377,6 +377,9 @@ MEDIA_URL = "/media/"
 ROLIK_PAPKA = env("ROLIK_PAPKA", str(Path("/data") / "rolik") if Path("/data").exists()
                   else str(BASE_DIR / "rolik"))
 
+# Rolik Instagram Reels'ga ham chiqadi (`core/instagram.py`). Bo'sh — chiqmaydi.
+INSTAGRAM_TOKEN = env("INSTAGRAM_TOKEN", "")
+
 #: Masala rasmining eng katta hajmi (bayt) — yuborishdan OLDIN tekshiriladi.
 #:
 #: 6 MB — zamonaviy telefon surati shu atrofda. Undan kattasi deyarli

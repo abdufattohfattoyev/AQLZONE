@@ -9316,6 +9316,39 @@ class RolikPostTest(TestCase):
         self.assertEqual(v.call_count, 0)
         self.assertIn("bo'sh", admin.call_args.args[1])
 
+    def test_kalitsiz_instagramga_tegilmaydi(self):
+        from core import instagram
+        with patch.object(instagram, "reels_joyla") as ig:
+            self._yur()
+        self.assertEqual(ig.call_count, 0)
+
+    @override_settings(INSTAGRAM_TOKEN="k")
+    def test_instagramga_ham_chiqadi(self):
+        from core import instagram
+        with patch.object(instagram, "reels_joyla", return_value=("joylandi", "", "77")) as ig:
+            self._yur()
+        video, matn = ig.call_args.args
+        self.assertTrue(video.name.endswith("01-sertifikat.mp4") and video.exists())
+        self.assertEqual(matn, "01-sertifikat matni")
+        chiqdi = list((self.navbat.parent / "chiqdi").glob("*.json"))
+        self.assertEqual(json.loads(chiqdi[0].read_text(encoding="utf-8"))["instagram_id"], "77")
+
+    @override_settings(INSTAGRAM_TOKEN="k")
+    def test_instagram_xatosi_kanalni_buzmaydi(self):
+        from core import instagram
+        with patch.object(instagram, "reels_joyla", return_value=("xato", "token eskirgan", "")):
+            v, admin = self._yur()
+        self.assertEqual(v.call_count, 1)
+        self.assertFalse((self.navbat / "01-sertifikat.mp4").exists())
+        self.assertTrue(any("Instagram" in c.args[1] for c in admin.call_args_list))
+
+    def test_izoh_teglarsiz(self):
+        from core.instagram import izoh
+        self.assertEqual(
+            izoh('<b>Sinab ko\'ring</b> &amp; o\'ynang<br><a href="https://t.me/x">Botni ochish</a>'),
+            "Sinab ko'ring & o'ynang\nBotni ochish: https://t.me/x",
+        )
+
 
 @override_settings(KANAL="AqlZoneUz", BOT_TOKEN=BOT)
 class AlbomPostTest(TestCase):
