@@ -1,5 +1,8 @@
 """
-Instagram Reels'ga video joylash — kunlik reklama roligi (`rolik_post`).
+Instagram'ga video joylash — kunlik reklama roligi (`rolik_post`).
+
+Bitta rolik IKKI joyga chiqadi: Reels (lentada qoladi) va Stories
+(bir kun yashaydi). Ikkisi bir xil videodan, bitta ochiq havoladan.
 
 Instagram API (Instagram orqali kirish, `graph.instagram.com`) ishlatiladi:
 Facebook sahifa kerak emas, faqat Business yoki Creator akkaunt va
@@ -127,14 +130,51 @@ def izoh(matn: str) -> str:
     return html.unescape(t).strip()[:MAX_IZOH]
 
 
-def reels_joyla(video: Path, matn: str) -> tuple[str, str, str]:
+def _bitta(ig: str, k: str, maydonlar: dict) -> tuple[str, str, str]:
     """
-    Videoni Reels qilib joylaydi. `(holat, izoh, media_id)` qaytaradi —
-    holat "joylandi" yoki "xato".
+    Bitta konteyner: ochadi, tayyor bo'lishini kutadi, joylaydi.
+    `(holat, izoh, media_id)` — holat "joylandi" yoki "xato".
     """
-    # Eng avval: havolasiz urinishdan ma'no yo'q.
+    try:
+        kid = _sorov(f"{API}/{ig}/media", {**maydonlar, "access_token": k}, usul="POST")["id"]
+        for _ in range(KUTISH // ORALIQ):
+            time.sleep(ORALIQ)
+            h = _sorov(f"{API}/{kid}", {"fields": "status_code,status", "access_token": k})
+            if h.get("status_code") == "FINISHED":
+                break
+            if h.get("status_code") in ("ERROR", "EXPIRED"):
+                return "xato", h.get("status") or h["status_code"], ""
+        else:
+            return "xato", f"Instagram videoni {KUTISH // 60} daqiqada tayyorlamadi", ""
+
+        j = _sorov(f"{API}/{ig}/media_publish", {"creation_id": kid, "access_token": k}, usul="POST")
+        return "joylandi", "", j.get("id", "")
+    except (RuntimeError, OSError, KeyError, ValueError) as e:
+        return "xato", str(e), ""
+
+
+def joyla(video: Path, matn: str) -> dict[str, tuple[str, str, str]]:
+    """
+    Rolikni Reels'ga VA Stories'ga joylaydi:
+    `{"reels": (holat, izoh, id), "stories": (...)}`.
+
+    Ikkisi BIR havoladan oziqlanadi — fayl bir marta ochiladi va
+    ikkisi tugagach yopiladi.
+
+    Ikkisi MUSTAQIL: biri chiqmasa ikkinchisi baribir urinadi va
+    har birining holati alohida qaytadi. Reels lentada qoladi,
+    Stories bir kun yashaydi — ular bir-birining o'rnini bosmaydi,
+    shuning uchun bittasining xatosi ikkinchisini to'xtatmasligi
+    kerak.
+
+    Stories izoh (`caption`) ni qabul qilmaydi — Instagram unga
+    matn qo'shishga ruxsat bermaydi. Va u 60 SONIYAgacha videoni
+    oladi: undan uzun rolik faqat Reels'ga chiqadi, Stories esa
+    Instagram'ning o'z xatosi bilan qaytadi.
+    """
     if not settings.SAYT_URL.startswith("https://"):
-        return "xato", "SAYT_URL yo'q yoki https emas — Instagram videoni olmaydi", ""
+        izoh_ = "SAYT_URL yo'q yoki https emas — Instagram videoni olmaydi"
+        return {"reels": ("xato", izoh_, ""), "stories": ("xato", izoh_, "")}
     try:
         kalitni_yangila()
     except Exception:                            # noqa: BLE001 — eski kalit hali ishlaydi
@@ -143,28 +183,15 @@ def reels_joyla(video: Path, matn: str) -> tuple[str, str, str]:
 
     havola, vaqtincha = ommaviy.ochib_ber(video)
     try:
-        ig = akkaunt()["user_id"]
-        kont = _sorov(f"{API}/{ig}/media", {
-            "media_type": "REELS", "video_url": havola,
-            "caption": matn, "share_to_feed": "true", "access_token": k,
-        }, usul="POST")
-        kid = kont["id"]
-
-        holat = {}
-        for _ in range(KUTISH // ORALIQ):
-            time.sleep(ORALIQ)
-            holat = _sorov(f"{API}/{kid}", {"fields": "status_code,status", "access_token": k})
-            if holat.get("status_code") == "FINISHED":
-                break
-            if holat.get("status_code") in ("ERROR", "EXPIRED"):
-                return "xato", holat.get("status") or holat["status_code"], ""
-        else:
-            return "xato", f"Instagram videoni {KUTISH // 60} daqiqada tayyorlamadi", ""
-
-        j = _sorov(f"{API}/{ig}/media_publish", {"creation_id": kid, "access_token": k}, usul="POST")
-        return "joylandi", "", j.get("id", "")
-    except (RuntimeError, OSError, KeyError, ValueError) as e:
-        return "xato", str(e), ""
+        try:
+            ig = akkaunt()["user_id"]
+        except (RuntimeError, OSError, KeyError, ValueError) as e:
+            return {"reels": ("xato", str(e), ""), "stories": ("xato", str(e), "")}
+        return {
+            "reels": _bitta(ig, k, {"media_type": "REELS", "video_url": havola,
+                                    "caption": matn, "share_to_feed": "true"}),
+            "stories": _bitta(ig, k, {"media_type": "STORIES", "video_url": havola}),
+        }
     finally:
         # Havola o'z ishini qildi — ochiq qolib ketmasin.
         ommaviy.yop(vaqtincha)

@@ -6,9 +6,9 @@ Reklama roligi kanalga — har kuni bittadan, navbat bo'yicha.
     rolik_post --holat   navbatni ko'rsatadi
     rolik_post --instagram   Instagram kaliti ishlayaptimi
 
-INSTAGRAM_TOKEN berilgan bo'lsa, kanalga chiqqan rolik Reels'ga ham
-joylanadi (`core/instagram.py`). Izoh — json'dagi `instagram`, bo'lmasa
-`matn` dan teglarsiz yasaladi.
+INSTAGRAM_TOKEN berilgan bo'lsa, kanalga chiqqan rolik Instagram'ning
+Reels va Stories'iga ham joylanadi (`core/instagram.py`). Izoh —
+json'dagi `instagram`, bo'lmasa `matn` dan teglarsiz yasaladi.
 
 ─────────────────── NAVBAT ───────────────────
 
@@ -170,14 +170,16 @@ class Command(BaseCommand):
         # xatosi kanal postini to'xtatmasin, faqat admin bilsin.
         if instagram.sozlanganmi():
             ig_matn = m.get("instagram") or instagram.izoh(matn)
-            ig_holat, ig_izoh, ig_id = instagram.reels_joyla(chiqdi / f"{kun}_{video.name}", ig_matn)
-            self.stdout.write(f"instagram: {ig_holat} {ig_izoh} {ig_id}")
-            m["instagram_id"] = ig_id
+            natija = instagram.joyla(chiqdi / f"{kun}_{video.name}", ig_matn)
+            for joy, (h, izoh, mid) in natija.items():
+                self.stdout.write(f"instagram {joy}: {h} {izoh} {mid}")
+                m[f"instagram_{joy}"] = mid
             (chiqdi / f"{kun}_{video.stem}.json").write_text(
                 json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
-            if ig_holat != "joylandi":
-                adminlarga(f"📸 <b>Rolik Instagram'ga chiqmadi</b>\n\n{html.escape(video.name)}: "
-                           f"{html.escape(ig_izoh)}")
+            xato = [f"{joy} — {izoh}" for joy, (h, izoh, _) in natija.items() if h != "joylandi"]
+            if xato:
+                adminlarga(f"📸 <b>Rolik Instagram'ga to'liq chiqmadi</b>\n\n"
+                           f"{html.escape(video.name)}\n" + "\n".join(html.escape(x) for x in xato))
 
         qoldi = len(roy) - 1
         if qoldi <= OGOHLANTIR:

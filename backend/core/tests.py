@@ -9318,63 +9318,101 @@ class RolikPostTest(TestCase):
 
     def test_kalitsiz_instagramga_tegilmaydi(self):
         from core import instagram
-        with patch.object(instagram, "reels_joyla") as ig:
+        with patch.object(instagram, "joyla") as ig:
             self._yur()
         self.assertEqual(ig.call_count, 0)
 
     @override_settings(INSTAGRAM_TOKEN="k")
-    def test_instagramga_ham_chiqadi(self):
+    def test_reels_va_stories_ikkisiga_chiqadi(self):
         from core import instagram
-        with patch.object(instagram, "reels_joyla", return_value=("joylandi", "", "77")) as ig:
+        ikki = {"reels": ("joylandi", "", "77"), "stories": ("joylandi", "", "88")}
+        with patch.object(instagram, "joyla", return_value=ikki) as ig:
             self._yur()
         video, matn = ig.call_args.args
         self.assertTrue(video.name.endswith("01-sertifikat.mp4") and video.exists())
         self.assertEqual(matn, "01-sertifikat matni")
         chiqdi = list((self.navbat.parent / "chiqdi").glob("*.json"))
-        self.assertEqual(json.loads(chiqdi[0].read_text(encoding="utf-8"))["instagram_id"], "77")
+        yozilgan = json.loads(chiqdi[0].read_text(encoding="utf-8"))
+        self.assertEqual((yozilgan["instagram_reels"], yozilgan["instagram_stories"]), ("77", "88"))
 
     @override_settings(INSTAGRAM_TOKEN="k")
-    def test_instagram_xatosi_kanalni_buzmaydi(self):
+    def test_bittasi_chiqmasa_faqat_osha_aytiladi(self):
+        """Stories chiqmasa ham Reels joyida qoladi va kanal posti buzilmaydi."""
         from core import instagram
-        with patch.object(instagram, "reels_joyla", return_value=("xato", "token eskirgan", "")):
+        yarim = {"reels": ("joylandi", "", "77"), "stories": ("xato", "60 soniyadan uzun", "")}
+        with patch.object(instagram, "joyla", return_value=yarim):
             v, admin = self._yur()
         self.assertEqual(v.call_count, 1)
         self.assertFalse((self.navbat / "01-sertifikat.mp4").exists())
-        self.assertTrue(any("Instagram" in c.args[1] for c in admin.call_args_list))
+        xabar = next(c.args[1] for c in admin.call_args_list if "Instagram" in c.args[1])
+        self.assertIn("stories — 60 soniyadan uzun", xabar)
+        self.assertNotIn("reels", xabar)
 
     @override_settings(INSTAGRAM_TOKEN="k", SAYT_URL="https://aql-zone.uz")
-    def test_ochiq_havola_ochiladi_va_yopiladi(self):
-        """Instagram videoni havoladan oladi — havola joylashdan keyin qolmasin."""
+    def test_bitta_havoladan_ikki_post_va_havola_yopiladi(self):
+        """Ikkisi bir havoladan oziqlanadi; joylangach havola qolmasin."""
         from core import instagram
-        korilgan = {}
+        ochilgan, turlar = [], []
 
         def sorov(url, maydonlar=None, **_):
+            m = maydonlar or {}
             if url.endswith("/me"):
                 return {"user_id": "9"}
-            if maydonlar and "video_url" in maydonlar:
-                korilgan["havola"] = maydonlar["video_url"]
-                return {"id": "c1"}
-            if "creation_id" in (maydonlar or {}):
-                return {"id": "m1"}
+            if "video_url" in m:
+                ochilgan.append(m["video_url"])
+                turlar.append((m["media_type"], m.get("caption")))
+                return {"id": f"c{len(turlar)}"}
+            if "creation_id" in m:
+                return {"id": "m-" + m["creation_id"]}
             return {"status_code": "FINISHED"}
 
         with patch.object(instagram, "_sorov", side_effect=sorov), \
                 patch.object(instagram, "kalitni_yangila"), \
                 patch.object(instagram.time, "sleep"):
-            holat, izoh, mid = instagram.reels_joyla(self.navbat / "01-sertifikat.mp4", "matn")
+            n = instagram.joyla(self.navbat / "01-sertifikat.mp4", "matn")
 
-        self.assertEqual((holat, mid), ("joylandi", "m1"))
-        self.assertTrue(korilgan["havola"].startswith("https://aql-zone.uz/rolik/"))
+        self.assertEqual(n["reels"], ("joylandi", "", "m-c1"))
+        self.assertEqual(n["stories"], ("joylandi", "", "m-c2"))
+        self.assertEqual(len(set(ochilgan)), 1, "ikkisi bir havoladan olishi kerak")
+        self.assertTrue(ochilgan[0].startswith("https://aql-zone.uz/rolik/"))
+        # Stories izohni qabul qilmaydi — unga matn yuborilmasin.
+        self.assertEqual(turlar, [("REELS", "matn"), ("STORIES", None)])
         from core.ommaviy import papka
         self.assertEqual(list(papka().glob("*.mp4")), [])
+
+    @override_settings(INSTAGRAM_TOKEN="k", SAYT_URL="https://aql-zone.uz")
+    def test_reels_xatosi_storiesni_tashlab_ketmaydi(self):
+        from core import instagram
+
+        def sorov(url, maydonlar=None, **_):
+            m = maydonlar or {}
+            if url.endswith("/me"):
+                return {"user_id": "9"}
+            if "video_url" in m:
+                if m["media_type"] == "REELS":
+                    raise RuntimeError("reels band")
+                return {"id": "c2"}
+            if "creation_id" in m:
+                return {"id": "m2"}
+            return {"status_code": "FINISHED"}
+
+        with patch.object(instagram, "_sorov", side_effect=sorov), \
+                patch.object(instagram, "kalitni_yangila"), \
+                patch.object(instagram.time, "sleep"):
+            n = instagram.joyla(self.navbat / "01-sertifikat.mp4", "matn")
+
+        self.assertEqual(n["reels"], ("xato", "reels band", ""))
+        self.assertEqual(n["stories"], ("joylandi", "", "m2"))
 
     @override_settings(INSTAGRAM_TOKEN="k", SAYT_URL="")
     def test_sayt_urlsiz_urinilmaydi(self):
         from core import instagram
         with patch.object(instagram, "_sorov") as s:
-            holat, izoh, _ = instagram.reels_joyla(self.navbat / "01-sertifikat.mp4", "matn")
-        self.assertEqual((holat, s.call_count), ("xato", 0))
-        self.assertIn("SAYT_URL", izoh)
+            n = instagram.joyla(self.navbat / "01-sertifikat.mp4", "matn")
+        self.assertEqual(s.call_count, 0)
+        for joy in ("reels", "stories"):
+            self.assertEqual(n[joy][0], "xato")
+            self.assertIn("SAYT_URL", n[joy][1])
 
     def test_izoh_teglarsiz(self):
         from core.instagram import izoh
