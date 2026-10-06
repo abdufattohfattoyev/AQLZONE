@@ -7989,6 +7989,67 @@ class OsishTahliliTest(TestCase):
         self.assertIn("masala qolmadi", m)
         self.assertLess(len(m), 4096)
 
+    def test_instagram_surati_xatoda_kunni_buzmaydi(self):
+        """Instagram kaliti eskirsa ham kanal va ilova tarixi yozilishi kerak."""
+        from core import instagram as IG
+        from core import osish as O
+        with self.settings(INSTAGRAM_TOKEN="k"), \
+                patch.object(IG, "hisob", side_effect=RuntimeError("token eskirgan")), \
+                self.assertLogs("core.osish", "WARNING") as kundalik:
+            q = O.surat(kanal_azo=42)
+        self.assertEqual((q.kanal_azo, q.instagram_azo), (42, None))
+        self.assertIn("instagram surati olinmadi", kundalik.output[0])
+
+    def test_instagram_hisobotga_tushadi(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        from core import instagram as IG
+        from core import osish as O
+        bugun = timezone.localdate()
+        MDL.KunlikOsish.objects.create(sana=bugun - timedelta(days=9), instagram_azo=800)
+        with self.settings(INSTAGRAM_TOKEN="k"), \
+                patch.object(IG, "hisob", return_value={"followers_count": 855}), \
+                patch.object(IG, "kunlik_olchov", return_value={"views": 84, "reach": 10}):
+            O.surat(bugun - timedelta(days=1), kanal_azo=130)
+
+        h = O.hafta(bugun - timedelta(days=7), bugun)
+        self.assertEqual((h["ig"], h["ig_osdi"], h["ig_korish"]), (855, 55, 84))
+
+        with patch.object(O, "rolik_natijalari", return_value=[]):
+            m = O.hisobot_matni(bugun)
+        self.assertIn("Instagram", m)
+        self.assertIn("855", m)
+
+    def test_rolik_natijalari_korish_boyicha_tartiblanadi(self):
+        import json
+        import tempfile
+        from datetime import timedelta
+        from pathlib import Path
+        from django.utils import timezone
+        from core import instagram as IG
+        from core import osish as O
+        bugun = timezone.localdate()
+        kok = tempfile.mkdtemp()
+        chiqdi = Path(kok) / "chiqdi"
+        chiqdi.mkdir()
+        for kun, nom, mid in ((2, "05_kichkintoy", "m5"), (3, "04_karvon", "m4")):
+            sana = (bugun - timedelta(days=kun)).isoformat()
+            (chiqdi / f"{sana}_{nom}.mp4").write_bytes(b"v")
+            (chiqdi / f"{sana}_{nom}.json").write_text(
+                json.dumps({"instagram_reels": mid}), encoding="utf-8")
+        # Oraliqdan tashqaridagi rolik tushmasligi kerak.
+        eski = (bugun - timedelta(days=30)).isoformat()
+        (chiqdi / f"{eski}_01_dtm.mp4").write_bytes(b"v")
+        (chiqdi / f"{eski}_01_dtm.json").write_text(
+            json.dumps({"instagram_reels": "m1"}), encoding="utf-8")
+
+        olchov = {"m5": {"views": 30}, "m4": {"views": 120}}
+        with self.settings(ROLIK_PAPKA=kok, INSTAGRAM_TOKEN="k"), \
+                patch.object(IG, "post_olchov", side_effect=lambda mid, **_: olchov[mid]):
+            r = O.rolik_natijalari(bugun - timedelta(days=7), bugun)
+        self.assertEqual([(x["nom"], x["views"]) for x in r],
+                         [("04_karvon", 120), ("05_kichkintoy", 30)])
+
 
 class SinfTest(TestCase):
     """O'qituvchi sinfi: kod, qo'shilish, panel va maxfiylik (`core/sinf.py`)."""

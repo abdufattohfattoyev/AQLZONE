@@ -115,6 +115,63 @@ def akkaunt() -> dict:
     return _sorov(f"{API}/me", {"fields": "user_id,username", "access_token": kalit()})
 
 
+# ------------------------------------------------------------------ tahlil
+#
+# Instagram ham Telegram kabi TARIX bermaydi: "bugun nechta obunachi"
+# degan savolga javob bor, "o'tgan hafta qancha edi" degani yo'q.
+# Shuning uchun kunlik surat `KunlikOsish` ga yozib boriladi
+# (`core/osish.py`) — aks holda "rolik odam olib keldimi" degan savol
+# javobsiz qolardi.
+
+#: Kunlik hisobotga tushadigan akkaunt o'lchovlari.
+KUNLIK_OLCHOV = ("views", "reach", "accounts_engaged", "total_interactions")
+
+#: Reels posti uchun. Stories boshqa o'lchovlarda yashaydi.
+POST_OLCHOV = "views,reach,likes,comments,saved,shares"
+STORY_OLCHOV = "views,reach,replies"
+
+
+def hisob() -> dict:
+    """`{"username", "followers_count", "media_count"}` — hozirgi holat."""
+    return _sorov(f"{API}/me", {
+        "fields": "username,followers_count,media_count", "access_token": kalit()})
+
+
+def _qiymatlar(j: dict) -> dict[str, int]:
+    """
+    Insights javobini `{"views": 84, ...}` ga keltiradi.
+
+    Instagram ikki xil shaklda qaytaradi: akkaunt o'lchovlari
+    `total_value` da, post o'lchovlari `values[0]` da. Qiymati
+    yo'qlari (masalan hali sanalmagan) umuman tushmaydi — nol bilan
+    to'ldirilmaydi, chunki "0 ta ko'rish" va "hali ma'lum emas"
+    bir xil narsa emas.
+    """
+    natija = {}
+    for o in j.get("data", []):
+        if "total_value" in o and "value" in o["total_value"]:
+            natija[o["name"]] = o["total_value"]["value"]
+        elif o.get("values"):
+            natija[o["name"]] = o["values"][0].get("value")
+    return natija
+
+
+def kunlik_olchov() -> dict[str, int]:
+    """Bugungi akkaunt raqamlari: ko'rish, qamrov, ta'sirlashgan hisoblar."""
+    return _qiymatlar(_sorov(f"{API}/{akkaunt()['user_id']}/insights", {
+        "metric": ",".join(KUNLIK_OLCHOV), "period": "day",
+        "metric_type": "total_value", "access_token": kalit()}))
+
+
+def post_olchov(media_id: str, story: bool = False) -> dict[str, int]:
+    """Bitta postning raqamlari. Post o'chirilgan bo'lsa — bo'sh."""
+    try:
+        return _qiymatlar(_sorov(f"{API}/{media_id}/insights", {
+            "metric": STORY_OLCHOV if story else POST_OLCHOV, "access_token": kalit()}))
+    except (RuntimeError, OSError, ValueError):
+        return {}
+
+
 def izoh(matn: str) -> str:
     """
     Telegram HTML matnini Instagram izohiga o'giradi: teglar olib

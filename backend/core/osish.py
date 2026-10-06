@@ -120,6 +120,29 @@ def _kun_oraligi(sana: date) -> tuple[datetime, datetime]:
     return boshi, boshi + timedelta(days=1)
 
 
+def instagram_surati() -> dict:
+    """
+    Instagram'ning bugungi raqamlari — suratga yozish uchun.
+
+    Xato bo'lsa BO'SH qaytadi va kunlik surat baribir yoziladi:
+    Instagram kaliti eskirgani kanal va ilova tarixini uzib
+    qo'ymasligi kerak.
+    """
+    from core import instagram as IG
+
+    if not IG.sozlanganmi():
+        return {}
+    try:
+        qiymat = {"instagram_azo": IG.hisob().get("followers_count")}
+        kun = IG.kunlik_olchov()
+        qiymat["instagram_korish"] = kun.get("views")
+        qiymat["instagram_qamrov"] = kun.get("reach")
+        return {k: v for k, v in qiymat.items() if v is not None}
+    except Exception:                            # noqa: BLE001
+        log.warning("instagram surati olinmadi", exc_info=True)
+        return {}
+
+
 def surat(sana: date | None = None, kanal_azo: int | None = None) -> KunlikOsish:
     """Shu kunning qatorini yozadi (qayta chaqirilsa — yangilaydi)."""
     sana = sana or timezone.localdate()
@@ -133,6 +156,7 @@ def surat(sana: date | None = None, kanal_azo: int | None = None) -> KunlikOsish
     azo = kanal_azo if kanal_azo is not None else kanal_azo_soni()
     if azo is not None:
         qiymat["kanal_azo"] = azo
+    qiymat.update(instagram_surati())
     q, _ = KunlikOsish.objects.update_or_create(sana=sana, defaults=qiymat)
     return q
 
@@ -157,11 +181,22 @@ def hafta(a: date, b: date) -> dict:
     # Kanal: oraliq oxiridagi eng yangi va boshidan oldingi eng yaqin surat.
     oxirgi = KunlikOsish.objects.filter(sana__lt=b, kanal_azo__isnull=False).order_by("-sana").first()
     oldingi = KunlikOsish.objects.filter(sana__lt=a, kanal_azo__isnull=False).order_by("-sana").first()
+    # Instagram: o'sha usul. Kunlik ko'rish/qamrov esa haftaga yig'iladi.
+    ig_ox = (KunlikOsish.objects.filter(sana__lt=b, instagram_azo__isnull=False)
+             .order_by("-sana").first())
+    ig_old = (KunlikOsish.objects.filter(sana__lt=a, instagram_azo__isnull=False)
+              .order_by("-sana").first())
+    ig_hafta = KunlikOsish.objects.filter(sana__gte=a, sana__lt=b).aggregate(
+        korish=Sum("instagram_korish"), qamrov=Sum("instagram_qamrov"))
 
     imt = ImtihonNatija.objects.filter(created_at__gte=boshi, created_at__lt=oxiri, kurs="")
     return {
         "kanal": oxirgi.kanal_azo if oxirgi else None,
         "kanal_osdi": (oxirgi.kanal_azo - oldingi.kanal_azo) if oxirgi and oldingi else None,
+        "ig": ig_ox.instagram_azo if ig_ox else None,
+        "ig_osdi": (ig_ox.instagram_azo - ig_old.instagram_azo) if ig_ox and ig_old else None,
+        "ig_korish": ig_hafta["korish"],
+        "ig_qamrov": ig_hafta["qamrov"],
         "start": sum(start_manba.values()),
         "start_manba": start_manba,
         "shart": shart,
@@ -179,6 +214,29 @@ def hafta(a: date, b: date) -> dict:
 # ------------------------------------------------------------------ hisobot
 
 
+def rolik_natijalari(a: date, b: date) -> list[dict]:
+    """
+    Hafta ichida chiqqan roliklar va ularning Instagram raqamlari.
+
+    Savol shu: AYNAN qaysi rolik ishladi. Kunlik suratdan bu chiqmaydi —
+    bir kunda bitta rolik chiqsa ham uning ko'rishi keyingi kunlarda
+    o'sib boradi, ya'ni raqamni postning o'zidan so'rash kerak.
+
+    Ko'rish bo'yicha kamayish tartibida.
+    """
+    from core import instagram as IG
+    from core import rolik as R
+
+    if not IG.sozlanganmi():
+        return []
+    natija = []
+    for sana, nom, m in R.chiqqanlar(a, b):
+        if not m.get("instagram_reels"):
+            continue
+        natija.append({"sana": sana, "nom": nom, **IG.post_olchov(m["instagram_reels"])})
+    return sorted(natija, key=lambda r: -(r.get("views") or 0))
+
+
 def _farq(joriy, oldingi) -> str:
     """"146 (▲ +12)" — o'tgan haftaga nisbatan."""
     if joriy is None:
@@ -193,7 +251,8 @@ def _foiz(a: int, b: int) -> int | None:
     return round(100 * a / b) if b else None
 
 
-def xulosalar(j: dict, o: dict, qaytish: dict, zaxira: int) -> list[str]:
+def xulosalar(j: dict, o: dict, qaytish: dict, zaxira: int,
+              roliklar: list[dict] | None = None) -> list[str]:
     """
     Raqamlardan chiqadigan XULOSA — "nima qilish kerak".
 
@@ -222,6 +281,15 @@ def xulosalar(j: dict, o: dict, qaytish: dict, zaxira: int) -> list[str]:
         r.append(f"📈 Yangi hisoblar {o['yangi']} → {j['yangi']} — o'sish bor, qaysi manbadan ekaniga qarang.")
     if j["kanal_osdi"] is not None and j["kanal_osdi"] <= 0:
         r.append("📉 Kanal bu hafta o'smadi — post almashish yoki reklama kerak.")
+    if j.get("ig_osdi") is not None and j["ig_osdi"] <= 0:
+        r.append("📉 Instagram bu hafta o'smadi — rolik mavzusi yoki chiqish vaqtini o'zgartirib ko'rish kerak.")
+    # Eng ko'p ko'rilgan rolik qolganidan sezilarli ajralib turgandami —
+    # demak mavzu ishlagan va keyingi to'plam shunga qarab yasalsin.
+    ko = [r_["views"] for r_ in (roliklar or []) if r_.get("views") is not None]
+    if len(ko) >= 3 and max(ko) >= 2 * (sorted(ko)[len(ko) // 2] or 1):
+        eng = max(roliklar, key=lambda x: x.get("views") or 0)
+        r.append(f"📈 Instagram'da eng ko'p ko'rilgani — «{eng['nom']}» ({eng['views']} ko'rish), "
+                 "qolganlaridan ikki barobar yuqori. Keyingi to'plamda shu mavzuni ko'paytirish kerak.")
     if not r:
         r.append("✅ Hammasi me'yorida — keskin tushish yo'q.")
     return r
@@ -245,6 +313,7 @@ def hisobot_matni(bugun: date | None = None) -> str:
     manbalar = T.manbalar(boshi, kunlar)[:4]
     chiqish = T.chiqish_nuqtalari(boshi)[:3]
     postlar = sorted(T.kanal_statistikasi(boshi)["postlar"], key=lambda p: -p["keldi"])[:3]
+    roliklar = rolik_natijalari(a, b)
     zaxira = Masala.objects.filter(holat=Masala.TASDIQ, kanal_at__isnull=True).count()
 
     def e(x) -> str:
@@ -259,6 +328,22 @@ def hisobot_matni(bugun: date | None = None) -> str:
     for p in postlar:
         if p["keldi"]:
             q.append(f"• {e(p['tur'])} {e(p['nom'])}: {p['keldi']} kishi keldi")
+
+    if j["ig"] is not None:
+        q.append("\n<b>📸 Instagram</b>")
+        q.append(f"Obunachi: {_farq(j['ig'], o['ig'])}"
+                 + (f" · hafta: {'+' if j['ig_osdi'] >= 0 else ''}{j['ig_osdi']}"
+                    if j["ig_osdi"] is not None else " · (tarix hali yig'ilmoqda)"))
+        if j["ig_korish"] is not None:
+            q.append(f"Ko'rish: {_farq(j['ig_korish'], o['ig_korish'])}"
+                     f" · qamrov: {_farq(j['ig_qamrov'], o['ig_qamrov'])}")
+        for r in roliklar[:3]:
+            olchov = [f"{r['views']} ko'rish"] if r.get("views") is not None else []
+            if r.get("likes"):
+                olchov.append(f"{r['likes']} layk")
+            if r.get("shares"):
+                olchov.append(f"{r['shares']} ulashish")
+            q.append(f"• {r['sana']:%d.%m} {e(r['nom'])}: " + (", ".join(olchov) or "raqam yo'q"))
 
     q.append("\n<b>🤖 Bot</b>")
     q.append(f"/start: {_farq(j['start'], o['start'])}")
@@ -286,5 +371,5 @@ def hisobot_matni(bugun: date | None = None) -> str:
     q.append(f"Kanal uchun masala zaxirasi: {zaxira}")
 
     q.append("\n<b>💡 Xulosa</b>")
-    q.extend(xulosalar(j, o, qaytish, zaxira))
+    q.extend(xulosalar(j, o, qaytish, zaxira, roliklar))
     return "\n".join(q)[:4000]

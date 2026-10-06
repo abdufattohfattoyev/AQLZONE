@@ -2131,6 +2131,11 @@ class KunlikOsish(models.Model):
     sana = models.DateField(unique=True)
     #: Telegram `getChatMemberCount` — o'qib bo'lmasa `None`.
     kanal_azo = models.IntegerField(null=True, blank=True)
+    #: Instagram ham tarix bermaydi — shu uchta ham shu yerda yoziladi.
+    #: `None` — o'qilmadi (kalit yo'q yoki xato), 0 — haqiqatan nol.
+    instagram_azo = models.IntegerField(null=True, blank=True)
+    instagram_korish = models.IntegerField(null=True, blank=True)
+    instagram_qamrov = models.IntegerField(null=True, blank=True)
     hisoblar = models.IntegerField(default=0)
     yangi = models.IntegerField(default=0)
     #: Shu kuni ilovada kamida bitta hodisasi bo'lgan hisoblar.

@@ -18,6 +18,9 @@ quvuri bilan) va egasi ko'rib chiqqanidan keyin serverga tashlanadi:
     <ROLIK_PAPKA>/navbat/01-sertifikat.mp4
     <ROLIK_PAPKA>/navbat/01-sertifikat.json   {"matn": ..., "tugma": ..., "havola": ...}
 
+Papkalarning o'zi `core/rolik.py` da — hisobot ham o'sha yerdan
+o'qiydi (`core/osish.py`: qaysi rolik qancha ko'rildi).
+
 Nom bo'yicha tartiblanadi — oldingi raqam navbatni belgilaydi.
 Joylangani `chiqdi/` ga sanasi bilan ko'chadi: navbatda faqat
 kutayotganlar qoladi va "nima chiqdi" degan savolga papkaning o'zi
@@ -51,28 +54,10 @@ from django.utils import timezone
 from core import instagram
 from core import xabar as X
 from core.kanal import kanal_nomi
+from core.rolik import malumot, navbat, papkalar
 
 #: Navbatda shuncha yoki kamroq qolganda adminlarga eslatiladi.
 OGOHLANTIR = 2
-
-
-def papkalar() -> tuple[Path, Path]:
-    kok = Path(settings.ROLIK_PAPKA)
-    return kok / "navbat", kok / "chiqdi"
-
-
-def navbat() -> list[Path]:
-    n, _ = papkalar()
-    return sorted(n.glob("*.mp4")) if n.exists() else []
-
-
-def malumot(video: Path) -> dict:
-    """Yonidagi `.json` — post matni va tugma. Bo'lmasa bo'sh."""
-    j = video.with_suffix(".json")
-    try:
-        return json.loads(j.read_text(encoding="utf-8")) if j.exists() else {}
-    except (OSError, ValueError):
-        return {}
 
 
 def davomiylik(video: Path) -> int:
