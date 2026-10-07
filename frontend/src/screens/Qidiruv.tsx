@@ -80,7 +80,21 @@ interface Props {
 
 export function Qidiruv({ progressOf, onOch, onBack }: Props) {
   useOrqaga(onBack);
-  const [sorov, setSorov] = useState("");
+  /**
+   * Boshlang'ich so'rov MANZILDAN olinadi (`/qidiruv?s=kasrlar`).
+   *
+   * Shu bilan qidiruv natijasi ULASHILADIGAN bo'ladi: ustoz guruhga
+   * "kasrlar" so'rovining havolasini tashlaydi va o'quvchi uni ochib,
+   * yozmasdan o'sha ro'yxatni ko'radi. Parametr o'qilmasa, havola bo'sh
+   * qidiruvni ochib, so'rovni qaytadan yozishga majbur qilardi.
+   */
+  const [sorov, setSorov] = useState(() => {
+    try {
+      return new URLSearchParams(location.search).get("s")?.slice(0, 100) ?? "";
+    } catch {
+      return "";
+    }
+  });
   const maydon = useRef<HTMLInputElement>(null);
 
   /**

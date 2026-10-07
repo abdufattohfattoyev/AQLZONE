@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 
@@ -208,6 +209,18 @@ def _mazmun(s: dict) -> str:
     """`#root` ichidagi o'qiladigan sahifa — React ulanganda almashtiriladi."""
     q = [f'<h1>{escape(s["h1"])}</h1>']
     q += [f"<p>{escape(p)}</p>" for p in s.get("matn") or []]
+    # Nomli formulalar. Formula — sahifaning eng qidirilgan qismi
+    # ("kvadratlar ayirmasi formulasi"), shuning uchun u matndan keyin
+    # darhol va alohida turadi, paragraf ichida yashirinmaydi.
+    if s.get("formulalar"):
+        q.append(f'<h2>{escape(s.get("formula_sarlavha") or "Formulalar")}</h2><ul class="az-f">')
+        for f in s["formulalar"]:
+            nom = f"<span>{escape(f['n'])}</span>" if f.get("n") else ""
+            q.append(f'<li>{nom}<code>{escape(f["f"])}</code></li>')
+        q.append("</ul>")
+    if s.get("qadamlar"):
+        q.append(f'<h2>{escape(s.get("qadam_sarlavha") or "Yechish tartibi")}</h2><ol>'
+                 + "".join(f"<li>{escape(x)}</li>" for x in s["qadamlar"]) + "</ol>")
     if s.get("misollar"):
         q.append(f'<h2>{escape(s.get("misol_sarlavha") or "Namunaviy savollar")}</h2><ol class="az-misol">')
         for m in s["misollar"]:
@@ -221,12 +234,25 @@ def _mazmun(s: dict) -> str:
                 q.append("<ol>" + "".join(f"<li>{escape(y)}</li>" for y in m["y"]) + "</ol>")
             q.append("</details></li>")
         q.append("</ol>")
-    if s.get("jadval"):
-        j = s["jadval"]
+    # Bitta jadval (`jadval`) yoki bir nechtasi (`jadvallar`) — ma'lumotnoma
+    # sahifalarida ikkinchisi kerak: Rim raqamlarida birliklar, o'nliklar va
+    # yuzliklar alohida jadval bo'ladi.
+    for j in ([s["jadval"]] if s.get("jadval") else []) + list(s.get("jadvallar") or []):
         q.append(f'<h2>{escape(j["nom"])}</h2><div class="az-j"><table><thead><tr>'
                  + "".join(f"<th>{escape(str(x))}</th>" for x in j["bosh"]) + "</tr></thead><tbody>"
                  + "".join("<tr>" + "".join(f"<td>{escape(str(x))}</td>" for x in r) + "</tr>" for r in j["qatorlar"])
                  + "</tbody></table></div>")
+    if s.get("xatolar"):
+        q.append(f'<h2>{escape(s.get("xato_sarlavha") or "Tipik xatolar")}</h2><ul>'
+                 + "".join(f"<li>{escape(x)}</li>" for x in s["xatolar"]) + "</ul>")
+    # Savol-javob. Shakli `misollar` bilan bir xil (ochiladigan `details`),
+    # lekin mazmuni boshqa: bu masala emas, o'quvchi qidiruvga yozadigan
+    # savolning javobi. JSON-LD da ham `FAQPage` bo'lib ketadi.
+    if s.get("savollar"):
+        q.append(f'<h2>{escape(s.get("savol_sarlavha") or "Savol va javob")}</h2><div class="az-sj">')
+        for x in s["savollar"]:
+            q.append(f'<details><summary>{escape(x["s"])}</summary><p>{escape(x["j"])}</p></details>')
+        q.append("</div>")
     if s.get("tugma"):
         q.append(f'<p><a class="az-tugma" href="{escape(s["tugma"]["yol"])}">{escape(s["tugma"]["nom"])}</a></p>')
     for g in s.get("guruhlar") or []:
@@ -238,9 +264,14 @@ def _mazmun(s: dict) -> str:
     if s.get("havolalar"):
         q.append("<nav><ul>" + "".join(
             f'<li><a href="{escape(h["yol"])}">{escape(h["nom"])}</a></li>' for h in s["havolalar"]) + "</ul></nav>")
+    # Tepadagi havola SAHIFANING TILIGA mos bosh sahifaga boradi. Statik
+    # sahifada (lug'at, ma'lumotnoma) React ulanmaydi, ya'ni bu yagona
+    # "orqaga" yo'li: ruscha sahifadan o'zbekcha bosh sahifaga olib
+    # borilsa, odam tilni qo'lda qaytarishga majbur bo'lardi.
+    uy = "/ru" if s.get("til") == "ru" else "/"
     return (
         '<main id="az-seo"><header><img src="/logo.svg" alt="Aql Zone" width="48" height="48" />'
-        '<a href="/">Aql Zone</a><i></i></header>' + "".join(q) + "</main>"
+        f'<a href="{uy}">Aql Zone</a><i></i></header>' + "".join(q) + "</main>"
     )
 
 
@@ -251,10 +282,26 @@ SEO_USLUB = (
     "#az-seo header a{font-weight:700;font-size:20px;color:#1a2450;text-decoration:none;flex:1}"
     "#az-seo header i{width:72px;height:4px;border-radius:4px;background:#48c97a;opacity:.7}"
     "#az-seo h1{font-size:26px;line-height:1.2;margin:8px 0 12px}#az-seo h2{font-size:18px;margin:22px 0 6px}"
-    "#az-seo ul{padding-left:20px;margin:6px 0}#az-seo a{color:#2c56b8}"
+    # Ro'yxat belgilari ATAYLAB qaytariladi: ilova uslublari (Tailwind
+    # preflight) `ul`/`ol` dan belgini olib tashlaydi — ilovada hamma
+    # ro'yxat o'z ko'rinishiga ega. Bu yerda esa oddiy matn turadi va
+    # belgisiz "yechish tartibi" qadamlari oddiy abzasga aylanadi: qaysi
+    # qadam birinchi ekani ko'rinmaydi.
+    "#az-seo ul{padding-left:20px;margin:6px 0;list-style:disc}"
+    "#az-seo ol{padding-left:22px;margin:6px 0;list-style:decimal}"
+    "#az-seo li{margin:2px 0}#az-seo a{color:#2c56b8}"
     "#az-seo nav ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:22px}"
     ".az-misol>li{margin:0 0 14px}.az-misol p{margin:4px 0}.az-k{font-size:20px;font-weight:700}"
     "#az-seo summary{cursor:pointer;color:#2c56b8}.az-j{overflow-x:auto}"
+    # Formula ro'yxati: nomi yupqa, formulaning o'zi qalin va bir xil
+    # kenglikdagi shriftda — ko'z uni matndan ajratib oladi.
+    # `#az-seo` bilan: yuqoridagi umumiy `ul` qoidasi id bilan yozilgan,
+    # ya'ni oddiy sinf undan kuchsiz bo'lib, formula ro'yxatiga ham belgi
+    # qo'yib yuborardi.
+    "#az-seo .az-f{list-style:none;padding:0}#az-seo .az-f>li{margin:0 0 8px}"
+    ".az-f span{display:block;font-size:14px;opacity:.75}"
+    ".az-f code{font:600 17px/1.5 ui-monospace,'Cascadia Code',Consolas,monospace}"
+    ".az-sj details{margin:0 0 8px}.az-sj summary{font-weight:600}"
     "#az-seo table{border-collapse:collapse;font-variant-numeric:tabular-nums}"
     "#az-seo td,#az-seo th{border:1px solid #d6dcef;padding:4px 8px;text-align:center}#az-seo th{background:#eef2fb}"
     ".az-tugma{display:inline-block;margin-top:14px;padding:12px 22px;border-radius:14px;background:#48c97a;"
@@ -318,27 +365,91 @@ def boyit(html: str, yol: str) -> str:
 # ------------------------------------------------------------------ sitemap
 
 
-def sitemap(request):
-    """Barcha ochiq sahifalar va tasdiqlangan masalalar."""
-    from .models import Masala
+#: Sitemap bo'limlari. Hammasi bitta faylga sig'adi (chegara 50 000 manzil),
+#: lekin bo'lib berilgani Search Console'da MUHIM: u indekslanish hisobotini
+#: har sitemap uchun alohida ko'rsatadi. Bitta fayl bo'lsa, "2000 sahifadan
+#: 1200 tasi indekslangan" deb yozadi va qaysi bo'lim tushmaganini aytmaydi —
+#: lug'at indekslanmayaptimi yoki masalalar, bilib bo'lmaydi.
+BOLIMLAR = ("asosiy", "darslar", "lugat", "masalalar")
 
-    a = asos()
-    qator = []
-    for yol, s in (malumot().get("sahifalar") or {}).items():
-        if s.get("muhim") and not s.get("kanonik"):
-            qator.append(f"<url><loc>{escape(a + yol)}</loc><priority>{s['muhim']:.1f}</priority></url>")
-    for pk, sana in (Masala.objects.filter(holat=Masala.TASDIQ)
-                     .order_by("-pk").values_list("pk", "created_at")[:20000]):
-        qator.append(f"<url><loc>{a}/masalalar/{pk}</loc><lastmod>{sana.date().isoformat()}</lastmod>"
-                     "<priority>0.5</priority></url>")
-    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
-           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + "".join(qator) + "</urlset>")
-    javob = HttpResponse(xml, content_type="application/xml; charset=utf-8")
-    javob["Cache-Control"] = "public, max-age=3600"
+
+def _bolim(yol: str) -> str:
+    """Manzil qaysi sitemapga tushadi."""
+    t = yol[3:] if yol == "/ru" or yol.startswith("/ru/") else yol
+    if t.startswith("/lugat"):
+        return "lugat"
+    if t.startswith("/kurs/"):
+        return "darslar"
+    return "asosiy"
+
+
+def _javob(xml: str, soat: int = 1):
+    javob = HttpResponse('<?xml version="1.0" encoding="UTF-8"?>\n' + xml,
+                         content_type="application/xml; charset=utf-8")
+    javob["Cache-Control"] = f"public, max-age={soat * 3600}"
     return javob
 
 
+def _yigish_sanasi() -> str:
+    """`seo.json` o'zgargan kun — statik sahifalarning `lastmod` i.
+
+    Sahifa matni yig'ishda yasaladi, ya'ni u aynan shu kuni o'zgargan.
+    Usiz Google minglab sahifani qachon qayta ko'rishni taxmin bilan hal
+    qilardi va yangi bo'lim bir necha hafta kutib qolardi.
+    """
+    f = Path(settings.FRONTEND_DIST) / "seo.json"
+    try:
+        return datetime.fromtimestamp(f.stat().st_mtime, tz=UTC).date().isoformat()
+    except OSError:
+        return datetime.now(tz=UTC).date().isoformat()
+
+
+def sitemap(request):
+    """Sitemap indeksi — bo'limlarga havola."""
+    a = asos()
+    sana = _yigish_sanasi()
+    return _javob(
+        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        + "".join(f"<sitemap><loc>{a}/sitemap-{b}.xml</loc><lastmod>{sana}</lastmod></sitemap>"
+                 for b in BOLIMLAR)
+        + "</sitemapindex>", soat=24)
+
+
+def sitemap_bolim(request, bolim: str):
+    """Bitta bo'lim manzillari."""
+    from django.http import Http404
+
+    from .models import Masala
+
+    if bolim not in BOLIMLAR:
+        raise Http404
+    a = asos()
+    qator = []
+    if bolim == "masalalar":
+        for pk, sana in (Masala.objects.filter(holat=Masala.TASDIQ)
+                         .order_by("-pk").values_list("pk", "created_at")[:40000]):
+            qator.append(f"<url><loc>{a}/masalalar/{pk}</loc><lastmod>{sana.date().isoformat()}</lastmod>"
+                         "<priority>0.5</priority></url>")
+    else:
+        sana = _yigish_sanasi()
+        for yol, s in (malumot().get("sahifalar") or {}).items():
+            if not s.get("muhim") or s.get("kanonik") or _bolim(yol) != bolim:
+                continue
+            qator.append(f"<url><loc>{escape(a + yol)}</loc><lastmod>{sana}</lastmod>"
+                         f"<priority>{s['muhim']:.1f}</priority></url>")
+    return _javob('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                  + "".join(qator) + "</urlset>")
+
+
 def robots(request):
+    # Shaxsiy va bir martalik manzillar yopiladi: ular qidiruvda chiqmasligi
+    # kerak (profil, xona kodi, duel havolasi) va robot ularni aylanib
+    # yurgan vaqtida HAQIQIY sahifalarni ko'rmaydi.
+    #
+    # DIQQAT: bu yerga yozilgan manzilni Google UMUMAN o'qimaydi, ya'ni
+    # undagi `noindex` ni ham ko'rmaydi. Shuning uchun faqat hech qachon
+    # indekslanmasligi kerak bo'lgan bo'limlar yoziladi; qolgan shaxsiy
+    # sahifalar `noindex` bilan qoladi (`boyit`).
     matn = (
         "User-agent: *\n"
         "Allow: /\n"
@@ -347,6 +458,14 @@ def robots(request):
         "Disallow: /kirish/\n"
         "Disallow: /xona/\n"
         "Disallow: /duel/\n"
+        "Disallow: /sinf/qoshil/\n"
+        "Disallow: /masalalar/menikilar\n"
+        "Disallow: /men\n"
+        "Disallow: /sozlamalar\n"
+        # Qidiruv natijasi sahifasi: har xil `?s=` bilan cheksiz ko'p
+        # manzil beradi va ularning hammasi ichki havolalardan tuzilgan
+        # bo'sh ro'yxat. Google buni "cheksiz bo'shliq" deb biladi.
+        "Disallow: /qidiruv\n"
         f"\nSitemap: {asos()}/sitemap.xml\n"
     )
     javob = HttpResponse(matn, content_type="text/plain; charset=utf-8")

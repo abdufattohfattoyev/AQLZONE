@@ -14,7 +14,7 @@ Tartib MUHIM: SPA eng oxirida turadi, chunki u qolgan hamma manzilni
 o'ziga oladi. `/boshqaruv` undan keyin yozilsa, React ilova ochilib,
 "bunday sahifa yo'q" degan ekran chiqardi.
 """
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from core import boshqaruv, masala_hisobot
 from core.views import health
@@ -66,6 +66,9 @@ urlpatterns = [
     *rolik_urlpatterns(),
     # Qidiruv tizimlari uchun — SPA dan OLDIN (`core/seo.py`).
     path("sitemap.xml", seo.sitemap, name="sitemap"),
+    # Bo'limlar: `sitemap.xml` indeksi shularga havola qiladi
+    # (`core/seo.py: BOLIMLAR`).
+    re_path(r"^sitemap-(?P<bolim>[a-z]+)\.xml$", seo.sitemap_bolim, name="sitemap-bolim"),
     path("robots.txt", seo.robots, name="robots"),
     *spa_urlpatterns(),
 ]
