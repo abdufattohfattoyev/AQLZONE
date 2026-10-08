@@ -8685,24 +8685,46 @@ class MatematikaKanalTest(TestCase):
         import re
         from core import matematika_kanal as MK
 
+        from fractions import Fraction
+        from math import comb
+
+        kimlar = set()
         for urug in range(300):
             for kim, savol, javob, usul in MK._misollar(R.Random(urug)):
-                self.assertTrue(javob.isdigit(), savol)
-                self.assertRegex(kim, r"^\d–\d-sinf$")
+                kimlar.add(kim)
+                # Butun son (manfiy ham), qisqargan kasr yoki o'nli kasr (vergul bilan).
+                self.assertRegex(javob, r"^-?\d+$|^\d+/\d+$|^\d+,\d+$", savol)
+                if "/" in javob:
+                    sur, mah = map(int, javob.split("/"))
+                    self.assertEqual(Fraction(sur, mah).denominator, mah, f"qisqarmagan: {savol}")
+                self.assertRegex(kim, r"^(10–11-sinf|[1-3]-kurs)$")
                 self.assertTrue(usul.endswith(javob) or usul.endswith(javob + "."), usul)
-                m = re.search(r"7 ning (\d+)-darajasi", savol)
-                if m:
-                    self.assertEqual(javob, str(pow(7, int(m[1]), 10)))
-                m = re.fullmatch(r"Hisoblang: (\d+) × (\d+)", savol)
-                if m:
-                    self.assertEqual(int(javob), int(m[1]) * int(m[2]))
-                m = re.match(r"Hisoblang: (\d+)²", savol)
-                if m:
-                    self.assertEqual(int(javob), int(m[1]) ** 2)
                 self.assertIn(": ", savol)                   # rasmda shart va ifoda ajraladi
-                m = re.fullmatch(r"Foizini toping: (\d+) ning (\d+)% i", savol)
+
+                # Javoblarni yechimdan mustaqil, qayta hisoblab tekshiramiz.
+                m = re.search(r"log₂ (\d+) − log₂ (\d+)", savol)
                 if m:
-                    self.assertEqual(int(javob) * 100, int(m[1]) * int(m[2]))
+                    self.assertEqual(2 ** int(javob), int(m[1]) // int(m[2]))
+                m = re.search(r"C\((\d+), (\d+)\)", savol)
+                if m:
+                    self.assertEqual(int(javob), comb(int(m[1]), int(m[2])))
+                m = re.search(r"sin (\d)x / (\d)x", savol)
+                if m:
+                    self.assertEqual(Fraction(javob), Fraction(int(m[1]), int(m[2])))
+                m = re.search(r"\|(\d)  (\d)\|\n\|(\d)  (\d)\|", savol)
+                if m:
+                    a, b, c, d = map(int, m.groups())
+                    kutilgan = a + d if "xos son" in savol else a * d - b * c
+                    self.assertEqual(int(javob), kutilgan)
+                m = re.search(r"\|(\d+) \+ (\d+)i\|", savol)
+                if m:
+                    self.assertEqual(int(javob) ** 2, int(m[1]) ** 2 + int(m[2]) ** 2)
+                m = re.search(r"P\(yig'indi = (\d+)\)", savol)
+                if m:
+                    son = sum(1 for x in range(1, 7) for y in range(1, 7) if x + y == int(m[1]))
+                    self.assertEqual(Fraction(javob), Fraction(son, 36))
+        # To'plamda maktab ham, uchala kurs ham bor.
+        self.assertEqual(kimlar, {"10–11-sinf", "1-kurs", "2-kurs", "3-kurs"})
 
     def test_misol_posti_javobsiz_va_tugmasiz(self):
         from datetime import date
