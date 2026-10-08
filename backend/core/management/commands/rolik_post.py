@@ -8,7 +8,8 @@ Reklama roligi kanalga — har kuni bittadan, navbat bo'yicha.
 
 INSTAGRAM_TOKEN berilgan bo'lsa, kanalga chiqqan rolik Instagram'ning
 Reels va Stories'iga ham joylanadi (`core/instagram.py`). Izoh —
-json'dagi `instagram`, bo'lmasa `matn` dan teglarsiz yasaladi.
+json'dagi `instagram`, bo'lmasa `matn` dan teglarsiz yasaladi; oxiriga
+doim aniq 5 ta `#teg` qo'yiladi (json'dagi `teglar`, yetmasa umumiylari).
 
 ─────────────────── NAVBAT ───────────────────
 
@@ -154,7 +155,8 @@ class Command(BaseCommand):
         # O'sha rolik Instagram Reels'ga ham. Telegram'dan KEYIN: Instagram
         # xatosi kanal postini to'xtatmasin, faqat admin bilsin.
         if instagram.sozlanganmi():
-            ig_matn = m.get("instagram") or instagram.izoh(matn)
+            ig_matn = instagram.teglar_bilan(m.get("instagram") or instagram.izoh(matn),
+                                             m.get("teglar") or ())
             natija = instagram.joyla(chiqdi / f"{kun}_{video.name}", ig_matn)
             for joy, (h, izoh, mid) in natija.items():
                 self.stdout.write(f"instagram {joy}: {h} {izoh} {mid}")

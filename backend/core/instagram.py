@@ -56,6 +56,13 @@ YANGILASH_KUN = 7
 #: Instagram izohining eng katta uzunligi.
 MAX_IZOH = 2200
 
+#: Reels izohidagi teglar soni. Instagram 5 tadan ortig'ini qabul
+#: qilmaydi — shuning uchun ham kam emas, ham ko'p emas: aniq shuncha.
+TEG_SONI = 5
+
+#: Rolik json'ida `teglar` bo'lmasa yoki 5 taga yetmasa — shulardan.
+TEGLAR = ("AqlZone", "matematika", "milliysertifikat", "mantiq", "oquvchilar")
+
 
 def _kalit_fayli() -> Path:
     return Path(settings.ROLIK_PAPKA) / "instagram.kalit"
@@ -185,6 +192,28 @@ def izoh(matn: str) -> str:
     t = re.sub(r"<br\s*/?>", "\n", t, flags=re.I)
     t = re.sub(r"<[^>]+>", "", t)
     return html.unescape(t).strip()[:MAX_IZOH]
+
+
+def teglar_bilan(matn: str, teglar: list[str] | tuple[str, ...] = ()) -> str:
+    """
+    Izoh oxiriga aniq `TEG_SONI` ta teg qo'yadi.
+
+    Avval rolikning o'z teglari (json'dagi `teglar`), keyin matnning
+    ichida yozilgan `#teg` lar, yetmasa — `TEGLAR` dan. Matn ichidagi
+    teglar olib tashlanib oxiriga yig'iladi: aks holda ular ham
+    sanalib, Instagram'ning 5 talik chegarasidan oshib ketardi.
+    """
+    ichida = re.findall(r"#(\w+)", matn)
+    toza = re.sub(r"[ \t]*#\w+", "", matn)
+    toza = re.sub(r"\n{3,}", "\n\n", toza).strip()
+
+    tanlangan: list[str] = []
+    for t in [*teglar, *ichida, *TEGLAR]:
+        t = re.sub(r"\W", "", str(t).lstrip("#"))
+        if t and t.lower() not in {x.lower() for x in tanlangan}:
+            tanlangan.append(t)
+    qator = " ".join(f"#{t}" for t in tanlangan[:TEG_SONI])
+    return f"{toza[:MAX_IZOH - len(qator) - 2]}\n\n{qator}".strip()
 
 
 def _bitta(ig: str, k: str, maydonlar: dict) -> tuple[str, str, str]:

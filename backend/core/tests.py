@@ -9423,7 +9423,8 @@ class RolikPostTest(TestCase):
             self._yur()
         video, matn = ig.call_args.args
         self.assertTrue(video.name.endswith("01-sertifikat.mp4") and video.exists())
-        self.assertEqual(matn, "01-sertifikat matni")
+        self.assertTrue(matn.startswith("01-sertifikat matni\n\n#"))
+        self.assertEqual(matn.count("#"), instagram.TEG_SONI)
         chiqdi = list((self.navbat.parent / "chiqdi").glob("*.json"))
         yozilgan = json.loads(chiqdi[0].read_text(encoding="utf-8"))
         self.assertEqual((yozilgan["instagram_reels"], yozilgan["instagram_stories"]), ("77", "88"))
@@ -9513,6 +9514,23 @@ class RolikPostTest(TestCase):
             izoh('<b>Sinab ko\'ring</b> &amp; o\'ynang<br><a href="https://t.me/x">Botni ochish</a>'),
             "Sinab ko'ring & o'ynang\nBotni ochish: https://t.me/x",
         )
+
+    def test_teglar_doim_besh_ta(self):
+        from core.instagram import TEGLAR, teglar_bilan
+        # Teg berilmasa — umumiylari.
+        self.assertEqual(teglar_bilan("Matn"), "Matn\n\n" + " ".join(f"#{t}" for t in TEGLAR))
+        # Rolikniki birinchi, matn ichidagisi oxirga yig'iladi, takror yo'q.
+        t = teglar_bilan("Sinab ko'ring #olimpiada\nzo'r #AqlZone",
+                         ["#kasrlar", "foiz", "aqlzone", "test", "geometriya", "ortiqcha"])
+        matn, qator = t.split("\n\n")
+        self.assertEqual(matn, "Sinab ko'ring\nzo'r")
+        self.assertEqual(qator, "#kasrlar #foiz #aqlzone #test #geometriya")
+
+    def test_teglar_uzun_matnda_ham_sigadi(self):
+        from core.instagram import MAX_IZOH, teglar_bilan
+        t = teglar_bilan("a" * 3000)
+        self.assertLessEqual(len(t), MAX_IZOH)
+        self.assertEqual(t.count("#"), 5)
 
 
 @override_settings(KANAL="AqlZoneUz", BOT_TOKEN=BOT)
