@@ -68,13 +68,6 @@ const KIMLAR: { kim: Kim; ic: string; rang: Rang }[] = [
   { kim: "ustoz", ic: "chart", rang: "green" },
 ];
 
-/** Jonli savollar — javoblar tartibi ataylab har xil. */
-const SAVOLLAR = [
-  { mavzu: "lendMavzu1", savol: "lendS1", ifoda: "3/4 + 1/8", javoblar: ["5/8", "7/8", "4/12", "1"], togri: 1, izoh: "lendS1Izoh" },
-  { mavzu: "lendMavzu2", savol: "lendS2", ifoda: "", javoblar: ["8", "15", "12", "20"], togri: 2, izoh: "lendS2Izoh" },
-  { mavzu: "lendMavzu3", savol: "lendS3", ifoda: "", javoblar: ["6", "11", "7", "12"], togri: 0, izoh: "lendS3Izoh" },
-] as const;
-
 const BOLIMLAR = [
   { ic: "map", nom: "tabDarslar", izoh: "boshDarslarBatafsil", rang: "blue", yol: yolKurslar },
   { ic: "chart", nom: "testlar", izoh: "boshTestlarBatafsil", rang: "green", yol: yolTestSinf },
@@ -122,7 +115,6 @@ export function Lending({ onBoshlash, onOch }: Props) {
       <main>
         <Qahramon onBoshlash={onBoshlash} onOch={onOch} />
         <Sonlar />
-        <SinovBolim />
         <Bolimlar onOch={onOch} />
         <Kimlar onBoshlash={onBoshlash} />
         <Qanday />
@@ -519,159 +511,6 @@ function Sahna({ sl, faol }: { sl: Slayd; faol: boolean }) {
           </span>
         </>
       )}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------ sinov */
-
-/**
- * Jonli savol — alohida bo'lim.
- *
- * Ilgari ikki ustun edi: chapda sarlavha va ikki chip, o'ngda baland
- * (~600px) tik karta. Kompyuterda chap tomon yarim bo'sh qolib, bo'lim
- * butun ekranni egallardi; kartaning ichida "Jonli sinov" sarlavhasi
- * yana takrorlanardi. Endi sarlavha tepada markazda, karta keng va
- * past: savol chapda, javoblar o'ngda, natija va "Keyingi" bitta qatorda.
- * Chiplar ("Yulduz yig'ing", "Darhol tushuntirish") olib tashlandi —
- * tushuntirishni odam javob bergan zahoti o'zi ko'radi.
- */
-function SinovBolim() {
-  return (
-    <section className="py-8 sm:py-12">
-      <div className="mx-auto max-w-[1040px] px-4 sm:px-6">
-        <div className="mb-5 text-center sm:mb-6">
-          <span className={`inline-flex rounded-full px-3.5 py-1 font-display text-[12px] tracking-wider uppercase
-                            ${RANG.blue.quti} ${RANG.blue.matn}`}>
-            {t("lendJonli")}
-          </span>
-          <h2 className="mt-2.5 font-display text-[clamp(1.5rem,5.5vw,2.25rem)] leading-tight tracking-tight">
-            {t("lendSinovSarlavha")}
-          </h2>
-          <p className="mx-auto mt-2 max-w-[34rem] text-[14.5px] leading-relaxed text-ink-soft sm:text-[15.5px]">
-            {t("lendSinovIzoh")}
-          </p>
-        </div>
-        <Sinov />
-      </div>
-    </section>
-  );
-}
-
-/** Kasrni ustma-ust yozadi: "7/8" → 7 ustida 8. Qolgani o'zgarmaydi. */
-function Ifoda({ matn }: { matn: string }) {
-  const qism = matn.split(/(\d+\/\d+)/);
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      {qism.filter(Boolean).map((q, i) => {
-        const m = q.match(/^(\d+)\/(\d+)$/);
-        if (!m) return <span key={i}>{q}</span>;
-        return (
-          <span key={i} className="inline-flex flex-col items-center text-[0.8em] leading-none">
-            <span>{m[1]}</span>
-            <span className="my-0.5 h-[2px] w-full min-w-4 rounded-full bg-current" />
-            <span>{m[2]}</span>
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
-/**
- * Jonli savol — sahifadagi eng muhim qism. Ilovaning o'zi kabi ishlaydi:
- * javob → darhol to'g'ri/xato → bir qatorlik tushuntirish.
- */
-function Sinov() {
-  const [n, setN] = useState(0);
-  const [tanlov, setTanlov] = useState<number | null>(null);
-  const s = SAVOLLAR[n]!;
-  const javob = tanlov !== null;
-  const togri = tanlov === s.togri;
-
-  return (
-    /* md+ da ikki ustun: chapda savol, o'ngda javoblar va natija.
-       Telefonda ustma-ust, lekin ichki sarlavhasiz — ~420px o'rniga ~600px edi. */
-    <div className="az-kirish relative z-10 grid w-full gap-3 rounded-[28px] bg-karta p-3.5 shadow-clay sm:p-4
-                    md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-4"
-      style={{ "--az-kech": "120ms" } as CSSProperties}>
-      <div className="relative flex min-h-[132px] flex-col items-center justify-center rounded-2xl bg-sahna px-4 pt-9 pb-5
-                      text-center shadow-ichki md:min-h-0">
-        {/* Mavzu va hisoblagich — savol qutisining tepasida, alohida qator emas. */}
-        <span className="absolute top-3 left-4 font-display text-[11.5px] tracking-wider text-ink-dim uppercase">
-          {t(s.mavzu)}
-        </span>
-        <span className="absolute top-2.5 right-3 rounded-full bg-brand-blue/12 px-2.5 py-0.5 font-display text-[12.5px]
-                         text-brand-blue-t">
-          {n + 1} / {SAVOLLAR.length}
-        </span>
-        <p className="text-[15px] text-ink-soft">{t(s.savol)}</p>
-        {s.ifoda && (
-          <p className="mt-2.5 font-display text-[32px] leading-none sm:text-[36px]">
-            <Ifoda matn={s.ifoda} /> <span className="text-ink-dim">=</span>{" "}
-            <span className="rounded-xl bg-brand-blue/12 px-2.5 text-brand-blue-t">?</span>
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-2.5">
-        {s.javoblar.map((j, i) => {
-          const bu = tanlov === i;
-          const rang = !javob ? `${OQ_TUGMA} hover:-translate-y-0.5`
-            : i === s.togri ? "bg-brand-green text-white"
-            : bu ? "bg-brand-red text-white"
-            : "bg-track text-ink-dim";
-          const harf = !javob ? "bg-track text-ink-dim group-hover:bg-brand-blue group-hover:text-white"
-            : i === s.togri || bu ? "bg-white/25 text-white" : "bg-karta/60 text-ink-dim";
-          return (
-            <button key={`${n}-${i}`} type="button" disabled={javob}
-              onClick={() => setTanlov(i)} data-tahlil="Tanishuv: sinov javob"
-              className={`clay-press group flex h-14 items-center justify-between rounded-2xl px-3
-                          font-display text-[21px] transition ${rang}`}>
-              <span className={`grid size-7 place-items-center rounded-full text-[12.5px] transition ${harf}`}>
-                {"ABCD"[i]}
-              </span>
-              <Ifoda matn={j} />
-              <span className="w-7" />
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Natija va "Keyingi" — BITTA qator. Ilgari ular ikki alohida blok
-          edi va karta ostida yana 60px joy olardi. Javobdan oldin "Keyingi"
-          ko'rinmaydi: odam savolni o'tkazib yubormay, avval yechib ko'rsin. */}
-      <div aria-live="polite"
-        className={`flex min-h-[56px] items-center gap-3 rounded-2xl py-2 pr-2 pl-3 transition ${
-          !javob ? "bg-track" : togri ? "bg-brand-green/14" : "bg-brand-red/10"}`}>
-        <span className={`grid size-7 shrink-0 place-items-center rounded-full text-white ${
-          !javob ? "bg-brand-blue" : togri ? "bg-brand-green" : "bg-brand-red"}`}>
-          <Icon name={!javob ? "izoh" : togri ? "check" : "close"} size={15} />
-        </span>
-        <div className="min-w-0 flex-1 text-[13.5px] leading-snug">
-          {javob ? (
-            <>
-              <p className={`font-display text-[14.5px] ${togri ? "text-brand-green" : "text-brand-red"}`}>
-                {togri ? t("lendTogri") : t("lendNotogri")}
-              </p>
-              <p className="text-ink-soft">{t(s.izoh)}</p>
-            </>
-          ) : (
-            <p className="text-ink-soft">{t("lendTanlang")}</p>
-          )}
-        </div>
-        {javob && (
-          <button type="button" data-tahlil="Tanishuv: keyingi savol" aria-label={t("lendKeyingi")}
-            onClick={() => { setN((n + 1) % SAVOLLAR.length); setTanlov(null); }}
-            className="clay-press flex h-11 shrink-0 items-center gap-1 rounded-full bg-karta px-4 font-display text-[14px]
-                       text-ink shadow-clay-sm hover:text-brand-blue-t">
-            <span className="hidden min-[400px]:inline">{t("lendKeyingi")}</span>
-            <Icon name="chevron" size={16} />
-          </button>
-        )}
-      </div>
-      </div>
     </div>
   );
 }
