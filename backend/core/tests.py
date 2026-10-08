@@ -9738,3 +9738,29 @@ class PremiumEmojiTest(TestCase):
         with patch.object(xabar, "_sorov", return_value=(True, 200, "")) as s:
             xabar.yubor("12345", "🚀 boshla")
             self.assertNotIn("<tg-emoji", s.call_args[0][1]["text"])
+
+
+class RolikTugmaTest(TestCase):
+    """Rolik tugmalari bo'limga olib borishi SHART — ilovaning boshiga emas."""
+
+    @override_settings(MINI_APP_URL="https://aql-zone.uz", BOT_TOKEN=BOT, KANAL_MAJBURIY=False)
+    def test_har_rolik_havolasi_boshqa_bolimni_ochadi(self):
+        from django.core.cache import cache
+        from core.management.commands import bot as B
+
+        # Ssenariylar kompyuterda (`.rolik/`) va serverda yo'q — shuning
+        # uchun ro'yxat shu yerda. Rolik havolasi o'zgarsa sinov yiqiladi.
+        kutilgan = {
+            "kichkintoy": "/kichkintoy", "oyinlar": "/oyinlar", "qabul": "/qabul",
+            "mantiq": "/mantiq", "sinflar": "/sinflar", "sertifikat": "/sertifikat",
+            "karvon": "/oyinlar/karvon", "marafon": "/marafon", "masalalar": "/masalalar",
+        }
+        cache.clear()
+        for i, (param, yol) in enumerate(kutilgan.items()):
+            with patch.object(B, "bolimni_yubor") as yubor, patch.object(B, "api"):
+                B.yangilikni_qayta_ishla({"message": {
+                    "chat": {"id": 1},
+                    "from": {"id": 7000 + i, "language_code": "uz"},
+                    "text": f"/start {param}"}})
+            self.assertTrue(yubor.called, f"/start {param} bo'limga olib bormadi")
+            self.assertEqual(yubor.call_args.args[2], yol, f"/start {param} noto'g'ri yo'lga ketdi")

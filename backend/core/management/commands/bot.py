@@ -843,6 +843,31 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         bolimni_yubor(chat_id, til, SERTIFIKAT_YOLI, "sertifikatHaqida")
         return f"{tg_id}: sertifikat havolasi"
 
+    # Reklama roliklarining tugmalari (`rolik_post`). Ilgari bu
+    # parametrlar BU YERDA YO'Q edi va tugma odamni bo'limga emas,
+    # ilovaning boshiga olib borardi: rolikda ko'rgan narsasini u
+    # yana o'zi qidirishga majbur bo'lardi.
+    if matn.startswith("/start kichkintoy"):
+        bolimni_yubor(chat_id, til, "/kichkintoy", "kichkintoyBot")
+        return f"{tg_id}: kichkintoylar bo'limi"
+
+    if matn.startswith("/start oyinlar"):
+        bolimni_yubor(chat_id, til, "/oyinlar", "oyinlarBot")
+        return f"{tg_id}: o'yinlar bo'limi"
+
+    if matn.startswith("/start qabul"):
+        bolimni_yubor(chat_id, til, "/qabul", "qabulBot")
+        return f"{tg_id}: qabul (prezident maktabi) havolasi"
+
+    if matn.startswith("/start mantiq"):
+        bolimni_yubor(chat_id, til, "/mantiq", "mantiqBot")
+        return f"{tg_id}: mantiq bo'limi"
+
+    # `sinf_<kod>` dan OLDIN tekshirilmaydi: pastdagi shart aniqroq.
+    if matn.startswith("/start sinflar"):
+        bolimni_yubor(chat_id, til, "/sinflar", "sinflarBot")
+        return f"{tg_id}: sinflar bo'limi"
+
     # DTM marafoni — kanaldagi e'lon tugmasi (`core/marafon.py`).
     if matn.startswith("/start marafon"):
         bolimni_yubor(chat_id, til, "/marafon", "marafonHaqida")

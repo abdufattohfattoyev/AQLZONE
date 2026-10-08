@@ -697,6 +697,62 @@ XABAR: dict[str, dict[str, str]] = {
             "Приключение по Шёлковому пути: решайте препятствия и дойдите из Ташкента до Хивы!"
         ),
     },
+    "kichkintoyBot": {
+        "uz": (
+            "🧸 <b>Kichkintoylar</b>\n\n"
+            "2 yoshdan: rasmli va ovozli o'yinlar — hayvonlar, ranglar, raqamlar. "
+            "O'qiy olmaydigan bola ham tushunadi."
+        ),
+        "ru": (
+            "🧸 <b>Малыши</b>\n\n"
+            "С 2 лет: игры с картинками и озвучкой — животные, цвета, числа. "
+            "Поймёт даже ребёнок, который ещё не читает."
+        ),
+    },
+    "oyinlarBot": {
+        "uz": (
+            "🎲 <b>O'yinlar</b>\n\n"
+            "Tezkor hisob, tarozi, 24 va boshqalar — 3 daraja. O'ynab hisobla."
+        ),
+        "ru": (
+            "🎲 <b>Игры</b>\n\n"
+            "Быстрый счёт, весы, 24 и другие — 3 уровня. Считай играя."
+        ),
+    },
+    "qabulBot": {
+        "uz": (
+            "🎓 <b>Prezident maktablariga tayyorlov</b>\n\n"
+            "4-sinf bitiruvchilari uchun: 30 topshiriq, 90 daqiqa — haqiqiy imtihondagidek. "
+            "Oxirida mavzular bo'yicha tahlil va har savolning yechimi."
+        ),
+        "ru": (
+            "🎓 <b>Подготовка к Президентским школам</b>\n\n"
+            "Для выпускников 4 класса: 30 заданий, 90 минут — как на настоящем экзамене. "
+            "В конце разбор по темам и решение каждого вопроса."
+        ),
+    },
+    "mantiqBot": {
+        "uz": (
+            "🧩 <b>Mantiq va fikrlash</b>\n\n"
+            "2–4-sinf uchun 14 ta usul: tovuqlar va quyonlar, sehrli kvadrat, tarozi va boshqalar."
+        ),
+        "ru": (
+            "🧩 <b>Логика и мышление</b>\n\n"
+            "14 приёмов для 2–4 класса: куры и кролики, магический квадрат, весы и другие."
+        ),
+    },
+    "sinflarBot": {
+        "uz": (
+            "👩‍🏫 <b>O'qituvchi uchun sinf</b>\n\n"
+            "Sinf ochasiz, o'quvchilar kod bilan qo'shiladi — kim ishlayapti va "
+            "kim qayerda qiynalayotganini ko'rib turasiz."
+        ),
+        "ru": (
+            "👩‍🏫 <b>Класс для учителя</b>\n\n"
+            "Создаёте класс, ученики присоединяются по коду — вы видите, кто работает "
+            "и у кого какие трудности."
+        ),
+    },
     #: Majburiy kanal a'zoligi (`KANAL_MAJBURIY`).
     "kanalShart": {
         "uz": (
