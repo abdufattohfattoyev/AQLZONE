@@ -126,7 +126,7 @@ export function Lending({ onBoshlash, onOch }: Props) {
         <Qanday />
         <Oxir onBoshlash={onBoshlash} bot={bot} />
       </main>
-      <Etak bot={bot} />
+      <Etak bot={bot} onOch={onOch} />
       <PastkiTugma onBoshlash={onBoshlash} />
     </div>
   );
@@ -707,30 +707,99 @@ function Oxir({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
   );
 }
 
-function Etak({ bot }: { bot: string }) {
+/**
+ * Sahifa oxiri — to'rt ustun: kim biz, bo'limlar, shu sahifa, aloqa.
+ *
+ * Ilgari bitta qator edi (logo · shior · ikki havola) va keng ekranda
+ * uchala bo'lak bir-biridan uzoqlashib, "©" qatori esa ulardan alohida
+ * osilib qolardi. Endi hammasi bitta to'rga tushadi, pastki qator esa
+ * yupqa chiziq bilan ajratilgan.
+ */
+function Etak({ bot, onOch }: { bot: string; onOch: (yol: string) => void }) {
+  const havola = "flex min-h-9 items-center text-[14.5px] text-ink-soft transition hover:text-brand-blue-t";
+  const sarlavha = "font-display text-[13px] tracking-wider text-ink-dim uppercase";
   return (
     <footer className="bg-track/60">
-      <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-4 px-4 py-8 2xl:max-w-[1320px] text-center
-                      sm:px-6 md:flex-row md:justify-between md:text-left">
-        <div className="flex items-center gap-2.5">
-          <Logo size={30} jonli={false} />
-          <span className="font-display text-[18px] text-brand-blue-t">Aql Zone</span>
-        </div>
-        <p className="text-[13.5px] text-ink-dim">{t("lendEtak")}</p>
-        <div className="flex items-center gap-1 text-[14px]">
-          <a href={KANAL} target="_blank" rel="noopener" data-tahlil="Tanishuv: kanal"
-            className="flex h-11 items-center rounded-full px-3 font-display text-ink-soft hover:bg-karta hover:text-ink">
-            {t("lendKanal")}
-          </a>
-          {bot && (
-            <a href={botHavolasi(bot)} data-tahlil="Tanishuv: kirish (etak)"
-              className="flex h-11 items-center rounded-full px-3 font-display text-ink-soft hover:bg-karta hover:text-ink">
-              {t("lendKirish")}
+      <div className="mx-auto max-w-[1200px] px-4 pt-12 sm:px-6 sm:pt-14 2xl:max-w-[1320px]">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
+          {/* Kim biz */}
+          <div className="lg:col-span-5">
+            <div className="flex items-center gap-2.5">
+              <Logo size={36} jonli={false} />
+              <span className="font-display text-[22px] text-brand-blue-t">Aql Zone</span>
+            </div>
+            <p className="mt-4 max-w-[26rem] text-[14.5px] leading-relaxed text-ink-soft">{t("lendEtakIzoh")}</p>
+            <a href={KANAL} target="_blank" rel="noopener" data-tahlil="Tanishuv: kanal (etak)"
+              className={`clay-press mt-5 inline-flex h-11 items-center gap-2.5 rounded-full pr-5 pl-2 font-display text-[14.5px] ${OQ_TUGMA}`}>
+              <span className="grid size-8 place-items-center rounded-full bg-brand-blue text-white">
+                <Icon name="send" size={15} />
+              </span>
+              @AqlZoneUz
             </a>
-          )}
+          </div>
+
+          {/* Havolalar — telefonda ikki ustun, kengida uchta. */}
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
+            <nav aria-label={t("lendEtakBolimlar")}>
+              <p className={sarlavha}>{t("lendEtakBolimlar")}</p>
+              <ul className="mt-3">
+                {BOLIMLAR.map((b) => (
+                  <li key={b.ic}>
+                    <button type="button" onClick={() => onOch(b.yol())} data-tahlil={`Tanishuv: etak ${b.ic}`}
+                      className={havola}>
+                      {t(b.nom)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <nav aria-label={t("lendEtakSahifa")}>
+              <p className={sarlavha}>{t("lendEtakSahifa")}</p>
+              <ul className="mt-3">
+                {NAV.map(([id, nom]) => (
+                  <li key={id}>
+                    <button type="button" onClick={() => bor(id)} className={havola}>{t(nom)}</button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div className="col-span-2 sm:col-span-1">
+              <p className={sarlavha}>{t("lendEtakAloqa")}</p>
+              <ul className="mt-3">
+                <li>
+                  <a href={KANAL} target="_blank" rel="noopener" data-tahlil="Tanishuv: kanal" className={havola}>
+                    {t("lendKanal")}
+                  </a>
+                </li>
+                {bot && (
+                  <li>
+                    <a href={botHavolasi(bot)} data-tahlil="Tanishuv: kirish (etak)" className={havola}>
+                      {t("lendBot")} · @{bot}
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Pastki qator. Telefonda pastki "Bepul boshlash" paneli uni
+            yopmasin — shuning uchun tor ekranda pastdan katta bo'sh joy. */}
+        <div className="mt-10 flex flex-col-reverse items-center gap-4 border-t border-track py-6 pb-24
+                        min-[520px]:pb-6 sm:flex-row sm:justify-between">
+          <p className="text-[13px] text-ink-dim">© {new Date().getFullYear()} Aql Zone · {t("lendEtak")}</p>
+          <div className="flex items-center gap-2">
+            <TilTugma />
+            <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              data-tahlil="Tanishuv: tepaga"
+              className="flex h-10 items-center gap-1.5 rounded-full bg-karta px-4 font-display text-[13.5px] text-ink-soft
+                         shadow-clay-sm hover:text-ink">
+              <span className="-rotate-90"><Icon name="chevron" size={14} /></span>
+              {t("lendTepaga")}
+            </button>
+          </div>
         </div>
       </div>
-      <p className="pb-24 text-center text-[13px] text-ink-dim min-[520px]:pb-6">© {new Date().getFullYear()} Aql Zone</p>
     </footer>
   );
 }

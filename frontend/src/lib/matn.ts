@@ -1092,6 +1092,15 @@ const S = {
   lendQ1Chip: ["Ro'yxatsiz", "Без регистрации"],
   lendQ3Chip: ["Telegram — bir bosish", "Telegram — одно касание"],
   lendEtak: ["Matematikani tushunib o'rganish uchun ilova", "Приложение, чтобы понимать математику"],
+  lendEtakIzoh: [
+    "2 yoshdan abituriyentgacha: darslar, DTM va milliy sertifikat testlari, masalalar va o'yinlar — o'zbek va rus tillarida.",
+    "От 2 лет до абитуриента: уроки, тесты ДТМ и нацсертификата, задачи и игры — на узбекском и русском.",
+  ],
+  lendEtakBolimlar: ["Bo'limlar", "Разделы"],
+  lendEtakSahifa: ["Sahifa", "Страница"],
+  lendEtakAloqa: ["Aloqa", "Контакты"],
+  lendBot: ["Telegram bot", "Telegram-бот"],
+  lendTepaga: ["Tepaga", "Наверх"],
   lendKim_oquvchi_belgi: ["1–11-sinf o'quvchilari uchun", "Для учеников 1–11 классов"],
   lendKim_oquvchi_sarlavha: ["Darsni tushunib, bahoni ko'taring", "Понимайте урок — и оценки вырастут"],
   lendKim_oquvchi_izoh: [
