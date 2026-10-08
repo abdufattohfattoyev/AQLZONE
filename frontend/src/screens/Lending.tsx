@@ -139,27 +139,44 @@ export function Lending({ onBoshlash, onOch }: Props) {
  *
  * Tor ekranda tepa panelda bu tugmaga joy yo'q, sahifa esa uzun: odam
  * "Kimlar uchun" ni o'qib turganda boshlashga qaror qilsa, tugmani
- * qidirib tepaga qaytishi kerak bo'lardi. Panel faqat asosiy tugma
- * ekrandan chiqib ketganda va yakuniy chaqiriq hali ko'rinmaganda
- * chiqadi — bir ekranda ikkita bir xil tugma turmasin.
+ * qidirib tepaga qaytishi kerak bo'lardi.
+ *
+ * Panel faqat ekranda BOSHQA hech bir "Bepul boshlash" ko'rinmaganda
+ * chiqadi — bir ekranda ikkita bir xil tugma turmasin (qahramon,
+ * "Kimlar uchun" paneli, yakuniy chaqiriq).
+ *
+ * Ilgari bu IntersectionObserver bilan qilingan edi va yuqoriga tez
+ * qaytilganda u o'zgarishni ba'zan sezmay, panel tepadagi tugma bilan
+ * BIRGA qolib ketardi. Endi har aylantirishda tugmalarning joyi
+ * to'g'ridan-to'g'ri o'lchanadi. `requestAnimationFrame` ishlatilmaydi:
+ * u fondagi oynada to'xtab qoladi, tekshiruvning o'zi esa arzon (beshta
+ * tugma).
  */
 function PastkiTugma({ onBoshlash }: { onBoshlash: () => void }) {
   const [kor, setKor] = useState(false);
   useEffect(() => {
-    const asosiy = document.getElementById("qahramon");
-    const oxir = document.querySelector('[data-tahlil="Tanishuv: boshlash (oxir)"]');
-    if (!asosiy || !oxir) return;
-    const holat = { asosiy: true, oxir: false };
-    const kuzat = new IntersectionObserver((yozuvlar) => {
-      for (const y of yozuvlar) {
-        if (y.target === asosiy) holat.asosiy = y.isIntersecting;
-        else holat.oxir = y.isIntersecting;
-      }
-      setKor(!holat.asosiy && !holat.oxir);
-    });
-    kuzat.observe(asosiy);
-    kuzat.observe(oxir);
-    return () => kuzat.disconnect();
+    const tekshir = () => {
+      const pastki = innerHeight - 90;          // panelning o'zi egallaydigan joy
+      const tugmalar = document.querySelectorAll<HTMLElement>(
+        '[data-tahlil^="Tanishuv: boshlash"]:not([data-tahlil="Tanishuv: boshlash (past)"]),'
+        + ' [data-tahlil^="Tanishuv: kim boshlash"]');
+      const korinadi = [...tugmalar].some((b) => {
+        if (b.closest('[aria-hidden="true"]')) return false;
+        const r = b.getBoundingClientRect();
+        return r.height > 0 && r.bottom > 0 && r.top < pastki;
+      });
+      setKor(!korinadi);
+    };
+    tekshir();
+    addEventListener("scroll", tekshir, { passive: true });
+    addEventListener("resize", tekshir);
+    // Slayd almashganda ham (faol slayd tugmasi o'zgaradi).
+    const id = setInterval(tekshir, 1000);
+    return () => {
+      removeEventListener("scroll", tekshir);
+      removeEventListener("resize", tekshir);
+      clearInterval(id);
+    };
   }, []);
 
   return (
