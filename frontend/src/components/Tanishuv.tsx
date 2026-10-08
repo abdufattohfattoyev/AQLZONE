@@ -194,7 +194,11 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   // javobini KUTMAYDI (`kutilyapti` ham kiradi): reklamadan kelgan odam
   // birinchi ko'rgan narsa aylanuvchi belgi bo'lmasin. Server "bu odam
   // kirgan" desa, yuqoridagi effekt sahifani o'zi yopadi.
-  if (tanishtirish && pathname === "/" && (holat === "kutilyapti" || holat === "sinov")) {
+  //
+  // `kerak-emas` ham kiradi: server javob bermasa holat shunga o'tadi va
+  // ilgari sahifa ~3 soniyadan keyin odamning ko'zi oldida yo'qolardi.
+  // Kirgan odamga esa `tanishtirish` yuqorida o'zi o'chiriladi.
+  if (tanishtirish && pathname === "/" && (holat === "kutilyapti" || holat === "sinov" || holat === "kerak-emas")) {
     return <Tanishtiruv onTayyor={() => setTanishtirish(false)} />;
   }
 

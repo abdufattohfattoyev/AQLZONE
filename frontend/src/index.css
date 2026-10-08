@@ -1671,3 +1671,43 @@
 @media (prefers-reduced-motion: reduce) {
   .az-chorlov:not(.bg-karta) { animation: none; }
 }
+
+/* ============================================================
+   TANISHUV SAHIFASI — qahramon slaydlari (`screens/Lending.tsx`)
+
+   Faqat shu sahifada. Ilovaning o'zida doimiy harakat taqiqlangan
+   (`aqlzone-dizayn`), bu esa reklama yuzi: 3D belgi suzib turadi,
+   slayd almashganda u aylanib kiradi, nuqta ostidagi chiziq esa
+   keyingi slaydgacha qolgan vaqtni ko'rsatadi.
+   ============================================================ */
+@keyframes az-lend-suz {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-14px) rotate(3deg); }
+}
+@keyframes az-lend-kir {
+  from { opacity: 0; transform: scale(0.6) rotate(-18deg) translateY(30px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes az-lend-vaqt {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.az-lend-suz { animation: az-lend-suz 5.5s ease-in-out infinite; }
+.az-lend-kir { animation: az-lend-kir 0.7s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+.az-lend-vaqt {
+  transform-origin: left;
+  animation: az-lend-vaqt var(--az-vaqt, 6s) linear both;
+}
+.az-lend-vaqt[data-toxtadi="1"] { animation-play-state: paused; }
+/* Orqadagi nozik katak to'r — markazda ko'rinadi, chetga qarab yo'qoladi. */
+.az-lend-tor {
+  background-image:
+    linear-gradient(var(--color-track) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-track) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 70% 60% at 60% 45%, black 30%, transparent 75%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .az-lend-suz, .az-lend-kir { animation: none; }
+  .az-lend-vaqt { animation: none; transform: scaleX(1); }
+}

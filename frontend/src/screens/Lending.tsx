@@ -27,6 +27,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { Logo } from "../components/Logo";
 import { Icon } from "../lib/icons";
+import { Hajmli } from "../lib/hajmli";
 
 import { COURSES, lessonCount } from "../lib/curriculum";
 import { OYINLAR } from "../lib/oyin";
@@ -119,8 +120,9 @@ export function Lending({ onBoshlash, onOch }: Props) {
     <div className="min-h-ekran w-full overflow-x-clip">
       <Tepa onBoshlash={onBoshlash} bot={bot} />
       <main>
-        <Qahramon onBoshlash={onBoshlash} bot={bot} />
+        <Qahramon onBoshlash={onBoshlash} onOch={onOch} />
         <Sonlar />
+        <SinovBolim />
         <Bolimlar onOch={onOch} />
         <Kimlar onBoshlash={onBoshlash} />
         <Qanday />
@@ -144,7 +146,7 @@ export function Lending({ onBoshlash, onOch }: Props) {
 function PastkiTugma({ onBoshlash }: { onBoshlash: () => void }) {
   const [kor, setKor] = useState(false);
   useEffect(() => {
-    const asosiy = document.querySelector('[data-tahlil="Tanishuv: boshlash"]');
+    const asosiy = document.getElementById("qahramon");
     const oxir = document.querySelector('[data-tahlil="Tanishuv: boshlash (oxir)"]');
     if (!asosiy || !oxir) return;
     const holat = { asosiy: true, oxir: false };
@@ -265,99 +267,217 @@ function YoruglikTugma() {
 
 /* ------------------------------------------------------------ qahramon */
 
-function Qahramon({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
+/**
+ * Qahramon slaydlari — testmakon uslubida aylanib turadi.
+ *
+ * Har slayd bitta bo'limni sotadi: o'z sarlavhasi (o'rtadagi so'z rangli
+ * "tabletka" ichida), izohi, katta 3D belgisi, ikkita kichik yorliq va
+ * o'sha bo'limga olib boradigan tugma. "Bepul boshlash" esa hammasida
+ * bir xil — asosiy amal o'zgarmaydi.
+ *
+ * Belgilar `Hajmli` dan: ular `public/belgi/e/` dagi 256px 3D rasmlar
+ * (asl varaqdagi o'lcham shu) — shuning uchun 240px dan katta qilinmaydi,
+ * aks holda xiralashardi.
+ */
+const SLAYDLAR = [
+  { rang: "blue", belgi: "kitob", yorliq: "lendSl1Belgi", s1: "lendSarlavha1", s2: "lendSarlavha2", s3: "lendSarlavha3",
+    izoh: "lendIzoh", tugma: "lendSl1Tugma", yol: yolKurslar, chip1: "lendSl1Chip1", chip2: "lendSl1Chip2", n: JAMI_DARS },
+  { rang: "green", belgi: "nishon", yorliq: "lendSl2Belgi", s1: "lendSl2S1", s2: "lendSl2S2", s3: "lendSl2S3",
+    izoh: "lendSl2Izoh", tugma: "lendSl2Tugma", yol: yolTestSinf, chip1: "lendSl2Chip1", chip2: "lendSl2Chip2", n: 0 },
+  { rang: "gold", belgi: "medal", yorliq: "lendSl3Belgi", s1: "lendSl3S1", s2: "lendSl3S2", s3: "lendSl3S3",
+    izoh: "lendSl3Izoh", tugma: "lendSl3Tugma", yol: yolSertifikat, chip1: "lendSl3Chip1", chip2: "lendSl3Chip2", n: 0 },
+  { rang: "blue", belgi: "kubok", yorliq: "lendSl4Belgi", s1: "lendSl4S1", s2: "lendSl4S2", s3: "lendSl4S3",
+    izoh: "lendSl4Izoh", tugma: "lendSl4Tugma", yol: yolOyinlar, chip1: "lendSl4Chip1", chip2: "lendSl4Chip2", n: OYINLAR.length },
+] as const;
+
+type Slayd = (typeof SLAYDLAR)[number];
+
+/** Bir slayd necha millisekund turadi. */
+const SLAYD_MS = 6500;
+
+/**
+ * Sarlavhadagi ajratilgan so'z foni. Oltinda oq matn o'qilmaydi —
+ * u yerda qora; qora rejimda ham qora qoladi, chunki fon baribir oltin.
+ */
+const TABLETKA: Record<Rang, string> = {
+  blue: "bg-brand-blue text-white",
+  green: "bg-brand-green text-white",
+  gold: "bg-brand-gold text-black/85",
+};
+const NUQTA: Record<Rang, string> = { blue: "bg-brand-blue", green: "bg-brand-green", gold: "bg-brand-gold" };
+const NUR: Record<Rang, string> = { blue: "bg-brand-blue/25", green: "bg-brand-green/25", gold: "bg-brand-gold/25" };
+
+const SARLAVHA = "mt-5 font-display text-[clamp(2.4rem,11vw,3.75rem)] leading-[1.1] tracking-tight lg:text-[clamp(3.5rem,4.8vw,4.5rem)]";
+
+function Qahramon({ onBoshlash, onOch }: { onBoshlash: () => void; onOch: (yol: string) => void }) {
+  const [i, setI] = useState(0);
+  const [toxta, setToxta] = useState(false);
+  // Harakatni kamaytirishni so'ragan odamga slaydlar o'zi almashmaydi.
+  const [kamHarakat] = useState(() => {
+    try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
+  });
+
+  useEffect(() => {
+    if (toxta || kamHarakat) return;
+    const id = setTimeout(() => setI((x) => (x + 1) % SLAYDLAR.length), SLAYD_MS);
+    return () => clearTimeout(id);
+  }, [i, toxta, kamHarakat]);
+
+  const s = SLAYDLAR[i]!;
+
   return (
-    <section className="relative">
-      {/* Yumshoq nur — faqat shu yerda (tepadagi izoh). Sahifa kengligidan
-          chiqib ketmaydi: ildiz `overflow-x-clip`. */}
-      <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[520px] w-[860px]
-                                  max-w-[200vw] -translate-x-1/2 rounded-full bg-brand-blue/12 blur-[120px]" />
-      <div aria-hidden className="pointer-events-none absolute top-1/3 -left-40 -z-10 size-[420px]
-                                  rounded-full bg-brand-green/10 blur-[110px]" />
+    <section id="qahramon" className="relative isolate overflow-hidden"
+      onMouseEnter={() => setToxta(true)} onMouseLeave={() => setToxta(false)}>
+      {/* Katak to'r va slayd rangidagi nur — faqat shu yerda (fayl boshidagi izoh). */}
+      <div aria-hidden className="az-lend-tor pointer-events-none absolute inset-0 -z-10" />
+      <div aria-hidden className={`pointer-events-none absolute top-1/4 right-[5%] -z-10 size-[360px] rounded-full
+                                   blur-[110px] transition-colors duration-700 sm:size-[520px] ${NUR[s.rang]}`} />
 
-      <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 pt-8 pb-12 sm:gap-12 sm:px-6 lg:pb-14 2xl:max-w-[1320px]
-                      sm:pt-14 lg:grid-cols-12 lg:gap-10 lg:pt-16">
-        <div className="az-kirish min-w-0 lg:col-span-7">
-          <p className="inline-flex items-center gap-2 rounded-full bg-karta px-3.5 py-1.5 text-[13px]
-                        text-brand-blue-t shadow-clay-sm">
-            <span className="relative flex size-2.5" aria-hidden>
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-green opacity-60" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-brand-green" />
-            </span>
-            <span className="font-display">{t("lendBelgi")}</span>
-          </p>
+      <div className="mx-auto max-w-[1200px] px-4 pt-8 pb-10 sm:px-6 sm:pt-14 lg:pt-16 lg:pb-12 2xl:max-w-[1320px]">
+        {/* Hamma slayd BITTA katakda ustma-ust turadi: blok balandligi eng
+            uzun slaydga teng bo'ladi va almashganda sahifa sakramaydi. */}
+        <div className="grid">
+          {SLAYDLAR.map((sl, k) => {
+            const faol = k === i;
+            return (
+              <div key={k} aria-hidden={!faol} inert={!faol}
+                className={`grid items-center gap-6 [grid-area:1/1] lg:grid-cols-12 lg:gap-10
+                            transition-[opacity,transform] duration-500 ${
+                              faol ? "opacity-100" : "pointer-events-none translate-y-3 opacity-0"}`}>
+                <div className="min-w-0 lg:col-span-7">
+                  <p className={`inline-flex items-center gap-2 rounded-full bg-karta px-3.5 py-1.5 font-display text-[13px]
+                                 shadow-clay-sm ${RANG[sl.rang].matn}`}>
+                    <span className="relative flex size-2.5" aria-hidden>
+                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-green opacity-60" />
+                      <span className="relative inline-flex size-2.5 rounded-full bg-brand-green" />
+                    </span>
+                    {t(sl.yorliq)}
+                  </p>
 
-          {/* O'lcham ekran kengligiga SILLIQ ergashadi (clamp): ilgari
-              sakrab o'zgarardi va 400–640px oralig'ida sarlavha yo
-              juda kichik, yo juda katta ko'rinardi. Kompyuterda ustun
-              kengligi cheklangani uchun yuqori chegara alohida. */}
-          <h1 className="mt-5 font-display text-[clamp(2.4rem,11vw,3.75rem)] leading-[1.06] tracking-tight
-                         lg:text-[clamp(3.5rem,4.8vw,4.5rem)]">
-            {t("lendSarlavha1")}{" "}
-            <span className="relative inline-block text-brand-blue-t">
-              {t("lendSarlavha2")}
-              <svg aria-hidden viewBox="0 0 240 12" fill="none" preserveAspectRatio="none"
-                className="absolute -bottom-1.5 left-0 h-3 w-full text-brand-green">
-                <path d="M3 9C60 3 180 3 237 9" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-              </svg>
-            </span>{" "}
-            {t("lendSarlavha3")}
-          </h1>
+                  {/* Sahifada bitta h1 — birinchi slaydniki. */}
+                  {k === 0
+                    ? <h1 className={SARLAVHA}><Sarlavha3 sl={sl} /></h1>
+                    : <p role="heading" aria-level={2} className={SARLAVHA}><Sarlavha3 sl={sl} /></p>}
 
-          <p className="mt-6 max-w-[36rem] text-[16px] leading-relaxed text-ink-soft sm:text-[18px]">
-            {t("lendIzoh")}
-          </p>
+                  <p className="mt-5 max-w-[36rem] text-[16px] leading-relaxed text-ink-soft sm:text-[18px]">{t(sl.izoh)}</p>
 
-          <div className="mt-8 flex flex-col gap-3 min-[480px]:flex-row min-[480px]:items-center">
-            <button type="button" onClick={onBoshlash} data-tahlil="Tanishuv: boshlash"
-              className={`tugma-3d group flex h-14 items-center justify-center gap-2.5 rounded-full px-8
-                          font-display text-[17px] ${KOK_TUGMA}`}>
-              {t("lendBoshlash")}
-              <span className="transition-transform group-hover:translate-x-1"><Icon name="chevron" size={18} /></span>
-            </button>
-            {bot && (
-              <a href={botHavolasi(bot)} data-tahlil="Tanishuv: telegram"
-                className={`clay-press flex h-14 items-center justify-center gap-2.5 rounded-full px-7
-                            font-display text-[16px] ${OQ_TUGMA}`}>
-                <span className="grid size-7 place-items-center rounded-full bg-brand-blue/12 text-brand-blue-t">
-                  <Icon name="send" size={15} />
-                </span>
-                {t("telegramBilanKirish")}
-              </a>
-            )}
+                  <div className="mt-7 flex flex-col gap-3 min-[480px]:flex-row min-[480px]:items-center">
+                    <button type="button" onClick={onBoshlash} data-tahlil="Tanishuv: boshlash"
+                      className={`tugma-3d group flex h-14 items-center justify-center gap-2.5 rounded-full px-8
+                                  font-display text-[17px] ${KOK_TUGMA}`}>
+                      {t("lendBoshlash")}
+                      <span className="transition-transform group-hover:translate-x-1"><Icon name="chevron" size={18} /></span>
+                    </button>
+                    <button type="button" onClick={() => onOch(sl.yol())} data-tahlil={`Tanishuv: slayd ${k + 1}`}
+                      className={`clay-press flex h-14 items-center justify-center gap-2 rounded-full px-7
+                                  font-display text-[16px] ${OQ_TUGMA}`}>
+                      {t(sl.tugma)}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3D belgi — faqat faol slaydda chiziladi: aylanib kirish
+                    animatsiyasi har almashishda qaytadan boshlansin. */}
+                <div className="relative mx-auto grid h-60 w-full max-w-[420px] place-items-center sm:h-72 lg:col-span-5 lg:h-[380px]">
+                  {faol && (
+                    <>
+                      <div className="az-lend-kir">
+                        <div className="az-lend-suz">
+                          <Hajmli nom={sl.belgi} olcham={240}
+                            className="size-40 drop-shadow-[0_28px_30px_rgb(0_0_0/0.28)] sm:size-52 lg:size-60" />
+                        </div>
+                      </div>
+                      <span className="az-kirish absolute top-[6%] left-0 flex items-center gap-1.5 rounded-full bg-karta/95 px-3.5 py-2
+                                       font-display text-[13px] shadow-clay-sm backdrop-blur sm:left-[2%]"
+                        style={{ "--az-kech": "250ms" } as CSSProperties}>
+                        <span className={RANG[sl.rang].matn}><Icon name="check" size={15} /></span>
+                        {t(sl.chip1, { n: sl.n })}
+                      </span>
+                      <span className="az-kirish absolute right-0 bottom-[6%] flex items-center gap-1.5 rounded-full bg-karta/95 px-3.5 py-2
+                                       font-display text-[13px] shadow-clay-sm backdrop-blur sm:right-[2%]"
+                        style={{ "--az-kech": "400ms" } as CSSProperties}>
+                        <span className="text-brand-gold"><Icon name="star" size={15} /></span>
+                        {t(sl.chip2)}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Slayd nuqtalari — faolining ichida keyingisigacha qolgan vaqt. */}
+        <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 lg:mt-2">
+          <div className="flex items-center gap-2" role="tablist" aria-label="Slaydlar">
+            {SLAYDLAR.map((sl, k) => (
+              <button key={k} type="button" role="tab" aria-selected={k === i}
+                aria-label={t("lendSlayd", { n: k + 1 })} onClick={() => setI(k)}
+                className={`relative h-2.5 overflow-hidden rounded-full bg-track transition-all duration-300 ${
+                  k === i ? "w-12" : "w-2.5 hover:w-4"}`}>
+                {k === i && (
+                  <span key={i} data-toxtadi={toxta ? "1" : "0"}
+                    className={`az-lend-vaqt absolute inset-0 rounded-full ${NUQTA[sl.rang]}`}
+                    style={{ "--az-vaqt": `${SLAYD_MS}ms` } as CSSProperties} />
+                )}
+              </button>
+            ))}
           </div>
-
-          <p className="mt-4 flex items-center gap-2 text-[13.5px] text-ink-dim">
-            <span className="grid size-5 place-items-center rounded-full bg-brand-green text-white">
+          <p className="flex items-center gap-2 text-[13px] text-ink-dim">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-brand-green text-white">
               <Icon name="check" size={12} />
             </span>
             {t("lendTagIzoh")}
           </p>
-
-          {/* Namunadagi "4 800+ o'quvchi, 4.9 / 5" o'rnida — rost faktlar. */}
-          <ul className="mt-8 flex flex-wrap gap-2 border-t border-track pt-6">
-            {(["lendFakt1", "lendFakt2", "lendFakt3"] as const).map((k) => (
-              <li key={k} className="rounded-full bg-track px-3.5 py-1.5 font-display text-[13px] text-ink-soft">
-                {t(k)}
-              </li>
-            ))}
-          </ul>
         </div>
+      </div>
+    </section>
+  );
+}
 
-        {/* Yorliqlar KARTAGA nisbatan joylashadi (o'rovchi karta kengligida):
-            ustun kengroq bo'lganda ular kartadan uzoqlashib qolardi. */}
-        <div className="relative mx-auto w-full max-w-[460px] lg:col-span-5">
-          {/* Karta atrofidagi kichik yorliqlar — tor ekranda yashirinadi. */}
-          <span className="absolute -top-5 -left-4 z-20 hidden items-center gap-1.5 rounded-full bg-karta/95 px-3.5 py-2
-                           font-display text-[13px] shadow-clay-sm backdrop-blur sm:flex">
-            <span className="text-brand-gold"><Icon name="star" size={16} /></span>
-            {t("lendChipYulduz")}
+function Sarlavha3({ sl }: { sl: Slayd }) {
+  return (
+    <>
+      {t(sl.s1)}{" "}
+      <span className={`rounded-[0.3em] px-[0.2em] [box-decoration-break:clone] [-webkit-box-decoration-break:clone]
+                        ${TABLETKA[sl.rang]}`}>
+        {t(sl.s2)}
+      </span>{" "}
+      {t(sl.s3)}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------ sinov */
+
+/** Jonli savol — endi alohida bo'lim (ilgari qahramon blokining o'ng tomoni edi). */
+function SinovBolim() {
+  return (
+    <section className="py-10 sm:py-14 lg:py-16">
+      <div className="mx-auto grid max-w-[1200px] items-center gap-8 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 2xl:max-w-[1320px]">
+        <div className="text-center lg:col-span-6 lg:text-left">
+          <span className={`inline-flex rounded-full px-3.5 py-1 font-display text-[12px] tracking-wider uppercase
+                            ${RANG.blue.quti} ${RANG.blue.matn}`}>
+            {t("lendJonli")}
           </span>
-          <span className="absolute -right-3 -bottom-5 z-20 hidden items-center gap-1.5 rounded-full bg-karta/95 px-3.5 py-2
-                           font-display text-[13px] shadow-clay-sm backdrop-blur sm:flex">
-            <span className="text-brand-green"><Icon name="izoh" size={16} /></span>
-            {t("lendChipIzoh")}
-          </span>
+          <h2 className="mt-3 font-display text-[clamp(1.75rem,6.5vw,2.75rem)] leading-tight tracking-tight">
+            {t("lendSinovSarlavha")}
+          </h2>
+          <p className="mx-auto mt-3 max-w-[32rem] text-[15px] leading-relaxed text-ink-soft sm:text-[16px] lg:mx-0">
+            {t("lendSinovIzoh")}
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2 lg:justify-start">
+            <span className="flex items-center gap-1.5 rounded-full bg-karta px-3.5 py-2 font-display text-[13px] shadow-clay-sm">
+              <span className="text-brand-gold"><Icon name="star" size={15} /></span>
+              {t("lendChipYulduz")}
+            </span>
+            <span className="flex items-center gap-1.5 rounded-full bg-karta px-3.5 py-2 font-display text-[13px] shadow-clay-sm">
+              <span className="text-brand-green"><Icon name="izoh" size={15} /></span>
+              {t("lendChipIzoh")}
+            </span>
+          </div>
+        </div>
+        <div className="mx-auto w-full max-w-[460px] lg:col-span-6 lg:mr-0">
           <Sinov />
         </div>
       </div>
