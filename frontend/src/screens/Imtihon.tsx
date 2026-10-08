@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { ImtihonSarlavha } from "../components/ImtihonTur";
 import { ImtEshiklar } from "../components/HaftalikReyting";
 import { Icon } from "../lib/icons";
+import { PanelBelgi } from "../lib/chizma/panelBelgi";
 import { marafonHolat } from "../lib/marafon";
 import type { MarafonHolat } from "../lib/marafon";
 import { t } from "../lib/matn";
@@ -83,9 +84,8 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
       {marafon && marafon.kun && (
         <button type="button" onClick={onMarafon} data-tahlil="DTM: marafon"
           className="clay-press flex w-full items-center gap-3 rounded-clay bg-karta p-4 text-left shadow-clay-sm">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand-gold/20 text-brand-gold-d">
-            <Icon name="flame" size={22} />
-          </span>
+          {/* 3D firuza belgi (`PanelBelgi`) — ilgari amber yostiqdagi yassi olov edi. */}
+          <PanelBelgi nom="olov" size={44} className="az-pb-toliq shrink-0" />
           <span className="min-w-0 flex-1">
             <span className="block font-display text-[17px] leading-tight">{t("marafonKirish")}</span>
             <span className="block text-[13px] text-ink-dim">

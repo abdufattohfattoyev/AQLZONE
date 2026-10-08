@@ -16,6 +16,7 @@
  */
 import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
+import { PanelBelgi } from "../lib/chizma/panelBelgi";
 import type { ImtTur, Reyting, ReytingQator } from "../lib/imtihon";
 import { VARIANTLAR, haftalikReyting, oxirgiJavob } from "../lib/imtihon";
 import { t } from "../lib/matn";
@@ -51,9 +52,8 @@ export function ImtEshiklar({ tur, onReyting, onKorish }: {
     <div className="flex flex-col divide-y divide-track overflow-hidden rounded-clay bg-karta shadow-clay-sm">
       <button type="button" onClick={onReyting} data-tahlil={`${nom}: haftalik reyting`}
         className="clay-press flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left">
-        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand-gold/20 text-brand-gold-d">
-          <Icon name="trophy" size={20} />
-        </span>
+        {/* 3D firuza belgilar (`PanelBelgi`) — ilgari amber/kulrang yostiqdagi yassi belgi edi. */}
+        <PanelBelgi nom="kubok" size={40} className="az-pb-toliq shrink-0" />
         <span className="min-w-0 flex-1">
           <span className="block font-display text-[16px] leading-tight">{t("hrSarlavha")}</span>
           <span className="block truncate text-[13px] text-ink-dim">{t("hrKirishIzoh")}</span>
@@ -63,9 +63,7 @@ export function ImtEshiklar({ tur, onReyting, onKorish }: {
       {oxirgi && (
         <button type="button" onClick={() => onKorish(oxirgi.variant)} data-tahlil={`${nom}: oxirgi urinishni ko'rib chiqish`}
           className="clay-press flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left">
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-track text-ink-soft">
-            <Icon name="search" size={19} />
-          </span>
+          <PanelBelgi nom="lupa" size={40} className="az-pb-toliq shrink-0" />
           <span className="min-w-0 flex-1">
             <span className="block font-display text-[16px] leading-tight">{t("korishOxirgi", { n: oxirgi.variant })}</span>
             <span className="block truncate text-[13px] text-ink-dim">{t("korishOxirgiIzoh")}</span>

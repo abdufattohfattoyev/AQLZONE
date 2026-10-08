@@ -1577,9 +1577,12 @@
 .hajmli-oq { --bl: #ffffff; --bm: #f2f6fa; --bd: #cfdae4; --bx: #7d8f9e; }
 .hajmli-rasm.hajmli-oq { filter: brightness(0) invert(1) opacity(0.92); }
 
+/* 2026-10-08 dan belgilar bitta firuza rangda va doim TO'LIQ rangda.
+   Ilgari faol bo'lmagani xira edi (saturate .55, opacity .62) — har xil
+   rangli belgilarda faolini ajratardi; endi faolini tabletka/yostiq
+   ajratadi, xira firuza esa kulrang loydek ko'rinardi. */
 .az-pb-rasm {
-  filter: saturate(0.55) opacity(0.62)
-          drop-shadow(0 1px 2px rgb(0 0 0 / 0.2));
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.2));
 }
 .az-pb-rasm.az-pb-faol {
   filter: saturate(1) opacity(1)
@@ -1588,6 +1591,11 @@
 :root[data-tema][data-yoruglik="qora"] .az-pb-rasm.az-pb-faol {
   filter: saturate(1.05) opacity(1)
           drop-shadow(0 0 7px rgb(255 255 255 / 0.18));
+}
+/* Paneldan TASHQARIDAGI o'sha 3D belgi (karta qatorida). U yerda "faol
+   emas" degan holat yo'q — xiralashtirilsa, o'chiq tugmadek ko'rinardi. */
+.az-pb-rasm.az-pb-toliq {
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.22));
 }
 
 /* Bosilganda belgi ichkariga bosiladi — butun karta emas, aynan

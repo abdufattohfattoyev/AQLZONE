@@ -34,7 +34,7 @@ import { tgIsm } from "../lib/qobiq";
 import { yolSozlama } from "../lib/yollar";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { PanelBelgi, type PanelBelgiNom } from "../lib/chizma/panelBelgi";
-import { Icon, type IconName } from "../lib/icons";
+import { Icon } from "../lib/icons";
 import { useKompyuter } from "../lib/maket";
 import { Logo } from "./Logo";
 import { TilTugma } from "./TilTugma";
@@ -150,10 +150,10 @@ export function Panel() {
     // qidiruv) — faqat O'SHA yonadi. Ilgari `/imtihon` da "O'qish" ham
     // to'liq ko'k turardi va DTM satri uning yonida ko'rinmay qolardi.
     const satrlar = [
-      { ik: "clock" as const, nom: t("yonDtm"), yol: yolImtihon(), faol: pathname.startsWith(yolImtihon()) },
-      { ik: "trophy" as const, nom: t("yonSertifikat"), yol: yolSertifikat(), faol: pathname.startsWith(yolSertifikat()) },
-      { ik: "chart" as const, nom: t("reyting"), yol: yolReyting(), faol: pathname === yolReyting() },
-      { ik: "search" as const, nom: t("qidiruvNom"), yol: yolQidiruv(), faol: pathname === yolQidiruv() },
+      { ik: "dtm" as const, nom: t("yonDtm"), yol: yolImtihon(), faol: pathname.startsWith(yolImtihon()) },
+      { ik: "kubok" as const, nom: t("yonSertifikat"), yol: yolSertifikat(), faol: pathname.startsWith(yolSertifikat()) },
+      { ik: "reyting" as const, nom: t("reyting"), yol: yolReyting(), faol: pathname === yolReyting() },
+      { ik: "lupa" as const, nom: t("qidiruvNom"), yol: yolQidiruv(), faol: pathname === yolQidiruv() },
     ];
     const satrFaol = satrlar.some((s) => s.faol);
     return (
@@ -224,7 +224,7 @@ function Tab({ ic, nom, on, faol }: {
       <span aria-hidden
         className={`az-tab-yostiq absolute inset-0 rounded-2xl
                     ${faol ? "scale-100 opacity-100" : "scale-90 opacity-0"}`} />
-      <span className={`relative ${faol ? "" : "opacity-75"}`}>
+      <span className="relative">
         <PanelBelgi nom={ic} faol={faol} size={28} />
       </span>
       {/* 320px li telefonda bir tugmaga ~60px qoladi: yozuv 11px, kengroqda
@@ -323,7 +323,7 @@ function YonTugma({ ic, nom, on, faol }: {
                   ${faol ? "bg-brand-blue font-bold text-white shadow-[0_4px_14px_-4px_var(--color-brand-blue)]"
                     : "font-semibold text-ink-soft hover:bg-karta"}`}>
       <span className="relative">
-        <PanelBelgi nom={ic} faol={faol} size={26} />
+        <PanelBelgi nom={ic} faol={faol} oq={faol} size={26} />
       </span>
       <span className="relative truncate">{nom}</span>
     </button>
@@ -336,11 +336,13 @@ function YonGuruh({ nom }: { nom: string }) {
 }
 
 /**
- * Ikkinchi darajali satr — chiziqli belgi, yostiqsiz. Faol bo'lsa
+ * Ikkinchi darajali satr — kichikroq 3D belgi (2026-10-08 gacha yassi
+ * chiziqli edi va paneldagi 3D tugmalar bilan ikki xil til bo'lardi),
+ * yostiqsiz. Faol bo'lsa
  * asosiy tugma kabi to'ldirilgan ko'k: "qayerdaman?" bir qarashda
  * bilinsin (ilgari `bg-karta` edi va qora rejimda deyarli ko'rinmasdi).
  */
-function YonSatr({ ik, nom, on, faol }: { ik: IconName; nom: string; on: () => void; faol: boolean }) {
+function YonSatr({ ik, nom, on, faol }: { ik: PanelBelgiNom; nom: string; on: () => void; faol: boolean }) {
   return (
     <button type="button" onClick={on} data-tahlil={`Yon: ${ik}`}
       aria-current={faol ? "page" : undefined}
@@ -348,7 +350,7 @@ function YonSatr({ ik, nom, on, faol }: { ik: IconName; nom: string; on: () => v
                   transition-colors duration-200
                   ${faol ? "bg-brand-blue font-bold text-white shadow-[0_4px_14px_-4px_var(--color-brand-blue)]"
                     : "font-semibold text-ink-soft hover:bg-karta"}`}>
-      <Icon name={ik} size={18} className="shrink-0" />
+      <PanelBelgi nom={ik} faol={faol} oq={faol} size={22} className="shrink-0" />
       <span className="truncate">{nom}</span>
     </button>
   );
