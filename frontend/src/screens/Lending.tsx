@@ -130,6 +130,49 @@ export function Lending({ onBoshlash, onOch }: Props) {
         <Oxir onBoshlash={onBoshlash} bot={bot} />
       </main>
       <Etak bot={bot} />
+      <PastkiTugma onBoshlash={onBoshlash} />
+    </div>
+  );
+}
+
+/**
+ * Telefonda pastda doim turadigan "Bepul boshlash".
+ *
+ * Tor ekranda tepa panelda bu tugmaga joy yo'q, sahifa esa uzun: odam
+ * "Kimlar uchun" ni o'qib turganda boshlashga qaror qilsa, tugmani
+ * qidirib tepaga qaytishi kerak bo'lardi. Panel faqat asosiy tugma
+ * ekrandan chiqib ketganda va yakuniy chaqiriq hali ko'rinmaganda
+ * chiqadi — bir ekranda ikkita bir xil tugma turmasin.
+ */
+function PastkiTugma({ onBoshlash }: { onBoshlash: () => void }) {
+  const [kor, setKor] = useState(false);
+  useEffect(() => {
+    const asosiy = document.querySelector('[data-tahlil="Tanishuv: boshlash"]');
+    const oxir = document.querySelector('[data-tahlil="Tanishuv: boshlash (oxir)"]');
+    if (!asosiy || !oxir) return;
+    const holat = { asosiy: true, oxir: false };
+    const kuzat = new IntersectionObserver((yozuvlar) => {
+      for (const y of yozuvlar) {
+        if (y.target === asosiy) holat.asosiy = y.isIntersecting;
+        else holat.oxir = y.isIntersecting;
+      }
+      setKor(!holat.asosiy && !holat.oxir);
+    });
+    kuzat.observe(asosiy);
+    kuzat.observe(oxir);
+    return () => kuzat.disconnect();
+  }, []);
+
+  return (
+    <div aria-hidden={!kor}
+      className={`fixed inset-x-0 bottom-0 z-30 px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]
+                  transition duration-300 min-[520px]:hidden ${
+                    kor ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0"}`}>
+      <button type="button" onClick={onBoshlash} tabIndex={kor ? 0 : -1} data-tahlil="Tanishuv: boshlash (past)"
+        className={`tugma-3d flex h-14 w-full items-center justify-center gap-2 rounded-full font-display text-[17px] ${KOK_TUGMA}`}>
+        {t("lendBoshlash")}
+        <Icon name="chevron" size={18} />
+      </button>
     </div>
   );
 }
@@ -156,7 +199,7 @@ function Tepa({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
   const faol = useFaolBolim();
   return (
     <header className="pointer-events-none sticky top-0 z-30 px-3 pt-2 sm:px-6">
-      <div className="pointer-events-auto mx-auto flex h-16 max-w-[1200px] items-center gap-2 rounded-[28px]
+      <div className="pointer-events-auto mx-auto flex h-16 max-w-[1200px] 2xl:max-w-[1320px] items-center gap-2 rounded-[28px]
                       bg-karta/85 px-3 shadow-clay-sm backdrop-blur-xl sm:h-[72px] sm:gap-3 sm:px-5">
         <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           className="flex shrink-0 items-center gap-2" aria-label="Aql Zone">
@@ -235,7 +278,7 @@ function Qahramon({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) 
       <div aria-hidden className="pointer-events-none absolute top-1/3 -left-40 -z-10 size-[420px]
                                   rounded-full bg-brand-green/10 blur-[110px]" />
 
-      <div className="mx-auto grid max-w-[1200px] items-center gap-12 px-4 pt-10 pb-14 sm:px-6
+      <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 pt-8 pb-12 sm:gap-12 sm:px-6 2xl:max-w-[1320px]
                       sm:pt-14 lg:grid-cols-12 lg:gap-10 lg:pt-16 lg:pb-20">
         <div className="az-kirish min-w-0 lg:col-span-7">
           <p className="inline-flex items-center gap-2 rounded-full bg-karta px-3.5 py-1.5 text-[13px]
@@ -247,8 +290,12 @@ function Qahramon({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) 
             <span className="font-display">{t("lendBelgi")}</span>
           </p>
 
-          <h1 className="mt-5 font-display text-[40px] leading-[1.06] tracking-tight
-                         min-[400px]:text-[46px] sm:text-[58px] lg:text-[64px]">
+          {/* O'lcham ekran kengligiga SILLIQ ergashadi (clamp): ilgari
+              sakrab o'zgarardi va 400–640px oralig'ida sarlavha yo
+              juda kichik, yo juda katta ko'rinardi. Kompyuterda ustun
+              kengligi cheklangani uchun yuqori chegara alohida. */}
+          <h1 className="mt-5 font-display text-[clamp(2.4rem,11vw,3.75rem)] leading-[1.06] tracking-tight
+                         lg:text-[clamp(3.5rem,4.8vw,4.5rem)]">
             {t("lendSarlavha1")}{" "}
             <span className="relative inline-block text-brand-blue-t">
               {t("lendSarlavha2")}
@@ -449,18 +496,22 @@ function Sonlar() {
     { ic: "raqamlar", rang: "blue", son: "UZ / RU", nom: t("lendSonTilNom"), izoh: t("lendSonTilIzoh") },
   ];
   return (
-    <section className="bg-track/60 py-8 sm:py-10">
-      <ul className="mx-auto grid max-w-[1200px] gap-3 px-4 sm:grid-cols-2 sm:gap-4 sm:px-6 lg:grid-cols-4">
+    <section className="bg-track/60 py-6 sm:py-10">
+      {/* Telefonda ham IKKI ustun: bitta ustunda to'rtta baland karta
+          ekranni to'rt marta aylantirtirardi. Tor kartada belgi ustda,
+          kengida — chapda. */}
+      <ul className="mx-auto grid max-w-[1200px] grid-cols-2 gap-3 px-4 sm:gap-4 sm:px-6 lg:grid-cols-4 2xl:max-w-[1320px]">
         {sonlar.map((s) => (
-          <li key={s.nom} className="flex items-start gap-4 rounded-[22px] bg-karta p-5 shadow-clay-sm
-                                     transition hover:-translate-y-1">
-            <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${RANG[s.rang].quti}`}>
-              <img src={`/belgi/${s.ic}.webp`} width={28} height={28} alt="" aria-hidden decoding="async" />
+          <li key={s.nom} className="flex flex-col gap-3 rounded-[22px] bg-karta p-4 shadow-clay-sm transition
+                                     hover:-translate-y-1 sm:flex-row sm:items-start sm:gap-4 sm:p-5">
+            <span className={`grid size-10 shrink-0 place-items-center rounded-2xl sm:size-12 ${RANG[s.rang].quti}`}>
+              <img src={`/belgi/${s.ic}.webp`} width={28} height={28} alt="" aria-hidden decoding="async"
+                className="size-6 sm:size-7" />
             </span>
             <div className="min-w-0">
-              <p className={`font-display text-[30px] leading-none tracking-tight ${RANG[s.rang].matn}`}>{s.son}</p>
-              <p className="mt-2 font-display text-[14.5px]">{s.nom}</p>
-              <p className="text-[13px] text-ink-dim">{s.izoh}</p>
+              <p className={`font-display text-[24px] leading-none tracking-tight sm:text-[30px] ${RANG[s.rang].matn}`}>{s.son}</p>
+              <p className="mt-1.5 font-display text-[14px] sm:mt-2 sm:text-[14.5px]">{s.nom}</p>
+              <p className="text-[12.5px] leading-snug text-ink-dim sm:text-[13px]">{s.izoh}</p>
             </div>
           </li>
         ))}
@@ -480,16 +531,16 @@ function Sarlavha({ id, yorliq, rang = "blue", nom, izoh }: {
                         ${RANG[rang].quti} ${RANG[rang].matn}`}>
         {yorliq}
       </span>
-      <h2 className="mt-3 font-display text-[30px] leading-tight tracking-tight sm:text-[40px]">{nom}</h2>
-      {izoh && <p className="mt-3 text-[16px] leading-relaxed text-ink-soft">{izoh}</p>}
+      <h2 className="mt-3 font-display text-[clamp(1.75rem,6.5vw,2.75rem)] leading-tight tracking-tight">{nom}</h2>
+      {izoh && <p className="mt-3 text-[15px] leading-relaxed text-ink-soft sm:text-[16px]">{izoh}</p>}
     </div>
   );
 }
 
 function Bolim({ children, fon }: { children: ReactNode; fon?: boolean }) {
   return (
-    <section className={`py-16 sm:py-24 ${fon ? "bg-track/60" : ""}`}>
-      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">{children}</div>
+    <section className={`py-14 sm:py-20 lg:py-24 ${fon ? "bg-track/60" : ""}`}>
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-6 2xl:max-w-[1320px]">{children}</div>
     </section>
   );
 }
@@ -498,11 +549,11 @@ function Bolimlar({ onOch }: { onOch: (yol: string) => void }) {
   return (
     <Bolim>
       <Sarlavha id="imkoniyat" yorliq={t("lendImkoniyat")} nom={t("lendImkSarlavha")} izoh={t("lendImkIzoh")} />
-      <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         {BOLIMLAR.map((b) => (
           <li key={b.ic}>
             <button type="button" onClick={() => onOch(b.yol())} data-tahlil={`Tanishuv: bo'lim ${b.ic}`}
-              className="group flex h-full w-full flex-col rounded-[28px] bg-karta p-6 text-left shadow-clay-sm
+              className="group flex h-full w-full flex-col rounded-[24px] bg-karta p-5 text-left sm:rounded-[28px] sm:p-6 shadow-clay-sm
                          transition hover:-translate-y-1.5 hover:shadow-clay">
               <span className={`grid size-14 place-items-center rounded-2xl transition-transform group-hover:scale-110
                                 ${RANG[b.rang].quti}`}>
@@ -534,11 +585,11 @@ function Kimlar({ onBoshlash }: { onBoshlash: () => void }) {
 
       {/* Tor ekranda yorliqlar o'ralib ikkinchi qatorga o'tadi — yonga
           suriladigan qator sahifani gorizontal siljitib yuborardi. */}
-      <div className="mt-8 flex flex-wrap justify-center gap-2" role="tablist">
+      <div className="mt-6 flex flex-wrap justify-center gap-2 sm:mt-8" role="tablist">
         {KIMLAR.map(({ kim: k }) => (
           <button key={k} type="button" role="tab" aria-selected={k === kim}
             onClick={() => setKim(k)} data-tahlil={`Tanishuv: kim ${k}`}
-            className={`h-11 rounded-full px-5 font-display text-[15px] transition ${
+            className={`h-11 rounded-full px-4 font-display text-[14.5px] transition sm:px-5 sm:text-[15px] ${
               k === kim ? KOK_TUGMA : `${OQ_TUGMA} text-ink-soft hover:text-ink`}`}>
             {t(`lendKim_${k}`)}
           </button>
@@ -546,7 +597,7 @@ function Kimlar({ onBoshlash }: { onBoshlash: () => void }) {
       </div>
 
       <div key={kim} role="tabpanel"
-        className="az-kirish mt-6 grid items-center gap-8 rounded-[32px] bg-karta p-6 shadow-clay sm:p-8 lg:grid-cols-12">
+        className="az-kirish mt-6 grid items-center gap-6 rounded-[28px] bg-karta p-5 shadow-clay sm:gap-8 sm:rounded-[32px] sm:p-8 lg:grid-cols-12">
         <div className="min-w-0 lg:col-span-7">
           <span className={`inline-flex rounded-full px-3.5 py-1 font-display text-[13px] ${r.quti} ${r.matn}`}>
             {t(`lendKim_${kim}_belgi`)}
@@ -572,9 +623,9 @@ function Kimlar({ onBoshlash }: { onBoshlash: () => void }) {
 
         {/* Namunadagi suratlar o'rnida — bo'limning o'z belgisi. Begona
             rasm sahifani og'irlashtirar va istalgan payt o'chib qolardi. */}
-        <div className={`relative grid h-56 place-items-center overflow-hidden rounded-[24px] sm:h-72 lg:col-span-5 ${r.quti}`}>
+        <div className={`relative order-first grid h-40 place-items-center overflow-hidden rounded-[22px] sm:h-60 lg:order-none lg:col-span-5 lg:h-80 ${r.quti}`}>
           <img src={`/belgi/${tanlangan.ic}.webp`} width={150} height={150} alt="" aria-hidden decoding="async"
-            className="az-suzish drop-shadow-xl" />
+            className="az-suzish size-24 drop-shadow-xl sm:size-32 lg:size-40" />
           <span className="absolute bottom-4 left-4 rounded-full bg-karta/90 px-3.5 py-1.5 font-display text-[13px] shadow-clay-sm">
             {t(`lendKim_${kim}`)}
           </span>
@@ -595,18 +646,26 @@ function Qanday() {
   return (
     <Bolim>
       <Sarlavha id="qanday" yorliq={t("lendQadamlar")} nom={t("boshQanday")} izoh={t("lendQandayIzoh")} />
-      <ol className="mt-10 grid gap-4 md:grid-cols-3">
+      {/* Uch ustun faqat keng ekranda. Planshetda (768) uch ustunda
+          sarlavhalar ikki qatorga sinib, kartalar cho'zilib ketardi —
+          u yerda va telefonda raqam chapda, matn o'ngda turadi. */}
+      <ol className="mx-auto mt-8 grid max-w-[720px] gap-3 sm:mt-10 sm:gap-4 lg:max-w-none lg:grid-cols-3">
         {qadamlar.map((q, i) => (
-          <li key={q.nom} className="flex flex-col rounded-[28px] bg-karta p-6 shadow-clay-sm transition hover:-translate-y-1">
-            <span className={`grid size-16 place-items-center rounded-2xl font-display text-[24px] ${RANG[q.rang].quti} ${RANG[q.rang].matn}`}>
+          <li key={q.nom} className="flex gap-4 rounded-[24px] bg-karta p-5 shadow-clay-sm transition
+                                     hover:-translate-y-1 sm:p-6 lg:flex-col lg:gap-0 lg:rounded-[28px]">
+            <span className={`grid size-12 shrink-0 place-items-center rounded-2xl font-display text-[19px]
+                              sm:size-14 lg:size-16 lg:text-[24px] ${RANG[q.rang].quti} ${RANG[q.rang].matn}`}>
               0{i + 1}
             </span>
-            <h3 className="mt-5 font-display text-[20px]">{t(q.nom)}</h3>
-            <p className="mt-2 flex-1 text-[14.5px] leading-relaxed text-ink-soft">{t(q.izoh)}</p>
-            <span className={`mt-5 flex items-center gap-2 rounded-xl bg-track px-3 py-2.5 font-display text-[13px] ${RANG[q.rang].matn}`}>
-              <Icon name={q.ic} size={16} />
-              {t(q.chip)}
-            </span>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <h3 className="font-display text-[18px] sm:text-[20px] lg:mt-5">{t(q.nom)}</h3>
+              <p className="mt-1.5 flex-1 text-[14.5px] leading-relaxed text-ink-soft lg:mt-2">{t(q.izoh)}</p>
+              <span className={`mt-3 flex w-fit items-center gap-2 rounded-xl bg-track px-3 py-2 font-display text-[13px]
+                                lg:mt-5 lg:w-auto lg:py-2.5 ${RANG[q.rang].matn}`}>
+                <Icon name={q.ic} size={16} />
+                {t(q.chip)}
+              </span>
+            </div>
           </li>
         ))}
       </ol>
@@ -647,9 +706,9 @@ function Savollar() {
 
 function Oxir({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
   return (
-    <section className="px-4 py-16 sm:px-6 sm:py-24">
-      <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[36px] bg-gradient-to-br
-                      from-brand-blue to-brand-blue-d px-6 py-14 text-center text-white shadow-clay sm:py-20">
+    <section className="px-4 py-14 sm:px-6 sm:py-20 lg:py-24">
+      <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[28px] sm:rounded-[36px] 2xl:max-w-[1320px] bg-gradient-to-br
+                      from-brand-blue to-brand-blue-d px-5 py-12 text-center sm:px-6 sm:py-16 lg:py-20 text-white shadow-clay">
         <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-white/10 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -right-24 -bottom-24 size-80 rounded-full bg-brand-green/25 blur-3xl" />
         <div className="relative mx-auto flex max-w-[40rem] flex-col items-center">
@@ -683,7 +742,7 @@ function Oxir({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
 function Etak({ bot }: { bot: string }) {
   return (
     <footer className="bg-track/60">
-      <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-4 px-4 py-8 text-center
+      <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-4 px-4 py-8 2xl:max-w-[1320px] text-center
                       sm:px-6 md:flex-row md:justify-between md:text-left">
         <div className="flex items-center gap-2.5">
           <Logo size={30} jonli={false} />
@@ -703,7 +762,7 @@ function Etak({ bot }: { bot: string }) {
           )}
         </div>
       </div>
-      <p className="pb-6 text-center text-[13px] text-ink-dim">© {new Date().getFullYear()} Aql Zone</p>
+      <p className="pb-24 text-center text-[13px] text-ink-dim min-[520px]:pb-6">© {new Date().getFullYear()} Aql Zone</p>
     </footer>
   );
 }
