@@ -10,6 +10,8 @@ INSTAGRAM_TOKEN berilgan bo'lsa, kanalga chiqqan rolik Instagram'ning
 Reels va Stories'iga ham joylanadi (`core/instagram.py`). Izoh —
 json'dagi `instagram`, bo'lmasa `matn` dan teglarsiz yasaladi; oxiriga
 doim aniq 5 ta `#teg` qo'yiladi (json'dagi `teglar`, yetmasa umumiylari).
+Stories izoh olmaydi — json'dagi `stories` matni (bo'lmasa umumiy
+yozuv) videoning pastiga yoziladi (`core/stories_yozuv.py`).
 
 ─────────────────── NAVBAT ───────────────────
 
@@ -52,7 +54,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from core import instagram
+from core import instagram, stories_yozuv
 from core import xabar as X
 from core.kanal import kanal_nomi
 from core.rolik import malumot, navbat, papkalar
@@ -157,7 +159,8 @@ class Command(BaseCommand):
         if instagram.sozlanganmi():
             ig_matn = instagram.teglar_bilan(m.get("instagram") or instagram.izoh(matn),
                                              m.get("teglar") or ())
-            natija = instagram.joyla(chiqdi / f"{kun}_{video.name}", ig_matn)
+            natija = instagram.joyla(chiqdi / f"{kun}_{video.name}", ig_matn,
+                                     m.get("stories") or stories_yozuv.umumiy_matn())
             for joy, (h, izoh, mid) in natija.items():
                 self.stdout.write(f"instagram {joy}: {h} {izoh} {mid}")
                 m[f"instagram_{joy}"] = mid

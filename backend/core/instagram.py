@@ -34,6 +34,7 @@ from __future__ import annotations
 import html
 import json
 import re
+import shutil
 import time
 import urllib.error
 import urllib.parse
@@ -42,7 +43,7 @@ from pathlib import Path
 
 from django.conf import settings
 
-from core import ommaviy
+from core import ommaviy, stories_yozuv
 
 API = "https://graph.instagram.com/v23.0"
 
@@ -239,7 +240,7 @@ def _bitta(ig: str, k: str, maydonlar: dict) -> tuple[str, str, str]:
         return "xato", str(e), ""
 
 
-def joyla(video: Path, matn: str) -> dict[str, tuple[str, str, str]]:
+def joyla(video: Path, matn: str, stories_matn: str = "") -> dict[str, tuple[str, str, str]]:
     """
     Rolikni Reels'ga VA Stories'ga joylaydi:
     `{"reels": (holat, izoh, id), "stories": (...)}`.
@@ -254,7 +255,10 @@ def joyla(video: Path, matn: str) -> dict[str, tuple[str, str, str]]:
     kerak.
 
     Stories izoh (`caption`) ni qabul qilmaydi — Instagram unga
-    matn qo'shishga ruxsat bermaydi. Va u 60 SONIYAgacha videoni
+    matn qo'shishga ruxsat bermaydi. Shuning uchun `stories_matn`
+    videoning o'ziga, pastiga yoziladi (`core/stories_yozuv.py`) va
+    Stories o'sha nusxadan, o'z havolasidan chiqadi. Yozib bo'lmasa —
+    asl videodan, yozuvsiz. Va u 60 SONIYAgacha videoni
     oladi: undan uzun rolik faqat Reels'ga chiqadi, Stories esa
     Instagram'ning o'z xatosi bilan qaytadi.
     """
@@ -267,7 +271,9 @@ def joyla(video: Path, matn: str) -> dict[str, tuple[str, str, str]]:
         pass
     k = kalit()
 
+    yozuvli = stories_yozuv.yozuvli(video, stories_matn) if stories_matn else None
     havola, vaqtincha = ommaviy.ochib_ber(video)
+    s_havola, s_vaqtincha = ommaviy.ochib_ber(yozuvli) if yozuvli else (havola, None)
     try:
         try:
             ig = akkaunt()["user_id"]
@@ -276,8 +282,12 @@ def joyla(video: Path, matn: str) -> dict[str, tuple[str, str, str]]:
         return {
             "reels": _bitta(ig, k, {"media_type": "REELS", "video_url": havola,
                                     "caption": matn, "share_to_feed": "true"}),
-            "stories": _bitta(ig, k, {"media_type": "STORIES", "video_url": havola}),
+            "stories": _bitta(ig, k, {"media_type": "STORIES", "video_url": s_havola}),
         }
     finally:
-        # Havola o'z ishini qildi — ochiq qolib ketmasin.
+        # Havolalar o'z ishini qildi — ochiq qolib ketmasin.
         ommaviy.yop(vaqtincha)
+        if s_vaqtincha:
+            ommaviy.yop(s_vaqtincha)
+        if yozuvli:
+            shutil.rmtree(yozuvli.parent, ignore_errors=True)

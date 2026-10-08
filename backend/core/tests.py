@@ -9421,8 +9421,9 @@ class RolikPostTest(TestCase):
         ikki = {"reels": ("joylandi", "", "77"), "stories": ("joylandi", "", "88")}
         with patch.object(instagram, "joyla", return_value=ikki) as ig:
             self._yur()
-        video, matn = ig.call_args.args
+        video, matn, stories = ig.call_args.args
         self.assertTrue(video.name.endswith("01-sertifikat.mp4") and video.exists())
+        self.assertIn("Telegram'da bepul", stories)
         self.assertTrue(matn.startswith("01-sertifikat matni\n\n#"))
         self.assertEqual(matn.count("#"), instagram.TEG_SONI)
         chiqdi = list((self.navbat.parent / "chiqdi").glob("*.json"))
@@ -9473,6 +9474,55 @@ class RolikPostTest(TestCase):
         self.assertEqual(turlar, [("REELS", "matn"), ("STORIES", None)])
         from core.ommaviy import papka
         self.assertEqual(list(papka().glob("*.mp4")), [])
+
+    @override_settings(INSTAGRAM_TOKEN="k", SAYT_URL="https://aql-zone.uz")
+    def test_stories_yozuvli_nusxadan_chiqadi(self):
+        """Stories o'z havolasidan — yozuvli nusxadan; hammasi keyin tozalanadi."""
+        import tempfile
+        from pathlib import Path
+        from core import instagram
+        papka = Path(tempfile.mkdtemp())
+        nusxa = papka / "stories.mp4"
+        nusxa.write_bytes(b"YOZUVLI")
+        ochilgan = {}
+
+        def sorov(url, maydonlar=None, **_):
+            m = maydonlar or {}
+            if url.endswith("/me"):
+                return {"user_id": "9"}
+            if "video_url" in m:
+                nom = m["video_url"].rsplit("/", 1)[1]
+                from core.ommaviy import papka as op
+                ochilgan[m["media_type"]] = (op() / nom).read_bytes()
+                return {"id": "c"}
+            if "creation_id" in m:
+                return {"id": "m"}
+            return {"status_code": "FINISHED"}
+
+        with patch.object(instagram, "_sorov", side_effect=sorov), \
+                patch.object(instagram, "kalitni_yangila"), \
+                patch.object(instagram.time, "sleep"), \
+                patch.object(instagram.stories_yozuv, "yozuvli", return_value=nusxa) as y:
+            instagram.joyla(self.navbat / "01-sertifikat.mp4", "matn", "Botda bepul")
+
+        self.assertEqual(y.call_args.args[1], "Botda bepul")
+        self.assertEqual(ochilgan["STORIES"], b"YOZUVLI")
+        self.assertNotEqual(ochilgan["REELS"], b"YOZUVLI")
+        from core.ommaviy import papka as op
+        self.assertEqual(list(op().glob("*.mp4")), [])
+        self.assertFalse(papka.exists())
+
+    def test_stories_yozuvi_tozalanadi(self):
+        from core.stories_yozuv import tozala
+        self.assertEqual(tozala("📚 <b>694 dars</b> — bepul 💡"), "694 dars — bepul")
+
+    def test_stories_plashkasi_chiziladi(self):
+        from core.stories_yozuv import EN_ULUSH, plashka
+        p = plashka("Aql Zone — Telegram'da bepul: @aqlzone_bot " * 4, 1080)
+        if p is None:
+            self.skipTest("shrift yo'q")
+        self.assertLessEqual(p.width, round(1080 * EN_ULUSH))
+        self.assertEqual(p.mode, "RGBA")
 
     @override_settings(INSTAGRAM_TOKEN="k", SAYT_URL="https://aql-zone.uz")
     def test_reels_xatosi_storiesni_tashlab_ketmaydi(self):

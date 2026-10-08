@@ -29,8 +29,10 @@ WORKDIR /app
 # Shrift masala rasmidagi AqlZone tamg'asi uchun kerak (`core/tamga.py`).
 # `python:slim` obrazida birorta ham shrift yo'q va tamg'a yozuvsiz —
 # faqat belgi bo'lib — bosilardi.
+# ffmpeg — Stories nusxasiga yozuv qo'yish (`core/stories_yozuv.py`) va
+# rolik davomiyligi (`rolik_post`) uchun.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements.txt ./
