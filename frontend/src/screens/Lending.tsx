@@ -23,7 +23,7 @@
  * Namunadagi uydirma raqamlar ("4 800+ o'quvchi", "4.9 / 5") va begona
  * rasmlar olinmadi: sahifada faqat rost narsa turadi.
  */
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { Logo } from "../components/Logo";
 import { Icon } from "../lib/icons";
@@ -295,7 +295,9 @@ function YoruglikTugma() {
  * varaqdagi o'lcham shu) — 240px dan katta qilinmaydi, xiralashardi.
  */
 const SLAYDLAR = [
-  { rang: "blue", belgi: "kitob", tab: "lendSlTab1", yorliq: "lendSl1Belgi", s1: "lendSarlavha1", s2: "lendSarlavha2", s3: "lendSarlavha3",
+  // 1-slayd: kitob o'rniga Pifagor teoremasi (`Teorema`) — kitob har qanday
+  // fanni bildirardi, teorema esa birinchi qarashda "matematika" deydi.
+  { rang: "blue", belgi: "teorema", tab: "lendSlTab1", yorliq: "lendSl1Belgi", s1: "lendSarlavha1", s2: "lendSarlavha2", s3: "lendSarlavha3",
     izoh: "lendIzoh", tugma: "lendSl1Tugma", yol: yolKurslar, chip1: "lendSl1Chip1", chip2: "lendSl1Chip2", n: JAMI_DARS },
   { rang: "green", belgi: "nishon", tab: "lendSlTab2", yorliq: "lendSl2Belgi", s1: "lendSl2S1", s2: "lendSl2S2", s3: "lendSl2S3",
     izoh: "lendSl2Izoh", tugma: "lendSl2Tugma", yol: yolTestSinf, chip1: "lendSl2Chip1", chip2: "lendSl2Chip2", n: 0 },
@@ -324,12 +326,14 @@ const CHIZIQ: Record<Rang, string> = { blue: "bg-brand-blue", green: "bg-brand-g
 const NUR: Record<Rang, string> = { blue: "bg-brand-blue/22", green: "bg-brand-green/22", gold: "bg-brand-gold/22" };
 
 /**
- * Sahna atrofida suzuvchi matematik belgilar: [belgi, chapdan %, tepadan %,
- * kechikish s]. Joylari qo'lda tanlangan — belgining o'zi va yorliqlarni
- * yopmasin.
+ * Sahna halqalari bo'ylab AYLANADIGAN matematik belgilar: halqa (%) va
+ * belgilar burchagi (gradus). Ilgari ular joyida suzib turardi; 2026-10-08
+ * da "atrofidagilar aylansin" deyildi. Tashqi va o'rta halqa qarama-qarshi
+ * tomonga aylanadi (`index.css`, "az-orbita").
  */
-const SIMVOLLAR: [string, number, number, number][] = [
-  ["+", 14, 22, 0], ["×", 80, 16, 1.2], ["π", 86, 58, 2.1], ["√", 10, 66, 0.6], ["%", 50, 8, 1.7], ["=", 58, 88, 2.6],
+const ORBITALAR: { halqa: number; teskari: boolean; davr: string; belgilar: [string, number][] }[] = [
+  { halqa: 88, teskari: false, davr: "52s", belgilar: [["+", -150], ["π", -30], ["%", 90]] },
+  { halqa: 66, teskari: true, davr: "40s", belgilar: [["×", -90], ["√", 30], ["=", 150]] },
 ];
 
 const SARLAVHA = "mt-5 font-display text-[clamp(2.4rem,11vw,3.75rem)] leading-[1.1] tracking-tight lg:text-[clamp(3.4rem,4.6vw,4.25rem)]";
@@ -470,14 +474,24 @@ function Sahna({ sl, faol }: { sl: Slayd; faol: boolean }) {
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-ink-dim/15"
             style={{ width: `${o}%`, height: `${o}%` }} />
         ))}
-        {/* Suzuvchi matematik belgilar */}
-        {SIMVOLLAR.map(([b, x, y, kech]) => (
-          <span key={b} aria-hidden
-            className={`az-lend-suz absolute grid size-10 place-items-center rounded-2xl bg-karta font-display text-[20px]
-                        shadow-clay-sm sm:size-12 sm:text-[24px] ${RANG[sl.rang].matn}`}
-            style={{ left: `${x}%`, top: `${y}%`, translate: "-50% -50%", animationDelay: `-${kech}s` }}>
-            {b}
-          </span>
+        {/* Halqalar bo'ylab aylanadigan belgilar. Halqa buriladi, belgi
+            teskari buriladi — doim tik turadi. */}
+        {ORBITALAR.map((o) => (
+          <div key={o.halqa} aria-hidden
+            className={`az-orbita absolute top-1/2 left-1/2 ${o.teskari ? "az-orbita-teskari" : ""}`}
+            style={{ width: `${o.halqa}%`, height: `${o.halqa}%`, translate: "-50% -50%",
+                     "--az-orbita": o.davr } as CSSProperties}>
+            {o.belgilar.map(([b, burchak]) => (
+              <span key={b} className="absolute"
+                style={{ left: `${50 + 50 * Math.cos((burchak * Math.PI) / 180)}%`,
+                         top: `${50 + 50 * Math.sin((burchak * Math.PI) / 180)}%`, translate: "-50% -50%" }}>
+                <span className={`grid size-10 place-items-center rounded-2xl bg-karta font-display text-[20px]
+                                  shadow-clay-sm sm:size-12 sm:text-[24px] ${RANG[sl.rang].matn}`}>
+                  {b}
+                </span>
+              </span>
+            ))}
+          </div>
         ))}
         {/* Belgi — faqat faol slaydda chiziladi: kirish animatsiyasi har
             almashishda qaytadan boshlansin. */}
@@ -485,8 +499,10 @@ function Sahna({ sl, faol }: { sl: Slayd; faol: boolean }) {
           {faol && (
             <div className="az-lend-kir">
               <div className="az-lend-suz">
-                <Hajmli nom={sl.belgi} olcham={240}
-                  className="size-36 drop-shadow-[0_26px_26px_rgb(0_0_0/0.28)] sm:size-48 lg:size-56" />
+                {sl.belgi === "teorema"
+                  ? <Teorema className="size-40 drop-shadow-[0_22px_22px_rgb(0_0_0/0.28)] sm:size-52 lg:size-60" />
+                  : <Hajmli nom={sl.belgi} olcham={240}
+                      className="size-36 drop-shadow-[0_26px_26px_rgb(0_0_0/0.28)] sm:size-48 lg:size-56" />}
               </div>
             </div>
           )}
@@ -512,6 +528,78 @@ function Sahna({ sl, faol }: { sl: Slayd; faol: boolean }) {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Pifagor teoremasi — 3D chizma: to'g'ri burchakli uchburchak (3 : 4 : 5)
+ * va uning tomonlariga qurilgan kvadratlar, kataklari bilan: 9 + 16 = 25
+ * katakni sanab, teoremani ko'z bilan "isbotlash" mumkin.
+ *
+ * Hajm: har kvadrat ostida o'sha shaklning pastga surilgan to'q nusxasi
+ * (qalinlik), yuzasida tepadan yorug' gradient. Rang — faqat firuza
+ * pog'onalari (dizayn qoidasi: bitta asosiy rang).
+ */
+function Teorema({ className = "" }: { className?: string }) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, "");
+  // Uchburchak: C — to'g'ri burchak, CA = 60 (a), CB = 80 (b), AB = 100 (c).
+  const A = [90, 80], B = [170, 140], C = [90, 140];
+  const n = [60, -80];                                  // AB ga tik, C dan tashqariga
+  const kvadratlar = [
+    { nom: "a²", t: [[30, 80], [90, 80], [90, 140], [30, 140]], k: 3, g: `${id}a` },
+    { nom: "b²", t: [[90, 140], [170, 140], [170, 220], [90, 220]], k: 4, g: `${id}b` },
+    { nom: "c²", t: [A, B, [B[0]! + n[0]!, B[1]! + n[1]!], [A[0]! + n[0]!, A[1]! + n[1]!]], k: 5, g: `${id}c` },
+  ];
+  const nuqta = (p: number[][]) => p.map((q) => q.join(",")).join(" ");
+  const ora = (p: number[], q: number[], s: number) => [p[0]! + (q[0]! - p[0]!) * s, p[1]! + (q[1]! - p[1]!) * s];
+  return (
+    <svg viewBox="16 -12 228 248" className={className} role="img" aria-label="a² + b² = c²">
+      <defs>
+        {[["a", "#8be3ec", "#17b3c1"], ["b", "#4fcfdb", "#0e8f9b"], ["c", "#25c2cf", "#0b6f79"],
+          ["u", "#f4fdfe", "#b6eef3"]].map(([k, och, toq]) => (
+          <linearGradient key={k} id={`${id}${k}`} x1="0" y1="0" x2="0.3" y2="1">
+            <stop offset="0" stopColor={och} />
+            <stop offset="1" stopColor={toq} />
+          </linearGradient>
+        ))}
+      </defs>
+      {/* Avval HAMMA qalinlik, keyin yuzalar: aks holda bir shaklning to'q
+          qalinligi qo'shni shaklning yuzasi ustiga chiqib qolardi. */}
+      {[...kvadratlar.map((kv) => kv.t), [A, B, C]].map((t, i) => (
+        <polygon key={i} points={nuqta(t.map(([x, y]) => [x!, y! + 8]))} fill="#075961" />
+      ))}
+      {kvadratlar.map((kv) => {
+        const [p0, p1, , p3] = kv.t as number[][];
+        const markaz = [(kv.t[0]![0]! + kv.t[2]![0]!) / 2, (kv.t[0]![1]! + kv.t[2]![1]!) / 2];
+        return (
+          <g key={kv.nom}>
+            <polygon points={nuqta(kv.t)} fill={`url(#${kv.g})`} />
+            {/* Kataklar — kvadratning tomonlariga parallel chiziqlar. */}
+            {Array.from({ length: kv.k - 1 }, (_, i) => {
+              const s = (i + 1) / kv.k;
+              const u0 = ora(p0!, p1!, s), u1 = ora(p3!, kv.t[2]!, s);
+              const v0 = ora(p0!, p3!, s), v1 = ora(p1!, kv.t[2]!, s);
+              return (
+                <g key={i} stroke="#ffffff" strokeOpacity="0.32" strokeWidth="1.4">
+                  <line x1={u0[0]} y1={u0[1]} x2={u1[0]} y2={u1[1]} />
+                  <line x1={v0[0]} y1={v0[1]} x2={v1[0]} y2={v1[1]} />
+                </g>
+              );
+            })}
+            {/* Yuqori chetdagi yaltiroq. */}
+            <polyline points={nuqta([ora(p3!, p0!, 0.92), p0!, ora(p0!, p1!, 0.6)])} fill="none"
+              stroke="#ffffff" strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            <text x={markaz[0]} y={markaz[1]! + 9} textAnchor="middle" fontSize={kv.k * 5.4 + 8}
+              fontWeight="800" fill="#ffffff" style={{ fontFamily: "var(--font-display)" }}
+              paintOrder="stroke" stroke="#075961" strokeOpacity="0.35" strokeWidth="3">{kv.nom}</text>
+          </g>
+        );
+      })}
+      {/* Uchburchak — eng och firuza (karta rangida bo'lsa qorong'i temada
+          fonga singib ketardi), to'g'ri burchak belgisi bilan. */}
+      <polygon points={nuqta([A, B, C])} fill={`url(#${id}u)`} />
+      <path d={`M${C[0]} ${C[1]! - 14}h14v14`} fill="none" stroke="#0e8f9b" strokeWidth="2.6" />
+    </svg>
   );
 }
 

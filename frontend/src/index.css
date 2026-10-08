@@ -1684,7 +1684,17 @@
   animation: az-lend-vaqt var(--az-vaqt, 6s) linear both;
 }
 .az-lend-vaqt[data-toxtadi="1"] { animation-play-state: paused; }
+/* Sahna halqalari bo'ylab aylanadigan belgilar. Halqa butunligicha
+   buriladi, belgi esa teskari buriladi — u doim TIK turadi (aks holda
+   "√" va "π" pastki yarmida teskari o'qilardi). Ichki va tashqi halqa
+   qarama-qarshi tomonga: harakat jonli, lekin bir xil oqim emas. */
+@keyframes az-orbita { to { transform: rotate(360deg); } }
+.az-orbita { animation: az-orbita var(--az-orbita, 48s) linear infinite; }
+.az-orbita-teskari { animation-direction: reverse; }
+.az-orbita > * > * { animation: az-orbita var(--az-orbita, 48s) linear infinite reverse; }
+.az-orbita-teskari > * > * { animation-direction: normal; }
 @media (prefers-reduced-motion: reduce) {
+  .az-orbita, .az-orbita > * > * { animation: none; }
   .az-lend-suz, .az-lend-kir { animation: none; }
   .az-lend-vaqt { animation: none; transform: scaleX(1); }
 }
