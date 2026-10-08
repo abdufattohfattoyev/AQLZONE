@@ -266,6 +266,10 @@ const S = {
   bugunQadamTayyor: ["Bugungi qadamlar bajarildi", "Шаги на сегодня выполнены"],
   bugunQadamTayyorIzoh: ["Ajoyib! Xohlasangiz, yana bitta dars qiling.", "Отлично! Если хотите — ещё один урок."],
   bugunYanaDars: ["Yana bitta dars", "Ещё один урок"],
+  /* Reja to'liq bajarilgach asosiy karta duelga chaqiradi. */
+  bugunHammasi: ["Bugun hammasi bajarildi ✨", "На сегодня всё выполнено ✨"],
+  bugunHammasiIzoh: ["Endi do'stingiz bilan bellashib ko'ring.", "Теперь попробуйте сразиться с другом."],
+  bugunDuelga: ["Duelga chiqish", "В дуэль"],
   bugunTanishuv: ["Aql bilan tanishuv", "Знакомство с Aql"],
   bugunTanishuvIzoh: [
     "Qisqa sinov bilan qaysi bobdan boshlashni topamiz — 3 daqiqa, baho yo'q.",

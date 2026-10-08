@@ -525,36 +525,34 @@ function Sahna({ sl, faol }: { sl: Slayd; faol: boolean }) {
 
 /* ------------------------------------------------------------ sinov */
 
-/** Jonli savol — endi alohida bo'lim (ilgari qahramon blokining o'ng tomoni edi). */
+/**
+ * Jonli savol — alohida bo'lim.
+ *
+ * Ilgari ikki ustun edi: chapda sarlavha va ikki chip, o'ngda baland
+ * (~600px) tik karta. Kompyuterda chap tomon yarim bo'sh qolib, bo'lim
+ * butun ekranni egallardi; kartaning ichida "Jonli sinov" sarlavhasi
+ * yana takrorlanardi. Endi sarlavha tepada markazda, karta keng va
+ * past: savol chapda, javoblar o'ngda, natija va "Keyingi" bitta qatorda.
+ * Chiplar ("Yulduz yig'ing", "Darhol tushuntirish") olib tashlandi —
+ * tushuntirishni odam javob bergan zahoti o'zi ko'radi.
+ */
 function SinovBolim() {
   return (
-    <section className="py-10 sm:py-14 lg:py-16">
-      <div className="mx-auto grid max-w-[1200px] items-center gap-8 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 2xl:max-w-[1320px]">
-        <div className="text-center lg:col-span-6 lg:text-left">
+    <section className="py-8 sm:py-12">
+      <div className="mx-auto max-w-[1040px] px-4 sm:px-6">
+        <div className="mb-5 text-center sm:mb-6">
           <span className={`inline-flex rounded-full px-3.5 py-1 font-display text-[12px] tracking-wider uppercase
                             ${RANG.blue.quti} ${RANG.blue.matn}`}>
             {t("lendJonli")}
           </span>
-          <h2 className="mt-3 font-display text-[clamp(1.75rem,6.5vw,2.75rem)] leading-tight tracking-tight">
+          <h2 className="mt-2.5 font-display text-[clamp(1.5rem,5.5vw,2.25rem)] leading-tight tracking-tight">
             {t("lendSinovSarlavha")}
           </h2>
-          <p className="mx-auto mt-3 max-w-[32rem] text-[15px] leading-relaxed text-ink-soft sm:text-[16px] lg:mx-0">
+          <p className="mx-auto mt-2 max-w-[34rem] text-[14.5px] leading-relaxed text-ink-soft sm:text-[15.5px]">
             {t("lendSinovIzoh")}
           </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2 lg:justify-start">
-            <span className="flex items-center gap-1.5 rounded-full bg-karta px-3.5 py-2 font-display text-[13px] shadow-clay-sm">
-              <span className="text-brand-gold"><Icon name="star" size={15} /></span>
-              {t("lendChipYulduz")}
-            </span>
-            <span className="flex items-center gap-1.5 rounded-full bg-karta px-3.5 py-2 font-display text-[13px] shadow-clay-sm">
-              <span className="text-brand-green"><Icon name="izoh" size={15} /></span>
-              {t("lendChipIzoh")}
-            </span>
-          </div>
         </div>
-        <div className="mx-auto w-full max-w-[460px] lg:col-span-6 lg:mr-0">
-          <Sinov />
-        </div>
+        <Sinov />
       </div>
     </section>
   );
@@ -592,35 +590,32 @@ function Sinov() {
   const togri = tanlov === s.togri;
 
   return (
-    <div className="az-kirish relative z-10 w-full rounded-[28px] bg-karta p-5 shadow-clay sm:p-6"
+    /* md+ da ikki ustun: chapda savol, o'ngda javoblar va natija.
+       Telefonda ustma-ust, lekin ichki sarlavhasiz — ~420px o'rniga ~600px edi. */
+    <div className="az-kirish relative z-10 grid w-full gap-3 rounded-[28px] bg-karta p-3.5 shadow-clay sm:p-4
+                    md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-4"
       style={{ "--az-kech": "120ms" } as CSSProperties}>
-      <div className="flex items-center justify-between gap-3 border-b border-track pb-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand-blue/12">
-            <img src="/belgi/savol.webp" width={26} height={26} alt="" aria-hidden decoding="async" />
-          </span>
-          <div className="min-w-0">
-            <p className="font-display text-[15.5px] leading-tight">{t("lendJonli")}</p>
-            <p className="text-[12.5px] text-ink-dim">{t("lendJonliIzoh")}</p>
-          </div>
-        </div>
-        <span className="shrink-0 rounded-full bg-brand-blue/12 px-3 py-1 font-display text-[13px] text-brand-blue-t">
+      <div className="relative flex min-h-[132px] flex-col items-center justify-center rounded-2xl bg-sahna px-4 pt-9 pb-5
+                      text-center shadow-ichki md:min-h-0">
+        {/* Mavzu va hisoblagich — savol qutisining tepasida, alohida qator emas. */}
+        <span className="absolute top-3 left-4 font-display text-[11.5px] tracking-wider text-ink-dim uppercase">
+          {t(s.mavzu)}
+        </span>
+        <span className="absolute top-2.5 right-3 rounded-full bg-brand-blue/12 px-2.5 py-0.5 font-display text-[12.5px]
+                         text-brand-blue-t">
           {n + 1} / {SAVOLLAR.length}
         </span>
-      </div>
-
-      <div className="mt-4 rounded-2xl bg-sahna px-4 py-5 text-center shadow-ichki">
-        <p className="font-display text-[12px] tracking-wider text-ink-dim uppercase">{t(s.mavzu)}</p>
-        <p className="mt-2 text-[15px] text-ink-soft">{t(s.savol)}</p>
+        <p className="text-[15px] text-ink-soft">{t(s.savol)}</p>
         {s.ifoda && (
-          <p className="mt-3 font-display text-[34px] leading-none">
+          <p className="mt-2.5 font-display text-[32px] leading-none sm:text-[36px]">
             <Ifoda matn={s.ifoda} /> <span className="text-ink-dim">=</span>{" "}
             <span className="rounded-xl bg-brand-blue/12 px-2.5 text-brand-blue-t">?</span>
           </p>
         )}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         {s.javoblar.map((j, i) => {
           const bu = tanlov === i;
           const rang = !javob ? `${OQ_TUGMA} hover:-translate-y-0.5`
@@ -632,8 +627,8 @@ function Sinov() {
           return (
             <button key={`${n}-${i}`} type="button" disabled={javob}
               onClick={() => setTanlov(i)} data-tahlil="Tanishuv: sinov javob"
-              className={`clay-press group flex h-16 items-center justify-between rounded-2xl px-3
-                          font-display text-[22px] transition ${rang}`}>
+              className={`clay-press group flex h-14 items-center justify-between rounded-2xl px-3
+                          font-display text-[21px] transition ${rang}`}>
               <span className={`grid size-7 place-items-center rounded-full text-[12.5px] transition ${harf}`}>
                 {"ABCD"[i]}
               </span>
@@ -644,17 +639,20 @@ function Sinov() {
         })}
       </div>
 
+      {/* Natija va "Keyingi" — BITTA qator. Ilgari ular ikki alohida blok
+          edi va karta ostida yana 60px joy olardi. Javobdan oldin "Keyingi"
+          ko'rinmaydi: odam savolni o'tkazib yubormay, avval yechib ko'rsin. */}
       <div aria-live="polite"
-        className={`mt-4 flex min-h-[64px] items-center gap-3 rounded-2xl px-4 py-3 transition ${
+        className={`flex min-h-[56px] items-center gap-3 rounded-2xl py-2 pr-2 pl-3 transition ${
           !javob ? "bg-track" : togri ? "bg-brand-green/14" : "bg-brand-red/10"}`}>
-        <span className={`grid size-8 shrink-0 place-items-center rounded-full text-white ${
+        <span className={`grid size-7 shrink-0 place-items-center rounded-full text-white ${
           !javob ? "bg-brand-blue" : togri ? "bg-brand-green" : "bg-brand-red"}`}>
-          <Icon name={!javob ? "izoh" : togri ? "check" : "close"} size={16} />
+          <Icon name={!javob ? "izoh" : togri ? "check" : "close"} size={15} />
         </span>
-        <div className="min-w-0 text-[14px] leading-snug">
+        <div className="min-w-0 flex-1 text-[13.5px] leading-snug">
           {javob ? (
             <>
-              <p className={`font-display text-[15px] ${togri ? "text-brand-green" : "text-brand-red"}`}>
+              <p className={`font-display text-[14.5px] ${togri ? "text-brand-green" : "text-brand-red"}`}>
                 {togri ? t("lendTogri") : t("lendNotogri")}
               </p>
               <p className="text-ink-soft">{t(s.izoh)}</p>
@@ -663,15 +661,16 @@ function Sinov() {
             <p className="text-ink-soft">{t("lendTanlang")}</p>
           )}
         </div>
+        {javob && (
+          <button type="button" data-tahlil="Tanishuv: keyingi savol" aria-label={t("lendKeyingi")}
+            onClick={() => { setN((n + 1) % SAVOLLAR.length); setTanlov(null); }}
+            className="clay-press flex h-11 shrink-0 items-center gap-1 rounded-full bg-karta px-4 font-display text-[14px]
+                       text-ink shadow-clay-sm hover:text-brand-blue-t">
+            <span className="hidden min-[400px]:inline">{t("lendKeyingi")}</span>
+            <Icon name="chevron" size={16} />
+          </button>
+        )}
       </div>
-
-      <div className="mt-4 flex justify-end">
-        <button type="button" data-tahlil="Tanishuv: keyingi savol"
-          onClick={() => { setN((n + 1) % SAVOLLAR.length); setTanlov(null); }}
-          className="flex h-11 items-center gap-1.5 rounded-full bg-track px-5 font-display text-[14px] text-ink hover:bg-brand-blue/12">
-          {t("lendKeyingi")}
-          <Icon name="chevron" size={15} />
-        </button>
       </div>
     </div>
   );

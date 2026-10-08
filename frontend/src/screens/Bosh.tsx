@@ -14,11 +14,13 @@
  *   1. Sarlavha      sana va salom; o'ngda zanjir (olov + son) va qidiruv
  *   2. Asosiy amal   BIRINCHI turadi: qaysi dars, bobdagi yo'l va
  *                    ekrandagi YAGONA katta tugma
- *   3. Bugungi reja  uch band, har birining NIMA ekani yozilgan
- *                    ("5 ta savol · 3 daqiqa", "yashirin sonni toping")
- *   4. Bu hafta      7 kun va zanjir ODDIY GAP bilan: "Bugun bitta dars
- *                    qilsangiz — 4 kun bo'ladi"
- *   5. Aql maslahati eng pastda, jim ramkada
+ *   3. Bugungi reja  uch band ixcham ro'yxatda, o'ngda "1/3"
+ *   4. Bu hafta      7 kun va haftalik sandiq
+ *
+ * 2026-10-08: "kirishda juda ko'p narsa" — ekrandan bo'limlar to'ri,
+ * maslahat, ikkinchi "Darslar" tugmasi, foiz halqasi va yulduz/rekord
+ * qatori olib tashlandi (pastdagi `return` izohiga qarang). Yangi odam
+ * faqat katta kartani ko'radi.
  *
  * Ilgari asosiy tugma uchinchi o'rinda, "0/3" halqasi va "5 soat"
  * yozuvi izohsiz turardi — yangi odam nima qilishni tushunmasdi.
@@ -37,12 +39,11 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../lib/icons";
 import type { IconName } from "../lib/icons";
-import { Logo } from "../components/Logo";
 import { Hajmli } from "../lib/hajmli";
 import type { HajmliNom } from "../lib/hajmli";
 import { getHisob, joriyProfil, kunlikHolat, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
-import { COURSES, OLIY_KURSLAR } from "../lib/curriculum";
+import { COURSES } from "../lib/curriculum";
 import type { Course } from "../lib/curriculum";
 import { oxirgiKurs } from "../lib/oxirgi";
 import { useKompyuter } from "../lib/maket";
@@ -63,22 +64,13 @@ import { kunKaliti, qaytish } from "../lib/zanjir";
 import { Qaytish, ZanjirTiklash } from "../components/Qaytish";
 import {
   HAFTA_MAQSAD, HAFTA_TANGA, darsBugunmi, faolKunlar, haftaYoli, joriyZanjir, rekordniYangila,
-  salomVaqti, sandiqOchilganmi, sandiqniOch, yilKuni,
+  salomVaqti, sandiqOchilganmi, sandiqniOch,
 } from "../lib/bugun";
 import { darajaKerakmi } from "../lib/daraja";
 import { tovush } from "../lib/ovoz";
 import { kunlikSonBugun } from "./KunlikSon";
-import { FORMULALAR } from "../lib/formulalar";
-import { VARIANTLAR as DTM_VARIANT } from "../lib/imtihon";
-import { VARIANTLAR as SERT_VARIANT } from "../lib/sertifikat";
-import {
-  yolFormulalarUmumiy, yolImtihon, yolKurslar, yolMasalalar, yolMantiq, yolOyinlar, yolQabul, yolSertifikat, yolSessiya,
-} from "../lib/yollar";
-import { QABUL_VARIANT } from "../lib/qabul";
-import { mantiqMavzular } from "../lib/mantiq";
+import { yolDuel, yolImtihon, yolSertifikat } from "../lib/yollar";
 import { bolimlar as bolimRoyxati } from "../lib/moslash";
-import type { Bolim } from "../lib/moslash";
-import { SESSIYA_VARIANTLAR } from "../lib/sessiya";
 
 interface Props {
   progressOf: (c: Course) => Progress;
@@ -97,12 +89,9 @@ interface Props {
   onKurs: (c: Course) => void;
   /** Aql bilan tanishuv — daraja aniqlash (`screens/Daraja.tsx`). */
   onDaraja: (c: Course) => void;
-  /** Bo'limlar to'ri va tez o'tish tugmalari uchun. */
+  /** Tez o'tish tugmalari va duelga taklif uchun. */
   onYol: (yol: string) => void;
 }
-
-/** Maslahatlar soni — `matn.ts` dagi `maslahat0…` kalitlari. */
-const MASLAHAT_SONI = 10;
 
 /**
  * Qayerdan davom etish kerak.
@@ -162,7 +151,7 @@ export function Bosh({
     return () => { bekor = true; };
   }, []);
 
-  const { kunlik, jamiTanga, jamiYulduz, tiklash, zanjirniTikla, oyinTugadi } = useProgress();
+  const { kunlik, jamiTanga, tiklash, zanjirniTikla, oyinTugadi } = useProgress();
   const prof = useProfil();
   const kompyuter = useKompyuter();
   const bugun = kunKaliti();
@@ -209,7 +198,8 @@ export function Bosh({
 
   // ---- zanjir ----
   const zanjir = joriyZanjir(kunlik, bugun);
-  const rekord = rekordniYangila(zanjir);
+  // Rekord endi "Men" bo'limida ko'rinadi, lekin u shu yerda yangilanadi.
+  rekordniYangila(zanjir);
   const qisqa = t("bugunQisqaKunlar").split(",");
 
   // Bugungi qadam: reja bandlaridan birinchi bajarilmagani (`asosiyAmal`).
@@ -220,6 +210,7 @@ export function Bosh({
   };
   const amal = asosiyAmal({
     davom, prof, qadam, progressOf, onDarslar, onMasalalar, onDavom, onKurs, onDaraja, onImtihon, onTestlar,
+    onDuel: () => onYol(yolDuel()),
   });
 
   // ---- haftalik yo'l ----
@@ -269,98 +260,52 @@ export function Bosh({
     </header>
   );
 
-  /* ─── Bugungi reja: halqa (necha foiz bajarildi), uch vazifa va uch son. ─── */
+  /* ─── Bugungi reja: ixcham ro'yxat — uch band, o'ngda "1/3".
+     Ilgari har band alohida chegarali karta, tepada foiz halqasi, ostida
+     "yulduz · zanjir · rekord" qatori bor edi: ekranda o'nga yaqin
+     bir-biriga o'xshash quti paydo bo'lib, odam qayerdan boshlashni
+     bilmay qolardi. Endi bandlar oddiy qatorlar, sonlar — "Men" da. ─── */
   const bajarilgan = vazifalar.filter((v) => v.bajarildi).length;
-  const foiz = Math.round((bajarilgan / vazifalar.length) * 100);
   const reja = (
-    <section aria-label={t("bugunReja")} className="flex flex-col gap-4 rounded-[24px] bg-karta p-4 shadow-clay-sm
-                                                     min-[360px]:p-5">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <h2 className="font-display text-[19px]">{t("bugunReja")}</h2>
-          <p className="text-[13.5px] text-ink-dim">{t("bugunRejaHolat", { n: bajarilgan, jami: vazifalar.length })}</p>
-        </div>
-        <Halqa foiz={foiz} />
+    <section aria-label={t("bugunReja")} className="flex flex-col gap-1 rounded-[24px] bg-karta px-4 pt-4 pb-2
+                                                     shadow-clay-sm min-[360px]:px-5">
+      <div className="flex items-baseline gap-3">
+        <h2 className="min-w-0 flex-1 font-display text-[19px]">{t("bugunReja")}</h2>
+        <span aria-label={t("bugunRejaHolat", { n: bajarilgan, jami: vazifalar.length })}
+          className={`shrink-0 font-display text-[16px] font-bold ${
+            bajarilgan === vazifalar.length ? "text-brand-green-d" : "text-ink-dim"}`}>
+          {bajarilgan}/{vazifalar.length}
+        </span>
       </div>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col divide-y divide-track">
         {vazifalar.map((v) => (
           <li key={v.tahlil}>
             <button type="button" onClick={v.on} disabled={!v.on} data-tahlil={v.tahlil}
               aria-label={`${v.nom}. ${v.izoh ?? ""}${v.bajarildi ? ` · ${t("bugunBajarildi")}` : ""}`}
-              className={`clay-press flex min-h-[60px] w-full items-center gap-3 rounded-[16px] px-3 text-left
-                          disabled:cursor-default ${v.bajarildi ? "bg-brand-green/10" : "bg-sahna"}
-                          ring-[1.5px] ring-inset ${v.bajarildi ? "ring-brand-green/35" : "ring-track"}`}>
-              <Hajmli nom={v.bel} olcham={36} jonli={!v.bajarildi && Boolean(v.on)} />
-              <span className="flex min-w-0 flex-1 flex-col leading-snug">
-                <span className={`text-[15px] font-bold ${v.bajarildi ? "text-brand-green-d" : ""}`}>{v.nom}</span>
-                <span className="truncate text-[12.5px] text-ink-dim">{v.qisqa}</span>
-              </span>
+              className="clay-press flex min-h-[56px] w-full items-center gap-3 text-left disabled:cursor-default">
+              {/* Bajarilgan band — yashil belgi, qolgani — xira 3D belgi: ko'z
+                  avval qilinmaganiga tushadi. Belgi qimirlamaydi — harakat faqat
+                  tepadagi katta tugmada. */}
               {v.bajarildi ? (
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-green text-white">
-                  <Icon name="check" size={14} />
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-green text-white">
+                  <Icon name="check" size={15} />
                 </span>
-              ) : v.on ? (
-                <Icon name="chevron" size={16} className="shrink-0 text-ink-dim" />
               ) : (
-                <Icon name="lock" size={15} className="shrink-0 text-ink-dim" />
+                <span className={v.on ? "" : "opacity-50 grayscale"}><Hajmli nom={v.bel} olcham={28} /></span>
               )}
+              <span className="flex min-w-0 flex-1 flex-col leading-snug">
+                <span className={`text-[15px] font-bold ${v.bajarildi ? "text-ink-dim line-through decoration-2" : ""}`}>
+                  {v.nom}
+                </span>
+                {!v.bajarildi && <span className="truncate text-[12.5px] text-ink-dim">{v.qisqa}</span>}
+              </span>
+              {!v.bajarildi && (v.on
+                ? <Icon name="chevron" size={16} className="shrink-0 text-ink-dim" />
+                : <Icon name="lock" size={15} className="shrink-0 text-ink-dim" />)}
             </button>
           </li>
         ))}
       </ul>
-      <div className="grid grid-cols-3 divide-x divide-track border-t border-track pt-3 text-center">
-        <Son n={String(jamiYulduz)} nom={t("menYulduz")} />
-        <Son n={String(zanjir)} nom={t("menZanjir")} />
-        <Son n={String(rekord)} nom={t("bugunRekordQisqa")} />
-      </div>
-    </section>
-  );
-
-  /* ─── Bo'limni tanlang — testmakon'dagi "Fan tanlang" kabi: 3D belgi, nom
-     va nechta narsa borligi. Telefonda 2, kengroqda 3 ustun. ─── */
-  // QAYSI bo'limlar va QAYSI tartibda — anketa javobidan (`lib/moslash.ts`).
-  // Ilgari to'r hammaga bir xil edi: 2-sinf bolasi DTM va milliy
-  // sertifikatni, talaba esa Prezident maktabini ko'rardi. Ro'yxatda
-  // yo'q bo'lim yo'qolmaydi — pastki paneldan (O'qish, O'yin) ochiladi.
-  const KARTA: Record<Bolim, { bel: HajmliNom; nom: string; izoh: string; yol: string }> = {
-    // Oliy yo'lda "1–11-sinf" emas — talabaning o'z kurslari.
-    darslar: yolOf(prof) === "oliy"
-      ? { bel: "kitob", nom: t("bolimDarslar"), izoh: t("bolimDarslarOliyIzoh", { n: OLIY_KURSLAR().length }), yol: yolKurslar() }
-      : { bel: "kitob", nom: t("bolimDarslar"), izoh: t("bolimDarslarIzoh", { n: COURSES.reduce((a, c) => a + c.units.reduce((b, u) => b + u.lessons.length, 0), 0) }), yol: yolKurslar() },
-    dtm: { bel: "nishon", nom: t("yonDtm"), izoh: t("bolimVariant", { n: DTM_VARIANT }), yol: yolImtihon() },
-    sertifikat: { bel: "medal", nom: t("yonSertifikat"), izoh: t("bolimVariant", { n: SERT_VARIANT }), yol: yolSertifikat() },
-    masalalar: { bel: "goya", nom: t("masalalar"), izoh: t("bolimMasalaIzoh"), yol: yolMasalalar() },
-    oyinlar: { bel: "kubok", nom: t("bolimOyinlar"), izoh: t("bolimOyinIzoh"), yol: yolOyinlar() },
-    formulalar: { bel: "diagramma", nom: t("kattalarFormula"), izoh: t("bolimFormulaIzoh", { n: FORMULALAR.reduce((a, b) => a + b.lar.length, 0) }), yol: yolFormulalarUmumiy() },
-    qabul: { bel: "toj", nom: t("bolimQabul"), izoh: t("bolimQabulIzoh", { n: QABUL_VARIANT }), yol: yolQabul() },
-    mantiq: { bel: "miya", nom: t("bolimMantiq"), izoh: t("bolimMantiqIzoh", { n: mantiqMavzular().length }), yol: yolMantiq() },
-    sessiya: { bel: "bitiruv", nom: t("bolimSessiya"), izoh: t("bolimVariant", { n: SESSIYA_VARIANTLAR }), yol: yolSessiya() },
-  };
-  const bolimlar = bolimRoyxati(prof).map((b) => KARTA[b]);
-  const bolimTori = (
-    <section aria-label={t("bolimSarlavha")} className="flex flex-col gap-3">
-      <div>
-        <h2 className="font-display text-[20px]">{t("bolimSarlavha")}</h2>
-        <p className="text-[13.5px] text-ink-dim">{t("bolimIzoh")}</p>
-      </div>
-      <div className="grid grid-cols-2 gap-2.5 min-[360px]:gap-3 md:grid-cols-3 md:gap-4">
-        {bolimlar.map((b) => (
-          <button key={b.yol} type="button" onClick={() => onYol(b.yol)} data-tahlil={`Bugun: bo'lim ${b.nom}`}
-            /* Telefonda belgi tepada, yozuv ostida — tor ustunda nom bo'linmasin;
-               kengda yonma-yon (namunadagi "fan" kartasidek). */
-            className="clay-press group flex min-h-[104px] flex-col items-start gap-2 rounded-[20px] bg-karta p-3.5
-                       text-left shadow-clay-sm transition-transform min-[360px]:p-4 md:min-h-[110px] md:flex-row
-                       md:items-center md:gap-3 kom:hover:-translate-y-0.5">
-            <span className="shrink-0 transition-transform kom:group-hover:scale-110">
-              <Hajmli nom={b.bel} olcham={40} />
-            </span>
-            <span className="flex min-w-0 flex-col leading-snug">
-              <span className="font-display text-[15.5px] font-bold min-[360px]:text-[17px]">{b.nom}</span>
-              <span className="text-[12.5px] text-ink-dim min-[360px]:text-[13.5px]">{b.izoh}</span>
-            </span>
-          </button>
-        ))}
-      </div>
     </section>
   );
 
@@ -431,61 +376,31 @@ export function Bosh({
     <div className="[&>*]:mt-0"><Qaytish kun={qaytish(kunlik)} /></div>
   );
 
-  const maslahat = (
-    <aside className="flex items-start gap-3 rounded-[22px] px-4 py-3.5 ring-[1.5px] ring-track ring-inset">
-      <Logo size={30} jonli={false} className="mt-0.5 shrink-0" />
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[12.5px] font-bold text-ink-dim">{t("bugunMaslahat")}</span>
-        <span className="text-[14.5px] leading-[1.45]">
-          {t(`maslahat${yilKuni(bugun) % MASLAHAT_SONI}` as Kalit)}
-        </span>
-      </div>
-    </aside>
-  );
+  /* Tartib: sarlavha → BITTA katta tugmali karta → bugungi reja → hafta.
+     Telefonda ustma-ust, md+ da karta va reja yonma-yon.
 
-  /* Tartib hamma o'lchamda bir xil: sarlavha → hero + reja → bo'limlar →
-     hafta + maslahat. Telefonda ustma-ust, md+ da ikki ustun. */
+     Ilgari bu yerda yana "Bo'limni tanlang" to'ri (9 tagacha karta) va
+     "Aql maslahati" bor edi. Bo'limlar pastki panelda (O'qish, O'yin,
+     Masalalar) takrorlanardi, maslahat esa o'qilmasdi — ikkalasi ham
+     "hozir nima qilay?" degan savolga javobni ko'mib qo'yardi.
+
+     YANGI ODAM (hali hech narsa boshlamagan) faqat katta kartani ko'radi:
+     reja va hafta unga hali ma'nosiz ("sinov — darsdan keyin", bo'm-bo'sh
+     yo'l). Birinchi darsni o'tgach, ular o'z-o'zidan chiqadi. */
+  const yangi = !davom;
   return (
     <div className={`mx-auto flex w-full max-w-[430px] flex-col gap-4 px-3.5 pt-3.5 pb-4 min-[360px]:gap-5
                      min-[360px]:px-[18px] min-[360px]:pt-5 sm:max-w-[560px] md:max-w-[1120px] md:gap-6 md:px-8
                      md:pt-7 ${kompyuter ? "pb-14" : ""}`}>
       {sarlavha}
-      <div className="grid items-stretch gap-4 min-[360px]:gap-5 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] md:gap-6">
-        <AsosiyKarta amal={amal} zanjir={zanjir} ikkinchi={{ nom: t("bolimDarslar"), on: onDarslar }} />
-        {reja}
+      <div className={`grid items-stretch gap-4 min-[360px]:gap-5 md:gap-6 ${
+        yangi ? "" : "md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]"}`}>
+        <AsosiyKarta amal={amal} />
+        {!yangi && reja}
       </div>
       {ogoh}
-      {bolimTori}
-      <div className="grid items-start gap-4 min-[360px]:gap-5 md:grid-cols-2 md:gap-6">
-        {haftaBlok}
-        {maslahat}
-      </div>
+      {!yangi && <div className="md:max-w-[560px]">{haftaBlok}</div>}
     </div>
-  );
-}
-
-/** Halqa: bugungi reja necha foiz bajarilgani. */
-function Halqa({ foiz }: { foiz: number }) {
-  const r = 30, uz = 2 * Math.PI * r;
-  return (
-    <span className="relative grid size-[76px] shrink-0 place-items-center" role="img" aria-label={`${foiz}%`}>
-      <svg viewBox="0 0 72 72" className="absolute inset-0 size-full -rotate-90" aria-hidden>
-        <circle cx="36" cy="36" r={r} fill="none" strokeWidth="7" className="stroke-track" />
-        <circle cx="36" cy="36" r={r} fill="none" strokeWidth="7" strokeLinecap="round"
-          className={foiz === 100 ? "stroke-brand-green" : "stroke-brand-blue"}
-          style={{ strokeDasharray: uz, strokeDashoffset: uz * (1 - foiz / 100), transition: "stroke-dashoffset .6s" }} />
-      </svg>
-      <span className="font-display text-[18px] font-bold">{foiz}%</span>
-    </span>
-  );
-}
-
-function Son({ n, nom }: { n: string; nom: string }) {
-  return (
-    <span className="flex flex-col px-1">
-      <span className="font-display text-[19px] leading-tight font-bold">{n}</span>
-      <span className="truncate text-[12px] text-ink-dim">{nom}</span>
-    </span>
   );
 }
 
@@ -541,6 +456,8 @@ interface Amal {
   /** Bobning kichik yo'li: har dars — o'tilgan / joriy / qolgan. */
   yol?: ("otilgan" | "joriy" | "qolgan")[];
   tugma: string;
+  /** Kartadagi 3D rasm; berilmasa — dars uchun raketa, boshqasiga bitiruv. */
+  belgi?: HajmliNom;
 }
 
 /** Bugungi reja bandlarining holati — "Bugungi qadam" shundan tanlanadi. */
@@ -558,7 +475,7 @@ interface Qadam {
  *
  *   qaytgan odam   → reja bandlaridan BIRINCHI bajarilmagani: dars,
  *                    keyin sinov, keyin kunlik son; hammasi bajarilsa —
- *                    "Yana bitta dars". Ilgari tugma doim keyingi darsni
+ *                    duelga taklif. Ilgari tugma doim keyingi darsni
  *                    ochardi va sinov bilan kunlik sonni bola pastdagi
  *                    ro'yxatdan o'zi topishi kerak edi. Endi u nima
  *                    qilishni o'ylamaydi — faqat bosadi
@@ -570,7 +487,7 @@ interface Qadam {
  *   profil yo'q    → sinf tanlash ("O'rganishni boshlash")
  */
 function asosiyAmal({
-  davom, prof, qadam, progressOf, onDarslar, onMasalalar, onDavom, onKurs, onDaraja, onImtihon, onTestlar,
+  davom, prof, qadam, progressOf, onDarslar, onMasalalar, onDavom, onKurs, onDaraja, onImtihon, onTestlar, onDuel,
 }: {
   davom: ReturnType<typeof davomJoyi>;
   prof: Profil | null;
@@ -583,6 +500,7 @@ function asosiyAmal({
   onDaraja: (c: Course) => void;
   onImtihon: () => void;
   onTestlar: () => void;
+  onDuel: () => void;
 }): Amal {
   if (davom) {
     const U = davom.c.units[davom.ui]!;
@@ -609,13 +527,18 @@ function asosiyAmal({
         izoh: t("bugunSonIzoh", { soat: t("bugunSoat", { n: qolganSoat() }) }), tugma: t("bugunAmalOynash"),
       };
     }
+    // Hammasi bajarildi — duelga chaqiriladi. Ilgari "Yana bitta dars"
+    // edi: bajarilgan rejadan keyin yana darsga undash charchatardi,
+    // do'st bilan bellashuv esa ertaga qaytishga sabab beradi.
     return {
-      ...dars, tahlil: "Bugun: yana bitta dars", yorliq: t("bugunQadamTayyor"),
-      izoh: t("bugunQadamTayyorIzoh"), tugma: t("bugunYanaDars"),
+      tahlil: "Bugun: hammasi bajarildi, duel", on: onDuel, yorliq: t("bugunQadamTayyor"),
+      nom: t("bugunHammasi"), izoh: t("bugunHammasiIzoh"), tugma: t("bugunDuelga"), belgi: "kubok",
     };
   }
   const boshla = (tahlil: string, on: () => void, nom: string, izoh: string): Amal => ({
-    tahlil, on, nom, izoh, yorliq: t("bugunBirinchiQadam"), tugma: t("bugunBoshlash"),
+    // Tugmada qisqa "Boshlash": sarlavha ko'pincha o'zi "O'rganishni
+    // boshlash" va bir xil yozuv ikki marta turardi.
+    tahlil, on, nom, izoh, yorliq: t("bugunBirinchiQadam"), tugma: t("bugunAmalBoshlash"),
   });
   const yol = yolOf(prof);
   const kurs = profilKursi(prof);
@@ -644,22 +567,17 @@ function asosiyAmal({
  * yozilgan. Faqat oq tugma bosiladi: kartaning qolgan qismi o'qish
  * uchun — tasodifan tegib ketilgan barmoq darsni ochib yubormasin.
  */
-function AsosiyKarta({ amal, zanjir, ikkinchi }: {
-  amal: Amal; zanjir: number; ikkinchi: { nom: string; on: () => void };
-}) {
+function AsosiyKarta({ amal }: { amal: Amal }) {
   const otilgan = amal.yol?.filter((h) => h === "otilgan").length ?? 0;
   const jami = amal.yol?.length ?? 0;
-  const belgi: HajmliNom = amal.yol ? "raketa" : "bitiruv";
+  const belgi: HajmliNom = amal.belgi ?? (amal.yol ? "raketa" : "bitiruv");
   return (
-    /* Testmakon uslubidagi hero: karta rangidagi yuza, burchakda ko'k nur,
-       o'ngda katta suzuvchi 3D rasm. Ikki tugma — asosiy (ko'k) va
-       ikkinchi darajali (xira). */
-    <section className="relative flex min-h-[240px] flex-col justify-center gap-3.5 overflow-hidden rounded-[26px] bg-karta
+    /* Bitta tugmali karta. Ilgari yonida ikkinchi "Darslar" tugmasi, ichida
+       zanjir chipi (sarlavhada ham bor edi) va orqada rangli nurlar turardi:
+       odam ikki tugma orasida ikkilanardi. Endi tanlov yo'q — faqat bosish.
+       "Barcha darslar" pastki paneldagi O'qish tabida. */
+    <section className="relative flex min-h-[220px] flex-col justify-center gap-3.5 overflow-hidden rounded-[26px] bg-karta
                         p-5 shadow-clay md:p-7">
-      <span aria-hidden className="pointer-events-none absolute -top-24 -right-16 size-72 rounded-full
-                                   bg-brand-blue/20 blur-3xl" />
-      <span aria-hidden className="pointer-events-none absolute -bottom-24 left-10 size-56 rounded-full
-                                   bg-brand-gold/10 blur-3xl" />
       {/* Rasm o'lchamga qarab BITTA: telefonda burchakda kichik, kengda katta. */}
       <span className="az-suzish pointer-events-none absolute top-4 right-4 md:hidden">
         <Hajmli nom={belgi} olcham={56} jonli />
@@ -667,13 +585,9 @@ function AsosiyKarta({ amal, zanjir, ikkinchi }: {
       <span className="az-suzish pointer-events-none absolute right-8 hidden md:block">
         <Hajmli nom={belgi} olcham={128} jonli />
       </span>
-      <span className="relative flex flex-wrap items-center gap-2 pr-20 md:pr-40">
-        <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-bold ${
-          zanjir ? "bg-brand-gold/15 text-brand-gold-d" : "bg-track text-ink-soft"}`}>
-          <Olov yoniq={zanjir > 0} kichik /> {t("bugunZanjir", { n: zanjir })}
-        </span>
-        {amal.joy && <span className="text-[13px] font-bold text-ink-dim">{amal.joy}</span>}
-      </span>
+      {amal.joy && (
+        <span className="relative pr-20 text-[13px] font-bold text-ink-dim md:pr-40">{amal.joy}</span>
+      )}
       <span className="relative flex flex-col gap-1.5 pr-16 md:pr-40">
         <span className="text-[13px] font-bold text-brand-blue-t">{amal.yorliq}</span>
         <span className="font-display text-[24px] leading-[1.12] font-bold min-[360px]:text-[27px] md:text-[32px]">
@@ -690,19 +604,14 @@ function AsosiyKarta({ amal, zanjir, ikkinchi }: {
           <span className="text-[13px] text-ink-dim">{t("bugunBobYoli", { n: otilgan, jami })}</span>
         </span>
       )}
-      <span className="relative mt-1 flex flex-wrap items-center gap-2.5">
-        <button type="button" onClick={amal.on} data-tahlil={amal.tahlil}
-          className="tugma-3d flex min-h-[52px] items-center gap-2 rounded-[16px] bg-brand-blue px-6 font-display
-                     text-[18px] font-bold text-white shadow-[0_4px_0_var(--color-brand-blue-d),0_12px_24px_-10px_var(--color-brand-blue)]">
-          {amal.tugma}
-          <Icon name="chevron" size={18} />
-        </button>
-        <button type="button" onClick={ikkinchi.on} data-tahlil="Bugun: barcha darslar"
-          className="clay-press flex min-h-[52px] items-center justify-center rounded-[16px] bg-track px-5 text-[15px] font-bold
-                     text-ink-soft hover:text-ink">
-          {ikkinchi.nom}
-        </button>
-      </span>
+      {/* Telefonda tugma butun eni bo'ylab — bosh barmoq uchun eng oson nishon. */}
+      <button type="button" onClick={amal.on} data-tahlil={amal.tahlil}
+        className="tugma-3d relative mt-1 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[16px]
+                   bg-brand-blue px-6 font-display text-[18px] font-bold text-white
+                   shadow-[0_4px_0_var(--color-brand-blue-d),0_12px_24px_-10px_var(--color-brand-blue)] md:w-auto md:self-start">
+        {amal.tugma}
+        <Icon name="chevron" size={18} />
+      </button>
     </section>
   );
 }
