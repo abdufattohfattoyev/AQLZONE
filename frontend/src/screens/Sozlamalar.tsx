@@ -290,8 +290,8 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
           {/* ---- til ----
               Eng yuqorida turadi va bu ataylab: noto'g'ri tilda ochilgan
               ilovada odam boshqa hech narsani o'qiy olmaydi, ya'ni bu
-              tugma uning BIRINCHI ehtiyoji. Almashtirilganda sahifa
-              qayta yuklanadi (`lib/til.ts` ga qarang). */}
+              tugma uning BIRINCHI ehtiyoji. Almashtirilganda ilova joyida
+              qayta chiziladi, sahifa yuklanmaydi (`lib/til.ts` ga qarang). */}
           <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
             style={{ "--az-kech": "40ms" } as React.CSSProperties}>
             <div className="font-display text-[14px]">{t("tilSarlavha")}</div>

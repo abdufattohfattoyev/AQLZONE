@@ -6,12 +6,8 @@
  * komponentdan tashqarida chaqiriladi — hook ularga yetib bormaydi.
  * Shu sabab `til()` istalgan joydan o'qiladi.
  *
- * Til ALMASHGANDA SAHIFA QAYTA YUKLANADI. Bu ataylab: kurslar ro'yxati,
- * bob nomlari va savollar modul yuklanganda bir marta yasaladi, ularni
- * yugurib turgan ilovada birma-bir almashtirish esa albatta biror joyda
- * eski matn qoldiradi. Qayta yuklash — bir soniyalik narx, evaziga
- * ekranda ikki til aralashib qolmaydi. Profil almashtirish ham xuddi
- * shu yo'ldan boradi (`screens/Profillar.tsx`).
+ * Ilgari til almashganda sahifa qayta yuklanardi. 2026-10-08 dan
+ * yuklanmaydi: ilova joyida qayta chiziladi (`tilniQoy` izohi).
  */
 export type Til = "uz" | "ru";
 
@@ -61,11 +57,29 @@ export const til = (): Til => joriy;
 /** Foydalanuvchi tilni o'zi tanlaganmi (yoki taxmin ishlatilyaptimi). */
 export const tilTanlangan = (): boolean => saqlangan() !== null;
 
+const tinglovchilar = new Set<() => void>();
+
+/** Til o'zgarishiga obuna (`useTil`). */
+export function tilgaObuna(f: () => void): () => void {
+  tinglovchilar.add(f);
+  return () => { tinglovchilar.delete(f); };
+}
+
 /**
- * Tilni almashtiradi.
+ * Tilni almashtiradi — SAHIFA QAYTA YUKLANMAYDI.
  *
- * `qaytaYukla` faqat ilk tanlovda `false` bo'ladi: o'sha payt ekranda
- * hali hech narsa yo'q va yuklashning ma'nosi yo'q.
+ * Ilgari har almashishda `location.reload()` bo'lardi: odam ekran
+ * oqarib, qaytadan yuklanishini ko'rardi. Endi obunachilarga xabar
+ * beriladi va `main.tsx` dagi `TilQobiq` ilovani joyida yangi tilda
+ * qayta chizadi. Kurslar va savollar ikki tilni birga saqlaydi va
+ * `kursMatn`/`t` bilan CHIZISH paytida tarjima qilinadi, shuning uchun
+ * qayta chizish yetadi. Modul darajasida bir marta hisoblanadigan
+ * nomlar bo'lsa, ular getter yoki funksiya bo'lishi kerak
+ * (`masalaSinf.ts` → TOIFALAR, `qidiruv.ts` → indeks keshi).
+ *
+ * Bitta istisno qayta yuklaydi: ruscha manzildan (`/ru/...`)
+ * o'zbekchaga. U yerda `/ru` marshrutning asosi (`main.tsx` →
+ * ASOS_YOL) va u faqat sahifa ochilganda o'qiladi.
  */
 export function tilniQoy(t: Til, qaytaYukla = true): void {
   const ozgardi = t !== joriy;
@@ -77,15 +91,12 @@ export function tilniQoy(t: Til, qaytaYukla = true): void {
   }
   document.documentElement.lang = t;
   if (!qaytaYukla || !ozgardi) return;
-  // Ruscha manzildan (`/ru/...`) o'zbekchaga o'tilsa — manzil ham
-  // o'zbekchasiga. Aks holda `index.html` sahifa yuklanishida tilni yana
-  // ruschaga qaytarib qo'yardi.
   const p = window.location.pathname;
   if (t === "uz" && /^\/ru(\/|$)/.test(p)) {
     window.location.replace((p.slice(3) || "/") + window.location.search + window.location.hash);
     return;
   }
-  window.location.reload();
+  tinglovchilar.forEach((f) => f());
 }
 
 /**
@@ -98,27 +109,23 @@ export function tilniQoy(t: Til, qaytaYukla = true): void {
  * o'zbekcha, boshqa joyda ruscha bo'lishi tushuntirib bo'lmaydigan
  * narsa.
  *
- * Saqlash reload'dan OLDIN kutiladi, aks holda sahifa yangilanishi
- * so'rovni yarim yo'lda uzib qo'yardi. Lekin ko'pi bilan bir yarim
- * soniya: sekin tarmoq tufayli til almashmay turishi — bundan ancha
- * yomon. Yetib bormasa ham falokat emas: ilova keyingi ochilishida
- * `Tanishuv` farqni ko'rib qayta yuboradi.
+ * Til DARHOL almashadi, saqlash orqada ketadi. Ilgari saqlash kutilardi,
+ * chunki sahifa qayta yuklanib so'rovni uzib qo'yardi; endi qayta
+ * yuklash yo'q. Yetib bormasa ham falokat emas: ilova keyingi
+ * ochilishida `Tanishuv` farqni ko'rib qayta yuboradi.
  *
  * `api` DINAMIK yuklanadi: `api` → `matn` → `til` zanjiri allaqachon
  * bor va to'g'ridan-to'g'ri import halqa yasagan bo'lardi.
  */
 export async function tilniAlmashtir(t: Til): Promise<void> {
   if (t === joriy) return;
+  tilniQoy(t);
   try {
     const { tilniSaqla } = await import("./api");
-    await Promise.race([
-      tilniSaqla(t),
-      new Promise((bajar) => setTimeout(bajar, 1500)),
-    ]);
+    await tilniSaqla(t);
   } catch {
-    /* tarmoq yo'q — til baribir almashadi */
+    /* tarmoq yo'q — til baribir almashdi */
   }
-  tilniQoy(t);
 }
 
 /**

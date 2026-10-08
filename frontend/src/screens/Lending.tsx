@@ -27,7 +27,7 @@ import { COURSES, lessonCount } from "../lib/curriculum";
 import { OYINLAR } from "../lib/oyin";
 import { blokBormi, sinfOf } from "../lib/blok";
 import { botHavolasi, botNomi } from "../lib/api";
-import { TILLAR, til, tilniQoy } from "../lib/til";
+import { TILLAR, til, tilniAlmashtir } from "../lib/til";
 import { aniqla, obuna, yoruglikniOqi, yoruglikniQoy } from "../lib/yoruglik";
 import { useTahlil } from "../lib/tahlil";
 import { t } from "../lib/matn";
@@ -138,13 +138,13 @@ function Tepa({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
   );
 }
 
-/** UZ / RU. Tanlov sahifani qayta yuklaydi (`lib/til.ts` izohi). */
+/** UZ / RU. Sahifa qayta yuklanmaydi — joyida yangi tilda chiziladi. */
 function TilTugma() {
   const joriy = til();
   return (
     <div className="flex h-10 items-center rounded-xl bg-track p-1" role="group" aria-label="Til / Язык">
       {TILLAR.map((x) => (
-        <button key={x.kod} type="button" onClick={() => tilniQoy(x.kod)}
+        <button key={x.kod} type="button" onClick={() => void tilniAlmashtir(x.kod)}
           aria-pressed={x.kod === joriy} data-tahlil={`Tanishuv: til ${x.kod}`}
           className={`h-8 rounded-lg px-2.5 font-display text-[13px] ${
             x.kod === joriy ? "bg-karta text-ink shadow-clay-sm" : "text-ink-dim hover:text-ink"}`}>

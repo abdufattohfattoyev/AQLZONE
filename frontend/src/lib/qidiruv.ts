@@ -177,10 +177,13 @@ function darsNomi(n: string): [string, string] {
 }
 
 let keshlangan: Natija[] | null = null;
+/** Kesh qaysi tilda yasalgan — til sahifa yangilanmasdan almashadi (`lib/til.ts`). */
+let keshTili = "";
 
 /** Indeks. Birinchi chaqiruvda yasaladi, keyin o'sha nusxa qaytadi. */
 export function indeks(): Natija[] {
-  if (keshlangan) return keshlangan;
+  if (keshlangan && keshTili === til()) return keshlangan;
+  keshTili = til();
   const r: Natija[] = [];
   const ru = til() === "ru";
 

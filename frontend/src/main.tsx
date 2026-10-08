@@ -1,4 +1,5 @@
-import { StrictMode } from "react";
+import { Fragment, StrictMode, useEffect, useSyncExternalStore } from "react";
+import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, HashRouter } from "react-router-dom";
 import "./index.css";
@@ -12,7 +13,7 @@ import { Kanal } from "./components/Kanal";
 import { DuelTaklifOyna } from "./components/DuelTaklifOyna";
 import { ProgressProvider } from "./lib/progress";
 import { t } from "./lib/matn";
-import { tilniUlash } from "./lib/til";
+import { til, tilgaObuna, tilniUlash } from "./lib/til";
 import { qobiqniUlash } from "./lib/qobiq";
 import { maketniUlash } from "./lib/maket";
 import { qolla as yoruglikniQolla, tizimniKuzat } from "./lib/yoruglik";
@@ -85,6 +86,23 @@ const Router = import.meta.env.VITE_ROUTER === "hash" ? HashRouter : BrowserRout
  */
 const ASOS_YOL = import.meta.env.VITE_ROUTER !== "hash" && /^\/ru(\/|$)/.test(location.pathname) ? "/ru" : undefined;
 
+/**
+ * Til almashganda ilovani JOYIDA qayta chizadi — sahifa yangilanmaydi.
+ *
+ * `key` til bo'yicha: React ichidagi hamma narsa (shu jumladan bir marta
+ * hisoblanib `useMemo` da turgan ro'yxatlar) yangi tilda qayta yasaladi.
+ * `ProgressProvider` va `Router` TASHQARIDA qoladi: progress xotirada
+ * turadi va serverga yozilishi kutilayotgan bo'lishi mumkin, manzil esa
+ * o'zgarmasligi kerak — odam qaysi ekranda bo'lsa, o'sha yerda qoladi.
+ */
+function TilQobiq({ children }: { children: ReactNode }) {
+  const joriy = useSyncExternalStore(tilgaObuna, til);
+  useEffect(() => {
+    if (!document.getElementById("az-seo")) document.title = t("shior");
+  }, [joriy]);
+  return <Fragment key={joriy}>{children}</Fragment>;
+}
+
 // Faqat server sahifasi (ko'paytirish jadvali, formulalar bo'limi) —
 // ilovada ekrani yo'q. React ulansa, u o'rniga "topilmadi" chizardi.
 if (!document.documentElement.dataset.statik) createRoot(document.getElementById("root")!).render(
@@ -95,6 +113,7 @@ if (!document.documentElement.dataset.statik) createRoot(document.getElementById
     <XatoUshlagich qayer="ilova">
       <Router basename={ASOS_YOL}>
         <ProgressProvider>
+          <TilQobiq>
           {/* Chaqiruv havolasidan kelgan kod ENG BIRINCHI o'qiladi —
               `Tanishuv` dan ham oldin. U til so'ralayotgan paytda
               ilovani umuman chizmaydi va kod yo'qolib ketardi. */}
@@ -112,6 +131,7 @@ if (!document.documentElement.dataset.statik) createRoot(document.getElementById
             <DuelTaklifOyna />
           </Tanishuv>
           <Holat />
+          </TilQobiq>
         </ProgressProvider>
       </Router>
     </XatoUshlagich>

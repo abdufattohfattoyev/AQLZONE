@@ -47,10 +47,13 @@ export interface Toifa {
  * o'n oltita sinfning ostida qolsa, ularni faqat oxirigacha surgan
  * odam ko'rardi — ya'ni deyarli hech kim.
  */
+//
+// `nom` — GETTER: til sahifa yangilanmasdan almashadi (`lib/til.ts`),
+// modul yuklanganda bir marta yozilgan nom esa eski tilda qolib ketardi.
 export const TOIFALAR: Toifa[] = [
-  { kod: KATTALAR, nom: t("masalaKattalar"), kursdan: false },
-  { kod: OLIMPIADA, nom: t("masalaOlimpiada"), kursdan: false },
-  ...COURSES.filter(maktabKursi).map((c) => ({ kod: c.grade, nom: sinfMatn(c.grade), kursdan: true })),
+  { kod: KATTALAR, get nom() { return t("masalaKattalar"); }, kursdan: false },
+  { kod: OLIMPIADA, get nom() { return t("masalaOlimpiada"); }, kursdan: false },
+  ...COURSES.filter(maktabKursi).map((c) => ({ kod: c.grade, get nom() { return sinfMatn(c.grade); }, kursdan: true })),
 ];
 
 /** Faqat sinflar — filtr ro'yxatida ishlatiladi. */
