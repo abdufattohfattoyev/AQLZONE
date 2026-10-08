@@ -9220,6 +9220,9 @@ class SeoTest(TestCase):
             "/kurs/x/1-bob/1-dars": {"sarlavha": "D", "tavsif": "D", "h1": "D", "matn": [], "havolalar": [], "ld": [],
                                      "misollar": [{"s": "Hisobla", "k": "2 + 3", "v": [4, 5], "j": 5, "y": ["2 + 3 = 5"],
                                                    "jt": "Javob"}],
+                                     # `muhim` — sitemapga tushishi uchun: dars
+                                     # `sitemap-darslar.xml` bo'limini sinaydi.
+                                     "muhim": 0.6,
                                      "muqobil": {"uz": "/kurs/x/1-bob/1-dars", "ru": "/ru/kurs/x/1-bob/1-dars"}},
             "/ru/kurs/x/1-bob/1-dars": {"sarlavha": "Д", "tavsif": "Д", "h1": "Д", "matn": [], "havolalar": [],
                                         "ld": [], "til": "ru",
@@ -9306,16 +9309,45 @@ class SeoTest(TestCase):
         self.assertIn("6-sinf", h)
         self.assertNotIn("YASHIRIN", h)
 
-    def test_sitemap_va_robots(self):
+    def test_sitemap_indeksi_bolimlarga_boladi(self):
+        """`/sitemap.xml` — indeks: har bo'lim alohida faylda.
+
+        Bo'lib berish Search Console uchun: bitta faylda "2000 dan 1200 tasi
+        indekslangan" deb yoziladi va qaysi bo'lim tushmagani ko'rinmaydi.
+        """
+        x = self.client.get("/sitemap.xml").content.decode()
+        self.assertIn("<sitemapindex", x)
+        for bolim in ("asosiy", "darslar", "lugat", "masalalar"):
+            self.assertIn(f"<loc>https://aql-zone.uz/sitemap-{bolim}.xml</loc>", x)
+        # Manzillarning o'zi indeksda EMAS — faqat bo'limlarga havola.
+        self.assertNotIn("/imtihon", x)
+
+    def test_sitemap_bolimlari(self):
         m = Masala.objects.create(muallif=Pupil.objects.create(first_name="B").asosiy_profil(), sinf=5,
                                   matn="2+2?", javob="4", holat=Masala.TASDIQ)
-        x = self.client.get("/sitemap.xml").content.decode()
-        self.assertIn("<loc>https://aql-zone.uz/imtihon</loc>", x)
-        self.assertIn(f"<loc>https://aql-zone.uz/masalalar/{m.pk}</loc>", x)
-        self.assertNotIn("formulalar", x)
+        asosiy = self.client.get("/sitemap-asosiy.xml").content.decode()
+        self.assertIn("<loc>https://aql-zone.uz/imtihon</loc>", asosiy)
+        self.assertIn("<lastmod>", asosiy)
+        # Kanonik nusxa sitemapga tushmaydi — Google uni asosiysining
+        # takrori deb biladi, ya'ni yuborish faqat chalkashtiradi.
+        self.assertNotIn("formulalar", asosiy)
+        # Dars `/kurs/...` bo'limida, asosiyda emas.
+        self.assertNotIn("1-bob", asosiy)
+
+        darslar = self.client.get("/sitemap-darslar.xml").content.decode()
+        self.assertIn("<loc>https://aql-zone.uz/kurs/x/1-bob/1-dars</loc>", darslar)
+
+        masalalar = self.client.get("/sitemap-masalalar.xml").content.decode()
+        self.assertIn(f"<loc>https://aql-zone.uz/masalalar/{m.pk}</loc>", masalalar)
+
+        self.assertEqual(self.client.get("/sitemap-yoq.xml").status_code, 404)
+
+    def test_robots(self):
         r = self.client.get("/robots.txt").content.decode()
         self.assertIn("Sitemap: https://aql-zone.uz/sitemap.xml", r)
         self.assertIn("Disallow: /api/", r)
+        # Qidiruv sahifasi `?s=` bilan cheksiz ko'p manzil beradi.
+        self.assertIn("Disallow: /qidiruv", r)
 
 
 @override_settings(KANAL="AqlZoneUz", BOT_TOKEN=BOT, ADMIN_TG=["1"])
