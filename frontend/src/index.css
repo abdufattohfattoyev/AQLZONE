@@ -20,7 +20,7 @@
                             ko'l aksi. Shishasimon kartalar.
 
    2026-09: RANGLAR endi hamma temada bir xil (yorug' — sovuq neytral,
-   qorong'i — sokin slate, asosiy ko'k #4677ef). Temalar faqat shakl va
+   qorong'i — sokin slate, asosiy firuza #17b3c1). Temalar faqat shakl va
    kayfiyatda farq qiladi: burchak radiusi, soya qalinligi, fon bezagi.
 
    Buning sababi oddiy: 4-sinf o'quvchisi "kichkinalar o'yini" ni yoqtirmaydi,
@@ -57,20 +57,28 @@
      yo'qolardi. Eski nomlar (`brand-purple`, `brand-orange`) o'chirilmadi:
      ular yuzlab joyda ishlatiladi. Ular endi uchtadan biriga TENG —
      binafsha → ko'k, to'q sariq → oltin. */
-  /* 2026-09: ko'k sal ochroq va yorqinroq (#3b6fe0 → #4677ef) — zamonaviyroq.
-     Oq yozuv bilan kontrast ~4.2: yirik (≥18px qalin) tugma yozuviga yetadi. */
-  --color-brand-blue: #4677ef;
-  --color-brand-blue-d: #3360d4;
-  --color-brand-green: #22b06b;
-  --color-brand-green-d: #1a8a53;
-  --color-brand-gold: #f5b301;
-  --color-brand-gold-d: #d09400;
+  /* 2026-10-08: asosiy rang FIRUZA (#17b3c1) — foydalanuvchi bergan
+     palitra (--ic). Ilgari ko'k edi (#3b6fe0 → #4677ef). Token NOMLARI
+     o'zgarmadi (`brand-blue` yuzlab joyda ishlatiladi) — faqat qiymati:
+     "blue" endi "asosiy rang" degani.
+       asosiy   #17b3c1   to'q (hover, matn) #0e8f9b
+       yashil   #16a34a   (to'langan / to'g'ri)
+       mukofot  #d97706   amber (palitrada "qisman"; tanga, yulduz)
+       qizil    #ef4444   (xato / bekor)
+     Firuza och rang: oq yozuv uning ustida faqat YIRIK qalin matnda
+     o'qiladi — kichik matn uchun to'q firuza (`brand-blue-d`) ishlatiladi. */
+  --color-brand-blue: #17b3c1;
+  --color-brand-blue-d: #0e8f9b;
+  --color-brand-green: #16a34a;
+  --color-brand-green-d: #15803d;
+  --color-brand-gold: #d97706;
+  --color-brand-gold-d: #b45309;
 
-  --color-brand-purple: #4677ef;
-  --color-brand-purple-d: #3360d4;
-  --color-brand-orange: #f5b301;
-  --color-brand-orange-d: #d09400;
-  --color-brand-red: #e5484d;
+  --color-brand-purple: #17b3c1;
+  --color-brand-purple-d: #0e8f9b;
+  --color-brand-orange: #d97706;
+  --color-brand-orange-d: #b45309;
+  --color-brand-red: #ef4444;
   /* Ko'k YOZUV — tanlangan tab, "Almashtirish" kabi ikkinchi darajali
      havola. Yorug' fonda to'q ko'k (`brand-blue-d`), qora rejimda esa
      to'q ko'k quyuq kartada o'qilmasdi (kontrast ~2) — u yerda och
@@ -83,13 +91,13 @@
   --color-yol: rgb(20 30 60 / 0.1); /* dars yo'li */
   --color-yol-chiziq: rgb(255 255 255 / 0.5);
 
-  --color-ink: #172033;
-  --color-ink-soft: #465068;
+  --color-ink: #1f2937;
+  --color-ink-soft: #4b5563;
   /* Xira matn kartadagi "6 dars" kabi yozuvlar uchun — oq kartada
      kontrast ~5.6 (kichik matn uchun kerakli 4.5 dan yuqori). */
-  --color-ink-dim: #5b6680;
-  --color-clay: #d5dcea;             /* 3D soyaning rangi */
-  --color-locked: #c3cad8;
+  --color-ink-dim: #64707d;
+  --color-clay: #d0e1e4;             /* 3D soyaning rangi */
+  --color-locked: #c2d2d5;
   --color-sahna: #ffffff;            /* savol turadigan maydon */
 
   --radius-clay: 26px;
@@ -177,20 +185,20 @@
    va yashil yumshoq nurlar — logoning o'z ranglari. Qorong'i kayfiyat
    "katta" temada (2–4-sinf) qoldi, u yerda u o'rinli. */
 :root[data-tema="bosh"] {
-  --az-body: #f3f5f9;
+  --az-body: #f2f7f8;
 
   --color-karta: #ffffff;
   --color-track: rgb(20 30 60 / 0.08);
   --color-yol: rgb(20 30 60 / 0.1);
   --color-yol-chiziq: rgb(255 255 255 / 0.65);
 
-  --color-ink: #172033;
-  --color-ink-soft: #465068;
+  --color-ink: #1f2937;
+  --color-ink-soft: #4b5563;
   /* Xira matn ham O'QILADIGAN bo'lishi shart: kurs tavsifi shu rangda va
-     o'lchami 12.5px. #5b6680 oq kartada ~5.6 kontrast beradi. */
-  --color-ink-dim: #5b6680;
-  --color-clay: #d5dcea;             /* 3D soyaning rangi */
-  --color-locked: #c3cad8;
+     o'lchami 12.5px. #64707d oq kartada ~5 kontrast beradi. */
+  --color-ink-dim: #64707d;
+  --color-clay: #d0e1e4;             /* 3D soyaning rangi */
+  --color-locked: #c2d2d5;
   --color-sahna: #ffffff;
 
   --az-soya: inset 0 0 0 1px rgb(20 30 60 / 0.06), 0 4px 0 var(--color-clay), 0 18px 34px -14px rgb(20 30 60 / 0.22);
@@ -201,8 +209,8 @@
   --az-soya-node: 0 6px 0 rgb(163 183 224 / 0.8), 0 14px 26px rgb(30 50 110 / 0.18);
   --radius-clay: 24px;
 
-  --az-maqsad-1: #e0e8fd;
-  --az-maqsad-2: #cfdcfb;
+  --az-maqsad-1: #e3f6f8;
+  --az-maqsad-2: #c8ecf1;
 }
 
 /* ---------------- 1-sinf: yumshoq, katta ----------------
@@ -210,19 +218,19 @@
    edi va kichkintoy kurslari boshqa ilovadek ko'rinardi). Farqi faqat
    shaklda qoldi: kattaroq burchak va qalinroq "o'yinchoq" soya. */
 :root[data-tema="bolalar"] {
-  --az-body: #f3f5f9;
+  --az-body: #f2f7f8;
   --color-karta: #ffffff;
   --color-track: rgb(20 30 60 / 0.08);
   --color-yol: rgb(20 30 60 / 0.1);
   --color-yol-chiziq: rgb(255 255 255 / 0.55);
 
-  --color-ink: #172033;
-  --color-ink-soft: #465068;
+  --color-ink: #1f2937;
+  --color-ink-soft: #4b5563;
   /* Xira matn kartadagi "6 dars" kabi yozuvlar uchun — oq kartada
      kontrast ~5.6 (kichik matn uchun kerakli 4.5 dan yuqori). */
-  --color-ink-dim: #5b6680;
-  --color-clay: #d5dcea;
-  --color-locked: #c3cad8;
+  --color-ink-dim: #64707d;
+  --color-clay: #d0e1e4;
+  --color-locked: #c2d2d5;
   /* Savol maydoni ham oq — butun loyihadagidek. */
   --color-sahna: #ffffff;
 
@@ -233,8 +241,8 @@
   --az-ichki: inset 0 2px 4px rgb(20 30 60 / 0.12);
   --radius-clay: 32px;
 
-  --az-maqsad-1: #e0e8fd;
-  --az-maqsad-2: #cfdcfb;
+  --az-maqsad-1: #e3f6f8;
+  --az-maqsad-2: #c8ecf1;
 }
 
 /* ---------------- 2–4-sinf: chuqur ko'k, shishasimon ---------------- */
@@ -260,8 +268,8 @@
   --az-soya-node: 0 6px 0 rgb(0 0 0 / 0.4), 0 14px 26px rgb(0 0 0 / 0.4);
   --radius-clay: 20px;
 
-  --az-maqsad-1: #3a2f66;
-  --az-maqsad-2: #2a2350;
+  --az-maqsad-1: #134a52;
+  --az-maqsad-2: #0f3a41;
 }
 
 @layer base {
@@ -330,7 +338,7 @@
 
 :root[data-tema][data-yoruglik="oq"] {
   --color-brand-blue-t: var(--color-brand-blue-d);
-  --az-body: #f3f5f9;
+  --az-body: #f2f7f8;
 
   --color-karta: #ffffff;
   --color-sahna: #ffffff;
@@ -338,13 +346,13 @@
   --color-yol: rgb(20 30 60 / 0.1);
   --color-yol-chiziq: rgb(255 255 255 / 0.65);
 
-  --color-ink: #172033;
-  --color-ink-soft: #465068;
+  --color-ink: #1f2937;
+  --color-ink-soft: #4b5563;
   /* Xira matn ham O'QILADIGAN bo'lishi shart: kurs tavsifi shu rangda
-     va o'lchami 12,5px. #5b6680 oq kartada ~5.6 kontrast beradi. */
-  --color-ink-dim: #5b6680;
-  --color-clay: #d5dcea;
-  --color-locked: #c3cad8;
+     va o'lchami 12.5px. #64707d oq kartada ~5 kontrast beradi. */
+  --color-ink-dim: #64707d;
+  --color-clay: #d0e1e4;
+  --color-locked: #c2d2d5;
 
   --az-soya: inset 0 0 0 1px rgb(20 30 60 / 0.06), 0 5px 0 var(--color-clay), 0 14px 28px -12px rgb(20 30 60 / 0.24);
   --az-soya-sm: inset 0 0 0 1px rgb(20 30 60 / 0.06), 0 3px 0 var(--color-clay), 0 9px 18px -10px rgb(20 30 60 / 0.2);
@@ -352,8 +360,8 @@
   /* Oq kartada quyuq o'yiq iflos ko'rinadi — ko'kimtir va yengil. */
   --az-ichki: inset 0 2px 5px rgb(26 40 90 / 0.16);
 
-  --az-maqsad-1: #e0e8fd;
-  --az-maqsad-2: #cfdcfb;
+  --az-maqsad-1: #e3f6f8;
+  --az-maqsad-2: #c8ecf1;
 }
 
 /* Qavariq chekka va panel soyasi — oq yuzada yumshoqroq bo'lishi kerak.
@@ -402,8 +410,8 @@
      och soya qolib, o'yiq umuman ko'rinmasdi. */
   --az-ichki: inset 0 2px 4px rgb(0 0 0 / 0.35);
 
-  --az-maqsad-1: #3a2f66;
-  --az-maqsad-2: #2a2350;
+  --az-maqsad-1: #134a52;
+  --az-maqsad-2: #0f3a41;
 }
 :root[data-tema][data-yoruglik="qora"] .az-qavariq::after {
   box-shadow:
@@ -420,15 +428,9 @@
   filter: saturate(1.05) opacity(1) drop-shadow(0 0 6px rgb(255 255 255 / 0.14));
 }
 :root[data-tema][data-yoruglik="qora"] .az-logo       { --az-logo-nur-korin: 1; }
-:root[data-tema][data-yoruglik="qora"] .az-l-tund     { fill: #5a7fe0; }
-:root[data-tema][data-yoruglik="qora"] .az-l-tund-s   { stroke: #6f92ee; }
-:root[data-tema][data-yoruglik="qora"] .az-l-shapka-a { stop-color: #7ea3f5; }
-:root[data-tema][data-yoruglik="qora"] .az-l-shapka-b { stop-color: #3f63c8; }
-:root[data-tema][data-yoruglik="qora"] .az-l-kitob-a  { stop-color: #5b86e8; }
-:root[data-tema][data-yoruglik="qora"] .az-l-kitob-b  { stop-color: #4a72cf; }
-:root[data-tema][data-yoruglik="qora"] .az-l-yozuv    { fill: #dfe8ff; }
-:root[data-tema][data-yoruglik="qora"] .az-l-shior    { fill: #9fb8f0; }
-:root[data-tema][data-yoruglik="qora"] .az-l-shior-s  { stroke: #9fb8f0; }
+:root[data-tema][data-yoruglik="qora"] .az-l-yozuv    { fill: #e3f6f8; }
+:root[data-tema][data-yoruglik="qora"] .az-l-shior    { fill: #7fd6df; }
+:root[data-tema][data-yoruglik="qora"] .az-l-shior-s  { stroke: #7fd6df; }
 
 /* ============================================================
    MANZARA USTIDAGI YUZALAR
@@ -1149,11 +1151,12 @@
 
    Ikki ish qiladi:
 
-   1) TEMAGA MOSLASH. Logoning shapka, kitob va "Aql" qismlari to'q ko'k.
-      Oq fonda bu kuchli, lekin "bosh" va "katta" temalarning qorong'i
-      fonida belgi fonga singib ketardi — shuning uchun o'sha temalarda
-      to'q ranglar ochroqqa ko'chadi va orqasida yumshoq nur yoqiladi.
-      Nur ATAYLAB faqat qorong'ida: oq fonda u kir dog'dek ko'rinadi.
+   1) TEMAGA MOSLASH. Belgi 2026-10-08 dan o'z firuza plitkasi bilan keladi,
+      shuning uchun uning qismlarini qayta bo'yash shart emas (ilgari
+      to'q ko'k shapka va kitob qorong'i fonga singib ketardi). Faqat
+      to'liq variantdagi "Aql" yozuvi va shior qorong'ida ochroq bo'ladi,
+      plitka orqasida esa yumshoq firuza nur yoqiladi. Nur ATAYLAB faqat
+      qorong'ida: oq fonda u kir dog'dek ko'rinadi.
 
    2) JONLANTIRISH. Harakat kichik va sekin: belgi ekranning eng tepasida
       doim turadi, kuchli animatsiya u yerda tez charchatadi.
@@ -1162,51 +1165,27 @@
   overflow: visible;              /* nur belgi chetidan tashqariga chiqadi */
   --az-logo-nur-korin: 0;
 }
-/* Aylanish/kattalashish markazi elementning O'Z chegarasidan olinsin.
-   Bo'lmasa SVG standarti bo'yicha markaz viewBox nuqtasi (0 0) bo'ladi va
-   popuk tebranish o'rniga katta yoy bo'ylab uchib ketadi. */
-.az-logo-popuk, .az-logo-kitob, .az-logo-nur { transform-box: fill-box; }
-.az-logo-nur { opacity: var(--az-logo-nur-korin); transform-origin: center; }
+/* Kattalashish markazi elementning O'Z chegarasidan olinsin — bo'lmasa
+   SVG standarti bo'yicha markaz viewBox nuqtasi (0 0) bo'lardi. */
+.az-logo-nur { transform-box: fill-box; opacity: var(--az-logo-nur-korin); transform-origin: center; }
 
-/* Faqat "katta" temada (2–4-sinf tungi ko'k osmoni) to'q qismlar ochroqqa
-   ko'chadi va orqasida nur yoqiladi. "bosh" va "bolalar" yorug' — u yerda
-   logo o'zining standart to'q ko'k ranglarida qoladi.
-
+/* "katta" temada (2–4-sinf tungi ko'k osmoni) yozuv ochroq, orqada nur.
    Ranglar ATAYLAB CSS qoidasida, SVG atributida emas — brauzer prezentatsiya
    atributi ichidagi `var()` ni almashtirmaydi. */
 :root[data-tema="katta"] .az-logo       { --az-logo-nur-korin: 1; }
-:root[data-tema="katta"] .az-l-tund     { fill: #5a7fe0; }          /* shapka tagligi, popuk */
-:root[data-tema="katta"] .az-l-tund-s   { stroke: #6f92ee; }        /* popuk ipi */
-:root[data-tema="katta"] .az-l-shapka-a { stop-color: #7ea3f5; }
-:root[data-tema="katta"] .az-l-shapka-b { stop-color: #3f63c8; }
-:root[data-tema="katta"] .az-l-kitob-a  { stop-color: #5b86e8; }
-/* Kitob o'rtasi — eng to'q nuqta. #35569f da tungi fonga nisbatan kontrast
-   2.58 edi, grafik element uchun kerakli 3:1 dan past. */
-:root[data-tema="katta"] .az-l-kitob-b  { stop-color: #4a72cf; }
-/* "Aql" oqqa yaqin — "Zone" allaqachon yorqin ko'k-yashil */
-:root[data-tema="katta"] .az-l-yozuv    { fill: #dfe8ff; }
-:root[data-tema="katta"] .az-l-shior    { fill: #9fb8f0; }
-:root[data-tema="katta"] .az-l-shior-s  { stroke: #9fb8f0; }
+:root[data-tema="katta"] .az-l-yozuv    { fill: #e3f6f8; }
+:root[data-tema="katta"] .az-l-shior    { fill: #7fd6df; }
+:root[data-tema="katta"] .az-l-shior-s  { stroke: #7fd6df; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* Belgi butunligicha sekin suzadi.
-     Diqqat: bu ICHKI guruh. Tashqi guruhda `transform="translate(120 6)"`
+     Diqqat: bu ICHKI guruh. Tashqi guruhda `transform="translate(120 4)"`
      atributi turibdi, CSS transform esa uni butunlay almashtirar edi —
      belgi to'liq variantda burchakka sakrab chiqib ketardi. */
   .az-logo-jonli .az-logo-belgi {
     animation: az-logo-suz 4.6s ease-in-out infinite;
   }
-  /* Popuk ipining boshidan tebranadi */
-  .az-logo-jonli .az-logo-popuk {
-    transform-origin: top center;
-    animation: az-logo-popuk 3.1s ease-in-out infinite;
-  }
-  /* Kitob sahifalari nafas oladi — pastki chekkasi joyida qoladi */
-  .az-logo-jonli .az-logo-kitob {
-    transform-origin: 50% 100%;
-    animation: az-logo-nafas 4.6s ease-in-out infinite;
-  }
-  /* "A" ustidan vaqti-vaqti bilan yorug'lik o'tadi */
+  /* Plitka ustidan vaqti-vaqti bilan yorug'lik o'tadi */
   .az-logo-jonli .az-logo-yaltir {
     transform-box: view-box;
     animation: az-logo-yaltir 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -1217,8 +1196,6 @@
 }
 
 @keyframes az-logo-suz   { 50% { transform: translateY(-5px); } }
-@keyframes az-logo-popuk { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
-@keyframes az-logo-nafas { 50% { transform: scaleY(1.07); } }
 @keyframes az-logo-nur   { 50% { transform: scale(1.07); opacity: calc(var(--az-logo-nur-korin) * 0.72); } }
 @keyframes az-logo-yaltir {
   0%, 62%   { transform: skewX(-14deg) translateX(0); }

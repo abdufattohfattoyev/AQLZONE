@@ -120,8 +120,8 @@ shuning uchun tashqi fayl ishlatmaydi.
 
 ## Ikonka
 
-`tools/ikonka.py` PNG larni `frontend/public/logo.svg` dagi
-yo'llardan chizadi. Logo o'zgarganda:
+`tools/ikonka.py` PNG larni `backend/core/tamga.py` → `_belgi()` bilan
+chizadi (u `frontend/public/logo.svg` ning PIL nusxasi). Logo o'zgarganda:
 
 ```bash
 cd apk && python tools/ikonka.py
@@ -134,7 +134,8 @@ Ikki nusxa bor va ikkalasi ham kerak:
 * `res/mipmap-*/ic_launcher.png` — Android 7 uchun (u vektorni ikonka
   sifatida qabul qilmaydi).
 
-`tools/dokon-512.png` — Play Store sahifasi uchun.
+`tools/dokon-512.png` — Play Store sahifasi uchun (chetigacha to'liq fon,
+shaffofliksiz — `frontend/public/logo-maskable-512.png` nusxasi).
 
 ---
 

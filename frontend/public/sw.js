@@ -29,7 +29,9 @@
 
 // v3: /api/v1/ovoz keshlanadigan bo'ldi. Raqam oshmasa eski kesh
 // qoidalari bilan ishlab, ovoz fayllari saqlanmasdi.
-const VERSIYA = "az-v3";
+// v4 (2026-10-08): yangi logo (firuza "AZ") — eski favicon va ikonka
+// keshdan tozalanmasa, telefonda eski logo qolib ketardi.
+const VERSIYA = "az-v4";
 const QOBIQ = `${VERSIYA}-qobiq`;
 
 /** Ilova ochilishi uchun eng zarur fayllar. */

@@ -105,12 +105,12 @@ export const UNIT_COLORS: Record<UnitColor, { bg: string; ring: string; road: st
   // Qat'iy uch rang (`index.css` dagi izoh): binafsha va qizil bob
   // ko'kka, to'q sariq oltinga teng. Nomlar kurs dasturida yozilgan,
   // shuning uchun ular qoladi — faqat rangi uchtadan biri.
-  green:  { bg: "bg-brand-green",  ring: "text-brand-green",  road: "#22b06b" },
-  blue:   { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#4677ef" },
-  orange: { bg: "bg-brand-gold",   ring: "text-brand-gold",   road: "#f5b301" },
-  purple: { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#4677ef" },
-  red:    { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#4677ef" },
-  gold:   { bg: "bg-brand-gold",   ring: "text-brand-gold",   road: "#f5b301" },
+  green:  { bg: "bg-brand-green",  ring: "text-brand-green",  road: "#16a34a" },
+  blue:   { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#17b3c1" },
+  orange: { bg: "bg-brand-gold",   ring: "text-brand-gold",   road: "#d97706" },
+  purple: { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#17b3c1" },
+  red:    { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#17b3c1" },
+  gold:   { bg: "bg-brand-gold",   ring: "text-brand-gold",   road: "#d97706" },
 };
 
 export const lessonId = (ui: number, li: number) => `${ui}-${li}`;

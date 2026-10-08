@@ -12,15 +12,15 @@ Har yangi narsa qo'shishdan oldin so'ra: "Bu odamga HOZIR, SHU ekranda kerakmi?"
 
 | Rang | Token | Ma'nosi — faqat shu |
 |---|---|---|
-| Ko'k `#4677ef` | `brand-blue` (`-d` to'q) | asosiy amal, tanlangan holat, havola |
-| Yashil `#22b06b` | `brand-green` | to'g'ri javob, tugadi, "davom etish" |
-| Oltin `#f5b301` | `brand-gold` (matnda `brand-gold-d`) | tanga, yulduz, mukofot, reyting |
+| Firuza `#17b3c1` (2026-10-08 dan; ilgari ko'k) | `brand-blue` (`-d` to'q `#0e8f9b` — kichik matnda) | asosiy amal, tanlangan holat, havola |
+| Yashil `#16a34a` | `brand-green` | to'g'ri javob, tugadi, "davom etish" |
+| Amber `#d97706` | `brand-gold` (matnda `brand-gold-d`) | tanga, yulduz, mukofot, reyting |
 
 - Qolgani **neytral**: `bg-karta`, `bg-sahna`, `bg-track`, `text-ink`, `text-ink-soft`, `text-ink-dim`.
 - `brand-red` — **faqat xato javob / rad etilgan**. Bezak uchun emas.
-- `brand-purple` va `brand-orange` eski nomlar (ko'k va oltinga teng). **Yangi kodda ishlatma.**
+- `brand-purple` va `brand-orange` eski nomlar (asosiy firuza va amberga teng). **Yangi kodda ishlatma.**
 - Qo'lda hex (`#8b5cf6`, `text-[#...]`) **yozma** — faqat token. Istisno: `lib/chizma`, `lib/hajmli` rasmlari.
-- Bir ekranda bitta asosiy (ko'k to'ldirilgan) tugma. Ikkinchi darajali amallar — neytral yoki faqat yozuv.
+- Bir ekranda bitta asosiy (firuza to'ldirilgan) tugma. Ikkinchi darajali amallar — neytral yoki faqat yozuv.
 - Bo'limlar, yorliqlar, belgilar fonini **rang bilan ajratma** — kamalak paydo bo'ladi. Neytral fon + yozuv yetadi.
 
 ## 2. Fon — tekis
@@ -38,7 +38,7 @@ statistika sonlari ("18/22 yechdi", ko'rishlar), like/dislike, qiyinlik nuqtalar
 Qoidalar:
 - **Odatiy holat belgisiz.** Faqat istisno belgilanadi (masalan "yechgansiz ✓").
 - Sarlavha qatorida: orqaga · sarlavha · ko'pi bilan 2 amal. Shior, hisoblagich qo'shma.
-- Filtrlar: eng ko'p ishlatiladigan bitta ochiq, qolgani bitta "Saralash/Filtr" varag'ida. O'zgartirilgan bo'lsa tugmada ko'k nuqta.
+- Filtrlar: eng ko'p ishlatiladigan bitta ochiq, qolgani bitta "Saralash/Filtr" varag'ida. O'zgartirilgan bo'lsa tugmada firuza nuqta.
 - "N ta topildi" kabi yordamchi qatorlar — kerak emas.
 - Emoji/3D belgi faqat bosh sahifa eshiklarida va o'yinlarda; filtr va yorliqlarda yo'q.
 - Bosh sahifada har doim **bitta katta tugma**: yangi odamga "O'rganishni boshlash", qaytganga "Davom etish".

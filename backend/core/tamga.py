@@ -18,8 +18,9 @@ yuklagan surat ham o'sha yo'ldan o'tadi — demak tamg'asiz rasm bazaga
 umuman tusha olmaydi. Uni har bir chaqiruvchida alohida bosish ham
 mumkin edi, lekin bitta joyda unutilsa — tamg'asiz rasm chiqib ketardi.
 
-Belgining shakli `frontend/public/logo.svg` dan olingan (shapka + "A" +
-ochiq kitob). Ikkalasini birga o'zgartiring: bir xil brend ikki xil
+Belgining shakli `frontend/public/logo.svg` dan olingan: firuza plitka,
+unda yonma-yon oq "A" va amber "Z" (2026-10-08 dan; ilgari shapka + "A" +
+ochiq kitob edi). Ikkalasini birga o'zgartiring: bir xil brend ikki xil
 ko'rinsa, u brend bo'lmay qoladi.
 
 ─────────────────── NEGA SHRIFT ZAXIRALI ───────────────────
@@ -32,23 +33,32 @@ shriftga bog'liq bo'lib qolmasligi kerak.
 """
 from __future__ import annotations
 
-import math
-
 try:
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageChops, ImageDraw, ImageFont
 except ImportError:                                   # pragma: no cover
     Image = None                                      # type: ignore[assignment]
+    ImageChops = None                                 # type: ignore[assignment]
     ImageDraw = None                                  # type: ignore[assignment]
     ImageFont = None                                  # type: ignore[assignment]
 
-#: Brend ranglari — `logo.svg` dagi gradientlarning uchlari.
-A_BOSH = (47, 127, 228)
-A_OXIR = (34, 189, 109)
-SIYOH = (22, 39, 107)
-FIRUZA = (34, 168, 192)
-SHAPKA = (26, 51, 118)
-SHAPKA_ICH = (22, 41, 94)
-KITOB = (27, 69, 168)
+#: Brend ranglari — `logo.svg` dagi gradientlarning uchlari (firuza palitra).
+FON_BOSH = (44, 198, 212)       # #2cc6d4
+FON_ORTA = (23, 179, 193)       # #17b3c1 — asosiy rang
+FON_OXIR = (14, 143, 155)       # #0e8f9b
+OQ_BOSH = (255, 255, 255)
+OQ_OXIR = (227, 246, 248)       # #e3f6f8
+AMBER_BOSH = (255, 184, 77)     # #ffb84d
+AMBER_OXIR = (217, 119, 6)      # #d97706
+A_SOYA = (8, 99, 107, 140)
+Z_SOYA = (138, 75, 0, 153)
+SIYOH = (31, 41, 55)            # #1f2937
+FIRUZA = (14, 143, 155)         # "Zone" yozuvi — oq yostiqda o'qilishi uchun to'q firuza
+
+#: Harflar — `logo.svg` dagi chiziqlar (120x120 to'rda), qalinligi 11.
+A_YOL = [(19, 88), (42, 30), (65, 88)]
+A_KONDALANG = [(30, 69), (54, 69)]
+Z_YOL = [(63, 32), (98, 32), (65, 88), (101, 88)]
+QALIN = 11
 
 #: Belgi `logo.svg` ning 120x120 lik koordinatasida chiziladi va
 #: keyin kerakli o'lchamga kichraytiriladi. Supersampling — chetlari
@@ -81,19 +91,9 @@ def _shrift(px: int):
     return None
 
 
-def _burab(nuqtalar, cx: float, cy: float, burchak: float):
-    """Nuqtalarni markaz atrofida buradi — shapka qiya turadi."""
-    a = math.radians(burchak)
-    c, s = math.cos(a), math.sin(a)
-    return [
-        ((x - cx) * c - (y - cy) * s + cx, (x - cx) * s + (y - cy) * c + cy)
-        for x, y in nuqtalar
-    ]
-
-
-def _gradient(olcham: int):
+def _gradient(olcham: int, ranglar, diagonal: bool = True):
     """
-    Diagonal ko'k→yashil gradient.
+    Bir necha rangli gradient (diagonal yoki tik).
 
     64x64 da chiziladi va kattalashtiriladi: har pikselni Python'da
     hisoblash rasm yuklashning har safarida sezilarli sekinlik berardi,
@@ -101,51 +101,73 @@ def _gradient(olcham: int):
     """
     kichik = Image.new("RGB", (64, 64))
     px = kichik.load()
+    oxir = len(ranglar) - 1
     for y in range(64):
         for x in range(64):
-            t = (x + y) / 126
-            px[x, y] = tuple(
-                round(A_BOSH[i] + (A_OXIR[i] - A_BOSH[i]) * t) for i in range(3)
-            )
+            t = (x + y) / 126 if diagonal else y / 63
+            i = min(int(t * oxir), oxir - 1)
+            u = t * oxir - i
+            a, b = ranglar[i], ranglar[i + 1]
+            px[x, y] = tuple(round(a[j] + (b[j] - a[j]) * u) for j in range(3))
     return kichik.resize((olcham, olcham), Image.BILINEAR)
 
 
-def _belgi(olcham: int):
-    """AqlZone belgisi (shapka + "A" + kitob) — shaffof RGBA."""
+def _chiziq(d, nuqtalar, qalin: float, rang) -> None:
+    """Uchlari va burilishlari YUMALOQ siniq chiziq (SVG round cap/join)."""
+    d.line(nuqtalar, fill=rang, width=round(qalin), joint="curve")
+    r = qalin / 2
+    for x, y in nuqtalar:
+        d.ellipse([x - r, y - r, x + r, y + r], fill=rang)
+
+
+def _belgi(olcham: int, plitka: bool = True):
+    """
+    AqlZone belgisi (firuza plitka + oq "A" + amber "Z") — shaffof RGBA.
+
+    `logo.svg` bilan bir xil: avval Z (orqada), keyin A — A'ning o'ng oyog'i
+    Z'ning pastini yopib turadi. Har harfning ostida siljigan soyasi bor.
+
+    `plitka=False` — faqat harflar, fonsiz. Kanal rasmlaridagi xira SUV
+    BELGISI uchun: to'liq plitka 10% shaffoflikda ham matn ostida katta
+    to'rtburchak dog' bo'lib qolardi, harflar esa fonga yumshoq singadi.
+    """
     k = olcham / BAZA
     im = Image.new("RGBA", (olcham, olcham), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
 
-    def n(nuqtalar):
-        return [(x * k, y * k) for x, y in nuqtalar]
+    def n(nuqtalar, dx=0.0, dy=0.0):
+        return [((x + dx) * k, (y + dy) * k) for x, y in nuqtalar]
 
-    # "A" — tashqi uchburchak minus ikkita teshik. Gradient shaklning
-    # ichiga niqob orqali quyiladi: ranglarni qo'lda bo'yashdan ko'ra
-    # niqob aniqroq, chunki teshiklar ham shu yerda kesiladi.
-    niqob = Image.new("L", (olcham, olcham), 0)
-    nd = ImageDraw.Draw(niqob)
-    nd.polygon(n([(60, 28), (109, 100), (11, 100)]), fill=255)
-    nd.polygon(n([(60, 58), (71.5, 75), (48.5, 75)]), fill=0)
-    nd.polygon(n([(44, 83), (76, 83), (80.5, 91), (39.5, 91)]), fill=0)
-    im.paste(_gradient(olcham), (0, 0), niqob)
+    if plitka:
+        # Plitka: yumaloq to'rtburchak niqob orqali gradient.
+        niqob = Image.new("L", (olcham, olcham), 0)
+        ImageDraw.Draw(niqob).rounded_rectangle([0, 0, olcham - 1, olcham - 1], 28 * k, fill=255)
+        im.paste(_gradient(olcham, (FON_BOSH, FON_ORTA, FON_OXIR)), (0, 0), niqob)
 
-    # Shapka A'ning uchini yopadi, shuning uchun undan KEYIN chiziladi.
-    d.polygon(n(_burab([(60, 6), (96, 22), (60, 38), (24, 22)], 60, 24, -13)),
-              fill=SHAPKA)
-    d.polygon(n(_burab([(48, 29), (72, 29), (72, 41), (48, 41)], 60, 24, -13)),
-              fill=SHAPKA_ICH)
-    popuk = _burab([(93.5, 22.6), (93.5, 44)], 60, 24, -13)
-    d.line(n(popuk), fill=SHAPKA_ICH, width=max(1, round(2.6 * k)))
-    px, py = popuk[1]
-    r = 5 * k
-    d.ellipse([px * k - r, py * k - r, px * k + r, py * k + r], fill=SHAPKA_ICH)
+        # Tepadagi yaltiroq: oq, pastga qarab yo'qoladi.
+        yaltir = Image.new("L", (olcham, olcham), 0)
+        yd = yaltir.load()
+        chegara = round(62 * k * 0.55)
+        for y in range(chegara):
+            q = round(77 * (1 - y / chegara))
+            for x in range(olcham):
+                yd[x, y] = q
+        yaltir = ImageChops.multiply(yaltir, niqob)
+        im.alpha_composite(Image.merge("RGBA", (*Image.new("RGB", (olcham, olcham), (255, 255, 255)).split(), yaltir)))
 
-    # Ochiq kitob: A shu yerda "turadi". Egri chiziqlar bir nechta
-    # nuqta bilan taqlid qilinadi — tamg'a o'lchamida farqi ko'rinmaydi.
-    chap = [(4, 98), (20, 93.5), (40, 94), (58, 100),
-            (58, 113), (40, 106), (20, 106.5), (4, 107)]
-    d.polygon(n(chap), fill=KITOB)
-    d.polygon(n([(120 - x, y) for x, y in chap]), fill=KITOB)
+    def harf(yollar, rangi_bosh, rangi_oxir, soya, diagonal):
+        qatlam = Image.new("RGBA", (olcham, olcham), (0, 0, 0, 0))
+        sd = ImageDraw.Draw(qatlam)
+        for yol in yollar:
+            _chiziq(sd, n(yol, 1.4, 3), QALIN * k, soya)
+        im.alpha_composite(qatlam)
+        niqob = Image.new("L", (olcham, olcham), 0)
+        nd = ImageDraw.Draw(niqob)
+        for yol in yollar:
+            _chiziq(nd, n(yol), QALIN * k, 255)
+        im.paste(_gradient(olcham, (rangi_bosh, rangi_oxir), diagonal), (0, 0), niqob)
+
+    harf([Z_YOL], AMBER_BOSH, AMBER_OXIR, Z_SOYA, True)
+    harf([A_YOL, A_KONDALANG], OQ_BOSH, OQ_OXIR, A_SOYA, False)
     return im
 
 
@@ -169,7 +191,7 @@ def _tamga(balandlik: int):
     # Oq yostiq: tamg'a chizmaning oq fonida ham, to'q rangli
     # bo'yalgan qismida ham bir xil o'qilishi kerak.
     d.rounded_rectangle([0, 0, w - 1, h - 1], h / 2,
-                        fill=(255, 255, 255, 232), outline=(226, 232, 246, 255),
+                        fill=(255, 255, 255, 232), outline=(200, 236, 241, 255),
                         width=max(1, round(h * 0.035)))
     im.alpha_composite(_belgi(belgi_o), (ichki, (h - belgi_o) // 2))
 

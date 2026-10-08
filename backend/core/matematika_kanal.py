@@ -441,11 +441,12 @@ def misol_posti(misol: tuple[str, str, str, str]) -> str:
 
 # Rasm ranglari — ilovaning qorong'i mavzusi va brend ranglari: kanal
 # postini ko'rgan odam ilovani ochganda o'sha ko'rinishni tanisin.
-_FON = (22, 28, 56)
-_KARTA = (34, 43, 84)
-_OQ = (244, 246, 255)
-_XIRA = (150, 160, 200)
-_KOK = (59, 111, 224)
+# 2026-10-08 dan firuza palitra (ilgari to'q ko'k fon va ko'k #3b6fe0).
+_FON = (11, 28, 33)
+_KARTA = (20, 48, 55)
+_OQ = (240, 250, 251)
+_XIRA = (138, 178, 184)
+_KOK = (23, 179, 193)
 
 
 def _qatorlarga(d, matn: str, shrift, kenglik: int) -> list[str]:
@@ -498,8 +499,8 @@ def misol_rasmi(misol: tuple, rukn: str = "OG'ZAKI MISOL", pastki: str = "",
     # Logotip — butun kartani egallaydi, lekin juda xira va MATN
     # ORQASIDA: rasm skrinshot bo'lib tarqalganda ham kimniki ekani
     # ko'rinib tursin, savolni o'qishga esa xalaqit bermasin.
-    belgi = _belgi(820 * S)
-    belgi.putalpha(belgi.getchannel("A").point(lambda a: a * 0.10))
+    belgi = _belgi(820 * S, plitka=False)
+    belgi.putalpha(belgi.getchannel("A").point(lambda a: a * 0.07))
     t = t.convert("RGBA")
     t.alpha_composite(belgi, ((EN * S - belgi.width) // 2, (EN * S - belgi.height) // 2 + 20 * S))
     t = t.convert("RGB")

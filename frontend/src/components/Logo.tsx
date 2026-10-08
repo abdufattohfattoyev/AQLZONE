@@ -5,23 +5,23 @@
  * brend bir joyda ikki xil ko'rinmasligi kerak. Birini o'zgartirganda
  * ikkalasini birga o'zgartiring.
  *
+ * 2026-10-08 dan belgi: firuza plitka, unda yonma-yon oq "A" va amber "Z"
+ * (ilgari shapka + A + ochiq kitob, ko'k-yashil edi). Plitka o'z foni bilan
+ * keladi, shuning uchun qorong'i temada belgining qismlarini qayta bo'yash
+ * endi shart emas — faqat to'liq variantdagi yozuv (`az-l-yozuv`, `az-l-shior`)
+ * ochroq qilinadi (index.css).
+ *
  * Nega <img src="/logo.svg"> emas: belgi ekranning birinchi kadrida turadi,
  * alohida so'rov esa uni bir lahza yo'q qilib ko'rsatadi. Inline SVG shu
  * "sakrash"ni yo'qotadi va uning ustiga CSS bilan tema/animatsiya beradi.
  *
- * TEMAGA MOSLASHUV. Shapka, kitob va "Aql" yozuvi to'q ko'k — bu oq fonda
- * kuchli, ammo "bosh" va "katta" temalarning qorong'i fonida belgi fonga
- * singib ketardi. Shuning uchun o'sha qismlarga `az-l-*` klasslari qo'yilgan
- * va index.css qorong'i temalarda ularni ochroq qiladi.
- *
  * Diqqat: rang UCHUN `fill="var(--x)"` YOZMANG. Brauzer SVG prezentatsiya
  * atributlari ichida custom property'ni almashtirmaydi — rang jimgina
- * zaxira qiymatda qolib ketadi va tema ishlamaydi (shu xato bo'lgan).
- * Atributda oddiy HEX turadi (oq fon uchun standart, `logo.svg` bilan bir xil),
- * temani esa CSS qoidasi ustidan yozadi.
+ * zaxira qiymatda qolib ketadi. Atributda oddiy HEX turadi, temani esa
+ * CSS qoidasi ustidan yozadi.
  *
  * Gradient id'lari useId orqali noyob: bir sahifada bir nechta logo bo'lsa
- * (masalan sarlavha + kartochka) ular bir-birining rangini o'g'irlamasin.
+ * ular bir-birining rangini o'g'irlamasin.
  */
 import { useId } from "react";
 import { T } from "../lib/til";
@@ -30,15 +30,15 @@ interface Props {
   size?: number;
   className?: string;
   /**
-   * "belgi" — faqat shakl (sarlavha, kichik o'lchamlar).
-   * "toliq" — shakl + "AqlZone" yozuvi + shior (kirish/splash ekranlari).
+   * "belgi" — faqat plitka (sarlavha, kichik o'lchamlar).
+   * "toliq" — plitka + "AqlZone" yozuvi + shior (kirish/splash ekranlari).
    */
   variant?: "belgi" | "toliq";
   /**
-   * Animatsiya: belgi suzadi, popuk tebranadi, kitob nafas oladi va "A"
-   * ustidan yorug'lik o'tadi. Ro'yxat ichidagi kichik logolarda o'chiring —
-   * ekranda bir vaqtda o'nlab harakat bo'lsa, diqqat savoldan chalg'iydi.
-   * `prefers-reduced-motion` yoqilgan qurilmada baribir to'xtaydi.
+   * Animatsiya: belgi suzadi va plitka ustidan yorug'lik o'tadi. Ro'yxat
+   * ichidagi kichik logolarda o'chiring — ekranda bir vaqtda o'nlab harakat
+   * bo'lsa, diqqat savoldan chalg'iydi. `prefers-reduced-motion` yoqilgan
+   * qurilmada baribir to'xtaydi.
    */
   jonli?: boolean;
 }
@@ -47,10 +47,10 @@ export function Logo({ size = 40, className = "", variant = "belgi", jonli = tru
   const uid = useId().replace(/:/g, "");
   const id = (nom: string) => `az-${nom}-${uid}`;
 
-  const aChap = id("achap");
-  const aOng = id("aong");
-  const shapka = id("shapka");
-  const kitob = id("kitob");
+  const fon = id("fon");
+  const yaltirFon = id("yfon");
+  const oq = id("oq");
+  const amber = id("amber");
   const zone = id("zone");
   const kesim = id("kesim");
   const nur = id("nur");
@@ -68,86 +68,77 @@ export function Logo({ size = 40, className = "", variant = "belgi", jonli = tru
       aria-label={toliq ? "Aql Zone — bilim sari har bir qadam" : "Aql Zone"}
     >
       <defs>
-        <linearGradient id={aChap} x1="0" y1="0" x2=".6" y2="1">
-          <stop offset="0" stopColor="#2f7fe4" />
-          <stop offset="1" stopColor="#1636c4" />
+        <linearGradient id={fon} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#2cc6d4" />
+          <stop offset=".55" stopColor="#17b3c1" />
+          <stop offset="1" stopColor="#0e8f9b" />
         </linearGradient>
-        <linearGradient id={aOng} x1=".1" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#2f8ee6" />
-          <stop offset="1" stopColor="#22bd6d" />
+        <linearGradient id={yaltirFon} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity=".3" />
+          <stop offset=".55" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id={shapka} x1="0" y1="0" x2="1" y2="1">
-          <stop className="az-l-shapka-a" offset="0" stopColor="#1e3a8f" />
-          <stop className="az-l-shapka-b" offset="1" stopColor="#101f52" />
+        <linearGradient id={oq} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#e3f6f8" />
         </linearGradient>
-        <linearGradient id={kitob} x1="0" y1="0" x2="1" y2="0">
-          <stop className="az-l-kitob-a" offset="0" stopColor="#1b45a8" />
-          <stop className="az-l-kitob-b" offset=".5" stopColor="#122f74" />
-          <stop className="az-l-kitob-a" offset="1" stopColor="#1b45a8" />
+        <linearGradient id={amber} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ffb84d" />
+          <stop offset="1" stopColor="#d97706" />
         </linearGradient>
         <linearGradient id={zone} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#2f8ee6" />
-          <stop offset=".55" stopColor="#22a8c0" />
-          <stop offset="1" stopColor="#22bd6d" />
+          <stop offset="0" stopColor="#17b3c1" />
+          <stop offset="1" stopColor="#0e8f9b" />
         </linearGradient>
 
-        {/* Qorong'i fonda belgini ajratib turadigan yumshoq yorug'lik.
+        {/* Qorong'i fonda plitkani ajratib turadigan yumshoq yorug'lik.
             Oq fonda index.css uni ko'rinmas qiladi — u yerda kerak emas. */}
         <radialGradient id={nur}>
-          <stop offset="0" stopColor="#4fd1ff" stopOpacity=".55" />
-          <stop offset=".55" stopColor="#3a86f0" stopOpacity=".22" />
-          <stop offset="1" stopColor="#3a86f0" stopOpacity="0" />
+          <stop offset="0" stopColor="#4fe3f0" stopOpacity=".5" />
+          <stop offset=".55" stopColor="#17b3c1" stopOpacity=".2" />
+          <stop offset="1" stopColor="#17b3c1" stopOpacity="0" />
         </radialGradient>
 
-        {/* "A" ustidan o'tadigan yorug'lik yo'li */}
+        {/* Plitka ustidan o'tadigan yorug'lik yo'li */}
         <linearGradient id={yaltir} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#fff" stopOpacity="0" />
-          <stop offset=".5" stopColor="#fff" stopOpacity=".55" />
+          <stop offset=".5" stopColor="#fff" stopOpacity=".4" />
           <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
 
-        {/* "A" — tashqi uchburchak minus ikki teshik; teshiklar orasi ko'ndalang chiziq bo'lib qoladi */}
-        <clipPath id={kesim} clipRule="evenodd">
-          <path d="M60 28 L109 100 H11 Z M60 58 L71.5 75 H48.5 Z M44 83 H76 L80.5 91 H39.5 Z" />
+        {/* Yorug'lik plitkadan tashqariga chiqmasin */}
+        <clipPath id={kesim}>
+          <rect width="120" height="120" rx="28" />
         </clipPath>
       </defs>
 
       {/* To'liq variantda belgi tepada, markazda turadi */}
-      <g transform={toliq ? "translate(120 6)" : undefined}>
+      <g transform={toliq ? "translate(120 4)" : undefined}>
         {/* Suzish ICHKI guruhda: CSS transform yuqoridagi translate atributini
             almashtirib yuborar edi va belgi burchakka sakrab chiqardi. */}
         <g className="az-logo-belgi">
-        <ellipse className="az-logo-nur" cx="60" cy="64" rx="62" ry="56" fill={`url(#${nur})`} />
+          <ellipse className="az-logo-nur" cx="60" cy="62" rx="66" ry="62" fill={`url(#${nur})`} />
 
-        {/* Shapka A'ning uchini yopadi — shuning uchun A'dan oldin chiziladi */}
-        <g transform="rotate(-13 60 24)">
-          <path d="M60 6 96 22 60 38 24 22Z" fill={`url(#${shapka})`} />
-          <path className="az-l-tund" d="M48 29v9c0 3.4 5.4 6 12 6s12-2.6 12-6v-9l-12 5.3z" fill="#16295e" />
-          {/* Popuk alohida guruh: tebranish uning ipi boshlanadigan nuqtadan aylanadi */}
-          <g className="az-logo-popuk">
-            <path className="az-l-tund-s" d="M93.5 22.6v16" stroke="#101f52" strokeWidth="2.6"
-              strokeLinecap="round" fill="none" />
-            <path className="az-l-tund" d="M93.5 37c3.4 0 5.6 2 5.6 4.6 0 3.4-2.4 7-5.6 8.6-3.2-1.6-5.6-5.2-5.6-8.6 0-2.6 2.2-4.6 5.6-4.6z"
-              fill="#16295e" />
+          <rect width="120" height="120" rx="28" fill={`url(#${fon})`} />
+          <rect width="120" height="62" rx="28" fill={`url(#${yaltirFon})`} />
+
+          {/* Z — orqada: A uni pastda yopib turadi */}
+          <path d="M63 32 H98 L65 88 H101" fill="none" stroke="#8a4b00" strokeOpacity=".6"
+            strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" transform="translate(1.4 3)" />
+          <path d="M63 32 H98 L65 88 H101" fill="none" stroke={`url(#${amber})`}
+            strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M65 30.4 H94" stroke="#fff" strokeOpacity=".6" strokeWidth="1.8" strokeLinecap="round" />
+
+          {/* A — doimiy qism */}
+          <path d="M19 88 L42 30 L65 88 M30 69 H54" fill="none" stroke="#08636b" strokeOpacity=".55"
+            strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" transform="translate(1.4 3)" />
+          <path d="M19 88 L42 30 L65 88 M30 69 H54" fill="none" stroke={`url(#${oq})`}
+            strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M22.5 82 L41.5 34" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+
+          <g clipPath={`url(#${kesim})`}>
+            <rect className="az-logo-yaltir" x="-46" y="-10" width="34" height="140"
+              transform="skewX(-14)" fill={`url(#${yaltir})`} />
           </g>
-        </g>
-
-        {/* Chap yelka ko'k, o'ng yelka ko'k→yashil: ikki to'rtburchak A shakli bo'ylab kesiladi */}
-        <g clipPath={`url(#${kesim})`}>
-          <path d="M0 0h74L34 120H0z" fill={`url(#${aChap})`} />
-          <path d="M74 0h46v120H34z" fill={`url(#${aOng})`} />
-          {/* Yorug'lik ham shu kesim ichida — A'dan tashqariga chiqmaydi */}
-          <rect className="az-logo-yaltir" x="-46" y="-10" width="34" height="140"
-            transform="skewX(-14)" fill={`url(#${yaltir})`} />
-        </g>
-
-        {/* Ochiq kitob: A shu yerda "turadi" */}
-        <g className="az-logo-kitob">
-          <path d="M4 98c17-9 39-8 54 2v13c-15-10-37-11-54-4z" fill={`url(#${kitob})`} />
-          <path d="M116 98c-17-9-39-8-54 2v13c15-10 37-11 54-4z" fill={`url(#${kitob})`} />
-          <path d="M8 96c16-7 36-6 50 3M112 96c-16-7-36-6-50 3" stroke="#fff" strokeWidth="2.4"
-            strokeLinecap="round" fill="none" opacity=".95" />
-        </g>
         </g>
       </g>
 
@@ -156,20 +147,20 @@ export function Logo({ size = 40, className = "", variant = "belgi", jonli = tru
           {/* textLength yozuvni shriftdan qat'i nazar bir xil kenglikda ushlab turadi.
               Bo'lmasa shrift yuklanguncha yozuv kengroq chiqib, yon chiziqlar
               matn ustiga tushadi va "o'chirilgan" kabi ko'rinadi. */}
-          <text x="180" y="200" textAnchor="middle" textLength="242" lengthAdjust="spacingAndGlyphs"
+          <text x="180" y="196" textAnchor="middle" textLength="242" lengthAdjust="spacingAndGlyphs"
             fontFamily="'Baloo 2', 'Fredoka', system-ui, sans-serif"
             fontSize="66" fontWeight="800" letterSpacing="-1">
-            <tspan className="az-l-yozuv" fill="#16276b">Aql</tspan>
+            <tspan className="az-l-yozuv" fill="#1f2937">Aql</tspan>
             <tspan fill={`url(#${zone})`}>Zone</tspan>
           </text>
           <g opacity=".9">
             {/* Shior 87..273 oralig'ida; chiziqlar 13px bo'shliq qoldirib chetda */}
-            <path className="az-l-shior-s" d="M40 232h34M286 232h34" stroke="#1b45a8" strokeWidth="3"
+            <path className="az-l-shior-s" d="M40 230h34M286 230h34" stroke="#17b3c1" strokeWidth="3"
               strokeLinecap="round" />
-            <text className="az-l-shior" x="180" y="237" textAnchor="middle" textLength="186"
+            <text className="az-l-shior" x="180" y="235" textAnchor="middle" textLength="186"
               lengthAdjust="spacingAndGlyphs"
               fontFamily="'Baloo 2', 'Fredoka', system-ui, sans-serif"
-              fontSize="13" fontWeight="700" letterSpacing="1.2" fill="#1e3a8f">
+              fontSize="13" fontWeight="700" letterSpacing="1.2" fill="#0e8f9b">
               {/* Shior tarjima qilinadi, brend nomi esa YO'Q: "Aql Zone" —
                   bu nom, uni o'girish brendni ikkiga bo'lardi. `textLength`
                   ikki tilda ham bir xil kenglikni ushlab turadi, ya'ni

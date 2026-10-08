@@ -45,7 +45,7 @@ PASTDAN = 0.08
 #: Ikkinchi qator plashkani yuqoriga — subtitrlar tomon — o'stiradi.
 ENG_KOP_QATOR = 2
 #: Plashka foni deyarli to'q: orqasidagi rolik yozuvi ko'rinib qolmasin.
-FON = (12, 18, 40, 225)
+FON = (9, 27, 31, 225)
 
 
 def umumiy_matn() -> str:

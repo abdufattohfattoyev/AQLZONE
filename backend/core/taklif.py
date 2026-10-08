@@ -114,8 +114,8 @@ def karta(n: ImtihonNatija) -> bytes:
     d = ImageDraw.Draw(t)
     m = 60 * S
     d.rounded_rectangle([m, m, EN * S - m, EN * S - m], radius=48 * S, fill=_KARTA)
-    belgi = _belgi(820 * S)
-    belgi.putalpha(belgi.getchannel("A").point(lambda a: a * 0.10))
+    belgi = _belgi(820 * S, plitka=False)
+    belgi.putalpha(belgi.getchannel("A").point(lambda a: a * 0.07))
     t = t.convert("RGBA")
     t.alpha_composite(belgi, ((EN * S - belgi.width) // 2, (EN * S - belgi.height) // 2 + 20 * S))
     t = t.convert("RGB")
