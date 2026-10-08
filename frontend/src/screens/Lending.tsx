@@ -8,8 +8,8 @@
  *      bitta masalani yechib ko'radi va tushuntirishni ko'radi — ilova
  *      aynan shu, va bu har qanday ta'rifdan tezroq tushuntiradi.
  *   2. Sonlar — dasturdan hisoblanadi, kurs o'sganda eskirmaydi.
- *   3. Bo'limlar (bosilsa — o'sha bo'lim ochiladi), kimlar uchun,
- *      qanday ishlaydi, savollar.
+ *   3. Bo'limlar (bosilsa — o'sha bo'lim ochiladi), kimlar uchun va
+ *      qanday ishlaydi. "Savollar" (FAQ) 2026-10-08 da olib tashlandi.
  *   4. Oxirida yana o'sha bitta tugma.
  *
  * Ko'rinish 2026-10-08 da foydalanuvchi bergan namunadan olingan:
@@ -83,12 +83,10 @@ const BOLIMLAR = [
   { ic: "palette", nom: "kichkintoy", izoh: "lendKichkintoyIzoh", rang: "gold", yol: yolKichkintoy },
 ] as const;
 
-const FAQ = [["lendF1", "lendF1J"], ["lendF2", "lendF2J"], ["lendF3", "lendF3J"], ["lendF4", "lendF4J"]] as const;
-
 /** Tepa paneldagi bo'limlar — `id` sahifadagi bo'lim langari. */
 const NAV = [
   ["imkoniyat", "lendImkoniyat"], ["kimlar", "lendKimlar"],
-  ["qanday", "boshQanday"], ["savollar", "lendSavollar"],
+  ["qanday", "boshQanday"],
 ] as const;
 
 /* Ko'k "loy" tugma: ichki yorug' qirra + pastki to'q qirra + yumshoq soya. */
@@ -126,7 +124,6 @@ export function Lending({ onBoshlash, onOch }: Props) {
         <Bolimlar onOch={onOch} />
         <Kimlar onBoshlash={onBoshlash} />
         <Qanday />
-        <Savollar />
         <Oxir onBoshlash={onBoshlash} bot={bot} />
       </main>
       <Etak bot={bot} />
@@ -278,8 +275,8 @@ function Qahramon({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) 
       <div aria-hidden className="pointer-events-none absolute top-1/3 -left-40 -z-10 size-[420px]
                                   rounded-full bg-brand-green/10 blur-[110px]" />
 
-      <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 pt-8 pb-12 sm:gap-12 sm:px-6 2xl:max-w-[1320px]
-                      sm:pt-14 lg:grid-cols-12 lg:gap-10 lg:pt-16 lg:pb-20">
+      <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 pt-8 pb-12 sm:gap-12 sm:px-6 lg:pb-14 2xl:max-w-[1320px]
+                      sm:pt-14 lg:grid-cols-12 lg:gap-10 lg:pt-16">
         <div className="az-kirish min-w-0 lg:col-span-7">
           <p className="inline-flex items-center gap-2 rounded-full bg-karta px-3.5 py-1.5 text-[13px]
                         text-brand-blue-t shadow-clay-sm">
@@ -539,7 +536,7 @@ function Sarlavha({ id, yorliq, rang = "blue", nom, izoh }: {
 
 function Bolim({ children, fon }: { children: ReactNode; fon?: boolean }) {
   return (
-    <section className={`py-14 sm:py-20 lg:py-24 ${fon ? "bg-track/60" : ""}`}>
+    <section className={`py-10 sm:py-14 lg:py-16 ${fon ? "bg-track/60" : ""}`}>
       <div className="mx-auto max-w-[1200px] px-4 sm:px-6 2xl:max-w-[1320px]">{children}</div>
     </section>
   );
@@ -549,7 +546,7 @@ function Bolimlar({ onOch }: { onOch: (yol: string) => void }) {
   return (
     <Bolim>
       <Sarlavha id="imkoniyat" yorliq={t("lendImkoniyat")} nom={t("lendImkSarlavha")} izoh={t("lendImkIzoh")} />
-      <ul className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+      <ul className="mt-7 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         {BOLIMLAR.map((b) => (
           <li key={b.ic}>
             <button type="button" onClick={() => onOch(b.yol())} data-tahlil={`Tanishuv: bo'lim ${b.ic}`}
@@ -649,7 +646,7 @@ function Qanday() {
       {/* Uch ustun faqat keng ekranda. Planshetda (768) uch ustunda
           sarlavhalar ikki qatorga sinib, kartalar cho'zilib ketardi —
           u yerda va telefonda raqam chapda, matn o'ngda turadi. */}
-      <ol className="mx-auto mt-8 grid max-w-[720px] gap-3 sm:mt-10 sm:gap-4 lg:max-w-none lg:grid-cols-3">
+      <ol className="mx-auto mt-7 grid max-w-[720px] gap-3 sm:mt-8 sm:gap-4 lg:max-w-none lg:grid-cols-3">
         {qadamlar.map((q, i) => (
           <li key={q.nom} className="flex gap-4 rounded-[24px] bg-karta p-5 shadow-clay-sm transition
                                      hover:-translate-y-1 sm:p-6 lg:flex-col lg:gap-0 lg:rounded-[28px]">
@@ -673,40 +670,11 @@ function Qanday() {
   );
 }
 
-/* ------------------------------------------------------------ savollar */
-
-function Savollar() {
-  const [ochiq, setOchiq] = useState<number | null>(0);
-  return (
-    <Bolim fon>
-      <Sarlavha id="savollar" yorliq={t("lendSavollar")} rang="gold" nom={t("lendSavolSarlavha")} />
-      <div className="mx-auto mt-10 grid max-w-[820px] gap-3">
-        {FAQ.map(([s, j], i) => {
-          const bu = ochiq === i;
-          return (
-            <div key={s} className="rounded-[22px] bg-karta shadow-clay-sm">
-              <button type="button" aria-expanded={bu} onClick={() => setOchiq(bu ? null : i)}
-                className="flex min-h-16 w-full items-center gap-3 px-5 py-4 text-left font-display text-[16.5px]">
-                <span className="flex-1">{t(s)}</span>
-                <span className={`grid size-8 shrink-0 place-items-center rounded-full transition ${
-                  bu ? "rotate-90 bg-brand-blue text-white" : "bg-track text-ink-dim"}`}>
-                  <Icon name="chevron" size={16} />
-                </span>
-              </button>
-              {bu && <p className="az-kirish px-5 pb-5 text-[15px] leading-relaxed text-ink-soft">{t(j)}</p>}
-            </div>
-          );
-        })}
-      </div>
-    </Bolim>
-  );
-}
-
 /* ------------------------------------------------------------ oxir */
 
 function Oxir({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
   return (
-    <section className="px-4 py-14 sm:px-6 sm:py-20 lg:py-24">
+    <section className="px-4 pt-2 pb-10 sm:px-6 sm:pb-14 lg:pb-16">
       <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[28px] sm:rounded-[36px] 2xl:max-w-[1320px] bg-gradient-to-br
                       from-brand-blue to-brand-blue-d px-5 py-12 text-center sm:px-6 sm:py-16 lg:py-20 text-white shadow-clay">
         <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-white/10 blur-3xl" />
