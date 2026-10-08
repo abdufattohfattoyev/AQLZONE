@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Kirish } from "../components/Kirish";
 import { Logo } from "../components/Logo";
+import { tanishtirildi } from "../components/Tanishtiruv";
 import { Sozlamalar } from "./Sozlamalar";
 import { getHisob, kodBilanKir } from "../lib/api";
 import { t } from "../lib/matn";
@@ -57,8 +58,15 @@ async function kirVaTekshir(kod: string): Promise<Holat> {
  */
 const boshlangan = new Map<string, Promise<Holat>>();
 
-/** Ilovani boshidan ochadi — marshrut turiga qarab (veb yoki APK). */
+/**
+ * Ilovani boshidan ochadi — marshrut turiga qarab (veb yoki APK).
+ *
+ * Tanishuv sahifasi (`Tanishtiruv.tsx`) endi kirgan odamga kerak emas:
+ * belgi qayta yuklashdan OLDIN qo'yiladi, aks holda server javobi
+ * kelguncha u bir lahza ko'rinib, keyin yo'qolardi.
+ */
 function ilovaniQaytaOch(): void {
+  tanishtirildi();
   if (import.meta.env.VITE_ROUTER === "hash") {
     window.location.hash = "#/";
     window.location.reload();

@@ -12,7 +12,10 @@
  * Ilgari anketa faqat ro'yxatdan TO'LIQ o'tganlarga chiqardi va 12%
  * odam to'ldirardi. Tahlil uchun bu yetmadi, ilova esa kimga
  * gapirayotganini bilmay, hammaga "1-sinf … 11-sinf" ni ko'rsatardi.
- * Endi savol hammaga — bir bosishli ikki savol, til tanlangandan keyin.
+ * 2026-09-25 dan savol hammaga berildi, 2026-10-08 dan esa yana faqat
+ * ro'yxatdan o'tganda (`components/Tanishuv.tsx`): kirmagan odamni
+ * birinchi ekranda savol bilan to'xtatish uni haydab yuborardi.
+ * Shuning uchun profil `null` bo'lishi — odatiy holat.
  */
 import { useSyncExternalStore } from "react";
 import { COURSES, OLIY_KURSLAR } from "./curriculum";

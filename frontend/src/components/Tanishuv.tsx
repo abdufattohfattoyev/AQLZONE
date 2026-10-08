@@ -14,6 +14,11 @@
  * turadi va Telegram bilan kirganda o'sha hisobga qo'shiladi
  * (`auth/kod` → `_hisoblarni_birlashtir`).
  *
+ * Veb'da birinchi marta bosh manzilga kelgan odam avval tanishuv
+ * sahifasini ko'radi (`Tanishtiruv.tsx`) — sayt nima ekani, "Bepul
+ * boshlash" tugmasi bilan. Til so'ralmaydi (o'zbekcha standart), anketa
+ * esa faqat ro'yxatdan o'tganda chiqadi.
+ *
  * Bitta holat hamon TO'SADI va u to'g'ri: odam botdan kelib, Telegram'i
  * bog'langan-u, ismini yozmagan bo'lsa (`ism`). U allaqachon kirish
  * jarayonining o'rtasida — uni yarim yo'lda qoldirish chalkashtiradi.
@@ -25,10 +30,9 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Anketa } from "./Anketa";
-import { Tanishtiruv, tanishtirilganmi } from "./Tanishtiruv";
+import { Tanishtiruv, tanishtirildi, tanishtirilganmi } from "./Tanishtiruv";
 import { Kirish } from "./Kirish";
 import { Kutish } from "./Kutish";
-import { TilTanlash } from "./TilTanlash";
 import { til, tilTanlangan, tilniQoy } from "../lib/til";
 import { getHisob, miniAppda, tilniSaqla } from "../lib/api";
 import { royxatniBelgila, taklifgaObuna } from "../lib/sinov";
@@ -72,32 +76,28 @@ type Holat = "kutilyapti" | "sinov" | "ism" | "anketa" | "yonalish" | "kerak-ema
  */
 const KIRGAN_KEY = "az_kirgan";
 
+function kirganmi(): boolean {
+  try { return localStorage.getItem(KIRGAN_KEY) === "1"; }
+  catch { return false; }
+}
+
 export function Tanishuv({ children }: { children: ReactNode }) {
   const [holat, setHolat] = useState<Holat>("kutilyapti");
   /** Anketadan keyin qaysi holatga o'tiladi (sinov / ism / ochiq). */
   const [keyin, setKeyin] = useState<Holat>("kerak-emas");
-  /**
-   * Til so'ralishi kerakmi.
-   *
-   * Holatda turadi, chunki tanlov taxmin bilan mos tushsa sahifa qayta
-   * yuklanmaydi — o'shanda ekranni React o'zi olib tashlashi kerak.
-   */
-  const [tilSoraladi, setTilSoraladi] = useState(() => !tilTanlangan());
-  /**
-   * Til savolini SO'RASHDAN OLDIN serverdan so'rab ko'ramiz.
-   *
-   * Qurilmada tanlov bo'lmasa, savolni darhol chizib yuborish
-   * xato bo'lardi: hisob allaqachon javob bergan bo'lishi mumkin va
-   * odam o'sha savolni ikkinchi (uchinchi, o'ninchi) marta ko'rardi.
-   *
-   * Kutish ko'pi bilan ikki soniya va faqat qurilmada tanlov
-   * bo'lmaganda — ya'ni yangi o'rnatishda yoki xotira yo'qolganda.
-   */
-  const [tilKutilmoqda, setTilKutilmoqda] = useState(() => !tilTanlangan());
   /** Sinov taklifi ko'rsatilyaptimi va bola nechta yulduz olgan edi. */
   const [taklif, setTaklif] = useState<number | null>(null);
-  /** "Aql Zone nima?" ekrani hali ko'rilmaganmi (`Tanishtiruv.tsx`). */
-  const [tanishtirish, setTanishtirish] = useState(() => !tanishtirilganmi());
+  /**
+   * Tanishuv sahifasi (`Tanishtiruv.tsx`) ko'rsatiladimi.
+   *
+   * Faqat VEB'da, faqat bosh manzilda va faqat hali ko'rmagan, kirmagan
+   * odamga. Telegram Mini App va APK'da yo'q: u yerga kelgan odam
+   * ilovani allaqachon tanlagan. Kanal postidan `/toplam/5` ga kelgan
+   * odamga ham yo'q — u aynan o'sha testni ochish uchun bosgan.
+   */
+  const [tanishtirish, setTanishtirish] = useState(() =>
+    !tanishtirilganmi() && !miniAppda() && import.meta.env.VITE_ROUTER !== "hash"
+    && !kirganmi());
   // Ism so'raladigan bo'lsa, o'sha ekranga TAYYOR holda beriladi. Aks
   // holda u xuddi shu `/me` javobini ikkinchi marta so'rar va odam
   // kirish tugmasini bosgach yana kutib turardi.
@@ -121,18 +121,15 @@ export function Tanishuv({ children }: { children: ReactNode }) {
 
         // ─── TIL IKKI TOMONLAMA SINXRON ───
         //
-        // Qurilmada tanlov bo'lmasa-yu, hisob allaqachon javob bergan
-        // bo'lsa — SERVERDAGISI olinadi va savol umuman chiqmaydi.
-        // Ilgari bunday paytda til qayta-qayta so'ralardi: qurilma
-        // xotirasi yo'qolishi odatiy hol (Telegram ichidagi ko'rinish
-        // tozalanadi, brauzer keshi o'chiriladi, odam boshqa
-        // telefondan kiradi), hisob esa bir marta javob bergan.
+        // Til endi SO'RALMAYDI (o'zbekcha standart, `lib/til.ts`). Lekin
+        // qurilmada tanlov bo'lmasa-yu, hisob ilgari ruschani tanlagan
+        // bo'lsa — serverdagisi olinadi: odam boshqa telefondan kirgan
+        // yoki xotira tozalangan. Ruschaga o'tish sahifani bir marta
+        // qayta yuklaydi (`tilniQoy`), keyin tanlov qurilmada turadi.
         if (!tilTanlangan() && h.tilTanlandi && (h.til === "uz" || h.til === "ru")) {
-          // Qayta yuklamaymiz: ekranda hali hech narsa yo'q va
-          // `TilTanlash` shu render'ning o'zida olib tashlanadi.
-          tilniQoy(h.til, false);
-          setTilSoraladi(false);
-          setTilKutilmoqda(false);
+          const boshqa = h.til !== til();
+          tilniQoy(h.til);
+          if (boshqa) return;            // sahifa qayta yuklanyapti
         } else if ((h.til || "uz") !== til() && tilTanlangan()) {
           // Teskari yo'nalish: qurilmadagi tanlov serverga yoziladi.
           // Faqat FARQ bo'lganda — har ochilishda yozib turish
@@ -144,24 +141,28 @@ export function Tanishuv({ children }: { children: ReactNode }) {
           else localStorage.removeItem(KIRGAN_KEY);
         } catch { /* xotira to'lgan — faqat bayroq eslanmaydi */ }
 
-        // Serverdan javob keldi — endi til savolini ko'rsatsa bo'ladi
-        // (agar hisob ham javob bermagan bo'lsa).
-        setTilKutilmoqda(false);
-
         royxatniBelgila(h.royxatdan);
         // Serverdagi javob qurilmaga (boshqa telefondan kelgan odam
         // qayta so'ralmasin).
         serverdanOl(h.kim, h.bosqich, h.yonalish);
 
-        // ANKETA ENDI HAMMAGA — ro'yxatdan o'tmaganga ham, va BIRINCHI.
-        // Ilgari u faqat ro'yxatdan o'tganga chiqardi ("sinab
-        // ko'rayotgan odamni anketa haydab yuboradi" degan qaror bilan)
-        // va 12% odam to'ldirardi; ilova esa kimga gapirayotganini bilmasdi
-        // (`components/Anketa.tsx`). Keyingi qadam eslab qolinadi.
-        const navbat: Holat = h.royxatdan ? "kerak-emas" : (h.telegram ? "ism" : "sinov");
-        if (anketaKerak()) { setKeyin(navbat); return setHolat("anketa"); }
-        if (yonalishKerak(profil())) { setKeyin(navbat); return setHolat("yonalish"); }
-        if (h.royxatdan) return setHolat("kerak-emas");
+        // ANKETA — FAQAT RO'YXATDAN O'TGANDA.
+        //
+        // 2026-09-25 dan 10-08 gacha u hammaga, kirgan zahoti chiqardi
+        // (tahlil uchun). Lekin saytga "nima ekan" deb kirgan odam hali
+        // hech narsa ko'rmay turib savolga duch kelardi va chiqib ketardi.
+        // Endi kirmagan odam ilovani erkin ko'radi; kim ekanini Telegram
+        // bilan kirganda aytadi — o'shanda u allaqachon qolishga qaror
+        // qilgan. Ism endi yozilgan bo'lsa (`ism` holati), anketa
+        // undan keyin chiqadi (pastdagi `Sozlamalar` → onTayyor).
+        if (h.royxatdan) {
+          // Kirgan odamga tanishuv sahifasi qayta chiqmasin.
+          tanishtirildi();
+          setTanishtirish(false);
+          if (anketaKerak()) { setKeyin("kerak-emas"); return setHolat("anketa"); }
+          if (yonalishKerak(profil())) { setKeyin("kerak-emas"); return setHolat("yonalish"); }
+          return setHolat("kerak-emas");
+        }
         // Telegram bog'langan, lekin ism-familiya to'liq emas — odam
         // ikki bosqich orasida qolib ketgan.
         return setHolat(h.telegram ? "ism" : "sinov");
@@ -170,9 +171,11 @@ export function Tanishuv({ children }: { children: ReactNode }) {
         // Server javob bermadi. Ilovani to'smaymiz va taklif ham
         // chiqarmaymiz: internetsiz odamni Telegram'ga yuborishdan
         // ma'no yo'q, u baribir ochilmaydi.
-        // Profil qurilmada saqlanadi — anketa internetsiz ham so'raladi.
-        setHolat(anketaKerak() ? "anketa" : yonalishKerak(profil()) ? "yonalish" : "kerak-emas");
-        setTilKutilmoqda(false);
+        // Anketa faqat oxirgi safar kirgan bo'lsa (`kirganmi` — ishora):
+        // profil qurilmada saqlanadi, javob internetsiz ham yoziladi.
+        const kirgan = kirganmi();
+        setHolat(kirgan && anketaKerak() ? "anketa"
+          : kirgan && yonalishKerak(profil()) ? "yonalish" : "kerak-emas");
         return;
       }
       setTimeout(tekshir, 900);
@@ -185,29 +188,13 @@ export function Tanishuv({ children }: { children: ReactNode }) {
   // Dars tugaganda `lib/sinov.ts` shu yerga xabar beradi.
   useEffect(() => taklifgaObuna(setTaklif), []);
 
-  // Server javob bermasa ham savol abadiy kutib turmaydi.
-  useEffect(() => {
-    if (!tilKutilmoqda) return;
-    const id = setTimeout(() => setTilKutilmoqda(false), 2000);
-    return () => clearTimeout(id);
-  }, [tilKutilmoqda]);
-
   if (kirishSahifasi) return <>{children}</>;
 
-  // Til savoli serverdan javob kelguncha ushlab turiladi (ko'pi bilan
-  // ikki soniya): hisob allaqachon javob bergan bo'lsa, savol umuman
-  // chiqmaydi.
-  if (tilKutilmoqda && tilSoraladi) return <Kutish />;
-
-  // Til eng birinchi so'raladi: qolgan hamma ekran (kirish taklifi ham,
-  // ism so'rash ham) allaqachon biror tilda yozilgan bo'ladi va noto'g'ri
-  // tanlangani odamni birinchi qadamda to'xtatib qo'yadi.
-  if (tilSoraladi) return <TilTanlash onTanlandi={() => setTilSoraladi(false)} />;
-
-  // Yangi odamga — anketadan OLDIN sayt nima ekani. Ro'yxatdan o'tgan
-  // (`kerak-emas`) va bot orqali kirish o'rtasidagi (`ism`) odam buni
-  // allaqachon biladi, unga ko'rsatilmaydi.
-  if (tanishtirish && (holat === "anketa" || holat === "sinov")) {
+  // Saytga birinchi kelgan odamga — to'liq tanishuv sahifasi. Server
+  // javobini KUTMAYDI (`kutilyapti` ham kiradi): reklamadan kelgan odam
+  // birinchi ko'rgan narsa aylanuvchi belgi bo'lmasin. Server "bu odam
+  // kirgan" desa, yuqoridagi effekt sahifani o'zi yopadi.
+  if (tanishtirish && pathname === "/" && (holat === "kutilyapti" || holat === "sinov")) {
     return <Tanishtiruv onTayyor={() => setTanishtirish(false)} />;
   }
 

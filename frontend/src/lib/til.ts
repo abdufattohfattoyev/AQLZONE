@@ -44,23 +44,16 @@ function saqlangan(): Til | null {
 }
 
 /**
- * Brauzer tili — ilk taxmin.
+ * Tanlov bo'lmasa — O'ZBEKCHA.
  *
- * O'zbekistonda ruscha interfeysli telefon ko'p, shuning uchun taxmin
- * foydali: rus tilida telefon ishlatadigan ota-ona ilovani o'zi tanish
- * tilda ko'radi. Taxmin QAT'IY emas — u faqat tanlov oynasida qaysi
- * tugma tanlangan bo'lib turishini belgilaydi.
+ * Ilgari brauzer tilidan taxmin qilinardi va birinchi ekranda "Tilni
+ * tanlang" so'ralardi (`TilTanlash`). U yangi odam ilovani ko'rishidan
+ * oldingi yana bitta to'siq edi. Endi savol yo'q: hamma o'zbekchada
+ * ochadi, ruscha kerak bo'lsa tanishuv sahifasidagi UZ / RU tugmasi
+ * yoki sozlamalar orqali o'zi almashtiradi. `/ru/...` manzillar esa
+ * `index.html` skriptida baribir ruschaga qo'yiladi.
  */
-function taxmin(): Til {
-  try {
-    const t = (navigator.languages?.[0] ?? navigator.language ?? "").toLowerCase();
-    return t.startsWith("ru") ? "ru" : "uz";
-  } catch {
-    return "uz";
-  }
-}
-
-let joriy: Til = saqlangan() ?? taxmin();
+let joriy: Til = saqlangan() ?? "uz";
 
 /** Ayni paytdagi til. */
 export const til = (): Til => joriy;
