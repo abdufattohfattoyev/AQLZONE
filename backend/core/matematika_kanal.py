@@ -332,28 +332,49 @@ def fakt_belgila(fakt: tuple[str, str]) -> None:
     )
 
 
-# ─────────────────────────── OG'ZAKI MISOL ───────────────────────────
+# ─────────────────────────── KUN MISOLLARI ───────────────────────────
 #
-# Qalam-qog'ozsiz, 30 soniyada yechiladigan misol va uning USULI.
+# Har kuni UCHTA misol, har biri ALOHIDA post (rasm + qisqa yozuv):
 #
-# Ikki post bo'lib chiqadi:
-#   1. 15:00 — savol RASMI (`misol_rasmi`) va KIM UCHUN. Javob yo'q, tugma yo'q: o'quvchi
-#      javobini izohda yozadi. Javob oldindan ko'rinsa (spoiler ham)
-#      izohda bahs bo'lmaydi — hamma bosib ko'radi-yu, ketadi.
-#   2. JAVOB_SOATI da — to'g'ri javob va yechish usuli, savol postiga
-#      javob (reply) bo'lib. Oraliq vaqt izohlar yig'ilishi uchun.
+#   13:00 — boshlang'ich sinf (1–4)    · masalan 2-sinf
+#   14:00 — maktab (5–11-sinf)         · masalan 6-sinf
+#   16:00 — oliy matematika (1–4-kurs) · masalan 2-kurs
 #
-# Misol kunga bog'liq (`bugungi_misol`), ya'ni javob posti savolni
-# bazadan emas, qayta hisoblab oladi — ikkalasi doim bir xil.
+# Sinf har kuni almashadi (`bugungi_sinflar`): bugun 2-sinf, 6-sinf,
+# 2-kurs bo'lsa, ertaga 3-sinf, 7-sinf, 3-kurs. Ya'ni kanalda har bir
+# o'quvchi o'ziga mos misolni muntazam topadi, kattalar esa uchalasini
+# ham sinab ko'radi.
+#
+# Javob postda YO'Q — na rasmda, na spoilerda. O'quvchi javobini IZOHDA
+# yozadi: javob oldindan ko'rinsa izohda bahs bo'lmaydi, hamma bosib
+# ko'radi-yu, ketadi. To'g'ri javoblar va yechish usuli kechqurun
+# `JAVOB_SOATI` da BITTA postda chiqadi — har biri o'z savoliga havola
+# bilan. Uchta alohida javob posti kanal lentasini to'ldirib yuborardi.
+#
+# Misol kunga bog'liq (`bugungi_misol`): javob posti savolni bazadan
+# emas, qayta hisoblab oladi — ikkalasi doim bir xil. Har misol
+# hisoblab yasaladi, qo'lda yozilmaydi; javoblar sinovda yechimdan
+# mustaqil qayta tekshiriladi (`tests.py`).
+#
+# Savol doim "SHART: IFODA" shaklida: rasmda shart kichik harf bilan
+# tepada, ifoda katta harf bilan o'rtada turadi (`misol_rasmi`). Shu
+# sababli shartning ICHIDA ": " bo'lmasin; bo'lish belgisi — "÷".
 
-#: Javob posti qachon chiqadi (Toshkent vaqti). Jadval: `aqlzone/celery.py`.
-JAVOB_SOATI = "17:00"
+#: Bosqichlar — (nomi, savol posti soati). Soatlar `aqlzone/celery.py`
+#: dagi jadval bilan bir xil bo'lsin: ular postda yozib qo'yiladi.
+BOSQICHLAR: dict[str, tuple[str, str]] = {
+    "boshlangich": ("1–4-sinf", "13:00"),
+    "maktab": ("5–11-sinf", "14:00"),
+    "oliy": ("1–4-kurs", "16:00"),
+}
 
-#: Misol kunlari — `date.weekday()` (0 = dushanba). Jadval bilan bir xil.
-MISOL_KUNLARI = {1: "seshanba", 3: "payshanba", 5: "shanba"}
+#: Uchala misolning javobi qachon chiqadi (Toshkent vaqti). Oxirgi
+#: savoldan to'rt soat keyin: izohlar yig'ilsin, talaba ham darsdan
+#: bo'shab ulgursin. 19:00 dagi rolik va 21:00 dagi natijalar orasida.
+JAVOB_SOATI = "20:00"
 
 
-def _yuqori(n: int) -> str:
+def _yuqori(n) -> str:
     """31 → ³¹ — daraja rasmda ham, matnda ham darajadek ko'rinsin."""
     return str(n).translate(str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹"))
 
@@ -363,124 +384,571 @@ def _pastki(n: int) -> str:
     return str(n).translate(str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉"))
 
 
+def _manfiy(s: str) -> str:
+    """Kompyuter minusi "-" emas, matematik "−" — rasmda chiziqcha bilan adashmasin."""
+    return s.replace("-", "−")
+
+
 def _kasr(f: Fraction) -> str:
-    """3/2 ko'rinishida; butun bo'lsa — faqat son."""
-    return str(f.numerator) if f.denominator == 1 else f"{f.numerator}/{f.denominator}"
+    """3/2 ko'rinishida; butun bo'lsa — faqat son. Manfiyda "−"."""
+    return _manfiy(str(f.numerator) if f.denominator == 1 else f"{f.numerator}/{f.denominator}")
 
 
-def _misollar(r: random.Random) -> list[tuple[str, str, str, str]]:
-    """
-    (kim uchun, savol, javob, usul) — har biri hisoblab yasaladi, qo'lda
-    yozilmaydi.
+def _onli(f: Fraction) -> str:
+    """Fraction(119, 20) → "5,95" — o'nli kasr, maktabdagidek vergul bilan."""
+    butun = f.numerator // f.denominator if f >= 0 else -((-f.numerator) // f.denominator)
+    qoldiq = abs(f - butun)
+    if not qoldiq:
+        return _manfiy(str(butun))
+    s = ""
+    while qoldiq and len(s) < 6:
+        qoldiq *= 10
+        s += str(int(qoldiq))
+        qoldiq -= int(qoldiq)
+    return _manfiy(f"{'-' if f < 0 and butun == 0 else ''}{butun},{s}")
 
-    2026-10-08 dan QIYINROQ: ilgari hammasi 4–9-sinf "hiylali hisob" edi
-    (25 × k, 11 × ab, 99 × d, foiz) va kanal egasi "juda oson" dedi. Endi
-    10–11-sinf va oliy matematika — 1, 2, 3-kurs. "Kim uchun" o'sha mavzu
-    o'tiladigan bosqich; kattaroqlar ham yecha oladi.
 
-    Savol doim "SHART: IFODA" shaklida: rasmda shart kichik harf bilan
-    tepada, ifoda katta harf bilan o'rtada turadi (`misol_rasmi`). Ifodada
-    `\n` — majburiy qator (matritsa satrlari).
-    """
-    # ── 10–11-sinf ──
-    m = r.randint(3, 7)
-    q = r.choice([3, 5, 6, 7, 11])
-    a1, d, n = r.randint(2, 9), r.randint(3, 7), r.choice([10, 20, 30, 40])
-    s_n = n * (2 * a1 + (n - 1) * d) // 2
+def _had(n: int) -> str:
+    """Ifodadagi navbatdagi had: 5 → "+ 5", −5 → "− 5"."""
+    return f"+ {n}" if n >= 0 else f"− {-n}"
+
+
+# ── 1–4-sinf ──
+# Bola bir daqiqada boshida yechadigan, lekin o'ylashni talab qiladigan
+# misollar: o'nlikdan o'tish, amallar tartibi, "kim nechta qoldi".
+# Har birida bitta kichik tuzoq bor (amallar tartibi, so'ralgan narsa
+# qizlar emas — o'g'il bolalar, yarim soat ham yo'l).
+
+def _sinf1(r: random.Random) -> list[tuple[str, str, str]]:
+    a, b = r.randint(6, 9), r.randint(4, 9)
+    c = r.randint(2, 9)
+    x, y = r.randint(5, 10), r.randint(3, 9)
+    olma, qoshildi = r.randint(4, 9), r.randint(3, 8)
+    yeyildi = r.randint(2, olma)
+    bosh, qadam = r.randint(1, 5), r.randint(2, 4)
+    qator = [bosh + qadam * i for i in range(4)]
+    tovuq, mushuk = r.randint(2, 4), r.randint(1, 2)
+    oyoq = ["2"] * tovuq + ["4"] * mushuk
+    return [
+        (f"Hisoblang: {a} + {b} − {c}", str(a + b - c),
+         f"Avval qo'shamiz: {a} + {b} = {a + b}. Keyin ayiramiz: {a + b} − {c} = {a + b - c}."),
+        (f"Qaysi son yetishmaydi: {x} + □ = {x + y}", str(y),
+         f"Noma'lum qo'shiluvchi = yig'indi − ma'lum qo'shiluvchi: {x + y} − {x} = {y}."),
+        (f"Savatda {olma} ta olma bor edi, yana {qoshildi} ta qo'shildi, {yeyildi} tasi yeyildi: "
+         "savatda nechta olma qoldi?", str(olma + qoshildi - yeyildi),
+         f"{olma} + {qoshildi} = {olma + qoshildi}, {olma + qoshildi} − {yeyildi} = "
+         f"{olma + qoshildi - yeyildi}."),
+        ("Qatorni davom ettiring: " + ", ".join(map(str, qator)) + ", ?", str(qator[-1] + qadam),
+         f"Har safar {qadam} ga oshadi: {qator[-1]} + {qadam} = {qator[-1] + qadam}."),
+        (f"Hovlida {tovuq} ta tovuq va {mushuk} ta mushuk bor: hammasining nechta oyog'i bor?",
+         str(2 * tovuq + 4 * mushuk),
+         f"Tovuqning 2 ta, mushukning 4 ta oyog'i bor: {' + '.join(oyoq)} = {2 * tovuq + 4 * mushuk}."),
+    ]
+
+
+def _sinf2(r: random.Random) -> list[tuple[str, str, str]]:
+    a, b = r.randint(25, 58), r.randint(17, 39)
+    c = r.randint(10, a + b - 20)
+    x, y = r.randint(3, 9), r.randint(3, 9)
+    z = r.randint(4, min(x * y - 1, 30))
+    ayr, farq = r.randint(15, 39), r.randint(20, 59)
+    k, n = r.randint(4, 9), r.randint(3, 9)
+    soat, daq = r.randint(7, 11), r.choice([10, 20, 30, 40, 45, 50])
+    davom = r.choice([35, 40, 45, 50, 55])
+    jami = soat * 60 + daq + davom
+    tugash = f"{jami // 60}:{jami % 60:02d}"
+    if daq + davom >= 60:
+        vaqt_usul = (f"{60 - daq} daqiqadan keyin {soat + 1}:00 bo'ladi, yana "
+                     f"{davom - (60 - daq)} daqiqa qo'shamiz: {tugash}.")
+    else:
+        vaqt_usul = f"{daq} + {davom} = {daq + davom} daqiqa, ya'ni {tugash}."
+    return [
+        (f"Hisoblang: {a} + {b} − {c}", str(a + b - c),
+         f"{a} + {b} = {a + b}, {a + b} − {c} = {a + b - c}."),
+        (f"Hisoblang: {x} × {y} − {z}", str(x * y - z),
+         f"Avval ko'paytirish: {x} × {y} = {x * y}. Keyin {x * y} − {z} = {x * y - z}."),
+        (f"Qaysi son yetishmaydi: □ − {ayr} = {farq}", str(ayr + farq),
+         f"Kamayuvchi = ayirma + ayriluvchi: {farq} + {ayr} = {ayr + farq}."),
+        (f"Bir qutida {k} ta qalam bor: {n} ta qutida jami nechta qalam bor?", str(k * n),
+         f"{n} ta quti, har birida {k} ta: {k} × {n} = {k * n}."),
+        (f"Dars {soat}:{daq:02d} da boshlanib, {davom} daqiqa davom etadi: dars soat nechada tugaydi?",
+         tugash, vaqt_usul),
+    ]
+
+
+def _sinf3(r: random.Random) -> list[tuple[str, str, str]]:
+    c, q, d = r.randint(2, 6), r.randint(2, 8), r.randint(2, 4)
+    a = r.randint(q * d + 10, 90)
+    bol, bolinma = r.randint(6, 9), r.randint(7, 12)
+    qoldiq = r.randint(1, bol - 1)
+    son = bol * bolinma + qoldiq
+    boy = r.randint(6, 15)
+    en = r.randint(3, boy - 1)
+    daftar, ruchka = r.choice([700, 800, 900, 1200, 1500]), r.choice([500, 600, 1000, 1300])
+    nd, nr = r.randint(2, 5), r.randint(2, 4)
+    narx = nd * daftar + nr * ruchka
+    return [
+        (f"Hisoblang: {a} − {c * q} ÷ {c} × {d}", str(a - q * d),
+         f"Avval bo'lish va ko'paytirish, chapdan o'ngga: {c * q} ÷ {c} = {q}, {q} × {d} = {q * d}. "
+         f"Keyin ayirish: {a} − {q * d} = {a - q * d}."),
+        (f"Bo'lishdagi qoldiqni toping: {son} ÷ {bol}", str(qoldiq),
+         f"{bol} × {bolinma} = {bol * bolinma} — {son} dan oshmaydigan eng yaqin son. "
+         f"Qoldiq: {son} − {bol * bolinma} = {qoldiq}."),
+        (f"To'g'ri to'rtburchakning bo'yi {boy} sm, eni {en} sm: perimetri necha sm?", str(2 * (boy + en)),
+         f"P = 2 × (bo'y + en) = 2 × ({boy} + {en}) = {2 * (boy + en)}."),
+        (f"Daftar {_son(daftar)} so'm, ruchka {_son(ruchka)} so'm. {nd} ta daftar va {nr} ta ruchka "
+         "olindi: jami necha so'm to'landi?", _son(narx),
+         f"{nd} × {_son(daftar)} = {_son(nd * daftar)}, {nr} × {_son(ruchka)} = {_son(nr * ruchka)}. "
+         f"Jami: {_son(nd * daftar)} + {_son(nr * ruchka)} = {_son(narx)}."),
+    ]
+
+
+def _sinf4(r: random.Random) -> list[tuple[str, str, str]]:
+    k = r.randint(13, 99)
+    tomon = r.randint(4, 15)
+    mah = r.choice([4, 5, 6, 8])
+    sur = r.choice([s for s in range(1, mah) if Fraction(s, mah).denominator == mah])   # 2/4 emas
+    jami = mah * r.randint(3, 40 // mah)
+    qiz = jami // mah * sur
+    v, t = r.choice([10, 12, 14, 16, 18]), r.randint(2, 4)
+    y = r.randint(3, 9)
+    return [
+        (f"Hisoblang: 25 × {k} × 4", _son(100 * k),
+         f"O'rin almashtiramiz: 25 × 4 = 100, 100 × {k} = {_son(100 * k)}."),
+        (f"Kvadratning perimetri {4 * tomon} sm: yuzi necha sm²?", str(tomon * tomon),
+         f"Tomoni {4 * tomon} ÷ 4 = {tomon} sm. Yuzi {tomon} × {tomon} = {tomon * tomon}."),
+        (f"Sinfda {jami} o'quvchi, ularning {sur}/{mah} qismi qizlar: o'g'il bolalar nechta?",
+         str(jami - qiz),
+         f"Qizlar: {jami} ÷ {mah} × {sur} = {qiz}. O'g'il bolalar: {jami} − {qiz} = {jami - qiz}."),
+        (f"Velosipedchi soatiga {v} km yuradi: {t} soat 30 daqiqada necha km yuradi?",
+         str(v * t + v // 2),
+         f"{t} soatda {v} × {t} = {v * t} km, yarim soatda {v} ÷ 2 = {v // 2} km. "
+         f"Jami: {v * t} + {v // 2} = {v * t + v // 2}."),
+        (f"Qulay usulda hisoblang: 999 × {y}", _son(999 * y),
+         f"999 = 1000 − 1: {_son(1000 * y)} − {y} = {_son(999 * y)}."),
+    ]
+
+
+# ── 5–11-sinf ──
+
+def _sinf5(r: random.Random) -> list[tuple[str, str, str]]:
+    mah = r.choice([6, 8, 9, 10, 12])
+    a, b = r.randint(2, mah - 1), r.randint(2, mah - 1)
+    c = r.randint(1, a + b - 1)
+    yig = Fraction(a + b - c, mah)
+    kasr_usul = f"Maxrajlar bir xil — suratlar bilan ishlaymiz: ({a} + {b} − {c})/{mah} = {a + b - c}/{mah}"
+    kasr_usul += "." if _kasr(yig) == f"{a + b - c}/{mah}" else f" = {_kasr(yig)}."
+    o1, o2, o3 = (Fraction(r.randint(110, 899), r.choice([10, 100])) for _ in range(3))
+    if o1 + o2 <= o3:
+        o1, o3 = o3, o1
+    onli = o1 + o2 - o3
+    x, k, b0 = r.randint(7, 25), r.randint(3, 9), r.randint(5, 40)
+    (a1, m1), (a2, m2) = r.choice([((2, 5), (3, 3)), ((2, 6), (3, 3)), ((3, 4), (4, 3)), ((2, 7), (5, 3)),
+                                   ((3, 4), (2, 6)), ((10, 3), (9, 3)), ((2, 8), (6, 3))])
+    d1, d2 = a1 ** m1, a2 ** m2
+    m = r.randint(10, 60)
+    return [
+        (f"Hisoblang: {a}/{mah} + {b}/{mah} − {c}/{mah}", _kasr(yig), kasr_usul),
+        (f"Hisoblang: {_onli(o1)} + {_onli(o2)} − {_onli(o3)}", _onli(onli),
+         f"Vergulni vergul ostiga yozamiz: {_onli(o1)} + {_onli(o2)} = {_onli(o1 + o2)}, "
+         f"{_onli(o1 + o2)} − {_onli(o3)} = {_onli(onli)}."),
+        (f"Tenglamani yeching: {k}x + {b0} = {k * x + b0}", str(x),
+         f"{k}x = {k * x + b0} − {b0} = {k * x}, x = {k * x} ÷ {k} = {x}."),
+        (f"Hisoblang: {a1}{_yuqori(m1)} − {a2}{_yuqori(m2)}", str(d1 - d2),
+         f"{a1}{_yuqori(m1)} = {d1}, {a2}{_yuqori(m2)} = {d2}. {d1} − {d2} = {d1 - d2}."),
+        (f"Ketma-ket uchta natural sonning yig'indisi {3 * m}: eng kattasi nechaga teng?", str(m + 1),
+         f"O'rtadagisi {3 * m} ÷ 3 = {m}, sonlar {m - 1}, {m}, {m + 1}. Eng kattasi — {m + 1}."),
+    ]
+
+
+def _ozaro_tub(r: random.Random, quyi: int, yuqori: int) -> tuple[int, int]:
+    from math import gcd
+    while True:
+        p, q = r.sample(range(quyi, yuqori + 1), 2)
+        if gcd(p, q) == 1:
+            return min(p, q), max(p, q)
+
+
+def _sinf6(r: random.Random) -> list[tuple[str, str, str]]:
+    g, (p, q) = r.randint(2, 9), _ozaro_tub(r, 2, 7)
+    g2, (p2, q2) = r.randint(6, 21), _ozaro_tub(r, 2, 9)
+    dd, t, c = r.randint(2, 9), r.randint(2, 6), r.randint(2, 15)
+    bb = dd * t
+    a, b, c2 = r.randint(5, 30), r.randint(3, 25), r.randint(3, 20)
+    narx, foiz = r.choice([40, 60, 80, 120, 150, 200]) * 1000, r.choice([10, 15, 20, 25, 30])
+    chegirma = narx * foiz // 100
+    return [
+        (f"Eng kichik umumiy karralini toping: EKUK({g * p}, {g * q})", str(g * p * q),
+         f"{g * p} = {g} · {p}, {g * q} = {g} · {q}. EKUK = {g} · {p} · {q} = {g * p * q}."),
+        (f"Eng katta umumiy bo'luvchini toping: EKUB({g2 * p2}, {g2 * q2})", str(g2),
+         f"{g2 * p2} = {g2} · {p2}, {g2 * q2} = {g2} · {q2}, {p2} va {q2} o'zaro tub. EKUB = {g2}."),
+        (f"Proporsiyadan x ni toping: x : {bb} = {c} : {dd}", str(t * c),
+         f"Chetki hadlar ko'paytmasi o'rta hadlar ko'paytmasiga teng: x · {dd} = {bb} · {c}, "
+         f"x = {bb * c} ÷ {dd} = {t * c}."),
+        (f"Hisoblang: −{a} + {b} − (−{c2})", _manfiy(str(-a + b + c2)),
+         f"−(−{c2}) = +{c2}: −{a} + {b} + {c2} = {_manfiy(str(-a + b + c2))}."),
+        (f"Kitob {_son(narx)} so'm edi, narxi {foiz}% ga tushdi: endi necha so'm?", _son(narx - chegirma),
+         f"{foiz}% i: {_son(narx)} × {foiz} ÷ 100 = {_son(chegirma)}. "
+         f"{_son(narx)} − {_son(chegirma)} = {_son(narx - chegirma)}."),
+    ]
+
+
+def _sinf7(r: random.Random) -> list[tuple[str, str, str]]:
+    a = r.randint(35, 99)
+    b = a - r.randint(1, 3)
+    s = r.choice([20, 30, 40, 50])
+    x1 = r.randint(s - 9, s - 1)
+    x2 = s - x1
+    while True:
+        x, k, m, c = r.randint(2, 12), r.randint(3, 7), r.randint(1, 5), r.randint(1, 6)
+        if c < k and k * (x - m) - c * x != 0:
+            break
+    d = k * (x - m) - c * x
+    asos = r.randint(2, 5)
+    e1, e2 = r.randint(3, 7), r.randint(2, 6)
+    e3 = e1 + e2 - r.randint(1, 3 if asos <= 3 else 2)
+    dar = e1 + e2 - e3
+    return [
+        (f"Qulay usulda hisoblang: {a}² − {b}²", str((a - b) * (a + b)),
+         f"a² − b² = (a − b)(a + b) = {a - b} × {a + b} = {(a - b) * (a + b)}."),
+        (f"a = {x1}, b = {x2} bo'lsa, ifodaning qiymatini toping: a² + 2ab + b²", str(s * s),
+         f"a² + 2ab + b² = (a + b)² = ({x1} + {x2})² = {s}² = {s * s}."),
+        (f"Tenglamani yeching: {k}(x − {m}) = {c}x {_had(d)}", str(x),
+         f"{k}x − {k * m} = {c}x {_had(d)}; {k}x − {c}x = {_manfiy(str(d))} + {k * m}; "
+         f"{k - c}x = {(k - c) * x}; x = {x}."),
+        (f"Hisoblang: ({asos}{_yuqori(e1)} · {asos}{_yuqori(e2)}) ÷ {asos}{_yuqori(e3)}", str(asos ** dar),
+         f"Asoslar bir xil — darajalar qo'shiladi va ayriladi: {e1} + {e2} − {e3} = {dar}. "
+         f"{asos}{_yuqori(dar)} = {asos ** dar}."),
+    ]
+
+
+#: Pifagor uchliklari — kanalda ildizdan butun son chiqsin.
+_UCHLIKLAR = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25), (6, 8, 10), (9, 12, 15),
+              (12, 16, 20), (20, 21, 29), (9, 40, 41), (15, 20, 25)]
+
+
+def _sinf8(r: random.Random) -> list[tuple[str, str, str]]:
+    p, q = sorted(r.sample(range(1, 13), 2))
+    ka, kb, kc = r.choice(_UCHLIKLAR)
+    m, s, t = r.choice([2, 3, 5, 6, 7]), r.randint(1, 4), r.randint(2, 4)
+    a, x0 = r.randint(2, 7), r.randint(6, 12)
+    b = r.randint(1, 20)
+    return [
+        (f"Tenglamaning katta ildizini toping: x² − {p + q}x + {p * q} = 0", str(q),
+         f"Viyet teoremasi: x₁ + x₂ = {p + q}, x₁ · x₂ = {p * q}. Ildizlar {p} va {q}, kattasi — {q}."),
+        (f"To'g'ri burchakli uchburchakning katetlari {ka} va {kb}: gipotenuzasini toping", str(kc),
+         f"c = √(a² + b²) = √({ka * ka} + {kb * kb}) = √{kc * kc} = {kc}."),
+        (f"Hisoblang: √{m * s * s} · √{m * t * t}", str(m * s * t),
+         f"√a · √b = √(ab) = √{m * s * s * m * t * t} = {m * s * t}."),
+        (f"Tengsizlikning nechta natural yechimi bor: {a}x − {b} < {a * x0 - b}", str(x0 - 1),
+         f"{a}x < {a * x0}, x < {x0}. Natural yechimlar: 1, 2, …, {x0 - 1} — jami {x0 - 1}."),
+    ]
+
+
+#: (yozuvi, qiymati) — 9-sinf jadval qiymatlari, kvadratlari bilan.
+_TRIG = [("sin 30°", Fraction(1, 2)), ("cos 60°", Fraction(1, 2)), ("tg 45°", Fraction(1)),
+         ("sin² 45°", Fraction(1, 2)), ("cos² 30°", Fraction(3, 4)), ("tg² 60°", Fraction(3)),
+         ("ctg² 30°", Fraction(3)), ("sin² 60°", Fraction(3, 4)), ("cos² 45°", Fraction(1, 2))]
+
+
+def _sinf9(r: random.Random) -> list[tuple[str, str, str]]:
+    b1, q, n = r.randint(2, 5), r.choice([2, 3]), r.randint(5, 7)
+    bn = b1 * q ** (n - 1)
+    a1, d, n2 = r.randint(2, 9), r.randint(3, 7), r.choice([10, 20, 30, 40])
+    s_n = n2 * (2 * a1 + (n2 - 1) * d) // 2
+    (t1, v1), (t2, v2) = r.sample(_TRIG, 2)
+    k1, k2 = r.sample([2, 3, 4, 6], 2)
+    trig = k1 * v1 + k2 * v2
+    while True:
+        h, k = r.randint(1, 5), r.randint(-9, 9)
+        if k and h * h + k:
+            break
+    x, y = sorted(r.sample(range(3, 16), 2), reverse=True)
+    return [
+        (f"Geometrik progressiyada b₁ = {b1}, q = {q}. Hadni toping: b{_pastki(n)}", _son(bn),
+         f"bₙ = b₁ · qⁿ⁻¹ = {b1} · {q}{_yuqori(n - 1)} = {b1} · {q ** (n - 1)} = {_son(bn)}."),
+        (f"Arifmetik progressiyada a₁ = {a1}, d = {d}. Yig'indini toping: S{_pastki(n2)}", _son(s_n),
+         f"Sₙ = n(2a₁ + (n − 1)d) / 2 = {n2} · (2 · {a1} + {n2 - 1} · {d}) / 2 = "
+         f"{n2} · {2 * a1 + (n2 - 1) * d} / 2 = {_son(s_n)}."),
+        (f"Hisoblang: {k1} {t1} + {k2} {t2}", _kasr(trig),
+         f"{t1} = {_kasr(v1)}, {t2} = {_kasr(v2)}. {k1} · {_kasr(v1)} + {k2} · {_kasr(v2)} = {_kasr(trig)}."),
+        (f"Parabola uchining ordinatasini toping: y = x² − {2 * h}x {_had(h * h + k)}", _manfiy(str(k)),
+         f"Uchining abssissasi x₀ = {2 * h} / 2 = {h}. y₀ = {h}² − {2 * h} · {h} {_had(h * h + k)} = "
+         f"{_manfiy(str(k))}."),
+        (f"x + y = {x + y}, x − y = {x - y} bo'lsa, toping: x · y", str(x * y),
+         f"Tengliklarni qo'shamiz: 2x = {2 * x}, x = {x}; y = {x + y} − {x} = {y}. x · y = {x * y}."),
+    ]
+
+
+def _sinf10(r: random.Random) -> list[tuple[str, str, str]]:
+    m, q = r.randint(3, 7), r.choice([3, 5, 6, 7, 11])
+    (a, ma), (b, mb) = (r.choice([2, 3, 5]), r.randint(2, 4)), (r.choice([2, 3, 5]), r.randint(2, 4))
+    burchak = r.randint(11, 79)
+    asos, dar, sur = r.choice([2, 3]), r.randint(4, 7), r.randint(1, 3)
+    if asos == 3:
+        dar = min(dar, 5)
+    ikki = r.choice([(f"2 sin {x}° · cos {x}°", f"sin {2 * x}°", v) for x, v in
+                     ((15, Fraction(1, 2)), (45, Fraction(1)), (75, Fraction(1, 2)))] +
+                    [(f"cos² {x}° − sin² {x}°", f"cos {2 * x}°", v) for x, v in
+                     ((30, Fraction(1, 2)), (60, Fraction(-1, 2)), (45, Fraction(0)))])
+    formula = "2 sin x cos x = sin 2x" if ikki[0].startswith("2") else "cos² x − sin² x = cos 2x"
+    return [
+        (f"Hisoblang: log₂ {q * 2 ** m} − log₂ {q}", str(m),
+         f"Logarifmlar ayirmasi — bo'linmaning logarifmi: log₂({q * 2 ** m} : {q}) = "
+         f"log₂ {2 ** m} = {m}."),
+        (f"Hisoblang: log{_pastki(a)} {a ** ma} + log{_pastki(b)} {b ** mb}", str(ma + mb),
+         f"{a ** ma} = {a}{_yuqori(ma)}, {b ** mb} = {b}{_yuqori(mb)}. Demak {ma} + {mb} = {ma + mb}."),
+        (f"Hisoblang: sin² {burchak}° + cos² {burchak}° + tg 45°", "2",
+         "Asosiy ayniyat: sin² x + cos² x = 1 (har qanday burchakda), tg 45° = 1. Demak 1 + 1 = 2."),
+        (f"Tenglamani yeching: {asos}ˣ⁺{_yuqori(sur)} = {asos ** dar}", str(dar - sur),
+         f"{asos ** dar} = {asos}{_yuqori(dar)}. Darajalar teng: x + {sur} = {dar}, x = {dar - sur}."),
+        (f"Hisoblang: {ikki[0]}", _kasr(ikki[2]),
+         f"Ikkilangan burchak formulasi: {formula}. Demak {ikki[0]} = {ikki[1]} = {_kasr(ikki[2])}."),
+    ]
+
+
+def _sinf11(r: random.Random) -> list[tuple[str, str, str]]:
     odam, guruh = r.randint(8, 15), r.choice([2, 3])
     c_nk = comb(odam, guruh)
-    burchak = r.randint(11, 79)
-    # ── 1-kurs ──
+    kh, nuqta = r.randint(2, 6), r.randint(2, 5)
+    hosila = 3 * nuqta * nuqta - 2 * kh * nuqta
+    yuqori, ozod = r.randint(2, 6), r.randint(1, 9)
+    yigindi = r.randint(3, 11)
+    holat = 6 - abs(yigindi - 7)
+    p = Fraction(holat, 36)
+    return [
+        (f"{odam} kishidan {guruh} kishilik guruhni necha usulda tanlash mumkin: C({odam}, {guruh})",
+         str(c_nk),
+         (f"C(n, 2) = n(n − 1) / 2 = {odam} · {odam - 1} / 2 = {c_nk}." if guruh == 2 else
+          f"C(n, 3) = n(n − 1)(n − 2) / 6 = {odam} · {odam - 1} · {odam - 2} / 6 = {c_nk}.")),
+        (f"f(x) = x³ − {kh}x² bo'lsa, hosilaning qiymatini toping: f′({nuqta})", _manfiy(str(hosila)),
+         f"f′(x) = 3x² − {2 * kh}x. Demak f′({nuqta}) = 3 · {nuqta * nuqta} − {2 * kh} · {nuqta} = "
+         f"{3 * nuqta * nuqta} − {2 * kh * nuqta} = {_manfiy(str(hosila))}."),
+        (f"Aniq integralni hisoblang: ∫₀{_yuqori(yuqori)} (2x + {ozod}) dx",
+         str(yuqori * yuqori + ozod * yuqori),
+         f"Boshlang'ich funksiya x² + {ozod}x. Nyuton–Leybnits: {yuqori}² + {ozod} · {yuqori} − 0 = "
+         f"{yuqori * yuqori + ozod * yuqori}."),
+        (f"Ikki o'yin kubigi tashlandi. Ehtimollikni toping: P(yig'indi = {yigindi})", _kasr(p),
+         f"Jami 6 · 6 = 36 holat. Yig'indi {yigindi} bo'ladiganlar {holat} ta. P = {holat}/36"
+         + ("." if _kasr(p) == f"{holat}/36" else f" = {_kasr(p)}.")),
+    ]
+
+
+# ── 1–4-kurs ──
+
+def _kurs1(r: random.Random) -> list[tuple[str, str, str]]:
     k1, m1 = r.sample(range(2, 10), 2)
     a2, b2 = r.sample(range(2, 10), 2)
     c2, e2 = r.randint(1, 9), r.randint(1, 9)
     ma, mb, mc, md = (r.randint(2, 9) for _ in range(4))
-    # ── 2-kurs ──
-    kh, nuqta = r.randint(2, 6), r.randint(2, 5)
-    hosila = 3 * nuqta * nuqta - 2 * kh * nuqta
-    yuqori, ozod = r.randint(2, 6), r.randint(1, 9)
-    maxraj = r.randint(2, 9)
-    xa, xb, xc, xd = (r.randint(1, 9) for _ in range(4))
-    # ── 3-kurs ──
-    yigindi = r.randint(3, 11)
-    holat = 6 - abs(yigindi - 7)
-    p = Fraction(holat, 36)
-    ka, kb, kc = r.choice([(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25), (6, 8, 10), (9, 12, 15)])
-    tomon = r.choice([4, 6, 8, 10, 12, 20])
-    kutilma = f"{(tomon + 1) / 2:g}".replace(".", ",")
-
-    limit1 = _kasr(Fraction(k1, m1))
-    limit2 = _kasr(Fraction(a2, b2))
+    u = [r.randint(-5, 6) or 1 for _ in range(3)]
+    v = [r.randint(-5, 6) or 2 for _ in range(3)]
+    skalyar = sum(x * y for x, y in zip(u, v))
+    limit1, limit2 = _kasr(Fraction(k1, m1)), _kasr(Fraction(a2, b2))
+    vek = lambda w: "(" + "; ".join(_manfiy(str(x)) for x in w) + ")"
     return [
-        ("10–11-sinf", f"Hisoblang: log₂ {q * 2 ** m} − log₂ {q}", str(m),
-         f"Logarifmlar ayirmasi — bo'linmaning logarifmi: log₂({q * 2 ** m} : {q}) = "
-         f"log₂ {2 ** m} = {m}."),
-        ("10–11-sinf", f"Arifmetik progressiyada a₁ = {a1}, d = {d}. Yig'indini toping: S{_pastki(n)}",
-         str(s_n),
-         f"Sₙ = n(2a₁ + (n − 1)d) / 2 = {n} · (2 · {a1} + {n - 1} · {d}) / 2 = "
-         f"{n} · {2 * a1 + (n - 1) * d} / 2 = {s_n}."),
-        ("10–11-sinf", f"{odam} kishidan {guruh} kishilik guruhni necha usulda tanlash mumkin: "
-                       f"C({odam}, {guruh})", str(c_nk),
-         (f"C(n, 2) = n(n − 1) / 2 = {odam} · {odam - 1} / 2 = {c_nk}." if guruh == 2 else
-          f"C(n, 3) = n(n − 1)(n − 2) / 6 = {odam} · {odam - 1} · {odam - 2} / 6 = {c_nk}.")),
-        ("10–11-sinf", f"Hisoblang: sin² {burchak}° + cos² {burchak}° + tg 45°", "2",
-         f"Asosiy ayniyat: sin² x + cos² x = 1 (har qanday burchakda), tg 45° = 1. "
-         f"Demak 1 + 1 = 2."),
-        ("1-kurs", f"Limitni toping: lim (x→0)\nsin {k1}x / {m1}x", limit1,
+        (f"Limitni toping: lim (x→0)\nsin {k1}x / {m1}x", limit1,
          f"Ajoyib limit: x → 0 da sin kx ≈ kx. Demak sin {k1}x / {m1}x → {k1}x / {m1}x = "
          f"{k1}/{m1}" + ("." if limit1 == f"{k1}/{m1}" else f" = {limit1}.")),
-        ("1-kurs", f"Limitni toping: lim (x→∞)\n({a2}x² + {c2}x) / ({b2}x² − {e2})", limit2,
+        (f"Limitni toping: lim (x→∞)\n({a2}x² + {c2}x) / ({b2}x² − {e2})", limit2,
          f"x → ∞ da eng katta daraja hal qiladi: x² oldidagi koeffitsientlar nisbati "
          f"{a2}/{b2}" + ("." if limit2 == f"{a2}/{b2}" else f" = {limit2}.")),
-        ("1-kurs", f"Determinantni hisoblang: |{ma}  {mb}|\n|{mc}  {md}|", str(ma * md - mb * mc),
+        (f"Determinantni hisoblang: |{ma}  {mb}|\n|{mc}  {md}|", _manfiy(str(ma * md - mb * mc)),
          f"2×2 determinant = ad − bc = {ma} · {md} − {mb} · {mc} = {ma * md} − {mb * mc} = "
-         f"{ma * md - mb * mc}."),
-        ("2-kurs", f"f(x) = x³ − {kh}x² bo'lsa, hosilaning qiymatini toping: f′({nuqta})", str(hosila),
-         f"f′(x) = 3x² − {2 * kh}x. Demak f′({nuqta}) = 3 · {nuqta * nuqta} − {2 * kh} · {nuqta} = "
-         f"{3 * nuqta * nuqta} − {2 * kh * nuqta} = {hosila}."),
-        ("2-kurs", f"Aniq integralni hisoblang: ∫₀{_yuqori(yuqori)} (2x + {ozod}) dx",
-         str(yuqori * yuqori + ozod * yuqori),
-         f"Boshlang'ich funksiya x² + {ozod}x. Nyuton–Leybnits: {yuqori}² + {ozod} · {yuqori} − 0 = "
-         f"{yuqori * yuqori + ozod * yuqori}."),
-        ("2-kurs", f"Qator yig'indisini toping: 1 + 1/{maxraj} + 1/{maxraj}² + 1/{maxraj}³ + …",
-         f"{maxraj}/{maxraj - 1}",
-         f"Cheksiz kamayuvchi geometrik progressiya, q = 1/{maxraj}: S = 1 / (1 − q) = "
-         f"1 / (1 − 1/{maxraj}) = {maxraj}/{maxraj - 1}."),
-        ("2-kurs", f"Matritsa xos sonlarining yig'indisini toping: |{xa}  {xb}|\n|{xc}  {xd}|", str(xa + xd),
-         f"Xos sonlar yig'indisi matritsa iziga (bosh diagonal yig'indisiga) teng — tenglamani "
-         f"yechish shart emas: {xa} + {xd} = {xa + xd}."),
-        ("3-kurs", f"Ikki o'yin kubigi tashlandi. Ehtimollikni toping: P(yig'indi = {yigindi})", _kasr(p),
-         f"Jami 6 · 6 = 36 holat. Yig'indi {yigindi} bo'ladiganlar {holat} ta. P = {holat}/36"
-         + ("." if _kasr(p) == f"{holat}/36" else f" = {_kasr(p)}.")),
-        ("3-kurs", f"Kompleks sonning modulini toping: |{ka} + {kb}i|", str(kc),
-         f"|a + bi| = √(a² + b²) = √({ka * ka} + {kb * kb}) = √{kc * kc} = {kc}."),
-        ("3-kurs", f"Son 1 dan {tomon} gacha teng ehtimollik bilan tanlanadi. Matematik kutilmani toping: M(X)",
-         kutilma,
-         f"Teng ehtimolli tanlovda kutilma — chetki qiymatlarning o'rtasi: (1 + {tomon}) / 2 = {kutilma}."),
+         f"{_manfiy(str(ma * md - mb * mc))}."),
+        (f"a = {vek(u)}, b = {vek(v)}. Skalyar ko'paytmani toping: a · b", _manfiy(str(skalyar)),
+         "a · b = x₁x₂ + y₁y₂ + z₁z₂ = " + " + ".join(_manfiy(f"{x} · {y}") if y >= 0 else
+                                                     _manfiy(f"{x} · ({y})") for x, y in zip(u, v))
+         + f" = {_manfiy(str(skalyar))}."),
     ]
 
 
-def bugungi_misol(kun=None) -> tuple[str, str, str, str]:
-    """Kunga bog'liq — bir kunda qayta chaqirilsa ham o'sha misol chiqadi."""
+def _kurs2(r: random.Random) -> list[tuple[str, str, str]]:
+    maxraj = r.randint(2, 9)
+    xa, xb, xc, xd = (r.randint(1, 9) for _ in range(4))
+    pa, pb, px, py = r.randint(1, 5), r.randint(1, 5), r.randint(1, 3), r.randint(1, 3)
+    xusus = 2 * pa * px * py + pb * py * py
+    ga, gb, gc = r.choice(_UCHLIKLAR)
+    return [
+        (f"Qator yig'indisini toping: 1 + 1/{maxraj} + 1/{maxraj}² + 1/{maxraj}³ + …",
+         f"{maxraj}/{maxraj - 1}" if maxraj > 2 else "2",
+         f"Cheksiz kamayuvchi geometrik progressiya, q = 1/{maxraj}: S = 1 / (1 − q) = "
+         f"1 / (1 − 1/{maxraj}) = " + (f"{maxraj}/{maxraj - 1}." if maxraj > 2 else "2.")),
+        (f"Matritsa xos sonlarining yig'indisini toping: |{xa}  {xb}|\n|{xc}  {xd}|", str(xa + xd),
+         f"Xos sonlar yig'indisi matritsa iziga (bosh diagonal yig'indisiga) teng — tenglamani "
+         f"yechish shart emas: {xa} + {xd} = {xa + xd}."),
+        (f"f(x, y) = {pa}x²y + {pb}xy². Xususiy hosilani toping: ∂f/∂x ({px}; {py})", str(xusus),
+         f"∂f/∂x = {2 * pa}xy + {pb}y² (y o'zgarmas deb olinadi). "
+         f"({px}; {py}) da: {2 * pa} · {px} · {py} + {pb} · {py * py} = {xusus}."),
+        (f"f(x, y) = {ga}x + {gb}y. Gradient uzunligini toping: |∇f|", str(gc),
+         f"∇f = ({ga}; {gb}), |∇f| = √({ga}² + {gb}²) = √{gc * gc} = {gc}."),
+    ]
+
+
+def _kurs3(r: random.Random) -> list[tuple[str, str, str]]:
+    ka, kb, kc = r.choice(_UCHLIKLAR)
+    tomon = r.choice([4, 6, 8, 10, 12, 20])
+    kutilma = _onli(Fraction(tomon + 1, 2))
+    n, p = r.choice([(10, Fraction(1, 2)), (20, Fraction(1, 2)), (20, Fraction(1, 5)), (50, Fraction(1, 10)),
+                     (40, Fraction(1, 4)), (100, Fraction(1, 5))])
+    disp = n * p * (1 - p)
+    a, b = r.randint(1, 6), r.randint(1, 6)
+    return [
+        (f"Kompleks sonning modulini toping: |{ka} + {kb}i|", str(kc),
+         f"|a + bi| = √(a² + b²) = √({ka * ka} + {kb * kb}) = √{kc * kc} = {kc}."),
+        (f"Son 1 dan {tomon} gacha teng ehtimollik bilan tanlanadi. Matematik kutilmani toping: M(X)",
+         kutilma,
+         f"Teng ehtimolli tanlovda kutilma — chetki qiymatlarning o'rtasi: (1 + {tomon}) / 2 = {kutilma}."),
+        (f"Binomial taqsimot, n = {n}, p = {_onli(p)}. Dispersiyani toping: D(X)", _onli(disp),
+         f"D(X) = np(1 − p) = {n} · {_onli(p)} · {_onli(1 - p)} = {_onli(disp)}."),
+        (f"Kompleks sonlar ko'paytmasini toping: ({a} + {b}i)({a} − {b}i)", str(a * a + b * b),
+         f"(a + bi)(a − bi) = a² − (bi)² = a² + b² = {a * a} + {b * b} = {a * a + b * b}."),
+    ]
+
+
+def _tub_kopaytuvchilar(n: int) -> list[tuple[int, int]]:
+    natija, p = [], 2
+    while n > 1:
+        k = 0
+        while n % p == 0:
+            n //= p
+            k += 1
+        if k:
+            natija.append((p, k))
+        p += 1
+    return natija
+
+
+def _kurs4(r: random.Random) -> list[tuple[str, str, str]]:
+    n = r.choice([36, 45, 48, 60, 72, 84, 90, 100, 120, 126, 150, 200])
+    tk = _tub_kopaytuvchilar(n)
+    phi = n
+    for p, _ in tk:
+        phi = phi // p * (p - 1)
+    yoyilma = " · ".join(f"{p}{_yuqori(k) if k > 1 else ''}" for p, k in tk)
+    m = r.choice([7, 11, 13])
+    a = r.randint(2, m - 2)
+    k, e = r.randint(8, 20), r.randint(1, 3)
+    b = (m - 1) * k + e
+    uch = r.randint(8, 20)
+    kk, y0, kat = r.randint(2, 5), r.randint(2, 9), r.randint(2, 4)
+    return [
+        (f"Eyler funksiyasini hisoblang: φ({n})", str(phi),
+         f"{n} = {yoyilma}. φ(n) = n · " + " · ".join(f"(1 − 1/{p})" for p, _ in tk) + f" = {phi}."),
+        (f"Qoldiqni toping: {a}{_yuqori(b)} mod {m}", str(pow(a, b, m)),
+         f"Fermaning kichik teoremasi: {a}{_yuqori(m - 1)} ≡ 1 (mod {m}). {b} = {m - 1} · {k} + {e}, "
+         f"demak {a}{_yuqori(b)} ≡ " + (f"{a}{_yuqori(e)} = {a ** e}" if e > 1 else str(a))
+         + f" (mod {m}), qoldiq — {pow(a, b, m)}."),
+        (f"To'liq grafda {uch} ta uch bor. Qirralar sonini toping: |E(K{_pastki(uch)})|",
+         str(comb(uch, 2)),
+         f"Har ikki uch qirra bilan tutashgan: C({uch}, 2) = {uch} · {uch - 1} / 2 = {comb(uch, 2)}."),
+        (f"y′ = {kk}y, y(0) = {y0} bo'lsa, toping: y(ln {kat} / {kk})", str(y0 * kat),
+         f"Yechim: y = {y0} · e^({kk}x). x = ln {kat} / {kk} da: {y0} · e^(ln {kat}) = "
+         f"{y0} · {kat} = {y0 * kat}."),
+    ]
+
+
+#: Sinf → misollar yasovchisi. Har biri (savol, javob, usul) ro'yxatini beradi.
+SINF_MISOLLARI = {
+    "1-sinf": _sinf1, "2-sinf": _sinf2, "3-sinf": _sinf3, "4-sinf": _sinf4,
+    "5-sinf": _sinf5, "6-sinf": _sinf6, "7-sinf": _sinf7, "8-sinf": _sinf8,
+    "9-sinf": _sinf9, "10-sinf": _sinf10, "11-sinf": _sinf11,
+    "1-kurs": _kurs1, "2-kurs": _kurs2, "3-kurs": _kurs3, "4-kurs": _kurs4,
+}
+
+
+def bugungi_sinflar(kun=None) -> dict[str, str]:
+    """
+    Bosqich → bugungi sinf, masalan {"boshlangich": "2-sinf", "maktab":
+    "6-sinf", "oliy": "2-kurs"}. Har kuni bittaga suriladi, ya'ni har
+    sinf muntazam keladi (boshlang'ich — 4 kunda, maktab — 7 kunda bir).
+    Kursda har to'rtinchi kun bitta sakraydi — aks holda 1-sinf doim
+    1-kurs bilan, 2-sinf 2-kurs bilan kelardi.
+    """
+    o = (kun or timezone.localdate()).toordinal()
+    return {
+        "boshlangich": f"{1 + o % 4}-sinf",
+        "maktab": f"{5 + o % 7}-sinf",
+        "oliy": f"{1 + (o + o // 4) % 4}-kurs",
+    }
+
+
+def bugungi_misol(bosqich: str, kun=None) -> tuple[str, str, str, str]:
+    """
+    (kim uchun, savol, javob, usul). Kunga bog'liq — bir kunda qayta
+    chaqirilsa ham o'sha misol chiqadi.
+
+    Misol TURI ham aylanadi: o'sha sinf keyingi safar kelganda boshqa
+    turdagi misol chiqadi (bugun tenglama bo'lsa, keyingisida — EKUK).
+    """
     kun = kun or timezone.localdate()
-    r = random.Random(kun.toordinal())
-    return r.choice(_misollar(r))
+    o = kun.toordinal()
+    kim = bugungi_sinflar(kun)[bosqich]
+    r = random.Random(o * 10 + list(BOSQICHLAR).index(bosqich))
+    misollar = SINF_MISOLLARI[kim](r)
+    davr = {"boshlangich": 4, "maktab": 7, "oliy": 3}[bosqich]
+    return (kim, *misollar[(o // davr) % len(misollar)])
 
 
-def misol_posti(misol: tuple[str, str, str, str]) -> str:
+def bugungi_misollar(kun=None) -> dict[str, tuple[str, str, str, str]]:
+    return {b: bugungi_misol(b, kun) for b in BOSQICHLAR}
+
+
+def misol_posti(misol: tuple[str, str, str, str], kun=None) -> str:
     """
     Rasm ostidagi yozuv. Savolning o'zi RASMDA (`misol_rasmi`), bu yerda
-    esa faqat nima qilish kerakligi — savolni ikki marta yozish kerak emas.
+    esa nima qilish kerakligi va bugungi qolgan misollar — o'quvchi
+    o'ziga mosini kutib tursin.
     """
-    kim, _, _, _ = misol
+    kim = misol[0]
     e = html.escape
+    sinflar = bugungi_sinflar(kun)
+    boshqalar = " · ".join(
+        f"{e(s)} — {BOSQICHLAR[b][1]}" for b, s in sinflar.items() if s != kim)
     return (
-        "🧠 <b>Kun misoli</b> — o'ylab ko'ring, 1–2 daqiqa\n"
-        f"👥 Kim uchun: <b>{e(kim)}</b> (kattalar ham sinab ko'rsin)\n\n"
-        "💬 Javobingizni <b>izohda</b> yozing — faqat sonni, yechimni emas, "
+        f"🧠 <b>Kun misoli · {e(kim)}</b>\n"
+        "Kattalar ham sinab ko'rsin — 1–2 daqiqalik o'ylash.\n\n"
+        "💬 Javobingizni <b>izohda</b> yozing — faqat javobni, yechimni emas, "
         "boshqalar ham o'ylab ko'rsin.\n"
-        f"⏰ To'g'ri javob va yechish usuli bugun soat <b>{JAVOB_SOATI}</b> da chiqadi."
+        f"⏰ To'g'ri javob va yechimi bugun soat <b>{JAVOB_SOATI}</b> da.\n\n"
+        f"📅 Bugun yana: {boshqalar}"
     )
+
+
+def post_havolasi(kanal: str, xabar_id: int | str) -> str:
+    """Kanal postiga havola: ochiq kanal — t.me/<nom>/<id>, yopiq — t.me/c/<raqam>/<id>."""
+    kanal = (kanal or "").strip()
+    if not kanal or not xabar_id:
+        return ""
+    if kanal.startswith("-100"):
+        return f"https://t.me/c/{kanal[4:]}/{xabar_id}"
+    return f"https://t.me/{kanal.lstrip('@')}/{xabar_id}"
+
+
+def javob_posti(chiqqanlar: list[tuple[tuple[str, str, str, str], str]], kun=None) -> str:
+    """
+    Kechki javoblar posti — bugun CHIQQAN misollar uchun, har biri o'z
+    savoliga havola bilan (`chiqqanlar` — (misol, havola) juftlari).
+    Oxirida ertangi sinflar: kim ertaga qaytishini bilsin.
+    """
+    e = lambda s: html.escape(s, quote=False)
+    kun = kun or timezone.localdate()
+    qism = ["✅ <b>Kun misollari — javoblar</b>"]
+    for (kim, savol, javob, usul), havola in chiqqanlar:
+        sarlavha = f'<a href="{html.escape(havola, quote=True)}">{e(kim)}</a>' if havola else e(kim)
+        qism.append(
+            f"📘 <b>{sarlavha}</b>\n"
+            f"❓ {e(savol.replace(chr(10), ' '))}\n"
+            f"Javob: <b>{e(javob)}</b>\n"
+            f"💡 {e(usul)}"
+        )
+    ertaga = " · ".join(bugungi_sinflar(kun + timedelta(days=1)).values())
+    qism.append(
+        "Izohda to'g'ri yozganlarning hammasiga — qoyil! 👏\n"
+        f"Ertaga: <b>{e(ertaga)}</b> — soat "
+        + ", ".join(s for _, s in BOSQICHLAR.values()) + " da."
+    )
+    return "\n\n".join(qism)
 
 
 # Rasm ranglari — ilovaning qorong'i mavzusi va brend ranglari: kanal
@@ -567,7 +1035,14 @@ def misol_rasmi(misol: tuple, rukn: str = "KUN MISOLI", pastki: str = "",
     # to'liq savol, ostidagi yozuv qisqa bo'lishi mumkin.
     kenglik = EN * S - 2 * ichki
     shart, _, ifoda = savol.partition(": ")
-    if not ifoda or variantlar:
+    # So'z masalasi: ikkinchi qism formula emas, so'roq gap ("yuzi necha
+    # sm²?"). Uni katta, ma'lumotni ("perimetri 32 sm") mayda qilsak —
+    # teskari bo'lardi. Bunday savol butunligicha bitta matn bo'ladi.
+    hikoya = (bool(ifoda) and not variantlar and not re.search(r"[0-9]", ifoda)
+              and len(re.findall(r"[A-Za-z']{4,}", ifoda)) >= 2)
+    if hikoya:
+        shart, ifoda = "", f"{shart}. {ifoda[0].upper()}{ifoda[1:]}"
+    elif not ifoda or variantlar:
         shart, ifoda = "", savol
     # Qisqa ifoda — bu FORMULA, uni so'zlar bo'yicha o'rash mumkin emas:
     # "P(yig'indi =" bir qatorda, "5)" keyingisida qolib ketardi. Sig'masa
@@ -579,6 +1054,8 @@ def misol_rasmi(misol: tuple, rukn: str = "KUN MISOLI", pastki: str = "",
     olchamlar, sigim, maydon = (132, 116, 100, 88, 76, 66, 58, 52, 46), 2, 620
     if variantlar:
         olchamlar, sigim, maydon = (72, 64, 58, 52, 46), 5, 390
+    elif hikoya:
+        olchamlar, sigim = (76, 68, 62, 56, 50, 46), 5
     for px in olchamlar:
         shrift = _shrift(px * S)
         # `qatiy` — qatorlar FAQAT `\n` da bo'linadi: formula o'zicha
@@ -613,7 +1090,7 @@ def misol_rasmi(misol: tuple, rukn: str = "KUN MISOLI", pastki: str = "",
 
     # Past: nima qilish kerak va kanal.
     past = _shrift(32 * S, False)
-    yoz = pastki or f"O'ylab ko'ring · javob {JAVOB_SOATI} da"
+    yoz = pastki or f"Javobni izohda yozing · yechim {JAVOB_SOATI} da"
     d.text(((EN * S - d.textlength(yoz, font=past)) / 2, 860 * S), yoz, font=past, fill=_XIRA)
     kanal = (getattr(settings, "KANAL", "") or "").strip()
     belgi = f"Aql Zone · {kanal if kanal.startswith('@') else '@' + kanal}" if kanal else "Aql Zone"
@@ -624,30 +1101,6 @@ def misol_rasmi(misol: tuple, rukn: str = "KUN MISOLI", pastki: str = "",
     xotira = io.BytesIO()
     t.save(xotira, format="JPEG", quality=90)
     return xotira.getvalue()
-
-
-def _keyingi_misol_kuni(kun) -> str:
-    for i in range(1, 8):
-        nomi = MISOL_KUNLARI.get((kun + timedelta(days=i)).weekday())
-        if nomi:
-            return nomi
-    return ""
-
-
-def javob_posti(misol: tuple[str, str, str, str], kun=None) -> str:
-    _, savol, javob, usul = misol
-    e = html.escape
-    keyingi = _keyingi_misol_kuni(kun or timezone.localdate())
-    matn = (
-        "✅ <b>Kun misoli — javob</b>\n\n"
-        f"❓ {e(savol)}\n"
-        f"Javob: <b>{e(javob)}</b>\n\n"
-        f"💡 <b>Qanday topiladi</b>\n{e(usul)}\n\n"
-        "Izohda to'g'ri yozganlarning hammasiga — qoyil! 👏"
-    )
-    if keyingi:
-        matn += f"\nKeyingi misol — {keyingi} kuni soat 15:00 da."
-    return matn
 
 
 # ─────────────────────────── TEZ TEST (QUIZ) ───────────────────────────

@@ -4,8 +4,9 @@ Kanaldagi matematika rukni (`core/matematika_kanal.py`).
     python manage.py matematika_kanal yigish          # lentalardan yangilik yig'adi (har 2 soatda)
     python manage.py matematika_kanal avto            # 10:00 — yangilik bo'lsa yangilik, bo'lmasa fakt
     python manage.py matematika_kanal fakt            # qiziq fakt
-    python manage.py matematika_kanal misol           # og'zaki misol — savol, javob izohda
-    python manage.py matematika_kanal javob           # o'sha misolning javobi va usuli
+    python manage.py matematika_kanal misol --bosqich maktab   # kun misoli (boshlangich/maktab/oliy)
+    python manage.py matematika_kanal misol           # uchala bosqich birdan
+    python manage.py matematika_kanal javob           # bugungi misollarning javoblari — bitta post
     python manage.py matematika_kanal test            # kattalar uchun tez test — rasm + quiz
     python manage.py matematika_kanal albom           # haftalik albom — suriladigan kartalar
     python manage.py matematika_kanal avto --sinov   # yubormaydi, matnni ko'rsatadi
@@ -28,6 +29,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("tur", choices=["yigish", "avto", "fakt", "misol", "javob", "test", "albom"])
         parser.add_argument("--sinov", action="store_true", help="yubormaydi, faqat ko'rsatadi")
+        parser.add_argument("--bosqich", choices=list(MK.BOSQICHLAR), default="",
+                            help="kun misoli: boshlangich (1–4-sinf), maktab (5–11), oliy (1–4-kurs)")
 
     def _kanal(self) -> str:
         kanal = getattr(settings, "KANAL", "") or ""
@@ -36,57 +39,82 @@ class Command(BaseCommand):
             return ""
         return kanal if kanal.startswith(("@", "-")) else f"@{kanal}"
 
-    def _misol(self, tur: str, sinov: bool) -> None:
+    def _misol(self, bosqich: str, sinov: bool) -> None:
         """
-        Og'zaki misol — rasm, tugmasiz: o'quvchi javobini izohda yozadi, to'g'ri
-        javob `JAVOB_SOATI` da savol postiga javob bo'lib chiqadi.
+        Kun misoli — bitta bosqichniki (boshlang'ich / maktab / oliy): rasm,
+        tugmasiz. O'quvchi javobini izohda yozadi.
 
-        Savol postining raqami `KanalYozuv` ga yoziladi (`misol:<sana>`,
-        raqam `manba` da) — javob posti unga ulanadi. Javob chiqqani
-        `misol-javob:<sana>` bilan belgilanadi: jadval ikki marta ishlasa
-        ham kanalga ikkita javob chiqmaydi.
+        Post raqami `KanalYozuv` ga yoziladi (`misol:<sana>:<bosqich>`,
+        raqam `manba` da) — kechki javoblar posti unga havola beradi va
+        jadval ikki marta ishlasa ham o'sha misol ikkinchi bor chiqmaydi.
         """
         kun = timezone.localdate()
-        misol = MK.bugungi_misol(kun)
-        savol_kalit, javob_kalit = f"misol:{kun}", f"misol-javob:{kun}"
-        savol_yozuv = KanalYozuv.objects.filter(kalit=savol_kalit).first()
-
-        if tur == "javob":
-            if not savol_yozuv and not sinov:
-                self.stderr.write("bugun og'zaki misol chiqmagan — javob ham yo'q")
-                return
-            if KanalYozuv.objects.filter(kalit=javob_kalit).exists() and not sinov:
-                self.stdout.write("bugungi javob allaqachon chiqqan")
-                return
-            matn = MK.javob_posti(misol, kun)
-        else:
-            matn = MK.misol_posti(misol)
+        misol = MK.bugungi_misol(bosqich, kun)
+        kalit = f"misol:{kun}:{bosqich}"
+        matn = MK.misol_posti(misol, kun)
 
         if sinov:
             self.stdout.write(matn)
+            self.stdout.write(f"\n❓ {misol[1]}\nJavob: {misol[2]}\n💡 {misol[3]}")
             self.stdout.write(self.style.SUCCESS("(sinov — yuborilmadi)"))
+            return
+        if KanalYozuv.objects.filter(kalit=kalit).exists():
+            self.stdout.write(f"bugungi misol ({bosqich}) allaqachon chiqqan")
             return
         kanal = self._kanal()
         if not kanal:
             return
 
-        if tur == "misol":
-            holat, izoh, xabar_id = X.rasm_yubor(kanal, MK.misol_rasmi(misol), matn)
-        else:
-            ulanadi = int(savol_yozuv.manba or 0) if savol_yozuv else 0
-            holat, izoh, xabar_id = X.kanal_matn(kanal, matn, javob_id=ulanadi)
+        holat, izoh, xabar_id = X.rasm_yubor(kanal, MK.misol_rasmi(misol), matn)
         if holat != "yuborildi":
             self.stderr.write(self.style.ERROR(f"yuborilmadi: {holat} {izoh}"))
             return
-
-        KanalYozuv.objects.update_or_create(
-            kalit=savol_kalit if tur == "misol" else javob_kalit,
-            defaults={
-                "tur": KanalYozuv.MISOL, "sarlavha": misol[1][:300],
-                "manba": str(xabar_id), "joylangan_at": timezone.now(),
-            },
+        KanalYozuv.objects.create(
+            kalit=kalit, tur=KanalYozuv.MISOL, sarlavha=misol[1][:300],
+            manba=str(xabar_id), joylangan_at=timezone.now(),
         )
-        self.stdout.write(self.style.SUCCESS(f"kanalga joylandi: {tur}"))
+        self.stdout.write(self.style.SUCCESS(f"kanalga joylandi: misol {misol[0]} ({xabar_id})"))
+
+    def _javob(self, sinov: bool) -> None:
+        """
+        Bugun CHIQQAN misollarning javoblari — bitta postda, har biri o'z
+        savoliga havola bilan. Birorta misol chiqmagan bo'lsa (kanal
+        ishlamadi) javob posti ham yo'q. `misol-javob:<sana>` — bir marta.
+        """
+        kun = timezone.localdate()
+        kanal = getattr(settings, "KANAL", "") or ""
+        kanal = kanal if kanal.startswith(("@", "-")) or not kanal else f"@{kanal}"
+        chiqqanlar = []
+        for bosqich, misol in MK.bugungi_misollar(kun).items():
+            yozuv = KanalYozuv.objects.filter(kalit=f"misol:{kun}:{bosqich}").first()
+            if yozuv or sinov:
+                chiqqanlar.append((misol, MK.post_havolasi(kanal, yozuv.manba if yozuv else "")))
+        matn = MK.javob_posti(chiqqanlar, kun)
+
+        if sinov:
+            self.stdout.write(matn)
+            self.stdout.write(self.style.SUCCESS("(sinov — yuborilmadi)"))
+            return
+        if not chiqqanlar:
+            self.stderr.write("bugun kun misoli chiqmagan — javob ham yo'q")
+            return
+        javob_kalit = f"misol-javob:{kun}"
+        if KanalYozuv.objects.filter(kalit=javob_kalit).exists():
+            self.stdout.write("bugungi javoblar allaqachon chiqqan")
+            return
+        kanal = self._kanal()
+        if not kanal:
+            return
+
+        holat, izoh, xabar_id = X.kanal_matn(kanal, matn)
+        if holat != "yuborildi":
+            self.stderr.write(self.style.ERROR(f"yuborilmadi: {holat} {izoh}"))
+            return
+        KanalYozuv.objects.create(
+            kalit=javob_kalit, tur=KanalYozuv.MISOL, sarlavha=f"javoblar {kun}",
+            manba=str(xabar_id), joylangan_at=timezone.now(),
+        )
+        self.stdout.write(self.style.SUCCESS(f"kanalga joylandi: javoblar ({len(chiqqanlar)} ta)"))
 
     def _test(self, sinov: bool) -> None:
         """
@@ -188,8 +216,14 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"yangi matematika yangiligi: {n} ta"))
             return
 
-        if tur in ("misol", "javob"):
-            self._misol(tur, sinov)
+        if tur == "misol":
+            # Bosqich berilmasa — uchalasi (qo'lda ishga tushirish uchun).
+            for bosqich in ([o["bosqich"]] if o["bosqich"] else MK.BOSQICHLAR):
+                self._misol(bosqich, sinov)
+            return
+
+        if tur == "javob":
+            self._javob(sinov)
             return
 
         # Joylashdan OLDIN bir marta yig'amiz: ertalabgi yangilik

@@ -103,19 +103,30 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=10, minute=0),
         "args": ("matematika_kanal", "avto"),
     },
-    # Og'zaki misol — haftada uch marta (sesh, pay, shan), tushlikdan
-    # keyin. Har kuni bo'lsa kechki masala posti bilan raqobat qilardi.
-    "matematika-misol": {
+    # Kun misollari — HAR KUNI uchta, alohida post: boshlang'ich sinf
+    # (13:00, darsdan keyin), maktab (14:00), oliy (16:00). 15:00 —
+    # test/albom joyi, shuning uchun bo'sh. Soatlar `MK.BOSQICHLAR`
+    # bilan bir xil bo'lsin — ular postda yozib qo'yiladi.
+    "matematika-misol-boshlangich": {
         "task": "core.vazifalar.buyruq",
-        "schedule": crontab(hour=15, minute=0, day_of_week="2,4,6"),
-        "args": ("matematika_kanal", "misol"),
+        "schedule": crontab(hour=13, minute=0),
+        "args": ("matematika_kanal", "misol", "--bosqich", "boshlangich"),
     },
-    # O'sha misolning javobi — ikki soatdan keyin. Shu orada o'quvchilar
-    # javobini izohda yozadi. 17:30 dagi kunlik son xabaridan oldin.
-    # Soat `MK.JAVOB_SOATI` bilan bir xil bo'lsin — savol postida yozilgan.
+    "matematika-misol-maktab": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=14, minute=0),
+        "args": ("matematika_kanal", "misol", "--bosqich", "maktab"),
+    },
+    "matematika-misol-oliy": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=16, minute=0),
+        "args": ("matematika_kanal", "misol", "--bosqich", "oliy"),
+    },
+    # Uchalasining javobi — bitta postda, 20:00 da (`MK.JAVOB_SOATI`).
+    # Shu orada o'quvchilar javobini izohda yozadi.
     "matematika-misol-javob": {
         "task": "core.vazifalar.buyruq",
-        "schedule": crontab(hour=17, minute=0, day_of_week="2,4,6"),
+        "schedule": crontab(hour=20, minute=0),
         "args": ("matematika_kanal", "javob"),
     },
     # Tez test (kattalar uchun, quiz) — misolsiz kunlarda (dush, chor,

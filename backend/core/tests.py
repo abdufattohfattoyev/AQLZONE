@@ -8680,88 +8680,220 @@ class MatematikaKanalTest(TestCase):
         kalitlar = [k for k, _ in MK.FAKTLAR]
         self.assertEqual(len(kalitlar), len(set(kalitlar)))
 
+    @staticmethod
+    def _qiymat(s):
+        """Javob matnidan son: "4 600", "−5", "5,95", "3/2", "9:15" (daqiqada)."""
+        from fractions import Fraction
+        s = s.replace(" ", "").replace("−", "-")
+        if ":" in s:
+            soat, daq = s.split(":")
+            return Fraction(int(soat) * 60 + int(daq))
+        return Fraction(s.replace(",", "."))
+
+    @staticmethod
+    def _hisobla(ifoda):
+        """
+        Sof arifmetik ifodani (×, ÷, −, ·, daraja, o'nli vergul, kasr)
+        Fraction bilan hisoblaydi; harf, ildiz yoki □ bo'lsa — None.
+        """
+        import re
+        from fractions import Fraction
+        yuqori = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
+        t = re.sub(r"[⁰¹²³⁴⁵⁶⁷⁸⁹]+", lambda m: "**" + m[0].translate(yuqori), ifoda)
+        t = t.replace("×", "*").replace("·", "*").replace("÷", "/").replace("−", "-")
+        if not re.fullmatch(r"[\d\s+\-*/().,]+", t):
+            return None
+        t = re.sub(r"(\*\*)?(\d+(?:,\d+)?)",
+                   lambda m: f"**{m[2]}" if m[1] else f"Fraction('{m[2].replace(',', '.')}')", t)
+        return eval(t, {"Fraction": Fraction})
+
     def test_misollar_javobi_togri(self):
         import random as R
         import re
-        from core import matematika_kanal as MK
-
         from fractions import Fraction
-        from math import comb
-
-        kimlar = set()
-        for urug in range(300):
-            for kim, savol, javob, usul in MK._misollar(R.Random(urug)):
-                kimlar.add(kim)
-                # Butun son (manfiy ham), qisqargan kasr yoki o'nli kasr (vergul bilan).
-                self.assertRegex(javob, r"^-?\d+$|^\d+/\d+$|^\d+,\d+$", savol)
-                if "/" in javob:
-                    sur, mah = map(int, javob.split("/"))
-                    self.assertEqual(Fraction(sur, mah).denominator, mah, f"qisqarmagan: {savol}")
-                self.assertRegex(kim, r"^(10–11-sinf|[1-3]-kurs)$")
-                self.assertTrue(usul.endswith(javob) or usul.endswith(javob + "."), usul)
-                self.assertIn(": ", savol)                   # rasmda shart va ifoda ajraladi
-
-                # Javoblarni yechimdan mustaqil, qayta hisoblab tekshiramiz.
-                m = re.search(r"log₂ (\d+) − log₂ (\d+)", savol)
-                if m:
-                    self.assertEqual(2 ** int(javob), int(m[1]) // int(m[2]))
-                m = re.search(r"C\((\d+), (\d+)\)", savol)
-                if m:
-                    self.assertEqual(int(javob), comb(int(m[1]), int(m[2])))
-                m = re.search(r"sin (\d)x / (\d)x", savol)
-                if m:
-                    self.assertEqual(Fraction(javob), Fraction(int(m[1]), int(m[2])))
-                m = re.search(r"\|(\d)  (\d)\|\n\|(\d)  (\d)\|", savol)
-                if m:
-                    a, b, c, d = map(int, m.groups())
-                    kutilgan = a + d if "xos son" in savol else a * d - b * c
-                    self.assertEqual(int(javob), kutilgan)
-                m = re.search(r"\|(\d+) \+ (\d+)i\|", savol)
-                if m:
-                    self.assertEqual(int(javob) ** 2, int(m[1]) ** 2 + int(m[2]) ** 2)
-                m = re.search(r"P\(yig'indi = (\d+)\)", savol)
-                if m:
-                    son = sum(1 for x in range(1, 7) for y in range(1, 7) if x + y == int(m[1]))
-                    self.assertEqual(Fraction(javob), Fraction(son, 36))
-        # To'plamda maktab ham, uchala kurs ham bor.
-        self.assertEqual(kimlar, {"10–11-sinf", "1-kurs", "2-kurs", "3-kurs"})
-
-    def test_misol_posti_javobsiz_va_tugmasiz(self):
-        from datetime import date
+        from math import comb, gcd, lcm
         from core import matematika_kanal as MK
 
-        misol = MK.bugungi_misol()
-        post = MK.misol_posti(misol)
-        self.assertNotIn("tg-spoiler", post)
-        self.assertNotIn(misol[3], post)                     # usul savolda yo'q
-        for m in MK._misollar(__import__("random").Random(1)):
-            self.assertTrue(MK.misol_rasmi(m).startswith(b"\xff\xd8"))
-        self.assertIn("izohda", post)
-        self.assertIn(MK.JAVOB_SOATI, post)
-        self.assertIn(misol[0], post)                        # kim uchun
-        self.assertEqual(MK.bugungi_misol(), MK.bugungi_misol())   # bir kunda bir xil
-        # Seshanba → keyingisi payshanba.
-        self.assertIn("payshanba", MK.javob_posti(misol, date(2026, 9, 22)))
+        tekshirilgan = 0
+        for kim, yasovchi in MK.SINF_MISOLLARI.items():
+            for urug in range(200):
+                for savol, javob, usul in yasovchi(R.Random(urug)):
+                    # Butun (minglar bo'shliq bilan, manfiy "−"), kasr, o'nli kasr yoki soat.
+                    self.assertRegex(javob, r"^−?\d+( \d{3})*$|^−?\d+/\d+$|^\d+,\d+$|^\d{1,2}:\d\d$",
+                                     f"{kim}: {savol}")
+                    if "/" in javob:
+                        sur, mah = map(int, javob.replace("−", "-").split("/"))
+                        self.assertEqual(Fraction(sur, mah).denominator, mah, f"qisqarmagan: {savol}")
+                    self.assertNotRegex(javob + usul, r"[\s(]-|^-", f"kompyuter minusi: {usul}")
+                    self.assertTrue(usul.endswith(javob + "."), f"{kim}: {usul}")
+                    shart, _, ifoda = savol.partition(": ")
+                    self.assertTrue(ifoda, savol)
+                    m = re.search(r"(\d+)/(\d+) qismi", shart)
+                    if m:
+                        self.assertEqual(Fraction(int(m[1]), int(m[2])).denominator, int(m[2]), savol)
+                    q = self._qiymat(javob)
+
+                    # Javoblarni yechimdan MUSTAQIL qayta hisoblaymiz.
+                    if shart.endswith("isoblang"):
+                        h = self._hisobla(ifoda)
+                        if h is not None:
+                            self.assertEqual(q, h, savol)
+                            tekshirilgan += 1
+                    m = re.fullmatch(r"(\d+) \+ □ = (\d+)", ifoda)
+                    if m:
+                        self.assertEqual(q, int(m[2]) - int(m[1]))
+                    m = re.fullmatch(r"□ − (\d+) = (\d+)", ifoda)
+                    if m:
+                        self.assertEqual(q, int(m[2]) + int(m[1]))
+                    m = re.fullmatch(r"(\d+) ÷ (\d+)", ifoda)
+                    if m and "qoldiq" in shart:
+                        self.assertEqual(q, int(m[1]) % int(m[2]))
+                    m = re.fullmatch(r"EK(UK|UB)\((\d+), (\d+)\)", ifoda)
+                    if m:
+                        f = lcm if m[1] == "UK" else gcd
+                        self.assertEqual(q, f(int(m[2]), int(m[3])))
+                    m = re.fullmatch(r"x : (\d+) = (\d+) : (\d+)", ifoda)
+                    if m:
+                        self.assertEqual(q * int(m[3]), int(m[1]) * int(m[2]))
+                    m = re.fullmatch(r"(\d+)x \+ (\d+) = (\d+)", ifoda)
+                    if m:
+                        self.assertEqual(int(m[1]) * q + int(m[2]), int(m[3]))
+                    m = re.fullmatch(r"(\d+)\(x − (\d+)\) = (\d+)x ([+−]) (\d+)", ifoda)
+                    if m:
+                        o_ng = int(m[3]) * q + (1 if m[4] == "+" else -1) * int(m[5])
+                        self.assertEqual(int(m[1]) * (q - int(m[2])), o_ng, savol)
+                    m = re.fullmatch(r"x² − (\d+)x \+ (\d+) = 0", ifoda)
+                    if m:
+                        self.assertEqual(q * q - int(m[1]) * q + int(m[2]), 0)
+                        self.assertGreater(2 * q, int(m[1]))               # kattasi
+                    m = re.fullmatch(r"√(\d+) · √(\d+)", ifoda)
+                    if m:
+                        self.assertEqual(q * q, int(m[1]) * int(m[2]))
+                    m = re.fullmatch(r"(\d+)x − (\d+) < (\d+)", ifoda)
+                    if m:
+                        a, b, c = map(int, m.groups())
+                        self.assertEqual(q, sum(1 for x in range(1, 100) if a * x - b < c))
+                    m = re.search(r"katetlari (\d+) va (\d+)", shart)
+                    if m:
+                        self.assertEqual(q * q, int(m[1]) ** 2 + int(m[2]) ** 2)
+                    m = re.fullmatch(r"x \+ y = (\d+), x − y = (\d+) bo'lsa, toping", shart)
+                    if m:
+                        s, d = int(m[1]), int(m[2])
+                        self.assertEqual(q, (s + d) // 2 * ((s - d) // 2))
+                    m = re.fullmatch(r"y = x² − (\d+)x ([+−]) (\d+)", ifoda)
+                    if m:
+                        b, c = int(m[1]), (1 if m[2] == "+" else -1) * int(m[3])
+                        self.assertEqual(q, min(x * x - b * x + c for x in range(-50, 50)))
+                    m = re.fullmatch(r"log₂ (\d+) − log₂ (\d+)", ifoda)
+                    if m:
+                        self.assertEqual(2 ** q, int(m[1]) // int(m[2]))
+                    m = re.fullmatch(r"(\d)ˣ⁺(\S) = (\d+)", ifoda)
+                    if m:
+                        sur = int(m[2].translate(str.maketrans("¹²³", "123")))
+                        self.assertEqual(int(m[1]) ** int(q + sur), int(m[3]))
+                    m = re.search(r"C\((\d+), (\d+)\)", ifoda)
+                    if m:
+                        self.assertEqual(q, comb(int(m[1]), int(m[2])))
+                    m = re.fullmatch(r"\|(\d)  (\d)\|\n\|(\d)  (\d)\|", ifoda)
+                    if m:
+                        a, b, c, d = map(int, m.groups())
+                        self.assertEqual(q, a + d if "xos son" in shart else a * d - b * c)
+                    m = re.fullmatch(r"\|(\d+) \+ (\d+)i\|", ifoda)
+                    if m:
+                        self.assertEqual(q * q, int(m[1]) ** 2 + int(m[2]) ** 2)
+                    m = re.fullmatch(r"\((\d) \+ (\d)i\)\((\d) − (\d)i\)", ifoda)
+                    if m:
+                        z = complex(int(m[1]), int(m[2])) * complex(int(m[3]), -int(m[4]))
+                        self.assertEqual(q, int(z.real))
+                    m = re.fullmatch(r"P\(yig'indi = (\d+)\)", ifoda)
+                    if m:
+                        son = sum(1 for x in range(1, 7) for y in range(1, 7) if x + y == int(m[1]))
+                        self.assertEqual(q, Fraction(son, 36))
+                    m = re.fullmatch(r"φ\((\d+)\)", ifoda)
+                    if m:
+                        n = int(m[1])
+                        self.assertEqual(q, sum(1 for k in range(1, n + 1) if gcd(k, n) == 1))
+                    m = re.fullmatch(r"(\d+)([⁰¹²³⁴⁵⁶⁷⁸⁹]+) mod (\d+)", ifoda)
+                    if m:
+                        dar = int(m[2].translate(str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")))
+                        self.assertEqual(q, pow(int(m[1]), dar, int(m[3])))
+                    m = re.search(r"(\d+) ta uch bor", shart)
+                    if m:
+                        self.assertEqual(q, comb(int(m[1]), 2))
+                    m = re.search(r"(\d) ta tovuq va (\d) ta mushuk", shart)
+                    if m:
+                        self.assertEqual(q, 2 * int(m[1]) + 4 * int(m[2]))
+        self.assertGreater(tekshirilgan, 2000)          # sof hisob misollari haqiqatan tekshirildi
+        self.assertEqual(set(MK.SINF_MISOLLARI),
+                         {f"{n}-sinf" for n in range(1, 12)} | {f"{n}-kurs" for n in range(1, 5)})
+
+    def test_sinflar_har_kuni_almashadi(self):
+        from datetime import date, timedelta
+        from core import matematika_kanal as MK
+
+        boshi = date(2026, 10, 1)
+        kunlar = [MK.bugungi_sinflar(boshi + timedelta(days=i)) for i in range(28)]
+        for bosqich, sinflar in (("boshlangich", {f"{n}-sinf" for n in range(1, 5)}),
+                                 ("maktab", {f"{n}-sinf" for n in range(5, 12)}),
+                                 ("oliy", {f"{n}-kurs" for n in range(1, 5)})):
+            self.assertEqual({k[bosqich] for k in kunlar}, sinflar)            # hammasi keladi
+            for kecha, bugun in zip(kunlar, kunlar[1:]):
+                self.assertNotEqual(kecha[bosqich], bugun[bosqich])           # ketma-ket takrorlanmaydi
+        # Kurs sinfga yopishib qolmaydi: 1-sinf har xil kurslar bilan keladi.
+        self.assertGreater(len({k["oliy"] for k in kunlar if k["boshlangich"] == "1-sinf"}), 1)
+        self.assertEqual(MK.bugungi_misol("maktab"), MK.bugungi_misol("maktab"))   # bir kunda bir xil
+
+    def test_misol_posti_javobsiz_va_rasmi_bor(self):
+        import random as R
+        from core import matematika_kanal as MK
+
+        for bosqich in MK.BOSQICHLAR:
+            misol = MK.bugungi_misol(bosqich)
+            post = MK.misol_posti(misol)
+            self.assertNotIn("tg-spoiler", post)
+            self.assertNotIn(misol[3], post)                 # usul yo'q
+            self.assertIn("izohda", post)
+            self.assertIn(MK.JAVOB_SOATI, post)
+            self.assertIn(misol[0], post)                    # kim uchun
+            for boshqa in MK.bugungi_sinflar().values():     # bugungi qolgan misollar ham
+                self.assertIn(boshqa, post)
+        for yasovchi in MK.SINF_MISOLLARI.values():
+            for savol, javob, usul in yasovchi(R.Random(3)):
+                self.assertTrue(MK.misol_rasmi(("2-sinf", savol, javob, usul)).startswith(b"\xff\xd8"))
 
     @override_settings(KANAL="@AqlZoneUz", BOT_TOKEN="x")
-    def test_misol_va_javob_bir_marta_ulanib_chiqadi(self):
+    def test_uchta_misol_va_bitta_javob_posti(self):
         from unittest import mock
+        from core import matematika_kanal as MK
         from core.models import KanalYozuv
 
-        with mock.patch("core.xabar.kanal_matn", return_value=("yuborildi", "", 77)) as yub, \
-             mock.patch("core.xabar.rasm_yubor", return_value=("yuborildi", "", 77)) as rasm, \
+        raqamlar = iter([71, 72, 73])
+        with mock.patch("core.xabar.rasm_yubor",
+                        side_effect=lambda *a: ("yuborildi", "", next(raqamlar))) as rasm, \
+             mock.patch("core.xabar.kanal_matn", return_value=("yuborildi", "", 80)) as yub, \
              mock.patch("core.xabar.yubor") as tugmali:
-            call_command("matematika_kanal", "misol", stdout=StringIO())
-            self.assertTrue(rasm.call_args[0][1].startswith(b"\xff\xd8"))   # JPEG
+            for bosqich in MK.BOSQICHLAR:
+                call_command("matematika_kanal", "misol", "--bosqich", bosqich, stdout=StringIO())
+                call_command("matematika_kanal", "misol", "--bosqich", bosqich, stdout=StringIO())
+            self.assertEqual(rasm.call_count, 3)                              # har biri bir marta
+            self.assertTrue(rasm.call_args[0][1].startswith(b"\xff\xd8"))
             self.assertEqual(len(rasm.call_args[0]), 3)                       # tugmasiz
-            yub.assert_not_called()
             call_command("matematika_kanal", "javob", stdout=StringIO())
-            self.assertEqual(yub.call_args.kwargs["javob_id"], 77)    # savolga ulanadi
-            self.assertIn("Qanday topiladi", yub.call_args[0][1])
             call_command("matematika_kanal", "javob", stdout=StringIO())
-            self.assertEqual(yub.call_count, 1)                        # ikkinchi javob yo'q
+            self.assertEqual(yub.call_count, 1)                               # javob bitta post
+            matn = yub.call_args[0][1]
+            for n, misol in zip((71, 72, 73), MK.bugungi_misollar().values()):
+                self.assertIn(f"https://t.me/AqlZoneUz/{n}", matn)            # savoliga havola
+                self.assertIn(f"<b>{misol[2]}</b>", matn)
             tugmali.assert_not_called()
-        self.assertEqual(KanalYozuv.objects.filter(tur="misol").count(), 2)
+        self.assertEqual(KanalYozuv.objects.filter(tur="misol").count(), 4)
+
+    def test_post_havolasi(self):
+        from core import matematika_kanal as MK
+
+        self.assertEqual(MK.post_havolasi("@AqlZoneUz", 5), "https://t.me/AqlZoneUz/5")
+        self.assertEqual(MK.post_havolasi("-1001234", "9"), "https://t.me/c/1234/9")
+        self.assertEqual(MK.post_havolasi("@AqlZoneUz", ""), "")
 
     def test_tez_test_savollari_togri_va_sigadi(self):
         import random as R
@@ -8882,6 +9014,10 @@ class MatematikaKanalTest(TestCase):
         jadval = app.conf.beat_schedule
         self.assertEqual(jadval["matematika-post"]["args"], ("matematika_kanal", "avto"))
         self.assertEqual(jadval["matematika-yigish"]["args"], ("matematika_kanal", "yigish"))
+        for bosqich in ("boshlangich", "maktab", "oliy"):
+            self.assertEqual(jadval[f"matematika-misol-{bosqich}"]["args"],
+                             ("matematika_kanal", "misol", "--bosqich", bosqich))
+        self.assertEqual(jadval["matematika-misol-javob"]["schedule"].hour, {20})
 
 
 @override_settings(BOT_TOKEN="sinov:token", ADMIN_TG=["111", "222"], TESTDA=False)
