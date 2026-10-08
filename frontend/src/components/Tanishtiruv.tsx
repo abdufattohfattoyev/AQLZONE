@@ -14,6 +14,7 @@
  * bosilgach yoki odam Telegram bilan kirgach.
  */
 import { Suspense, lazy } from "react";
+import { useNavigate } from "react-router-dom";
 import { Kutish } from "./Kutish";
 
 const TANISHTIRILDI_KEY = "az_tanishtirildi";
@@ -30,9 +31,19 @@ export function tanishtirildi(): void {
 const Lending = lazy(() => import("../screens/Lending").then((m) => ({ default: m.Lending })));
 
 export function Tanishtiruv({ onTayyor }: { onTayyor: () => void }) {
+  const nav = useNavigate();
+  const ich = (yol?: string) => {
+    tanishtirildi();
+    onTayyor();
+    // Bo'lim kartasi bosilsa — to'g'ridan-to'g'ri o'sha bo'limga: odam
+    // "Testlar" ni tanlagan, uni bosh sahifaga tashlab, testni qaytadan
+    // izlatish ortiqcha.
+    if (yol) nav(yol);
+    window.scrollTo(0, 0);
+  };
   return (
     <Suspense fallback={<Kutish />}>
-      <Lending onBoshlash={() => { tanishtirildi(); onTayyor(); window.scrollTo(0, 0); }} />
+      <Lending onBoshlash={() => ich()} onOch={ich} />
     </Suspense>
   );
 }
