@@ -1,4 +1,4 @@
-import { Fragment, StrictMode, useEffect, useSyncExternalStore } from "react";
+import { Fragment, StrictMode, useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, HashRouter } from "react-router-dom";
@@ -97,6 +97,20 @@ const ASOS_YOL = import.meta.env.VITE_ROUTER !== "hash" && /^\/ru(\/|$)/.test(lo
  */
 function TilQobiq({ children }: { children: ReactNode }) {
   const joriy = useSyncExternalStore(tilgaObuna, til);
+  // Qayta chizishdan oldingi aylantirish joyi. Render paytida o'qiladi —
+  // ya'ni eski ilova hali ekranda turganda. Qayta chizilgach o'sha joyga
+  // qaytariladi: bir lahzada sahifa qisqarib, brauzer aylantirishni
+  // o'zi kesib qo'ygan bo'lishi mumkin. Rasm va kech yuklangan bo'laklar
+  // uchun keyingi kadrda yana bir marta.
+  const joy = useRef({ til: joriy, y: 0 });
+  if (joy.current.til !== joriy) joy.current = { til: joriy, y: window.scrollY };
+  useLayoutEffect(() => {
+    const y = joy.current.y;
+    if (!y) return;
+    window.scrollTo(0, y);
+    const id = requestAnimationFrame(() => window.scrollTo(0, y));
+    return () => cancelAnimationFrame(id);
+  }, [joriy]);
   useEffect(() => {
     if (!document.getElementById("az-seo")) document.title = t("shior");
   }, [joriy]);

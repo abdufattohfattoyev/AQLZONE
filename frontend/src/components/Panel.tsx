@@ -28,7 +28,7 @@
  * edi (yashil uy, binafsha planshet) va panel kamalakka aylanardi —
  * dizayn qoidasi esa tanlangan holat uchun faqat ko'kni beradi.
  */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { getHisob } from "../lib/api";
 import { tgIsm } from "../lib/qobiq";
 import { yolSozlama } from "../lib/yollar";
@@ -366,7 +366,14 @@ function YonSatr({ ik, nom, on, faol }: { ik: IconName; nom: string; on: () => v
 export function TepagaQayt() {
   const { pathname } = useLocation();
   const tur = useNavigationType();
+  // Oxirgi ko'rilgan manzil. Komponent QAYTA ULANGANDA (til almashganda
+  // `main.tsx` → TilQobiq butun ilovani qayta chizadi) manzil o'sha-o'sha
+  // bo'ladi va tepaga surish kerak emas — aks holda "Men" sahifasining
+  // pastida tilni almashtirgan odam birdan tepaga otilib ketardi.
+  const oldingi = useRef(pathname);
   useEffect(() => {
+    if (oldingi.current === pathname) return;
+    oldingi.current = pathname;
     // "POP" — brauzerning orqaga/oldinga tugmasi. U yerda odam o'zi
     // qoldirgan joyga qaytishni kutadi, shuning uchun tegilmaydi.
     if (tur === "POP") return;
