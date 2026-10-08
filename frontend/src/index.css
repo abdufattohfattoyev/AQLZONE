@@ -1699,14 +1699,6 @@
   animation: az-lend-vaqt var(--az-vaqt, 6s) linear both;
 }
 .az-lend-vaqt[data-toxtadi="1"] { animation-play-state: paused; }
-/* Orqadagi nozik katak to'r — markazda ko'rinadi, chetga qarab yo'qoladi. */
-.az-lend-tor {
-  background-image:
-    linear-gradient(var(--color-track) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-track) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(ellipse 70% 60% at 60% 45%, black 30%, transparent 75%);
-}
 @media (prefers-reduced-motion: reduce) {
   .az-lend-suz, .az-lend-kir { animation: none; }
   .az-lend-vaqt { animation: none; transform: scaleX(1); }

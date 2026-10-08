@@ -1141,6 +1141,10 @@ const S = {
   lendSl4Chip1: ["{n} ta o'yin", "{n} игр"],
   lendSl4Chip2: ["Do'st bilan duel", "Дуэль с другом"],
   lendSlayd: ["{n}-slayd", "Слайд {n}"],
+  lendSlTab1: ["Darslar", "Уроки"],
+  lendSlTab2: ["DTM", "ДТМ"],
+  lendSlTab3: ["Sertifikat", "Сертификат"],
+  lendSlTab4: ["O'yinlar", "Игры"],
   lendSinovSarlavha: ["Hoziroq bitta savol yeching", "Решите один вопрос прямо сейчас"],
   lendSinovIzoh: [
     "Ilova aynan shunday ishlaydi: javob berasiz — darhol to'g'ri yoki xato ekani va qisqa tushuntirish chiqadi.",
