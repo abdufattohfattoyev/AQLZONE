@@ -91,6 +91,15 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
             <div className="font-display text-[18px] leading-tight">{t("imtihonBoshlang")}</div>
             <p className="text-[14px] leading-snug text-ink-soft">{t("sertBoshlangIzoh")}</p>
             <Shkala />
+            {/* Yangi odamga keyingi qadam bitta tugmada (`Imtihon.tsx` dagidek).
+                Yarim qolgan variant bo'lsa — uning tugmasi asosiy, bu chiqmaydi. */}
+            {!joriy && (
+              <button type="button" onClick={() => onVariant(1)} data-tahlil="Sertifikat: birinchi variantni boshlash"
+                className="tugma-3d mt-1 min-h-12 rounded-2xl bg-brand-blue px-5 font-display text-[16px] font-bold
+                           text-white shadow-[0_4px_0_var(--color-brand-blue-d)]">
+                {t("hrBoshla", { n: 1 })}
+              </button>
+            )}
           </>
         )}
 
@@ -141,7 +150,8 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
           {t("sertIzoh", { savol: SAVOL_SONI, soat: DAQIQA / 60, ball: 100 })}
         </span>
       </div>
-      <div className="grid grid-cols-4 gap-2">
+      {/* Kompyuterda uch ustun, baland kataklar va ball chizig'i — `Imtihon.tsx` dagidek. */}
+      <div className="grid grid-cols-4 gap-2 kom:grid-cols-3 kom:gap-3">
         {Array.from({ length: VARIANTLAR }, (_, i) => i + 1).map((n) => {
           const eng = engYaxshi(n);
           const bu = joriy?.n === n;
@@ -149,10 +159,14 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
             <button key={n} type="button" onClick={() => onVariant(n)} data-tahlil={`Sertifikat: ${n}-variant`}
               aria-label={t("imtihonVariant", { n })}
               className={`clay-press flex min-h-[60px] flex-col items-center justify-center rounded-[16px] bg-karta
-                          shadow-clay-sm ${bu ? "outline-2 outline-brand-blue outline-solid" : ""}`}>
-              <span className="font-display text-[18px] leading-tight font-bold">{n}</span>
-              <span className={`text-[12.5px] ${bu ? "font-bold text-brand-blue-t" : "text-ink-dim"}`}>
+                          shadow-clay-sm kom:min-h-[124px] kom:gap-1.5 kom:px-5 ${bu ? "outline-2 outline-brand-blue outline-solid" : ""}`}>
+              <span className="font-display text-[18px] leading-tight font-bold kom:text-[30px]">{n}</span>
+              <span className={`text-[12.5px] kom:text-[14px] ${bu ? "font-bold text-brand-blue-t" : "text-ink-dim"}`}>
                 {bu ? `${javobli}/${SAVOL_SONI}` : eng ? ballYoz(eng.ball) : "—"}
+              </span>
+              <span aria-hidden className="hidden h-1.5 w-full overflow-hidden rounded-full bg-track kom:block">
+                {(bu || eng) && <span className="block h-full rounded-full bg-brand-blue"
+                  style={{ width: `${bu ? (javobli / SAVOL_SONI) * 100 : eng!.ball}%` }} />}
               </span>
               {n === RASMIY_RAQAM && (
                 <span className="text-[11px] font-bold leading-tight text-brand-gold-d">{t("sertRasmiy")}</span>

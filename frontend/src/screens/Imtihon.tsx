@@ -115,6 +115,13 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
           <>
             <div className="font-display text-[18px] leading-tight">{t("imtihonBoshlang")}</div>
             <p className="text-[14px] leading-snug text-ink-soft">{t("imtihonBoshlangIzoh")}</p>
+            {/* Yangi odamga keyingi qadam bitta tugmada: ilgari "boshlang" deyilardi-yu,
+                qayerdan — o'zi o'ng ustundagi o'n ikki katakdan izlardi. */}
+            <button type="button" onClick={() => onVariant(1)} data-tahlil="DTM: birinchi variantni boshlash"
+              className="tugma-3d mt-1 min-h-12 rounded-2xl bg-brand-blue px-5 font-display text-[16px] font-bold
+                         text-white shadow-[0_4px_0_var(--color-brand-blue-d)]">
+              {t("hrBoshla", { n: 1 })}
+            </button>
           </>
         )}
 
@@ -141,16 +148,23 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
           {t("imtDtmTuzilish", { savol: OLCHAM.savol, daqiqa: OLCHAM.daqiqa })}
         </span>
       </div>
-      <div className="grid grid-cols-4 gap-2">
+      {/* Kompyuterda uch ustun, baland kataklar va natija chizig'i: ilgari
+          telefondagi 60px li 4×3 to'r keng ekranda pastda yarim ekran bo'shliq
+          qoldirardi. Chiziq — o'sha variantdagi eng yaxshi natija. */}
+      <div className="grid grid-cols-4 gap-2 kom:grid-cols-3 kom:gap-3">
         {Array.from({ length: VARIANTLAR }, (_, i) => i + 1).map((n) => {
           const eng = engi(n);
           return (
             <button key={n} type="button" onClick={() => onVariant(n)} data-tahlil={`Imtihon: ${n}-variant`}
               aria-label={t("imtihonVariant", { n })}
               className="clay-press flex min-h-[60px] flex-col items-center justify-center rounded-[16px] bg-karta
-                         shadow-clay-sm">
-              <span className="font-display text-[18px] leading-tight font-bold">{n}</span>
-              <span className="text-[12.5px] text-ink-dim">{eng ? `${eng.togri}/${eng.jami}` : "—"}</span>
+                         shadow-clay-sm kom:min-h-[124px] kom:gap-1.5 kom:px-5">
+              <span className="font-display text-[18px] leading-tight font-bold kom:text-[30px]">{n}</span>
+              <span className="text-[12.5px] text-ink-dim kom:text-[14px]">{eng ? `${eng.togri}/${eng.jami}` : "—"}</span>
+              <span aria-hidden className="hidden h-1.5 w-full overflow-hidden rounded-full bg-track kom:block">
+                {eng && <span className="block h-full rounded-full bg-brand-blue"
+                  style={{ width: `${(eng.togri / eng.jami) * 100}%` }} />}
+              </span>
             </button>
           );
         })}
