@@ -158,19 +158,23 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
           return (
             <button key={n} type="button" onClick={() => onVariant(n)} data-tahlil={`Sertifikat: ${n}-variant`}
               aria-label={t("imtihonVariant", { n })}
-              className={`clay-press flex min-h-[60px] flex-col items-center justify-center rounded-[16px] bg-karta
+              className={`clay-press relative flex min-h-[60px] flex-col items-center justify-center rounded-[16px] bg-karta
                           shadow-clay-sm kom:min-h-[124px] kom:gap-1.5 kom:px-5 ${bu ? "outline-2 outline-brand-blue outline-solid" : ""}`}>
               <span className="font-display text-[18px] leading-tight font-bold kom:text-[30px]">{n}</span>
               <span className={`text-[12.5px] kom:text-[14px] ${bu ? "font-bold text-brand-blue-t" : "text-ink-dim"}`}>
                 {bu ? `${javobli}/${SAVOL_SONI}` : eng ? ballYoz(eng.ball) : "—"}
               </span>
+              {/* "Rasmiy" — chiziqdan YUQORIDA. Kompyuterda u katakning yuqori
+                  burchagida turadi: oqimda qolsa, 1-katakdagi chiziq qo'shni
+                  kataklarnikidan pastga tushib, qator tekisligi buzilardi. */}
+              {n === RASMIY_RAQAM && (
+                <span className="text-[11px] font-bold leading-tight text-brand-gold-d
+                                 kom:absolute kom:top-2.5 kom:right-3 kom:text-[12px]">{t("sertRasmiy")}</span>
+              )}
               <span aria-hidden className="hidden h-1.5 w-full overflow-hidden rounded-full bg-track kom:block">
                 {(bu || eng) && <span className="block h-full rounded-full bg-brand-blue"
                   style={{ width: `${bu ? (javobli / SAVOL_SONI) * 100 : eng!.ball}%` }} />}
               </span>
-              {n === RASMIY_RAQAM && (
-                <span className="text-[11px] font-bold leading-tight text-brand-gold-d">{t("sertRasmiy")}</span>
-              )}
             </button>
           );
         })}
