@@ -149,6 +149,34 @@ services:
       redis:
         condition: service_healthy
 
+  # AI ISHCHISI — faqat `ai` navbati (AI ustoz javoblari, `core/ai.py`).
+  #
+  # Alohida, chunki AI javobi 5–30 soniya OpenAI'ni kutadi: umumiy
+  # ishchida (2 ta joy) ikki kishi bir vaqtda so'rasa, Telegram xabarlari
+  # ular orqasida navbatda turib qolardi.
+  #
+  # `--pool=threads`: ish protsessorni emas, tarmoqni kutadi — 8 ta oqim
+  # bitta jarayonda (~100 MB). 8 ta alohida jarayon ~600 MB yer edi.
+  # Bir vaqtda 8 ta javob yoziladi, qolganlari navbatda soniyalar kutadi.
+  ai:
+    build: .
+    container_name: aqlzone_ai
+    command: ["celery", "-A", "aqlzone", "worker", "-Q", "ai", "--pool=threads",
+              "--concurrency=8", "--loglevel=info", "-n", "ai@%h"]
+    env_file: .env
+    environment:
+      AZ_ROL: vazifa
+    volumes:
+      - data:/data
+    networks:
+      - az-tarmoq
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   # JADVAL — vazifalarni belgilangan vaqtda navbatga qo'yadi.
   #
   # Ilgari bu serverning `crontab` ida edi, ya'ni git'da yo'q edi:

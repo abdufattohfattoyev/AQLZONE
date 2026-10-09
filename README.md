@@ -280,6 +280,10 @@ CELERY_BROKER_URL=redis://redis:6379/0
 chiqish uchun: lokal mashinada Redis ko'tarish va ishchi jarayonni
 alohida yuritish kerak bo'lardi. Sinovlar ham shu rejimda ketadi.
 
+AI ustoz javoblari (`ai_javob`) — o'z navbatida (`ai`) va o'z ishchisida
+(`aqlzone_ai`, 8 oqim, `--pool=threads`): javob 5–30 soniya OpenAI'ni
+kutadi va umumiy ishchida Telegram xabarlarini navbatda ushlab turardi.
+
 Ishchi (`aqlzone_vazifa`) va jadval (`aqlzone_jadval`) — **alohida**
 konteynerlar. Bitta jarayonda yuritish mumkin (`worker -B`), lekin u
 paytda ishchini qayta ishga tushirish jadvalni ham uzib qo'yardi.
@@ -802,6 +806,11 @@ xabar bo'lib keladi. Javob 5–30 soniya oladi — so'rov ichida kutilsa
 gunicorn ishchisi band bo'lardi. Ishchi yiqilsa qator 5 daqiqadan keyin
 "xato" bo'lib ko'rinadi va "Qayta urinish" chiqadi (qayta urinish
 avtomatik EMAS — pul ketadigan so'rov jimgina takrorlanmasin).
+
+**Qotib qolmasligi uchun.** Javoblar alohida `aqlzone_ai` konteynerida
+yoziladi (bir vaqtda 8 ta, qolgani navbatda) — umumiy ishchi va sayt
+ularni kutmaydi. OpenAI'ga so'rov eng ko'pi ~2 daqiqa kutiladi
+(60 s × 2 urinish). Kuzatish: `docker logs aqlzone_ai --tail 50`.
 
 **Xarajat chegarasi.** Bir odamga kuniga `AI_KUNLIK` (30) javob, butun
 ilovaga kuniga `AI_KUNLIK_JAMI` (3000). Xato bilan tugagan javob

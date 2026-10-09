@@ -418,7 +418,10 @@ def _chaqir(tizim: str, xabarlar: list[dict], pupil_id: int, tur: str) -> tuple[
     """
     from openai import OpenAI
 
-    mijoz = OpenAI(api_key=settings.OPENAI_API_KEY, timeout=120, max_retries=2)
+    # Eng yomon holatda ~2 daqiqa (60 s × 2 urinish): ilgari 120 s × 3 —
+    # 6 daqiqa edi va ishchidagi joy shuncha band turardi, odam esa
+    # "yozyapti" ni tomosha qilardi. Oddiy javob 5–15 soniya.
+    mijoz = OpenAI(api_key=settings.OPENAI_API_KEY, timeout=60, max_retries=1)
     qoshimcha = {}
     if settings.OPENAI_FIKR:
         qoshimcha["reasoning_effort"] = settings.OPENAI_FIKR

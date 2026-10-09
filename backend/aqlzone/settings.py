@@ -220,6 +220,13 @@ CELERY_TASK_ACKS_LATE = True
 # navbatda turib qolardi va yiqilganda hammasi birga yo'qolardi.
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
+# AI ustoz javobi — ALOHIDA navbatda (`docker-compose.yml` → `ai` xizmati).
+# U 5–30 soniya OpenAI'ni kutadi; umumiy navbatda tursa, bir nechta odam
+# bir vaqtda so'raganda duel chaqiruvi va Premium xabarlari shu javoblar
+# orqasida kutib qolardi. Eager rejimda (lokal, sinov) yo'nalish
+# e'tiborga olinmaydi.
+CELERY_TASK_ROUTES = {"core.vazifalar.ai_javob": {"queue": "ai"}}
+
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
