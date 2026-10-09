@@ -606,6 +606,7 @@ Beshta bo'lim, chapdagi yon paneldan:
 /boshqaruv/masalalar           tasdiqlash navbati
 /boshqaruv/duel                duel hisoboti
 /boshqaruv/reklama             botdan e'lon tarqatish
+/boshqaruv/premium             Imtihon Premium: cheklar va tushum
 ```
 
 Umumiy panelda foydalanuvchilar ro'yxati **onlaynlardan** boshlanadi,
@@ -700,6 +701,57 @@ chaqiriladi. **U ishlamay qolsa ham hech narsa buzilmaydi**: bola ligani
 ochganda yopilmagan haftasi o'sha yerda yopiladi. Buyruq shunchaki buni
 hamma uchun bir vaqtda qiladi, ya'ni ilovaga kirmagan bolaning o'rni ham
 guruhdoshlariga to'g'ri ko'rinadi.
+
+## Imtihon Premium
+
+Pullik qism **faqat imtihon variantlari**: DTM, Milliy sertifikat va
+Prezident/ixtisoslashtirilgan maktab tayyorlovi. Har biridan birinchi
+**3 ta variant bepul**, qolgani Premium. Darslar, o'yinlar, duel va
+qolgan hamma narsa bepul.
+
+| | |
+|---|---|
+| Narx | 1 oy — 49 000 so'm, 3 oy — 119 000 so'm (`.env`: `PREMIUM_NARX_1OY`, `PREMIUM_NARX_3OY`) |
+| Sinov | 3 kun, har hisobga bir marta va faqat hech qachon premium bo'lmaganga |
+| To'lov | karta raqamiga o'tkazma → chek rasmi botga → admin tasdiqlaydi |
+| Huquq | `Pupil.premium_gacha` — serverda, tanga yoki `localStorage` da emas |
+
+**Oqim.** `/premium` sahifasida tarif tanlanadi va karta raqami ko'rinadi
+(nusxa olish tugmasi bilan). "To'ladim — chekni yuborish" botni
+`?start=premium_<tarif>` bilan ochadi; bot karta raqamini qayta yozadi va
+chek rasmini kutadi. Rasm kelsa `PremiumTolov` (`kutilmoqda`) yoziladi va
+`ADMIN_TG_IDS` dagi har adminga rasm + "✅ Tasdiqlash" / "❌ Rad etish"
+tugmalari boradi. Tasdiqlanganda muddat `max(hozir, premium_gacha) + 30/90
+kun` bo'ladi — oyi tugamasdan to'lagan odam qolgan kunlarini yo'qotmaydi.
+Bitta chek ikki marta tasdiqlanmaydi: holat tranzaksiya va qator qulfi
+ostida qayta tekshiriladi.
+
+**Server qismi.** Savollar mijozda urug'dan yasaladi, ya'ni ro'yxatdagi
+qulf va variant sahifasidagi darvoza (`/imtihon/9` ni qo'lda ochish
+`/premium` ga qaytaradi) asosiy to'siq. Server esa **reyting va tarixni**
+qo'riqlaydi: premiumsiz yopiq DTM/sertifikat varianti natijasi
+yozilmaydi (`core/imtihon.py`) — so'rovni qo'lda yuborib haftalik
+jadvalga kirib bo'lmaydi.
+
+**Eslatma.** Muddat tugashiga 3 kun qolganda bitta bot xabari — har kuni
+11:00 da (`premium_eslatma`, Celery). Bir muddat uchun ikkinchi marta
+ketmaydi (`Pupil.premium_eslatildi`) va faqat haqiqatan to'laganlarga:
+3 kunlik sinov birinchi kuniyoq "tugayapti" deb eslatilmasin.
+
+**Sozlash.** Karta raqami va egasi FAQAT serverdagi `.env` da:
+
+```bash
+PREMIUM_KARTA=8600 ....
+PREMIUM_KARTA_EGASI=Ism Familiya
+```
+
+Bo'sh bo'lsa sahifa va bot "to'lov hozircha qabul qilinmayapti" deydi.
+Panel: `/boshqaruv/premium` — kutilayotgan cheklar, faol premiumlar
+(to'lagan / sinovda) va oylik tushum.
+
+Kod: `backend/core/premium.py`, botdagi `premium_*` funksiyalar,
+`frontend/src/lib/premium.ts`, `screens/Premium.tsx`,
+`components/PremiumVaraq.tsx`.
 
 ## Manzillar
 

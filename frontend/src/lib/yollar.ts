@@ -141,6 +141,8 @@ export const yolImtihonVariant = (n: number) => `/imtihon/${n}`;
 /** Milliy sertifikat — xuddi shu qolipda (`lib/sertifikat.ts`). */
 export const yolSertifikat = () => "/sertifikat";
 export const yolSertifikatVariant = (n: number) => `/sertifikat/${n}`;
+/** Imtihon Premium — tariflar va to'lov (`screens/Premium.tsx`). */
+export const yolPremium = () => "/premium";
 
 /**
  * DTM/sertifikat atrofidagi uch sahifa — ikkalasida bir xil tuzilish,

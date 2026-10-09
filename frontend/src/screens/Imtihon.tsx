@@ -24,6 +24,8 @@ import { PanelBelgi } from "../lib/chizma/panelBelgi";
 import { marafonHolat } from "../lib/marafon";
 import type { MarafonHolat } from "../lib/marafon";
 import { t } from "../lib/matn";
+import { QulfBelgi } from "../components/PremiumVaraq";
+import { useVariantQulf } from "../components/variantQulf";
 import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
 import { OLCHAM, VARIANTLAR, daraja, engYaxshi, sinxronla, zaifMavzular } from "../lib/imtihon";
 import type { ServerTarix } from "../lib/imtihon";
@@ -69,6 +71,8 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
     : daraja();
   const engi = (n: number) => (tarix ? tarix.eng_yaxshi[String(n)] ?? null : engYaxshi(n));
   const [zaif] = useState(() => zaifMavzular());
+  // 4+ variant — Imtihon Premium (`lib/premium.ts`): bosilsa varaq chiqadi.
+  const qulf = useVariantQulf(onVariant);
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]
@@ -154,13 +158,16 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
       <div className="grid grid-cols-4 gap-2 kom:grid-cols-3 kom:gap-3">
         {Array.from({ length: VARIANTLAR }, (_, i) => i + 1).map((n) => {
           const eng = engi(n);
+          const yopiq = qulf.yopiqmi(n);
           return (
-            <button key={n} type="button" onClick={() => onVariant(n)} data-tahlil={`Imtihon: ${n}-variant`}
-              aria-label={t("imtihonVariant", { n })}
+            <button key={n} type="button" onClick={() => qulf.tanla(n)} data-tahlil={`Imtihon: ${n}-variant`}
+              aria-label={t(yopiq ? "premQulfli" : "imtihonVariant", { n })}
               className="clay-press flex min-h-[60px] flex-col items-center justify-center rounded-[16px] bg-karta
                          shadow-clay-sm kom:min-h-[124px] kom:gap-1.5 kom:px-5">
               <span className="font-display text-[18px] leading-tight font-bold kom:text-[30px]">{n}</span>
-              <span className="text-[12.5px] text-ink-dim kom:text-[14px]">{eng ? `${eng.togri}/${eng.jami}` : "—"}</span>
+              {yopiq ? <QulfBelgi /> : (
+                <span className="text-[12.5px] text-ink-dim kom:text-[14px]">{eng ? `${eng.togri}/${eng.jami}` : "—"}</span>
+              )}
               <span aria-hidden className="hidden h-1.5 w-full overflow-hidden rounded-full bg-track kom:block">
                 {eng && <span className="block h-full rounded-full bg-brand-blue"
                   style={{ width: `${(eng.togri / eng.jami) * 100}%` }} />}
@@ -172,6 +179,7 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
 
       <p className="text-[13px] leading-snug text-ink-dim">{t("imtDtmPast")}</p>
       </div>
+      {qulf.varaq}
     </div>
   );
 }

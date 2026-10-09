@@ -23,6 +23,8 @@ import { useState } from "react";
 import { Icon } from "../lib/icons";
 import { Hajmli } from "../lib/hajmli";
 import { t } from "../lib/matn";
+import { QulfBelgi } from "../components/PremiumVaraq";
+import { useVariantQulf } from "../components/variantQulf";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 import { QABUL, QABUL_TURLAR, QABUL_VARIANT, qabulEng, qabulOrtacha, qabulTurmi } from "../lib/qabul";
 import type { QabulTur } from "../lib/qabul";
@@ -42,6 +44,8 @@ export function Qabul({ onVariant, onChiq }: {
   onChiq: () => void;
 }) {
   const [tur, setTur] = useState<QabulTur>(oxirgiTur);
+  // 4+ variant — Imtihon Premium (`lib/premium.ts`), har tur uchun alohida.
+  const qulf = useVariantQulf((n) => onVariant(tur, n));
   const tanla = (x: QabulTur) => {
     tebrat("tanlov");
     setTur(x);
@@ -109,7 +113,7 @@ export function Qabul({ onVariant, onChiq }: {
             <p className="text-[14px] leading-snug text-ink-soft">{t("qabulBoshlangIzoh")}</p>
           </>
         )}
-        <button type="button" onClick={() => onVariant(tur, keyingi)} data-tahlil="Qabul: keyingi variant"
+        <button type="button" onClick={() => qulf.tanla(keyingi)} data-tahlil="Qabul: keyingi variant"
           className="tugma-3d mt-1 flex min-h-[52px] items-center justify-center gap-2 rounded-[16px] bg-brand-blue
                      font-display text-[17px] font-bold text-white shadow-[0_4px_0_var(--color-brand-blue-d)]">
           {t("qabulKeyingi", { n: keyingi })}
@@ -130,19 +134,23 @@ export function Qabul({ onVariant, onChiq }: {
       <div className="grid grid-cols-4 gap-2">
         {variantlar.map((n) => {
           const eng = qabulEng(tur, n);
+          const yopiq = qulf.yopiqmi(n);
           return (
-            <button key={n} type="button" onClick={() => onVariant(tur, n)} data-tahlil={`Qabul: ${n}-variant`}
-              aria-label={t("imtihonVariant", { n })}
+            <button key={n} type="button" onClick={() => qulf.tanla(n)} data-tahlil={`Qabul: ${n}-variant`}
+              aria-label={t(yopiq ? "premQulfli" : "imtihonVariant", { n })}
               className="clay-press flex min-h-[60px] flex-col items-center justify-center rounded-[16px] bg-karta
                          shadow-clay-sm">
               <span className="font-display text-[18px] leading-tight font-bold">{n}</span>
-              <span className={`text-[12.5px] ${eng ? "text-brand-green-d" : "text-ink-dim"}`}>
-                {eng ? (eng.ball !== null ? ballMatn(eng.ball) : `${eng.togri}/${eng.jami}`) : "—"}
-              </span>
+              {yopiq ? <QulfBelgi /> : (
+                <span className={`text-[12.5px] ${eng ? "text-brand-green-d" : "text-ink-dim"}`}>
+                  {eng ? (eng.ball !== null ? ballMatn(eng.ball) : `${eng.togri}/${eng.jami}`) : "—"}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
+      {qulf.varaq}
     </div>
   );
 }

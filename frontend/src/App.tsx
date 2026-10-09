@@ -37,6 +37,8 @@ const Home = lazy(() => import("./screens/Home").then((m) => ({ default: m.Home 
 const Lesson = lazy(() => import("./screens/Lesson").then((m) => ({ default: m.Lesson })));
 const Daraja = lazy(() => import("./screens/Daraja").then((m) => ({ default: m.Daraja })));
 const Qabul = lazy(() => import("./screens/Qabul").then((m) => ({ default: m.Qabul })));
+const Premium = lazy(() => import("./screens/Premium").then((m) => ({ default: m.Premium })));
+const PremiumDarvoza = lazy(() => import("./components/PremiumVaraq").then((m) => ({ default: m.PremiumDarvoza })));
 const Mantiq = lazy(() => import("./screens/Mantiq").then((m) => ({ default: m.Mantiq })));
 const Dokon = lazy(() => import("./screens/Dokon").then((m) => ({ default: m.Dokon })));
 const Nishonlar = lazy(() => import("./screens/Nishonlar").then((m) => ({ default: m.Nishonlar })));
@@ -105,7 +107,7 @@ import {
   yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant, yolQabul, yolQabulVariant, yolMantiq, yolMantiqMavzu,
-  yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq,
+  yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq, yolPremium,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { darajaBormi, darajaKerakmi } from "./lib/daraja";
@@ -216,6 +218,7 @@ function Yollar() {
       <Route path="/sinf/:id" element={<SinfSahifasi />} />
       <Route path="/sessiya" element={<SessiyaSahifasi />} />
       <Route path="/qabul" element={<QabulSahifasi />} />
+      <Route path={yolPremium()} element={<PremiumSahifasi />} />
       <Route path="/mantiq" element={<MantiqSahifasi />} />
       <Route path="/mantiq/:id" element={<MantiqMavzuSahifasi />} />
       <Route path="/qabul/:tur/:n" element={<QabulVariantSahifasi />} />
@@ -1013,7 +1016,11 @@ function SertifikatVariantSahifasi() {
   const raqam = Number(n);
   if (!Number.isInteger(raqam) || raqam < 1) return <Navigate to={yolSertifikat()} replace />;
   // `key` — boshqa variantga o'tilsa holat butunlay yangidan boshlansin.
-  return <SertifikatTest key={raqam} n={raqam} onExit={() => nav(yolSertifikat())} />;
+  return (
+    <PremiumDarvoza n={raqam}>
+      <SertifikatTest key={raqam} n={raqam} onExit={() => nav(yolSertifikat())} />
+    </PremiumDarvoza>
+  );
 }
 
 /**
@@ -1028,9 +1035,22 @@ function ImtihonVariantSahifasi() {
   const raqam = Number(n);
   if (!Number.isInteger(raqam) || raqam < 1) return <Navigate to={yolImtihon()} replace />;
   return (
-    <BlokEkran sinf={11} uzunlik="dtm" qamrov={{ tur: "imtihon" }} imtihon={raqam}
-      onExit={() => nav(yolImtihon())} />
+    <PremiumDarvoza n={raqam}>
+      <BlokEkran sinf={11} uzunlik="dtm" qamrov={{ tur: "imtihon" }} imtihon={raqam}
+        onExit={() => nav(yolImtihon())} />
+    </PremiumDarvoza>
   );
+}
+
+/**
+ * Imtihon Premium (`screens/Premium.tsx`). Sinov olingach — DTM
+ * ro'yxatiga: endi yopiq variantlar ochiq va odam shuni ko'rsin.
+ */
+function PremiumSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  const orqaga = () => (window.history.length > 1 ? nav(-1) : nav(yolImtihon()));
+  return <Premium onBack={orqaga} onOchildi={() => nav(yolImtihon(), { replace: true })} />;
 }
 
 /** Prezident va ixtisoslashtirilgan maktablarga tayyorlov (`screens/Qabul.tsx`). */
@@ -1053,8 +1073,10 @@ function QabulVariantSahifasi() {
     return <Navigate to={yolQabul()} replace />;
   }
   return (
-    <BlokEkran key={`${tur}-${raqam}`} sinf={4} uzunlik="dtm" qamrov={{ tur: "hammasi" }}
-      qabul={{ tur, n: raqam }} onExit={() => nav(yolQabul())} />
+    <PremiumDarvoza n={raqam}>
+      <BlokEkran key={`${tur}-${raqam}`} sinf={4} uzunlik="dtm" qamrov={{ tur: "hammasi" }}
+        qabul={{ tur, n: raqam }} onExit={() => nav(yolQabul())} />
+    </PremiumDarvoza>
   );
 }
 

@@ -20,6 +20,8 @@ import { ImtihonSarlavha } from "../components/ImtihonTur";
 import { ImtEshiklar } from "../components/HaftalikReyting";
 import { zaifMavzular } from "../lib/imtihon";
 import { t } from "../lib/matn";
+import { QulfBelgi } from "../components/PremiumVaraq";
+import { useVariantQulf } from "../components/variantQulf";
 import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
 import {
   DAQIQA, DARAJA_SHKALA, TUZILISH, VARIANTLAR, berilgan, daraja, engYaxshi, joriyniOqi, ortacha, sinxronla,
@@ -47,6 +49,8 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
   // Bir marta o'qiladi: ekran ochiq turganda variant o'zgarmaydi.
   const [joriy] = useState(joriyniOqi);
   const [zaif] = useState(() => zaifMavzular(3, "sert"));
+  // 4+ variant — Imtihon Premium (`lib/premium.ts`).
+  const qulf = useVariantQulf(onVariant);
   // Qurilmadagi urinishlar serverga — yangilanishdan oldin ishlanganlari
   // ham "birinchi urinish" bo'lib reytingni aldamasin (`lib/sertifikat.ts`).
   useEffect(() => { void sinxronla(); }, []);
@@ -119,7 +123,7 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
 
       {/* ---- yarim qolgan variant ---- */}
       {joriy && (
-        <button type="button" onClick={() => onVariant(joriy.n)} data-tahlil="Sertifikat: davom etish"
+        <button type="button" onClick={() => qulf.tanla(joriy.n)} data-tahlil="Sertifikat: davom etish"
           className="tugma-3d flex w-full flex-col gap-2.5 rounded-clay bg-brand-blue p-4 text-left text-white
                      shadow-[0_5px_0_var(--color-brand-blue-d)] min-[360px]:p-[18px]">
           <span className="flex w-full items-baseline justify-between gap-2">
@@ -155,15 +159,18 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
         {Array.from({ length: VARIANTLAR }, (_, i) => i + 1).map((n) => {
           const eng = engYaxshi(n);
           const bu = joriy?.n === n;
+          const yopiq = qulf.yopiqmi(n);
           return (
-            <button key={n} type="button" onClick={() => onVariant(n)} data-tahlil={`Sertifikat: ${n}-variant`}
-              aria-label={t("imtihonVariant", { n })}
+            <button key={n} type="button" onClick={() => qulf.tanla(n)} data-tahlil={`Sertifikat: ${n}-variant`}
+              aria-label={t(yopiq ? "premQulfli" : "imtihonVariant", { n })}
               className={`clay-press relative flex min-h-[60px] flex-col items-center justify-center rounded-[16px] bg-karta
                           shadow-clay-sm kom:min-h-[124px] kom:gap-1.5 kom:px-5 ${bu ? "outline-2 outline-brand-blue outline-solid" : ""}`}>
               <span className="font-display text-[18px] leading-tight font-bold kom:text-[30px]">{n}</span>
-              <span className={`text-[12.5px] kom:text-[14px] ${bu ? "font-bold text-brand-blue-t" : "text-ink-dim"}`}>
-                {bu ? `${javobli}/${SAVOL_SONI}` : eng ? ballYoz(eng.ball) : "—"}
-              </span>
+              {yopiq && !bu ? <QulfBelgi /> : (
+                <span className={`text-[12.5px] kom:text-[14px] ${bu ? "font-bold text-brand-blue-t" : "text-ink-dim"}`}>
+                  {bu ? `${javobli}/${SAVOL_SONI}` : eng ? ballYoz(eng.ball) : "—"}
+                </span>
+              )}
               {/* "Rasmiy" — chiziqdan YUQORIDA. Kompyuterda u katakning yuqori
                   burchagida turadi: oqimda qolsa, 1-katakdagi chiziq qo'shni
                   kataklarnikidan pastga tushib, qator tekisligi buzilardi. */}
@@ -183,6 +190,7 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
       <p className="text-[13px] leading-snug text-ink-dim">{t("sertPastIzoh")}</p>
       <p className="text-[13px] leading-snug text-ink-dim">{t("sertRasmiyIzoh")}</p>
       </div>
+      {qulf.varaq}
     </div>
   );
 }
