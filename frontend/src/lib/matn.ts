@@ -472,7 +472,6 @@ const S = {
   oyinHaftaOsdi: ["↑ +{n} haftada", "↑ +{n} за неделю"],
   oyinHaftaTushdi: ["↓ −{n} haftada", "↓ −{n} за неделю"],
   oyinGrafikAria: ["{nom}, oxirgi natijalar: {sonlar}. Rekord {rekord}.", "{nom}, последние результаты: {sonlar}. Рекорд {rekord}."],
-  oyinOynalmagan: ["Hali o'ynalmagan", "Ещё не играли"],
   oyinBoshqa: ["Boshqa o'yinlar", "Другие игры"],
   oyinDostlar: ["Do'stlar bilan", "С друзьями"],
 

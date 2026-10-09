@@ -84,6 +84,9 @@ export function Oyinlar({
     () => [...OYINLAR].sort((a, b) => Number(oxirgilar(b.id).length > 0) - Number(oxirgilar(a.id).length > 0)),
     [],
   );
+  // "oxirgi · rekord" izohi faqat kamida bitta grafik bo'lsa: yangi
+  // odamda grafik yo'q — izoh hech narsani tushuntirmaydi.
+  const grafikBor = tartib.some((o) => oxirgilar(o.id).length > 0);
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3 px-4 pt-5 pb-3
@@ -112,12 +115,14 @@ export function Oyinlar({
 
       <div className="mt-0.5 flex flex-wrap items-baseline justify-between gap-x-3">
         <h2 className="font-display text-[20px]">{t("oyinYakkaSarlavha")}</h2>
-        <span aria-hidden className="flex shrink-0 items-center gap-3 text-[12px] font-semibold text-ink-dim">
-          <span className="flex items-center gap-1"><span className="size-[9px] rounded-full bg-brand-blue" />{t("oyinOxirgi")}</span>
-          <span className="flex items-center gap-1"><span className="size-[9px] rounded-full bg-brand-gold" />{t("oyinRekord")}</span>
-        </span>
+        {grafikBor && (
+          <span aria-hidden className="flex shrink-0 items-center gap-3 text-[12px] font-semibold text-ink-dim">
+            <span className="flex items-center gap-1"><span className="size-[9px] rounded-full bg-brand-blue" />{t("oyinOxirgi")}</span>
+            <span className="flex items-center gap-1"><span className="size-[9px] rounded-full bg-brand-gold" />{t("oyinRekord")}</span>
+          </span>
+        )}
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 kom:gap-3">
         {tartib.map((o) => (
           <OyinKarta key={o.id} o={o} onOch={() => onOyin(o.id)} hozir={jonli?.oyinlar[o.id] ?? 0} />
         ))}
@@ -201,13 +206,17 @@ function Kichik({ belgi, nom, izoh, tahlil, on }: {
 }) {
   return (
     <button type="button" onClick={on} data-tahlil={tahlil}
-      className="clay-press flex min-w-0 items-center gap-2 rounded-[18px] bg-karta p-2.5 text-left shadow-clay-sm">
-      <span className="grid size-9 shrink-0 place-items-center rounded-[12px] bg-track">
-        <EmojiBelgi e={belgi} olcham={22} />
+      className="clay-press flex min-w-0 flex-col items-start gap-2 rounded-[20px] bg-karta p-3 text-left shadow-clay-sm
+                 sm:flex-row sm:items-center sm:gap-3 kom:p-4">
+      {/* Telefonda belgi ustda, yozuv ostida: yonma-yon turganda 165px
+          kartada "Bugungi maydon" ikki qatorga sinib, qo'shni karta bilan
+          bo'yi teng kelmasdi. */}
+      <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-track kom:size-14 kom:rounded-[16px]">
+        <EmojiBelgi e={belgi} olcham={32} />
       </span>
-      <span className="flex min-w-0 flex-col">
-        <span className="line-clamp-2 text-[14px] leading-tight font-bold">{nom}</span>
-        <span className="truncate text-[12px] leading-snug text-ink-dim">{izoh}</span>
+      <span className="flex w-full min-w-0 flex-col gap-0.5">
+        <span className="truncate text-[15px] leading-tight font-bold kom:text-[16px]">{nom}</span>
+        <span className="line-clamp-2 text-[12.5px] leading-snug text-ink-dim sm:truncate kom:text-[13px]">{izoh}</span>
       </span>
     </button>
   );
@@ -228,15 +237,22 @@ function OyinKarta({ o, onOch, hozir }: { o: Oyin; onOch: () => void; hozir: num
   return (
     <button type="button" onClick={onOch} data-tahlil={`O'yin: ${o.id}`}
       title={hozir > 0 ? `${nom} · ${t("oyinKartaHozir", { n: hozir })}` : nom}
-      className="clay-press flex min-w-0 flex-col gap-1 rounded-[18px] bg-karta px-3 pt-2.5 pb-2 text-left shadow-clay-sm">
-      <span className="flex w-full items-center gap-2">
-        <img src={`/belgi/h/${BELGI[o.id]}.webp`} alt="" width={24} height={24} className="size-6 shrink-0" />
-        <span className="min-w-0 flex-1 truncate text-[14px] leading-tight font-bold">{nom}</span>
+      className="clay-press flex min-w-0 flex-col gap-2 rounded-[20px] bg-karta p-3 text-left shadow-clay-sm
+                 kom:gap-2.5 kom:p-4">
+      {/* Ilgari belgi 24px edi va nom yonida bir qatorda turardi — o'n
+          to'rtta karta orasida belgi ko'rinmay, nom kesilib qolardi
+          ("Ko'paytirish jad…"). Endi belgi alohida katta plitkada, nom
+          ostida ikki qatorgacha to'liq. */}
+      <span className="flex w-full items-start justify-between gap-2">
+        <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-track kom:size-14 kom:rounded-[16px]">
+          <img src={`/belgi/h/${BELGI[o.id]}.webp`} alt="" width={40} height={40} className="size-9 kom:size-10" />
+        </span>
         {/* Hozir o'ynayotganlar — nol bo'lsa umuman chizilmaydi. */}
-        {hozir > 0 && <span aria-hidden className="az-jonli size-2 shrink-0 rounded-full bg-brand-green" />}
+        {hozir > 0 && <span aria-hidden className="az-jonli mt-1 size-2.5 shrink-0 rounded-full bg-brand-green" />}
       </span>
+      <span className="line-clamp-2 text-[15px] leading-tight font-bold kom:text-[16px]">{nom}</span>
 
-      {g ? (
+      {g && (
         <>
           <span className="flex items-baseline gap-1.5">
             <span className="font-display text-[20px] leading-none font-bold tabular-nums">{g.oxirgi.qiymat}</span>
@@ -258,12 +274,10 @@ function OyinKarta({ o, onOch, hozir }: { o: Oyin; onOch: () => void; hozir: num
               SVG ichidagi doirani ellipsga cho'zardi. */}
           <Nuqtalar g={g} />
         </>
-      ) : (
-        <>
-          <span className="pt-0.5 text-[13px] leading-snug text-ink-dim">{t("oyinOynalmagan")}</span>
-          <span aria-hidden className="mt-auto block h-[34px] border-b-[1.5px] border-dashed border-track" />
-        </>
       )}
+      {/* O'ynalmagan karta — faqat belgi va nom. Ilgari har birida "Hali
+          o'ynalmagan" va bo'sh punktir grafik turardi: sakkiz marta bir xil
+          yozuv — shovqin, odatiy holat belgisiz qoladi. */}
     </button>
   );
 }
@@ -297,8 +311,12 @@ function Qator({ belgi, nom, izoh, tahlil, on }: {
 }) {
   return (
     <button type="button" onClick={on} data-tahlil={tahlil}
-      className="clay-press flex min-h-[58px] w-full items-center gap-3 px-3.5 py-2 text-left">
-      <EmojiBelgi e={belgi} olcham={26} className="shrink-0" />
+      className="clay-press flex min-h-[68px] w-full items-center gap-3 px-3.5 py-2.5 text-left">
+      {/* Belgi yuqoridagi kartalardagi kabi plitkada — ilgari 26px yalang'och
+          emoji edi, kartalar bilan bir sahifada tartibsiz ko'rinardi. */}
+      <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-track">
+        <EmojiBelgi e={belgi} olcham={30} />
+      </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[15.5px] leading-tight font-bold">{nom}</span>
         <span className="truncate text-[13px] leading-snug text-ink-dim">{izoh}</span>
