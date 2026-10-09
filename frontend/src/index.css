@@ -265,7 +265,9 @@
   /* 2026-10-09: qorong'i palitra — #0B1722 · #20D5DF · #FFFFFF. */
   --color-brand-blue: #20d5df;
   --color-brand-blue-d: #12a3ad;
-  --az-plitka: #0e1c2b;
+  /* Ilgari #0e1c2b — kartadan (#13212f) TO'QROQ edi va plitka kartada
+     teshikdek ko'rinardi. Endi kartadan sal ochroq, firuza tusli. */
+  --az-plitka: #1a3340;
   /* Quyuq fonda "loy" soyasi ham quyuq bo'ladi — shundagina karta
      yuzadan ko'tarilgandek ko'rinadi. */
   --color-clay: #050d14;
@@ -348,7 +350,11 @@
   /* 2026-10-09: yorug' palitra — #E8FBF7 · #19B7B2 · #153B45. */
   --color-brand-blue: #19b7b2;
   --color-brand-blue-d: #0f8a86;
-  --az-plitka: #153b45;
+  /* Ilgari bu yerda ham to'q navy (#153b45) edi: oq sahifada har kartada
+     qora kvadrat paydo bo'lib, sahifa qoraygandek va belgilar
+     "bo'g'ilgan"dek ko'rinardi (ustoz fikri, 2026-10-09). Endi och
+     firuza — belgi o'zi ko'zga tashlanadi, plitka esa faqat "javon". */
+  --az-plitka: #d9f6f1;
   --color-brand-blue-t: var(--color-brand-blue-d);
   --az-body: #e8fbf7;
 
@@ -413,7 +419,9 @@
   /* 2026-10-09: qorong'i palitra — #0B1722 · #20D5DF · #FFFFFF. */
   --color-brand-blue: #20d5df;
   --color-brand-blue-d: #12a3ad;
-  --az-plitka: #0e1c2b;
+  /* Ilgari #0e1c2b — kartadan (#13212f) TO'QROQ edi va plitka kartada
+     teshikdek ko'rinardi. Endi kartadan sal ochroq, firuza tusli. */
+  --az-plitka: #1a3340;
   /* Quyuq fonda "loy" soyasi ham quyuq — shundagina karta ko'tarilgandek. */
   --color-clay: #050d14;
   --color-locked: #34495a;
@@ -1460,18 +1468,13 @@
   flex-shrink: 0;
   border-radius: 28%;
   background: var(--az-plitka);
-  border: 1px solid color-mix(in srgb, var(--color-brand-blue) 55%, transparent);
-  box-shadow:
-    0 0 14px color-mix(in srgb, var(--color-brand-blue) 26%, transparent),
-    inset 0 1px 0 rgb(255 255 255 / 0.07);
+  border: 1px solid color-mix(in srgb, var(--color-brand-blue) 22%, transparent);
 }
-.az-plitka > img, .az-plitka > span { width: 72%; height: 72%; object-fit: contain; }
-/* Kichik plitka (yon panel satri, ro'yxat qatori) — nur yengilroq. */
-.az-plitka-kichik {
-  box-shadow:
-    0 0 8px color-mix(in srgb, var(--color-brand-blue) 22%, transparent),
-    inset 0 1px 0 rgb(255 255 255 / 0.07);
-}
+/* Ilgari belgi 72% edi, plitka atrofida esa firuza nur va qalin
+   chiziq bor edi — uch qavat ramka belgini siqib, "bo'g'ilgan"dek
+   ko'rsatardi (ustoz fikri, 2026-10-09). Endi nur yo'q, chiziq
+   yengil, belgi 80%. */
+.az-plitka > img, .az-plitka > span { width: 80%; height: 80%; object-fit: contain; }
 
 /* Interfeys belgilari — ilovaning asosiy rangi (`lib/hajmli.tsx`, FIRUZA). */
 .hajmli[data-rang="firuza"]   { --bl:#8be3ec; --bm:#17b3c1; --bd:#0b6f79 }
