@@ -23,7 +23,7 @@
  * Namunadagi uydirma raqamlar ("4 800+ o'quvchi", "4.9 / 5") va begona
  * rasmlar olinmadi: sahifada faqat rost narsa turadi.
  */
-import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { Logo } from "../components/Logo";
 import { Icon } from "../lib/icons";
@@ -295,9 +295,10 @@ function YoruglikTugma() {
  * varaqdagi o'lcham shu) — 240px dan katta qilinmaydi, xiralashardi.
  */
 const SLAYDLAR = [
-  // 1-slayd: kitob o'rniga Pifagor teoremasi (`Teorema`) — kitob har qanday
-  // fanni bildirardi, teorema esa birinchi qarashda "matematika" deydi.
-  { rang: "blue", belgi: "teorema", tab: "lendSlTab1", yorliq: "lendSl1Belgi", s1: "lendSarlavha1", s2: "lendSarlavha2", s3: "lendSarlavha3",
+  // 1-slayd: kitob o'rniga firuza 3D miya (`public/belgi/f/miya.webp`) —
+  // kitob har qanday fanni bildirardi, miya esa "Aql Zone" nomining o'zi.
+  // 2026-10-08 da Pifagor teoremasi (SVG) sinab ko'rildi — yassi chiqdi.
+  { rang: "blue", belgi: "miya", tab: "lendSlTab1", yorliq: "lendSl1Belgi", s1: "lendSarlavha1", s2: "lendSarlavha2", s3: "lendSarlavha3",
     izoh: "lendIzoh", tugma: "lendSl1Tugma", yol: yolKurslar, chip1: "lendSl1Chip1", chip2: "lendSl1Chip2", n: JAMI_DARS },
   { rang: "green", belgi: "nishon", tab: "lendSlTab2", yorliq: "lendSl2Belgi", s1: "lendSl2S1", s2: "lendSl2S2", s3: "lendSl2S3",
     izoh: "lendSl2Izoh", tugma: "lendSl2Tugma", yol: yolTestSinf, chip1: "lendSl2Chip1", chip2: "lendSl2Chip2", n: 0 },
@@ -499,8 +500,9 @@ function Sahna({ sl, faol }: { sl: Slayd; faol: boolean }) {
           {faol && (
             <div className="az-lend-kir">
               <div className="az-lend-suz">
-                {sl.belgi === "teorema"
-                  ? <Teorema className="size-40 drop-shadow-[0_22px_22px_rgb(0_0_0/0.28)] sm:size-52 lg:size-60" />
+                {sl.belgi === "miya"
+                  ? <img src="/belgi/f/miya.webp" alt="" width={224} height={224}
+                      className="size-36 drop-shadow-[0_26px_26px_rgb(0_0_0/0.28)] sm:size-48 lg:size-56" />
                   : <Hajmli nom={sl.belgi} olcham={240}
                       className="size-36 drop-shadow-[0_26px_26px_rgb(0_0_0/0.28)] sm:size-48 lg:size-56" />}
               </div>
@@ -528,78 +530,6 @@ function Sahna({ sl, faol }: { sl: Slayd; faol: boolean }) {
         </>
       )}
     </div>
-  );
-}
-
-/**
- * Pifagor teoremasi — 3D chizma: to'g'ri burchakli uchburchak (3 : 4 : 5)
- * va uning tomonlariga qurilgan kvadratlar, kataklari bilan: 9 + 16 = 25
- * katakni sanab, teoremani ko'z bilan "isbotlash" mumkin.
- *
- * Hajm: har kvadrat ostida o'sha shaklning pastga surilgan to'q nusxasi
- * (qalinlik), yuzasida tepadan yorug' gradient. Rang — faqat firuza
- * pog'onalari (dizayn qoidasi: bitta asosiy rang).
- */
-function Teorema({ className = "" }: { className?: string }) {
-  const id = useId().replace(/[^a-zA-Z0-9]/g, "");
-  // Uchburchak: C — to'g'ri burchak, CA = 60 (a), CB = 80 (b), AB = 100 (c).
-  const A = [90, 80], B = [170, 140], C = [90, 140];
-  const n = [60, -80];                                  // AB ga tik, C dan tashqariga
-  const kvadratlar = [
-    { nom: "a²", t: [[30, 80], [90, 80], [90, 140], [30, 140]], k: 3, g: `${id}a` },
-    { nom: "b²", t: [[90, 140], [170, 140], [170, 220], [90, 220]], k: 4, g: `${id}b` },
-    { nom: "c²", t: [A, B, [B[0]! + n[0]!, B[1]! + n[1]!], [A[0]! + n[0]!, A[1]! + n[1]!]], k: 5, g: `${id}c` },
-  ];
-  const nuqta = (p: number[][]) => p.map((q) => q.join(",")).join(" ");
-  const ora = (p: number[], q: number[], s: number) => [p[0]! + (q[0]! - p[0]!) * s, p[1]! + (q[1]! - p[1]!) * s];
-  return (
-    <svg viewBox="16 -12 228 248" className={className} role="img" aria-label="a² + b² = c²">
-      <defs>
-        {[["a", "#8be3ec", "#17b3c1"], ["b", "#4fcfdb", "#0e8f9b"], ["c", "#25c2cf", "#0b6f79"],
-          ["u", "#f4fdfe", "#b6eef3"]].map(([k, och, toq]) => (
-          <linearGradient key={k} id={`${id}${k}`} x1="0" y1="0" x2="0.3" y2="1">
-            <stop offset="0" stopColor={och} />
-            <stop offset="1" stopColor={toq} />
-          </linearGradient>
-        ))}
-      </defs>
-      {/* Avval HAMMA qalinlik, keyin yuzalar: aks holda bir shaklning to'q
-          qalinligi qo'shni shaklning yuzasi ustiga chiqib qolardi. */}
-      {[...kvadratlar.map((kv) => kv.t), [A, B, C]].map((t, i) => (
-        <polygon key={i} points={nuqta(t.map(([x, y]) => [x!, y! + 8]))} fill="#075961" />
-      ))}
-      {kvadratlar.map((kv) => {
-        const [p0, p1, , p3] = kv.t as number[][];
-        const markaz = [(kv.t[0]![0]! + kv.t[2]![0]!) / 2, (kv.t[0]![1]! + kv.t[2]![1]!) / 2];
-        return (
-          <g key={kv.nom}>
-            <polygon points={nuqta(kv.t)} fill={`url(#${kv.g})`} />
-            {/* Kataklar — kvadratning tomonlariga parallel chiziqlar. */}
-            {Array.from({ length: kv.k - 1 }, (_, i) => {
-              const s = (i + 1) / kv.k;
-              const u0 = ora(p0!, p1!, s), u1 = ora(p3!, kv.t[2]!, s);
-              const v0 = ora(p0!, p3!, s), v1 = ora(p1!, kv.t[2]!, s);
-              return (
-                <g key={i} stroke="#ffffff" strokeOpacity="0.32" strokeWidth="1.4">
-                  <line x1={u0[0]} y1={u0[1]} x2={u1[0]} y2={u1[1]} />
-                  <line x1={v0[0]} y1={v0[1]} x2={v1[0]} y2={v1[1]} />
-                </g>
-              );
-            })}
-            {/* Yuqori chetdagi yaltiroq. */}
-            <polyline points={nuqta([ora(p3!, p0!, 0.92), p0!, ora(p0!, p1!, 0.6)])} fill="none"
-              stroke="#ffffff" strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-            <text x={markaz[0]} y={markaz[1]! + 9} textAnchor="middle" fontSize={kv.k * 5.4 + 8}
-              fontWeight="800" fill="#ffffff" style={{ fontFamily: "var(--font-display)" }}
-              paintOrder="stroke" stroke="#075961" strokeOpacity="0.35" strokeWidth="3">{kv.nom}</text>
-          </g>
-        );
-      })}
-      {/* Uchburchak — eng och firuza (karta rangida bo'lsa qorong'i temada
-          fonga singib ketardi), to'g'ri burchak belgisi bilan. */}
-      <polygon points={nuqta([A, B, C])} fill={`url(#${id}u)`} />
-      <path d={`M${C[0]} ${C[1]! - 14}h14v14`} fill="none" stroke="#0e8f9b" strokeWidth="2.6" />
-    </svg>
   );
 }
 
