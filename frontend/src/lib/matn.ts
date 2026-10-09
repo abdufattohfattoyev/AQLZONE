@@ -2655,6 +2655,9 @@ const S = {
   /* ---------------- kunlik son (Wordle uslubi) ---------------- */
   kunlikSon: ["Kunlik son", "Число дня"],
   kunlikSonIzoh: ["Yashirin tenglikni 6 urinishda toping", "Найдите скрытое равенство за 6 попыток"],
+  bugunYana: ["Yoki shundan boshlang", "Или начните с этого"],
+  bugunOyinIzoh: ["Hisob, mantiq va xotira o'yinlari", "Игры на счёт, логику и память"],
+  bugunMasalaIzoh: ["Olimpiada va qiziq masalalar", "Олимпиадные и занимательные задачи"],
   kunlikSonYechildi: ["Bugun yechildi ✓", "Сегодня решено ✓"],
   kunlikSonRaqam: ["#{n} · {daraja}", "#{n} · {daraja}"],
   ksTekshir: ["Tekshirish", "Проверить"],

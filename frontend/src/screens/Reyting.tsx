@@ -76,7 +76,7 @@ export function Reyting({ onBack, onDuel }: { onBack: () => void; onDuel: () => 
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]
-                    sm:max-w-[560px] kom:max-w-[760px] kom:px-8 kom:pt-8">
+                    sm:max-w-[560px] kom:max-w-[1040px] kom:px-8 kom:pt-8">
       <header className="flex min-h-12 items-center gap-3">
         {ozStrelka && (
           <button type="button" onClick={onBack} aria-label={t("ortga")}
@@ -142,10 +142,21 @@ export function Reyting({ onBack, onDuel }: { onBack: () => void; onDuel: () => 
             </div>
           )}
 
-          {!yuklanyapti && !dostsiz && top3.length > 0 && <Podium top={top3} />}
+          {/* Kompyuterda ikki ustun: chapda shohsupa (yopishqoq — ro'yxat uzun
+              bo'lsa ham ko'rinib turadi), o'ngda qolganlar. Ilgari hammasi
+              760px li bitta ustunda, ekranning ikki chetida bo'sh joy edi. */}
+          <div className="contents kom:grid kom:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] kom:items-start
+                          kom:gap-x-6 kom:gap-y-3.5 kom:pt-2">
+          {!yuklanyapti && !dostsiz && top3.length > 0 && (
+            <div className="kom:sticky kom:top-6 kom:rounded-clay kom:bg-karta kom:px-5 kom:pt-6 kom:pb-0
+                            kom:shadow-clay-sm">
+              <Podium top={top3} />
+            </div>
+          )}
 
           {!yuklanyapti && ma && !dostsiz && (qolgan.length > 0 || (ma.men && !menRoyxatda)) && (
-            <ol className="flex flex-col divide-y divide-track overflow-hidden rounded-[20px] bg-karta shadow-clay-sm">
+            <ol className="flex flex-col divide-y divide-track overflow-hidden rounded-[20px] bg-karta shadow-clay-sm
+                           kom:col-start-2">
               {qolgan.map((q) => <Qator key={`${q.orin}-${q.toliqIsm}`} q={q} />)}
               {/* Top ichida bo'lmasam — oxirida alohida. Bo'lsam
                   takrorlanmaydi: bir odam jadvalda ikki marta turgani chalkashtiradi. */}
@@ -154,10 +165,11 @@ export function Reyting({ onBack, onDuel }: { onBack: () => void; onDuel: () => 
           )}
 
           {!yuklanyapti && ma && !dostsiz && !ma.men && !menRoyxatda && ma.top.length > 0 && (
-            <p className="text-center text-[13px] leading-snug text-ink-dim">
+            <p className="text-center text-[13px] leading-snug text-ink-dim kom:col-start-2">
               {davr === "hafta" ? t("haftaYulduzsiz") : t("yulduzsiz")}
             </p>
           )}
+          </div>
         </>
       )}
     </div>

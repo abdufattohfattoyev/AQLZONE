@@ -145,6 +145,10 @@ export function Men({ onYol }: Props) {
         )}
       </Guruh>
 
+      {/* Kompyuterda o'ng ustun: ota-ona va sozlamalar BIRGA. Ilgari ular
+          to'rning alohida kataklarida edi — sozlamalar chap ustunga tushib,
+          o'ng ustun yarmida tugardi. Telefonda `contents` — tartib o'sha. */}
+      <div className="contents kom:flex kom:flex-col kom:gap-3.5">
       {!oziUchun && (
         <Guruh nom={t("menOtaOnaUchun")}>
           <Qator ic="vazifa" nom={t("otaOnaPaneli")} qiymat={t("menHisobot")}
@@ -173,6 +177,7 @@ export function Men({ onYol }: Props) {
             on={() => onYol(yolAnketa())} />
         )}
       </Guruh>
+      </div>
 
       {varaq === "til" && (
         <TanlovVaraq sarlavha={t("tilSarlavha")} onYop={() => setVaraq(null)}>

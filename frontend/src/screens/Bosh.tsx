@@ -69,7 +69,7 @@ import {
 import { darajaKerakmi } from "../lib/daraja";
 import { tovush } from "../lib/ovoz";
 import { kunlikSonBugun } from "./KunlikSon";
-import { yolDuel, yolImtihon, yolSertifikat } from "../lib/yollar";
+import { yolDuel, yolImtihon, yolOyinlar, yolSertifikat } from "../lib/yollar";
 import { bolimlar as bolimRoyxati } from "../lib/moslash";
 
 interface Props {
@@ -400,7 +400,42 @@ export function Bosh({
       </div>
       {ogoh}
       {!yangi && <div className="md:max-w-[560px]">{haftaBlok}</div>}
+      {/* Kompyuterda yangi odamga — katta karta ostida yana uch yo'l. Telefonda
+          YO'Q: u yerda "kirishda juda ko'p narsa" degan e'tiroz bor edi va
+          bo'limlar pastki panelda turibdi. Keng ekranda esa bitta karta
+          ostida yarim ekran bo'sh qolardi (2026-10-09). */}
+      {yangi && kompyuter && (
+        <section aria-label={t("bugunYana")} className="flex flex-col gap-3">
+          <h2 className="font-display text-[18px] text-ink-soft">{t("bugunYana")}</h2>
+          <div className="grid grid-cols-3 gap-4">
+            <YolPlitka belgi="zar" nom={t("tabOyin")} izoh={t("bugunOyinIzoh")}
+              on={() => onYol(yolOyinlar())} tahlil="Bugun: yangi — o'yinlar" />
+            <YolPlitka belgi="pencil" nom={t("masalalar")} izoh={t("bugunMasalaIzoh")}
+              on={onMasalalar} tahlil="Bugun: yangi — masalalar" />
+            <YolPlitka belgi="raqamlar" nom={t("kunlikSon")} izoh={t("kunlikSonIzoh")}
+              on={onKunlikSon} tahlil="Bugun: yangi — kunlik son" />
+          </div>
+        </section>
+      )}
     </div>
+  );
+}
+
+/** Kompyuterdagi qo'shimcha yo'l — 3D firuza belgi, nom va bir qator izoh. */
+function YolPlitka({ belgi, nom, izoh, on, tahlil }: {
+  belgi: string; nom: string; izoh: string; on: () => void; tahlil: string;
+}) {
+  return (
+    <button type="button" onClick={on} data-tahlil={tahlil}
+      className="clay-press flex items-center gap-4 rounded-clay bg-karta p-5 text-left shadow-clay-sm">
+      <img src={`/belgi/h/${belgi}.webp`} alt="" width={56} height={56} decoding="async"
+        className="size-14 shrink-0 drop-shadow-[0_6px_8px_rgb(0_0_0/0.25)]" />
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[18px] leading-tight">{nom}</span>
+        <span className="mt-1 block text-[13.5px] leading-snug text-ink-dim">{izoh}</span>
+      </span>
+      <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
+    </button>
   );
 }
 

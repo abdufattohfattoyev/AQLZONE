@@ -123,15 +123,22 @@ export function Oyinlar({
         ))}
       </div>
 
-      <h2 className="mt-2 font-display text-[20px]">{t("oyinBoshqa")}</h2>
+      {/* Kompyuterda "Boshqa" va "Do'stlar bilan" yonma-yon: to'liq kenglikdagi
+          ro'yxat qatori 1000px ga cho'zilib, yozuv chapda, strelka o'ngda
+          bir-biridan uzoqlashib ketardi. Telefonda `contents` — o'zgarishsiz. */}
+      <div className="contents kom:mt-2 kom:grid kom:grid-cols-2 kom:items-start kom:gap-x-5">
+      <div className="contents kom:flex kom:flex-col kom:gap-3">
+      <h2 className="mt-2 font-display text-[20px] kom:mt-0">{t("oyinBoshqa")}</h2>
       <Royxat>
         <Qator belgi="🎯" nom={t("sonOvi")} tahlil="O'yin: son ovi" on={onSonOvi}
           izoh={sonOviBugun() > 0 ? t("sonOviBugun", { n: sonOviBugun() }) : t("sonOviIzoh")} />
         <Qator belgi="🐫" nom={t("karvonTitul")} izoh={t("karvonIzoh")} tahlil="O'yin: karvon yo'li" on={onKarvon} />
         <Qator belgi="🦊" nom={t("shTitul")} izoh={t("shIzoh")} tahlil="O'yin: shaharcha" on={onShaharcha} />
       </Royxat>
+      </div>
 
-      <h2 className="mt-2 font-display text-[20px]">{t("oyinDostlar")}</h2>
+      <div className="contents kom:flex kom:flex-col kom:gap-3">
+      <h2 className="mt-2 font-display text-[20px] kom:mt-0">{t("oyinDostlar")}</h2>
       <Royxat>
         {(Object.keys(XONA_OYINLAR) as XonaOyin[]).map((k) => {
           const m = XONA_OYINLAR[k];
@@ -142,6 +149,8 @@ export function Oyinlar({
         })}
         <Qator belgi="🏆" nom={t("tjJadval")} izoh={t("tjJadvalIzoh")} tahlil="O'yin: haftalik jadval" on={onJadval} />
       </Royxat>
+      </div>
+      </div>
     </div>
   );
 }
