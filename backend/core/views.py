@@ -85,6 +85,8 @@ def _user_json(pupil: Pupil) -> dict:
         "qurilma": Identity.QURILMA in usullar,
         # Ota-ona panelidagi "Haftalik hisobot Telegram'ga" o'chirgichi.
         "haftalikHisobot": pupil.haftalik_hisobot,
+        # Botdagi kun savoli yoqilganmi ("🔕 Eslatmasin" bosilmagan).
+        "kunSavoli": pupil.kun_savoli_yopiq_at is None,
         # Ism ham, familiya ham to'ldirilganmi. Mijoz shu bayroqqa qarab
         # ro'yxat oynasini ko'rsatadi yoki ko'rsatmaydi.
         "royxatdan": pupil.royxatdan_otgan,
@@ -1610,6 +1612,44 @@ def haftalik_hisobot(request):
     pupil.haftalik_hisobot = yoq
     pupil.save(update_fields=["haftalik_hisobot"])
     return Response({"yoqilgan": pupil.haftalik_hisobot})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def kun_savoli_sozlama(request):
+    """
+    Sozlamalardagi "Kun savoli botda" o'chirgichi (`{"yoqilgan": true}`).
+
+    Botdagi "🔕 Eslatmasin" ni qaytarish yo'li shu. Telegram'i yo'q
+    hisobda yoqib bo'lmaydi (409) — savol baribir yetib bormasdi.
+    """
+    yoq = bool(request.data.get("yoqilgan"))
+    pupil = request.user
+    if yoq and not pupil.identities.filter(provider=Identity.TELEGRAM).exists():
+        return Response({"detail": "telegram", "sabab": "telegram"}, status=409)
+    pupil.kun_savoli_yopiq_at = None if yoq else (pupil.kun_savoli_yopiq_at or timezone.now())
+    pupil.save(update_fields=["kun_savoli_yopiq_at"])
+    return Response({"yoqilgan": pupil.kun_savoli_yopiq_at is None})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def xato_xabar(request):
+    """
+    Savol ostidagi "Xato haqida xabar berish" (`components/XatoXabar.tsx`).
+
+    Tana: `{sabab, izoh, joy, kalit, savol}` — `savol` savolning o'sha
+    paytdagi surati (`core/xato_xabar.py`). 429 — kunlik chegara.
+    """
+    from . import xato_xabar as XX
+
+    d = request.data if hasattr(request.data, "get") else {}
+    natija, x = XX.saqla(request.user, d, manba="ilova")
+    if natija == "chegara":
+        return Response({"detail": "chegara"}, status=429)
+    if natija == "bosh":
+        return Response({"detail": "bosh"}, status=400)
+    return Response({"ok": True, "id": x.pk if x else None, "takror": natija == "takror"})
 
 
 @api_view(["POST"])

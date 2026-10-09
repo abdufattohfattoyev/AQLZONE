@@ -714,6 +714,8 @@ export interface Hisob {
   qurilma: boolean;
   /** Ota-ona panelidagi "Haftalik hisobot Telegram'ga". Eski serverda yo'q. */
   haftalikHisobot?: boolean;
+  /** Botdagi kun savoli yoqilganmi ("🔕 Eslatmasin" bosilmagan). Eski serverda yo'q. */
+  kunSavoli?: boolean;
   /** Ism ham, familiya ham to'ldirilganmi. Ro'yxat oynasi shunga qaraydi. */
   royxatdan: boolean;
   /** Shu hisobdagi bolalar. Sozlamalarda ro'yxat qilib ko'rsatiladi. */
@@ -1537,6 +1539,50 @@ export async function haftalikHisobot(yoqilgan: boolean): Promise<boolean | "tel
     if (!r.ok) return null;
     return ((await r.json()) as { yoqilgan: boolean }).yoqilgan;
   } catch { return null; }
+}
+
+/**
+ * Botdagi kun savolini yoqish/o'chirish (`backend/core/kun_savoli.py`).
+ * Javob — serverdagi yangi holat; `"telegram"` — Telegram bog'lanmagan.
+ */
+export async function kunSavoliSozla(yoqilgan: boolean): Promise<boolean | "telegram" | null> {
+  if (!(await signIn())) return null;
+  try {
+    const r = await fetch("/api/v1/kun-savoli", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ yoqilgan }),
+    });
+    if (r.status === 409) return "telegram";
+    if (!r.ok) return null;
+    return ((await r.json()) as { yoqilgan: boolean }).yoqilgan;
+  } catch { return null; }
+}
+
+/** Savoldagi xato haqida xabar — `components/XatoXabar.tsx`. */
+export interface XatoXabarTana {
+  sabab: "javob" | "variant" | "savol" | "korinish" | "boshqa";
+  izoh: string;
+  /** Odam o'qiydigan joy: "5-sinf · Kasrlar · Qo'shish". */
+  joy: string;
+  /** Bir xil savolga kelgan xabarlarni guruhlash uchun. */
+  kalit: string;
+  /** Savolning o'sha paytdagi surati. */
+  savol: Record<string, unknown>;
+}
+
+/** `"ok"` | `"chegara"` (kunlik chegara) | `"xato"` (aloqa yo'q). */
+export async function xatoXabarYubor(tana: XatoXabarTana): Promise<"ok" | "chegara" | "xato"> {
+  if (!(await signIn())) return "xato";
+  try {
+    const r = await fetch("/api/v1/xato-xabar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(tana),
+    });
+    if (r.status === 429) return "chegara";
+    return r.ok ? "ok" : "xato";
+  } catch { return "xato"; }
 }
 
 /** "Meni jonli bellashuvga chaqirmasin". */

@@ -1042,6 +1042,12 @@ def misol_rasmi(misol: tuple, rukn: str = "KUN MISOLI", pastki: str = "",
               and len(re.findall(r"[A-Za-z']{4,}", ifoda)) >= 2)
     if hikoya:
         shart, ifoda = "", f"{shart}. {ifoda[0].upper()}{ifoda[1:]}"
+    elif variantlar and "\n" in ifoda:
+        # Ko'p qatorli formula (matritsa, limit) variantli kartada ham —
+        # shart tepada kichik, formula qatorma-qator: aks holda "|4 9|"
+        # shart bilan bir qatorga qo'shilib, matritsa buzilib chiqardi
+        # (botdagi kun savoli, `core/kun_savoli.py`).
+        qatiy = True
     elif not ifoda or variantlar:
         shart, ifoda = "", savol
     # Qisqa ifoda — bu FORMULA, uni so'zlar bo'yicha o'rash mumkin emas:

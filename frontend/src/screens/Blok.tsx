@@ -47,6 +47,7 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
 import { EmojiMatn } from "../lib/hajmli";
 import { QuestionView, sahnaBor, shartSahnada } from "../components/QuestionView";
+import { XatoXabar } from "../components/XatoXabar";
 import { Chiqish } from "../components/Chiqish";
 import { Yechim } from "../components/Yechim";
 import { Konfetti } from "../components/Konfetti";
@@ -716,6 +717,11 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
       <div className="mt-3 h-5 text-center text-[12px] text-ink-dim">
         {tanlangan !== null && <EmojiMatn>{togriJavob ? t("togriJavob") : t("blokXato")}</EmojiMatn>}
       </div>
+
+      {/* Joy "Imtihon/blok" deb yoziladi — mavzu nomi ekranda ataylab yo'q,
+          lekin admin xabarida u kerak (`components/XatoXabar.tsx`). */}
+      <XatoXabar a={S.a} tanlangan={tanlangan} className="mx-auto"
+        joy={`${t("xxBlok")} · ${S.kurs} · ${S.mavzu}`} kalit={`blok:${S.kursId}:${S.ui}:${S.li}`} />
 
       {oyna}
     </div>

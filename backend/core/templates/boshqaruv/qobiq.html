@@ -36,6 +36,8 @@ Sahifa to'ldiradigan joylar:
   <symbol id="i-menyu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
   <symbol id="i-yop" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
   <symbol id="i-premium" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+  <symbol id="i-ogoh" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-savol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
   <symbol id="i-oy" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
 </svg>
 
@@ -61,6 +63,11 @@ Sahifa to'ldiradigan joylar:
         <svg class="i"><use href="#i-tasdiq"/></svg> Tasdiqlash
         {% if navbat_soni %}<span class="sanoq">{{ navbat_soni }}</span>{% endif %}
       </a>
+      {% comment %} Ko'rilmagan xato xabarlari — ular ham "hozir qilinadigan ish". {% endcomment %}
+      <a class="yon-havola {% if joriy_bolim == 'xatolar' %}faol{% endif %}" href="/boshqaruv/xatolar">
+        <svg class="i"><use href="#i-ogoh"/></svg> Xato xabarlari
+        {% if xato_soni %}<span class="sanoq">{{ xato_soni }}</span>{% endif %}
+      </a>
     </div>
 
     <div class="yon-guruh">
@@ -76,6 +83,9 @@ Sahifa to'ldiradigan joylar:
       </a>
       <a class="yon-havola {% if joriy_bolim == 'premium' %}faol{% endif %}" href="/boshqaruv/premium">
         <svg class="i"><use href="#i-premium"/></svg> Premium
+      </a>
+      <a class="yon-havola {% if joriy_bolim == 'kun_savoli' %}faol{% endif %}" href="/boshqaruv/kun-savoli">
+        <svg class="i"><use href="#i-savol"/></svg> Kun savoli
       </a>
     </div>
 

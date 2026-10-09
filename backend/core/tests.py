@@ -10592,3 +10592,210 @@ class AiUstozTest(TestCase):
         with patch("core.ai._chaqir", return_value=("x < 3 va y > 2", 1, 1)):
             self.bot_xabar("5151", text="Tengsizlik")
         self.assertEqual(self.xabarlar[-1][1], "x &lt; 3 va y &gt; 2")
+
+
+# ───────────────────── xato xabari va botdagi kun savoli ─────────────────────
+
+
+class KunSavoliVariantTest(TestCase):
+    """Kun savoli: har darajada, har kunda — to'rtta har xil variant, to'g'risi orasida."""
+
+    def test_hamma_daraja_va_kunlarda_togri(self):
+        import random
+        from datetime import date
+
+        from . import kun_savoli as KSV
+        from . import matematika_kanal as MKN
+
+        joylar = [0, 0, 0, 0]
+        for d in range(200):
+            kun = date(2026, 10, 1) + timedelta(days=d)
+            for daraja in KSV.TARTIB:
+                savol, vs, i, _ = KSV.savol_tanla(daraja, kun)
+                self.assertEqual(len(vs), 4, (daraja, savol, vs))
+                self.assertEqual(len(set(vs)), 4, (daraja, savol, vs))
+                joylar[i] += 1
+                if daraja in MKN.SINF_MISOLLARI:
+                    # Variant yasash generatorning o'z javobini buzmasin.
+                    r = random.Random(kun.toordinal() * 31 + KSV.TARTIB.index(daraja))
+                    javoblar = {j for _, j, _ in MKN.SINF_MISOLLARI[daraja](r)}
+                    self.assertIn(vs[i], javoblar, (daraja, savol, vs, i))
+        # To'g'ri javob doim bir joyda turmasin (taxmin bilan topilmasin).
+        self.assertTrue(all(j > 300 for j in joylar), joylar)
+
+    def test_variant_turlari(self):
+        import random
+
+        from . import kun_savoli as KSV
+
+        r = random.Random(1)
+        for javob in ("17", "1 210 000", "−35", "3/4", "5,95", "10:35", "0"):
+            vs, i = KSV.variantlar_yasa(javob, r)
+            self.assertEqual(vs[i], javob)
+            self.assertEqual(len(set(vs)), 4, vs)
+        self.assertIsNone(KSV.variantlar_yasa("x + 1", r))
+
+    def test_daraja_anketadan(self):
+        from . import kun_savoli as KSV
+
+        self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=7)), "7-sinf")
+        self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=102)), "2-kurs")
+        self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=-1)), KSV.KATTALAR)
+        self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=-1, kim="abiturient")), "11-sinf")
+        self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=131)), "7-sinf")
+
+
+@override_settings(BOT_TOKEN="test", ADMIN_TG=[ADMIN_ID], BOSHQARUV_YONIQ=True)
+class KunSavoliBotTest(TestCase):
+    """Yuborish, javob tugmasi, xato xabari, eslatmasin, hisobot."""
+
+    def setUp(self):
+        cache.clear()
+        self.p = Pupil.objects.create(first_name="Ali", registered_at=timezone.now(), anketa_sinf=5)
+        Identity.objects.create(pupil=self.p, provider=Identity.TELEGRAM, external_id="42")
+        self.chaqiruvlar = []
+
+        def tg(usul, payload, rasm_baytlari=None):
+            self.chaqiruvlar.append((usul, payload))
+            if usul == "sendPhoto":
+                return True, 200, "", {"message_id": 7, "photo": [{"file_id": "F1"}]}
+            return True, 200, "", {}
+
+        for nom, qiymat in (("core.kun_savoli._tg", {"side_effect": tg}),
+                            ("core.kun_savoli.rasm", {"return_value": b"jpg"}),
+                            ("core.kun_savoli.time.sleep", {})):
+            p = patch(nom, **qiymat)
+            p.start()
+            self.addCleanup(p.stop)
+
+    def yubor(self):
+        from . import kun_savoli as KSV
+        return KSV.yubor_hammaga()
+
+    def bos(self, data, tg_id="42"):
+        from . import kun_savoli as KSV
+        q = {"id": "q", "data": data, "from": {"id": int(tg_id)},
+             "message": {"message_id": 7, "chat": {"id": int(tg_id)},
+                         "reply_markup": {"inline_keyboard": [[{"text": "x", "callback_data": "ks_yop"}]]}}}
+        return KSV.tugma(q, tg_id, "uz", data)
+
+    def test_yuborish_bir_marta_va_oz_darajasida(self):
+        s = self.yubor()
+        self.assertEqual(s["yuborildi"], 1)
+        j = MDL.KunSavoliJavob.objects.get()
+        self.assertEqual(j.savol.daraja, "5-sinf")
+        self.assertEqual(j.xabar_id, 7)
+        self.assertEqual(j.savol.file_id, "F1")
+        tugmalar = self.chaqiruvlar[0][1]["reply_markup"]["inline_keyboard"]
+        self.assertEqual([t["text"] for t in tugmalar[0]], ["A", "B", "C", "D"])
+        self.assertTrue(tugmalar[1][0]["callback_data"].startswith("ksx:"))
+        self.assertEqual(tugmalar[2][0]["callback_data"], "ks_yop")
+        # Qayta yurish — ikkinchi xabar ketmaydi.
+        self.assertEqual(self.yubor()["otkazildi"], 1)
+        self.assertEqual(MDL.KunSavoliJavob.objects.count(), 1)
+
+    def test_javob_faqat_birinchisi(self):
+        self.yubor()
+        j = MDL.KunSavoliJavob.objects.get()
+        xato_i = (j.savol.togri + 1) % 4
+        self.bos(f"ks:{j.pk}:{xato_i}")
+        self.bos(f"ks:{j.pk}:{j.savol.togri}")                  # ikkinchi bosish sanalmaydi
+        j.refresh_from_db()
+        self.assertEqual(j.javob, xato_i)
+        self.assertFalse(j.togri)
+        tahrir = [p for u, p in self.chaqiruvlar if u == "editMessageCaption"]
+        self.assertEqual(len(tahrir), 1)
+        self.assertIn("noto'g'ri", tahrir[0]["caption"])
+
+    def test_begona_tugmani_bosa_olmaydi(self):
+        self.yubor()
+        j = MDL.KunSavoliJavob.objects.get()
+        self.bos(f"ks:{j.pk}:0", tg_id="99")
+        j.refresh_from_db()
+        self.assertIsNone(j.javob)
+
+    def test_eslatmasin(self):
+        self.bos("ks_yop")
+        self.p.refresh_from_db()
+        self.assertIsNotNone(self.p.kun_savoli_yopiq_at)
+        self.assertEqual(self.yubor()["yuborildi"], 0)
+
+    def test_xato_xabari_botdan_va_izoh(self):
+        from . import kun_savoli as KSV
+        self.yubor()
+        j = MDL.KunSavoliJavob.objects.get()
+        self.bos(f"ksx:{j.pk}")
+        self.bos(f"ksxs:{j.pk}:javob")
+        x = MDL.XatoXabar.objects.get()
+        self.assertEqual((x.manba, x.sabab, x.kalit), ("bot", "javob", f"kun:{j.savol_id}"))
+        self.assertEqual(x.savol["matn"], j.savol.savol)
+        self.assertEqual(KSV.izoh_qabul(42, "42", "uz", "Javob 12 bo'lishi kerak"), f"42: xato #{x.pk} ga izoh")
+        x.refresh_from_db()
+        self.assertEqual(x.izoh, "Javob 12 bo'lishi kerak")
+        self.assertIsNone(KSV.izoh_qabul(42, "42", "uz", "yana matn"))   # bir marta
+
+    def test_hisobot(self):
+        from . import kun_savoli as KSV
+        self.yubor()
+        j = MDL.KunSavoliJavob.objects.get()
+        self.bos(f"ks:{j.pk}:{j.savol.togri}")
+        matn = KSV.hisobot_matni()
+        self.assertIn("Yuborildi: <b>1</b>", matn)
+        self.assertIn("Bosdi: <b>1</b> (100%)", matn)
+        self.assertIn("5-sinf", matn)
+
+    def test_panel_sahifalari(self):
+        from .boshqaruv import havola_yasa
+        self.yubor()
+        kod = havola_yasa(ADMIN_ID).rsplit("/", 1)[-1]
+        self.client.get(f"/boshqaruv/havola/{kod}")
+        self.assertContains(self.client.get("/boshqaruv/kun-savoli"), "5-sinf")
+        self.assertEqual(self.client.get("/boshqaruv/xatolar").status_code, 200)
+
+
+@override_settings(ADMIN_TG=[ADMIN_ID], BOSHQARUV_YONIQ=True)
+class XatoXabarTest(TestCase):
+    def setUp(self):
+        r = self.client.post("/api/v1/auth/device", {"deviceId": "dev-xato-0123456789ab", "platform": "web"},
+                             content_type="application/json")
+        self.h = {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def yubor(self, **o):
+        tana = {"sabab": "javob", "joy": "5-sinf · Kasrlar", "kalit": "dars:5:1:2:eqn",
+                "savol": {"prompt": "1/2 + 1/2 = ?", "choices": ["1", "2"], "answer": "2", "rasm": "<svg/>"}}
+        tana.update(o)
+        return self.client.post("/api/v1/xato-xabar", tana, content_type="application/json", **self.h)
+
+    def test_saqlanadi_va_takror_yozilmaydi(self):
+        self.assertEqual(self.yubor().status_code, 200)
+        self.assertTrue(self.yubor().json()["takror"])
+        x = MDL.XatoXabar.objects.get()
+        self.assertNotIn("rasm", x.savol)                      # chizma saqlanmaydi
+        self.assertEqual(x.manba, "ilova")
+
+    def test_kunlik_chegara(self):
+        from . import xato_xabar as XX
+        for n in range(XX.KUNLIK_CHEGARA):
+            self.assertEqual(self.yubor(kalit=f"k{n}").status_code, 200)
+        self.assertEqual(self.yubor(kalit="oxirgi").status_code, 429)
+
+    def test_bosh_rad(self):
+        self.assertEqual(self.yubor(savol={}, izoh="").status_code, 400)
+
+    def test_tuzatilganda_sheriklari_ham_yopiladi(self):
+        from . import xato_xabar as XX
+        self.yubor()
+        boshqa = Pupil.objects.create(first_name="Vali")
+        XX.saqla(boshqa, {"sabab": "javob", "kalit": "dars:5:1:2:eqn", "savol": {"prompt": "x"}})
+        x = MDL.XatoXabar.objects.order_by("pk").first()
+        with patch("core.xato_xabar.rahmat_yubor") as rahmat:
+            self.assertEqual(XX.hal_qil(x.pk, "tuzatildi")[0], "hal_qilindi")
+        self.assertEqual(rahmat.call_count, 2)
+        self.assertFalse(MDL.XatoXabar.objects.filter(holat="yangi").exists())
+        self.assertEqual(XX.hal_qil(x.pk, "rad")[0], "eskirgan")
+
+    def test_kun_savoli_sozlamasi(self):
+        r = self.client.post("/api/v1/kun-savoli", {"yoqilgan": True}, content_type="application/json", **self.h)
+        self.assertEqual(r.status_code, 409)                   # Telegram'siz yoqib bo'lmaydi
+        r = self.client.post("/api/v1/kun-savoli", {"yoqilgan": False}, content_type="application/json", **self.h)
+        self.assertEqual(r.json(), {"yoqilgan": False})

@@ -196,6 +196,22 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=11, minute=0),
         "args": ("premium_eslatma",),
     },
+    # ── Botdagi shaxsiy kun savoli (`core/kun_savoli.py`) ──
+    # 16:30 — maktabdan keyin, 17:30 dagi kunlik son va 18:00 dagi
+    # eslatmadan oldin: savol kun yorug'ida yechiladi, kechki xabarlar
+    # bilan ustma-ust tushmaydi. Har kimga o'z darajasidagisi.
+    "kun-savoli": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=16, minute=30),
+        "args": ("kun_savoli", "yubor"),
+    },
+    # 22:00 — adminlarga: nechta odamga ketdi, nechtasi bosdi, to'g'ri
+    # topdi, eslatmasin, xato xabarlari. Javoblarning ko'pi shu paytgacha.
+    "kun-savoli-hisobot": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=22, minute=0),
+        "args": ("kun_savoli", "hisobot"),
+    },
     # Kanaldagi postlar joyidami — kuniga bir marta yetarli.
     "kanal-tekshiruvi": {
         "task": "core.vazifalar.buyruq",

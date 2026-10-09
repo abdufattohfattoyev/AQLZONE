@@ -641,6 +641,15 @@ def tugma_javobi(q: dict) -> str:
     if data.startswith(("premium_ok:", "premium_rad:")):
         return premium_qaror_tugmasi(q, tg_id, data)
 
+    # Botdagi kun savoli: javob, xato xabari, "eslatmasin" (`core/kun_savoli.py`).
+    if data.startswith(("ks:", "ksx:", "ksxs:")) or data in ("ks_yop", "ks_hal"):
+        from core import kun_savoli as KSV
+        return KSV.tugma(q, tg_id, til, data)
+
+    # Xato xabari bo'yicha admin qarori: "✅ Tuzatildi" / "❌ Xato emas".
+    if data.startswith(("xx_ok:", "xx_rad:")) or data == "xx_hal":
+        return xato_qaror_tugmasi(q, tg_id, data)
+
     api("answerCallbackQuery", callback_query_id=q.get("id"))
     return f"{tg_id}: noma'lum tugma ({data[:32]})"
 
@@ -669,6 +678,37 @@ def quiz_namuna_tugmasi(q: dict, tg_id: str, data: str) -> str:
             reply_markup={"inline_keyboard": [[{"text": QUIZ_QAROR_MATNI[natija],
                                                 "callback_data": "quiz_hal"}]]})
     return f"{tg_id}: quiz namuna — {natija}"
+
+
+def xato_qaror_tugmasi(q: dict, tg_id: str, data: str) -> str:
+    """
+    Xato xabari ostidagi admin tugmasi (`core/xato_xabar.py`). Panel
+    bilan bir xil `hal_qil` — ikkinchi bosish holatni o'zgartirmaydi.
+    """
+    from core import xato_xabar as XX
+    from core.models import XatoXabar
+
+    if data == "xx_hal":
+        api("answerCallbackQuery", callback_query_id=q.get("id"), text="Allaqachon hal qilingan")
+        return f"{tg_id}: xato xabari — hal qilingan"
+    if not boshqaruv.admin_tg_mi(tg_id):
+        api("answerCallbackQuery", callback_query_id=q.get("id"), text="Faqat admin uchun", show_alert=True)
+        return f"{tg_id}: xato qarori — admin emas"
+    tur, _, xom = data.partition(":")
+    if not xom.isdigit():
+        api("answerCallbackQuery", callback_query_id=q.get("id"))
+        return f"{tg_id}: xato qarori — buzuq"
+    holat = XatoXabar.TUZATILDI if tur == "xx_ok" else XatoXabar.RAD
+    natija, x = XX.hal_qil(int(xom), holat)
+    yozuv = {"hal_qilindi": "✅ Tuzatildi — odamga rahmat ketdi" if holat == XatoXabar.TUZATILDI
+             else "❌ Xato emas deb belgilandi",
+             "eskirgan": "Allaqachon hal qilingan", "yoq": "Topilmadi"}[natija]
+    api("answerCallbackQuery", callback_query_id=q.get("id"), text=yozuv, show_alert=natija != "hal_qilindi")
+    xabar = q.get("message") or {}
+    if xabar.get("message_id") and x is not None:
+        api("editMessageReplyMarkup", chat_id=xabar["chat"]["id"], message_id=xabar["message_id"],
+            reply_markup={"inline_keyboard": XX.admin_tugmalari(x)})
+    return f"{tg_id}: xato #{xom} — {natija}"
 
 
 # ------------------------------------------------ imtihon premium
@@ -1341,6 +1381,12 @@ def yangilikni_qayta_ishla(u: dict) -> str:
             yordam += M("yordamAdmin", til)
         api("sendMessage", chat_id=chat_id, text=yordam)
         return f"{tg_id}: /help"
+
+    # Kun savolidagi "nima xato ekanini yozing" dan keyingi matn — izoh.
+    from core import kun_savoli as KSV
+    izoh_javob = KSV.izoh_qabul(chat_id, tg_id, til, matn)
+    if izoh_javob:
+        return izoh_javob
 
     # AI rejimida oddiy matn — savol. Buyruqlar va klaviatura tugmalari
     # yuqorida ushlanadi, ya'ni bu yerga faqat odamning o'z gapi keladi.

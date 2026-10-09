@@ -3,6 +3,7 @@ import { Icon } from "../lib/icons";
 import { EmojiMatn } from "../lib/hajmli";
 import { useFaollik } from "../lib/faollik";
 import { QuestionView, sahnaBor, shartSahnada } from "../components/QuestionView";
+import { XatoXabar } from "../components/XatoXabar";
 import { Ogit } from "../components/Ogit";
 import { DarsKirish, kirishBormi } from "../components/DarsKirish";
 import { Rasm } from "../components/Rasm";
@@ -523,6 +524,11 @@ export function Lesson({ unit, lesson, onExit, onFinish, joy, kursId, takrorlash
       </div>
 
       <div className="mt-1 text-center text-[12px] text-ink-dim">{kursMatn(unit.u)}</div>
+
+      {/* Savolda xato bo'lsa — shu yerdan adminga (`components/XatoXabar.tsx`). */}
+      <XatoXabar a={A} tanlangan={tanlangan} className="mx-auto"
+        joy={`${(A.joy ?? joy)?.kurs ? `${(A.joy ?? joy)?.kurs} · ` : ""}${kursMatn(unit.u)} · ${kursMatn(lesson.n).split(" · ")[0]}`}
+        kalit={(() => { const m = A.joy ?? joy; return m ? `dars:${m.kurs}:${m.ui}:${m.li}` : `dars:${lesson.n}`; })()} />
 
       {/* Ustoz rejimida yechimsiz savolda ham (quyi sinflar) varaq
           ochiladi — unda faqat to'g'ri javob turadi. */}

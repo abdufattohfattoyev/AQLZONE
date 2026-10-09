@@ -1,0 +1,85 @@
+{% extends "boshqaruv/qobiq.html" %}
+{% block sarlavha %}Xato xabarlari{% endblock %}
+{% block sahifa_nomi %}Xato xabarlari{% endblock %}
+{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }} · so'nggi {{ kunlar }} kun{% endblock %}
+
+{% comment %}
+Savollar ostidagi "Xato haqida xabar berish" (ilova) va kun savolidagi
+"⚠️ Xato haqida" (bot) — `core/xato_xabar.py`. Uch savol:
+  1. NIMANI TUZATISH KERAK? — ko'rilmaganlar ro'yxati, savol surati bilan.
+  2. QAYSI JOY ENG KO'P SHIKOYAT OLADI? — joy bo'yicha sanoq.
+  3. NIMA XATO DEYISHADI? — sabablar.
+"Tuzatildi" bosilsa xabar bergan odamga bot rahmat aytadi; shu savolga
+kelgan boshqa ko'rilmagan xabarlar ham birga yopiladi.
+{% endcomment %}
+
+{% block asboblar %}
+  <nav class="davr" aria-label="Holat">
+    <a class="{% if holat == 'yangi' %}faol{% endif %}" href="?holat=yangi">Yangi</a>
+    <a class="{% if holat == 'tuzatildi' %}faol{% endif %}" href="?holat=tuzatildi">Tuzatildi</a>
+    <a class="{% if holat == 'rad' %}faol{% endif %}" href="?holat=rad">Xato emas</a>
+    <a class="{% if holat == 'hammasi' %}faol{% endif %}" href="?holat=hammasi">Hammasi</a>
+  </nav>
+{% endblock %}
+
+{% block ichki %}
+<div class="oqim">
+
+  {% if xabar %}<div class="karta" role="status"><b>{{ xabar }}</b></div>{% endif %}
+
+  <div class="olchovlar">
+    <div class="karta olchov urgu"><div class="nom">Ko'rilmagan</div><div class="son">{{ yangi_soni }}</div><div class="ost">shu yerda yoki botda hal qilinadi</div></div>
+    <div class="karta olchov"><div class="nom">{{ kunlar }} kunda keldi</div><div class="son">{{ davr_soni }}</div><div class="ost">{{ odam_soni }} kishidan · botdan {{ bot_soni }}</div></div>
+    <div class="karta olchov"><div class="nom">Tuzatildi</div><div class="son">{{ tuzatildi_soni }}</div><div class="ost">odamga rahmat xabari ketgan</div></div>
+    <div class="karta olchov"><div class="nom">Xato emas</div><div class="son">{{ rad_soni }}</div><div class="ost">savol to'g'ri chiqqan</div></div>
+  </div>
+
+  <div class="bolim"><h2>{% if holat == 'yangi' %}Ko'rib chiqish navbati{% else %}Xabarlar{% endif %}</h2><p>eng yangisi tepada · 🔁 — shu savolga nechta xabar kelgani</p></div>
+  {% for x in royxat %}
+    <div class="karta">
+      <div class="bar-bosh" style="margin:0 0 8px;gap:8px;flex-wrap:wrap">
+        <b>#{{ x.pk }}</b>
+        <span class="belgi {% if x.sabab == 'javob' or x.sabab == 'variant' %}qizil{% elif x.sabab == 'savol' %}oltin{% endif %}">{{ x.sabab_nomi }}</span>
+        <span class="belgi">{% if x.manba == 'bot' %}bot · kun savoli{% else %}ilova{% endif %}</span>
+        {% if x.takror > 1 %}<span class="belgi qizil">🔁 {{ x.takror }} ta</span>{% endif %}
+        {% if x.holat == 'tuzatildi' %}<span class="belgi yashil">tuzatildi</span>{% elif x.holat == 'rad' %}<span class="belgi">xato emas</span>{% endif %}
+        <span class="juda-xira" style="margin-left:auto">{{ x.created_at|date:"d.m H:i" }}</span>
+      </div>
+      <div style="margin-bottom:6px"><b>📍 {{ x.joy|default:"—" }}</b></div>
+      {% if x.izoh %}<div style="margin-bottom:6px">💬 «{{ x.izoh }}»</div>{% endif %}
+      {% if x.savol_matn %}<div style="white-space:pre-wrap;font-size:14px;line-height:1.5;background:var(--yuza-2);border-radius:10px;padding:10px 12px;margin-bottom:8px">{{ x.savol_matn|safe }}</div>{% endif %}
+      <details class="izoh"><summary>Savolning to'liq surati (JSON)</summary><pre style="white-space:pre-wrap;font-size:12px">{{ x.savol }}</pre></details>
+      <div class="bar-bosh" style="margin:8px 0 0;gap:8px;flex-wrap:wrap">
+        <span class="juda-xira">{% if x.pupil %}{{ x.pupil.toliq_ism|default:"—" }}{% if x.pupil.username %} @{{ x.pupil.username }}{% endif %} · hisob #{{ x.pupil_id }}{% else %}noma'lum{% endif %}</span>
+        {% if x.holat == 'yangi' %}
+          <form method="post" class="amal" style="margin-left:auto">
+            {% csrf_token %}
+            <input type="hidden" name="xabar" value="{{ x.pk }}">
+            <input type="hidden" name="qaytish_holat" value="{{ holat }}">
+            <button class="tugma yashil" name="amal" value="tuzatildi">✅ Tuzatildi</button>
+            <button class="tugma xavfli" name="amal" value="rad">Xato emas</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="karta"><div class="bosh-holat">{% if holat == 'yangi' %}Ko'rilmagan xabar yo'q 🎉{% else %}Bu yerda hali hech narsa yo'q.{% endif %}</div></div>
+  {% endfor %}
+
+  <div class="setka k2">
+    <div class="karta">
+      <div class="karta-bosh"><h3>Eng ko'p shikoyat olgan joylar</h3></div>
+      {% for r in eng_kop %}
+        <div class="bar"><div class="bar-bosh" style="margin:0"><span class="nom">{{ r.joy }}</span><b class="son">{{ r.n }}</b></div></div>
+      {% empty %}<div class="bosh-holat">Hali xabar yo'q.</div>{% endfor %}
+    </div>
+    <div class="karta">
+      <div class="karta-bosh"><h3>Sabablar</h3></div>
+      {% for r in sabablar %}
+        <div class="bar"><div class="bar-bosh" style="margin:0"><span class="nom">{{ r.nom }}</span><b class="son">{{ r.n }}</b></div></div>
+      {% empty %}<div class="bosh-holat">Hali xabar yo'q.</div>{% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

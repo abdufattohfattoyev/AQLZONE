@@ -132,9 +132,15 @@ def yubor(
     qoshimcha_tugma: str = "",
     qoshimcha_havola: str = "",
     qoshimcha_uslub: str = KOK,
+    klaviatura: list[list[dict]] | None = None,
 ) -> tuple[str, str]:
     """
     Bitta xabar yuboradi. `(holat, izoh)` qaytadi.
+
+    `klaviatura` — tayyor inline tugmalar (qatorlar ro'yxati). Berilsa,
+    yuqoridagi tugma maydonlari o'rniga shu ketadi: bir qatorda ikki
+    callback tugma kerak bo'lgan joylar uchun (xato xabarida
+    "Tuzatildi" / "Xato emas", `core/xato_xabar.py`).
 
     Holat: `yuborildi` | `bloklandi` | `xato`.
 
@@ -195,6 +201,8 @@ def yubor(
         qatorlar.append([tugma_yasa(qoshimcha_tugma, qoshimcha_uslub, url=qoshimcha_havola)])
     if ikkinchi_tugma and ikkinchi_data:
         qatorlar.append([tugma_yasa(ikkinchi_tugma, ikkinchi_uslub, callback_data=ikkinchi_data)])
+    if klaviatura:
+        qatorlar = klaviatura
     if qatorlar:
         payload["reply_markup"] = {"inline_keyboard": qatorlar}
 

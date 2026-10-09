@@ -129,6 +129,13 @@ class Pupil(models.Model):
     #: e'lon, na kirish havolasi yetib boradi. Bitta tugma o'sha yo'qotishni
     #: oddiy "hozircha kerakmas" ga aylantiradi.
     xabar_yopiq_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Kun savolida "🔕 Eslatmasin" bosilgan payt (`core/kun_savoli.py`).
+    #:
+    #: `xabar_yopiq_at` dan TORROQ: faqat kun savoli to'xtaydi, eslatma va
+    #: boshqa xabarlar avvalgidek boradi. Odam bitta rukndan charchagan
+    #: bo'lishi mumkin — buning uchun hammasini o'chirish shart emas.
+    #: Ilovadagi sozlamada qaytadan yoqiladi.
+    kun_savoli_yopiq_at = models.DateTimeField(null=True, blank=True, default=None)
     #: Oxirgi "qaytib keling" xabari yuborilgan payt.
     qaytarish_at = models.DateTimeField(null=True, blank=True, default=None)
     #: Shu tanaffusda nechta "qaytib keling" xabari yuborilgan (0..3).
@@ -2382,3 +2389,108 @@ class AiXabar(models.Model):
         ordering = ["created_at", "id"]
         indexes = [models.Index(fields=["rol", "created_at"]),
                    models.Index(fields=["pupil", "rol", "created_at"])]
+class XatoXabar(models.Model):
+    """
+    "Xato haqida xabar berish" — foydalanuvchi savolda xato topdi.
+
+    Ikki joydan keladi: ilovadagi savol ostidagi tugma (`manba="ilova"`)
+    va botdagi kun savoli (`manba="bot"`, `core/kun_savoli.py`).
+
+    `savol` — o'sha paytdagi SURAT (matn, variantlar, javob). Ilovadagi
+    savollar generatorda har safar qaytadan yasaladi, ya'ni keyin "qaysi
+    savol edi" deb qidirib topib bo'lmaydi — admin xatoni faqat shu
+    suratdan ko'radi. `kalit` — bir xil savolga kelgan xabarlarni
+    guruhlash uchun (kurs/bob/dars/tur yoki kun savoli raqami).
+
+    Holat bir yo'nalishda: `yangi` → `tuzatildi` | `rad`. Tuzatilganda
+    xabar bergan odamga bot "rahmat, tuzatildi" deydi — u bergan
+    xabarning izsiz yo'qolmaganini bilsin.
+    """
+
+    YANGI = "yangi"
+    TUZATILDI = "tuzatildi"
+    RAD = "rad"
+    HOLATLAR = [(YANGI, "yangi"), (TUZATILDI, "tuzatildi"), (RAD, "xato emas")]
+
+    SABABLAR = [
+        ("javob", "Javob noto'g'ri"),
+        ("variant", "To'g'ri javob variantlarda yo'q"),
+        ("savol", "Savol xato yozilgan"),
+        ("korinish", "Ko'rinishi buzilgan"),
+        ("boshqa", "Boshqa"),
+    ]
+
+    pupil = models.ForeignKey(Pupil, null=True, blank=True, on_delete=models.SET_NULL,
+                              related_name="xato_xabarlari")
+    manba = models.CharField(max_length=8, default="ilova")
+    #: Odam o'qiydigan joy: "5-sinf · Kasrlar · Qo'shish", "Kun savoli · 7-sinf".
+    joy = models.CharField(max_length=160, default="", blank=True)
+    kalit = models.CharField(max_length=80, default="", blank=True)
+    sabab = models.CharField(max_length=10, choices=SABABLAR, default="boshqa")
+    izoh = models.CharField(max_length=500, default="", blank=True)
+    savol = models.JSONField(default=dict, blank=True)
+    holat = models.CharField(max_length=10, choices=HOLATLAR, default=YANGI)
+    created_at = models.DateTimeField(default=timezone.now)
+    hal_at = models.DateTimeField(null=True, blank=True, default=None)
+
+    class Meta:
+        db_table = "xato_xabar"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["holat", "created_at"]), models.Index(fields=["kalit"])]
+
+    def __str__(self) -> str:
+        return f"#{self.pk} {self.joy[:40]} · {self.sabab}"
+
+
+class KunSavoli(models.Model):
+    """
+    Botning shaxsiy "kun savoli" — bir kun, bir daraja, bitta savol
+    (`core/kun_savoli.py`). Har odamga O'Z darajasidagisi boradi.
+
+    Savol yozib qo'yiladi (generatordan qayta hisoblanmaydi): generator
+    keyin tuzatilsa ham, kechagi tugmalar o'sha kungi variantlarga
+    mos bo'lib qolsin.
+    """
+
+    sana = models.DateField()
+    daraja = models.CharField(max_length=24)
+    savol = models.TextField()
+    variantlar = models.JSONField(default=list)
+    togri = models.SmallIntegerField(default=0)
+    usul = models.TextField(default="", blank=True)
+    #: Birinchi yuborilgan rasm — qolganlarga Telegram'dagi nusxasi ketadi.
+    file_id = models.CharField(max_length=255, default="", blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "kun_savoli"
+        constraints = [models.UniqueConstraint(fields=["sana", "daraja"], name="kun_savoli_bir")]
+
+
+class KunSavoliJavob(models.Model):
+    """
+    Kun savoli bitta odamga: yuborildimi, bosdimi, to'g'rimi.
+
+    Admin hisoboti shundan: nechta odamga ketdi, nechtasi bosdi, nechtasi
+    to'g'ri topdi. `javob` — birinchi bosilgan variant (0..3); keyingi
+    bosishlar hisobni o'zgartirmaydi.
+    """
+
+    YUBORILDI = "yuborildi"
+    BLOKLANDI = "bloklandi"
+    XATO = "xato"
+
+    savol = models.ForeignKey(KunSavoli, on_delete=models.CASCADE, related_name="javoblar")
+    pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="kun_savollari")
+    tg_id = models.CharField(max_length=32)
+    xabar_id = models.BigIntegerField(default=0)
+    holat = models.CharField(max_length=10, default=YUBORILDI)
+    javob = models.SmallIntegerField(null=True, blank=True, default=None)
+    togri = models.BooleanField(null=True, blank=True, default=None)
+    yuborilgan_at = models.DateTimeField(default=timezone.now)
+    javob_at = models.DateTimeField(null=True, blank=True, default=None)
+
+    class Meta:
+        db_table = "kun_savoli_javob"
+        constraints = [models.UniqueConstraint(fields=["savol", "pupil"], name="kun_savoli_bir_odam")]
+        indexes = [models.Index(fields=["yuborilgan_at"])]

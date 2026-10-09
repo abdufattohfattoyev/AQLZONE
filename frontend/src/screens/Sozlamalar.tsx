@@ -25,7 +25,7 @@ import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { Logo } from "../components/Logo";
 import {
-  botHavolasi, botNomi, chiqish, duelSozlama, duelTaklifOl, getHisob, hisobniSaqla, miniAppda,
+  botHavolasi, botNomi, chiqish, duelSozlama, duelTaklifOl, getHisob, hisobniSaqla, kunSavoliSozla, miniAppda,
 } from "../lib/api";
 import { turniUnut } from "../lib/tur";
 import { ovozYoniqmi, ovozniYoq } from "../lib/ovoz";
@@ -454,6 +454,13 @@ export function Sozlamalar({ onBack, onProfillar, onTayyor, royxat = false, bosh
 
           <TaklifSozlama />
 
+          {/* Botdagi kun savoli — botdagi "🔕 Eslatmasin" ni qaytarish
+              yo'li shu. Telegram'siz hisobda ko'rsatilmaydi: savol baribir
+              yetib bormasdi. Eski server maydonni bermasa ham yo'q. */}
+          {hisob?.telegram && typeof hisob.kunSavoli === "boolean" && (
+            <KunSavoliSozlama boshlangich={hisob.kunSavoli} />
+          )}
+
           {/* ---- chiqish ----
               Mini App ichida KO'RSATILMAYDI. U yerda sessiya Telegram'ning
               o'zinikidan kelib chiqadi: chiqqan zahoti ilova `initData`
@@ -536,6 +543,34 @@ function TaklifSozlama() {
         <Icon name={yopiq ? "check" : "times"} size={17}
           className={yopiq ? "text-brand-green-d" : "text-ink-dim"} />
         {yopiq ? t("duelTaklifYoqish") : t("duelTaklifOchirish")}
+      </button>
+    </div>
+  );
+}
+
+/** Botdagi kun savolini yoqish/o'chirish (`backend/core/kun_savoli.py`). */
+function KunSavoliSozlama({ boshlangich }: { boshlangich: boolean }) {
+  const [yoniq, setYoniq] = useState(boshlangich);
+
+  const almashtir = () => {
+    const yangi = !yoniq;
+    setYoniq(yangi);
+    tebrat("tanlov");
+    kunSavoliSozla(yangi).then((j) => { if (j !== yangi) setYoniq(!yangi); });
+  };
+
+  return (
+    <div className="az-kirish mt-4 rounded-clay bg-karta p-4 shadow-clay-sm"
+      style={{ "--az-kech": "98ms" } as React.CSSProperties}>
+      <div className="font-display text-[14px]">{t("ksSozlama")}</div>
+      <p className="mt-1 text-[12px] leading-snug text-ink-dim">{t("ksSozlamaIzoh")}</p>
+      <button type="button" onClick={almashtir} aria-pressed={yoniq}
+        data-tahlil="Sozlama: kun savoli"
+        className="clay-press mt-3 flex w-full items-center justify-center gap-2 rounded-3xl
+                   bg-track py-2.5 font-display text-[14px] text-ink-soft">
+        <Icon name={yoniq ? "check" : "times"} size={17}
+          className={yoniq ? "text-brand-green-d" : "text-ink-dim"} />
+        {yoniq ? t("ksOchirish") : t("ksYoqish")}
       </button>
     </div>
   );

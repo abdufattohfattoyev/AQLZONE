@@ -923,6 +923,66 @@ XABAR: dict[str, dict[str, str]] = {
                    "ru": "Не удалось прочитать фото — пришлите другое."},
     "aiChiqdi": {"uz": "AI ustoz o'chdi. Qaytish uchun: /ai",
                  "ru": "AI-репетитор выключен. Чтобы вернуться: /ai"},
+
+    # ------------------------------------------------- kun savoli (`core/kun_savoli.py`)
+    "ksSarlavha": {
+        "uz": "🧩 <b>Kun savoli</b> · {daraja}\nJavobni pastdagi tugma bilan bering 👇",
+        "ru": "🧩 <b>Вопрос дня</b> · {daraja}\nОтвечайте кнопкой ниже 👇",
+    },
+    "ksTogri": {
+        "uz": "✅ <b>To'g'ri!</b> Javob: <b>{javob}</b>",
+        "ru": "✅ <b>Верно!</b> Ответ: <b>{javob}</b>",
+    },
+    "ksNotogri": {
+        "uz": "❌ <b>Afsus, noto'g'ri.</b> Siz: {siz} · to'g'ri javob: <b>{javob}</b>",
+        "ru": "❌ <b>Увы, неверно.</b> Вы: {siz} · правильный ответ: <b>{javob}</b>",
+    },
+    "ksUsul": {"uz": "💡 {usul}", "ru": "💡 {usul}"},
+    "ksSanoq": {
+        "uz": "📊 Bugun {daraja} savoliga {n} kishi javob berdi, {foiz}% to'g'ri topdi.",
+        "ru": "📊 Сегодня на вопрос ({daraja}) ответили {n} чел., верно — {foiz}%.",
+    },
+    "ksErtaga": {
+        "uz": "Ertaga yangi savol keladi 🔔",
+        "ru": "Завтра — новый вопрос 🔔",
+    },
+    "ksAllaqachon": {"uz": "Javob allaqachon qabul qilingan", "ru": "Ответ уже принят"},
+    "ksEskirgan": {"uz": "Bu savolning vaqti o'tdi", "ru": "Время этого вопроса прошло"},
+    "tKsXato": {"uz": "⚠️ Xato haqida xabar berish", "ru": "⚠️ Сообщить об ошибке"},
+    "tKsYop": {"uz": "🔕 Eslatmasin", "ru": "🔕 Не присылать"},
+    "tKsIlova": {"uz": "📚 Ilovada mashq qilish", "ru": "📚 Тренироваться в приложении"},
+    "ksYopildi": {
+        "uz": ("Yaxshi, kun savoli endi kelmaydi 🔕\n\n"
+               "Qayta yoqish: ilovada «Men» → «Sozlamalar» → «Kun savoli»."),
+        "ru": ("Хорошо, вопрос дня больше не придёт 🔕\n\n"
+               "Включить снова: в приложении «Я» → «Настройки» → «Вопрос дня»."),
+    },
+    "ksXatoSora": {
+        "uz": "⚠️ <b>Savolda nima xato?</b>\nTanlang — xabar adminga boradi:",
+        "ru": "⚠️ <b>Что не так с вопросом?</b>\nВыберите — сообщение уйдёт админу:",
+    },
+    "ksXatoRahmat": {
+        "uz": ("✅ Rahmat! Xabaringiz adminga yetkazildi.\n\n"
+               "Xohlasangiz, nima xato ekanini bitta xabar bilan yozing ✍️ "
+               "(15 daqiqa ichida)."),
+        "ru": ("✅ Спасибо! Сообщение передано админу.\n\n"
+               "Если хотите, опишите ошибку одним сообщением ✍️ (в течение 15 минут)."),
+    },
+    "ksXatoChegara": {
+        "uz": "Bugun juda ko'p xabar yubordingiz — ertaga urinib ko'ring.",
+        "ru": "Сегодня слишком много сообщений — попробуйте завтра.",
+    },
+    "ksIzohOlindi": {"uz": "✍️ Izoh qo'shildi — rahmat!", "ru": "✍️ Комментарий добавлен — спасибо!"},
+    "tSababjavob": {"uz": "Javob noto'g'ri", "ru": "Неверный ответ"},
+    "tSababvariant": {"uz": "To'g'ri javob yo'q", "ru": "Нет верного варианта"},
+    "tSababsavol": {"uz": "Savol xato yozilgan", "ru": "Ошибка в условии"},
+    "tSababboshqa": {"uz": "Boshqa", "ru": "Другое"},
+    "xatoTuzatildi": {
+        "uz": ("🛠 <b>Siz xabar bergan xato tuzatildi!</b>\n"
+               "📍 {joy}\n\nRahmat — sizning tufayli ilova yaxshilandi 🙌"),
+        "ru": ("🛠 <b>Ошибка, о которой вы сообщили, исправлена!</b>\n"
+               "📍 {joy}\n\nСпасибо — благодаря вам приложение стало лучше 🙌"),
+    },
 }
 
 

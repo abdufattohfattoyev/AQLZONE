@@ -24,6 +24,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
 import { QuestionView, sahnaBor, shartSahnada } from "../components/QuestionView";
+import { XatoXabar } from "../components/XatoXabar";
 import { Yechim } from "../components/Yechim";
 import { Konfetti } from "../components/Konfetti";
 import type { Activity } from "../lib/activity";
@@ -287,6 +288,17 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
           <Ochiq S={S} j={j && typeof j !== "string" ? j : { a: "", b: "" }} onYoz={qoy} />
         )}
       </div>
+
+      {/* Savolda xato bo'lsa — adminga (`components/XatoXabar.tsx`). Ochiq
+          savolda ikkala qismi bitta shartga tayanadi, a) qismi yuboriladi. */}
+      {(() => {
+        const bs = S.tur === "o" ? S.a : S.s;
+        return (
+          <XatoXabar a={bs.a} tanlangan={typeof j === "string" ? j : null} className="ml-auto"
+            joy={`${t("imtihonTurSert")} · ${t("imtihonVariant", { n: v.n })} · ${idx + 1} · ${bs.mavzu}`}
+            kalit={`sert:${bs.kursId}:${bs.ui}:${bs.li}`} />
+        );
+      })()}
 
       <div className="mt-2 grid grid-cols-2 gap-2.5">
         <button type="button" disabled={idx === 0} onClick={() => setIdx((i) => i - 1)}

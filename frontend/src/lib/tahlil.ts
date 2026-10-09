@@ -77,6 +77,8 @@ let kirish: { vaqt: number; yol: string } | null = null;
  */
 function manbaniAniqla(): string {
   if (URL_MANBA === "eslatma") return "eslatma";
+  // Botdagi kun savoli ostidagi "Ilovada mashq qilish" (`core/kun_savoli.py`).
+  if (URL_MANBA === "kun_savoli") return "kun_savoli";
   const kod = boshParametri();
   if (kod) {
     if (kod.endsWith(KANAL_BELGI)) return "kanal";

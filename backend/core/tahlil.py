@@ -34,6 +34,7 @@ MANBALAR = {
     "kanal": "Kanal posti",
     "ulashish": "Do'st ulashgan havola",
     "eslatma": "Bot eslatmasi",
+    "kun_savoli": "Botdagi kun savoli",
     "duel": "Duel chaqiruvi",
     "bot": "Botdan",
     "telegram": "Telegram (to'g'ridan)",

@@ -47,7 +47,7 @@ from .liga import DARAJALAR
 from .models import (
     Duel,
     Identity, LessonResult, LigaAzo, Masala, MasalaIzoh, Profile, Progress, Pupil, Reklama,
-    Session,
+    Session, XatoXabar,
 )
 
 #: Kirish belgisi shu nom bilan cookie'da saqlanadi.
@@ -228,6 +228,8 @@ def bolim(joriy: str) -> dict:
         "navbat_soni": MS.navbat_soni(),
         # Chap menyudagi "Jonli" yonidagi son — hozir ishlayotganlar.
         "jonli_soni": JL.soni(),
+        # Ko'rilmagan xato xabarlari (`core/xato_xabar.py`).
+        "xato_soni": XatoXabar.objects.filter(holat=XatoXabar.YANGI).count(),
     }
 
 
@@ -1556,3 +1558,55 @@ def premium_chek(request, pk: int):
             return HttpResponse(r.read(), content_type="image/jpeg")
     except Exception:                                    # noqa: BLE001
         raise Http404
+
+
+# ------------------------------------------------------------- xato xabarlari
+
+
+def xatolar(request):
+    """
+    Savollardagi xato xabarlari (`core/xato_xabar.py`): ko'rilmaganlar
+    tepada, "Tuzatildi" / "Xato emas" shu yerda ham bosiladi (botdagi
+    tugma bilan bir xil `hal_qil`).
+    """
+    from . import xato_xabar as XX
+
+    if not _yoniq():
+        raise Http404
+    if not kirganmi(request):
+        return kirish(request)
+    if request.method == "POST":
+        try:
+            pk = int(request.POST.get("xabar") or 0)
+        except ValueError:
+            pk = 0
+        amal = request.POST.get("amal")
+        holat = {"tuzatildi": XatoXabar.TUZATILDI, "rad": XatoXabar.RAD}.get(amal)
+        xabar = "Noma'lum amal"
+        if holat and pk:
+            natija, _ = XX.hal_qil(pk, holat)
+            xabar = {
+                "hal_qilindi": f"#{pk} — " + ("tuzatildi, odamga rahmat ketdi" if holat == XatoXabar.TUZATILDI
+                                              else "xato emas deb belgilandi"),
+                "eskirgan": f"#{pk} allaqachon hal qilingan",
+                "yoq": f"#{pk} topilmadi",
+            }[natija]
+        from urllib.parse import urlencode
+        qayt = {"holat": request.POST.get("qaytish_holat") or "yangi", "xabar": xabar}
+        return HttpResponseRedirect(f"/boshqaruv/xatolar?{urlencode(qayt)}")
+    holat = request.GET.get("holat") or "yangi"
+    return render(request, "boshqaruv/xatolar.html",
+                  XX.panel_statistika(davr(request), holat) | bolim("xatolar")
+                  | {"xabar": request.GET.get("xabar", "")[:200]})
+
+
+def kun_savoli(request):
+    """Botdagi kun savoli: bugun darajalar bo'yicha, kunlar kesimida (`core/kun_savoli.py`)."""
+    from . import kun_savoli as KS
+
+    if not _yoniq():
+        raise Http404
+    if not kirganmi(request):
+        return kirish(request)
+    return render(request, "boshqaruv/kun_savoli.html",
+                  KS.panel_statistika(davr(request)) | bolim("kun_savoli"))

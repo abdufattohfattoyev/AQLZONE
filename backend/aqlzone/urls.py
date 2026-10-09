@@ -8,6 +8,8 @@ Aql Zone — asosiy marshrutlar.
     /boshqaruv/masalalar/hisobot  masalalar bo'limi statistikasi
     /boshqaruv/reklama   botdan e'lon tarqatish
     /boshqaruv/premium   Imtihon Premium to'lovlari
+    /boshqaruv/xatolar   savollardagi xato xabarlari
+    /boshqaruv/kun-savoli  botdagi kun savoli hisoboti
     boshqa hammasi       React ilova (SPA) — /kurs/1-sinf kabi URL'lar
                          sahifa yangilanganda ham ishlashi uchun.
 
@@ -43,6 +45,9 @@ urlpatterns = [
     path("boshqaruv/jonli", boshqaruv.jonli, name="boshqaruv-jonli"),
     path("boshqaruv/jonli.json", boshqaruv.jonli_json, name="boshqaruv-jonli-json"),
     path("boshqaruv/tahlil", boshqaruv.tahlil, name="boshqaruv-tahlil"),
+    # Savollardagi xato xabarlari va botdagi kun savoli hisoboti.
+    path("boshqaruv/xatolar", boshqaruv.xatolar, name="boshqaruv-xatolar"),
+    path("boshqaruv/kun-savoli", boshqaruv.kun_savoli, name="boshqaruv-kun-savoli"),
     path("boshqaruv/masalalar", boshqaruv.masalalar, name="boshqaruv-masalalar"),
     # Masalalar hisoboti — tasdiqlash navbatidan ALOHIDA manzil.
     # Ikkalasi ikki xil ish: navbatda masala O'QILADI va qaror
