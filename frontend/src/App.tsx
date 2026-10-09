@@ -107,7 +107,7 @@ import {
   yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant, yolQabul, yolQabulVariant, yolMantiq, yolMantiqMavzu,
-  yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq, yolPremium,
+  yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import { darajaBormi, darajaKerakmi } from "./lib/daraja";
@@ -218,7 +218,7 @@ function Yollar() {
       <Route path="/sinf/:id" element={<SinfSahifasi />} />
       <Route path="/sessiya" element={<SessiyaSahifasi />} />
       <Route path="/qabul" element={<QabulSahifasi />} />
-      <Route path={yolPremium()} element={<PremiumSahifasi />} />
+      <Route path="/premium" element={<PremiumSahifasi />} />
       <Route path="/mantiq" element={<MantiqSahifasi />} />
       <Route path="/mantiq/:id" element={<MantiqMavzuSahifasi />} />
       <Route path="/qabul/:tur/:n" element={<QabulVariantSahifasi />} />
