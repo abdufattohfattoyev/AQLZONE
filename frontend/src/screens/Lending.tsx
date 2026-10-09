@@ -45,6 +45,8 @@ const TEST_SINFLAR = COURSES.map((c) => sinfOf(c.grade)).filter(blokBormi);
 
 /** Telegram kanal — sahifa pastida. Kanal nomi o'zgarmaydi. */
 const KANAL = "https://t.me/AqlZoneUz";
+const INSTAGRAM = "https://www.instagram.com/aql_zone/";
+const ADMIN = "https://t.me/Fattoyev_A";
 
 type Rang = "blue" | "green" | "gold";
 
@@ -826,6 +828,16 @@ function Etak({ bot, onOch }: { bot: string; onOch: (yol: string) => void }) {
                     </a>
                   </li>
                 )}
+                <li>
+                  <a href={INSTAGRAM} target="_blank" rel="noopener" data-tahlil="Tanishuv: instagram" className={havola}>
+                    Instagram · @aql_zone
+                  </a>
+                </li>
+                <li>
+                  <a href={ADMIN} target="_blank" rel="noopener" data-tahlil="Tanishuv: admin" className={havola}>
+                    {t("lendAdmin")} · @Fattoyev_A
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

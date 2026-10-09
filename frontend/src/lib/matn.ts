@@ -1087,6 +1087,7 @@ const S = {
   lendEtakSahifa: ["Sahifa", "Страница"],
   lendEtakAloqa: ["Aloqa", "Контакты"],
   lendBot: ["Telegram bot", "Telegram-бот"],
+  lendAdmin: ["Admin bilan aloqa", "Связаться с админом"],
   lendTepaga: ["Tepaga", "Наверх"],
   /* Qahramon slaydlari (`screens/Lending.tsx` → SLAYDLAR). 1-slayd
      yuqoridagi `lendSarlavha1..3` va `lendIzoh` dan foydalanadi. */
