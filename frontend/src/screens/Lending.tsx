@@ -27,7 +27,6 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { Logo } from "../components/Logo";
 import { Icon } from "../lib/icons";
-import { Hajmli } from "../lib/hajmli";
 
 import { COURSES, lessonCount } from "../lib/curriculum";
 import { OYINLAR } from "../lib/oyin";
@@ -291,8 +290,10 @@ function YoruglikTugma() {
  * matematik belgilar; ajratilgan so'z — marker bilan; slaydlar nuqta
  * emas, nomli yorliqlar.
  *
- * 3D belgilar `Hajmli` dan: `public/belgi/e/` dagi 256px rasmlar (asl
- * varaqdagi o'lcham shu) — 240px dan katta qilinmaydi, xiralashardi.
+ * 3D belgilar — `public/belgi/f/` dagi FIRUZA rasmlar (`.belgi/firuza.py`,
+ * asl 256px `belgi/e/` dan). 2026-10-09 gacha har slayd o'z rangida edi
+ * (yashil nishon, sariq medal) — endi hammasi bitta asosiy rangda.
+ * 240px dan katta qilinmaydi, xiralashardi.
  */
 const SLAYDLAR = [
   // 1-slayd: kitob o'rniga firuza 3D miya (`public/belgi/f/miya.webp`) —
@@ -300,11 +301,11 @@ const SLAYDLAR = [
   // 2026-10-08 da Pifagor teoremasi (SVG) sinab ko'rildi — yassi chiqdi.
   { rang: "blue", belgi: "miya", tab: "lendSlTab1", yorliq: "lendSl1Belgi", s1: "lendSarlavha1", s2: "lendSarlavha2", s3: "lendSarlavha3",
     izoh: "lendIzoh", tugma: "lendSl1Tugma", yol: yolKurslar, chip1: "lendSl1Chip1", chip2: "lendSl1Chip2", n: JAMI_DARS },
-  { rang: "green", belgi: "nishon", tab: "lendSlTab2", yorliq: "lendSl2Belgi", s1: "lendSl2S1", s2: "lendSl2S2", s3: "lendSl2S3",
+  { rang: "green", belgi: "slayd-nishon", tab: "lendSlTab2", yorliq: "lendSl2Belgi", s1: "lendSl2S1", s2: "lendSl2S2", s3: "lendSl2S3",
     izoh: "lendSl2Izoh", tugma: "lendSl2Tugma", yol: yolTestSinf, chip1: "lendSl2Chip1", chip2: "lendSl2Chip2", n: 0 },
-  { rang: "gold", belgi: "medal", tab: "lendSlTab3", yorliq: "lendSl3Belgi", s1: "lendSl3S1", s2: "lendSl3S2", s3: "lendSl3S3",
+  { rang: "gold", belgi: "slayd-medal", tab: "lendSlTab3", yorliq: "lendSl3Belgi", s1: "lendSl3S1", s2: "lendSl3S2", s3: "lendSl3S3",
     izoh: "lendSl3Izoh", tugma: "lendSl3Tugma", yol: yolSertifikat, chip1: "lendSl3Chip1", chip2: "lendSl3Chip2", n: 0 },
-  { rang: "blue", belgi: "kubok", tab: "lendSlTab4", yorliq: "lendSl4Belgi", s1: "lendSl4S1", s2: "lendSl4S2", s3: "lendSl4S3",
+  { rang: "blue", belgi: "slayd-kubok", tab: "lendSlTab4", yorliq: "lendSl4Belgi", s1: "lendSl4S1", s2: "lendSl4S2", s3: "lendSl4S3",
     izoh: "lendSl4Izoh", tugma: "lendSl4Tugma", yol: yolOyinlar, chip1: "lendSl4Chip1", chip2: "lendSl4Chip2", n: OYINLAR.length },
 ] as const;
 
@@ -500,11 +501,8 @@ function Sahna({ sl, faol }: { sl: Slayd; faol: boolean }) {
           {faol && (
             <div className="az-lend-kir">
               <div className="az-lend-suz">
-                {sl.belgi === "miya"
-                  ? <img src="/belgi/f/miya.webp" alt="" width={224} height={224}
-                      className="size-36 drop-shadow-[0_26px_26px_rgb(0_0_0/0.28)] sm:size-48 lg:size-56" />
-                  : <Hajmli nom={sl.belgi} olcham={240}
-                      className="size-36 drop-shadow-[0_26px_26px_rgb(0_0_0/0.28)] sm:size-48 lg:size-56" />}
+                <img src={`/belgi/f/${sl.belgi}.webp`} alt="" width={224} height={224}
+                  className="size-36 drop-shadow-[0_26px_26px_rgb(0_0_0/0.28)] sm:size-48 lg:size-56" />
               </div>
             </div>
           )}
