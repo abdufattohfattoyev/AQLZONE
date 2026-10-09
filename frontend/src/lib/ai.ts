@@ -42,6 +42,11 @@ export interface AiHolat {
   /** Serverda kalit bor-yo'qligi. */
   yoqilgan: boolean;
   premium: boolean;
+  /** Premium yoki bepul sinov qolgan — AI ishlatsa bo'ladi. */
+  ochiq: boolean;
+  /** Premiumsiz odamga umrbod beriladigan sinov javoblari (3). */
+  bepul: number;
+  bepul_qolgan: number;
   kunlik: number;
   /** Bugun yana nechta javob olish mumkin. */
   qolgan: number;

@@ -22,7 +22,13 @@ so'rab turadi. Botda javob tayyor bo'lgach xabar bo'lib ketadi.
 
 ─────────────────── HUQUQ VA XARAJAT ───────────────────
 
-Faqat faol Premium (`premium.faolmi`). Ikki chegara: bir odamga kuniga
+Faol Premium (`premium.faolmi`) — cheksiz (kunlik chegara ichida).
+Premiumsiz odam — UMRBOD `AI_BEPUL` (3) ta javob, sinov uchun: AI nima
+berishini tatib ko'rmagan odam unga pul to'lamaydi (testmakon.uz ham
+shunday — "AI tahlil 1× sinov"). Umrbod, kunlik emas: kunlik bepul
+javob doimiy xarajat bo'lardi va Premium'ga sabab qolmasdi.
+
+Ikki chegara: bir odamga kuniga
 `AI_KUNLIK` javob va butun ilovaga kuniga `AI_KUNLIK_JAMI` javob.
 Ikkinchisi — kalit sizib chiqsa yoki kimdir skript yozsa ham hisob bir
 kunda yonib ketmasin. Xato bilan tugagan javob chegaraga sanalmaydi.
@@ -96,25 +102,45 @@ def bugun_ishlatilgan(pupil: Pupil, hozir=None) -> int:
     return _sanaladigan(AiXabar.objects.filter(pupil=pupil, created_at__gte=_bugun_boshi(hozir))).count()
 
 
+def bepul_qolgan(pupil: Pupil) -> int:
+    """Premiumsiz odamning sinov javoblaridan nechtasi qoldi (umrbod)."""
+    return max(0, settings.AI_BEPUL - _sanaladigan(AiXabar.objects.filter(pupil=pupil)).count())
+
+
+def ochiqmi(pupil: Pupil) -> bool:
+    """Premium yoki hali bepul sinov bor."""
+    from . import premium as PR
+
+    return PR.faolmi(pupil) or bepul_qolgan(pupil) > 0
+
+
 def holat(pupil: Pupil) -> dict:
     """`GET /api/v1/ai` — ochiqmi, bugun qancha qoldi va oxirgi suhbatlar."""
     from . import premium as PR
 
-    ishlatilgan = bugun_ishlatilgan(pupil)
+    premium = PR.faolmi(pupil)
+    bepul = 0 if premium else bepul_qolgan(pupil)
+    kunlik = max(0, settings.AI_KUNLIK - bugun_ishlatilgan(pupil))
     return {
         "yoqilgan": yoqilganmi(),
-        "premium": PR.faolmi(pupil),
+        "premium": premium,
+        # Premium yoki sinov bor — AI ishlatsa bo'ladi.
+        "ochiq": premium or bepul > 0,
+        "bepul": settings.AI_BEPUL,
+        "bepul_qolgan": bepul,
         "kunlik": settings.AI_KUNLIK,
-        "qolgan": max(0, settings.AI_KUNLIK - ishlatilgan),
+        # Bugun nechta javob olish mumkin: premiumda kunlik chegara,
+        # sinovda — qolgan sinovlar (kunlik chegaradan oshmasdan).
+        "qolgan": kunlik if premium else min(kunlik, bepul),
         "suhbatlar": [_suhbat_qisqa(s) for s in pupil.ai_suhbatlar.all()[:ROYXAT]],
     }
 
 
 def _tekshir(pupil: Pupil) -> None:
-    """Premium, kalit va ikki chegara. Qator qulfi ostida chaqiriladi."""
+    """Premium (yoki sinov), kalit va ikki chegara. Qator qulfi ostida chaqiriladi."""
     from . import premium as PR
 
-    if not PR.faolmi(pupil):
+    if not PR.faolmi(pupil) and bepul_qolgan(pupil) <= 0:
         raise AiXato("premium")
     if not yoqilganmi():
         raise AiXato("yopiq")

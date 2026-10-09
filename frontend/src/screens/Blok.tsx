@@ -41,6 +41,7 @@
  * to'plamlar) va tanlash ro'yxati testni YURGIZADIGAN komponent
  * ichida yashasa, u har yangi tur qo'shilganda kattalashaverardi.
  */
+import { AiNatijaKarta } from "../components/AiKartalar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
@@ -870,6 +871,11 @@ function Natija({
         <span className="min-w-0 flex-1 font-display text-[16px]">{t("korishTugma")}</span>
         <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
       </button>
+      {imtihon && (
+        <div className="mt-2.5">
+          <AiNatijaKarta xato={xato} onOch={onKorish} tahlil="DTM: AI xatolar" />
+        </div>
+      )}
 
       {/* Zaif mavzular MASHQI — bitta-bitta darsga qaytishdan tezroq:
           qoqilgan boblardan aralash 10 savol (`ImtihonQoshimcha.ZaifMashq`).

@@ -81,13 +81,17 @@ export function AiBosh({ onBack }: { onBack: () => void }) {
       {aloqaYoq && <p className="text-[14.5px] text-ink-dim">{t("aloqaYoq")}</p>}
       {!h && !aloqaYoq && <p className="text-[14.5px] text-ink-dim">{t("yuklanyapti")}</p>}
 
-      {h && !h.premium && <AiPremiumTaklif />}
-      {h?.premium && !h.yoqilgan && <p className="text-[14.5px] text-ink-soft">{aiXatoMatni("yopiq")}</p>}
+      {/* Premiumsiz odam ham 3 ta bepul sinov oladi (`AI_BEPUL`) — taklif
+          faqat sinov tugagach chiqadi. */}
+      {h && !h.ochiq && <AiPremiumTaklif />}
+      {h?.ochiq && !h.yoqilgan && <p className="text-[14.5px] text-ink-soft">{aiXatoMatni("yopiq")}</p>}
 
-      {h?.premium && h.yoqilgan && (
+      {h?.ochiq && h.yoqilgan && (
         <>
           <p className="text-[14.5px] leading-snug text-ink-soft">{t("aiIzoh")}</p>
-          <p className="text-[13px] font-semibold text-ink-dim">{t("aiQolgan", { n: h.qolgan })}</p>
+          <p className="text-[13px] font-semibold text-ink-dim">
+            {t(h.premium ? "aiQolgan" : "aiBepulQolgan", { n: h.premium ? h.qolgan : h.bepul_qolgan })}
+          </p>
 
           <div className="flex flex-col gap-2.5">
             {AMALLAR.map((a) => (

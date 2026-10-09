@@ -884,6 +884,21 @@ XABAR: dict[str, dict[str, str]] = {
             "Новая тема: /ai · Выход: /stop"
         ),
     },
+    # Premiumsiz, sinov bor — necha bepul savol qolgani (`ai.bepul_qolgan`).
+    "aiBotSalomBepul": {
+        "uz": (
+            "🤖 <b>AI ustoz</b> tayyor.\n\n"
+            "Savolingizni yozing yoki masala rasmini yuboring — qadam-baqadam tushuntiraman.\n"
+            "Sizda <b>{qolgan}</b> ta bepul savol bor, keyin — Imtihon Premium.\n\n"
+            "Yangi mavzu: /ai · Chiqish: /stop"
+        ),
+        "ru": (
+            "🤖 <b>AI-репетитор</b> готов.\n\n"
+            "Напишите вопрос или пришлите фото задачи — объясню по шагам.\n"
+            "Бесплатных вопросов: <b>{qolgan}</b>, дальше — Imtihon Premium.\n\n"
+            "Новая тема: /ai · Выход: /stop"
+        ),
+    },
     "aiPremium": {
         "uz": (
             "🤖 <b>AI ustoz</b> — Imtihon Premium imkoniyati: imtihondagi xatolaringizni "

@@ -851,7 +851,11 @@ def _ai_premium_yubor(chat_id: int, til: str) -> None:
 
 
 def ai_boshla(chat_id: int, tg_id: str, til: str) -> str:
-    """`/ai` — Premium bo'lsa rejimni yoqadi, bo'lmasa Premium haqida aytadi."""
+    """
+    `/ai` — Premium yoki bepul sinov bo'lsa rejimni yoqadi, bo'lmasa
+    Premium haqida aytadi. Sinovdagi odamga necha bepul savol qolgani
+    aytiladi — tugaganda kutilmagan "Premium kerak" chiqmasin.
+    """
     from django.core.cache import cache
     from core import ai as AI
     from core import premium as PR
@@ -860,15 +864,16 @@ def ai_boshla(chat_id: int, tg_id: str, til: str) -> str:
     if pupil is None:
         api("sendMessage", chat_id=chat_id, text=M("premiumHisobYoq", til))
         return f"{tg_id}: /ai — hisob yo'q"
-    if not PR.faolmi(pupil):
+    if not AI.ochiqmi(pupil):
         _ai_premium_yubor(chat_id, til)
         return f"{tg_id}: /ai — premium yo'q"
     if not AI.yoqilganmi():
         api("sendMessage", chat_id=chat_id, text=M("aiYopiq", til))
         return f"{tg_id}: /ai — kalit yo'q"
     cache.set(_ai_kalit(tg_id), 0, AI_REJIM)
-    qolgan = max(0, settings.AI_KUNLIK - AI.bugun_ishlatilgan(pupil))
-    api("sendMessage", chat_id=chat_id, parse_mode="HTML", text=M("aiBotSalom", til, qolgan=qolgan))
+    h = AI.holat(pupil)
+    api("sendMessage", chat_id=chat_id, parse_mode="HTML",
+        text=M("aiBotSalom" if h["premium"] else "aiBotSalomBepul", til, qolgan=h["qolgan"]))
     return f"{tg_id}: /ai — rejim yoqildi"
 
 

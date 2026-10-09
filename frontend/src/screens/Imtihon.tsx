@@ -26,6 +26,7 @@ import type { MarafonHolat } from "../lib/marafon";
 import { t } from "../lib/matn";
 import { PremiumQator, QulfBelgi } from "../components/PremiumVaraq";
 import { useVariantQulf } from "../components/variantQulf";
+import { AiRejaKarta } from "../components/AiKartalar";
 import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
 import { OLCHAM, VARIANTLAR, daraja, engYaxshi, sinxronla, zaifMavzular } from "../lib/imtihon";
 import type { ServerTarix } from "../lib/imtihon";
@@ -143,6 +144,9 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
           </>
         )}
       </div>
+
+      {/* AI ustoz — natija bor bo'lsagina: reja natijalardan tuziladi. */}
+      {d && <AiRejaKarta tahlil="DTM: AI reja" />}
 
       <ImtEshiklar tur="dtm" onReyting={onReyting} onKorish={onKorish} />
       </div>

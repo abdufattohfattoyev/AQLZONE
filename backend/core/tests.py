@@ -10358,6 +10358,7 @@ class AiUstozTest(TestCase):
 
     # --- huquq ---
 
+    @override_settings(AI_BEPUL=0)
     def test_premiumsiz_yopiq(self):
         h, _ = self.kir(premium=False)
         self.assertFalse(self.client.get("/api/v1/ai", **h).json()["premium"])
@@ -10365,6 +10366,28 @@ class AiUstozTest(TestCase):
         self.assertEqual(r.status_code, 403)
         self.assertEqual(r.json()["kod"], "premium")
         self.assertEqual(self.chaqiruvlar, [])
+
+    def test_bepul_sinov_uchta(self):
+        h, _ = self.kir(premium=False)
+        j = self.client.get("/api/v1/ai", **h).json()
+        self.assertEqual((j["premium"], j["ochiq"], j["bepul"], j["bepul_qolgan"]), (False, True, 3, 3))
+        sid = self.yangi(h, tur="repetitor", matn="Bir").json()["id"]
+        # Xato javob sinovni yemaydi.
+        with patch("core.ai._chaqir", side_effect=RuntimeError("tarmoq")):
+            self.yangi(h, tur="repetitor", matn="Xato")
+        self.assertEqual(self.client.get("/api/v1/ai", **h).json()["bepul_qolgan"], 2)
+        self.client.post(f"/api/v1/ai/suhbat/{sid}", {"matn": "Ikki"}, content_type="application/json", **h)
+        self.yangi(h, tur="xato", kontekst=self.XATO)
+        j = self.client.get("/api/v1/ai", **h).json()
+        self.assertEqual((j["ochiq"], j["bepul_qolgan"], j["qolgan"]), (False, 0, 0))
+        r = self.yangi(h, tur="repetitor", matn="To'rt")
+        self.assertEqual(r.json()["kod"], "premium")
+        self.assertEqual(len(self.chaqiruvlar), 3)
+
+    def test_premiumda_sinov_sanalmaydi(self):
+        h, _ = self.kir()
+        j = self.client.get("/api/v1/ai", **h).json()
+        self.assertEqual((j["ochiq"], j["bepul_qolgan"], j["qolgan"]), (True, 0, 3))
 
     def test_kirmagan_rad(self):
         self.assertIn(self.client.get("/api/v1/ai").status_code, (401, 403))
@@ -10548,6 +10571,14 @@ class AiUstozTest(TestCase):
         self.bot_xabar("5151", text="Sinus nima?")
         self.assertEqual(self.chaqiruvlar, [])
 
+    def test_bot_bepul_sinov(self):
+        self.tg(premium=False)
+        self.bot_xabar("5151", text="/ai")
+        self.assertIn("bepul", self.yuborilgan[-1]["text"])
+        self.bot_xabar("5151", text="Sinus nima?")
+        self.assertEqual(len(self.chaqiruvlar), 1)
+
+    @override_settings(AI_BEPUL=0)
     def test_bot_premiumsiz(self):
         self.tg(premium=False)
         self.bot_xabar("5151", text="/ai")

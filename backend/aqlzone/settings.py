@@ -515,6 +515,9 @@ AI_MAX_TOKEN = int(env("AI_MAX_TOKEN", "4000"))
 # yoki kimdir skript yozsa ham hisob bir kunda "yonib" ketmasin.
 AI_KUNLIK = int(env("AI_KUNLIK", "30"))
 AI_KUNLIK_JAMI = int(env("AI_KUNLIK_JAMI", "3000"))
+# Premiumsiz odamga UMRBOD shuncha javob — sinov (egasining qarori,
+# 2026-10-09, testmakon.uz namunasida). 0 — sinov yo'q, faqat Premium.
+AI_BEPUL = int(env("AI_BEPUL", "3"))
 # Masala rasmlari — media'dan TASHQARIDA (bolaning daftari ochiq
 # havolada turmasin), volume ichida.
 AI_RASM_PAPKA = env("AI_RASM_PAPKA", str(Path("/data") / "ai_rasm")

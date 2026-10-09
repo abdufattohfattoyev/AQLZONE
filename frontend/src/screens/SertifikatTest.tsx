@@ -19,6 +19,7 @@
  *                    ishlash tabiiy. Chiqish shuning uchun so'ralmaydi:
  *                    yo'qoladigan narsa yo'q.
  */
+import { AiNatijaKarta } from "../components/AiKartalar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
@@ -668,6 +669,8 @@ function Natija({ v, javoblar, sekund, yozildi, strelka, onKorish, onQayta, onEx
         <span className="min-w-0 flex-1 font-display text-[16px]">{t("korishTugma")}</span>
         <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
       </button>
+      <AiNatijaKarta xato={qismlar.filter((q) => !q.togri && q.berildi).length} onOch={onKorish}
+        tahlil="Sertifikat: AI xatolar" />
 
       {mavzular.length > 0 && (
         <>

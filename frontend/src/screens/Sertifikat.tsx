@@ -22,6 +22,7 @@ import { zaifMavzular } from "../lib/imtihon";
 import { t } from "../lib/matn";
 import { PremiumQator, QulfBelgi } from "../components/PremiumVaraq";
 import { useVariantQulf } from "../components/variantQulf";
+import { AiRejaKarta } from "../components/AiKartalar";
 import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
 import {
   DAQIQA, DARAJA_SHKALA, TUZILISH, VARIANTLAR, berilgan, daraja, engYaxshi, joriyniOqi, ortacha, sinxronla,
@@ -144,6 +145,9 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
           <span className="text-[13px] leading-snug opacity-90">{t("imtSaqlangan")}</span>
         </button>
       )}
+
+      {/* AI ustoz — natija bor bo'lsagina (`Imtihon.tsx` dagidek). */}
+      {o && <AiRejaKarta tahlil="Sertifikat: AI reja" />}
 
       <ImtEshiklar tur="sert" onReyting={onReyting} onKorish={onKorish} />
       </div>
