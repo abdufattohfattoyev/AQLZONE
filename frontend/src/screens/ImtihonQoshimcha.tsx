@@ -67,5 +67,5 @@ export function ImtKorish({ tur, n, onChiq }: { tur: ImtTur; n: number; onChiq: 
   const v = sertYasa(n);
   if (!v || !saqlangan) return <Navigate to="/sertifikat" replace />;
   return <KoribChiqish sarlavha={`${t("imtihonTurSert")} · ${t("imtihonVariant", { n })}`}
-    savollar={sertSavollari(v, saqlangan.javoblar as SJavob[])} onYop={onChiq} />;
+    savollar={sertSavollari(v, saqlangan.javoblar as SJavob[])} onYop={onChiq} imtihon="sert" />;
 }

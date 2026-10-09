@@ -143,6 +143,11 @@ export const yolSertifikat = () => "/sertifikat";
 export const yolSertifikatVariant = (n: number) => `/sertifikat/${n}`;
 /** Imtihon Premium — tariflar va to'lov (`screens/Premium.tsx`). */
 export const yolPremium = () => "/premium";
+/** AI ustoz — Premium egalariga (`screens/Ai.tsx`). */
+export const yolAi = () => "/ai";
+export const yolAiSuhbat = (id: number) => `/ai/${id}`;
+/** Yangi suhbat yozish maydoni — birinchi savol yuborilgach `yolAiSuhbat` ga. */
+export const yolAiYangi = (tur: "repetitor" | "masala") => `/ai/yangi/${tur}`;
 
 /**
  * DTM/sertifikat atrofidagi uch sahifa — ikkalasida bir xil tuzilish,

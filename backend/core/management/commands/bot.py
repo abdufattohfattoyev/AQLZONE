@@ -808,6 +808,134 @@ def premium_qaror_tugmasi(q: dict, tg_id: str, data: str) -> str:
     return f"{tg_id}: premium #{xom} — {natija}"
 
 
+# ------------------------------------------------ AI ustoz (`core/ai.py`)
+#
+# `/ai` rejimni yoqadi: shundan keyin oddiy matn — savol, rasm — masala.
+# Rejim keshda (`AI_REJIM` soniya, har xabarda yangilanadi): odam bir
+# soat jim tursa, keyingi matni yana oddiy bot xabari bo'ladi va u
+# bilmagan holda AI chegarasini yemaydi.
+#
+# Kesh qiymati — joriy suhbat raqami (0 — hali yo'q). `/ai` yangi mavzu
+# boshlaydi, `/stop` rejimni o'chiradi.
+
+AI_REJIM = 3600
+
+
+def _ai_kalit(tg_id: str) -> str:
+    return f"ai_bot:{tg_id}"
+
+
+def ai_rejimdami(tg_id: str) -> bool:
+    from django.core.cache import cache
+
+    return cache.get(_ai_kalit(tg_id)) is not None
+
+
+def _ai_xato_matni(kod: str, til: str) -> str:
+    return {
+        "chegara": M("aiChegara", til, n=settings.AI_KUNLIK),
+        "jami": M("aiJami", til),
+        "band": M("aiBand", til),
+        "yopiq": M("aiYopiq", til),
+        "rasm": M("aiRasmXato", til),
+        "katta": M("aiRasmXato", til),
+    }.get(kod, M("aiXato", til))
+
+
+def _ai_premium_yubor(chat_id: int, til: str) -> None:
+    """AI — Premium imkoniyati. Ilova manzili bo'lmasa ham gap aytilsin (tugmasiz)."""
+    if ilova_url("/premium"):
+        bolimni_yubor(chat_id, til, "/premium", "aiPremium")
+    else:
+        api("sendMessage", chat_id=chat_id, parse_mode="HTML", text=M("aiPremium", til))
+
+
+def ai_boshla(chat_id: int, tg_id: str, til: str) -> str:
+    """`/ai` — Premium bo'lsa rejimni yoqadi, bo'lmasa Premium haqida aytadi."""
+    from django.core.cache import cache
+    from core import ai as AI
+    from core import premium as PR
+
+    pupil = PR.pupil_tg(tg_id)
+    if pupil is None:
+        api("sendMessage", chat_id=chat_id, text=M("premiumHisobYoq", til))
+        return f"{tg_id}: /ai — hisob yo'q"
+    if not PR.faolmi(pupil):
+        _ai_premium_yubor(chat_id, til)
+        return f"{tg_id}: /ai — premium yo'q"
+    if not AI.yoqilganmi():
+        api("sendMessage", chat_id=chat_id, text=M("aiYopiq", til))
+        return f"{tg_id}: /ai — kalit yo'q"
+    cache.set(_ai_kalit(tg_id), 0, AI_REJIM)
+    qolgan = max(0, settings.AI_KUNLIK - AI.bugun_ishlatilgan(pupil))
+    api("sendMessage", chat_id=chat_id, parse_mode="HTML", text=M("aiBotSalom", til, qolgan=qolgan))
+    return f"{tg_id}: /ai — rejim yoqildi"
+
+
+def ai_stop(chat_id: int, tg_id: str, til: str) -> str:
+    from django.core.cache import cache
+
+    cache.delete(_ai_kalit(tg_id))
+    api("sendMessage", chat_id=chat_id, text=M("aiChiqdi", til))
+    return f"{tg_id}: /stop — AI o'chdi"
+
+
+def tg_rasm_ol(file_id: str) -> bytes:
+    """Telegram'dagi rasm baytlari (`getFile` + yuklab olish)."""
+    token = settings.BOT_TOKEN
+    so = urllib.parse.quote(file_id)
+    with urllib.request.urlopen(f"https://api.telegram.org/bot{token}/getFile?file_id={so}", timeout=15) as r:
+        yol = json.loads(r.read())["result"]["file_path"]
+    with urllib.request.urlopen(f"https://api.telegram.org/file/bot{token}/{yol}", timeout=30) as r:
+        return r.read()
+
+
+def ai_savol(chat_id: int, tg_id: str, til: str, matn: str = "", file_id: str = "") -> str:
+    """
+    AI rejimidagi xabar. Rasm — har doim YANGI masala suhbati (yangi
+    masala), matn — joriy suhbatning davomi yoki yangi repetitor suhbati.
+    Javobning o'zi fonda yoziladi va bot xabari bo'lib keladi (`ai._botga`).
+    """
+    from django.core.cache import cache
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from core import ai as AI
+    from core import premium as PR
+    from core.models import AiSuhbat
+
+    pupil = PR.pupil_tg(tg_id)
+    if pupil is None:
+        cache.delete(_ai_kalit(tg_id))
+        return ""
+    joriy = cache.get(_ai_kalit(tg_id)) or 0
+    api("sendChatAction", chat_id=chat_id, action="typing")
+    try:
+        if file_id:
+            # Premium va chegara rasm yuklanishidan OLDIN — premiumsiz
+            # odamning rasmi diskka tushmasin.
+            AI._tekshir(pupil)
+            try:
+                baytlar = tg_rasm_ol(file_id)
+            except Exception:                        # noqa: BLE001
+                raise AI.AiXato("rasm")
+            rasm = AI.rasm_yukla(SimpleUploadedFile("masala.jpg", baytlar))
+            s, _ = AI.boshla(pupil, AiSuhbat.MASALA, matn, rasm=rasm, manba=AiSuhbat.BOT)
+        else:
+            s = AiSuhbat.objects.filter(pk=joriy, pupil=pupil).first() if joriy else None
+            if s is None:
+                s, _ = AI.boshla(pupil, AiSuhbat.REPETITOR, matn, manba=AiSuhbat.BOT)
+            else:
+                AI.davom(pupil, s, matn)
+    except AI.AiXato as e:
+        if e.kod == "premium":
+            cache.delete(_ai_kalit(tg_id))
+            _ai_premium_yubor(chat_id, til)
+        else:
+            api("sendMessage", chat_id=chat_id, text=_ai_xato_matni(e.kod, til))
+        return f"{tg_id}: AI — {e.kod}"
+    cache.set(_ai_kalit(tg_id), s.pk, AI_REJIM)
+    return f"{tg_id}: AI savol (suhbat #{s.pk}, {s.tur})"
+
+
 # ------------------------------------------------ majburiy kanal a'zoligi
 
 def kanal_shartini_yubor(chat_id: int, tg_id: str, til: str, matn: str) -> str:
@@ -914,6 +1042,9 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         javob = premium_chek(chat_id, tg_id, til, file_id)
         if javob:
             return javob
+        # Chek kutilmayotgan bo'lsa va AI rejimi yoqiq — masala rasmi.
+        if ai_rejimdami(tg_id):
+            return ai_savol(chat_id, tg_id, til, (xabar.get("caption") or "").strip(), file_id)
 
     # --- matn keldi ---
     matn = (xabar.get("text") or "").strip()
@@ -1043,6 +1174,10 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     if matn.startswith("/start premium"):
         return premium_boshla(chat_id, tg_id, til, matn)
 
+    # Ilovadagi "Botda so'rash" tugmasi — AI ustoz rejimi.
+    if matn.startswith("/start ai"):
+        return ai_boshla(chat_id, tg_id, til)
+
     if matn.startswith("/start"):
         # Odam o'zi yozdi — demak xabarlarga qarshi emas. "Boshqa
         # yozmang" belgisi olib tashlanadi, aks holda u eslatmalardan
@@ -1140,6 +1275,13 @@ def yangilikni_qayta_ishla(u: dict) -> str:
     if matn.startswith("/premium"):
         return premium_boshla(chat_id, tg_id, til, "/start premium")
 
+    # AI ustoz (Premium) — rejimni yoqadi / o'chiradi.
+    if matn.startswith("/ai"):
+        return ai_boshla(chat_id, tg_id, til)
+
+    if matn.startswith("/stop") and ai_rejimdami(tg_id):
+        return ai_stop(chat_id, tg_id, til)
+
     if matn.startswith("/masalalar") or matn in barcha("tMasalalar"):
         bolimni_yubor(chat_id, til, MASALALAR_YOLI, "masalalarBot")
         return f"{tg_id}: /masalalar"
@@ -1195,6 +1337,11 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         api("sendMessage", chat_id=chat_id, text=yordam)
         return f"{tg_id}: /help"
 
+    # AI rejimida oddiy matn — savol. Buyruqlar va klaviatura tugmalari
+    # yuqorida ushlanadi, ya'ni bu yerga faqat odamning o'z gapi keladi.
+    if matn and not matn.startswith("/") and ai_rejimdami(tg_id):
+        return ai_savol(chat_id, tg_id, til, matn)
+
     # Boshqa har qanday xabar — yo'naltiramiz.
     #
     # Klaviatura shu yerda ham QAYTA yuboriladi. Sabab: bu yangilikdan
@@ -1224,6 +1371,7 @@ BUYRUQLAR = (
     ("dtm", "buyruqDtm"),
     ("sertifikat", "buyruqSertifikat"),
     ("premium", "buyruqPremium"),
+    ("ai", "buyruqAi"),
     ("masalalar", "buyruqMasalalar"),
     ("oyinlar", "buyruqOyinlar"),
     ("duel", "buyruqDuel"),

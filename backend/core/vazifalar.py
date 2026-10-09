@@ -1,14 +1,16 @@
 """
 Fon vazifalari — Celery.
 
-─────────────────── IKKITA TUR ───────────────────
+─────────────────── UCHTA TUR ───────────────────
 
   buyruq()          jadval bo'yicha ishlaydigan `manage.py` buyrug'i
   telegram_xabar()  yo'qolmasligi kerak bo'lgan bitta xabar
+  ai_javob()        AI ustoz javobi (`core/ai.py`)
 
-Uchinchisi yo'q va bu ataylab: har ishni fonga surish oson, lekin
-har bir fon vazifasi — kuzatilishi kerak bo'lgan yangi joy. Faqat
-ikkita sabab bor edi (`aqlzone/celery.py`) va shu ikkitasi yopiladi.
+Ilgari faqat ikkitasi bor edi va bu ataylab: har ishni fonga surish
+oson, lekin har bir fon vazifasi — kuzatilishi kerak bo'lgan yangi joy.
+AI javobi uchinchi sabab bo'ldi: u 5–30 soniya oladi va so'rov ichida
+kutilsa gunicorn ishchisini band qilardi.
 
 ─────────────────── MANTIQ BU YERDA EMAS ───────────────────
 
@@ -91,6 +93,22 @@ def telegram_xabar(self, chat_id: str, matn: str, **maydonlar) -> str:
                     self.request.retries + 1, URINISH + 1, izoh)
         raise RuntimeError(f"telegram: {izoh}")
     return holat
+
+
+@shared_task(name="core.vazifalar.ai_javob", acks_late=False)
+def ai_javob(xabar_id: int) -> str:
+    """
+    AI ustoz javobi. Qayta urinish YO'Q: SDK tarmoq xatosida o'zi ikki
+    marta urinadi, undan keyin esa odam "Qayta urinish" ni o'zi bosadi —
+    pul ketadigan so'rovni jimgina takrorlab turish xavfli.
+
+    `acks_late=False`: ishchi yarim yo'lda yiqilsa vazifa navbatga
+    qaytmaydi (qaytsa bir javob ikki marta to'lanardi); osilib qolgan
+    qator 5 daqiqadan keyin "xato" bo'lib ko'rinadi (`ai.suhbat_toliq`).
+    """
+    from . import ai
+
+    return ai.javob_yoz(xabar_id)
 
 
 def fonda(vazifa, *args, **kwargs) -> None:

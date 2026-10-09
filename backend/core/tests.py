@@ -35,8 +35,8 @@ from . import views
 from . import masala_kanal as MK
 from . import models as MDL
 from .models import (
-    Duel, DuelTaklif, Faollik, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
-    MasalaOvoz, MasalaUrinish, Profile, Progress, Pupil, Reklama, ReklamaQabul,
+    AiSuhbat, AiXabar, Duel, DuelTaklif, Faollik, Identity, KirishKodi, LessonResult, LigaAzo, Masala, MasalaKorish,
+    MasalaOvoz, MasalaUrinish, ImtihonNatija, Profile, Progress, Pupil, Reklama, ReklamaQabul,
     Session, Xona,
 )
 
@@ -10299,3 +10299,265 @@ class PremiumTest(TestCase):
         self.assertIsNotNone(j["davr_boshi"])
         r = self.client.get("/api/v1/imtihon/reyting?tur=dtm", **h).json()
         self.assertTrue(r["qatorlar"][0]["premium"])
+
+
+@override_settings(OPENAI_API_KEY="sk-sinov", AI_KUNLIK=3, AI_KUNLIK_JAMI=100,
+                   BOT_TOKEN=BOT, KANAL_MAJBURIY=False)
+class AiUstozTest(TestCase):
+    """
+    AI ustoz (`core/ai.py`): faqat Premium, kunlik chegara, suhbat davomi,
+    bot rejimi. Tashqi API CHAQIRILMAYDI — `_chaqir` almashtiriladi.
+    """
+
+    def setUp(self):
+        import tempfile
+
+        from core.management.commands import bot
+
+        cache.clear()
+        self.bot = bot
+        self.yuborilgan: list[dict] = []
+        self._eski = bot.api
+        bot.api = lambda usul, **p: self.yuborilgan.append({"usul": usul, **p}) or {"ok": True}
+        self.xabarlar: list[tuple] = []
+        self.chaqiruvlar: list[tuple] = []
+        for nishon, tut in (
+            ("core.xabar.yubor", lambda chat, matn, **k: self.xabarlar.append((chat, matn)) or ("yuborildi", "")),
+            ("core.ai._chaqir", self._soxta_ai),
+        ):
+            t = patch(nishon, side_effect=tut)
+            t.start()
+            self.addCleanup(t.stop)
+        papka = tempfile.TemporaryDirectory()
+        self.addCleanup(papka.cleanup)
+        t = override_settings(AI_RASM_PAPKA=papka.name)
+        t.enable()
+        self.addCleanup(t.disable)
+
+    def tearDown(self):
+        self.bot.api = self._eski
+
+    def _soxta_ai(self, tizim, xabarlar, pupil_id, tur):
+        self.chaqiruvlar.append((tizim, xabarlar, tur))
+        return f"Javob #{len(self.chaqiruvlar)}", 120, 80
+
+    def kir(self, premium: bool = True, device: str = "dev-ai-ustoz-1111aaaa") -> tuple[dict, Pupil]:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        p = Pupil.objects.get(pk=r.json()["user"]["id"])
+        if premium:
+            p.premium_gacha = timezone.now() + timedelta(days=5)
+            p.save(update_fields=["premium_gacha"])
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}, p
+
+    def yangi(self, h, **tana):
+        return self.client.post("/api/v1/ai/suhbat", tana, content_type="application/json", **h)
+
+    XATO = {"savol": "2x + 3 = 11. x = ?", "togri": "4", "sizniki": "7", "mavzu": "Tenglamalar",
+            "variantlar": [{"harf": "A", "qiymat": "4"}, {"harf": "B", "qiymat": "7"}]}
+
+    # --- huquq ---
+
+    def test_premiumsiz_yopiq(self):
+        h, _ = self.kir(premium=False)
+        self.assertFalse(self.client.get("/api/v1/ai", **h).json()["premium"])
+        r = self.yangi(h, tur="repetitor", matn="Salom")
+        self.assertEqual(r.status_code, 403)
+        self.assertEqual(r.json()["kod"], "premium")
+        self.assertEqual(self.chaqiruvlar, [])
+
+    def test_kirmagan_rad(self):
+        self.assertIn(self.client.get("/api/v1/ai").status_code, (401, 403))
+
+    @override_settings(OPENAI_API_KEY="")
+    def test_kalitsiz_ochiq_emas(self):
+        h, _ = self.kir()
+        self.assertFalse(self.client.get("/api/v1/ai", **h).json()["yoqilgan"])
+        self.assertEqual(self.yangi(h, tur="repetitor", matn="Salom").status_code, 503)
+
+    # --- xato tushuntirish ---
+
+    def test_xato_tushuntirish_kontekst_bilan(self):
+        h, _ = self.kir()
+        r = self.yangi(h, tur="xato", kontekst=self.XATO)
+        self.assertEqual(r.status_code, 201)
+        j = r.json()
+        # Broker yo'q — vazifa joyida bajarildi, javob tayyor.
+        self.assertEqual([x["holat"] for x in j["xabarlar"]], ["tayyor", "tayyor"])
+        self.assertEqual(j["xabarlar"][1]["matn"], "Javob #1")
+        self.assertEqual(j["sarlavha"], "2x + 3 = 11. x = ?")
+        tizim, xabarlar, tur = self.chaqiruvlar[0]
+        self.assertEqual(tur, "xato")
+        self.assertIn("o'zbek", tizim)
+        self.assertIn("Kalitdagi to'g'ri javob: 4", xabarlar[0]["content"])
+        self.assertIn("O'quvchining javobi: 7", xabarlar[0]["content"])
+        x = AiXabar.objects.get(rol=AiXabar.AI)
+        self.assertEqual((x.kirish_token, x.chiqish_token), (120, 80))
+
+    def test_xato_savolsiz_400(self):
+        h, _ = self.kir()
+        self.assertEqual(self.yangi(h, tur="xato", kontekst={"togri": "4"}).status_code, 400)
+        self.assertEqual(self.yangi(h, tur="nimadir", matn="x").status_code, 400)
+
+    def test_rus_tilida_ruscha_korsatma(self):
+        h, p = self.kir()
+        p.til = "ru"
+        p.save(update_fields=["til"])
+        self.yangi(h, tur="repetitor", matn="Что такое логарифм?")
+        self.assertIn("rus", self.chaqiruvlar[0][0])
+
+    # --- suhbat davomi ---
+
+    def test_davom_va_tarix(self):
+        h, _ = self.kir()
+        sid = self.yangi(h, tur="repetitor", matn="Logarifm nima?").json()["id"]
+        j = self.client.post(f"/api/v1/ai/suhbat/{sid}", {"matn": "Misol keltiring"},
+                             content_type="application/json", **h).json()
+        self.assertEqual([x["rol"] for x in j["xabarlar"]], ["user", "ai", "user", "ai"])
+        tarix = self.chaqiruvlar[1][1]
+        self.assertEqual([x["role"] for x in tarix], ["user", "assistant", "user"])
+        self.assertEqual(tarix[1]["content"], "Javob #1")
+        self.assertEqual(self.client.get("/api/v1/ai", **h).json()["suhbatlar"][0]["id"], sid)
+
+    def test_begona_suhbat_404(self):
+        h, _ = self.kir()
+        sid = self.yangi(h, tur="repetitor", matn="Salom").json()["id"]
+        h2, _ = self.kir(device="dev-ai-ustoz-2222bbbb")
+        self.assertEqual(self.client.get(f"/api/v1/ai/suhbat/{sid}", **h2).status_code, 404)
+
+    def test_javob_yozilayotganda_band(self):
+        h, _ = self.kir()
+        with patch("core.ai._navbatga"):
+            sid = self.yangi(h, tur="repetitor", matn="Salom").json()["id"]
+        r = self.client.post(f"/api/v1/ai/suhbat/{sid}", {"matn": "Yana"},
+                             content_type="application/json", **h)
+        self.assertEqual(r.status_code, 409)
+
+    # --- chegara ---
+
+    def test_kunlik_chegara(self):
+        h, _ = self.kir()
+        for _ in range(3):
+            self.assertEqual(self.yangi(h, tur="repetitor", matn="Savol").status_code, 201)
+        r = self.yangi(h, tur="repetitor", matn="Yana")
+        self.assertEqual(r.status_code, 429)
+        self.assertEqual(r.json()["kod"], "chegara")
+        self.assertEqual(self.client.get("/api/v1/ai", **h).json()["qolgan"], 0)
+
+    def test_xato_javob_chegaraga_sanalmaydi_va_qayta_urinish(self):
+        h, _ = self.kir()
+        with patch("core.ai._chaqir", side_effect=RuntimeError("tarmoq")):
+            j = self.yangi(h, tur="repetitor", matn="Salom").json()
+        self.assertEqual(j["xabarlar"][-1]["holat"], "xato")
+        self.assertEqual(self.client.get("/api/v1/ai", **h).json()["qolgan"], 3)
+        j = self.client.post(f"/api/v1/ai/suhbat/{j['id']}/qayta", **h).json()
+        self.assertEqual([x["holat"] for x in j["xabarlar"]], ["tayyor", "tayyor"])
+        self.assertEqual(AiXabar.objects.filter(rol=AiXabar.AI).count(), 1)
+
+    @override_settings(AI_KUNLIK_JAMI=1)
+    def test_butun_ilova_chegarasi(self):
+        h, _ = self.kir()
+        self.yangi(h, tur="repetitor", matn="Bir")
+        h2, _ = self.kir(device="dev-ai-ustoz-3333cccc")
+        r = self.yangi(h2, tur="repetitor", matn="Ikki")
+        self.assertEqual(r.json()["kod"], "jami")
+
+    # --- reja va masala ---
+
+    def test_reja_server_natijalaridan(self):
+        h, p = self.kir()
+        pr = p.asosiy_profil()
+        for i in range(2):
+            ImtihonNatija.objects.create(profile=pr, variant=1, togri=10, jami=30, mijoz_vaqt=1000 + i,
+                                         mavzular=[{"m": "Progressiyalar", "x": 3}, {"m": "Trigonometriya", "x": 1}])
+        self.assertEqual(self.yangi(h, tur="reja").status_code, 201)
+        birinchi = self.chaqiruvlar[0][1][0]["content"]
+        self.assertIn("DTM: 2 ta urinish, o'rtacha 33%", birinchi)
+        self.assertLess(birinchi.index("Progressiyalar — 6"), birinchi.index("Trigonometriya — 2"))
+
+    def test_masala_rasm_bilan(self):
+        import base64
+        import io
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        h, _ = self.kir()
+        b = io.BytesIO()
+        Image.new("RGB", (3000, 1000), "white").save(b, format="PNG")
+        r = self.client.post("/api/v1/ai/suhbat", {
+            "tur": "masala", "matn": "",
+            "rasm": SimpleUploadedFile("m.png", b.getvalue(), content_type="image/png")}, **h)
+        self.assertEqual(r.status_code, 201)
+        self.assertTrue(r.json()["rasm"])
+        qism = self.chaqiruvlar[0][1][0]["content"]
+        self.assertEqual(qism[1]["type"], "image_url")
+        url = qism[1]["image_url"]["url"]
+        self.assertTrue(url.startswith("data:image/jpeg;base64,"))
+        # Kichraytirilgan: uzun tomoni 1600px.
+        jpeg = base64.b64decode(url.split(",", 1)[1])
+        self.assertEqual(Image.open(io.BytesIO(jpeg)).size[0], 1600)
+
+    def test_rasm_emas_400(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        h, _ = self.kir()
+        r = self.client.post("/api/v1/ai/suhbat", {
+            "tur": "masala", "rasm": SimpleUploadedFile("m.png", b"rasm emas", content_type="image/png")}, **h)
+        self.assertEqual(r.json()["kod"], "rasm")
+
+    def test_bolaklar(self):
+        from . import ai as AI
+
+        matn = "\n".join(f"{i}) " + "x" * 50 for i in range(200))
+        bolaklar = AI.bolaklarga(matn, 500)
+        self.assertTrue(all(len(b) <= 500 for b in bolaklar))
+        self.assertEqual("\n".join(bolaklar), matn)
+        self.assertEqual(AI.bolaklarga("y" * 1200, 500), ["y" * 500, "y" * 500, "y" * 200])
+
+    # --- bot ---
+
+    def tg(self, tg: str = "5151", premium: bool = True) -> Pupil:
+        p = Pupil.objects.create(first_name="Aziza", til="uz",
+                                 premium_gacha=timezone.now() + timedelta(days=3) if premium else None)
+        Identity.objects.create(pupil=p, provider=Identity.TELEGRAM, external_id=tg)
+        Identity.objects.create(pupil=p, provider=Identity.TELEFON, external_id=f"+99891{tg}000")
+        return p
+
+    def bot_xabar(self, tg: str, **ichki):
+        return self.bot.yangilikni_qayta_ishla({"update_id": 1, "message": {
+            "chat": {"id": int(tg)}, "from": {"id": int(tg), "first_name": "Aziza"}, **ichki}})
+
+    def test_bot_rejim_savol_va_davom(self):
+        p = self.tg()
+        self.bot_xabar("5151", text="/ai")
+        self.assertIn("AI ustoz", self.yuborilgan[-1]["text"])
+        self.bot_xabar("5151", text="Sinus nima?")
+        self.bot_xabar("5151", text="Misol bering")
+        s = AiSuhbat.objects.get(pupil=p)
+        self.assertEqual((s.tur, s.manba), ("repetitor", "bot"))
+        self.assertEqual(s.xabarlar.count(), 4)
+        self.assertEqual([m for _, m in self.xabarlar], ["Javob #1", "Javob #2"])
+        # /stop — keyingi matn oddiy bot xabari, AI chaqirilmaydi.
+        self.bot_xabar("5151", text="/stop")
+        self.bot_xabar("5151", text="salom")
+        self.assertEqual(len(self.chaqiruvlar), 2)
+
+    def test_bot_rejimsiz_matn_ai_ga_ketmaydi(self):
+        self.tg()
+        self.bot_xabar("5151", text="Sinus nima?")
+        self.assertEqual(self.chaqiruvlar, [])
+
+    def test_bot_premiumsiz(self):
+        self.tg(premium=False)
+        self.bot_xabar("5151", text="/ai")
+        self.assertIn("Imtihon Premium", self.yuborilgan[-1]["text"])
+        self.bot_xabar("5151", text="Sinus nima?")
+        self.assertEqual(self.chaqiruvlar, [])
+
+    def test_bot_javob_html_qochiriladi(self):
+        self.tg()
+        self.bot_xabar("5151", text="/ai")
+        with patch("core.ai._chaqir", return_value=("x < 3 va y > 2", 1, 1)):
+            self.bot_xabar("5151", text="Tengsizlik")
+        self.assertEqual(self.xabarlar[-1][1], "x &lt; 3 va y &gt; 2")

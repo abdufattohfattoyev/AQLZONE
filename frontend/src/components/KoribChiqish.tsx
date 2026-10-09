@@ -15,13 +15,20 @@
  *
  * Ranglar: to'g'ri javob — yashil, o'zining xato tanlovi — qizil
  * (ilovada qizil faqat xato uchun). Qolgan variantlar neytral.
+ *
+ * Xato va javobsiz savolda "AI tushuntirsin" (Premium, `AiOyna`): tayyor
+ * yechim hamma savolda yo'q, borida ham "nega MEN adashdim" degan savolga
+ * javob bermaydi. Oyna shu ekran ustida ochiladi — natija yo'qolmasin.
+ * Premiumsiz odam ham tugmani ko'radi va oynada nima olishini o'qiydi.
  */
 import { useMemo, useState } from "react";
+import type { XatoSavol } from "../lib/ai";
 import type { BlokSavol } from "../lib/blok";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
 import { kursMatn } from "../lib/tarjima/kurs";
+import { AiOyna } from "./AiSuhbat";
 import { QuestionView, sahnaBor, shartSahnada } from "./QuestionView";
 import { Yechim } from "./Yechim";
 
@@ -43,16 +50,19 @@ export interface KorishSavol {
 
 type Filtr = "xato" | "hammasi" | "javobsiz";
 
-export function KoribChiqish({ sarlavha, savollar, onYop }: {
+export function KoribChiqish({ sarlavha, savollar, onYop, imtihon = "dtm" }: {
   /** "5-variant · DTM" kabi — qaysi urinish ekani. */
   sarlavha: string;
   savollar: KorishSavol[];
   onYop: () => void;
+  /** AI ga qaysi imtihon ekani aytiladi (baholash tartibi har xil). */
+  imtihon?: "dtm" | "sert";
 }) {
   const xatolar = savollar.filter((q) => !q.togri && q.berildi).length;
   const javobsiz = savollar.filter((q) => !q.berildi).length;
   const [filtr, setFiltr] = useState<Filtr>(() => (xatolar ? "xato" : javobsiz ? "javobsiz" : "hammasi"));
   const [yechimda, setYechimda] = useState<BlokSavol | null>(null);
+  const [aida, setAida] = useState<XatoSavol | null>(null);
 
   const korinadi = useMemo(() => savollar.filter((q) =>
     filtr === "hammasi" ? true : filtr === "xato" ? !q.togri && q.berildi : !q.berildi), [savollar, filtr]);
@@ -97,18 +107,37 @@ export function KoribChiqish({ sarlavha, savollar, onYop }: {
           {t("korishBosh")}
         </p>
       ) : korinadi.map((q) => (
-        <SavolKarta key={q.raqam} q={q} onYechim={() => { tebrat("tanlov"); setYechimda(q.s); }} />
+        <SavolKarta key={q.raqam} q={q} onYechim={() => { tebrat("tanlov"); setYechimda(q.s); }}
+          onAi={() => { tebrat("tanlov"); setAida(aiSavoli(q, imtihon)); }} />
       ))}
 
       {yechimda?.a.yechim && (
         <Yechim qadamlar={yechimda.a.yechim} javob={String(yechimda.a.answer)} onYop={() => setYechimda(null)} />
       )}
+      {aida && <AiOyna savol={aida} onYop={() => setAida(null)} />}
     </div>
   );
 }
 
-/** Bitta savol: raqam va mavzu · shart · variantlar yoki javob qatorlari · yechim. */
-function SavolKarta({ q, onYechim }: { q: KorishSavol; onYechim: () => void }) {
+/**
+ * AI ga ketadigan savol. Savollar mijozda urug'dan yasaladi va server ularni
+ * bilmaydi — shuning uchun shart, variantlar va kalit shu yerdan yuboriladi.
+ */
+function aiSavoli(q: KorishSavol, imtihon: "dtm" | "sert"): XatoSavol {
+  const a = q.s.a;
+  const shart = [a.prompt, "text" in a && a.text ? String(a.text) : ""].filter(Boolean).join("\n");
+  return {
+    savol: shart,
+    togri: String(a.answer),
+    sizniki: q.berildi ? q.sizniki : "",
+    variantlar: q.variantlar,
+    mavzu: kursMatn(q.s.mavzu),
+    imtihon,
+  };
+}
+
+/** Bitta savol: raqam va mavzu · shart · variantlar yoki javob qatorlari · yechim · AI. */
+function SavolKarta({ q, onYechim, onAi }: { q: KorishSavol; onYechim: () => void; onAi: () => void }) {
   const a = q.s.a;
   const togriJavob = String(a.answer);
   const belgi = q.togri ? "bg-brand-green/15 text-brand-green-d"
@@ -165,13 +194,25 @@ function SavolKarta({ q, onYechim }: { q: KorishSavol; onYechim: () => void }) {
         </div>
       )}
 
-      {a.yechim && (
-        <button type="button" onClick={onYechim} data-tahlil="Ko'rib chiqish: yechim"
-          className="clay-press flex min-h-11 items-center justify-center gap-2 self-start rounded-xl bg-brand-blue/10
-                     px-4 text-[14.5px] font-bold text-brand-blue-t">
-          <Icon name="puzzle" size={17} />
-          {t("korishYechim")}
-        </button>
+      {(a.yechim || !q.togri) && (
+        <div className="flex flex-wrap gap-2">
+          {a.yechim && (
+            <button type="button" onClick={onYechim} data-tahlil="Ko'rib chiqish: yechim"
+              className="clay-press flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-blue/10
+                         px-4 text-[14.5px] font-bold text-brand-blue-t">
+              <Icon name="puzzle" size={17} />
+              {t("korishYechim")}
+            </button>
+          )}
+          {!q.togri && (
+            <button type="button" onClick={onAi} data-tahlil="Ko'rib chiqish: AI tushuntirsin"
+              className="clay-press flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sahna
+                         px-4 text-[14.5px] font-bold text-brand-blue-t shadow-ichki">
+              <Icon name="izoh" size={17} />
+              {t("aiTushuntir")}
+            </button>
+          )}
+        </div>
       )}
     </article>
   );

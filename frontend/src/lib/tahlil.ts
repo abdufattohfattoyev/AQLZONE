@@ -132,8 +132,11 @@ function yubor() {
  * variantlari ("12", "x = 3") va ular tugma nomi emas: panelning
  * "tugmalar" ro'yxati minglab javoblar bilan to'lib ketardi. Bu
  * ekranlarda faqat nomi aniq berilgan boshqaruvlar yoziladi.
+ *
+ * AI ustoz (`/ai`) ham shu ro'yxatda: u yerdagi yozuvlar — odamning o'z
+ * savollari va suhbat sarlavhalari, ularni tahlilga yozish kerak emas.
  */
-const SAVOL_EKRANI = /^\/(kurs\/[^/]+\/(dars|sinov|daraja|daftar|testlar)|oyinlar\/.+|toplam\/|masalalar\/:id|kichkintoy\/|xona\/|imtihon\/|qabul\/|mantiq\/|sertifikat\/|sessiya\/|mavzu\/)/;
+const SAVOL_EKRANI = /^\/(kurs\/[^/]+\/(dars|sinov|daraja|daftar|testlar)|oyinlar\/.+|toplam\/|masalalar\/:id|kichkintoy\/|xona\/|imtihon\/|qabul\/|mantiq\/|sertifikat\/|sessiya\/|mavzu\/|ai(\/|$))/;
 
 /** Bosilgan elementning odam o'qiydigan nomi. */
 function tugmaNomi(el: Element, yol: string): string {

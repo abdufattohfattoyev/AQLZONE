@@ -72,6 +72,9 @@ const YOPIQ = [
   // DTM varianti — bir soatlik imtihon. Pastdagi tugmani bexosdan
   // bosish butun urinishni yo'qotardi.
   /^\/imtihon\/\d+$/,
+  // AI ustoz suhbati va yozish ekrani — yozish maydoni pastda turadi va
+  // panel uni yopib qo'yardi (telefon klaviaturasi ochilganda ayniqsa).
+  /^\/ai\/(\d+|yangi\/[^/]+)$/,
   // Maktabga qabul varianti — 70–90 daqiqalik imtihon, xuddi shu sabab.
   /^\/qabul\/[^/]+\/\d+$/,
   // Mantiq mavzusi — bu ham dars (kirish, savollar), panel chalg'itmasin.

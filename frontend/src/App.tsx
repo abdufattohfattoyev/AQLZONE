@@ -38,6 +38,9 @@ const Lesson = lazy(() => import("./screens/Lesson").then((m) => ({ default: m.L
 const Daraja = lazy(() => import("./screens/Daraja").then((m) => ({ default: m.Daraja })));
 const Qabul = lazy(() => import("./screens/Qabul").then((m) => ({ default: m.Qabul })));
 const Premium = lazy(() => import("./screens/Premium").then((m) => ({ default: m.Premium })));
+const AiBosh = lazy(() => import("./screens/Ai").then((m) => ({ default: m.AiBosh })));
+const AiYangi = lazy(() => import("./screens/Ai").then((m) => ({ default: m.AiYangi })));
+const AiSahifa = lazy(() => import("./screens/Ai").then((m) => ({ default: m.AiSahifa })));
 const PremiumDarvoza = lazy(() => import("./components/PremiumVaraq").then((m) => ({ default: m.PremiumDarvoza })));
 const Mantiq = lazy(() => import("./screens/Mantiq").then((m) => ({ default: m.Mantiq })));
 const Dokon = lazy(() => import("./screens/Dokon").then((m) => ({ default: m.Dokon })));
@@ -106,7 +109,7 @@ import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
   yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
-  yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant, yolQabul, yolQabulVariant, yolMantiq, yolMantiqMavzu,
+  yolAi, yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant, yolQabul, yolQabulVariant, yolMantiq, yolMantiqMavzu,
   yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
@@ -219,6 +222,10 @@ function Yollar() {
       <Route path="/sessiya" element={<SessiyaSahifasi />} />
       <Route path="/qabul" element={<QabulSahifasi />} />
       <Route path="/premium" element={<PremiumSahifasi />} />
+      {/* AI ustoz (`screens/Ai.tsx`). `yangi/:tur` — `:id` dan OLDIN. */}
+      <Route path="/ai" element={<AiBoshSahifasi />} />
+      <Route path="/ai/yangi/:tur" element={<AiYangiSahifasi />} />
+      <Route path="/ai/:id" element={<AiSuhbatSahifasi />} />
       <Route path="/mantiq" element={<MantiqSahifasi />} />
       <Route path="/mantiq/:id" element={<MantiqMavzuSahifasi />} />
       <Route path="/qabul/:tur/:n" element={<QabulVariantSahifasi />} />
@@ -1051,6 +1058,35 @@ function PremiumSahifasi() {
   useTema("bosh");
   const orqaga = () => (window.history.length > 1 ? nav(-1) : nav(yolImtihon()));
   return <Premium onBack={orqaga} onOchildi={() => nav(yolImtihon(), { replace: true })} />;
+}
+
+/** AI ustoz — Premium egalariga (`screens/Ai.tsx`). Orqaga: tarix bo'lmasa — profil. */
+function useAiOrqaga() {
+  const nav = useNavigate();
+  return () => (window.history.state?.idx > 0 ? nav(-1) : nav(yolAi()));
+}
+
+function AiBoshSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <AiBosh onBack={() => (window.history.state?.idx > 0 ? nav(-1) : nav(yolMen()))} />;
+}
+
+function AiYangiSahifasi() {
+  const { tur } = useParams();
+  const orqaga = useAiOrqaga();
+  useTema("bosh");
+  if (tur !== "repetitor" && tur !== "masala") return <Navigate to={yolAi()} replace />;
+  return <AiYangi key={tur} tur={tur} onBack={orqaga} />;
+}
+
+function AiSuhbatSahifasi() {
+  const { id } = useParams();
+  const orqaga = useAiOrqaga();
+  useTema("bosh");
+  const raqam = Number(id);
+  if (!Number.isInteger(raqam) || raqam < 1) return <Navigate to={yolAi()} replace />;
+  return <AiSahifa key={raqam} id={raqam} onBack={orqaga} />;
 }
 
 /** Prezident va ixtisoslashtirilgan maktablarga tayyorlov (`screens/Qabul.tsx`). */

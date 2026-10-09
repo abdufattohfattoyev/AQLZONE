@@ -11,7 +11,8 @@
  *   2. Premium kartasi — qolgan vaqt soatlari bilan, muddatning qancha
  *      qismi qolgani (chiziq), tugash payti va Premium bilan ishlangan
  *      yopiq variantlar soni (`PremiumKarta`);
- *   3. haftalik reytingda ism yonida yulduz (`HaftalikReyting.tsx`).
+ *   3. haftalik reytingda ism yonida yulduz (`HaftalikReyting.tsx`);
+ *   4. AI ustozga kirish tugmasi (`screens/Ai.tsx`).
  *
  * Rang — firuza (asosiy/tanlangan holat): oltin faqat tanga, yulduz-mukofot
  * va reyting uchun (dizayn qoidasi), qizil hech qayerda.
@@ -20,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { qolganMatn, sanaMatn, usePremium, useQolgan } from "../lib/premium";
-import { yolPremium } from "../lib/yollar";
+import { yolAi, yolPremium } from "../lib/yollar";
 
 /** Ism ostidagi "⭐ Premium" yorlig'i. */
 export function PremiumBelgi() {
@@ -106,10 +107,19 @@ export function PremiumKarta() {
         </div>
       </dl>
 
-      <button type="button" onClick={() => nav(yolPremium())} data-tahlil="Profil: premium uzaytirish"
-        className="clay-press min-h-11 rounded-2xl bg-sahna text-[14.5px] font-bold text-brand-blue-t shadow-ichki">
-        {t("premUzaytirish")}
-      </button>
+      {/* AI ustoz — Premium'ning eng ko'p ishlatiladigan qismi, shu yerdan bir bosishda. */}
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" onClick={() => nav(yolAi())} data-tahlil="Profil: AI ustoz"
+          className="clay-press flex min-h-11 items-center justify-center gap-1.5 rounded-2xl bg-sahna text-[14.5px]
+                     font-bold text-brand-blue-t shadow-ichki">
+          <Icon name="izoh" size={16} />
+          {t("aiSarlavha")}
+        </button>
+        <button type="button" onClick={() => nav(yolPremium())} data-tahlil="Profil: premium uzaytirish"
+          className="clay-press min-h-11 rounded-2xl bg-sahna text-[14.5px] font-bold text-brand-blue-t shadow-ichki">
+          {t("premUzaytirish")}
+        </button>
+      </div>
     </section>
   );
 }

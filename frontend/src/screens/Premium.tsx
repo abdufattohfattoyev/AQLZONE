@@ -229,6 +229,7 @@ function Farq({ bepul }: { bepul: number }) {
     { nom: "premFarqQabul", b: t("premTaTa", { n: bepul }), p: t("premTaTa", { n: JAMI_VARIANT }) },
     { nom: "premFarqReyting", b: "—", p: "✓" },
     { nom: "premFarqTahlil", b: t("premFarqTahlil_", { n: bepul }), p: t("premFarqTahlil_", { n: JAMI_VARIANT }) },
+    { nom: "premFarqAi", b: "—", p: "✓" },
     { nom: "premFarqDars", b: t("premFarqDarsQiymat"), p: t("premFarqDarsQiymat") },
   ];
   return (

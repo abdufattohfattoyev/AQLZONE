@@ -19,6 +19,11 @@ urlpatterns = [
     path("premium", views.premium, name="premium"),
     path("premium/sinov", views.premium_sinov, name="premium-sinov"),
     path("premium/chek", views.premium_chek, name="premium-chek"),
+    # AI ustoz — faqat Premium (`core/ai.py`).
+    path("ai", views.ai_holat, name="ai"),
+    path("ai/suhbat", views.ai_yangi, name="ai-yangi"),
+    path("ai/suhbat/<int:pk>", views.ai_suhbat, name="ai-suhbat"),
+    path("ai/suhbat/<int:pk>/qayta", views.ai_qayta, name="ai-qayta"),
     path("profiles", views.profiles, name="profiles"),
     path("profiles/<int:pk>", views.profile_detail, name="profile-detail"),
     # Do'kondan kiyilgan bezak — joriy profilga yoziladi.

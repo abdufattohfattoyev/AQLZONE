@@ -867,6 +867,47 @@ XABAR: dict[str, dict[str, str]] = {
     "tPremiumOchish": {"uz": "📝 Variantlarni ochish", "ru": "📝 Открыть варианты"},
     "tPremiumUzaytirish": {"uz": "⭐ Uzaytirish", "ru": "⭐ Продлить"},
     "tAdminAloqa": {"uz": "💬 Admin bilan aloqa", "ru": "💬 Связаться с админом"},
+    # ---------------------------------------------------------- AI ustoz (`core/ai.py`)
+    "buyruqAi": {"uz": "AI ustoz — savol bering yoki masala rasmini yuboring",
+                 "ru": "AI-репетитор — задайте вопрос или пришлите фото задачи"},
+    "aiBotSalom": {
+        "uz": (
+            "🤖 <b>AI ustoz</b> tayyor.\n\n"
+            "Savolingizni yozing yoki masala rasmini yuboring — qadam-baqadam tushuntiraman.\n"
+            "Bugun yana <b>{qolgan}</b> ta savol mumkin.\n\n"
+            "Yangi mavzu: /ai · Chiqish: /stop"
+        ),
+        "ru": (
+            "🤖 <b>AI-репетитор</b> готов.\n\n"
+            "Напишите вопрос или пришлите фото задачи — объясню по шагам.\n"
+            "Сегодня осталось вопросов: <b>{qolgan}</b>.\n\n"
+            "Новая тема: /ai · Выход: /stop"
+        ),
+    },
+    "aiPremium": {
+        "uz": (
+            "🤖 <b>AI ustoz</b> — Imtihon Premium imkoniyati: imtihondagi xatolaringizni "
+            "tushuntiradi, masalani yechishga yordam beradi va zaif mavzularingiz bo'yicha reja tuzadi."
+        ),
+        "ru": (
+            "🤖 <b>AI-репетитор</b> — возможность Imtihon Premium: объясняет ошибки в экзамене, "
+            "помогает решить задачу и составляет план по слабым темам."
+        ),
+    },
+    "aiYopiq": {"uz": "AI ustoz hozircha ishlamayapti. Keyinroq urinib ko'ring.",
+                "ru": "AI-репетитор пока не работает. Попробуйте позже."},
+    "aiChegara": {"uz": "Bugungi {n} ta savol tugadi. Ertaga yana so'rashingiz mumkin.",
+                  "ru": "Сегодняшние {n} вопросов закончились. Завтра можно снова."},
+    "aiJami": {"uz": "AI ustoz hozir juda band — birozdan keyin urinib ko'ring.",
+               "ru": "AI-репетитор сейчас перегружен — попробуйте чуть позже."},
+    "aiBand": {"uz": "⏳ Oldingi savolga javob yozilyapti — biroz kuting.",
+               "ru": "⏳ Ответ на прошлый вопрос ещё пишется — подождите немного."},
+    "aiXato": {"uz": "Javob olib bo'lmadi. Savolni qayta yuboring.",
+               "ru": "Не удалось получить ответ. Отправьте вопрос ещё раз."},
+    "aiRasmXato": {"uz": "Rasmni o'qib bo'lmadi — boshqa rasm yuboring.",
+                   "ru": "Не удалось прочитать фото — пришлите другое."},
+    "aiChiqdi": {"uz": "AI ustoz o'chdi. Qaytish uchun: /ai",
+                 "ru": "AI-репетитор выключен. Чтобы вернуться: /ai"},
 }
 
 

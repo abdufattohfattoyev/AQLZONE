@@ -782,6 +782,52 @@ Kod: `backend/core/premium.py`, botdagi `premium_*` funksiyalar,
 `frontend/src/lib/premium.ts`, `screens/Premium.tsx`,
 `components/PremiumVaraq.tsx`, `components/variantQulf.tsx`.
 
+### AI ustoz (Premium)
+
+Faqat faol Premium egalariga. Provayder — OpenAI (Chat Completions).
+To'rt vazifa, hammasi suhbat (javobdan keyin "shu qadamni tushunmadim"
+deb davom ettirish mumkin):
+
+| Vazifa | Qayerda |
+|---|---|
+| Xatoni tushuntirish | imtihondan keyin "Ko'rib chiqish" → savol ostida "AI tushuntirsin" (oyna, natija yo'qolmaydi) |
+| Shaxsiy reja | `/ai` → "Shaxsiy reja" — oxirgi 30 kundagi DTM/sertifikat natijalari va zaif mavzular SERVERDAN olinadi |
+| Savol berish (repetitor) | `/ai`, botda `/ai` |
+| Masala yechish | `/ai` (matn yoki rasm), botda `/ai` dan keyin rasm yuborish |
+
+**Oqim.** So'rov odamning xabarini va bo'sh javob qatorini (`kutilmoqda`)
+yozadi, Celery ishchisi (`ai_javob`) modelni chaqirib qatorni to'ldiradi,
+ilova esa uni har 2 soniyada so'rab turadi. Botda javob tayyor bo'lgach
+xabar bo'lib keladi. Javob 5–30 soniya oladi — so'rov ichida kutilsa
+gunicorn ishchisi band bo'lardi. Ishchi yiqilsa qator 5 daqiqadan keyin
+"xato" bo'lib ko'rinadi va "Qayta urinish" chiqadi (qayta urinish
+avtomatik EMAS — pul ketadigan so'rov jimgina takrorlanmasin).
+
+**Xarajat chegarasi.** Bir odamga kuniga `AI_KUNLIK` (30) javob, butun
+ilovaga kuniga `AI_KUNLIK_JAMI` (3000). Xato bilan tugagan javob
+sanalmaydi. Tokenlar har javobda yoziladi (`AiXabar.kirish_token`,
+`chiqish_token`). Sinovda `gpt-5.4-mini` bilan bitta tushuntirish
+≈ 450 kirish + 300 chiqish token ≈ $0.002.
+
+**Rasm** EXIF bo'yicha buriladi, 1600px gacha kichraytiriladi va
+`AI_RASM_PAPKA` ga yoziladi (media'dan tashqarida — bolaning daftari
+ochiq havolada turmasin).
+
+**Sozlash** — serverdagi `.env` (`~/aqlzone/.env`), keyin `docker compose up -d`:
+
+```bash
+OPENAI_API_KEY=sk-...          # bo'sh — AI o'chiq, qolgani ishlayveradi
+# OPENAI_MODEL=gpt-5.4-mini    # arzonrog'i: gpt-5.4-nano
+# OPENAI_FIKR=low              # fikrlamaydigan model tanlansa bo'sh qoldiring
+# AI_KUNLIK=30
+# AI_KUNLIK_JAMI=3000
+```
+
+Provayder faqat `core/ai.py` → `_chaqir` da: boshqasiga o'tish uchun shu
+funksiya almashtiriladi. Kod: `backend/core/ai.py`, botdagi `ai_*`
+funksiyalar, `frontend/src/lib/ai.ts`, `screens/Ai.tsx`,
+`components/AiSuhbat.tsx`.
+
 ## Manzillar
 
 Sahifalar endi HTML fayl nomi bilan emas, o'qib tushunarli manzil bilan

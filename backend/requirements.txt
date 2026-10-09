@@ -38,3 +38,7 @@ psycopg[binary]>=3.2
 # o'sha yerda bajariladi. Shuning uchun paket har doim o'rnatiladi,
 # lekin Redis faqat serverda kerak.
 celery[redis]>=5.4
+
+# AI ustoz (`core/ai.py`) — OpenAI'ning rasmiy kutubxonasi. Faqat
+# `OPENAI_API_KEY` berilganda chaqiriladi; import ham shu paytda.
+openai>=2.0

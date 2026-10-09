@@ -485,3 +485,30 @@ PREMIUM_CHEK_PAPKA = env("PREMIUM_CHEK_PAPKA", str(Path("/data") / "premium_chek
                          if Path("/data").exists() else str(BASE_DIR / "premium_chek"))
 PREMIUM_SINOV_KUN = int(env("PREMIUM_SINOV_KUN", "3"))
 PREMIUM_BEPUL = int(env("PREMIUM_BEPUL", "3"))
+
+# ---------------------------------------------------------- AI ustoz
+#
+# Premium egalariga AI yordamchi (`core/ai.py`): xatoni tushuntirish,
+# zaif mavzular rejasi, repetitor suhbati va masala yechimiga yordam.
+# Provayder — OpenAI (egasining qarori, 2026-10-09).
+#
+# KALIT FAQAT `.env` DA. Bo'sh bo'lsa AI o'chiq: sahifa "hozircha
+# ishlamayapti" deydi, qolgan hamma narsa ishlayveradi.
+OPENAI_API_KEY = env("OPENAI_API_KEY", "")
+# Model — `.env` dan almashtiriladi (arzonrog'i: gpt-5.4-nano).
+OPENAI_MODEL = env("OPENAI_MODEL", "gpt-5.4-mini")
+# Fikrlash chuqurligi (`reasoning_effort`): low | medium | high. Bo'sh —
+# parametr yuborilmaydi (fikrlamaydigan model tanlansa shunday qiling,
+# aks holda OpenAI so'rovni rad etadi).
+OPENAI_FIKR = env("OPENAI_FIKR", "low")
+# Bitta javobning eng ko'p tokeni (fikrlash ham shunga kiradi).
+AI_MAX_TOKEN = int(env("AI_MAX_TOKEN", "4000"))
+# Xarajat chegarasi: bir odam bir kunda nechta javob oladi va butun
+# ilova bir kunda nechta javob beradi. Ikkinchisi — kalit sizib chiqsa
+# yoki kimdir skript yozsa ham hisob bir kunda "yonib" ketmasin.
+AI_KUNLIK = int(env("AI_KUNLIK", "30"))
+AI_KUNLIK_JAMI = int(env("AI_KUNLIK_JAMI", "3000"))
+# Masala rasmlari — media'dan TASHQARIDA (bolaning daftari ochiq
+# havolada turmasin), volume ichida.
+AI_RASM_PAPKA = env("AI_RASM_PAPKA", str(Path("/data") / "ai_rasm")
+                    if Path("/data").exists() else str(BASE_DIR / "ai_rasm"))

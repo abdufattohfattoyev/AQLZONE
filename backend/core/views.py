@@ -2294,3 +2294,92 @@ def premium_chek(request):
     PR.adminlarga_rasm(t, jpeg)
     PR.chek_olindi_xabari(t)
     return Response(PR.holat(request.user), status=201)
+
+
+# ------------------------------------------------------------ AI ustoz
+
+
+def _ai_xato(e) -> Response:
+    """Xato `kod` bilan — matnni mijoz o'z tilida yozadi."""
+    return Response({"detail": e.kod, "kod": e.kod}, status=e.holat)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def ai_holat(request):
+    """AI ochiqmi (Premium + kalit), bugun qancha javob qoldi va oxirgi suhbatlar."""
+    from . import ai as AI
+
+    return Response(AI.holat(request.user))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
+def ai_yangi(request):
+    """
+    Yangi suhbat: `tur` + `matn` (+ `kontekst` xato uchun, + `rasm` masala
+    uchun). Javob darhol yozilmaydi — `kutilmoqda` qatori qaytadi va
+    mijoz `GET ai/suhbat/<id>` ni so'rab turadi.
+
+    Rasm bilan kelganda so'rov multipart bo'ladi va `kontekst` JSON satr.
+    """
+    from . import ai as AI
+
+    d = request.data
+    kontekst = d.get("kontekst")
+    if isinstance(kontekst, str):
+        try:
+            kontekst = json.loads(kontekst)
+        except ValueError:
+            kontekst = None
+    try:
+        rasm = ""
+        if request.FILES.get("rasm") is not None:
+            if d.get("tur") != "masala":
+                raise AI.AiXato("rasm")
+            # Rasm saqlanishidan OLDIN huquq tekshiriladi: premiumsiz odam
+            # diskni to'ldira olmasin.
+            AI._tekshir(request.user)
+            rasm = AI.rasm_yukla(request.FILES["rasm"])
+        s, _ = AI.boshla(request.user, str(d.get("tur") or ""), str(d.get("matn") or ""),
+                         kontekst, rasm)
+    except AI.AiXato as e:
+        return _ai_xato(e)
+    s.refresh_from_db()
+    return Response(AI.suhbat_toliq(s), status=201)
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def ai_suhbat(request, pk: int):
+    """GET — suhbat va xabarlar; POST `{matn}` — keyingi savol."""
+    from . import ai as AI
+    from .models import AiSuhbat
+
+    s = AiSuhbat.objects.filter(pk=pk, pupil=request.user).first()
+    if s is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    if request.method == "POST":
+        try:
+            AI.davom(request.user, s, str(request.data.get("matn") or ""))
+        except AI.AiXato as e:
+            return _ai_xato(e)
+    return Response(AI.suhbat_toliq(s))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def ai_qayta(request, pk: int):
+    """Oxirgi javob xato bilan tugagan — qayta so'rash."""
+    from . import ai as AI
+    from .models import AiSuhbat
+
+    s = AiSuhbat.objects.filter(pk=pk, pupil=request.user).first()
+    if s is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    try:
+        AI.qayta_urin(request.user, s)
+    except AI.AiXato as e:
+        return _ai_xato(e)
+    return Response(AI.suhbat_toliq(s))

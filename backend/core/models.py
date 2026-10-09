@@ -2305,3 +2305,80 @@ class PremiumTolov(models.Model):
         db_table = "premium_tolov"
         ordering = ["-created_at"]
         indexes = [models.Index(fields=["holat", "created_at"])]
+
+
+class AiSuhbat(models.Model):
+    """
+    AI ustoz bilan bitta suhbat (`core/ai.py`).
+
+    Har to'rt vazifa — suhbat: xatoni tushuntirgandan keyin ham odam
+    "shu qadamni tushunmadim" deb so'ray olishi kerak. Farqi faqat
+    boshlanishida: `tur` tizim ko'rsatmasini, `kontekst` esa birinchi
+    xabarga qo'shiladigan ma'lumotni (savol, variantlar, zaif mavzular)
+    belgilaydi.
+
+    `rasm` — masala rasmi (`AI_RASM_PAPKA` dagi fayl nomi). Har javobda
+    qayta yuboriladi: model oldingi so'rovni eslab qolmaydi.
+    """
+
+    XATO = "xato"
+    REJA = "reja"
+    REPETITOR = "repetitor"
+    MASALA = "masala"
+    TURLAR = [(XATO, "xatoni tushuntirish"), (REJA, "zaif mavzular rejasi"),
+              (REPETITOR, "repetitor"), (MASALA, "masala yechimi")]
+    ILOVA = "ilova"
+    BOT = "bot"
+    MANBALAR = [(ILOVA, "ilova"), (BOT, "bot")]
+
+    pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="ai_suhbatlar")
+    tur = models.CharField(max_length=10, choices=TURLAR)
+    manba = models.CharField(max_length=5, choices=MANBALAR, default=ILOVA)
+    #: Ro'yxatda ko'rinadigan qisqa nom (birinchi savolning boshi).
+    sarlavha = models.CharField(max_length=120, default="", blank=True)
+    kontekst = models.JSONField(default=dict, blank=True)
+    rasm = models.CharField(max_length=64, default="", blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    yangilangan_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "ai_suhbat"
+        ordering = ["-yangilangan_at"]
+        indexes = [models.Index(fields=["pupil", "yangilangan_at"])]
+
+
+class AiXabar(models.Model):
+    """
+    Suhbatdagi bitta xabar.
+
+    AI javobi FONDA yoziladi: avval `kutilmoqda` holatida bo'sh qator
+    paydo bo'ladi, ishchi uni to'ldiradi (`tayyor`) yoki `xato` qiladi.
+    Mijoz shu qatorni so'rab turadi — gunicorn ishchisi model javobini
+    10–30 soniya kutib band bo'lmaydi.
+
+    Tokenlar — xarajatni panelda ko'rish uchun.
+    """
+
+    USER = "user"
+    AI = "ai"
+    ROLLAR = [(USER, "odam"), (AI, "AI")]
+    KUTILMOQDA = "kutilmoqda"
+    TAYYOR = "tayyor"
+    XATO = "xato"
+    HOLATLAR = [(KUTILMOQDA, "kutilmoqda"), (TAYYOR, "tayyor"), (XATO, "xato")]
+
+    suhbat = models.ForeignKey(AiSuhbat, on_delete=models.CASCADE, related_name="xabarlar")
+    #: Kunlik chegarani sanash uchun nusxa (suhbat orqali JOIN qilmaslik).
+    pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="ai_xabarlar")
+    rol = models.CharField(max_length=4, choices=ROLLAR)
+    matn = models.TextField(default="", blank=True)
+    holat = models.CharField(max_length=10, choices=HOLATLAR, default=TAYYOR)
+    kirish_token = models.IntegerField(default=0)
+    chiqish_token = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "ai_xabar"
+        ordering = ["created_at", "id"]
+        indexes = [models.Index(fields=["rol", "created_at"]),
+                   models.Index(fields=["pupil", "rol", "created_at"])]

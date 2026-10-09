@@ -198,7 +198,7 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
   if (tugadi && korish) {
     return (
       <KoribChiqish sarlavha={`${t("imtihonTurSert")} · ${t("imtihonVariant", { n: v.n })}`}
-        savollar={sertSavollari(v, javoblar)} onYop={() => setKorish(false)} />
+        savollar={sertSavollari(v, javoblar)} onYop={() => setKorish(false)} imtihon="sert" />
     );
   }
   if (tugadi) {
