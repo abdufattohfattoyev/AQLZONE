@@ -332,7 +332,10 @@ function KursBelgi({ c, foiz, olcham, i }: {
            Soya rasmga kuydirilmagan: u yorug' va qorong'i temada
            boshqacha bo'lishi kerak. */
         <span className="kurs-belgi-kir size-full" style={{ "--kech": `${160 + i * 70}ms` } as CSSProperties}>
-          <span className={`block size-full ${joriy ? "kurs-belgi-suz" : ""}`}>
+          {/* Nur — belgi ortidagi yumshoq firuza doira: belgini karta fonidan
+              ajratadi. Hover'da kengayadi, joriy kursda sekin "nafas oladi". */}
+          <span aria-hidden className={`kurs-nur ${joriy ? "kurs-nur-joriy" : ""}`} />
+          <span className={`relative block size-full ${joriy ? "kurs-belgi-suz" : ""}`}>
             <img src={rasm} alt="" loading="lazy" decoding="async"
               className="kurs-belgi size-full object-contain" />
           </span>
