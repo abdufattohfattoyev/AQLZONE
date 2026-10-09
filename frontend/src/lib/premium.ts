@@ -30,6 +30,10 @@ export interface PremiumHolat {
   qolgan_sekund: number;
   /** Faol, lekin hali to'lov yo'q — 3 kunlik sinov. */
   sinovda: boolean;
+  /** Joriy davr boshi (oxirgi tasdiqlangan to'lov yoki sinov) — profil chizig'i uchun. */
+  davr_boshi: string | null;
+  /** Premium bilan ishlangan yopiq variantlar soni (DTM + sertifikat). */
+  ishlangan: number;
   sinov_mumkin: boolean;
   sinov_kun: number;
   bepul: number;

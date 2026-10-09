@@ -163,6 +163,8 @@ export interface ReytingQator {
   ball: number | null;
   sekund: number;
   men: boolean;
+  /** Imtihon Premium foydalanuvchisi — ism yonida yulduz. */
+  premium?: boolean;
   /** O'zimnikida: jadvalga kirgan urinishning vaqti (`ImtihonNatija.vaqt`). */
   vaqt?: number;
 }

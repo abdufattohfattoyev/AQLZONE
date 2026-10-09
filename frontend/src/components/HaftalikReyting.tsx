@@ -240,6 +240,11 @@ function Qator({ q, umumiy }: { q: ReytingQator; umumiy: boolean }) {
             qaytaradi: "Do'stingiz" jadvalda notanishni do'st deb atardi). */}
         <span className={`block truncate text-[15px] ${q.men ? "font-bold text-brand-blue-t" : "font-semibold"}`}>
           {q.men ? (q.ism ? `${q.ism} · ${t("siz")}` : t("hrSiz")) : q.ism || t("hrAnonim")}
+          {/* Premium foydalanuvchi — ism yonida yulduz (`core/imtihon.py` → `premium`). */}
+          {q.premium && (
+            <Icon name="star" size={13} className="ml-1 inline-block -translate-y-px text-brand-blue-t"
+              aria-label={t("premBelgi")} />
+          )}
         </span>
         {umumiy && <span className="block text-[12.5px] text-ink-dim">{t("hrVariantQisqa", { n: q.variant })}</span>}
       </span>

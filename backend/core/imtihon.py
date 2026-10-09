@@ -341,11 +341,17 @@ def haftalik_reyting(tur_nomi: str, variant: int | None, men: Profile | None,
         tanlangan = list(eng.values())
     tanlangan.sort(key=_kalit)
 
+    hozir = timezone.now()
+
     def qator(i: int, n: ImtihonNatija) -> dict:
+        p = n.profile.pupil
         q = {
             "orin": i + 1, "ism": ism(n.profile), "variant": n.variant,
             "togri": n.togri, "jami": n.jami, "ball": n.ball, "sekund": n.sekund,
             "men": n.profile_id == men_id,
+            # Ism yonidagi yulduz — Premium foydalanuvchi (`core/premium.py`).
+            # Pupil allaqachon `select_related` bilan keladi: qo'shimcha so'rov yo'q.
+            "premium": bool(p and p.premium_gacha and p.premium_gacha > hozir),
         }
         # O'zimniki — qaysi urinish jadvalga kirgani: natija ekrani
         # "bu qayta ishlash, hisobga birinchisi kirdi" deb ayta olsin.

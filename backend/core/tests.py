@@ -10284,3 +10284,18 @@ class PremiumTest(TestCase):
         self.assertEqual(j["meniki"]["togri"], 24)
         self.assertEqual(j["otgan_hafta"]["orin"], 1)
         self.assertEqual(j["otgan_hafta"]["natija"], 50)
+
+    def test_profil_uchun_davr_va_ishlangan_hamda_reyting_belgisi(self):
+        h, pk = self.kir()
+        Pupil.objects.filter(pk=pk).update(premium_gacha=timezone.now() + timedelta(days=5))
+        MDL.PremiumTolov.objects.create(pupil_id=pk, tarif="7kun", summa=5000, holat="tasdiqlandi",
+                                        hal_qilingan_at=timezone.now() - timedelta(days=2))
+        for v, vaqt in ((2, 1), (5, 2), (5, 3), (9, 4)):
+            self.client.post("/api/v1/imtihon/natija", {"variant": v, "togri": 10, "jami": 30, "vaqt": vaqt},
+                             content_type="application/json", **h)
+        j = self.client.get("/api/v1/premium", **h).json()
+        self.assertEqual(j["ishlangan"], 2)                  # 5 va 9 (takror sanalmaydi, 2 — bepul)
+        self.assertFalse(j["sinovda"])
+        self.assertIsNotNone(j["davr_boshi"])
+        r = self.client.get("/api/v1/imtihon/reyting?tur=dtm", **h).json()
+        self.assertTrue(r["qatorlar"][0]["premium"])

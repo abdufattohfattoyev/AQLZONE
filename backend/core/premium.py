@@ -125,8 +125,13 @@ def holat(pupil: Pupil) -> dict:
     kutilayotgan = PremiumTolov.objects.filter(pupil=pupil, holat=PremiumTolov.KUTILMOQDA).first()
     oxirgi_rad = (PremiumTolov.objects.filter(pupil=pupil).order_by("-created_at")
                   .values_list("holat", flat=True).first()) == PremiumTolov.RAD
-    sinovda = faol and not PremiumTolov.objects.filter(
-        pupil=pupil, holat=PremiumTolov.TASDIQLANDI).exists()
+    oxirgi_tasdiq = (PremiumTolov.objects.filter(pupil=pupil, holat=PremiumTolov.TASDIQLANDI)
+                     .order_by("-hal_qilingan_at").values_list("hal_qilingan_at", flat=True).first())
+    sinovda = faol and oxirgi_tasdiq is None
+    # Joriy davr qachon boshlangan — profildagi "qancha qoldi" chizig'i uchun:
+    # oxirgi tasdiqlangan to'lov yoki sinov. Uzaytirilgan obunada chiziq
+    # oxirgi to'lovdan sanaladi.
+    davr_boshi = (oxirgi_tasdiq or pupil.premium_sinov_at) if faol else None
     return {
         "faol": faol,
         "gacha": pupil.premium_gacha.isoformat() if faol else None,
@@ -134,6 +139,10 @@ def holat(pupil: Pupil) -> dict:
         # to'g'ri chiqsin (u sanani o'z soatidan ayiradi).
         "qolgan_sekund": int((pupil.premium_gacha - hozir).total_seconds()) if faol else 0,
         "sinovda": sinovda,
+        "davr_boshi": davr_boshi.isoformat() if davr_boshi else None,
+        # Premium bilan ishlangan YOPIQ variantlar (DTM + sertifikat) — profilda
+        # "nima oldim" degan savolga javob.
+        "ishlangan": _yopiq_ishlangan(pupil),
         # Sinov — bir marta va faqat hech qachon premium bo'lmaganga:
         # muddati tugagan obunachiga "yana 3 kun bepul" har oy so'raladigan
         # tekin oyga aylanardi.
@@ -151,6 +160,13 @@ def holat(pupil: Pupil) -> dict:
         if kutilayotgan else None,
         "rad_etilgan": oxirgi_rad and not faol,
     }
+
+
+def _yopiq_ishlangan(pupil: Pupil) -> int:
+    from .models import ImtihonNatija
+
+    return (ImtihonNatija.objects.filter(profile__pupil=pupil, kurs="", variant__gt=bepul_variant())
+            .values("tur", "variant").distinct().count())
 
 
 class SinovXato(Exception):

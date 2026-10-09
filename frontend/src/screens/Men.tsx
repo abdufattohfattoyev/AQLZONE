@@ -38,6 +38,8 @@ import {
 } from "../lib/yollar";
 import { Tanlov, TanlovVaraq } from "../components/Varaq";
 import { PremiumQator } from "../components/PremiumVaraq";
+import { AvatarYulduz, PremiumBelgi, PremiumKarta } from "../components/PremiumProfil";
+import { usePremium } from "../lib/premium";
 
 interface Props {
   /** Ichki sahifaga o'tish — marshrut `App.tsx` da. */
@@ -61,6 +63,8 @@ export function Men({ onYol }: Props) {
   const [hisob, setHisob] = useState<Hisob | null>(null);
   const [orin, setOrin] = useState<number | null>(null);
   const [varaq, setVaraq] = useState<"til" | "yoruglik" | null>(null);
+  // Imtihon Premium — profil boshqacha ko'rinadi (`components/PremiumProfil.tsx`).
+  const premiumFaol = Boolean(usePremium()?.faol);
   const [taklif, setTaklif] = useState<{ havola: string; soni: number } | null>(null);
 
   // Ikkala so'rov ham internetsiz `null` qaytaradi — ekran ularsiz ham
@@ -102,18 +106,22 @@ export function Men({ onYol }: Props) {
       {/* Kompyuterda ikki ustun: profil va sonlar yonma-yon, bo'limlar ostida. */}
       <h1 className="sr-only">{t("menSarlavha")}</h1>
 
-      {/* ---- profil kartasi ---- */}
-      <div className="flex items-center gap-3 rounded-clay bg-karta p-4 shadow-clay-sm min-[360px]:gap-3.5">
+      {/* ---- profil kartasi ---- Premium faol bo'lsa boshqacha: firuza hoshiya,
+          to'ldirilgan avatar, yulduz va "Premium" yorlig'i (`PremiumProfil.tsx`). */}
+      <div className={`flex items-center gap-3 rounded-clay bg-karta p-4 shadow-clay-sm min-[360px]:gap-3.5 ${
+        premiumFaol ? "outline-2 outline-brand-blue outline-solid" : ""}`}>
         <span aria-hidden
-          className="grid size-[52px] shrink-0 place-items-center rounded-full bg-brand-blue/12
-                     font-display text-[21px] font-bold text-brand-blue-t min-[360px]:size-[60px]
-                     min-[360px]:text-[24px]">
+          className={`relative grid size-[52px] shrink-0 place-items-center rounded-full font-display
+                      text-[21px] font-bold min-[360px]:size-[60px] min-[360px]:text-[24px] ${
+            premiumFaol ? "bg-brand-blue text-white" : "bg-brand-blue/12 text-brand-blue-t"}`}>
           {bosHarflar(ism)}
+          {premiumFaol && <AvatarYulduz />}
         </span>
-        <span className="flex min-w-0 flex-1 flex-col">
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="font-display text-[19px] leading-tight font-bold break-words
                            min-[360px]:text-[21px]">{ism}</span>
           {prof && <span className="text-[14px] text-ink-dim">{profilNomi(prof)}</span>}
+          {premiumFaol && <PremiumBelgi />}
         </span>
         <button type="button" onClick={() => onYol("/profillar")} data-tahlil="Men: almashtirish"
           className="clay-press min-h-11 shrink-0 rounded-xl bg-track px-3 text-[14px] font-bold
@@ -124,7 +132,7 @@ export function Men({ onYol }: Props) {
 
       {/* ---- Imtihon Premium ---- faol bo'lsa qancha qolgani (soatlari bilan),
           aks holda kichik taklif: profil — odam o'z hisobini ko'radigan joy. */}
-      <PremiumQator taklif />
+      {premiumFaol ? <PremiumKarta /> : <PremiumQator taklif />}
 
       {/* ---- uch son ---- Yulduz va tanga OLTIN (mukofot), zanjir — neytral. */}
       <div className="grid grid-cols-3 gap-2">

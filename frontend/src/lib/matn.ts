@@ -2764,6 +2764,11 @@ const S = {
   premKorish: ["Premium'ni ko'rish", "Посмотреть Premium"],
   premQulfli: ["{n}-variant, Premium", "Вариант {n}, Premium"],
   premOlish: ["Premium olish", "Получить Premium"],
+  premBelgi: ["Premium", "Premium"],
+  premIshlangan: ["Premium bilan ishlangan variantlar", "Решено вариантов с Premium"],
+  premIshlanganSon: ["{n} ta", "{n}"],
+  premTugaydi: ["Tugaydi", "Заканчивается"],
+  premQolganUlush: ["Muddatning {n}% qoldi", "Осталось {n}% срока"],
   premOlishIzoh: ["Barcha imtihon variantlari — 7 kunga {narx} so'mdan",
     "Все варианты экзаменов — от {narx} сум за 7 дней"],
 
