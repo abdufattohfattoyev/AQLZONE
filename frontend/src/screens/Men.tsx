@@ -228,7 +228,7 @@ function Qator({ ic, nom, qiymat = "", on }: {
   return (
     <button type="button" onClick={on} data-tahlil={`Men: ${ic}`}
       className="clay-press flex min-h-[54px] w-full items-center gap-3 px-3.5 text-left">
-      <img src={`/belgi/${ic}.webp`} width={28} height={28} alt="" decoding="async"
+      <img src={`/belgi/h/${ic}.webp`} width={28} height={28} alt="" decoding="async"
         className="size-7 shrink-0 object-contain" />
       <span className="min-w-0 flex-1 truncate text-[16px] font-semibold">{nom}</span>
       {/* Uzun qiymat ("Haftalik hisobot") tor telefonda nomni qirqib

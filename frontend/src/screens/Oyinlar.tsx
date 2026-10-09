@@ -172,7 +172,7 @@ function TezOyin({ jonli, onOch }: { jonli: OyinlarJonli | null; onOch: () => vo
       className="tugma-3d flex w-full items-center gap-3 rounded-[24px] bg-brand-blue px-3.5 py-3.5 text-left
                  text-white shadow-[0_5px_0_var(--color-brand-blue-d)] min-[360px]:gap-3.5 min-[360px]:px-4">
       <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white/18 min-[360px]:size-[54px]">
-        <img src="/belgi/chaqmoq.webp" alt="" width={30} height={30} className="size-[30px]" />
+        <img src="/belgi/h/chaqmoq.webp" alt="" width={30} height={30} className="size-[30px]" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate font-display text-[19px] leading-tight font-bold min-[360px]:text-[21px]">{t("tezOyin")}</span>
@@ -221,7 +221,7 @@ function OyinKarta({ o, onOch, hozir }: { o: Oyin; onOch: () => void; hozir: num
       title={hozir > 0 ? `${nom} · ${t("oyinKartaHozir", { n: hozir })}` : nom}
       className="clay-press flex min-w-0 flex-col gap-1 rounded-[18px] bg-karta px-3 pt-2.5 pb-2 text-left shadow-clay-sm">
       <span className="flex w-full items-center gap-2">
-        <img src={`/belgi/${BELGI[o.id]}.webp`} alt="" width={24} height={24} className="size-6 shrink-0" />
+        <img src={`/belgi/h/${BELGI[o.id]}.webp`} alt="" width={24} height={24} className="size-6 shrink-0" />
         <span className="min-w-0 flex-1 truncate text-[14px] leading-tight font-bold">{nom}</span>
         {/* Hozir o'ynayotganlar — nol bo'lsa umuman chizilmaydi. */}
         {hozir > 0 && <span aria-hidden className="az-jonli size-2 shrink-0 rounded-full bg-brand-green" />}

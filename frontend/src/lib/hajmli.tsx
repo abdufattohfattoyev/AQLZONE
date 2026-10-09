@@ -206,11 +206,35 @@ const EMOJI_RASM = new Set<string>([
   "yoqdi", "yoqmadi", "yukMashina", "yulduz", "yulduzcha", "yuqoriga", "yurak", "zebra",
 ]);
 
+/**
+ * FIRUZA — interfeys belgilari ilovaning asosiy rangida (2026-10-09,
+ * "testmakon kabi — ikonkalar asosiy rangda"). Ularning rasmi
+ * `public/belgi/h/` dan olinadi (`.belgi/firuza.py`: asl 3D rasmning
+ * soya va yaltirog'i saqlanib, firuzaga o'tkazilgan), SVG zaxirasi ham
+ * firuza bo'yoqda chiziladi.
+ *
+ * RANGI MA'NO BILDIRADIGANLAR BU YERDA YO'Q va o'z rangida qoladi:
+ * to'g'ri/xato, oltin–kumush–bronza va tanga, yurak (jon),
+ * ogohlantirish, yuz ifodalari, mashqda sanaladigan narsalar (olma,
+ * hayvonlar, rangli doiralar, shakllar) va do'kondagi kiyimlar. Bola
+ * "3 ta qizil olma" ni sanayotganda olma firuza bo'lib qolmasin.
+ *
+ * Ro'yxat `.belgi/firuza.py` dagi `HAJMLI_FIRUZA` bilan bir xil
+ * bo'lsin (+ `RASM` dagilar — ular hammasi interfeys belgisi).
+ */
+const FIRUZA = new Set<string>([
+  "kubok", "medal", "yulduz", "yulduzcha", "daraja", "kitob", "toj", "raketa", "bitiruv",
+  "olov", "kometa", "olmos", "nishon", "goya", "bayroq", "qayta", "bayram", "maydon",
+  "qolBerish", "qarsak", "kuch", "nihol", "yuqoriga", "ongga", "pastga", "chapga",
+  "qongiroq", "asbob", "diagramma", "boyoq", "qumSoat",
+]);
+
 /** Rasm manzili — yoki `null`, belgi SVG bilan chizilsa. */
 const rasmManzili = (nom: string): string | null =>
-  RASM.has(nom) ? `/belgi/${nom}.webp`
-    : EMOJI_RASM.has(nom) ? `/belgi/e/${nom}.webp`
-      : null;
+  RASM.has(nom) ? `/belgi/h/${nom}.webp`
+    : FIRUZA.has(nom) ? `/belgi/h/e/${nom}.webp`
+      : EMOJI_RASM.has(nom) ? `/belgi/e/${nom}.webp`
+        : null;
 
 /** Yuklanmay qolgan rasmlar — ular sahifa yopilgunicha SVG bo'lib chiziladi. */
 const BUZUQ = new Set<string>();
@@ -260,7 +284,7 @@ export function Hajmli({ nom, olcham = 24, jonli, className, nomi }: Props) {
     <svg
       viewBox="0 0 40 40" width={olcham} height={olcham}
       className={`hajmli${jonli && b.jon ? " jonli" : ""}${className ? " " + className : ""}`}
-      data-rang={b.rang} data-nom={nom} style={uslub}
+      data-rang={FIRUZA.has(nom) || RASM.has(nom) ? "firuza" : b.rang} data-nom={nom} style={uslub}
       role={nomi ? "img" : undefined} aria-label={nomi}
       aria-hidden={nomi ? undefined : true}
     >

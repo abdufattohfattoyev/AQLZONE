@@ -551,7 +551,7 @@ function Sonlar() {
           <li key={s.nom} className="flex flex-col gap-3 rounded-[22px] bg-karta p-4 shadow-clay-sm transition
                                      hover:-translate-y-1 sm:flex-row sm:items-start sm:gap-4 sm:p-5">
             <span className={`grid size-10 shrink-0 place-items-center rounded-2xl sm:size-12 ${RANG[s.rang].quti}`}>
-              <img src={`/belgi/${s.ic}.webp`} width={28} height={28} alt="" aria-hidden decoding="async"
+              <img src={`/belgi/h/${s.ic}.webp`} width={28} height={28} alt="" aria-hidden decoding="async"
                 className="size-6 sm:size-7" />
             </span>
             <div className="min-w-0">
@@ -603,7 +603,7 @@ function Bolimlar({ onOch }: { onOch: (yol: string) => void }) {
                          transition hover:-translate-y-1.5 hover:shadow-clay">
               <span className={`grid size-14 place-items-center rounded-2xl transition-transform group-hover:scale-110
                                 ${RANG[b.rang].quti}`}>
-                <img src={`/belgi/${b.ic}.webp`} width={34} height={34} alt="" aria-hidden decoding="async" />
+                <img src={`/belgi/h/${b.ic}.webp`} width={34} height={34} alt="" aria-hidden decoding="async" />
               </span>
               <h3 className="mt-5 font-display text-[20px] leading-tight">{t(b.nom)}</h3>
               <p className="mt-2 flex-1 text-[14.5px] leading-relaxed text-ink-soft">{t(b.izoh)}</p>
@@ -670,7 +670,7 @@ function Kimlar({ onBoshlash }: { onBoshlash: () => void }) {
         {/* Namunadagi suratlar o'rnida — bo'limning o'z belgisi. Begona
             rasm sahifani og'irlashtirar va istalgan payt o'chib qolardi. */}
         <div className={`relative order-first grid h-40 place-items-center overflow-hidden rounded-[22px] sm:h-60 lg:order-none lg:col-span-5 lg:h-80 ${r.quti}`}>
-          <img src={`/belgi/${tanlangan.ic}.webp`} width={150} height={150} alt="" aria-hidden decoding="async"
+          <img src={`/belgi/h/${tanlangan.ic}.webp`} width={150} height={150} alt="" aria-hidden decoding="async"
             className="az-suzish size-24 drop-shadow-xl sm:size-32 lg:size-40" />
           <span className="absolute bottom-4 left-4 rounded-full bg-karta/90 px-3.5 py-1.5 font-display text-[13px] shadow-clay-sm">
             {t(`lendKim_${kim}`)}
@@ -730,7 +730,7 @@ function Oxir({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
         <div aria-hidden className="pointer-events-none absolute -right-24 -bottom-24 size-80 rounded-full bg-brand-green/25 blur-3xl" />
         <div className="relative mx-auto flex max-w-[40rem] flex-col items-center">
           <span className="grid size-16 place-items-center rounded-full bg-white/15 backdrop-blur">
-            <img src="/belgi/chaqmoq.webp" width={36} height={36} alt="" aria-hidden decoding="async" />
+            <img src="/belgi/h/chaqmoq.webp" width={36} height={36} alt="" aria-hidden decoding="async" />
           </span>
           <h2 className="mt-5 font-display text-[28px] leading-tight tracking-tight sm:text-[40px]">{t("lendOxirSarlavha")}</h2>
           <p className="mt-3 text-[16px] opacity-90 sm:text-[17px]">{t("lendOxirIzoh")}</p>

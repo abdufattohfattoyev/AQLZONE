@@ -1421,6 +1421,8 @@
 .hajmli[data-rang="yashil"]   { --bl:#8ce8ae; --bm:#48c97a; --bd:#2b8f53 }
 .hajmli[data-rang="sariq"]    { --bl:#ffd85f; --bm:#f5b301; --bd:#b98500 }
 .hajmli[data-rang="zangori"]  { --bl:#93d9f2; --bm:#4fb8e0; --bd:#2a86af }
+/* Interfeys belgilari — ilovaning asosiy rangi (`lib/hajmli.tsx`, FIRUZA). */
+.hajmli[data-rang="firuza"]   { --bl:#8be3ec; --bm:#17b3c1; --bd:#0b6f79 }
 .hajmli[data-rang="binafsha"] { --bl:#d3aef4; --bm:#b07be8; --bd:#8148be }
 .hajmli[data-rang="qizil"]    { --bl:#ffb0a5; --bm:#ff7a6b; --bd:#d14b3a }
 .hajmli[data-rang="olov"]     { --bl:#ffc98f; --bm:#ff9f43; --bd:#cf7418 }

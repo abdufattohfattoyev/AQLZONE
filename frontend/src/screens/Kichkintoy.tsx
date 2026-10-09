@@ -113,7 +113,9 @@ export function Kichkintoy({ onBack, onMavzu, onChiq }: {
 function MavzuBelgi({ m }: { m: Mavzu }) {
   if (m.id === "rang" || m.id === "raqam") {
     return (
-      <img src={`/belgi/${m.id === "rang" ? "palette" : "raqamlar"}.webp`} alt="" width={84} height={84}
+      // "Ranglar" palitrasi ASL rangida: bu mavzuda ranglarning o'zi o'rgatiladi,
+      // firuza palitra bolaga noto'g'ri narsani ko'rsatardi. Raqamlar — firuza.
+      <img src={m.id === "rang" ? "/belgi/palette.webp" : "/belgi/h/raqamlar.webp"} alt="" width={84} height={84}
         className="size-[72px] min-[360px]:size-[84px]" />
     );
   }
