@@ -29,6 +29,7 @@ aniq bo'ladi.
 """
 from __future__ import annotations
 
+import html
 import json
 import time
 import urllib.error
@@ -632,6 +633,14 @@ def tugma_javobi(q: dict) -> str:
     if data.startswith(("quiz_ok:", "quiz_yoq:")):
         return quiz_namuna_tugmasi(q, tg_id, data)
 
+    if data.startswith("premium_tarif:"):
+        api("answerCallbackQuery", callback_query_id=q.get("id"))
+        chat = ((q.get("message") or {}).get("chat") or {}).get("id") or int(tg_id)
+        return premium_kartani_yubor(chat, tg_id, til, data.split(":", 1)[1])
+
+    if data.startswith(("premium_ok:", "premium_rad:")):
+        return premium_qaror_tugmasi(q, tg_id, data)
+
     api("answerCallbackQuery", callback_query_id=q.get("id"))
     return f"{tg_id}: noma'lum tugma ({data[:32]})"
 
@@ -660,6 +669,132 @@ def quiz_namuna_tugmasi(q: dict, tg_id: str, data: str) -> str:
             reply_markup={"inline_keyboard": [[{"text": QUIZ_QAROR_MATNI[natija],
                                                 "callback_data": "quiz_hal"}]]})
     return f"{tg_id}: quiz namuna — {natija}"
+
+
+# ------------------------------------------------ imtihon premium
+#
+# `/start premium[_1oy|_3oy]` → tarif → karta raqami → chek RASMI →
+# adminga rasm + "✅ Tasdiqlash" / "❌ Rad etish" (`core/premium.py`).
+#
+# Tanlangan tarif keshda 24 soat turadi: odam to'lovni bank ilovasida
+# qilib, chekni keyinroq yuboradi. Tarif tanlanmagan bo'lsa kelgan rasm
+# oddiy rasm — bot unga "chek qabul qilindi" demaydi.
+
+PREMIUM_KESH = 24 * 3600
+
+
+def _som(n: int) -> str:
+    return f"{n:,}".replace(",", " ")
+
+
+def premium_boshla(chat_id: int, tg_id: str, til: str, matn: str) -> str:
+    from core import premium as PR
+
+    if not settings.PREMIUM_KARTA:
+        api("sendMessage", chat_id=chat_id, text=M("premiumYopiq", til))
+        return f"{tg_id}: premium — karta sozlanmagan"
+    if PR.pupil_tg(tg_id) is None:
+        api("sendMessage", chat_id=chat_id, text=M("premiumHisobYoq", til))
+        return f"{tg_id}: premium — hisob yo'q"
+    # Ilovadagi tarif tugmasi tarifni o'zi aytadi: `premium_3oy`.
+    tarif = matn.split("premium", 1)[1].lstrip("_").strip()
+    if tarif in PR.TARIF_KUN:
+        return premium_kartani_yubor(chat_id, tg_id, til, tarif)
+    narx = PR.narxlar()
+    api("sendMessage", chat_id=chat_id, parse_mode="HTML",
+        text=M("premiumTariflar", til, narx1=_som(narx["1oy"]), narx3=_som(narx["3oy"])),
+        reply_markup={"inline_keyboard": [
+            [tugma_yasa(M("tPremium1oy", til, narx=_som(narx["1oy"])), KOK,
+                        callback_data="premium_tarif:1oy")],
+            [tugma_yasa(M("tPremium3oy", til, narx=_som(narx["3oy"])), YASHIL,
+                        callback_data="premium_tarif:3oy")],
+        ]})
+    return f"{tg_id}: premium — tariflar"
+
+
+def premium_kartani_yubor(chat_id: int, tg_id: str, til: str, tarif: str) -> str:
+    from django.core.cache import cache
+    from core import premium as PR
+
+    if tarif not in PR.TARIF_KUN or not settings.PREMIUM_KARTA:
+        return f"{tg_id}: premium — noto'g'ri tarif"
+    cache.set(f"premium_tarif:{tg_id}", tarif, PREMIUM_KESH)
+    egasi = settings.PREMIUM_KARTA_EGASI
+    api("sendMessage", chat_id=chat_id, parse_mode="HTML",
+        text=M("premiumKarta", til, tarif=M(f"premium{tarif}", til),
+               narx=_som(PR.narxlar()[tarif]), karta=html.escape(settings.PREMIUM_KARTA),
+               egasi=f"👤 {html.escape(egasi)}" if egasi else ""))
+    return f"{tg_id}: premium — karta ({tarif})"
+
+
+def premium_chek(chat_id: int, tg_id: str, til: str, file_id: str) -> str | None:
+    """
+    Chek rasmi. Tarif tanlanmagan bo'lsa `None` — rasm boshqa narsa
+    bo'lishi mumkin va u pastdagi umumiy javobga tushadi.
+    """
+    from django.core.cache import cache
+    from core import premium as PR
+
+    tarif = cache.get(f"premium_tarif:{tg_id}")
+    if not tarif:
+        return None
+    pupil = PR.pupil_tg(tg_id)
+    if pupil is None:
+        api("sendMessage", chat_id=chat_id, text=M("premiumHisobYoq", til))
+        return f"{tg_id}: premium chek — hisob yo'q"
+    t = PR.tolov_yoz(pupil, tarif, file_id)
+    cache.delete(f"premium_tarif:{tg_id}")
+    api("sendMessage", chat_id=chat_id, text=M("premiumChekOlindi", til))
+    tugmalar = {"inline_keyboard": [[
+        tugma_yasa("✅ Tasdiqlash", YASHIL, callback_data=f"premium_ok:{t.pk}"),
+        tugma_yasa("❌ Rad etish", QIZIL, callback_data=f"premium_rad:{t.pk}"),
+    ]]}
+    for admin in settings.ADMIN_TG:
+        api("sendPhoto", chat_id=admin, photo=file_id, caption=PR.admin_izohi(t),
+            parse_mode="HTML", reply_markup=tugmalar)
+    return f"{tg_id}: premium chek #{t.pk} ({tarif})"
+
+
+#: Admin bosgandan keyin tugmalar o'rnida qoladigan yozuv.
+PREMIUM_QAROR_MATNI = {
+    "tasdiqlandi": "✅ Tasdiqlangan",
+    "rad": "❌ Rad etilgan",
+    "yoq": "To'lov topilmadi",
+    "ruxsat_yoq": "Faqat admin uchun",
+}
+
+
+def premium_qaror_tugmasi(q: dict, tg_id: str, data: str) -> str:
+    """
+    "✅ Tasdiqlash" / "❌ Rad etish". Ikkinchi bosish (yoki ikkinchi admin)
+    hech narsani o'zgartirmaydi — `premium.hal_qil` holatni qulf ostida
+    tekshiradi — faqat haqiqiy holatni ko'rsatadi.
+    """
+    from core import premium as PR
+
+    if not boshqaruv.admin_tg_mi(tg_id):
+        api("answerCallbackQuery", callback_query_id=q.get("id"),
+            text=PREMIUM_QAROR_MATNI["ruxsat_yoq"], show_alert=True)
+        return f"{tg_id}: premium qaror — admin emas"
+    tur, _, xom = data.partition(":")
+    if not xom.isdigit():
+        api("answerCallbackQuery", callback_query_id=q.get("id"))
+        return f"{tg_id}: premium qaror — buzuq"
+    natija, t = PR.hal_qil(int(xom), tasdiq=tur == "premium_ok")
+    if natija in ("tasdiqlandi", "rad"):
+        PR.foydalanuvchiga_xabar(t)
+    holat = t.holat if t else "yoq"
+    yozuv = PREMIUM_QAROR_MATNI[holat]
+    if natija == "eskirgan":
+        yozuv = f"Allaqachon: {yozuv}"
+    api("answerCallbackQuery", callback_query_id=q.get("id"), text=yozuv,
+        show_alert=natija in ("eskirgan", "yoq"))
+    xabar = q.get("message") or {}
+    if xabar.get("message_id") and t:
+        api("editMessageReplyMarkup", chat_id=xabar["chat"]["id"], message_id=xabar["message_id"],
+            reply_markup={"inline_keyboard": [[{"text": PREMIUM_QAROR_MATNI[holat],
+                                                "callback_data": "premium_hal"}]]})
+    return f"{tg_id}: premium #{xom} — {natija}"
 
 
 # ------------------------------------------------ majburiy kanal a'zoligi
@@ -755,6 +890,19 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         pupil, yangi = raqamni_bogla(tg_id, telefon, ism, familiya, til)
         ilovani_yubor(chat_id, pupil, yangi)
         return f"{tg_id}: raqam bog'landi (hisob #{pupil.pk})"
+
+    # --- rasm keldi: Premium cheki bo'lishi mumkin ---
+    # Rasm yoki rasm-fayl (ba'zilar chekni "fayl" qilib yuboradi). Eng
+    # katta o'lchamdagisi olinadi — admin raqamlarni o'qiy olsin.
+    rasm = xabar.get("photo") or []
+    hujjat = xabar.get("document") or {}
+    file_id = (rasm[-1].get("file_id") if rasm
+               else hujjat.get("file_id") if str(hujjat.get("mime_type", "")).startswith("image/")
+               else "")
+    if file_id:
+        javob = premium_chek(chat_id, tg_id, til, file_id)
+        if javob:
+            return javob
 
     # --- matn keldi ---
     matn = (xabar.get("text") or "").strip()
@@ -879,6 +1027,10 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         if kod.isalnum():
             bolimni_yubor(chat_id, til, f"/sinf/qoshil/{kod}", "sinfBot")
             return f"{tg_id}: sinf kodi ({kod})"
+
+    # Imtihon Premium — ilovadagi "To'ladim — chekni yuborish" tugmasi.
+    if matn.startswith("/start premium"):
+        return premium_boshla(chat_id, tg_id, til, matn)
 
     if matn.startswith("/start"):
         # Odam o'zi yozdi — demak xabarlarga qarshi emas. "Boshqa

@@ -1477,3 +1477,17 @@ def tahlil(request):
     from . import tahlil as TH
     TH.tozala()
     return render(request, "boshqaruv/tahlil.html", TH.statistika(davr(request)) | bolim("tahlil"))
+
+
+# ------------------------------------------------------------- premium
+
+
+def premium(request):
+    """Imtihon Premium: kutilayotgan cheklar, faollar va tushum (`core/premium.py`)."""
+    from . import premium as PR
+
+    if not _yoniq():
+        raise Http404
+    if not kirganmi(request):
+        return kirish(request)
+    return render(request, "boshqaruv/premium.html", PR.panel_statistika() | bolim("premium"))

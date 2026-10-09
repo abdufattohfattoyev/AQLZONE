@@ -7,6 +7,7 @@ Aql Zone — asosiy marshrutlar.
     /boshqaruv/masalalar          tasdiqlash navbati
     /boshqaruv/masalalar/hisobot  masalalar bo'limi statistikasi
     /boshqaruv/reklama   botdan e'lon tarqatish
+    /boshqaruv/premium   Imtihon Premium to'lovlari
     boshqa hammasi       React ilova (SPA) — /kurs/1-sinf kabi URL'lar
                          sahifa yangilanganda ham ishlashi uchun.
 
@@ -35,6 +36,7 @@ urlpatterns = [
     path("boshqaruv/chiqish", boshqaruv.chiqish, name="boshqaruv-chiqish"),
     path("boshqaruv/reklama", boshqaruv.reklama, name="boshqaruv-reklama"),
     path("boshqaruv/duel", boshqaruv.duellar, name="boshqaruv-duel"),
+    path("boshqaruv/premium", boshqaruv.premium, name="boshqaruv-premium"),
     # Hozir kim nima ishlayapti. JSON alohida: sahifa har 5 soniyada
     # faqat ro'yxatni so'raydi, o'zini qayta yuklamaydi.
     path("boshqaruv/jonli", boshqaruv.jonli, name="boshqaruv-jonli"),

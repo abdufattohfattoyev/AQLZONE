@@ -224,6 +224,21 @@ class Pupil(models.Model):
     #: kelganlarga yetib bormasdi. Shu ruxsat bu yo'lni ochadi.
     yozish_ruxsat_at = models.DateTimeField(null=True, blank=True, default=None)
 
+    # ─────────────────────── IMTIHON PREMIUM (`core/premium.py`) ───────────────────────
+    #
+    # Huquq SERVERDA turadi — tanga yoki qurilma xotirasida emas: ular
+    # mijozda hisoblanadi va bitta `localStorage.setItem` bilan
+    # soxtalashtiriladi.
+    #
+    #   premium_gacha      shu paytgacha ochiq; o'tgan bo'lsa — yopiq
+    #   premium_sinov_at   3 kunlik sinov olingan payt (har hisobga BIR marta)
+    #   premium_eslatildi  qaysi `premium_gacha` uchun "3 kun qoldi" xabari
+    #                      ketgan — uzaytirilsa yangi muddat yana eslatiladi,
+    #                      shu muddat uchun esa ikkinchi marta ketmaydi
+    premium_gacha = models.DateTimeField(null=True, blank=True, default=None)
+    premium_sinov_at = models.DateTimeField(null=True, blank=True, default=None)
+    premium_eslatildi = models.DateTimeField(null=True, blank=True, default=None)
+
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -2253,3 +2268,39 @@ class BotHodisa(models.Model):
     class Meta:
         db_table = "bot_hodisa"
         constraints = [models.UniqueConstraint(fields=["sana", "tur", "manba"], name="bot_hodisa_bir")]
+
+
+class PremiumTolov(models.Model):
+    """
+    Imtihon Premium uchun karta orqali to'lov — bitta chek.
+
+    To'lov tizimi (Click/Payme) ATAYLAB yo'q: odam karta raqamiga pul
+    o'tkazadi va chek rasmini botga yuboradi, admin uni ko'z bilan
+    tekshirib tasdiqlaydi (`core/premium.py`). `chek` — Telegram
+    `file_id`: rasmning o'zi Telegram'da turadi, bizda faqat havolasi.
+
+    Holat bir yo'nalishda o'zgaradi: `kutilmoqda` → `tasdiqlandi` | `rad`.
+    Hal qilingan chek qayta hal qilinmaydi — aks holda ikki admin bir
+    vaqtda bosganda bitta to'lov ikki oy berardi.
+    """
+
+    KUTILMOQDA = "kutilmoqda"
+    TASDIQLANDI = "tasdiqlandi"
+    RAD = "rad"
+    HOLATLAR = [(KUTILMOQDA, "kutilmoqda"), (TASDIQLANDI, "tasdiqlandi"), (RAD, "rad etildi")]
+    TARIFLAR = [("1oy", "1 oy"), ("3oy", "3 oy")]
+
+    pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="premium_tolovlar")
+    tarif = models.CharField(max_length=4, choices=TARIFLAR)
+    #: So'mda — chek yuborilgan paytdagi narx (keyin narx o'zgarsa ham
+    #: tushum hisobi buzilmasin).
+    summa = models.IntegerField(default=0)
+    chek = models.CharField(max_length=255, default="", blank=True)
+    holat = models.CharField(max_length=12, choices=HOLATLAR, default=KUTILMOQDA)
+    created_at = models.DateTimeField(default=timezone.now)
+    hal_qilingan_at = models.DateTimeField(null=True, blank=True, default=None)
+
+    class Meta:
+        db_table = "premium_tolov"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["holat", "created_at"])]

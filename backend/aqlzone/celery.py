@@ -188,6 +188,14 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=12, minute=0, day_of_week=1),
         "args": ("reyting_post",),
     },
+    # Imtihon Premium tugashiga 3 kun qolganlarga — 11:00, bitta xabar
+    # (`premium_eslatma`). Kunduzi: to'lov bank ilovasida qilinadi va
+    # kechasi kelgan "uzaytiring" ertalabgacha unutiladi.
+    "premium-eslatma": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(hour=11, minute=0),
+        "args": ("premium_eslatma",),
+    },
     # Kanaldagi postlar joyidami — kuniga bir marta yetarli.
     "kanal-tekshiruvi": {
         "task": "core.vazifalar.buyruq",

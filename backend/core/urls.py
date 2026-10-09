@@ -15,6 +15,9 @@ urlpatterns = [
     path("auth/link", views.auth_link, name="auth-link"),
     path("auth/kod", views.auth_kod, name="auth-kod"),
     path("me", views.me, name="me"),
+    # Imtihon Premium (`core/premium.py`).
+    path("premium", views.premium, name="premium"),
+    path("premium/sinov", views.premium_sinov, name="premium-sinov"),
     path("profiles", views.profiles, name="profiles"),
     path("profiles/<int:pk>", views.profile_detail, name="profile-detail"),
     # Do'kondan kiyilgan bezak — joriy profilga yoziladi.

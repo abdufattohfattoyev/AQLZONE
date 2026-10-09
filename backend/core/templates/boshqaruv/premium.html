@@ -1,0 +1,66 @@
+{% extends "boshqaruv/qobiq.html" %}
+{% block sarlavha %}Premium{% endblock %}
+{% block sahifa_nomi %}Imtihon Premium{% endblock %}
+{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }}{% endblock %}
+
+{% comment %}
+Bitta savol: HOZIR TEKSHIRILADIGAN CHEK BORMI? Shuning uchun kutayotganlar
+birinchi. Chekni tasdiqlash botda (rasm shu yerda emas, Telegram'da) —
+bu sahifa navbat va tushumni ko'rsatadi, xolos (`core/premium.py`).
+{% endcomment %}
+
+{% block ichki %}
+<div class="oqim">
+
+  <div class="olchovlar">
+    <div class="karta olchov urgu">
+      <div class="nom">Kutilayotgan cheklar</div>
+      <div class="son">{{ kutilmoqda|length }}</div>
+      <div class="ost">botda tasdiqlanadi</div>
+    </div>
+    <div class="karta olchov"><div class="nom">Faol premium</div><div class="son">{{ faol_soni }}</div><div class="ost">{{ faol_tolagan }} to'lagan · {{ faol_sinov }} sinovda</div></div>
+    <div class="karta olchov"><div class="nom">Shu oy tushum</div><div class="son">{{ oy_tushum_matn }}</div><div class="ost">so'm · {{ oy_soni }} ta to'lov</div></div>
+  </div>
+
+  <div class="bolim"><h2>Kutilayotganlar</h2><p>eng eskisi tepada</p></div>
+  <div class="jadval-quti">
+    <div class="jadval-siljish">
+      <table class="kartochka">
+        <thead><tr><th>#</th><th>Kim</th><th>Tarif</th><th class="raqam">Summa</th><th>Yuborilgan</th></tr></thead>
+        <tbody>
+          {% for t in kutilmoqda %}
+            <tr>
+              <td>{{ t.pk }}</td>
+              <td>{{ t.pupil.toliq_ism|default:"—" }}{% if t.pupil.username %} <span class="juda-xira">@{{ t.pupil.username }}</span>{% endif %}</td>
+              <td>{{ t.get_tarif_display }}</td>
+              <td class="raqam">{{ t.summa_matn }}</td>
+              <td>{{ t.created_at|date:"d.m H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5"><div class="bosh-holat">Kutilayotgan chek yo'q.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="setka k2">
+    <div class="karta">
+      <div class="karta-bosh"><h3>Oylik tushum</h3></div>
+      {% for oy, summa in oylar_matn %}
+        <div class="bar"><div class="bar-bosh" style="margin:0"><span class="nom">{{ oy }}</span><b class="son">{{ summa }}</b></div></div>
+      {% empty %}<div class="bosh-holat">Hali tasdiqlangan to'lov yo'q.</div>{% endfor %}
+    </div>
+    <div class="karta">
+      <div class="karta-bosh"><h3>So'nggi qarorlar</h3></div>
+      {% for t in songgi %}
+        <div class="bar"><div class="bar-bosh" style="margin:0">
+          <span class="nom">{{ t.pupil.toliq_ism|default:"—" }} · {{ t.get_tarif_display }}</span>
+          {% if t.holat == "tasdiqlandi" %}<span class="belgi yashil">tasdiqlandi</span>{% else %}<span class="belgi qizil">rad</span>{% endif %}
+        </div></div>
+      {% empty %}<div class="bosh-holat">Hali qaror yo'q.</div>{% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

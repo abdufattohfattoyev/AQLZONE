@@ -91,6 +91,22 @@ def _toza(d: dict) -> dict | None:
             "mavzular": _mavzular(d.get("mavzular"))}
 
 
+def _ochiq_variant(profil: Profile):
+    """
+    `variant → bool`: shu variant natijasini yozish mumkinmi (`core/premium.py`).
+
+    Savollar mijozda yasaladi, ya'ni yopiq variantni ilova ichida qulf
+    to'sadi. Server esa REYTING va TARIXNI qo'riqlaydi: aks holda so'rovni
+    qo'lda yuborib, premiumsiz haftalik jadvalga kirib bo'lardi. Premium
+    holati bir marta o'qiladi — eski tarix 50 tagacha bir yo'la keladi.
+    """
+    from . import premium as PR
+
+    faol = PR.faolmi(profil.pupil)
+    bepul = PR.bepul_variant()
+    return lambda variant: faol or variant <= bepul
+
+
 def yoz(profil: Profile, urinishlar, sessiya: bool = False) -> int:
     """
     Urinishlarni yozadi. Nechta YANGI qator qo'shilganini qaytaradi.
@@ -103,11 +119,15 @@ def yoz(profil: Profile, urinishlar, sessiya: bool = False) -> int:
     if not isinstance(urinishlar, list):
         return 0
     yangi = 0
+    ochiq = _ochiq_variant(profil)
     for d in urinishlar[:MAX_BIR_YOLA]:
         t = _toza(d)
         # DTM so'rovi faqat DTM urinishini, sessiya so'rovi faqat
         # sessiyanikini yozadi — biri ikkinchisining tarixiga tushmasin.
         if not t or bool(t["kurs"]) != sessiya:
+            continue
+        # Yopiq DTM varianti premiumsiz — yozilmaydi (sessiya bepul).
+        if not sessiya and not ochiq(t["variant"]):
             continue
         try:
             with transaction.atomic():
@@ -199,9 +219,10 @@ def sert_yoz(profil: Profile, urinishlar) -> int:
     if not isinstance(urinishlar, list):
         return 0
     yangi = 0
+    ochiq = _ochiq_variant(profil)
     for d in urinishlar[:MAX_BIR_YOLA]:
         t = _sert_toza(d)
-        if not t:
+        if not t or not ochiq(t["variant"]):
             continue
         try:
             with transaction.atomic():

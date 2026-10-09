@@ -460,3 +460,18 @@ LOGGING = {
         "core.frontend": {"handlers": ["admin_tg"], "level": "ERROR"},
     },
 }
+
+# ---------------------------------------------------------- imtihon premium
+#
+# DTM, milliy sertifikat va prezident maktabi variantlari — birinchi
+# `PREMIUM_BEPUL` tasi bepul, qolgani Premium (`core/premium.py`).
+#
+# To'lov KARTA RAQAMIGA o'tkazma: raqam va egasi faqat shu yerda,
+# `.env` dan. Bo'sh bo'lsa sahifa "to'lov hozircha yopiq" deydi —
+# kodda yoki git'da haqiqiy raqam hech qachon turmaydi.
+PREMIUM_KARTA = env("PREMIUM_KARTA", "")
+PREMIUM_KARTA_EGASI = env("PREMIUM_KARTA_EGASI", "")
+PREMIUM_NARX_1OY = int(env("PREMIUM_NARX_1OY", "49000"))
+PREMIUM_NARX_3OY = int(env("PREMIUM_NARX_3OY", "119000"))
+PREMIUM_SINOV_KUN = int(env("PREMIUM_SINOV_KUN", "3"))
+PREMIUM_BEPUL = int(env("PREMIUM_BEPUL", "3"))

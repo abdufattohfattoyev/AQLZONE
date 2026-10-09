@@ -47,6 +47,7 @@ from . import masala_kanal as MK
 from . import test_toplam as TT
 from . import jonli as JL
 from . import onlayn as ON
+from . import premium as PR
 from . import ovoz as O
 from . import rasm as R
 from . import tahlil as TH
@@ -484,6 +485,8 @@ def me(request):
     return Response({
         "user": _user_json(request.user),
         "profil": _profil_json(profil),
+        # Imtihon Premium — ilova qulfni shundan chizadi (`core/premium.py`).
+        "premium": PR.holat(request.user),
         **_progress_json(profil),
     })
 
@@ -2248,3 +2251,24 @@ def faollik(request):
 
     JL.yoz(profil, joy, str(d.get("nom") or ""), son("savol"), son("jami"), son("togri"))
     return Response({"ok": True})
+
+
+# ----------------------------------------------------------------- premium
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def premium(request):
+    """Imtihon Premium holati, narxlar va karta (`core/premium.py`)."""
+    return Response(PR.holat(request.user))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def premium_sinov(request):
+    """3 kunlik bepul sinov — har hisobga bir marta, ikkinchisi 409."""
+    try:
+        pupil = PR.sinov_ber(request.user.pk)
+    except PR.SinovXato:
+        return Response({"detail": "sinov_olingan", **PR.holat(request.user)}, status=409)
+    return Response(PR.holat(pupil))
