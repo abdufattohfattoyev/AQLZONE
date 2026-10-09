@@ -37,6 +37,7 @@ import {
   yolAnketa, yolDokon, yolKichkintoy, yolNishon, yolOtaOna, yolReyting, yolSozlama,
 } from "../lib/yollar";
 import { Tanlov, TanlovVaraq } from "../components/Varaq";
+import { PremiumQator } from "../components/PremiumVaraq";
 
 interface Props {
   /** Ichki sahifaga o'tish — marshrut `App.tsx` da. */
@@ -120,6 +121,10 @@ export function Men({ onYol }: Props) {
           {t("menAlmashtir")}
         </button>
       </div>
+
+      {/* ---- Imtihon Premium ---- faol bo'lsa qancha qolgani (soatlari bilan),
+          aks holda kichik taklif: profil — odam o'z hisobini ko'radigan joy. */}
+      <PremiumQator taklif />
 
       {/* ---- uch son ---- Yulduz va tanga OLTIN (mukofot), zanjir — neytral. */}
       <div className="grid grid-cols-3 gap-2">

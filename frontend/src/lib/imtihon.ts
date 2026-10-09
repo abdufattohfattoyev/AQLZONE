@@ -176,6 +176,11 @@ export interface Reyting {
   variantlar: Record<string, number>;
   qatorlar: ReytingQator[];
   meniki: ReytingQator | null;
+  /**
+   * O'tgan haftaning o'sha jadvalida o'zim: o'rin, ishlaganlar soni va
+   * natija (DTM — foiz, sertifikat — ball). Ishlamagan bo'lsam — `null`.
+   */
+  otgan_hafta?: { orin: number; ishlagan: number; natija: number; hafta_boshi: string } | null;
 }
 
 /**

@@ -24,7 +24,7 @@ import { PanelBelgi } from "../lib/chizma/panelBelgi";
 import { marafonHolat } from "../lib/marafon";
 import type { MarafonHolat } from "../lib/marafon";
 import { t } from "../lib/matn";
-import { QulfBelgi } from "../components/PremiumVaraq";
+import { PremiumQator, QulfBelgi } from "../components/PremiumVaraq";
 import { useVariantQulf } from "../components/variantQulf";
 import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
 import { OLCHAM, VARIANTLAR, daraja, engYaxshi, sinxronla, zaifMavzular } from "../lib/imtihon";
@@ -82,6 +82,8 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
       <div className="contents kom:col-span-2 kom:block">
         <ImtihonSarlavha joriy="dtm" onTanla={onSertifikat} onChiq={onChiq} />
       </div>
+      {/* Premium faol bo'lsa — qancha qolgani (soatlari bilan), aks holda hech narsa. */}
+      <div className="contents kom:col-span-2 kom:block"><PremiumQator /></div>
 
       {/* Chap ustun: natija va natijadan keyingi eshiklar (reyting, ko'rib chiqish). */}
       <div className="contents kom:flex kom:flex-col kom:gap-3.5">

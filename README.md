@@ -707,51 +707,80 @@ guruhdoshlariga to'g'ri ko'rinadi.
 Pullik qism **faqat imtihon variantlari**: DTM, Milliy sertifikat va
 Prezident/ixtisoslashtirilgan maktab tayyorlovi. Har biridan birinchi
 **3 ta variant bepul**, qolgani Premium. Darslar, o'yinlar, duel va
-qolgan hamma narsa bepul.
+qolgan hamma narsa bepul. Farq `/premium` sahifasida jadval bo'lib turadi.
 
 | | |
 |---|---|
-| Narx | 1 oy — 49 000 so'm, 3 oy — 119 000 so'm (`.env`: `PREMIUM_NARX_1OY`, `PREMIUM_NARX_3OY`) |
+| Narx | 7 kun — 5 000 so'm, 1 oy — 12 000 so'm (`.env`: `PREMIUM_NARX_7KUN`, `PREMIUM_NARX_1OY`) |
 | Sinov | 3 kun, har hisobga bir marta va faqat hech qachon premium bo'lmaganga |
-| To'lov | karta raqamiga o'tkazma → chek rasmi botga → admin tasdiqlaydi |
+| To'lov | karta raqamiga o'tkazma → chek rasmi (saytda yoki botda) → admin tasdiqlaydi |
 | Huquq | `Pupil.premium_gacha` — serverda, tanga yoki `localStorage` da emas |
 
-**Oqim.** `/premium` sahifasida tarif tanlanadi va karta raqami ko'rinadi
-(nusxa olish tugmasi bilan). "To'ladim — chekni yuborish" botni
-`?start=premium_<tarif>` bilan ochadi; bot karta raqamini qayta yozadi va
-chek rasmini kutadi. Rasm kelsa `PremiumTolov` (`kutilmoqda`) yoziladi va
-`ADMIN_TG_IDS` dagi har adminga rasm + "✅ Tasdiqlash" / "❌ Rad etish"
-tugmalari boradi. Tasdiqlanganda muddat `max(hozir, premium_gacha) + 30/90
-kun` bo'ladi — oyi tugamasdan to'lagan odam qolgan kunlarini yo'qotmaydi.
-Bitta chek ikki marta tasdiqlanmaydi: holat tranzaksiya va qator qulfi
-ostida qayta tekshiriladi.
+**Oqim.** `/premium` da tarif tanlanadi, to'liq karta raqami va egasi
+ko'rinadi (nusxa olish tugmasi bilan). Chek ikki yo'l bilan yuboriladi:
+
+* **saytning o'zida** — "Chek rasmini yuborish" (`POST /api/v1/premium/chek`).
+  Brauzerda ochgan odamda Telegram bo'lmasligi mumkin, shuning uchun bu
+  asosiy yo'l. Rasm `PREMIUM_CHEK_PAPKA` ga yoziladi — `MEDIA_ROOT` dan
+  TASHQARIDA, chunki media ochiq beriladi, chekda esa karta va ism bor;
+* **bot orqali** — `?start=premium_<tarif>`, bot karta raqamini qayta
+  yozadi va rasmni kutadi.
+
+Ikkalasida ham har adminga (`ADMIN_TG_IDS`) rasm + izoh (kim, tarif,
+summa, qayerdan, oldin necha marta to'lagan, hozir qancha qolgan) va
+"✅ Tasdiqlash" / "❌ Rad etish" tugmalari boradi. Odamga bot orqali
+"chek qabul qilindi", keyin qaror haqida xabar keladi (tasdiqda — tarif,
+qolgan vaqt va tugash soati). "Admin bilan aloqa" tugmasi sahifada ham,
+botda ham bor (`PREMIUM_ADMIN`, bo'sh bo'lsa bot ochiladi).
+
+Muddat `max(hozir, premium_gacha) + 7/30 kun` — muddati tugamasdan
+to'lagan odam qolgan kun va soatlarini yo'qotmaydi. Bitta chek ikki
+marta tasdiqlanmaydi: holat tranzaksiya va qator qulfi ostida qayta
+tekshiriladi (bot va panel bir vaqtda bosilsa ham).
+
+**Qolgan vaqt hamma joyda soatlari bilan**: Premium sahifasida, profilda
+(`Men`), DTM/sertifikat/qabul sahifalari tepasida ("29 kun 23 soat
+qoldi") va botda (`/premium` buyrug'i). Server `qolgan_sekund` beradi —
+telefon soati noto'g'ri bo'lsa ham to'g'ri chiqadi.
 
 **Server qismi.** Savollar mijozda urug'dan yasaladi, ya'ni ro'yxatdagi
 qulf va variant sahifasidagi darvoza (`/imtihon/9` ni qo'lda ochish
 `/premium` ga qaytaradi) asosiy to'siq. Server esa **reyting va tarixni**
 qo'riqlaydi: premiumsiz yopiq DTM/sertifikat varianti natijasi
-yozilmaydi (`core/imtihon.py`) — so'rovni qo'lda yuborib haftalik
-jadvalga kirib bo'lmaydi.
+yozilmaydi (`core/imtihon.py`).
 
-**Eslatma.** Muddat tugashiga 3 kun qolganda bitta bot xabari — har kuni
-11:00 da (`premium_eslatma`, Celery). Bir muddat uchun ikkinchi marta
-ketmaydi (`Pupil.premium_eslatildi`) va faqat haqiqatan to'laganlarga:
-3 kunlik sinov birinchi kuniyoq "tugayapti" deb eslatilmasin.
+**Eslatma.** Muddat tugashiga oz qolganda bitta bot xabari — har kuni
+11:00 da (`premium_eslatma`, Celery): oylikda 3 kun, 7 kunlikda 1 kun
+qolganda. Bir muddat uchun ikkinchi marta ketmaydi
+(`Pupil.premium_eslatildi`) va faqat to'laganlarga.
+
+**Panel** — `/boshqaruv/premium`:
+
+* tekshirish navbati — chek rasmi bilan, shu yerning o'zida tasdiqlanadi;
+* faol premiumlar — qolgan vaqt soatlari bilan, tugashi yaqini tepada;
+* tushum — shu hafta va o'tgan hafta (o'zgarish foizi), oy, jami, oylar
+  va tariflar bo'yicha;
+* **voronka** — yopiq variantni bosdi → sahifani ochdi → tarif tanladi →
+  chek yubordi → tasdiqlandi, har bosqichda odamlar soni va foizi;
+* sinovdan to'lovga o'tish, qayta to'laganlar, muddati tugaganlar.
+
+**Foydalanuvchi tahlili.** Haftalik reytingda o'tgan hafta bilan
+solishtirish: o'rin va natija ("2 → 1", "50% → 90%", "▲ 1 pog'ona
+yuqoriga"). `GET /api/v1/imtihon/reyting` javobida `otgan_hafta`.
 
 **Sozlash.** Karta raqami va egasi FAQAT serverdagi `.env` da:
 
 ```bash
-PREMIUM_KARTA=8600 ....
+PREMIUM_KARTA=9860 ....
 PREMIUM_KARTA_EGASI=Ism Familiya
+PREMIUM_ADMIN=telegram_username     # ixtiyoriy
 ```
 
 Bo'sh bo'lsa sahifa va bot "to'lov hozircha qabul qilinmayapti" deydi.
-Panel: `/boshqaruv/premium` — kutilayotgan cheklar, faol premiumlar
-(to'lagan / sinovda) va oylik tushum.
 
 Kod: `backend/core/premium.py`, botdagi `premium_*` funksiyalar,
 `frontend/src/lib/premium.ts`, `screens/Premium.tsx`,
-`components/PremiumVaraq.tsx`.
+`components/PremiumVaraq.tsx`, `components/variantQulf.tsx`.
 
 ## Manzillar
 

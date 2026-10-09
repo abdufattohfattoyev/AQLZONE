@@ -20,7 +20,7 @@ import { ImtihonSarlavha } from "../components/ImtihonTur";
 import { ImtEshiklar } from "../components/HaftalikReyting";
 import { zaifMavzular } from "../lib/imtihon";
 import { t } from "../lib/matn";
-import { QulfBelgi } from "../components/PremiumVaraq";
+import { PremiumQator, QulfBelgi } from "../components/PremiumVaraq";
 import { useVariantQulf } from "../components/variantQulf";
 import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
 import {
@@ -67,6 +67,7 @@ export function Sertifikat({ onVariant, onDtm, onChiq, onMashq, onReyting, onKor
       {/* Kompyuterda ikki ustun: chapda natija, o'ngda variantlar. Telefonda
           o'rovchi bloklar `contents` — ya'ni ular yo'qdek, tartib o'zgarmaydi. */}
       <div className="contents kom:col-span-2 kom:block"><ImtihonSarlavha joriy="sertifikat" onTanla={onDtm} onChiq={onChiq} /></div>
+      <div className="contents kom:col-span-2 kom:block"><PremiumQator /></div>
 
       <div className="contents kom:flex kom:flex-col kom:gap-3.5">
       {/* ---- o'rtacha va shkala ---- */}

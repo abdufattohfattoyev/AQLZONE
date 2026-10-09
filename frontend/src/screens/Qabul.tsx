@@ -23,7 +23,7 @@ import { useState } from "react";
 import { Icon } from "../lib/icons";
 import { Hajmli } from "../lib/hajmli";
 import { t } from "../lib/matn";
-import { QulfBelgi } from "../components/PremiumVaraq";
+import { PremiumQator, QulfBelgi } from "../components/PremiumVaraq";
 import { useVariantQulf } from "../components/variantQulf";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 import { QABUL, QABUL_TURLAR, QABUL_VARIANT, qabulEng, qabulOrtacha, qabulTurmi } from "../lib/qabul";
@@ -73,6 +73,7 @@ export function Qabul({ onVariant, onChiq }: {
         </div>
         <Hajmli nom="toj" olcham={40} />
       </header>
+      <PremiumQator />
 
       {/* Tur tanlagichi — uchta teng tugma. Tor ekranda ikki qatorga
           o'tadi, yozuv qisqarmaydi. */}

@@ -191,6 +191,8 @@ export function ReytingJadval({ tur, boshVariant, strelka, onChiq, onVariantBosh
       {r === null && <p className="py-8 text-center text-[14.5px] text-ink-dim">{t("hrYuklanmoqda")}</p>}
       {r === "xato" && <p className="py-8 text-center text-[14.5px] text-ink-dim">{t("hrXato")}</p>}
 
+      {r && r !== "xato" && <OtganHafta r={r} />}
+
       {r && r !== "xato" && (r.qatorlar.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-[22px] bg-karta p-6 text-center shadow-clay-sm">
           <span className="grid size-14 place-items-center rounded-3xl bg-brand-gold/20 text-brand-gold-d">
@@ -246,5 +248,58 @@ function Qator({ q, umumiy }: { q: ReytingQator; umumiy: boolean }) {
         <span className="text-[12px] text-ink-dim tabular-nums">{vaqt(q.sekund)}</span>
       </span>
     </li>
+  );
+}
+
+/**
+ * O'tgan hafta bilan solishtirish: o'rin va natija, o'zgarish strelkasi.
+ *
+ * "3-o'rin" o'z-o'zidan kam narsa aytadi; "o'tgan hafta 7-o'rin edi"
+ * esa o'sishni ko'rsatadi — tayyorgarlikda aynan shu odamni ertaga
+ * qaytaradi. Yuqorilash yashil (yaxshi natija), pastlash neytral:
+ * qizil faqat xato javobga (dizayn qoidasi).
+ */
+function OtganHafta({ r }: { r: Reyting }) {
+  const o = r.otgan_hafta ?? null;
+  const m = r.meniki;
+  if (!o && !m) return null;
+  if (!o && m) {
+    return <p className="rounded-[18px] bg-karta px-4 py-3 text-[13.5px] text-ink-soft shadow-clay-sm">{t("hrOtganYangi")}</p>;
+  }
+  if (o && !m) {
+    return (
+      <p className="rounded-[18px] bg-karta px-4 py-3 text-[13.5px] text-ink-soft shadow-clay-sm">
+        {t("hrOtganKutyapti", { orin: o.orin })}
+      </p>
+    );
+  }
+  const sert = r.tur === "sert";
+  const hozirgi = sert ? (m!.ball ?? 0) : (m!.jami ? Math.round((100 * m!.togri) / m!.jami) : 0);
+  const farq = o!.orin - m!.orin;
+  const natijaFarq = Math.round((hozirgi - o!.natija) * 10) / 10;
+  const natijaMatn = (n: number) => (sert ? String(n).replace(".", ",") : `${n}%`);
+  return (
+    <section aria-label={t("hrOtganSarlavha")}
+      className="flex flex-col gap-2 rounded-[22px] bg-karta p-4 shadow-clay-sm">
+      <h2 className="text-[13px] font-bold text-ink-dim">{t("hrOtganSarlavha")}</h2>
+      <div className="grid grid-cols-2 gap-2.5">
+        {[
+          { nom: t("hrOtganOrin"), oldin: `${o!.orin}`, endi: `${m!.orin}` },
+          { nom: t("hrOtganNatija"), oldin: natijaMatn(o!.natija), endi: natijaMatn(hozirgi) },
+        ].map((x) => (
+          <div key={x.nom} className="flex flex-col rounded-2xl bg-sahna px-3 py-2.5 shadow-ichki">
+            <span className="text-[12px] font-semibold text-ink-dim">{x.nom}</span>
+            <span className="font-display text-[18px] leading-tight font-bold">
+              <span className="text-[14px] font-semibold text-ink-dim">{x.oldin} → </span>{x.endi}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className={`text-[13.5px] font-bold ${farq > 0 || natijaFarq > 0 ? "text-brand-green-d" : "text-ink-soft"}`}>
+        {farq > 0 ? `▲ ${t("hrOtganYuqori", { n: farq })}` : farq < 0 ? `▼ ${t("hrOtganPast", { n: -farq })}`
+          : t("hrOtganTeng")}
+        {natijaFarq !== 0 && ` · ${natijaFarq > 0 ? "+" : ""}${sert ? String(natijaFarq).replace(".", ",") : `${natijaFarq}%`}`}
+      </p>
+    </section>
   );
 }
