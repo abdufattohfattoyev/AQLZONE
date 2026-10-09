@@ -47,7 +47,7 @@ import { useNavigate } from "react-router-dom";
 import { boshParametri } from "../lib/qobiq";
 import { MASALA_BOSH, ROYXAT_PARAM } from "../lib/ulash";
 import { kanalBelgisiz } from "../lib/tahlil";
-import { yolDuelKod, yolMasala, yolMasalalar, yolTestSinf, yolToplam, yolXona, yolKunlikSon, yolKarvon } from "../lib/yollar";
+import { yolDuelKod, yolMasala, yolMasalalar, yolTestSinf, yolToplam, yolXona, yolKunlikSon, yolKarvon, yolPremium } from "../lib/yollar";
 
 /** Ishlatilgan kod shu yerda qoladi — sessiya davomida. */
 const KALIT = "az_duel_kod";
@@ -66,6 +66,9 @@ function manzil(xom: string): string | null {
   // Kunlik son natijasi ulashilganda keladigan havola.
   if (kod === "kunlik") return yolKunlikSon();
   if (kod === "karvon") return yolKarvon();
+  // Kanaldagi Premium posti tugmasi (`?startapp=premium`). Busiz noma'lum
+  // parametr pastdagi duel yo'liga tushib, "chaqiruv topilmadi" chiqardi.
+  if (kod === "premium") return yolPremium();
   if (kod.startsWith("test_")) {
     const raqam = Number(kod.slice("test_".length));
     return Number.isInteger(raqam) && raqam > 0 ? yolToplam(raqam) : null;
