@@ -155,6 +155,7 @@ XABAR: dict[str, dict[str, str]] = {
     "buyruqStart": {"uz": "Boshlash — ilovani ochish", "ru": "Начать — открыть приложение"},
     "buyruqDtm": {"uz": "DTM variantlari — 30 savol, 60 daqiqa", "ru": "Варианты ДТМ — 30 вопросов, 60 минут"},
     "buyruqSertifikat": {"uz": "Milliy sertifikat — 45 topshiriq", "ru": "Нац. сертификат — 45 заданий"},
+    "buyruqPremium": {"uz": "Imtihon Premium — qancha qoldi, uzaytirish", "ru": "Imtihon Premium — сколько осталось"},
     "buyruqMasalalar": {"uz": "Masalalar — yeching va yozing", "ru": "Задачи — решайте и публикуйте"},
     "dtmHaqida": {
         "uz": (
@@ -786,21 +787,21 @@ XABAR: dict[str, dict[str, str]] = {
             "⭐ <b>Imtihon Premium</b>\n\n"
             "DTM, Milliy sertifikat va Prezident maktabi — barcha variantlar, "
             "to'liq tahlil va haftalik reyting.\n\n"
-            "• 1 oy — <b>{narx1} so'm</b>\n"
-            "• 3 oy — <b>{narx3} so'm</b>\n\n"
+            "• 7 kun — <b>{narx7} so'm</b>\n"
+            "• 1 oy — <b>{narx1} so'm</b>\n\n"
             "Tarifni tanlang:"
         ),
         "ru": (
             "⭐ <b>Imtihon Premium</b>\n\n"
             "ДТМ, Нац. сертификат и Президентская школа — все варианты, "
             "полный разбор и недельный рейтинг.\n\n"
-            "• 1 месяц — <b>{narx1} сум</b>\n"
-            "• 3 месяца — <b>{narx3} сум</b>\n\n"
+            "• 7 дней — <b>{narx7} сум</b>\n"
+            "• 1 месяц — <b>{narx1} сум</b>\n\n"
             "Выберите тариф:"
         ),
     },
+    "tPremium7kun": {"uz": "7 kun — {narx} so'm", "ru": "7 дней — {narx} сум"},
     "tPremium1oy": {"uz": "1 oy — {narx} so'm", "ru": "1 месяц — {narx} сум"},
-    "tPremium3oy": {"uz": "3 oy — {narx} so'm", "ru": "3 месяца — {narx} сум"},
     "premiumKarta": {
         "uz": (
             "💳 <b>{tarif} — {narx} so'm</b>\n\n"
@@ -819,8 +820,6 @@ XABAR: dict[str, dict[str, str]] = {
             "мы проверим и включим Premium."
         ),
     },
-    "premium1oy": {"uz": "1 oy", "ru": "1 месяц"},
-    "premium3oy": {"uz": "3 oy", "ru": "3 месяца"},
     "premiumYopiq": {
         "uz": "To'lov hozircha qabul qilinmayapti. Birozdan keyin qayta urinib ko'ring.",
         "ru": "Оплата сейчас не принимается. Попробуйте чуть позже.",
@@ -829,24 +828,45 @@ XABAR: dict[str, dict[str, str]] = {
         "uz": "Avval /start bosing va ilovaga shu Telegram orqali kiring — Premium hisobingizga yoziladi.",
         "ru": "Сначала нажмите /start и войдите в приложение через этот Telegram — Premium запишется на ваш аккаунт.",
     },
+    "premiumKop": {
+        "uz": "Sizda tekshirilmagan cheklar bor — admin ko'rib chiqqach javob beramiz.",
+        "ru": "У вас уже есть непроверенные чеки — ответим после проверки.",
+    },
     "premiumChekOlindi": {
-        "uz": "✅ Chek qabul qilindi. Tekshirib, tez orada Premium'ni yoqamiz.",
-        "ru": "✅ Чек получен. Проверим и скоро включим Premium.",
+        "uz": "✅ Chek qabul qilindi. Admin tekshirgach, Premium yoqiladi va shu yerga xabar keladi.",
+        "ru": "✅ Чек получен. После проверки Premium включится, и сюда придёт сообщение.",
     },
     "premiumTasdiq": {
-        "uz": "⭐ Premium yoqildi — {gacha} gacha. Barcha imtihon variantlari ochiq. Omad!",
-        "ru": "⭐ Premium включён — до {gacha}. Все варианты экзаменов открыты. Удачи!",
+        "uz": (
+            "⭐ <b>Premium yoqildi!</b>\n\n"
+            "📦 Tarif: {tarif}\n"
+            "⏳ Qoldi: <b>{qolgan}</b>\n"
+            "📅 Tugaydi: {gacha}\n\n"
+            "Barcha imtihon variantlari ochiq. Omad!"
+        ),
+        "ru": (
+            "⭐ <b>Premium включён!</b>\n\n"
+            "📦 Тариф: {tarif}\n"
+            "⏳ Осталось: <b>{qolgan}</b>\n"
+            "📅 До: {gacha}\n\n"
+            "Все варианты экзаменов открыты. Удачи!"
+        ),
     },
     "premiumRad": {
-        "uz": "To'lov tasdiqlanmadi. Savol bo'lsa, shu yerga yozing.",
-        "ru": "Оплата не подтверждена. Если есть вопросы, напишите сюда.",
+        "uz": "To'lov tasdiqlanmadi. Savol bo'lsa, admin bilan bog'laning.",
+        "ru": "Оплата не подтверждена. Если есть вопросы, свяжитесь с админом.",
     },
     "premiumEslatma": {
-        "uz": "⏳ Imtihon Premium {gacha} da tugaydi. Tayyorgarlik uzilmasin — uzaytirib qo'ying.",
-        "ru": "⏳ Imtihon Premium заканчивается {gacha}. Чтобы подготовка не прервалась — продлите.",
+        "uz": "⏳ Imtihon Premium tugashiga <b>{qolgan}</b> qoldi ({gacha}). Tayyorgarlik uzilmasin — uzaytirib qo'ying.",
+        "ru": "⏳ До конца Imtihon Premium осталось <b>{qolgan}</b> ({gacha}). Чтобы подготовка не прервалась — продлите.",
+    },
+    "premiumHolat": {
+        "uz": "⭐ Premium faol — yana <b>{qolgan}</b> ({gacha} gacha).",
+        "ru": "⭐ Premium активен — ещё <b>{qolgan}</b> (до {gacha}).",
     },
     "tPremiumOchish": {"uz": "📝 Variantlarni ochish", "ru": "📝 Открыть варианты"},
     "tPremiumUzaytirish": {"uz": "⭐ Uzaytirish", "ru": "⭐ Продлить"},
+    "tAdminAloqa": {"uz": "💬 Admin bilan aloqa", "ru": "💬 Связаться с админом"},
 }
 
 

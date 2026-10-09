@@ -2272,3 +2272,25 @@ def premium_sinov(request):
     except PR.SinovXato:
         return Response({"detail": "sinov_olingan", **PR.holat(request.user)}, status=409)
     return Response(PR.holat(pupil))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
+def premium_chek(request):
+    """
+    Chek rasmi SAYTDAN: `tarif` + `rasm`. Adminga rasm va tasdiqlash
+    tugmalari boradi, odamga — bot orqali "qabul qilindi".
+
+    Xato `kod` bilan qaytadi (`tarif`, `rasm`, `katta`, `kop`, `karta`) —
+    matnni mijoz o'z tilida yozadi.
+    """
+    if not settings.PREMIUM_KARTA:
+        return Response({"detail": "karta", "kod": "karta"}, status=400)
+    try:
+        t, jpeg = PR.chek_yukla(request.user, request.data.get("tarif", ""), request.FILES.get("rasm"))
+    except PR.ChekXato as e:
+        return Response({"detail": e.kod, "kod": e.kod}, status=429 if e.kod == "kop" else 400)
+    PR.adminlarga_rasm(t, jpeg)
+    PR.chek_olindi_xabari(t)
+    return Response(PR.holat(request.user), status=201)

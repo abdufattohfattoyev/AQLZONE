@@ -128,8 +128,12 @@ def imtihon_reyting(request):
     except ValueError:
         variant = 0
     variant = variant if 1 <= variant <= IM.VARIANTLAR else None
-    return Response(IM.haftalik_reyting(request.query_params.get("tur") or "dtm", variant,
-                                        _profil_tanla(request)))
+    profil = _profil_tanla(request)
+    tur = request.query_params.get("tur") or "dtm"
+    javob = IM.haftalik_reyting(tur, variant, profil)
+    # O'tgan hafta — o'sha jadvalda o'zim qayerda edim (`otgan_hafta`).
+    javob["otgan_hafta"] = IM.otgan_hafta_meniki(tur, variant, profil)
+    return Response(javob)
 
 
 @api_view(["POST"])

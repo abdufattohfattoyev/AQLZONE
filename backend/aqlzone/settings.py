@@ -471,7 +471,17 @@ LOGGING = {
 # kodda yoki git'da haqiqiy raqam hech qachon turmaydi.
 PREMIUM_KARTA = env("PREMIUM_KARTA", "")
 PREMIUM_KARTA_EGASI = env("PREMIUM_KARTA_EGASI", "")
-PREMIUM_NARX_1OY = int(env("PREMIUM_NARX_1OY", "49000"))
-PREMIUM_NARX_3OY = int(env("PREMIUM_NARX_3OY", "119000"))
+# Narx: 7 kun — 5 000, 1 oy — 12 000 so'm (egasining qarori, 2026-10-09;
+# ilgari 1 oy 49 000 / 3 oy 119 000 edi — imtihon oldidan bir haftalik
+# arzon kirish yo'li yo'q edi).
+PREMIUM_NARX_7KUN = int(env("PREMIUM_NARX_7KUN", "5000"))
+PREMIUM_NARX_1OY = int(env("PREMIUM_NARX_1OY", "12000"))
+# Admin bilan aloqa — Telegram username (@siz). Bo'sh bo'lsa bot ochiladi.
+PREMIUM_ADMIN = env("PREMIUM_ADMIN", "")
+# Saytdan yuklangan cheklar — `MEDIA_ROOT` dan TASHQARIDA (media ochiq
+# beriladi, chekda esa karta va ism bor). Volume ichida: qayta qurishda
+# yo'qolmasin.
+PREMIUM_CHEK_PAPKA = env("PREMIUM_CHEK_PAPKA", str(Path("/data") / "premium_chek")
+                         if Path("/data").exists() else str(BASE_DIR / "premium_chek"))
 PREMIUM_SINOV_KUN = int(env("PREMIUM_SINOV_KUN", "3"))
 PREMIUM_BEPUL = int(env("PREMIUM_BEPUL", "3"))

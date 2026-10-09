@@ -2288,7 +2288,8 @@ class PremiumTolov(models.Model):
     TASDIQLANDI = "tasdiqlandi"
     RAD = "rad"
     HOLATLAR = [(KUTILMOQDA, "kutilmoqda"), (TASDIQLANDI, "tasdiqlandi"), (RAD, "rad etildi")]
-    TARIFLAR = [("1oy", "1 oy"), ("3oy", "3 oy")]
+    #: "3oy" — eski tarif (2026-10-09 gacha): yozuvlari tarixda qoladi.
+    TARIFLAR = [("7kun", "7 kun"), ("1oy", "1 oy"), ("3oy", "3 oy")]
 
     pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="premium_tolovlar")
     tarif = models.CharField(max_length=4, choices=TARIFLAR)

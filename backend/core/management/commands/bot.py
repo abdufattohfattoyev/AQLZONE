@@ -697,18 +697,27 @@ def premium_boshla(chat_id: int, tg_id: str, til: str, matn: str) -> str:
         api("sendMessage", chat_id=chat_id, text=M("premiumHisobYoq", til))
         return f"{tg_id}: premium — hisob yo'q"
     # Ilovadagi tarif tugmasi tarifni o'zi aytadi: `premium_3oy`.
-    tarif = matn.split("premium", 1)[1].lstrip("_").strip()
+    tarif = matn.split("premium", 1)[1].lstrip("_").strip() if "premium" in matn else ""
     if tarif in PR.TARIF_KUN:
         return premium_kartani_yubor(chat_id, tg_id, til, tarif)
     narx = PR.narxlar()
+    pupil = PR.pupil_tg(tg_id)
+    # Faol bo'lsa — avval qancha qolgani (soatlari bilan), keyin uzaytirish.
+    if PR.faolmi(pupil):
+        api("sendMessage", chat_id=chat_id, parse_mode="HTML",
+            text=M("premiumHolat", til, qolgan=PR.qolgan_matn(pupil.premium_gacha, til),
+                   gacha=timezone.localtime(pupil.premium_gacha).strftime("%d.%m.%Y %H:%M")))
+    qatorlar = [
+        [tugma_yasa(M("tPremium7kun", til, narx=_som(narx["7kun"])), KOK,
+                    callback_data="premium_tarif:7kun")],
+        [tugma_yasa(M("tPremium1oy", til, narx=_som(narx["1oy"])), YASHIL,
+                    callback_data="premium_tarif:1oy")],
+    ]
+    if PR.admin_havola():
+        qatorlar.append([tugma_yasa(M("tAdminAloqa", til), "", url=PR.admin_havola())])
     api("sendMessage", chat_id=chat_id, parse_mode="HTML",
-        text=M("premiumTariflar", til, narx1=_som(narx["1oy"]), narx3=_som(narx["3oy"])),
-        reply_markup={"inline_keyboard": [
-            [tugma_yasa(M("tPremium1oy", til, narx=_som(narx["1oy"])), KOK,
-                        callback_data="premium_tarif:1oy")],
-            [tugma_yasa(M("tPremium3oy", til, narx=_som(narx["3oy"])), YASHIL,
-                        callback_data="premium_tarif:3oy")],
-        ]})
+        text=M("premiumTariflar", til, narx7=_som(narx["7kun"]), narx1=_som(narx["1oy"])),
+        reply_markup={"inline_keyboard": qatorlar})
     return f"{tg_id}: premium — tariflar"
 
 
@@ -721,9 +730,11 @@ def premium_kartani_yubor(chat_id: int, tg_id: str, til: str, tarif: str) -> str
     cache.set(f"premium_tarif:{tg_id}", tarif, PREMIUM_KESH)
     egasi = settings.PREMIUM_KARTA_EGASI
     api("sendMessage", chat_id=chat_id, parse_mode="HTML",
-        text=M("premiumKarta", til, tarif=M(f"premium{tarif}", til),
+        text=M("premiumKarta", til, tarif=PR.tarif_nomi(tarif, til),
                narx=_som(PR.narxlar()[tarif]), karta=html.escape(settings.PREMIUM_KARTA),
-               egasi=f"👤 {html.escape(egasi)}" if egasi else ""))
+               egasi=f"👤 {html.escape(egasi)}" if egasi else ""),
+        reply_markup={"inline_keyboard": [[tugma_yasa(M("tAdminAloqa", til), "", url=PR.admin_havola())]]}
+        if PR.admin_havola() else None)
     return f"{tg_id}: premium — karta ({tarif})"
 
 
@@ -742,16 +753,16 @@ def premium_chek(chat_id: int, tg_id: str, til: str, file_id: str) -> str | None
     if pupil is None:
         api("sendMessage", chat_id=chat_id, text=M("premiumHisobYoq", til))
         return f"{tg_id}: premium chek — hisob yo'q"
-    t = PR.tolov_yoz(pupil, tarif, file_id)
+    try:
+        t = PR.tolov_yoz(pupil, tarif, file_id)
+    except PR.ChekXato:
+        api("sendMessage", chat_id=chat_id, text=M("premiumKop", til))
+        return f"{tg_id}: premium chek — kutilayotgan ko'p"
     cache.delete(f"premium_tarif:{tg_id}")
     api("sendMessage", chat_id=chat_id, text=M("premiumChekOlindi", til))
-    tugmalar = {"inline_keyboard": [[
-        tugma_yasa("✅ Tasdiqlash", YASHIL, callback_data=f"premium_ok:{t.pk}"),
-        tugma_yasa("❌ Rad etish", QIZIL, callback_data=f"premium_rad:{t.pk}"),
-    ]]}
     for admin in settings.ADMIN_TG:
         api("sendPhoto", chat_id=admin, photo=file_id, caption=PR.admin_izohi(t),
-            parse_mode="HTML", reply_markup=tugmalar)
+            parse_mode="HTML", reply_markup=PR.admin_tugmalari(t))
     return f"{tg_id}: premium chek #{t.pk} ({tarif})"
 
 
@@ -1125,6 +1136,10 @@ def yangilikni_qayta_ishla(u: dict) -> str:
         bolimni_yubor(chat_id, til, "/marafon", "marafonHaqida")
         return f"{tg_id}: /marafon"
 
+    # Imtihon Premium — holat (qancha qoldi) va tariflar.
+    if matn.startswith("/premium"):
+        return premium_boshla(chat_id, tg_id, til, "/start premium")
+
     if matn.startswith("/masalalar") or matn in barcha("tMasalalar"):
         bolimni_yubor(chat_id, til, MASALALAR_YOLI, "masalalarBot")
         return f"{tg_id}: /masalalar"
@@ -1208,6 +1223,7 @@ BUYRUQLAR = (
     ("start", "buyruqStart"),
     ("dtm", "buyruqDtm"),
     ("sertifikat", "buyruqSertifikat"),
+    ("premium", "buyruqPremium"),
     ("masalalar", "buyruqMasalalar"),
     ("oyinlar", "buyruqOyinlar"),
     ("duel", "buyruqDuel"),

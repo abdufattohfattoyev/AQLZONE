@@ -1,43 +1,112 @@
 {% extends "boshqaruv/qobiq.html" %}
 {% block sarlavha %}Premium{% endblock %}
 {% block sahifa_nomi %}Imtihon Premium{% endblock %}
-{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }}{% endblock %}
+{% block sahifa_izoh %}{{ yangilangan|date:"d.m.Y H:i" }} · voronka: so'nggi {{ kunlar }} kun{% endblock %}
 
 {% comment %}
-Bitta savol: HOZIR TEKSHIRILADIGAN CHEK BORMI? Shuning uchun kutayotganlar
-birinchi. Chekni tasdiqlash botda (rasm shu yerda emas, Telegram'da) —
-bu sahifa navbat va tushumni ko'rsatadi, xolos (`core/premium.py`).
+Uch savol, shu tartibda:
+  1. HOZIR TEKSHIRILADIGAN CHEK BORMI? — navbat eng tepada, shu yerda
+     tasdiqlanadi (botdagi tugma bilan bir xil `premium.hal_qil`).
+  2. PUL KELYAPTIMI? — shu hafta / o'tgan hafta, oy, jami.
+  3. ODAM QAYERDA KETYAPTI? — voronka: yopiq variant → sahifa → tarif →
+     chek → tasdiq. Har bosqichda oldingisiga nisbatan foiz.
 {% endcomment %}
+
+{% block asboblar %}
+  <nav class="davr" aria-label="Davr">
+    <a class="{% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
+    <a class="{% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
+    <a class="{% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
+  </nav>
+{% endblock %}
 
 {% block ichki %}
 <div class="oqim">
+
+  {% if xabar %}<div class="karta" role="status"><b>{{ xabar }}</b></div>{% endif %}
 
   <div class="olchovlar">
     <div class="karta olchov urgu">
       <div class="nom">Kutilayotgan cheklar</div>
       <div class="son">{{ kutilmoqda|length }}</div>
-      <div class="ost">botda tasdiqlanadi</div>
+      <div class="ost">shu yerda yoki botda tasdiqlanadi</div>
     </div>
     <div class="karta olchov"><div class="nom">Faol premium</div><div class="son">{{ faol_soni }}</div><div class="ost">{{ faol_tolagan }} to'lagan · {{ faol_sinov }} sinovda</div></div>
-    <div class="karta olchov"><div class="nom">Shu oy tushum</div><div class="son">{{ oy_tushum_matn }}</div><div class="ost">so'm · {{ oy_soni }} ta to'lov</div></div>
+    <div class="karta olchov">
+      <div class="nom">Shu hafta tushum</div><div class="son">{{ hafta_tushum_matn }}</div>
+      <div class="ost">o'tgan hafta: {{ otgan_hafta_matn }}{% if hafta_ozgarish is not None %} · <b>{% if hafta_ozgarish >= 0 %}+{% endif %}{{ hafta_ozgarish }}%</b>{% endif %}</div>
+    </div>
+    <div class="karta olchov"><div class="nom">Shu oy tushum</div><div class="son">{{ oy_tushum_matn }}</div><div class="ost">so'm · {{ oy_soni }} ta to'lov · jami {{ jami_tushum_matn }}</div></div>
   </div>
 
-  <div class="bolim"><h2>Kutilayotganlar</h2><p>eng eskisi tepada</p></div>
+  <div class="bolim"><h2>Tekshirish navbati</h2><p>eng eskisi tepada · chekni bosib kattalashtiring</p></div>
   <div class="jadval-quti">
     <div class="jadval-siljish">
       <table class="kartochka">
-        <thead><tr><th>#</th><th>Kim</th><th>Tarif</th><th class="raqam">Summa</th><th>Yuborilgan</th></tr></thead>
+        <thead><tr><th>Chek</th><th>Kim</th><th>Tarif</th><th class="raqam">Summa</th><th>Qayerdan</th><th>Kutyapti</th><th>Qaror</th></tr></thead>
         <tbody>
           {% for t in kutilmoqda %}
             <tr>
-              <td>{{ t.pk }}</td>
-              <td>{{ t.pupil.toliq_ism|default:"—" }}{% if t.pupil.username %} <span class="juda-xira">@{{ t.pupil.username }}</span>{% endif %}</td>
-              <td>{{ t.get_tarif_display }}</td>
+              <td><a href="/boshqaruv/premium/chek/{{ t.pk }}" target="_blank" rel="noopener">
+                <img src="/boshqaruv/premium/chek/{{ t.pk }}" alt="#{{ t.pk }} cheki" loading="lazy"
+                     style="width:56px;height:56px;object-fit:cover;border-radius:10px;display:block"></a></td>
+              <td>{{ t.pupil.toliq_ism|default:"—" }}{% if t.pupil.username %} <span class="juda-xira">@{{ t.pupil.username }}</span>{% endif %}<br><span class="juda-xira">hisob #{{ t.pupil_id }} · to'lov #{{ t.pk }}</span></td>
+              <td>{{ t.tarif_matn }}</td>
               <td class="raqam">{{ t.summa_matn }}</td>
-              <td>{{ t.created_at|date:"d.m H:i" }}</td>
+              <td>{{ t.manba }}</td>
+              <td>{{ t.kutgan }}</td>
+              <td>
+                <form method="post" class="amal">
+                  {% csrf_token %}
+                  <input type="hidden" name="tolov" value="{{ t.pk }}">
+                  <button class="tugma yashil" name="amal" value="tasdiq">Tasdiqlash</button>
+                  <button class="tugma xavfli" name="amal" value="rad">Rad etish</button>
+                </form>
+              </td>
             </tr>
           {% empty %}
-            <tr><td colspan="5"><div class="bosh-holat">Kutilayotgan chek yo'q.</div></td></tr>
+            <tr><td colspan="7"><div class="bosh-holat">Kutilayotgan chek yo'q.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bolim"><h2>Voronka</h2><p>premium qaysi bosqichgacha yetib keldi — so'nggi {{ kunlar }} kun, odamlar soni</p></div>
+  <div class="karta">
+    {% for b in voronka %}
+      <div class="bar">
+        <div class="bar-bosh"><span class="nom">{{ b.nom }}</span><b class="son">{{ b.son }}</b><span class="foiz">{% if b.foiz is not None %}{{ b.foiz }}%{% else %}—{% endif %}</span></div>
+        <div class="chiziqcha"><span style="width:{{ b.kenglik }}%"></span></div>
+      </div>
+    {% endfor %}
+  </div>
+  <details class="izoh"><summary>Qanday o'qiladi?</summary>
+    <p>Foiz — oldingi bosqichdan nechtasi o'tgani. «Sahifani ochdi → Tarif tanladi» past bo'lsa — narx yoki sahifa ishontirmayapti. «Tarif tanladi → Chek yubordi» past bo'lsa — to'lov yo'li qiyin (karta, chek). «Chek yubordi → Tasdiqlandi» past bo'lsa — cheklar noto'g'ri keladi yoki tekshirish kechikyapti.</p>
+  </details>
+
+  <div class="olchovlar">
+    <div class="karta olchov"><div class="nom">Sinovdan to'lovga</div><div class="son">{{ sinov_foiz }}%</div><div class="ost">{{ sinovdan_tolagan }} / {{ sinov_olgan }} sinov olgan</div></div>
+    <div class="karta olchov"><div class="nom">Qayta to'laganlar</div><div class="son">{{ qayta_tolagan }}</div><div class="ost">kamida 2 marta</div></div>
+    <div class="karta olchov {% if tugagan > faol_tolagan %}yomon{% endif %}"><div class="nom">Muddati tugagan</div><div class="son">{{ tugagan }}</div><div class="ost">to'lagan, hozir premiumsiz</div></div>
+    <div class="karta olchov"><div class="nom">Rad etilgan</div><div class="son">{{ rad_soni }}</div><div class="ost">jami cheklar</div></div>
+  </div>
+
+  <div class="bolim"><h2>Faol premiumlar</h2><p>tugashi yaqinlari tepada · qolgan vaqt soatlari bilan</p></div>
+  <div class="jadval-quti">
+    <div class="jadval-siljish">
+      <table class="kartochka">
+        <thead><tr><th>Kim</th><th>Turi</th><th>Qoldi</th><th>Tugaydi</th></tr></thead>
+        <tbody>
+          {% for p in faollar %}
+            <tr>
+              <td>{{ p.toliq_ism|default:"—" }}{% if p.username %} <span class="juda-xira">@{{ p.username }}</span>{% endif %}</td>
+              <td>{% if p.tolagan %}<span class="belgi yashil">to'lagan</span>{% else %}<span class="belgi">sinov</span>{% endif %}</td>
+              <td>{% if p.tez_tugaydi %}<b>{{ p.qolgan }}</b>{% else %}{{ p.qolgan }}{% endif %}</td>
+              <td>{{ p.premium_gacha|date:"d.m.Y H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4"><div class="bosh-holat">Hozir faol premium yo'q.</div></td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -52,14 +121,21 @@ bu sahifa navbat va tushumni ko'rsatadi, xolos (`core/premium.py`).
       {% empty %}<div class="bosh-holat">Hali tasdiqlangan to'lov yo'q.</div>{% endfor %}
     </div>
     <div class="karta">
-      <div class="karta-bosh"><h3>So'nggi qarorlar</h3></div>
-      {% for t in songgi %}
-        <div class="bar"><div class="bar-bosh" style="margin:0">
-          <span class="nom">{{ t.pupil.toliq_ism|default:"—" }} · {{ t.get_tarif_display }}</span>
-          {% if t.holat == "tasdiqlandi" %}<span class="belgi yashil">tasdiqlandi</span>{% else %}<span class="belgi qizil">rad</span>{% endif %}
-        </div></div>
-      {% empty %}<div class="bosh-holat">Hali qaror yo'q.</div>{% endfor %}
+      <div class="karta-bosh"><h3>Tariflar bo'yicha</h3></div>
+      {% for r in tariflar %}
+        <div class="bar"><div class="bar-bosh" style="margin:0"><span class="nom">{{ r.nom }} · {{ r.soni }} ta</span><b class="son">{{ r.tushum }}</b></div></div>
+      {% empty %}<div class="bosh-holat">Hali tasdiqlangan to'lov yo'q.</div>{% endfor %}
     </div>
+  </div>
+
+  <div class="bolim"><h2>So'nggi qarorlar</h2></div>
+  <div class="karta">
+    {% for t in songgi %}
+      <div class="bar"><div class="bar-bosh" style="margin:0">
+        <span class="nom">{{ t.pupil.toliq_ism|default:"—" }} · {{ t.tarif_matn }} · {{ t.summa_matn }} so'm · {{ t.hal_qilingan_at|date:"d.m H:i" }}</span>
+        {% if t.holat == "tasdiqlandi" %}<span class="belgi yashil">tasdiqlandi</span>{% else %}<span class="belgi qizil">rad</span>{% endif %}
+      </div></div>
+    {% empty %}<div class="bosh-holat">Hali qaror yo'q.</div>{% endfor %}
   </div>
 
 </div>

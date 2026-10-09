@@ -364,3 +364,21 @@ def haftalik_reyting(tur_nomi: str, variant: int | None, men: Profile | None,
         # O'z o'rni — jadvalga sig'masa ham ko'rinsin.
         "meniki": meniki,
     }
+
+
+def otgan_hafta_meniki(tur_nomi: str, variant: int | None, men: Profile) -> dict | None:
+    """
+    O'tgan haftaning o'sha jadvalida o'zimning qatorim — solishtirish uchun.
+
+    "3-o'rin" o'z-o'zidan kam narsa aytadi; "o'tgan hafta 7-o'rin edi" esa
+    o'sishni ko'rsatadi va aynan shu odamni keyingi haftaga qaytaradi.
+    Ishlamagan bo'lsa — `None` (taqqoslash yo'q, "yangi" deb ko'rsatiladi).
+    """
+    boshi = hafta_boshi() - timedelta(days=7)
+    r = haftalik_reyting(tur_nomi, variant, men, boshi=boshi)
+    m = r["meniki"]
+    if not m:
+        return None
+    natija = m["ball"] if r["tur"] == "sert" else (round(100 * m["togri"] / m["jami"]) if m["jami"] else 0)
+    return {"orin": m["orin"], "ishlagan": r["ishlagan"], "natija": natija,
+            "hafta_boshi": r["hafta_boshi"]}

@@ -37,6 +37,7 @@ urlpatterns = [
     path("boshqaruv/reklama", boshqaruv.reklama, name="boshqaruv-reklama"),
     path("boshqaruv/duel", boshqaruv.duellar, name="boshqaruv-duel"),
     path("boshqaruv/premium", boshqaruv.premium, name="boshqaruv-premium"),
+    path("boshqaruv/premium/chek/<int:pk>", boshqaruv.premium_chek, name="boshqaruv-premium-chek"),
     # Hozir kim nima ishlayapti. JSON alohida: sahifa har 5 soniyada
     # faqat ro'yxatni so'raydi, o'zini qayta yuklamaydi.
     path("boshqaruv/jonli", boshqaruv.jonli, name="boshqaruv-jonli"),

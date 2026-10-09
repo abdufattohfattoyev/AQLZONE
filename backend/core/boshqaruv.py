@@ -1483,11 +1483,76 @@ def tahlil(request):
 
 
 def premium(request):
-    """Imtihon Premium: kutilayotgan cheklar, faollar va tushum (`core/premium.py`)."""
+    """
+    Imtihon Premium: kutilayotgan cheklar (shu yerda ham tasdiqlanadi),
+    faollar qolgan soatlari bilan, tushum va voronka (`core/premium.py`).
+
+    Tasdiqlash botdagi tugma bilan BIR XIL funksiyadan o'tadi
+    (`premium.hal_qil`) — ikkalasi bir vaqtda bosilsa ham to'lov bir marta
+    hisoblanadi.
+    """
     from . import premium as PR
 
     if not _yoniq():
         raise Http404
     if not kirganmi(request):
         return kirish(request)
-    return render(request, "boshqaruv/premium.html", PR.panel_statistika() | bolim("premium"))
+    xabar = ""
+    if request.method == "POST":
+        try:
+            tid = int(request.POST.get("tolov") or 0)
+        except ValueError:
+            tid = 0
+        amal = request.POST.get("amal")
+        if amal in ("tasdiq", "rad") and tid:
+            natija, t = PR.hal_qil(tid, tasdiq=amal == "tasdiq")
+            if natija in ("tasdiqlandi", "rad"):
+                PR.foydalanuvchiga_xabar(t)
+            xabar = {
+                "tasdiqlandi": f"#{tid} tasdiqlandi — foydalanuvchiga xabar ketdi",
+                "rad": f"#{tid} rad etildi",
+                "eskirgan": f"#{tid} allaqachon hal qilingan",
+                "yoq": f"#{tid} topilmadi",
+            }[natija]
+    return render(request, "boshqaruv/premium.html",
+                  PR.panel_statistika(davr(request)) | bolim("premium") | {"xabar": xabar})
+
+
+def premium_chek(request, pk: int):
+    """
+    Chek rasmi — faqat adminga. Saytdan kelgani diskdan, botdan kelgani
+    Telegram'dan (`getFile`) olib beriladi: rasm havolasida bot tokeni
+    bor, uni brauzerga ochib bo'lmaydi.
+    """
+    import json as _json
+    import urllib.request
+
+    from django.http import HttpResponse
+
+    from . import premium as PR
+    from .models import PremiumTolov
+
+    if not _yoniq() or not kirganmi(request):
+        raise Http404
+    t = PremiumTolov.objects.filter(pk=pk).first()
+    if t is None or not t.chek:
+        raise Http404
+    yol = PR.chek_fayli(t)
+    if yol is not None:
+        if not yol.is_file():
+            raise Http404
+        # Baytlar bilan, `FileResponse` emas: chek bir necha yuz KB, ochiq
+        # fayl dastagi esa Windows'da faylni o'chirishga to'sqinlik qiladi.
+        return HttpResponse(yol.read_bytes(), content_type="image/jpeg")
+    token = settings.BOT_TOKEN
+    if not token:
+        raise Http404
+    try:
+        with urllib.request.urlopen(
+                f"https://api.telegram.org/bot{token}/getFile?file_id={t.chek}", timeout=15) as r:
+            fayl_yoli = _json.loads(r.read())["result"]["file_path"]
+        with urllib.request.urlopen(
+                f"https://api.telegram.org/file/bot{token}/{fayl_yoli}", timeout=30) as r:
+            return HttpResponse(r.read(), content_type="image/jpeg")
+    except Exception:                                    # noqa: BLE001
+        raise Http404

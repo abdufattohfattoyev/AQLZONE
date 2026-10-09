@@ -9933,7 +9933,7 @@ class RolikTugmaTest(TestCase):
 
 
 @override_settings(PREMIUM_KARTA="8600 0000 0000 0000", PREMIUM_KARTA_EGASI="Sinov Egasi",
-                   PREMIUM_NARX_1OY=49000, PREMIUM_NARX_3OY=119000, PREMIUM_SINOV_KUN=3,
+                   PREMIUM_NARX_7KUN=5000, PREMIUM_NARX_1OY=12000, PREMIUM_SINOV_KUN=3,
                    PREMIUM_BEPUL=3, ADMIN_TG=[ADMIN_ID], BOSHQARUV_YONIQ=True)
 class PremiumTest(TestCase):
     """
@@ -9988,7 +9988,7 @@ class PremiumTest(TestCase):
         j = self.client.get("/api/v1/premium", **h).json()
         self.assertFalse(j["faol"])
         self.assertTrue(j["sinov_mumkin"])
-        self.assertEqual(j["narxlar"], {"1oy": 49000, "3oy": 119000})
+        self.assertEqual(j["narxlar"], {"7kun": 5000, "1oy": 12000})
         self.assertEqual(j["karta"], "8600 0000 0000 0000")
         self.assertEqual(j["karta_egasi"], "Sinov Egasi")
         self.assertFalse(self.client.get("/api/v1/me", **h).json()["premium"]["faol"])
@@ -10057,10 +10057,10 @@ class PremiumTest(TestCase):
         from core import premium as PR
 
         p = self.tg_pupil(premium_gacha=timezone.now() - timedelta(days=20))
-        t = PR.tolov_yoz(p, "3oy", "chek-2")
+        t = PR.tolov_yoz(p, "7kun", "chek-2")
         PR.hal_qil(t.pk, tasdiq=True)
         qolgan = Pupil.objects.get(pk=p.pk).premium_gacha - timezone.now()
-        self.assertTrue(timedelta(days=89, hours=23) < qolgan <= timedelta(days=90))
+        self.assertTrue(timedelta(days=6, hours=23) < qolgan <= timedelta(days=7))
 
     # --- bot ---
 
@@ -10068,20 +10068,20 @@ class PremiumTest(TestCase):
         p = self.tg_pupil("4242")
         self.bot.yangilikni_qayta_ishla(self.xabar("4242", text="/start premium"))
         tariflar = self.yuborilgan[-1]
-        self.assertIn("49 000", tariflar["text"])
+        self.assertIn("12 000", tariflar["text"])
         datalar = [b["callback_data"] for q in tariflar["reply_markup"]["inline_keyboard"] for b in q]
-        self.assertEqual(datalar, ["premium_tarif:1oy", "premium_tarif:3oy"])
+        self.assertEqual(datalar, ["premium_tarif:7kun", "premium_tarif:1oy"])
 
-        self.bot.yangilikni_qayta_ishla(self.tugma("4242", "premium_tarif:3oy"))
+        self.bot.yangilikni_qayta_ishla(self.tugma("4242", "premium_tarif:7kun"))
         karta = [x for x in self.yuborilgan if x["usul"] == "sendMessage"][-1]
         self.assertIn("8600 0000 0000 0000", karta["text"])
-        self.assertIn("119 000", karta["text"])
+        self.assertIn("5 000", karta["text"])
 
         self.bot.yangilikni_qayta_ishla(self.xabar("4242", photo=[
             {"file_id": "kichik"}, {"file_id": "katta-chek"}]))
         t = MDL.PremiumTolov.objects.get()
         self.assertEqual((t.pupil_id, t.tarif, t.summa, t.chek, t.holat),
-                         (p.pk, "3oy", 119000, "katta-chek", "kutilmoqda"))
+                         (p.pk, "7kun", 5000, "katta-chek", "kutilmoqda"))
         adminga = [x for x in self.yuborilgan if x["usul"] == "sendPhoto"]
         self.assertEqual(len(adminga), 1)
         self.assertEqual(adminga[0]["chat_id"], ADMIN_ID)
@@ -10098,7 +10098,7 @@ class PremiumTest(TestCase):
         self.bot.yangilikni_qayta_ishla(self.tugma(ADMIN_ID, f"premium_ok:{t.pk}"))
         self.bot.yangilikni_qayta_ishla(self.tugma(ADMIN_ID, f"premium_ok:{t.pk}"))
         p.refresh_from_db()
-        self.assertTrue(timedelta(days=89) < p.premium_gacha - timezone.now() <= timedelta(days=90))
+        self.assertTrue(timedelta(days=6) < p.premium_gacha - timezone.now() <= timedelta(days=7))
         # Foydalanuvchiga BITTA xabar — ikkinchi bosish qayta yubormaydi.
         self.assertEqual([x[0] for x in self.xabarlar], ["4242"])
         self.assertIn("Premium", self.xabarlar[0][1])
@@ -10130,11 +10130,11 @@ class PremiumTest(TestCase):
         from core import premium as PR
 
         tolagan = self.tg_pupil("4246", premium_gacha=timezone.now() + timedelta(days=2))
-        MDL.PremiumTolov.objects.create(pupil=tolagan, tarif="1oy", summa=49000, holat="tasdiqlandi")
+        MDL.PremiumTolov.objects.create(pupil=tolagan, tarif="1oy", summa=12000, holat="tasdiqlandi")
         self.tg_pupil("4247", premium_gacha=timezone.now() + timedelta(days=2),
                       premium_sinov_at=timezone.now())                       # faqat sinov
         uzoq = self.tg_pupil("4248", premium_gacha=timezone.now() + timedelta(days=20))
-        MDL.PremiumTolov.objects.create(pupil=uzoq, tarif="1oy", summa=49000, holat="tasdiqlandi")
+        MDL.PremiumTolov.objects.create(pupil=uzoq, tarif="1oy", summa=12000, holat="tasdiqlandi")
 
         PR.eslatma_yubor()
         PR.eslatma_yubor()                                                    # jadval ikki marta yurdi
@@ -10151,7 +10151,7 @@ class PremiumTest(TestCase):
         from core import premium as PR
 
         p = self.tg_pupil("4249")
-        PR.tolov_yoz(p, "3oy", "chek-4")
+        PR.tolov_yoz(p, "7kun", "chek-4")
         t = PR.tolov_yoz(p, "1oy", "chek-5")
         PR.hal_qil(t.pk, tasdiq=True)
         kod = boshqaruv.havola_yasa(ADMIN_ID).rsplit("/", 1)[-1]
@@ -10159,5 +10159,128 @@ class PremiumTest(TestCase):
         r = self.client.get("/boshqaruv/premium")
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "Dilshod Karimov")
-        self.assertContains(r, "119 000")
-        self.assertContains(r, "49 000")
+        self.assertContains(r, "5 000")
+        self.assertContains(r, "12 000")
+        self.assertContains(r, "Voronka")
+
+    # --- saytdan chek, panel, qolgan vaqt, o'tgan hafta ---
+
+    def rasm(self):
+        from io import BytesIO
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        b = BytesIO()
+        Image.new("RGB", (40, 30), (200, 200, 200)).save(b, format="PNG")
+        return SimpleUploadedFile("chek.png", b.getvalue(), content_type="image/png")
+
+    def test_saytdan_chek_yuklanadi(self):
+        import tempfile
+
+        h, pk = self.kir()
+        with tempfile.TemporaryDirectory() as papka, self.settings(PREMIUM_CHEK_PAPKA=papka):
+            r = self.client.post("/api/v1/premium/chek", {"tarif": "1oy", "rasm": self.rasm()}, **h)
+            self.assertEqual(r.status_code, 201, r.content)
+            self.assertEqual(r.json()["kutilmoqda"]["tarif"], "1oy")
+            t = MDL.PremiumTolov.objects.get()
+            self.assertEqual((t.pupil_id, t.summa, t.holat), (pk, 12000, "kutilmoqda"))
+            self.assertTrue(t.chek.startswith("fayl:"))
+            from core import premium as PR
+            self.assertTrue(PR.chek_fayli(t).is_file())
+            # Rasm bo'lmagan fayl va noma'lum tarif — rad.
+            from django.core.files.uploadedfile import SimpleUploadedFile
+            yomon = SimpleUploadedFile("x.png", b"rasm emas", content_type="image/png")
+            r = self.client.post("/api/v1/premium/chek", {"tarif": "1oy", "rasm": yomon}, **h)
+            self.assertEqual(r.json()["kod"], "rasm")
+            r = self.client.post("/api/v1/premium/chek", {"tarif": "5yil", "rasm": self.rasm()}, **h)
+            self.assertEqual(r.json()["kod"], "tarif")
+            # Kutilayotgan cheklar chegarasi.
+            for _ in range(2):
+                self.client.post("/api/v1/premium/chek", {"tarif": "7kun", "rasm": self.rasm()}, **h)
+            r = self.client.post("/api/v1/premium/chek", {"tarif": "7kun", "rasm": self.rasm()}, **h)
+            self.assertEqual(r.status_code, 429)
+
+    def test_paneldan_tasdiqlash_va_chek_korish(self):
+        import tempfile
+
+        from core import premium as PR
+
+        p = self.tg_pupil("4250")
+        with tempfile.TemporaryDirectory() as papka, self.settings(PREMIUM_CHEK_PAPKA=papka):
+            t, _ = PR.chek_yukla(p, "1oy", self.rasm())
+            kod = boshqaruv.havola_yasa(ADMIN_ID).rsplit("/", 1)[-1]
+            self.client.get(f"/boshqaruv/havola/{kod}")
+            rasm = self.client.get(f"/boshqaruv/premium/chek/{t.pk}")
+            self.assertEqual(rasm.status_code, 200)
+            self.assertEqual(rasm["Content-Type"], "image/jpeg")
+            r = self.client.post("/boshqaruv/premium", {"tolov": t.pk, "amal": "tasdiq"})
+            self.assertContains(r, "tasdiqlandi")
+            r = self.client.post("/boshqaruv/premium", {"tolov": t.pk, "amal": "tasdiq"})
+            self.assertContains(r, "allaqachon")
+        p.refresh_from_db()
+        self.assertTrue(timedelta(days=29) < p.premium_gacha - timezone.now() <= timedelta(days=30))
+        self.assertEqual([x[0] for x in self.xabarlar], ["4250"])
+        self.assertIn("qoldi", self.xabarlar[0][1].lower())
+
+    def test_chek_begonaga_korinmaydi(self):
+        from core import premium as PR
+
+        t = PR.tolov_yoz(self.tg_pupil("4251"), "7kun", "fayl:" + "0" * 32 + ".jpg")
+        self.assertEqual(self.client.get(f"/boshqaruv/premium/chek/{t.pk}").status_code, 404)
+
+    def test_holatda_qolgan_vaqt_va_kutilayotgan(self):
+        from core import premium as PR
+
+        h, pk = self.kir()
+        Pupil.objects.filter(pk=pk).update(premium_gacha=timezone.now() + timedelta(days=2, hours=5, minutes=1))
+        j = self.client.get("/api/v1/premium", **h).json()
+        self.assertTrue(2 * 86400 + 5 * 3600 <= j["qolgan_sekund"] <= 2 * 86400 + 5 * 3600 + 60)
+        self.assertTrue(j["sinovda"])
+        self.assertIsNone(j["kutilmoqda"])
+        hozir = timezone.now()
+        self.assertEqual(PR.qolgan_matn(hozir + timedelta(days=5, hours=3, minutes=20), hozir=hozir), "5 kun 3 soat")
+        self.assertEqual(PR.qolgan_matn(hozir + timedelta(hours=4, minutes=7), hozir=hozir), "4 soat 7 daqiqa")
+        self.assertEqual(PR.qolgan_matn(hozir + timedelta(days=1, hours=2), "ru", hozir=hozir), "1 дн. 2 ч")
+
+    def test_admin_aloqa_havolasi(self):
+        h, _ = self.kir()
+        with self.settings(PREMIUM_ADMIN="@aqlzone_admin"):
+            self.assertEqual(self.client.get("/api/v1/premium", **h).json()["admin"],
+                             "https://t.me/aqlzone_admin")
+
+    def test_yetti_kunlikka_eslatma_bir_kun_qolganda(self):
+        from core import premium as PR
+
+        p = self.tg_pupil("4252", premium_gacha=timezone.now() + timedelta(days=2))
+        MDL.PremiumTolov.objects.create(pupil=p, tarif="7kun", summa=5000, holat="tasdiqlandi",
+                                        hal_qilingan_at=timezone.now())
+        PR.eslatma_yubor()
+        self.assertEqual(self.xabarlar, [])                                  # hali erta
+        Pupil.objects.filter(pk=p.pk).update(premium_gacha=timezone.now() + timedelta(hours=20))
+        PR.eslatma_yubor()
+        self.assertEqual(len(self.xabarlar), 1)
+        self.assertIn("soat", self.xabarlar[0][1])
+
+    def test_bot_premium_buyrugi_qolgan_vaqtni_aytadi(self):
+        self.tg_pupil("4253", premium_gacha=timezone.now() + timedelta(days=3, hours=4, minutes=30))
+        self.bot.yangilikni_qayta_ishla(self.xabar("4253", text="/premium"))
+        matnlar = [x.get("text", "") for x in self.yuborilgan if x["usul"] == "sendMessage"]
+        self.assertTrue(any("3 kun 4 soat" in m for m in matnlar), matnlar)
+
+    def test_reytingda_otgan_hafta_bilan_solishtirish(self):
+        from core import imtihon as IM
+
+        h, pk = self.kir()
+        Pupil.objects.filter(pk=pk).update(premium_gacha=timezone.now() + timedelta(days=9))
+        self.client.post("/api/v1/imtihon/natija", {"variant": 2, "togri": 15, "jami": 30, "vaqt": 11},
+                         content_type="application/json", **h)
+        # Yozuvni o'tgan haftaga suramiz.
+        otgan = IM.hafta_boshi() - timedelta(days=3)
+        MDL.ImtihonNatija.objects.update(created_at=otgan)
+        self.client.post("/api/v1/imtihon/natija", {"variant": 3, "togri": 24, "jami": 30, "vaqt": 22},
+                         content_type="application/json", **h)
+        j = self.client.get("/api/v1/imtihon/reyting?tur=dtm", **h).json()
+        self.assertEqual(j["meniki"]["togri"], 24)
+        self.assertEqual(j["otgan_hafta"]["orin"], 1)
+        self.assertEqual(j["otgan_hafta"]["natija"], 50)
