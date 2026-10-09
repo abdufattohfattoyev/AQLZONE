@@ -30,16 +30,18 @@
  *
  * Rasmi yo'q kurs eski ko'rinishda — rangli kvadrat va chiziqli belgi —
  * ishlab turaveradi.
+ *
+ * 2026-10-09 dan FIRUZA nusxalar (`rasm/kurs-f/`, `.belgi/firuza.py`):
+ * ilova bitta asosiy rangda. Asl rangli rasmlar `rasm/kurs/` da qoladi.
  */
-
 const FAYLLAR = import.meta.glob<string>(
-  "../../rasm/kurs/*.{png,webp}",
+  "../../rasm/kurs-f/*.{png,webp}",
   { eager: true, query: "?url", import: "default" },
 );
 
 const JADVAL: Record<string, string> = {};
 for (const [yol, manzil] of Object.entries(FAYLLAR)) {
-  // "../../rasm/kurs/grade1.webp" → "grade1"
+  // "../../rasm/kurs-f/grade1.webp" → "grade1"
   const nom = yol.split("/").pop()?.replace(/\.[^.]+$/, "");
   if (nom) JADVAL[nom] = manzil;
 }

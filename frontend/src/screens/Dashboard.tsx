@@ -5,6 +5,7 @@ import type { IconName } from "../lib/icons";
 import { Reveal } from "../components/Reveal";
 import { COURSES, OLIY_KURSLAR, lessonCount, maktabKursi } from "../lib/curriculum";
 import { kursBelgi } from "../lib/chizma/kursBelgi";
+import { oxirgiKurs } from "../lib/oxirgi";
 import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import type { Kalit } from "../lib/matn";
@@ -303,9 +304,15 @@ function Sarlavha({ children, kech }: { children: React.ReactNode; kech: CSSProp
  * "Tugadi" belgisi ikkalasida ham bir xil joyda — plitkaning o'ng
  * pastki burchagida, chetidan chiqib turadi.
  */
-function KursBelgi({ c, foiz, olcham }: {
+function KursBelgi({ c, foiz, olcham, i }: {
   c: Course; foiz: number; olcham: "katta" | "kichik";
+  /** Ro'yxatdagi o'rni — belgilar navbat bilan "sakrab" chiqadi. */
+  i: number;
 }) {
+  // Hozir o'qilayotgan kurs — uning belgisi sekin suzib turadi. DOIMIY
+  // harakat faqat shu BITTA belgida (dizayn qoidasi: cheksiz animatsiya
+  // faqat "keyingi qadam"da); qolganlari bir marta kirib, to'xtaydi.
+  const joriy = foiz < 100 && c.slug === oxirgiKurs();
   const rasm = kursBelgi(c.id);
   const color = UNIT_COLORS[c.color];
   // 3D narsa plitkadan KATTAROQ turadi. Plitka o'z kvadratini to'liq
@@ -324,8 +331,12 @@ function KursBelgi({ c, foiz, olcham }: {
         /* `kurs-belgi` — soya va bosilgandagi qimirlash (`index.css`).
            Soya rasmga kuydirilmagan: u yorug' va qorong'i temada
            boshqacha bo'lishi kerak. */
-        <img src={rasm} alt="" loading="lazy" decoding="async"
-          className="kurs-belgi size-full object-contain" />
+        <span className="kurs-belgi-kir size-full" style={{ "--kech": `${160 + i * 70}ms` } as CSSProperties}>
+          <span className={`block size-full ${joriy ? "kurs-belgi-suz" : ""}`}>
+            <img src={rasm} alt="" loading="lazy" decoding="async"
+              className="kurs-belgi size-full object-contain" />
+          </span>
+        </span>
       ) : (
         <>
           <Icon name={c.ic} size={olcham === "katta" ? 27 : 25} />
@@ -365,7 +376,7 @@ function KursKarta({ c, i, progressOf, onOpen }: {
         className="tugma-3d flex h-full w-full items-center gap-3 rounded-clay bg-karta/95 p-3
                    text-left shadow-clay backdrop-blur-sm sm:gap-3.5 sm:p-3.5"
         style={kech(110 + i * 70)}>
-        <KursBelgi c={c} foiz={foiz} olcham="katta" />
+        <KursBelgi c={c} foiz={foiz} olcham="katta" i={i} />
 
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline gap-2">
@@ -443,7 +454,7 @@ function SinfKarta({ c, i, progressOf, onOpen }: {
                    shadow-clay backdrop-blur-sm sm:p-3.5"
         style={kech(110 + i * 70)}>
         <span className="flex w-full items-start gap-2">
-          <KursBelgi c={c} foiz={foiz} olcham="kichik" />
+          <KursBelgi c={c} foiz={foiz} olcham="kichik" i={i} />
           {done > 0 && (
             <span className="ml-auto font-display text-[12px] text-ink-dim">{foiz}%</span>
           )}
