@@ -216,7 +216,7 @@ export function Qidiruv({ progressOf, onOch, onBack }: Props) {
                   ? <span className="grid size-7 shrink-0 place-items-center text-ink-dim" title={t("qidiruvQulf")}>
                       <Icon name="lock" size={20} />
                     </span>
-                  : <img src={`/belgi/h/${g.ic}.webp`} alt="" width={28} height={28} className="size-7 shrink-0 object-contain" />}
+                  : <span className="az-plitka az-plitka-kichik size-8"><img src={`/belgi/h/${g.ic}.webp`} alt="" width={28} height={28} /></span>}
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-[15.5px] leading-tight font-bold">{q.nom}</span>
                   <span className="truncate text-[13px] text-ink-dim">

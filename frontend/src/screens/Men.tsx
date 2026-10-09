@@ -233,8 +233,9 @@ function Qator({ ic, nom, qiymat = "", on }: {
   return (
     <button type="button" onClick={on} data-tahlil={`Men: ${ic}`}
       className="clay-press flex min-h-[54px] w-full items-center gap-3 px-3.5 text-left">
-      <img src={`/belgi/h/${ic}.webp`} width={28} height={28} alt="" decoding="async"
-        className="size-7 shrink-0 object-contain" />
+      <span className="az-plitka az-plitka-kichik size-9">
+        <img src={`/belgi/h/${ic}.webp`} width={28} height={28} alt="" decoding="async" />
+      </span>
       <span className="min-w-0 flex-1 truncate text-[16px] font-semibold">{nom}</span>
       {/* Uzun qiymat ("Haftalik hisobot") tor telefonda nomni qirqib
           qo'yardi — u yerda nom muhimroq, qiymat yashiriladi. Chegara

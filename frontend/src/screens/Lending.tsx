@@ -550,7 +550,7 @@ function Sonlar() {
         {sonlar.map((s) => (
           <li key={s.nom} className="flex flex-col gap-3 rounded-[22px] bg-karta p-4 shadow-clay-sm transition
                                      hover:-translate-y-1 sm:flex-row sm:items-start sm:gap-4 sm:p-5">
-            <span className={`grid size-10 shrink-0 place-items-center rounded-2xl sm:size-12 ${RANG[s.rang].quti}`}>
+            <span className="az-plitka az-plitka-kichik size-10 sm:size-12">
               <img src={`/belgi/h/${s.ic}.webp`} width={28} height={28} alt="" aria-hidden decoding="async"
                 className="size-6 sm:size-7" />
             </span>
@@ -601,8 +601,7 @@ function Bolimlar({ onOch }: { onOch: (yol: string) => void }) {
             <button type="button" onClick={() => onOch(b.yol())} data-tahlil={`Tanishuv: bo'lim ${b.ic}`}
               className="group flex h-full w-full flex-col rounded-[24px] bg-karta p-5 text-left sm:rounded-[28px] sm:p-6 shadow-clay-sm
                          transition hover:-translate-y-1.5 hover:shadow-clay">
-              <span className={`grid size-14 place-items-center rounded-2xl transition-transform group-hover:scale-110
-                                ${RANG[b.rang].quti}`}>
+              <span className="az-plitka size-14 transition-transform group-hover:scale-110">
                 <img src={`/belgi/h/${b.ic}.webp`} width={34} height={34} alt="" aria-hidden decoding="async" />
               </span>
               <h3 className="mt-5 font-display text-[20px] leading-tight">{t(b.nom)}</h3>
@@ -729,7 +728,7 @@ function Oxir({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
         <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-white/10 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -right-24 -bottom-24 size-80 rounded-full bg-brand-green/25 blur-3xl" />
         <div className="relative mx-auto flex max-w-[40rem] flex-col items-center">
-          <span className="grid size-16 place-items-center rounded-full bg-white/15 backdrop-blur">
+          <span className="az-plitka size-16">
             <img src="/belgi/h/chaqmoq.webp" width={36} height={36} alt="" aria-hidden decoding="async" />
           </span>
           <h2 className="mt-5 font-display text-[28px] leading-tight tracking-tight sm:text-[40px]">{t("lendOxirSarlavha")}</h2>

@@ -13,9 +13,9 @@
  * hammasi firuza: farq SHAKLDA, hajm (soya va yaltiroq) esa saqlangan.
  * Rasmlar `.belgi/firuza.py` bilan asl 3D rasmlardan yasaladi.
  *
- * `oq` — to'ldirilgan firuza tugma USTIDA (kompyuterdagi faol bo'lim).
- * U yerda firuza belgi fonga singib ketardi, shuning uchun o'sha hajmning
- * oqish nusxasi (`*-oq.webp`) olinadi.
+ * 2026-10-09: har belgi TO'Q NAVY PLITKADA (`.az-plitka`, `index.css`) —
+ * ingichka firuza chiziq va yumshoq nur bilan. Ilgari faol tugma ustida
+ * oqish nusxa (`*-oq.webp`) olinardi; plitka bilan bu kerak emas.
  *
  * Ilgari "Imtihonlar" guruhi (DTM, sertifikat, reyting, qidiruv) yassi
  * chiziqli belgida edi — panelda ikki xil til. Endi ular ham 3D.
@@ -34,20 +34,27 @@ const FAYL: Partial<Record<PanelBelgiNom, string>> = { vazifa: "qalam" };
 export const panelBelgiYoli = (nom: PanelBelgiNom, oq = false): string =>
   `/belgi/f/${FAYL[nom] ?? nom}${oq ? "-oq" : ""}.webp`;
 
-export function PanelBelgi({ nom, faol = false, oq = false, size = 26, className = "" }: {
+export function PanelBelgi({ nom, faol = false, size = 26, className = "" }: {
   nom: PanelBelgiNom;
-  /** Shu tugma turgan sahifa ochiqmi — harakat va to'liq rang shundan. */
+  /** Shu tugma turgan sahifa ochiqmi — harakat shundan. */
   faol?: boolean;
-  /** To'ldirilgan firuza fon ustida — oqish nusxa. */
+  /**
+   * ESKIRGAN (2026-10-09): ilgari firuza tugma ustida oqish nusxa olinardi.
+   * Endi belgi doim to'q navy plitkada (`.az-plitka`) — firuza belgi
+   * firuza tugma ustida ham ko'rinadi. Chaqiruvlar buzilmasin deb qoldi.
+   */
   oq?: boolean;
   size?: number;
   className?: string;
 }) {
   return (
-    <img src={panelBelgiYoli(nom, oq)} width={size} height={size} alt=""
-      // Panel belgilari BIRINCHI ko'rinadigan narsalardan. Brauzerga
-      // "keyinroq" deb qo'yib berilsa, panel bir zum bo'sh turardi.
-      decoding="sync" fetchPriority="high"
-      className={`az-pb az-pb-rasm ${faol ? "az-pb-faol" : ""} ${className}`} />
+    <span className={`az-plitka ${size < 36 ? "az-plitka-kichik" : ""} ${className}`}
+      style={{ width: size, height: size }}>
+      <img src={panelBelgiYoli(nom)} width={size} height={size} alt=""
+        // Panel belgilari BIRINCHI ko'rinadigan narsalardan. Brauzerga
+        // "keyinroq" deb qo'yib berilsa, panel bir zum bo'sh turardi.
+        decoding="sync" fetchPriority="high"
+        className={`az-pb az-pb-rasm ${faol ? "az-pb-faol" : ""}`} />
+    </span>
   );
 }

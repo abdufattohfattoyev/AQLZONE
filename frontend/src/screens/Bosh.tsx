@@ -428,8 +428,9 @@ function YolPlitka({ belgi, nom, izoh, on, tahlil }: {
   return (
     <button type="button" onClick={on} data-tahlil={tahlil}
       className="clay-press flex items-center gap-4 rounded-clay bg-karta p-5 text-left shadow-clay-sm">
-      <img src={`/belgi/h/${belgi}.webp`} alt="" width={56} height={56} decoding="async"
-        className="size-14 shrink-0 drop-shadow-[0_6px_8px_rgb(0_0_0/0.25)]" />
+      <span className="az-plitka size-14">
+        <img src={`/belgi/h/${belgi}.webp`} alt="" width={56} height={56} decoding="async" />
+      </span>
       <span className="min-w-0 flex-1">
         <span className="block font-display text-[18px] leading-tight">{nom}</span>
         <span className="mt-1 block text-[13.5px] leading-snug text-ink-dim">{izoh}</span>

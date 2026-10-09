@@ -225,7 +225,7 @@ function Tab({ ic, nom, on, faol }: {
         className={`az-tab-yostiq absolute inset-0 rounded-2xl
                     ${faol ? "scale-100 opacity-100" : "scale-90 opacity-0"}`} />
       <span className="relative">
-        <PanelBelgi nom={ic} faol={faol} size={28} />
+        <PanelBelgi nom={ic} faol={faol} size={34} />
       </span>
       {/* 320px li telefonda bir tugmaga ~60px qoladi: yozuv 11px, kengroqda
           dizayndagi 12.5px. 11px dan kichigi o'qilmaydi (dizayn qoidasi). */}
@@ -323,7 +323,7 @@ function YonTugma({ ic, nom, on, faol }: {
                   ${faol ? "bg-brand-blue font-bold text-white shadow-[0_4px_14px_-4px_var(--color-brand-blue)]"
                     : "font-semibold text-ink-soft hover:bg-karta"}`}>
       <span className="relative">
-        <PanelBelgi nom={ic} faol={faol} oq={faol} size={26} />
+        <PanelBelgi nom={ic} faol={faol} size={34} />
       </span>
       <span className="relative truncate">{nom}</span>
     </button>
@@ -350,7 +350,7 @@ function YonSatr({ ik, nom, on, faol }: { ik: PanelBelgiNom; nom: string; on: ()
                   transition-colors duration-200
                   ${faol ? "bg-brand-blue font-bold text-white shadow-[0_4px_14px_-4px_var(--color-brand-blue)]"
                     : "font-semibold text-ink-soft hover:bg-karta"}`}>
-      <PanelBelgi nom={ik} faol={faol} oq={faol} size={22} className="shrink-0" />
+      <PanelBelgi nom={ik} faol={faol} size={30} className="shrink-0" />
       <span className="truncate">{nom}</span>
     </button>
   );

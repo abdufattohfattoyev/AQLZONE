@@ -6,7 +6,6 @@ import { Reveal } from "../components/Reveal";
 import { COURSES, OLIY_KURSLAR, lessonCount, maktabKursi } from "../lib/curriculum";
 import { kursBelgi } from "../lib/chizma/kursBelgi";
 import { oxirgiKurs } from "../lib/oxirgi";
-import { UNIT_COLORS } from "../lib/types";
 import { t } from "../lib/matn";
 import type { Kalit } from "../lib/matn";
 import { sorov } from "../lib/api";
@@ -252,15 +251,17 @@ export function Dashboard({
 }
 
 /** Kattalar bo'limidagi bitta karta — sinf kartalari bilan bir o'lchamda. */
-function KattaKarta({ ik, nom, izoh, rang, on, kech }: {
-  ik: IconName; nom: string; izoh: string; rang: string; on: () => void; kech: CSSProperties;
+function KattaKarta({ ik, nom, izoh, on, kech }: {
+  ik: IconName; nom: string; izoh: string; /** Eskirgan: belgi endi plitkada (rang ishlatilmaydi). */ rang?: string; on: () => void; kech: CSSProperties;
 }) {
   return (
     <Reveal kech={0}>
       <button type="button" onClick={on} data-tahlil={`Darslar: ${nom}`} style={kech}
         className="az-kirish clay-press flex w-full flex-col items-start gap-2 rounded-clay bg-karta
                    p-3 text-left shadow-clay-sm">
-        <span className={`grid size-10 place-items-center rounded-2xl text-white ${rang}`}>
+        {/* Plitka (`.az-plitka`) — barcha belgilar bitta uslubda; ilgari har
+            karta o'z rangli kvadratida edi (ko'k, yashil, to'q sariq). */}
+        <span className="az-plitka az-plitka-kichik size-10 text-brand-blue-t">
           <Icon name={ik} size={20} />
         </span>
         <span className="min-w-0">
@@ -314,7 +315,6 @@ function KursBelgi({ c, foiz, olcham, i }: {
   // faqat "keyingi qadam"da); qolganlari bir marta kirib, to'xtaydi.
   const joriy = foiz < 100 && c.slug === oxirgiKurs();
   const rasm = kursBelgi(c.id);
-  const color = UNIT_COLORS[c.color];
   // 3D narsa plitkadan KATTAROQ turadi. Plitka o'z kvadratini to'liq
   // to'ldiradi, narsa esa yo'q: palitra yoki sirkulning atrofida bo'sh
   // joy bor va bir xil o'lchamda u plitkaning yarmicha bo'lib ko'rinardi.
@@ -326,16 +326,15 @@ function KursBelgi({ c, foiz, olcham, i }: {
 
   return (
     <span className={`relative grid shrink-0 place-items-center overflow-visible ${olchov}
-                      ${rasm ? "" : `text-white ${color.bg}`}`}>
+                      ${rasm ? "" : "az-plitka text-brand-blue-t"}`}>
       {rasm ? (
         /* `kurs-belgi` — soya va bosilgandagi qimirlash (`index.css`).
            Soya rasmga kuydirilmagan: u yorug' va qorong'i temada
            boshqacha bo'lishi kerak. */
-        <span className="kurs-belgi-kir size-full" style={{ "--kech": `${160 + i * 70}ms` } as CSSProperties}>
-          {/* Nur — belgi ortidagi yumshoq firuza doira: belgini karta fonidan
-              ajratadi. Hover'da kengayadi, joriy kursda sekin "nafas oladi". */}
-          <span aria-hidden className={`kurs-nur ${joriy ? "kurs-nur-joriy" : ""}`} />
-          <span className={`relative block size-full ${joriy ? "kurs-belgi-suz" : ""}`}>
+        /* Plitka (`.az-plitka`) — barcha belgilar bitta uslubda (2026-10-09).
+           Ilgari belgi ortida firuza nur-doira (`kurs-nur`) edi. */
+        <span className="kurs-belgi-kir az-plitka size-full" style={{ "--kech": `${160 + i * 70}ms` } as CSSProperties}>
+          <span className={`relative block ${joriy ? "kurs-belgi-suz" : ""}`}>
             <img src={rasm} alt="" loading="lazy" decoding="async"
               className="kurs-belgi size-full object-contain" />
           </span>

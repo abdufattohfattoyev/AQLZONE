@@ -180,7 +180,7 @@ export function TestSinf({ onSinf, onImtihon, onQabul, onToplam, onBack }: Props
                           ${sinf === ozSinf ? "ring-2 ring-brand-blue" : ""}`}>
               <span className="flex w-full items-start">
                 {rasm ? (
-                  <img src={rasm} alt="" loading="lazy" className="kurs-belgi size-14" />
+                  <span className="az-plitka size-14"><img src={rasm} alt="" loading="lazy" className="kurs-belgi" /></span>
                 ) : (
                   <span className={`grid size-12 place-items-center rounded-2xl font-display text-[18px]
                                     text-white ${rang.bg}`}>{sinf}</span>

@@ -53,7 +53,7 @@ export function OqishTestlar({ kurs, onBlok, onImtihon, onToplamlar, onSessiya }
       {blok ? (
         <div className="flex flex-col gap-3 rounded-clay bg-karta p-4 shadow-clay-sm min-[360px]:p-[18px]">
           <div className="flex items-center gap-3">
-            <img src="/belgi/h/chart.webp" alt="" width={44} height={44} className="size-11 shrink-0" />
+            <span className="az-plitka size-11"><img src="/belgi/h/chart.webp" alt="" width={44} height={44} /></span>
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="font-display text-[19px] leading-tight font-bold">{t("oqishBlokTest", { n: sinf })}</span>
               <span className="text-[14px] text-ink-dim">
@@ -107,7 +107,7 @@ function Qator({ ic, nom, izoh, natija, rang = "", on, tahlil }: {
     <button type="button" onClick={on} data-tahlil={tahlil}
       className="clay-press flex min-h-[60px] w-full items-center gap-3 rounded-[18px] bg-karta px-3.5 py-2.5
                  text-left shadow-clay-sm">
-      <img src={`/belgi/h/${ic}.webp`} alt="" width={32} height={32} className="size-8 shrink-0 object-contain" />
+      <span className="az-plitka az-plitka-kichik size-9"><img src={`/belgi/h/${ic}.webp`} alt="" width={32} height={32} /></span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-[16px] leading-tight font-bold">{nom}</span>
         <span className="text-[13px] leading-snug text-ink-dim">{izoh}</span>

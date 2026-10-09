@@ -185,7 +185,7 @@ function TezOyin({ jonli, onOch }: { jonli: OyinlarJonli | null; onOch: () => vo
     <button type="button" onClick={onOch} data-tahlil="O'yin: tez o'yin"
       className="tugma-3d flex w-full items-center gap-3 rounded-[24px] bg-brand-blue px-3.5 py-3.5 text-left
                  text-white shadow-[0_5px_0_var(--color-brand-blue-d)] min-[360px]:gap-3.5 min-[360px]:px-4">
-      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white/18 min-[360px]:size-[54px]">
+      <span className="az-plitka size-12 min-[360px]:size-[54px]">
         <img src="/belgi/h/chaqmoq.webp" alt="" width={30} height={30} className="size-[30px]" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
@@ -244,7 +244,7 @@ function OyinKarta({ o, onOch, hozir }: { o: Oyin; onOch: () => void; hozir: num
           ("Ko'paytirish jad…"). Endi belgi alohida katta plitkada, nom
           ostida ikki qatorgacha to'liq. */}
       <span className="flex w-full items-start justify-between gap-2">
-        <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-track kom:size-14 kom:rounded-[16px]">
+        <span className="az-plitka size-12 kom:size-14">
           <img src={`/belgi/h/${BELGI[o.id]}.webp`} alt="" width={40} height={40} className="size-9 kom:size-10" />
         </span>
         {/* Hozir o'ynayotganlar — nol bo'lsa umuman chizilmaydi. */}
@@ -314,8 +314,10 @@ function Qator({ belgi, nom, izoh, tahlil, on }: {
       className="clay-press flex min-h-[68px] w-full items-center gap-3 px-3.5 py-2.5 text-left">
       {/* Belgi yuqoridagi kartalardagi kabi plitkada — ilgari 26px yalang'och
           emoji edi, kartalar bilan bir sahifada tartibsiz ko'rinardi. */}
-      <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-track">
-        <EmojiBelgi e={belgi} olcham={30} />
+      {/* 2026-10-09: to'q navy plitka (`.az-plitka`) — barcha belgilar bitta
+          uslubda; ichidagi belgi o'z plitkasini chizmaydi (`plitkasiz`). */}
+      <span className="az-plitka size-12">
+        <EmojiBelgi e={belgi} olcham={30} plitkasiz />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[15.5px] leading-tight font-bold">{nom}</span>

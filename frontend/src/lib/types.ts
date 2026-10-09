@@ -106,10 +106,10 @@ export const UNIT_COLORS: Record<UnitColor, { bg: string; ring: string; road: st
   // ko'kka, to'q sariq oltinga teng. Nomlar kurs dasturida yozilgan,
   // shuning uchun ular qoladi — faqat rangi uchtadan biri.
   green:  { bg: "bg-brand-green",  ring: "text-brand-green",  road: "#16a34a" },
-  blue:   { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#17b3c1" },
+  blue:   { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#19b7b2" },
   orange: { bg: "bg-brand-gold",   ring: "text-brand-gold",   road: "#d97706" },
-  purple: { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#17b3c1" },
-  red:    { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#17b3c1" },
+  purple: { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#19b7b2" },
+  red:    { bg: "bg-brand-blue",   ring: "text-brand-blue",   road: "#19b7b2" },
   gold:   { bg: "bg-brand-gold",   ring: "text-brand-gold",   road: "#d97706" },
 };
 

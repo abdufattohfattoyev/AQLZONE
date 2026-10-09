@@ -130,6 +130,11 @@ interface Props {
    * chunki ko'pincha yonida allaqachon yozuv turadi.
    */
   nomi?: string;
+  /**
+   * Plitkasiz chizilsin — o'rovchi O'ZI plitka bo'lganda (masalan
+   * `Oyinlar` ro'yxati qatori), ikki plitka ichma-ich chiqmasin.
+   */
+  plitkasiz?: boolean;
 }
 
 /**
@@ -250,7 +255,7 @@ const BUZUQ = new Set<string>();
  * kerak bo'lganda yoqiladi: mukofot berilganda, javob to'g'ri
  * chiqqanda, kunlik sinov ochilganda.
  */
-export function Hajmli({ nom, olcham = 24, jonli, className, nomi }: Props) {
+export function Hajmli({ nom, olcham = 24, jonli, className, nomi, plitkasiz }: Props) {
   // React har chizilishda o'zi noyob kalit beradi. Qo'lda sanoq
   // yuritish ham mumkin edi, lekin serverda va mijozda ikki xil
   // bo'lib, React ularni bir-biriga mos kelmadi deb hisoblardi.
@@ -259,6 +264,23 @@ export function Hajmli({ nom, olcham = 24, jonli, className, nomi }: Props) {
   const [buzuq, setBuzuq] = useState(() => BUZUQ.has(nom));
   const manzil = buzuq ? null : rasmManzili(nom);
 
+  // Interfeys belgisi — to'q navy plitkada (`.az-plitka`, `index.css`).
+  // Matn ichidagi belgi (`hajmli-matn`) va mashqda sanaladigan narsalar
+  // (FIRUZA/RASM da yo'q) — plitkasiz.
+  const plitka = manzil && !plitkasiz && (FIRUZA.has(nom) || RASM.has(nom))
+    && !(className ?? "").includes("hajmli-matn");
+  if (manzil && plitka) {
+    return (
+      <span className={`az-plitka${olcham < 36 ? " az-plitka-kichik" : ""}${className ? " " + className : ""}`}
+        style={{ width: olcham, height: olcham }} role={nomi ? "img" : undefined} aria-label={nomi}
+        aria-hidden={nomi ? undefined : true}>
+        <img src={manzil} width={olcham} height={olcham} alt="" loading="lazy" decoding="async"
+          onError={() => { BUZUQ.add(nom); setBuzuq(true); }}
+          className={`hajmli hajmli-rasm${jonli && b.jon ? " jonli" : ""}`}
+          data-nom={nom} style={{ "--h": b.jon, "--d": b.davom } as CSSProperties} />
+      </span>
+    );
+  }
   if (manzil) {
     return (
       <img src={manzil} width={olcham} height={olcham} alt={nomi ?? ""}
@@ -342,7 +364,7 @@ interface EmojiProps extends Omit<Props, "nom"> {
  * o'zgaradi. Xaritada yo'q emoji esa o'zi bo'lib chiqaveradi —
  * ya'ni eng yomon holatda ilova hozirgidek ishlaydi, buziladi emas.
  */
-export function EmojiBelgi({ e, olcham = 24, jonli, className, nomi }: EmojiProps) {
+export function EmojiBelgi({ e, olcham = 24, jonli, className, nomi, plitkasiz }: EmojiProps) {
   const nom = EMOJI[e] ?? EMOJI[sof(e)];
   if (!nom) {
     return (
@@ -352,7 +374,7 @@ export function EmojiBelgi({ e, olcham = 24, jonli, className, nomi }: EmojiProp
     );
   }
   return <Hajmli nom={nom} olcham={olcham} jonli={jonli}
-    className={className} nomi={nomi} />;
+    className={className} nomi={nomi} plitkasiz={plitkasiz} />;
 }
 
 /** Shu emojining belgisi bormi — ro'yxat chizishdan oldin tekshirish uchun. */
