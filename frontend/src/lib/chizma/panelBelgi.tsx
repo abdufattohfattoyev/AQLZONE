@@ -24,7 +24,7 @@
  * `index.css`): doim qimirlaydigan belgi darsdan chalg'itadi.
  */
 export type PanelBelgiNom =
-  | "uy" | "xarita" | "oyin" | "vazifa" | "reyting" | "menyu"
+  | "uy" | "xarita" | "oyin" | "vazifa" | "miya" | "reyting" | "menyu"
   | "dtm" | "kubok" | "lupa" | "olov";
 
 /** Belgi → fayl (`public/belgi/f/`). Nomi farq qilganlari. */

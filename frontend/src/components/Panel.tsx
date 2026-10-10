@@ -17,7 +17,10 @@
  *   Bugun      `/`           — bugun nima qilish kerak
  *   O'qish     `/darslar`    — darslar, testlar, formulalar, xatolar
  *   O'yin      `/oyinlar`    — duel, maydon, yakka o'yinlar
- *   Masalalar  `/masalalar`  — lenta, masala yozish
+ *   AI ustoz   `/ai`         — reja, savol, masala (2026-10-10 dan;
+ *                              ilgari bu joyda Masalalar edi — u endi
+ *                              O'qish ichida yorliq, 14 kunda 152 kishidan
+ *                              12 tasi masala ochgan edi)
  *   Men        `/men`        — yutuqlar, ota-ona, sozlamalar
  *
  * Qaysi manzil qaysi bo'limga tegishli — `lib/tab.ts` (sinovi
@@ -41,7 +44,7 @@ import { TilTugma } from "./TilTugma";
 import { YoruglikTugma } from "./YoruglikTugma";
 import { faolTab, type TabId } from "../lib/tab";
 import {
-  yolBosh, yolImtihon, yolKurslar, yolMasalalar, yolMen, yolOyinlar, yolQidiruv, yolReyting, yolSertifikat,
+  yolAi, yolBosh, yolImtihon, yolKurslar, yolMen, yolOyinlar, yolQidiruv, yolReyting, yolSertifikat,
 } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
@@ -144,7 +147,7 @@ export function Panel() {
     { id: "oqish", ic: "xarita", nom: t("tabOqish"), yol: yolKurslar() },
     // O'yin ENG O'RTADA — paneldagi eng oson yetiladigan joy.
     { id: "oyin", ic: "oyin", nom: t("tabOyin"), yol: yolOyinlar() },
-    { id: "masalalar", ic: "vazifa", nom: t("masalalar"), yol: yolMasalalar() },
+    { id: "ai", ic: "miya", nom: t("tabAi"), yol: yolAi() },
     { id: "men", ic: "menyu", nom: t("tabMen"), yol: yolMen() },
   ];
 

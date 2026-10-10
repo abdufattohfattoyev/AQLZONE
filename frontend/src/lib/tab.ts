@@ -11,7 +11,7 @@
  * havolalar `/kurs/...`, `/imtihon/...` ga olib boradi — ular ishlashda
  * qoladi, faqat qaysi tab yonishi o'zgaradi.
  */
-export type TabId = "bugun" | "oqish" | "oyin" | "masalalar" | "men";
+export type TabId = "bugun" | "oqish" | "oyin" | "ai" | "men";
 
 /**
  * Kurs ichidagi, lekin "Men" bo'limiga tegishli sahifalar. Ular kursga
@@ -28,6 +28,9 @@ export function faolTab(yol: string): TabId | null {
   if (/^\/(darslar|kurs|testlar|toplam|kichkintoy)(\/|$)/.test(yol)) return "oqish";
   if (/^\/(imtihon|sertifikat|sessiya|marafon|qabul|mantiq)(\/|$)/.test(yol)) return "oqish";
   if (/^\/(oyinlar|duel|xona)(\/|$)/.test(yol)) return "oyin";
-  if (/^\/masalalar(\/|$)/.test(yol)) return "masalalar";
+  // 2026-10-10: Masalalar pastki paneldan O'qish ichiga ko'chdi (yorliq),
+  // uning o'rnida — AI ustoz. Masala havolalari (kanal, bot) o'zgarmadi.
+  if (/^\/masalalar(\/|$)/.test(yol)) return "oqish";
+  if (/^\/ai(\/|$)/.test(yol)) return "ai";
   return null;
 }

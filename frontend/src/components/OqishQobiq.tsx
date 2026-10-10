@@ -21,7 +21,7 @@
  * (`/testlar` eski manzil va unda kurs yo'q) — shuning uchun sinf
  * almashtirilganda oxirgi kurs ham yoziladi.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
@@ -33,14 +33,17 @@ import { kursMatn } from "../lib/tarjima/kurs";
 import { oxirginiYoz } from "../lib/oxirgi";
 import { profilKurslari, useProfil } from "../lib/profil";
 import { tebrat } from "../lib/qobiq";
-import { yolFormulalar, yolKurs, yolQidiruv, yolTestSinf, yolXatolar } from "../lib/yollar";
+import { yolFormulalar, yolKurs, yolMasalalar, yolQidiruv, yolTestSinf, yolXatolar } from "../lib/yollar";
 import { Tanlov, TanlovVaraq } from "./Varaq";
 
-export type OqishYorliq = "darslar" | "testlar" | "formulalar" | "xatolar";
+export type OqishYorliq = "darslar" | "testlar" | "masalalar" | "formulalar" | "xatolar";
 
 const YORLIQLAR: { id: OqishYorliq; kalit: Kalit }[] = [
   { id: "darslar", kalit: "tabDarslar" },
   { id: "testlar", kalit: "testlar" },
+  // 2026-10-10: pastki paneldan shu yerga ko'chdi (panelda — AI ustoz).
+  // Testlardan keyin: ikkalasi ham "yechish", formulalar esa ma'lumot.
+  { id: "masalalar", kalit: "masalalar" },
   { id: "formulalar", kalit: "oqishFormulalar" },
   { id: "xatolar", kalit: "oqishXatolar" },
 ];
@@ -50,6 +53,7 @@ export function yorliqYoli(y: OqishYorliq, c: Course): string {
   if (y === "darslar") return yolKurs(c);
   if (y === "formulalar") return yolFormulalar(c);
   if (y === "xatolar") return yolXatolar(c);
+  if (y === "masalalar") return yolMasalalar();
   return yolTestSinf();
 }
 
@@ -104,28 +108,7 @@ export function OqishQobiq({ yorliq, kurs, children }: {
         </button>
       </header>
 
-      <nav aria-label={t("oqishBolimlar")} data-tur="yorliqlar"
-        className="grid grid-cols-4 gap-1 rounded-2xl bg-track p-1">
-        {YORLIQLAR.map((y) => {
-          const faol = y.id === yorliq;
-          return (
-            <button key={y.id} type="button" aria-current={faol ? "page" : undefined}
-              data-tahlil={`O'qish: ${y.id}`}
-              onClick={() => {
-                if (faol) return;
-                tebrat("tanlov");
-                // Testlar manzilida kurs yo'q — u oxirgi kursdan olinadi.
-                oxirginiYoz(kurs.slug);
-                nav(yorliqYoli(y.id, kurs), { replace: true });
-              }}
-              className={`grid min-h-10 min-w-0 place-items-center rounded-xl px-0.5 text-[13px]
-                          min-[360px]:text-[14px] ${
-                faol ? "bg-karta font-bold text-brand-blue-t shadow-clay-sm" : "font-semibold text-ink-soft"}`}>
-              <span className="max-w-full truncate">{t(y.kalit)}</span>
-            </button>
-          );
-        })}
-      </nav>
+      <OqishYorliqlar yorliq={yorliq} kurs={kurs} />
 
       {children}
 
@@ -139,5 +122,52 @@ export function OqishQobiq({ yorliq, kurs, children }: {
         </TanlovVaraq>
       )}
     </div>
+  );
+}
+
+/**
+ * O'qish yorliqlari — Darslar · Testlar · Masalalar · Formulalar · Xatolar.
+ *
+ * Alohida komponent, chunki Masalalar sahifasi o'z sarlavhasi (sinf
+ * tanlagichi, qidiruv) bilan turadi va `OqishQobiq` ga sig'maydi —
+ * lekin yorliqlar qatori ikkalasida BIR XIL bo'lishi shart, aks holda
+ * Masalalarga o'tgan odam "qayerga keldim?" deb qoladi.
+ *
+ * Beshta yorliq 320px ekranga teng bo'lib sig'maydi ("Formulalar"
+ * kesilardi) — qator SURILADI va faol yorliq o'zi ko'rinishga keladi.
+ */
+export function OqishYorliqlar({ yorliq, kurs }: { yorliq: OqishYorliq; kurs: Course }) {
+  const nav = useNavigate();
+  const faolRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    faolRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [yorliq]);
+
+  return (
+    <nav aria-label={t("oqishBolimlar")} data-tur="yorliqlar"
+      className="flex gap-1 overflow-x-auto rounded-2xl bg-track p-1 [scrollbar-width:none]
+                 [&::-webkit-scrollbar]:hidden">
+      {YORLIQLAR.map((y) => {
+        const faol = y.id === yorliq;
+        return (
+          <button key={y.id} ref={faol ? faolRef : undefined} type="button"
+            aria-current={faol ? "page" : undefined}
+            data-tahlil={`O'qish: ${y.id}`}
+            onClick={() => {
+              if (faol) return;
+              tebrat("tanlov");
+              // Testlar va Masalalar manzilida kurs yo'q — u oxirgi kursdan olinadi.
+              oxirginiYoz(kurs.slug);
+              nav(yorliqYoli(y.id, kurs), { replace: true });
+            }}
+            className={`grid min-h-10 flex-1 shrink-0 place-items-center rounded-xl px-3 text-[13px]
+                        whitespace-nowrap min-[360px]:text-[14px] ${
+              faol ? "bg-karta font-bold text-brand-blue-t shadow-clay-sm" : "font-semibold text-ink-soft"}`}>
+            {t(y.kalit)}
+          </button>
+        );
+      })}
+    </nav>
   );
 }

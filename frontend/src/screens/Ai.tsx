@@ -25,8 +25,13 @@ import type { Kalit } from "../lib/matn";
 import { havolaniOch, tebrat, useOrqaga } from "../lib/qobiq";
 import { yolAiSuhbat, yolAiYangi } from "../lib/yollar";
 
-function Sarlavha({ matn, onBack }: { matn: string; onBack: () => void }) {
-  const strelka = useOrqaga(onBack);
+/**
+ * `ildiz` — `/ai` pastki paneldagi BO'LIM (2026-10-10 dan): unda orqaga
+ * strelka va Telegram'ning orqaga tugmasi yo'q, boshqa tab ildizlaridagi kabi.
+ */
+function Sarlavha({ matn, onBack, ildiz = false }: { matn: string; onBack: () => void; ildiz?: boolean }) {
+  // `useOrqaga` qaytargani "nativ tugma yo'q" degani — ildizda strelka baribir kerak emas.
+  const strelka = useOrqaga(onBack, !ildiz) && !ildiz;
   return (
     <div className="flex items-center gap-2.5">
       {strelka && (
@@ -77,7 +82,7 @@ export function AiBosh({ onBack }: { onBack: () => void }) {
 
   return (
     <div className={QOBIQ}>
-      <Sarlavha matn={t("aiSarlavha")} onBack={onBack} />
+      <Sarlavha matn={t("aiSarlavha")} onBack={onBack} ildiz />
       {aloqaYoq && <p className="text-[14.5px] text-ink-dim">{t("aloqaYoq")}</p>}
       {!h && !aloqaYoq && <p className="text-[14.5px] text-ink-dim">{t("yuklanyapti")}</p>}
 

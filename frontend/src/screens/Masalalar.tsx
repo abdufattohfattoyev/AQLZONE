@@ -55,7 +55,9 @@ import * as MS from "../lib/masala";
 import type { Holat, Masala, Tartib } from "../lib/masala";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 import { useKompyuter } from "../lib/maket";
-import { sinfOfProfil, useProfil } from "../lib/profil";
+import { joriyKurs, sinfOfProfil, useProfil } from "../lib/profil";
+import { OqishYorliqlar } from "../components/OqishQobiq";
+import { oxirgiKurs } from "../lib/oxirgi";
 
 /**
  * Saralash tasmasi.
@@ -104,7 +106,8 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack, onQidiruv }: Pr
   // Boshlang'ich sinf — profilniki (dizaynda sinf chipi ko'k to'ldirilgan):
   // 3-sinf o'quvchisiga birinchi bo'lib 11-sinf masalasi chiqmasin.
   // Profil sinfi masala toifalarida bo'lmasa — hamma sinf.
-  const ozSinf = sinfOfProfil(useProfil());
+  const prof = useProfil();
+  const ozSinf = sinfOfProfil(prof);
   const [sinf, setSinf] = useState<number | null>(
     () => (ozSinf !== null && SINFLAR.some((x) => x.kod === ozSinf) ? ozSinf : null));
   const [royxat, setRoyxat] = useState<Masala[]>([]);
@@ -192,7 +195,10 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack, onQidiruv }: Pr
           "Masala yozish" — pastdagi SUZUVCHI tugma: ekrandagi yagona
           asosiy amal va ro'yxat surilganda ham qo'l ostida. */}
       <header className="flex min-h-12 items-center gap-2">
-        <h1 className="min-w-0 flex-1 truncate font-display text-[23px] min-[360px]:text-[26px]">{t("masalalar")}</h1>
+        {/* Sarlavha "O'qish": Masalalar 2026-10-10 dan O'qish ichidagi yorliq
+            (pastki panelda uning o'rnida — AI ustoz). Qaysi yorliq ekani
+            pastdagi qatorda ko'rinadi. */}
+        <h1 className="min-w-0 flex-1 truncate font-display text-[23px] min-[360px]:text-[26px]">{t("tabOqish")}</h1>
         <button type="button" onClick={() => och("sinf")} data-tahlil="Masalalar: sinf"
           className={`clay-press flex min-h-11 max-w-[45%] shrink-0 items-center gap-0.5 rounded-[14px] bg-karta pr-2.5
                       pl-3.5 text-[14.5px] font-bold shadow-clay-sm ${sinf !== null ? "text-brand-blue-t" : "text-ink"}`}>
@@ -204,6 +210,8 @@ export function Masalalar({ onOch, onYangi, onMenikilar, onBack, onQidiruv }: Pr
           <Icon name="search" size={20} />
         </button>
       </header>
+
+      <OqishYorliqlar yorliq="masalalar" kurs={joriyKurs(prof, oxirgiKurs())} />
 
       {/* ---- almashtirgich: Yangi · Ommabop · Menikilar ----
           Eng ko'p kerak bo'ladigan uchta ko'rinish bitta relsda. Qolgan

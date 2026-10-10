@@ -54,9 +54,13 @@ tekshir("/oyinlar/duel", "oyin");
 tekshir("/duel/abc", "oyin");
 tekshir("/xona/XYZ", "oyin");
 
-tekshir("/masalalar", "masalalar");
-tekshir("/masalalar/12", "masalalar");
-tekshir("/masalalar/yangi", "masalalar");
+// Masalalar endi O'qish ichida, panelda uning o'rnida — AI ustoz.
+tekshir("/masalalar", "oqish");
+tekshir("/masalalar/12", "oqish");
+tekshir("/masalalar/yangi", "oqish");
+tekshir("/ai", "ai");
+tekshir("/ai/12", "ai");
+tekshir("/ai/yangi/masala", "ai");
 
 tekshir("/men", "men");
 tekshir("/men/anketa", "men");

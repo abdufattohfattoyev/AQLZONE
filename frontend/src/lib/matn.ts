@@ -185,6 +185,7 @@ const S = {
   /* Yangi dizayn: pastki panelda besh bo'lim (`lib/tab.ts`). */
   tabBugun: ["Bugun", "Сегодня"],
   tabOqish: ["O'qish", "Учёба"],
+  tabAi: ["AI ustoz", "AI-учитель"],
   tabOyin: ["O'yin", "Игры"],
   tabMen: ["Men", "Я"],
   tabBolimlar: ["Asosiy bo'limlar", "Основные разделы"],
