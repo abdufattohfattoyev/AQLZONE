@@ -11,7 +11,6 @@ KUN SAVOLI — botdan har kuni SHAXSIY savol, har kimga o'z darajasida.
 Rasm (savol + to'rtta variant) va uning ostida tugmalar:
 
     [ A ] [ B ] [ C ] [ D ]
-    [ ⚠️ Xato haqida xabar berish ]
     [ 🔕 Eslatmasin ]
 
 Bosilgach xabarning o'zi o'zgaradi: to'g'ri/noto'g'ri, to'g'ri javob,
@@ -293,12 +292,17 @@ def _harflar(n: int) -> str:
 
 
 def klaviatura(j: KunSavoliJavob, til: str) -> list[list[dict]]:
-    """Javobgacha: variant tugmalari + xato + eslatmasin."""
+    """
+    Javobgacha: variant tugmalari + eslatmasin.
+
+    "Xato haqida xabar" tugmasi botda YO'Q (2026-10-10, egasining qarori):
+    xabar qisqa tursin. Xato haqida xabar ilovadagi savollarda qoladi;
+    eski xabarlardagi tugma esa avvalgidek ishlaydi (`tugma` dagi `ksx:`).
+    """
     from .xabar import KOK, tugma_yasa
 
     return [
         [tugma_yasa(_harflar(i), KOK, callback_data=f"ks:{j.pk}:{i}") for i in range(len(j.savol.variantlar))],
-        [tugma_yasa(M("tKsXato", til), callback_data=f"ksx:{j.pk}")],
         [tugma_yasa(M("tKsYop", til), callback_data="ks_yop")],
     ]
 
@@ -311,7 +315,7 @@ def _ilova_havola() -> str:
 
 
 def javobdan_keyin_klaviatura(j: KunSavoliJavob, til: str, yopiq: bool) -> list[list[dict]]:
-    """Javobdan keyin: harflar belgili (bosib bo'lmaydi), ilova, xato, eslatmasin."""
+    """Javobdan keyin: harflar belgili (bosib bo'lmaydi), ilova, eslatmasin."""
     from .xabar import KOK, YASHIL, tugma_yasa
 
     ks = j.savol
@@ -325,7 +329,6 @@ def javobdan_keyin_klaviatura(j: KunSavoliJavob, til: str, yopiq: bool) -> list[
         q.append([tugma_yasa(M("tKsIlova", til), YASHIL, web_app={"url": havola})])
     elif havola:
         q.append([tugma_yasa(M("tKsIlova", til), YASHIL, url=havola)])
-    q.append([tugma_yasa(M("tKsXato", til), callback_data=f"ksx:{j.pk}")])
     if not yopiq:
         q.append([tugma_yasa(M("tKsYop", til), callback_data="ks_yop")])
     return q

@@ -10692,8 +10692,9 @@ class KunSavoliBotTest(TestCase):
         self.assertEqual(j.savol.file_id, "F1")
         tugmalar = self.chaqiruvlar[0][1]["reply_markup"]["inline_keyboard"]
         self.assertEqual([t["text"] for t in tugmalar[0]], ["A", "B", "C", "D"])
-        self.assertTrue(tugmalar[1][0]["callback_data"].startswith("ksx:"))
-        self.assertEqual(tugmalar[2][0]["callback_data"], "ks_yop")
+        # Botda "xato haqida" tugmasi yo'q — faqat variantlar va "eslatmasin".
+        self.assertEqual(len(tugmalar), 2)
+        self.assertEqual(tugmalar[1][0]["callback_data"], "ks_yop")
         # Qayta yurish — ikkinchi xabar ketmaydi.
         self.assertEqual(self.yubor()["otkazildi"], 1)
         self.assertEqual(MDL.KunSavoliJavob.objects.count(), 1)
