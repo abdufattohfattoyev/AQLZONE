@@ -10069,8 +10069,12 @@ class PremiumTest(TestCase):
         self.bot.yangilikni_qayta_ishla(self.xabar("4242", text="/start premium"))
         tariflar = self.yuborilgan[-1]
         self.assertIn("12 000", tariflar["text"])
-        datalar = [b["callback_data"] for q in tariflar["reply_markup"]["inline_keyboard"] for b in q]
+        # Tarif tugmalaridan keyin "Admin bilan aloqa" — havola tugmasi,
+        # unda `callback_data` yo'q, shuning uchun alohida tekshiriladi.
+        tugmalar = [b for q in tariflar["reply_markup"]["inline_keyboard"] for b in q]
+        datalar = [b["callback_data"] for b in tugmalar if "callback_data" in b]
         self.assertEqual(datalar, ["premium_tarif:7kun", "premium_tarif:1oy"])
+        self.assertEqual([b["url"] for b in tugmalar if "url" in b], ["https://t.me/aqlzone_bot"])
 
         self.bot.yangilikni_qayta_ishla(self.tugma("4242", "premium_tarif:7kun"))
         karta = [x for x in self.yuborilgan if x["usul"] == "sendMessage"][-1]
