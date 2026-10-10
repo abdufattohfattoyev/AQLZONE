@@ -10064,6 +10064,10 @@ class PremiumTest(TestCase):
 
     # --- bot ---
 
+    # Admin havolasi `PREMIUM_ADMIN` yoki `BOT_USERNAME` dan — ikkalasi
+    # shu yerda beriladi: lokal `.env` da bor, CI'da yo'q edi va test
+    # muhitga qarab ikki xil natija berardi.
+    @override_settings(PREMIUM_ADMIN="", BOT_USERNAME="aqlzone_bot")
     def test_bot_toliq_oqim(self):
         p = self.tg_pupil("4242")
         self.bot.yangilikni_qayta_ishla(self.xabar("4242", text="/start premium"))
@@ -10859,6 +10863,9 @@ class DuelJonliKuchaytirishTest(DuelAdolatTaklifTest):
         self.client.get("/api/v1/duel/taklif", **self.b)
         self.assertTrue(holat()["korildi"])
 
+    # Xabar faqat bot sozlangan bo'lsa ketadi (`chaqiruv_xabari`). Lokal
+    # `.env` da `BOT_TOKEN` bor, CI'da yo'q — test 409 olib yiqilardi.
+    @override_settings(BOT_TOKEN="sinov:token", BOT_USERNAME="aqlzone_bot")
     def test_telegramda_chaqirish_bir_marta(self):
         self.tanishtir()
         pb = self.profil(self.b)
