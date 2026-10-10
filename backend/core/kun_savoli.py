@@ -82,8 +82,35 @@ MAXSUS = {
 TARTIB = [*MK.SINF_MISOLLARI, KATTALAR]
 
 
+#: Ilova kurs slug'i → kun savoli darajasi (`frontend/src/lib/curriculum`).
+KURS_DARAJA = {
+    "maktabgacha": "1-sinf",
+    "oliy-matematika": "1-kurs",
+    "oliy-matematika-2": "2-kurs",
+    "ehtimollar-nazariyasi": "3-kurs",
+}
+_KURS_SINF = re.compile(r"^(\d{1,2})-sinf")
+
+
+def kursdan_daraja(slug: str) -> str | None:
+    """"8-sinf-geometriya" → "8-sinf". Tanilmasa — None."""
+    slug = (slug or "").strip()
+    if slug in KURS_DARAJA:
+        return KURS_DARAJA[slug]
+    m = _KURS_SINF.match(slug)
+    if m and 1 <= int(m.group(1)) <= 11:
+        return f"{int(m.group(1))}-sinf"
+    return None
+
+
 def daraja_top(pupil: Pupil) -> str:
-    """Odamga qaysi darajadagi savol boradi."""
+    """
+    Odamga qaysi darajadagi savol boradi. Avval ilovada OXIRGI ochilgan
+    kurs (odam hozir nimani o'qiyotgani), u bo'lmasa — anketa.
+    """
+    kursdan = kursdan_daraja(pupil.songgi_kurs)
+    if kursdan:
+        return kursdan
     s = pupil.anketa_sinf
     if pupil.kim == "abiturient":
         return "11-sinf"

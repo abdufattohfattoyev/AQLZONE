@@ -1634,6 +1634,22 @@ def kun_savoli_sozlama(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+def songgi_kurs(request):
+    """Ilovada ochilgan kurs (`{"slug": "oliy-matematika-2"}`) — kun savoli darajasi uchun."""
+    from . import kun_savoli as KSV
+
+    slug = str((request.data or {}).get("slug") or "")[:40]
+    if not KSV.kursdan_daraja(slug):
+        return Response({"detail": "slug"}, status=400)
+    pupil = request.user
+    if pupil.songgi_kurs != slug:
+        pupil.songgi_kurs = slug
+        pupil.save(update_fields=["songgi_kurs"])
+    return Response({"ok": True})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def xato_xabar(request):
     """
     Savol ostidagi "Xato haqida xabar berish" (`components/XatoXabar.tsx`).

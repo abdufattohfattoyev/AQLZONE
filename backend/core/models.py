@@ -136,6 +136,13 @@ class Pupil(models.Model):
     #: bo'lishi mumkin — buning uchun hammasini o'chirish shart emas.
     #: Ilovadagi sozlamada qaytadan yoqiladi.
     kun_savoli_yopiq_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Ilovada OXIRGI ochilgan kurs (slug: "7-sinf-algebra", "oliy-matematika-2").
+    #:
+    #: Kun savoli darajasi avval shundan olinadi, anketadan emas: anketa
+    #: bir marta to'ldiriladi va eskiradi (sinovda "1-sinf" deb bosib,
+    #: keyin 2-kursni o'qiyotgan odamga 1-sinf misoli borardi). Ilova uni
+    #: kurs ochilganda yuboradi (`frontend/src/lib/oxirgi.ts`).
+    songgi_kurs = models.CharField(max_length=40, default="", blank=True)
     #: Oxirgi "qaytib keling" xabari yuborilgan payt.
     qaytarish_at = models.DateTimeField(null=True, blank=True, default=None)
     #: Shu tanaffusda nechta "qaytib keling" xabari yuborilgan (0..3).

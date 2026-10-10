@@ -10643,6 +10643,10 @@ class KunSavoliVariantTest(TestCase):
         self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=-1)), KSV.KATTALAR)
         self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=-1, kim="abiturient")), "11-sinf")
         self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=131)), "7-sinf")
+        # Ilovada ochilgan kurs anketadan USTUN (anketada 1-sinf, o'qiyotgani 2-kurs).
+        self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=1, songgi_kurs="oliy-matematika-2")), "2-kurs")
+        self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=1, songgi_kurs="8-sinf-geometriya")), "8-sinf")
+        self.assertEqual(KSV.daraja_top(Pupil(anketa_sinf=5, songgi_kurs="nomalum")), "5-sinf")
 
 
 @override_settings(BOT_TOKEN="test", ADMIN_TG=[ADMIN_ID], BOSHQARUV_YONIQ=True)
@@ -10793,6 +10797,14 @@ class XatoXabarTest(TestCase):
         self.assertEqual(rahmat.call_count, 2)
         self.assertFalse(MDL.XatoXabar.objects.filter(holat="yangi").exists())
         self.assertEqual(XX.hal_qil(x.pk, "rad")[0], "eskirgan")
+
+    def test_songgi_kurs(self):
+        r = self.client.post("/api/v1/songgi-kurs", {"slug": "oliy-matematika-2"},
+                             content_type="application/json", **self.h)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(MDL.Pupil.objects.get(identities__provider="device").songgi_kurs, "oliy-matematika-2")
+        r = self.client.post("/api/v1/songgi-kurs", {"slug": "../yolgon"}, content_type="application/json", **self.h)
+        self.assertEqual(r.status_code, 400)
 
     def test_kun_savoli_sozlamasi(self):
         r = self.client.post("/api/v1/kun-savoli", {"yoqilgan": True}, content_type="application/json", **self.h)

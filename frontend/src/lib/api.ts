@@ -1559,6 +1559,20 @@ export async function kunSavoliSozla(yoqilgan: boolean): Promise<boolean | "tele
   } catch { return null; }
 }
 
+/**
+ * Ochilgan kursni serverga aytadi — botdagi kun savoli shu darajada
+ * keladi (`backend/core/kun_savoli.py`). Kirmagan bo'lsa yubormaydi;
+ * xato yutiladi: bu fon ishi, kursni ochishni to'smasin.
+ */
+export function songgiKursniYoz(slug: string): void {
+  if (!token) return;
+  fetch("/api/v1/songgi-kurs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ slug }),
+  }).catch(() => { /* keyingi ochilishda yana yuboriladi */ });
+}
+
 /** Savoldagi xato haqida xabar — `components/XatoXabar.tsx`. */
 export interface XatoXabarTana {
   sabab: "javob" | "variant" | "savol" | "korinish" | "boshqa";

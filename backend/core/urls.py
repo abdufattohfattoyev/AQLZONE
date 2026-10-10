@@ -35,6 +35,7 @@ urlpatterns = [
     # Botdagi kun savoli o'chirgichi va savoldagi xato xabari.
     path("kun-savoli", views.kun_savoli_sozlama, name="kun-savoli"),
     path("xato-xabar", views.xato_xabar, name="xato-xabar"),
+    path("songgi-kurs", views.songgi_kurs, name="songgi-kurs"),
     path("leaderboard", views.leaderboard, name="leaderboard"),
     path("liga", views.liga, name="liga"),
     path("kanal", views.kanal, name="kanal"),

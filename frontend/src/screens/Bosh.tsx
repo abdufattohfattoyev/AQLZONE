@@ -45,7 +45,7 @@ import { getHisob, joriyProfil, kunlikHolat, profilSoni } from "../lib/api";
 import type { Hisob } from "../lib/api";
 import { COURSES } from "../lib/curriculum";
 import type { Course } from "../lib/curriculum";
-import { oxirgiKurs } from "../lib/oxirgi";
+import { kursniServergaAyt, oxirgiKurs } from "../lib/oxirgi";
 import { useKompyuter } from "../lib/maket";
 import { tebrat, tgIsm } from "../lib/qobiq";
 import {
@@ -157,6 +157,9 @@ export function Bosh({
   const bugun = kunKaliti();
   const davom = davomJoyi(progressOf, prof);
   const kurs = davom?.c ?? joriyKurs(prof, oxirgiKurs());
+  // Bosh sahifadagi kurs — odam hozir o'qiyotgani. Server ham bilsin:
+  // botdagi kun savoli shu darajada keladi (`lib/oxirgi.ts`).
+  useEffect(() => { kursniServergaAyt(kurs.slug); }, [kurs.slug]);
 
   // ---- sarlavha ----
   const hozir = new Date();
