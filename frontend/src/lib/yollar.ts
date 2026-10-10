@@ -135,6 +135,10 @@ export const yolMaydon = () => "/oyinlar/maydon";
 /** Kunlik son — Wordle uslubidagi kunlik jumboq. */
 export const yolKunlikSon = () => "/oyinlar/kunlik-son";
 export const yolSonOvi = () => "/oyinlar/son-ovi";
+/** Mantiq o'yinlari (`screens/Izdosh.tsx`, `QoidaOvi.tsx`, `Strelka.tsx`). */
+export const yolIzdosh = () => "/oyinlar/izdosh";
+export const yolQoidaOvi = () => "/oyinlar/qoida-ovi";
+export const yolStrelka = () => "/oyinlar/strelka";
 /** DTM tayyorgarlik — variantlar ro'yxati va bitta variant. */
 export const yolImtihon = () => "/imtihon";
 export const yolImtihonVariant = (n: number) => `/imtihon/${n}`;

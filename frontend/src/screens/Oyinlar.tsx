@@ -31,6 +31,9 @@ import { useOyinlarJonli } from "../lib/oyinlarJonli";
 import { XONA_OYINLAR } from "../lib/xonaOyinlar";
 import { kunlikSonBugun } from "./KunlikSon";
 import { sonOviBugun } from "./SonOvi";
+import { izdoshOtilgan } from "./Izdosh";
+import { qoidaRekord } from "./QoidaOvi";
+import { strelkaOtilgan } from "./Strelka";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { OYINLAR } from "../lib/oyin";
@@ -49,7 +52,7 @@ const BELGI: Record<OyinId, string> = {
 };
 
 export function Oyinlar({
-  onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onShaharcha, onKarvon, onJadval, onDuel, onJamoa, onQidiruv,
+  onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onMantiq, onShaharcha, onKarvon, onJadval, onDuel, onJamoa, onQidiruv,
 }: {
   onBack: () => void;
   onOyin: (id: string) => void;
@@ -58,6 +61,8 @@ export function Oyinlar({
   onKunlikSon: () => void;
   /** Son ovi — to'rtta kartadan 24 ni chiqarish. */
   onSonOvi: () => void;
+  /** Mantiq o'yinlari — Izdosh, Qoida ovi, Strelka yo'li. */
+  onMantiq: (oyin: "izdosh" | "qoida" | "strelka") => void;
   /** Tulki shaharchasi — tangaga bino, kunlik hosil. */
   onShaharcha: () => void;
   /** Karvon yo'li — Ipak yo'li bo'ylab sarguzasht. */
@@ -126,6 +131,22 @@ export function Oyinlar({
         {tartib.map((o) => (
           <OyinKarta key={o.id} o={o} onOch={() => onOyin(o.id)} hozir={jonli?.oyinlar[o.id] ?? 0} />
         ))}
+      </div>
+
+      {/* ---- mantiq o'yinlari ----
+          Hisobsiz, fikrlash jumboqlari: izdosh bilan eshik ochish, sonlar
+          qoidasini topish, strelkalar yo'li. Har birida izohda odamning
+          o'z yutug'i (o'tilgan darajalar, rekord) — bo'lmasa qisqa tavsif. */}
+      <h2 className="mt-2 font-display text-[20px]">{t("oyinMantiq")}</h2>
+      <div className="contents kom:grid kom:grid-cols-1">
+      <Royxat>
+        <Qator belgi="🚩" nom={t("izdosh")} tahlil="O'yin: izdosh" on={() => onMantiq("izdosh")}
+          izoh={izdoshOtilgan() > 0 ? t("izdoshKartaOtilgan", { n: izdoshOtilgan() }) : t("izdoshTavsif")} />
+        <Qator belgi="💡" nom={t("qoidaOvi")} tahlil="O'yin: qoida ovi" on={() => onMantiq("qoida")}
+          izoh={qoidaRekord() > 0 ? t("qoidaKartaRekord", { n: qoidaRekord() }) : t("qoidaTavsif")} />
+        <Qator belgi="➡️" nom={t("strelka")} tahlil="O'yin: strelka" on={() => onMantiq("strelka")}
+          izoh={strelkaOtilgan() > 0 ? t("strelkaKartaOtilgan", { n: strelkaOtilgan() }) : t("strelkaTavsif")} />
+      </Royxat>
       </div>
 
       {/* Kompyuterda "Boshqa" va "Do'stlar bilan" yonma-yon: to'liq kenglikdagi

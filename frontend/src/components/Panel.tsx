@@ -98,6 +98,8 @@ const YOPIQ = [
   /^\/oyinlar\/kunlik-son$/,
   // Karvon yo'li — o'z menyusi bilan to'liq ekran.
   /^\/oyinlar\/karvon$/,
+  // Mantiq o'yinlari — boshqaruv tugmalari pastda, panel ularni yopardi.
+  /^\/oyinlar\/(izdosh|qoida-ovi|strelka)$/,
   // Duel — u ham o'yin. Chaqiruv havolasi (`/duel/<kod>`) esa
   // umuman ilova ichidan emas, Telegramdan ochiladi: u yerda panel
   // "qayerdaman?" degan savolni faqat kuchaytirardi.
