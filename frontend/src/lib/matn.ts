@@ -556,6 +556,19 @@ const S = {
   oyinBoshqa: ["Boshqa o'yinlar", "Другие игры"],
   oyinDostlar: ["Do'stlar bilan", "С друзьями"],
   oyinDostlarIzoh: ["{n} ta o'yin · xona kodi bilan", "{n} игры · по коду комнаты"],
+  // Tanga → Premium (`components/TangaPremium.tsx`).
+  tpNom: ["Tangani Premiumga almashtirish", "Обменять монеты на Premium"],
+  tpTaklif: ["{narx} tanga = {kun} kunlik Premium", "{narx} монет = Premium на {kun} дней"],
+  tpYaraydi: ["Premiumga yaraydigan tanga", "Монеты для Premium"],
+  tpIzoh: [
+    "Dars, sinov, masala va o'yinlarda yig'ilgan tanga hisoblanadi. Oyiga bir marta almashtirsa bo'ladi.",
+    "Считаются монеты за уроки, проверки, задачи и игры. Обменять можно раз в месяц.",
+  ],
+  tpTugma: ["{narx} tangani almashtirish", "Обменять {narx} монет"],
+  tpYetmaydi: ["Yana {n} tanga kerak", "Нужно ещё {n} монет"],
+  tpKeyingi: ["Keyingisi {sana} dan", "Следующий обмен с {sana}"],
+  tpOchildi: ["Premium {kun} kunga ochildi", "Premium открыт на {kun} дней"],
+  tpXato: ["Almashtirib bo'lmadi — qayta urinib ko'ring", "Не получилось — попробуйте ещё раз"],
 
   /* ---------------- Imtihon: DTM va Milliy sertifikat (yangi dizayn) ---------------- */
   imtTayyorgarlik: ["Imtihonga tayyorgarlik", "Подготовка к экзамену"],

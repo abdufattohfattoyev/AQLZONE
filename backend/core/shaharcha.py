@@ -140,7 +140,12 @@ def hosil(profil: Profile, javob) -> dict:
         togri = False
     s.hosil_kun = bugun
     s.save(update_fields=["hosil_kun"])
-    return {"jami": jami, "togri": togri, "tanga": jami * 2 if togri else jami}
+    tanga = jami * 2 if togri else jami
+    # Tanga → Premium hisobi (`premium._topilgan_tanga`): miqdorni server
+    # o'zi hisobladi, shuning uchun jurnalga ham o'zi yozadi.
+    from .premium import tanga_yoz
+    tanga_yoz(profil, "shaharcha", tanga, kun=bugun)
+    return {"jami": jami, "togri": togri, "tanga": tanga}
 
 
 def sherik_idlar(profil: Profile, soni: int = 20) -> list[int]:

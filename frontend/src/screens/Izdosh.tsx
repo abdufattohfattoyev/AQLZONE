@@ -83,7 +83,7 @@ export function Izdosh({ onChiq }: { onChiq: () => void }) {
       // Tanga faqat YANGI yulduz uchun: bir darajani qayta-qayta o'ynab tanga yig'ilmasin.
       const yangiTanga = Math.max(0, yul - eski) * 3;
       setTanga(yangiTanga);
-      if (yangiTanga > 0) oyinTugadi(yangiTanga, 1);
+      if (yangiTanga > 0) oyinTugadi(yangiTanga, 1, "izdosh");
       const x: Xotira = {
         ...xotira,
         ochiq: Math.max(xotira.ochiq, Math.min(joriy + 1, DARAJALAR.length - 1)),

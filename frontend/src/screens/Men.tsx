@@ -7,7 +7,7 @@
  *
  *   profil kartasi   ism, kim ekani, bolalar orasida almashtirish
  *   uch son          yulduz va tanga (oltin — mukofot), zanjir
- *   Yutuqlar         reyting, nishonlar, do'kon
+ *   Yutuqlar         reyting, nishonlar, tanga → Premium (ilgari do'kon)
  *   Ota-ona uchun    ota-ona paneli, bolalar profillari
  *   Sozlamalar       til, yorug'lik, hisob va Telegram, "siz kimsiz"
  *
@@ -38,6 +38,7 @@ import {
 } from "../lib/yollar";
 import { Tanlov, TanlovVaraq } from "../components/Varaq";
 import { PremiumQator } from "../components/PremiumVaraq";
+import { TangaPremiumQator } from "../components/TangaPremium";
 import { AvatarYulduz, PremiumBelgi, PremiumKarta } from "../components/PremiumProfil";
 import { usePremium } from "../lib/premium";
 
@@ -146,8 +147,9 @@ export function Men({ onYol }: Props) {
           on={() => onYol(yolReyting())} />
         <Qator ic="miya" nom={t("nishonlar")} qiymat={`${nishon.olingan} / ${nishon.jami}`}
           on={() => onYol(yolNishon(kurs))} />
-        {/* Do'kon qatori olib tashlandi (2026-10-10): 25 kunda 7 kishi
-            kirgan, boshqacha ko'rinishda qayta quriladi. Manzil ishlaydi. */}
+        {/* Do'kon o'rnida (2026-10-10): tanga → 7 kunlik Premium. Do'konga
+            25 kunda 7 kishi kirgan edi; manzili ishlaydi, avatarlar qoladi. */}
+        <TangaPremiumQator />
         {/* O'qituvchi sinfi — o'quvchi kod bilan qo'shiladi, o'qituvchi panel ochadi. */}
         <Qator ic="map" nom={t("sinfSarlavha")} on={() => onYol("/sinflar")} />
         {/* Shaxsiy taklif havolasi (`core/taklif.py`) — Telegram "ulashish"

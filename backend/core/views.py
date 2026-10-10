@@ -2382,6 +2382,38 @@ def premium_sinov(request):
     return Response(PR.holat(pupil))
 
 
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def premium_tanga(request):
+    """
+    Tanga → Premium. GET — holat; POST — 500 tanga evaziga 7 kun.
+    Xato `kod` bilan (`oy`, `kam`) — matnni mijoz o'z tilida yozadi.
+    """
+    profil = _profil_tanla(request)
+    if request.method == "GET":
+        return Response(PR.tanga_holat(request.user, profil))
+    try:
+        pupil = PR.tanga_almashtir(request.user.pk, profil)
+    except PR.TangaXato as e:
+        return Response({"detail": e.kod, "kod": e.kod, "tanga": PR.tanga_holat(request.user, profil)},
+                        status=409)
+    return Response({"premium": PR.holat(pupil), "tanga": PR.tanga_holat(pupil, profil)})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def tanga_jurnal(request):
+    """
+    Telefondagi o'yin tangasi: `{manba, tanga}` (`premium.MANBALAR`).
+    Javobda haqiqatda yozilgani — chegaradan oshgani tashlanadi. Telefondagi
+    tangaga tegmaydi: u faqat Premium almashuvi hisobida.
+    """
+    manba = str(request.data.get("manba", ""))
+    if manba == "shaharcha":  # uni server o'zi yozadi
+        return Response({"yozildi": 0})
+    return Response({"yozildi": PR.tanga_yoz(_profil_tanla(request), manba, request.data.get("tanga"))})
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])

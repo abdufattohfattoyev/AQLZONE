@@ -10309,6 +10309,136 @@ class PremiumTest(TestCase):
         self.assertTrue(r["qatorlar"][0]["premium"])
 
 
+class TangaPremiumTest(TestCase):
+    """
+    Tanga → Premium (`premium.tanga_almashtir`): server tangani o'z
+    natijalaridan sanaydi, mijoz aytgan songa ishonmaydi.
+    """
+
+    def kir(self, device: str = "dev-tanga-1111aaaa2222") -> tuple[dict, int]:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}, r.json()["user"]["id"]
+
+    def qoldiq(self, h, tanga: int):
+        """Mijoz sinxronlagan qoldiq — xuddi ilova yuborgandek."""
+        self.client.put("/api/v1/progress",
+                        {"state": {"azapp_grade4_v1": json.dumps({"stars": 0, "coins": tanga, "done": {}})}},
+                        content_type="application/json", **h)
+
+    def natija(self, h, togri: int, sinov: bool = False):
+        joy = 99 if sinov else 0
+        self.client.post("/api/v1/results", {"grade": 4, "unit": joy, "lesson": joy,
+                                             "asked": togri, "correct": togri, "stars": 3},
+                         content_type="application/json", **h)
+
+    def test_soxta_qoldiq_premium_bermaydi(self):
+        h, pk = self.kir()
+        self.qoldiq(h, 10_000)                 # localStorage'da yozilgan son
+        self.natija(h, 20)                     # haqiqatda 40 tanga
+        j = self.client.get("/api/v1/premium/tanga", **h).json()
+        self.assertEqual(j["yaraydi"], 40)
+        self.assertFalse(j["mumkin"])
+        r = self.client.post("/api/v1/premium/tanga", **h)
+        self.assertEqual(r.status_code, 409)
+        self.assertEqual(r.json()["kod"], "kam")
+        self.assertIsNone(Pupil.objects.get(pk=pk).premium_gacha)
+
+    def test_almashtirish_va_oyiga_bir_marta(self):
+        h, pk = self.kir()
+        for _ in range(6):
+            self.natija(h, 45)                 # 6 × 90 = 540
+        self.natija(h, 45, sinov=True)         # + 180 = 720
+        self.qoldiq(h, 2000)
+        self.assertEqual(self.client.get("/api/v1/premium/tanga", **h).json()["yaraydi"], 720)
+        j = self.client.post("/api/v1/premium/tanga", **h).json()
+        self.assertTrue(j["premium"]["faol"])
+        self.assertFalse(j["premium"]["sinovda"])     # tanga — sinov emas
+        qolgan = Pupil.objects.get(pk=pk).premium_gacha - timezone.now()
+        self.assertTrue(timedelta(days=6, hours=23) < qolgan <= timedelta(days=7))
+        self.assertEqual(j["tanga"]["yaraydi"], 220)
+        self.assertIsNotNone(j["tanga"]["keyingi"])
+        # Tanga yetsa ham — 30 kun o'tmaguncha yo'q.
+        for _ in range(5):
+            self.natija(h, 45)
+        r = self.client.post("/api/v1/premium/tanga", **h)
+        self.assertEqual(r.json()["kod"], "oy")
+
+    def test_mijoz_qoldigi_chegaralaydi(self):
+        """Shaharchaga sarflangan tanga Premiumga ikkinchi marta sarflanmasin."""
+        h, _ = self.kir()
+        for _ in range(7):
+            self.natija(h, 45)                 # 630 topilgan
+        self.qoldiq(h, 120)                    # qolgani sarflangan
+        self.assertEqual(self.client.get("/api/v1/premium/tanga", **h).json()["yaraydi"], 120)
+
+    def test_bitta_natija_chegarasi(self):
+        h, _ = self.kir()
+        self.natija(h, 500)                    # serializer 500 gacha qabul qiladi
+        self.qoldiq(h, 5000)
+        self.assertEqual(self.client.get("/api/v1/premium/tanga", **h).json()["yaraydi"], 90)
+
+    # --- o'yinlar ---
+
+    def yaraydi(self, h) -> int:
+        return self.client.get("/api/v1/premium/tanga", **h).json()["yaraydi"]
+
+    def test_server_natijalaridagi_oyinlar(self):
+        """Masala, kunlik son, duel va xona — o'z jadvallaridan, mijozdagi formula bilan."""
+        from core.models import Duel, KunlikSonNatija, Masala, MasalaUrinish, Profile, XonaNatija
+
+        h, pk = self.kir()
+        self.qoldiq(h, 5000)
+        pr = Profile.objects.filter(pupil_id=pk).first()
+        boshqa = Profile.objects.create(pupil=Pupil.objects.create(first_name="B"))
+        m1 = Masala.objects.create(muallif=boshqa, matn="2+2", javob="4")
+        m2 = Masala.objects.create(muallif=boshqa, matn="3+3", javob="6")
+        m3 = Masala.objects.create(muallif=boshqa, matn="4+4", javob="8")
+        MasalaUrinish.objects.create(masala=m1, profile=pr, togri=True, yechdi=True)    # 10
+        MasalaUrinish.objects.create(masala=m2, profile=pr, togri=False, yechdi=True)   # 3
+        MasalaUrinish.objects.create(masala=m3, profile=pr, togri=False, yechdi=False)  # 0
+        bugun = timezone.localdate()
+        KunlikSonNatija.objects.create(profile=pr, sana=bugun, daraja=1, urinish=2, bajardi=True)   # 6+8
+        KunlikSonNatija.objects.create(profile=pr, sana=bugun, daraja=2, urinish=6, bajardi=False)  # 2
+        Duel.objects.create(kod="t1", urug=1, oyin="tezkor", chaqirgan=pr, chaqirgan_ball=31, chaqirgan_tugatdi=True)   # 11
+        Duel.objects.create(kod="t2", urug=1, oyin="tezkor", chaqirgan=boshqa, qabul=pr, qabul_ball=9, qabul_tugatdi=True)  # 3
+        Duel.objects.create(kod="t3", urug=1, oyin="tezkor", chaqirgan=pr, chaqirgan_ball=500, chaqirgan_tugatdi=True)  # chegara 40
+        XonaNatija.objects.create(profile=pr, oyin="royale", ochko=7)                  # 3
+        self.assertEqual(self.yaraydi(h), 10 + 3 + 14 + 2 + 11 + 3 + 40 + 3)
+
+    def jurnal(self, h, manba, tanga):
+        return self.client.post("/api/v1/tanga", {"manba": manba, "tanga": tanga},
+                                content_type="application/json", **h).json()["yozildi"]
+
+    def test_telefondagi_oyinlar_chegarada(self):
+        h, _ = self.kir()
+        self.qoldiq(h, 5000)
+        self.assertEqual(self.jurnal(h, "oyin", 20), 20)
+        self.assertEqual(self.jurnal(h, "oyin", 9999), 60)       # bitta yozuv chegarasi
+        self.assertEqual(self.jurnal(h, "izdosh", 9), 9)
+        self.assertEqual(self.jurnal(h, "nomalum", 50), 0)       # noma'lum manba
+        self.assertEqual(self.jurnal(h, "shaharcha", 50), 0)     # uni server yozadi
+        self.assertEqual(self.jurnal(h, "oyin", -5), 0)
+        self.assertEqual(self.yaraydi(h), 89)
+        for _ in range(10):
+            self.jurnal(h, "oyin", 60)
+        self.assertEqual(self.yaraydi(h), 200 + 9)               # "oyin" kunda 200
+        for m in ("maydon", "mantiq", "qoida", "strelka"):
+            for _ in range(5):
+                self.jurnal(h, m, 100)
+        self.assertEqual(self.yaraydi(h), 250)                   # jami kunda 250
+
+    def test_shaharcha_hosili_yoziladi(self):
+        from core import shaharcha as SH
+        from core.models import Profile
+
+        h, pk = self.kir()
+        self.qoldiq(h, 5000)
+        pr = Profile.objects.filter(pupil_id=pk).first()
+        natija = SH.hosil(pr, -1)                                # noto'g'ri javob — bir barobar
+        self.assertEqual(self.yaraydi(h), natija["tanga"])
+
+
 @override_settings(OPENAI_API_KEY="sk-sinov", AI_KUNLIK=3, AI_KUNLIK_JAMI=100,
                    BOT_TOKEN=BOT, KANAL_MAJBURIY=False)
 class AiUstozTest(TestCase):

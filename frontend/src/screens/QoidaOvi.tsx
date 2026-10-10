@@ -98,7 +98,7 @@ export function QoidaOvi({ onChiq }: { onChiq: () => void }) {
     // ya'ni qayta o'ynash haqiqiy mashq — tanga cheklanmaydi.
     const yangiTanga = Math.max(1, Math.round(ball / 3));
     setTanga(yangiTanga);
-    oyinTugadi(yangiTanga, RAUND);
+    oyinTugadi(yangiTanga, RAUND, "qoida");
     const x = { ...xotira, rekord: Math.max(xotira.rekord, ball), oyinlar: xotira.oyinlar + 1 };
     setXotira(x);
     yoz(KALIT, x);

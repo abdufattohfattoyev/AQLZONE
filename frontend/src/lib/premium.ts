@@ -15,7 +15,7 @@
  * ham yozilmaydi (`core/imtihon.py`).
  */
 import { useEffect, useState } from "react";
-import { botNomi, sorov, xatoKodi } from "./api";
+import { bilanProfil, botNomi, profilQuery, sorov, xatoKodi } from "./api";
 import { til } from "./til";
 import { havolaniOch } from "./qobiq";
 
@@ -134,6 +134,37 @@ export async function botdaYubor(tarif: Tarif): Promise<boolean> {
   if (!bot) return false;
   havolaniOch(`https://t.me/${encodeURIComponent(bot)}?start=premium_${tarif}`);
   return true;
+}
+
+/**
+ * Tanga → Premium (`core/premium.py`, "TANGA → PREMIUM").
+ *
+ * `yaraydi` — SERVER sanagan tanga: dars, sinov, masala va o'yin
+ * natijalaridan, mijoz qoldig'idan oshmaydi.
+ */
+export interface TangaHolat {
+  narx: number;
+  kun: number;
+  yaraydi: number;
+  /** Shu sanagacha yana almashtirib bo'lmaydi (oyiga bir marta). */
+  keyingi: string | null;
+  mumkin: boolean;
+}
+
+export function tangaHolatOl(): Promise<TangaHolat | null> {
+  return sorov<TangaHolat>(`/api/v1/premium/tanga${profilQuery()}`).catch(() => null);
+}
+
+/** Almashtiradi. Muvaffaqiyatda Premium holati yangilanadi; xatoda — `null`. */
+export async function tangaAlmashtir(): Promise<TangaHolat | null> {
+  try {
+    const j = await sorov<{ premium: PremiumHolat; tanga: TangaHolat }>(
+      "/api/v1/premium/tanga", bilanProfil({}));
+    yangila(j.premium);
+    return j.tanga;
+  } catch {
+    return null;
+  }
 }
 
 /** 12000 → "12 000". */

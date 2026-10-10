@@ -127,11 +127,14 @@ def holat(pupil: Pupil) -> dict:
                   .values_list("holat", flat=True).first()) == PremiumTolov.RAD
     oxirgi_tasdiq = (PremiumTolov.objects.filter(pupil=pupil, holat=PremiumTolov.TASDIQLANDI)
                      .order_by("-hal_qilingan_at").values_list("hal_qilingan_at", flat=True).first())
-    sinovda = faol and oxirgi_tasdiq is None
+    # Tanga bilan olingan muddat ham "to'lov" — usiz u "sinov" deb ko'rinardi.
+    oxirgi_tanga = pupil.tanga_almashuvlar.values_list("created_at", flat=True).first()
+    sinovda = faol and oxirgi_tasdiq is None and oxirgi_tanga is None
     # Joriy davr qachon boshlangan — profildagi "qancha qoldi" chizig'i uchun:
-    # oxirgi tasdiqlangan to'lov yoki sinov. Uzaytirilgan obunada chiziq
-    # oxirgi to'lovdan sanaladi.
-    davr_boshi = (oxirgi_tasdiq or pupil.premium_sinov_at) if faol else None
+    # oxirgi tasdiqlangan to'lov, tanga almashuvi yoki sinov. Uzaytirilgan
+    # obunada chiziq oxirgisidan sanaladi.
+    oxirgi = max((v for v in (oxirgi_tasdiq, oxirgi_tanga) if v), default=None)
+    davr_boshi = (oxirgi or pupil.premium_sinov_at) if faol else None
     return {
         "faol": faol,
         "gacha": pupil.premium_gacha.isoformat() if faol else None,
@@ -188,6 +191,209 @@ def sinov_ber(pupil_id: int) -> Pupil:
         p.premium_sinov_at = hozir
         p.premium_gacha = hozir + timedelta(days=settings.PREMIUM_SINOV_KUN)
         p.save(update_fields=["premium_sinov_at", "premium_gacha"])
+    return p
+
+
+# ─────────────────── TANGA → PREMIUM ───────────────────
+#
+# 2026-10-10: do'kon o'rniga — tanga yig'ishga aniq maqsad. Muammo: tanga
+# MIJOZDA hisoblanadi va `localStorage` da bir qator bilan soxtalashadi.
+# Shuning uchun server tangani O'ZI sanaydi — o'zida saqlangan natijalardan,
+# mijozdagi formulalar bilan bir xil:
+#
+#     dars, sinov     LessonResult        to'g'ri × 2 / × 4
+#     masala          MasalaUrinish       birinchi urinishda 10, keyin 3
+#     kunlik son      KunlikSonNatija     yutsa 6 + qolgan urinish × 2, aks holda 2
+#     duel            Duel                ⌈ball / 3⌉
+#     xona o'yinlari  XonaNatija          ⌈ochko / 3⌉
+#     qolganlari      TangaYozuv          yakka o'yin, maydon, mantiq, sandiq
+#                                         (mijoz yuboradi — `MANBALAR` chegarasida),
+#                                         shaharcha hosili (server o'zi yozadi)
+#
+#     yaraydi = min(topilgan − almashtirilgan,  mijozdagi qoldiq)
+#
+# Ikkinchi chegara — ikki marta sarflashga qarshi: do'kon va shaharchaga
+# sarflangan tanga mijoz qoldig'idan allaqachon ayrilgan.
+#
+# HAR NATIJA CHEGARALANGAN: hech qaysi manba bitta yozuvda o'z o'yini
+# bera oladiganidan ko'p bermaydi, telefondagi o'yinlar esa kunda ham
+# (`KUNLIK_MAX`). API'ni biladigan odam baribir soxta natija yuborishi
+# mumkin, lekin 500 tanga uchun kamida bir necha kun kerak — va oyiga
+# bir marta, ya'ni eng ko'pi 7 kun.
+
+TANGA_NARX = 500
+TANGA_KUN = 7
+#: Hisobga necha kunda bir marta.
+TANGA_ORALIQ = 30
+#: Bitta natijadan eng ko'p shuncha to'g'ri javob sanaladi — eng uzun
+#: haqiqiy mashq 45 savol; serializer esa 500 gacha qabul qiladi.
+TANGA_NATIJA_MAX = 45
+#: `lib/progress.tsx` dagi `SINOV_JOY` va `SINOV_TANGA`.
+SINOV_JOY = 99
+SINOV_TANGA = 4
+
+
+class TangaXato(Exception):
+    def __init__(self, kod: str):
+        super().__init__(kod)
+        self.kod = kod
+
+
+#: Telefondagi o'yinlar: manba → (bitta yozuvda eng ko'pi, kunda eng ko'pi).
+#: Bitta yozuv chegarasi — o'sha o'yin haqiqatda bera oladigan eng katta
+#: tanga (formulalar `screens/*.tsx` da, izohda).
+MANBALAR: dict[str, tuple[int, int]] = {
+    "oyin": (60, 200),      # yakka o'yin: ⌈ball/3⌉, kunning birinchisi × 2
+    "maydon": (100, 100),   # bugungi maydon — kuniga bir marta, × 2
+    "mantiq": (90, 200),    # mantiq darslari: to'g'ri × 2
+    "izdosh": (9, 60),      # yangi yulduz × 3
+    "strelka": (6, 60),     # yangi yulduz × 2
+    "qoida": (8, 60),       # ⌈ball/3⌉, eng ko'pi 8
+    "son_ovi": (8, 40),     # 3–8
+    "sandiq": (30, 30),     # haftalik sandiq
+}
+#: Telefondagi o'yinlardan kuniga jami — har manba alohida to'lsa ham.
+KUNLIK_MAX = 250
+#: Masala: birinchi urinishda topsa — eng katta mukofot, keyin — eng kichigi
+#: (`lib/masalaTanga.ts`, MUKOFOT = [10, 5, 3]; ikkinchi va uchinchi
+#: urinish serverda ajratilmaydi — kamrog'i olinadi).
+MASALA_BIRINCHI, MASALA_KEYIN = 10, 3
+#: Duel va xona: ⌈ball / 3⌉ (`lib/oyin/rekord.ts`, `tangaHisobi`).
+OYIN_NATIJA_MAX = 40
+
+
+def _topilgan_tanga(profile) -> int:
+    from django.db.models import Case, F, IntegerField, Sum, Value, When
+    from django.db.models.functions import Least
+
+    from .models import Duel, KunlikSonNatija, LessonResult, MasalaUrinish, TangaYozuv, XonaNatija
+
+    def yigindi(qs, ifoda) -> int:
+        return int(qs.aggregate(t=Sum(ifoda, output_field=IntegerField()))["t"] or 0)
+
+    def uchdan_biri(maydon: str):
+        # ⌈x / 3⌉ butun sonlarda = (x + 2) / 3; manfiy ball 0.
+        return Least((F(maydon) + 2) / 3, Value(OYIN_NATIJA_MAX))
+
+    dars = yigindi(LessonResult.objects.filter(profile=profile),
+                   Least("correct", Value(TANGA_NATIJA_MAX)) * Case(
+                       When(unit=SINOV_JOY, lesson=SINOV_JOY, then=Value(SINOV_TANGA)),
+                       default=Value(2), output_field=IntegerField()))
+    masala = yigindi(MasalaUrinish.objects.filter(profile=profile, yechdi=True),
+                     Case(When(togri=True, then=Value(MASALA_BIRINCHI)),
+                          default=Value(MASALA_KEYIN), output_field=IntegerField()))
+    kunlik = yigindi(KunlikSonNatija.objects.filter(profile=profile),
+                     Case(When(bajardi=True, then=Value(6) + (Value(6) - Least("urinish", Value(6))) * 2),
+                          default=Value(2), output_field=IntegerField()))
+    duel = (yigindi(Duel.objects.filter(chaqirgan=profile, chaqirgan_tugatdi=True, chaqirgan_ball__gt=0),
+                    uchdan_biri("chaqirgan_ball"))
+            + yigindi(Duel.objects.filter(qabul=profile, qabul_tugatdi=True, qabul_ball__gt=0),
+                      uchdan_biri("qabul_ball")))
+    xona = yigindi(XonaNatija.objects.filter(profile=profile, ochko__gt=0), uchdan_biri("ochko"))
+    jurnal = yigindi(TangaYozuv.objects.filter(profile=profile), F("tanga"))
+    return dars + masala + kunlik + duel + xona + jurnal
+
+
+def tanga_yoz(profile, manba: str, tanga, kun=None) -> int:
+    """
+    Telefondagi o'yin tangasini jurnalga yozadi — `MANBALAR` chegarasida.
+    Qaytadi: haqiqatda yozilgan tanga (chegaradan oshgani tashlanadi).
+
+    `shaharcha` — server o'zi chaqiradi (`shaharcha.hosil`), chegara yo'q:
+    miqdorni u o'zi hisoblagan.
+    """
+    from django.db.models import Sum
+
+    from .models import TangaYozuv
+
+    try:
+        tanga = int(tanga)
+    except (TypeError, ValueError):
+        return 0
+    kun = kun or timezone.localdate()
+    if manba == "shaharcha":
+        if tanga > 0:
+            TangaYozuv.objects.create(profile=profile, manba=manba, tanga=tanga, kun=kun)
+        return max(0, tanga)
+    if manba not in MANBALAR or tanga <= 0:
+        return 0
+    bir, kunda = MANBALAR[manba]
+    bugun = TangaYozuv.objects.filter(profile=profile, kun=kun).exclude(manba="shaharcha")
+    shu = bugun.filter(manba=manba).aggregate(t=Sum("tanga"))["t"] or 0
+    hammasi = bugun.aggregate(t=Sum("tanga"))["t"] or 0
+    tanga = min(tanga, bir, kunda - shu, KUNLIK_MAX - hammasi)
+    if tanga <= 0:
+        return 0
+    TangaYozuv.objects.create(profile=profile, manba=manba, tanga=tanga, kun=kun)
+    return tanga
+
+
+def _mijoz_qoldiq(profile) -> int:
+    """Mijoz sinxronlagan tanga qoldig'i — kurs kalitlaridagi `coins` yig'indisi."""
+    from .models import BIZNING_KALIT, Progress
+
+    state = Progress.objects.filter(profile=profile).values_list("state", flat=True).first() or {}
+    jami = 0
+    for kalit, xom in state.items():
+        if not BIZNING_KALIT.match(kalit):
+            continue
+        try:
+            d = json.loads(xom)
+        except (TypeError, ValueError):
+            continue
+        if isinstance(d, dict) and isinstance(d.get("coins"), int) and d["coins"] > 0:
+            jami += d["coins"]
+    return jami
+
+
+def tanga_holat(pupil: Pupil, profile, hozir=None) -> dict:
+    """`GET /api/v1/premium/tanga` — qancha tanga yaraydi va almashtirsa bo'ladimi."""
+    from django.db.models import Sum
+
+    from .models import TangaAlmashuv
+
+    hozir = hozir or timezone.now()
+    sarflangan = (TangaAlmashuv.objects.filter(profile=profile)
+                  .aggregate(t=Sum("tanga"))["t"]) or 0
+    yaraydi = max(0, min(_topilgan_tanga(profile) - sarflangan, _mijoz_qoldiq(profile)))
+    oxirgi = (TangaAlmashuv.objects.filter(pupil=pupil)
+              .values_list("created_at", flat=True).first())
+    keyingi = oxirgi + timedelta(days=TANGA_ORALIQ) if oxirgi else None
+    if keyingi and keyingi <= hozir:
+        keyingi = None
+    return {
+        "narx": TANGA_NARX,
+        "kun": TANGA_KUN,
+        "yaraydi": yaraydi,
+        # Shu sanagacha yana almashtirib bo'lmaydi ("oyiga bir marta").
+        "keyingi": keyingi.isoformat() if keyingi else None,
+        "mumkin": yaraydi >= TANGA_NARX and keyingi is None,
+    }
+
+
+def tanga_almashtir(pupil_id: int, profile) -> Pupil:
+    """
+    500 tanga → 7 kun. Xato `TangaXato.kod`: `oy` (30 kun o'tmagan),
+    `kam` (tasdiqlangan tanga yetmaydi).
+
+    Hisob qatori qulflanadi: ikki marta tez bosish (yoki ikki qurilma)
+    bitta tangani ikki marta almashtirmasin. Muddat `hal_qil` dagidek
+    `max(hozir, premium_gacha)` dan uzayadi.
+    """
+    from .models import TangaAlmashuv
+
+    with transaction.atomic():
+        p = Pupil.objects.select_for_update().get(pk=pupil_id)
+        h = tanga_holat(p, profile)
+        if h["keyingi"]:
+            raise TangaXato("oy")
+        if h["yaraydi"] < TANGA_NARX:
+            raise TangaXato("kam")
+        hozir = timezone.now()
+        TangaAlmashuv.objects.create(pupil=p, profile=profile, tanga=TANGA_NARX,
+                                     kun=TANGA_KUN, created_at=hozir)
+        p.premium_gacha = max(hozir, p.premium_gacha or hozir) + timedelta(days=TANGA_KUN)
+        p.save(update_fields=["premium_gacha"])
     return p
 
 

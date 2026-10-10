@@ -2331,6 +2331,49 @@ class PremiumTolov(models.Model):
         indexes = [models.Index(fields=["holat", "created_at"])]
 
 
+class TangaAlmashuv(models.Model):
+    """
+    Tanga → Premium almashuvi (2026-10-10, do'kon o'rniga).
+
+    Tanga PROFILDA yig'iladi, Premium esa HISOBGA beriladi — shuning
+    uchun ikkalasi ham yoziladi: profil — "bu bola qancha tangasini
+    sarfladi" (`premium.tanga_holat`), hisob — "oyiga bir marta" sharti.
+    """
+
+    pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="tanga_almashuvlar")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="tanga_almashuvlar")
+    tanga = models.IntegerField()
+    kun = models.IntegerField()
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "tanga_almashuv"
+        ordering = ["-created_at"]
+
+
+class TangaYozuv(models.Model):
+    """
+    Natijasi serverda BOSHQA joyda saqlanmaydigan tanga — jurnal.
+
+    Dars, sinov, masala, kunlik son, duel va xona o'yinlari tangasi o'z
+    jadvallaridan sanaladi (`premium._topilgan_tanga`). Yakka o'yinlar,
+    maydon, mantiq o'yinlari va haftalik sandiq esa faqat telefonda
+    o'ynaladi — ularning tangasi shu yerga yoziladi, har manba bitta
+    yozuvda va kunda CHEGARALANGAN (`premium.MANBALAR`). Shaharcha
+    hosilini server o'zi hisoblaydi va o'zi yozadi.
+    """
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="tanga_yozuvlari")
+    manba = models.CharField(max_length=12)
+    tanga = models.IntegerField()
+    kun = models.DateField()
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "tanga_yozuv"
+        indexes = [models.Index(fields=["profile", "kun"])]
+
+
 class AiSuhbat(models.Model):
     """
     AI ustoz bilan bitta suhbat (`core/ai.py`).

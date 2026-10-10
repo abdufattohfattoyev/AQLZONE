@@ -413,6 +413,47 @@ export async function postResult(p: ResultPayload): Promise<void> {
   catch (e) { console.warn("[api] natija yuborilmadi:", (e as Error).message); }
 }
 
+/**
+ * Telefondagi o'yin tangasi serverga (`POST /api/v1/tanga`) — faqat
+ * Tanga → Premium hisobi uchun (`core/premium.py`, `MANBALAR`). Natijasi
+ * serverda saqlanadigan o'yinlar (duel, kunlik son, masala, xona,
+ * shaharcha) bu yerdan YUBORILMAYDI — server ularni o'zi sanaydi.
+ *
+ * Internet yo'q bo'lsa yozuv navbatda qoladi va keyingi yuborishda ketadi:
+ * aks holda metroda o'ynagan bola tangasi Premiumga yaramay qolardi.
+ */
+export type TangaManba =
+  "oyin" | "maydon" | "mantiq" | "izdosh" | "strelka" | "qoida" | "son_ovi" | "sandiq";
+
+const TANGA_NAVBAT = "azapp_tanga_navbat_v1";
+
+interface TangaYozuv { manba: TangaManba; tanga: number; profileId: string | null }
+
+function tangaNavbat(): TangaYozuv[] {
+  try { return JSON.parse(localStorage.getItem(TANGA_NAVBAT) ?? "[]") as TangaYozuv[]; } catch { return []; }
+}
+
+function tangaNavbatQoy(n: TangaYozuv[]): void {
+  // 50 tadan ko'pi — bir necha kun internetsiz; eskisi tushadi.
+  try { localStorage.setItem(TANGA_NAVBAT, JSON.stringify(n.slice(-50))); } catch { /* eslanmaydi */ }
+}
+
+export async function tangaYubor(manba: TangaManba, tanga: number): Promise<void> {
+  if (tanga <= 0) return;
+  const navbat = [...tangaNavbat(), { manba, tanga, profileId: profilId }];
+  if (!token) { tangaNavbatQoy(navbat); return; }
+  const qoldi: TangaYozuv[] = [];
+  for (const y of navbat) {
+    try {
+      await post("/api/v1/tanga", y.profileId ? { manba: y.manba, tanga: y.tanga, profileId: y.profileId }
+        : { manba: y.manba, tanga: y.tanga });
+    } catch {
+      qoldi.push(y);
+    }
+  }
+  tangaNavbatQoy(qoldi);
+}
+
 export const isSignedIn = () => Boolean(token);
 
 /**

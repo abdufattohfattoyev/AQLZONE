@@ -19,6 +19,8 @@ urlpatterns = [
     path("premium", views.premium, name="premium"),
     path("premium/sinov", views.premium_sinov, name="premium-sinov"),
     path("premium/chek", views.premium_chek, name="premium-chek"),
+    path("premium/tanga", views.premium_tanga, name="premium-tanga"),
+    path("tanga", views.tanga_jurnal, name="tanga-jurnal"),
     # AI ustoz — faqat Premium (`core/ai.py`).
     path("ai", views.ai_holat, name="ai"),
     path("ai/suhbat", views.ai_yangi, name="ai-yangi"),

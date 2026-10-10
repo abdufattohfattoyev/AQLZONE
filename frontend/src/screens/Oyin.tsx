@@ -66,7 +66,7 @@ export function Oyin({ oyin, daraja, onChiq, onDaraja }: {
     const bonus = !bugunOynalgan(oyin.id);
     const yangiRekord = natijaniYoz(oyin.id, daraja, n.ball);
     const tanga = tangaHisobi(n.ball, bonus);
-    oyinTugadi(tanga, n.savollar);
+    oyinTugadi(tanga, n.savollar, "oyin");
     setNatija({ ball: n.ball, rekord: rekord(oyin.id, daraja), yangiRekord, tanga, bonus });
   };
 

@@ -114,7 +114,7 @@ export function Strelka({ onChiq }: { onChiq: () => void }) {
           const eski = xotira.yulduz[joriy] ?? 0;
           const yangiTanga = Math.max(0, yul - eski) * 2;
           setTanga(yangiTanga);
-          if (yangiTanga > 0) oyinTugadi(yangiTanga, 1);
+          if (yangiTanga > 0) oyinTugadi(yangiTanga, 1, "strelka");
           const x: Xotira = {
             ...xotira, ochiq: Math.max(xotira.ochiq, joriy + 1),
             yulduz: { ...xotira.yulduz, [joriy]: Math.max(eski, yul) },

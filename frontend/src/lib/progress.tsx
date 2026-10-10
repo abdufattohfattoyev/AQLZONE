@@ -251,7 +251,12 @@ interface Ctx {
    * Zanjirga esa QO'SHILADI — bo'limning butun maqsadi shu: odam
    * har kuni ilovani ochsin.
    */
-  oyinTugadi: (tanga: number, savollar: number) => void;
+  /**
+   * `manba` — telefondagi o'yinlar uchun: tanga serverga ham yoziladi
+   * (Tanga → Premium hisobi). Natijasi serverda turadigan o'yinlar
+   * (duel, kunlik son, masala, xona, shaharcha) uni bermaydi.
+   */
+  oyinTugadi: (tanga: number, savollar: number, manba?: api.TangaManba) => void;
   /**
    * Jami hisobdan tanga yechadi. Yetmasa `false` va hech narsa
    * o'zgarmaydi.
@@ -569,7 +574,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
    * o'yin ularning orasiga tushsa, ota-ona panelidagi "eng qiyin
    * darslar" ro'yxati buzilardi.
    */
-  const oyinTugadi = useCallback((tanga: number, savollar: number) => {
+  const oyinTugadi = useCallback((tanga: number, savollar: number, manba?: api.TangaManba) => {
+    if (manba && tanga > 0) void api.tangaYubor(manba, tanga);
     const c = courseBySlug(oxirgiKurs()) ?? COURSES[0];
     if (!c) return;
     if (tanga > 0) {

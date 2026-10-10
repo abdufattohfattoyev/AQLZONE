@@ -75,7 +75,7 @@ export function Maydon({ onChiq }: { onChiq: () => void }) {
     // Maydon tangasi mashqdagidan ko'ra saxiyroq (bonus bilan): u
     // kuniga bir marta beriladi va aynan shu narsa ertaga qaytishga
     // sabab bo'ladi.
-    oyinTugadi(tangaHisobi(jami, true), yangiSavollar);
+    oyinTugadi(tangaHisobi(jami, true), yangiSavollar, "maydon");
     setNatija(yozildi);
     setHolat({ nima: "yakun" });
   };

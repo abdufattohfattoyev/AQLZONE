@@ -1165,7 +1165,7 @@ function MantiqMavzuSahifasi() {
       onExit={() => nav(yolMantiq())}
       onFinish={(r: LessonResult) => {
         mantiqYoz(m.id, r.stars);
-        oyinTugadi(r.correct * 2, r.asked);
+        oyinTugadi(r.correct * 2, r.asked, "mantiq");
         nav(yolMantiq());
       }} />
   );

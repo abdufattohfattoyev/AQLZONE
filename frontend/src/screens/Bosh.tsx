@@ -224,7 +224,7 @@ export function Bosh({
     if (!sandiqniOch(yol.dushanba)) { setSandiqOchiq(true); return; }
     // Tanga o'yin mukofoti yo'li bilan tushadi: zanjirga ham, yulduzga
     // ham tegmaydi (`progress.tsx` → oyinTugadi, savollar = 0).
-    oyinTugadi(HAFTA_TANGA, 0);
+    oyinTugadi(HAFTA_TANGA, 0, "sandiq");
     tovush("togri");
     tebrat("yutuq");
     setSandiqOchiq(true);

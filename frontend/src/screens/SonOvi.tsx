@@ -163,7 +163,7 @@ export function SonOvi({ onChiq }: { onChiq: () => void }) {
         const vaqt = Math.max(1, Math.round((Date.now() - boshAt) / 1000));
         setSekund(vaqt);
         // Tez yechilsa ko'proq tanga: 3 dan 8 gacha.
-        oyinTugadi(Math.max(3, 8 - Math.floor(vaqt / 30)), 1);
+        oyinTugadi(Math.max(3, 8 - Math.floor(vaqt / 30)), 1, "son_ovi");
         const yangiXotira: Xotira = {
           ...xotira, kun,
           tugagan: { ...xotira.tugagan, [daraja]: Math.min(TOPLAM, tugagan + 1) },
