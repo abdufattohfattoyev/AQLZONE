@@ -6,7 +6,7 @@
  * kunda o'ldiradi.
  */
 import {
-  SOZLAMA, birlashtir, jumboq, kunlikToplam, maslahat, tasodifiyJumboq, yechimBormi, yechimTop,
+  SOZLAMA, birlashtir, kunlikToplam, maslahat, tasodifiyJumboq, yechimBormi, yechimTop,
 } from "../src/lib/oyin/sonOvi";
 import type { Daraja } from "../src/lib/oyin/tur";
 

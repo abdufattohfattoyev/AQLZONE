@@ -18,7 +18,7 @@
  * `npm run tekshir` bilan birga ishlaydi.
  */
 import { bugungiBosqichlar, bugungiOyinlar } from "../src/lib/oyin/maydon";
-import { kunUrugi, urugBilan } from "../src/lib/oyin/urug";
+import { urugBilan } from "../src/lib/oyin/urug";
 
 let xato = 0;
 const tekshir = (nom: string, ok: boolean, izoh = "") => {

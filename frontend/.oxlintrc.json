@@ -1,8 +1,15 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "typescript", "oxc"],
+  // `oyin-manba/ilova-tekshir.js` ni `ilovaga.py` YASAYDI (karvon-yoli.html
+  // dan) — qo'lda tuzatilgan narsa keyingi yasashda yo'qoladi.
+  "ignorePatterns": ["oyin-manba/**"],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+    // O'chirildi (2026-10-10): faqat dev'dagi Fast Refresh haqida. Ekranlar
+    // o'z holat yordamchilarini (`kunlikSonBugun`, `izdoshOtilgan`) ataylab
+    // komponent yonida eksport qiladi; 36 ta ogohlantirish CI'da haqiqiy
+    // muammolarni ko'mib yuborardi. Prod'ga ta'siri yo'q.
+    "react/only-export-components": "off"
   }
 }

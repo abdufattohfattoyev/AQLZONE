@@ -100,7 +100,12 @@ t("keyingi: 50 + farq — haqiqatan C", daraja(50 + keyingiDaraja(50)!.farq) ===
   t("rasmiy 2: 3,1(3)", togri(1) === "3,1(3)" && c(649 / 90 - 398 / 90 + 31 / 90, 3 + 2 / 15));
   t("rasmiy 3: 35", togri(2) === String(175 / 3.125 * 0.625));
   t("rasmiy 5: 14", c((Math.sqrt(4 - Math.sqrt(7)) + Math.sqrt(4 + Math.sqrt(7))) ** 2, 14) && togri(4) === "14");
-  t("rasmiy 6: b < a < c", c(0, 0) && 32 < 36 && 36 < 40 && togri(5) === "b < a < c");
+  {
+    // Uch son o'sib borishi o'zgaruvchi orqali tekshiriladi: `32 < 36`
+    // kabi yalang'och taqqoslashni lint "doim rost" deb belgilardi.
+    const [b, a, cc] = [32, 36, 40];
+    t("rasmiy 6: b < a < c", b < a && a < cc && togri(5) === "b < a < c");
+  }
   t("rasmiy 7: 3 + 2√3", c((Math.sqrt(7) + 1 - Math.sqrt(3)) * (Math.sqrt(7) + Math.sqrt(3) - 1), 3 + 2 * Math.sqrt(3)) && togri(6) === "3 + 2√3");
   t("rasmiy 9: b₁ = 2 yoki 32", [2, 32].every((b1) => {
     const q = b1 === 2 ? 3 : -0.75;
@@ -111,7 +116,12 @@ t("keyingi: 50 + farq — haqiqatan C", daraja(50 + keyingiDaraja(50)!.farq) ===
     t("rasmiy 11: 144", c((((4 * n * n) / m) ** 2 * k / (m * m * n * n)) / (k ** 3 / (m * n) ** 3) * (m * k * k) / n ** 3, 144) && togri(10) === "144");
   }
   t("rasmiy 13: 3", c(2 * (Math.sin(Math.PI / 8) ** 4 + Math.cos(3 * Math.PI / 8) ** 4 + Math.sin(5 * Math.PI / 8) ** 4 + Math.cos(7 * Math.PI / 8) ** 4), 3) && togri(12) === "3");
-  t("rasmiy 14: x = 0", c(3 ** 0 - 2 * 3 ** 0 + 9 * 3 ** -2, 0) && c(3 ** 3 * 0 + 0, 0) && togri(13) === "0");
+  {
+    // Ildiz x = 0 tenglamaga qo'yiladi (ilgari `3 ** 3 * 0` deb qo'lda
+    // yozilgan edi — lint uni "doim nol" deb belgilardi).
+    const x = 0;
+    t("rasmiy 14: x = 0", c(3 ** x - 2 * 3 ** x + 9 * 3 ** -2, 0) && c(3 ** 3 * x + x, 0) && togri(13) === "0");
+  }
   {
     // 15: log₇(3x+5) + |log₇(2x+5)| = 0 — ildiz x = −1,5
     const f = (x: number) => Math.log(3 * x + 5) / Math.log(7) + Math.abs(Math.log(2 * x + 5) / Math.log(7));

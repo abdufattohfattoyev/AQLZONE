@@ -1152,7 +1152,13 @@ function MantiqMavzuSahifasi() {
   const { oyinTugadi } = useProgress();
   useTema("bosh");
   const m = mantiqMavzu(id ?? "");
-  const dars = useMemo(() => (m ? mantiqDars(m) : null), [m?.id]);
+  // `mantiqMavzu` har chaqiruvda YANGI obyekt qaytaradi — `m` ga bog'lansa
+  // dars (va tasodifiy savollar) har chizilishda qayta yasalardi. Shuning
+  // uchun manzildagi `id` ga bog'lanadi va mavzu ichkarida qayta olinadi.
+  const dars = useMemo(() => {
+    const x = mantiqMavzu(id ?? "");
+    return x ? mantiqDars(x) : null;
+  }, [id]);
   if (!m || !dars) return <Navigate to={yolMantiq()} replace />;
   const yulduzlar = mantiqYulduzlar();
   return (
