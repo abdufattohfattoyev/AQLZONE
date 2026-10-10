@@ -206,7 +206,7 @@ function TezOyin({ jonli, onOch }: { jonli: OyinlarJonli | null; onOch: () => vo
     <button type="button" onClick={onOch} data-tahlil="O'yin: tez o'yin"
       className="tugma-3d flex w-full items-center gap-3 rounded-[24px] bg-brand-blue px-3.5 py-3.5 text-left
                  text-white shadow-[0_5px_0_var(--color-brand-blue-d)] min-[360px]:gap-3.5 min-[360px]:px-4">
-      <span className="az-plitka size-12 min-[360px]:size-[54px]">
+      <span className="az-plitka az-plitka-oq size-12 min-[360px]:size-[54px]">
         <img src="/belgi/h/chaqmoq.webp" alt="" width={30} height={30} className="size-[30px]" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
@@ -232,8 +232,10 @@ function Kichik({ belgi, nom, izoh, tahlil, on }: {
       {/* Telefonda belgi ustda, yozuv ostida: yonma-yon turganda 165px
           kartada "Bugungi maydon" ikki qatorga sinib, qo'shni karta bilan
           bo'yi teng kelmasdi. */}
-      <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-track kom:size-14 kom:rounded-[16px]">
-        <EmojiBelgi e={belgi} olcham={32} />
+      {/* 2026-10-10: kulrang (`bg-track`) plitka olib tashlandi — belgi
+          boshqa kartalardagi kabi o'zi turadi (`.az-plitka`, fonsiz). */}
+      <span className="az-plitka size-12 kom:size-14">
+        <EmojiBelgi e={belgi} olcham={40} plitkasiz />
       </span>
       <span className="flex w-full min-w-0 flex-col gap-0.5">
         <span className="truncate text-[15px] leading-tight font-bold kom:text-[16px]">{nom}</span>

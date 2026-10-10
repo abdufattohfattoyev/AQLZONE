@@ -1466,15 +1466,43 @@
   display: inline-grid;
   place-items: center;
   flex-shrink: 0;
-  border-radius: 28%;
-  background: var(--az-plitka);
-  border: 1px solid color-mix(in srgb, var(--color-brand-blue) 22%, transparent);
 }
-/* Ilgari belgi 72% edi, plitka atrofida esa firuza nur va qalin
-   chiziq bor edi — uch qavat ramka belgini siqib, "bo'g'ilgan"dek
-   ko'rsatardi (ustoz fikri, 2026-10-09). Endi nur yo'q, chiziq
-   yengil, belgi 80%. */
-.az-plitka > img, .az-plitka > span { width: 80%; height: 80%; object-fit: contain; }
+/* 2026-10-10 (ustoz fikri): plitka FONI va chizig'i olib tashlandi —
+   belgi o'zi turadi. Ilgari och firuza kvadrat ichida 80% edi: firuza
+   belgi firuza kvadratda "qutiga solingan"dek, kartada esa ikki qavat
+   ramka (karta + plitka) bo'lib ko'rinardi. Endi belgi joyini to'liq
+   egallaydi, chuqurlikni esa yumshoq soya beradi — 3D belgi yuzadan
+   ko'tarilib turgandek. `--az-plitka` tokeni boshqa joylar uchun qoldi. */
+.az-plitka > img, .az-plitka > span {
+  width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 3px 3px color-mix(in srgb, var(--color-brand-blue-d) 30%, transparent));
+  transition: transform 260ms cubic-bezier(.34, 1.56, .64, 1);
+  transform-origin: 50% 80%;
+}
+/* Ko'k (asosiy) tugma ustidagi belgi: firuza belgi firuza fonga singib
+   ketmasin — oq ingichka nur bilan ajratiladi, fon qo'shilmaydi. */
+.az-plitka-oq > img {
+  filter: drop-shadow(0 0 1.5px rgb(255 255 255 / 0.95)) drop-shadow(0 3px 3px rgb(0 0 0 / 0.22));
+}
+
+/* JONLI KO'RINISH — fon ketgach belgi "tirik" bo'lishi kerak: karta
+   ustiga kelganda yoki bosilganda belgi sal ko'tarilib, qiyshayadi.
+   Doimiy (cheksiz) harakat EMAS — dizayn qoidasi faqat bitta "keyingi
+   qadam"ga ruxsat beradi; bu faqat odam tegingandagina javob. */
+@media (hover: hover) {
+  :is(button, a, [role="button"]):hover .az-plitka > img,
+  :is(button, a, [role="button"]):hover .az-plitka > span {
+    transform: translateY(-3px) scale(1.08) rotate(-4deg);
+  }
+}
+:is(button, a, [role="button"]):active .az-plitka > img,
+:is(button, a, [role="button"]):active .az-plitka > span {
+  transform: scale(0.92);
+  transition-duration: 90ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .az-plitka > img, .az-plitka > span { transition: none; transform: none !important; }
+}
 
 /* Interfeys belgilari — ilovaning asosiy rangi (`lib/hajmli.tsx`, FIRUZA). */
 .hajmli[data-rang="firuza"]   { --bl:#8be3ec; --bm:#17b3c1; --bd:#0b6f79 }

@@ -730,7 +730,7 @@ function Oxir({ onBoshlash, bot }: { onBoshlash: () => void; bot: string }) {
         <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-white/10 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -right-24 -bottom-24 size-80 rounded-full bg-brand-green/25 blur-3xl" />
         <div className="relative mx-auto flex max-w-[40rem] flex-col items-center">
-          <span className="az-plitka size-16">
+          <span className="az-plitka az-plitka-oq size-16">
             <img src="/belgi/h/chaqmoq.webp" width={36} height={36} alt="" aria-hidden decoding="async" />
           </span>
           <h2 className="mt-5 font-display text-[28px] leading-tight tracking-tight sm:text-[40px]">{t("lendOxirSarlavha")}</h2>
