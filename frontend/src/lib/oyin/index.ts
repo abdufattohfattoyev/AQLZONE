@@ -59,6 +59,10 @@ export const OYINLAR: Oyin[] = [
     nom: "oyin24", izoh: "oyin24Izoh", qoida: "oyin24Qoida",
     // Uch daqiqa — bitta topishmoq uchun emas, QANCHASINI yechishing uchun.
     vaqt: [180, 180, 180],
+    // 2026-10-10: "Son ovi" bilan bir xil o'yin (to'rt sondan 24) — 25
+    // kunda 6 kishi ochgan, Son ovi esa 11. Ikkitasi yonma-yon odamni
+    // chalg'itardi; ro'yxatdan olindi, manzil ishlaydi.
+    yashirin: true,
   },
   {
     id: "xotira", tur: "xotira", ic: "grid", rang: "blue", emoji: "🧠",
@@ -67,7 +71,10 @@ export const OYINLAR: Oyin[] = [
   },
 ];
 
-export const oyinById = (id: string): Oyin | undefined =>
+/** Odamga ko'rsatiladigan o'yinlar — `yashirin` lar chiqarilgan. */
+export const KORINADIGAN_OYINLAR = OYINLAR.filter((o) => !o.yashirin);
+
+export const oyinById =(id: string): Oyin | undefined =>
   OYINLAR.find((o) => o.id === id);
 
 export const OYIN_IDLAR: OyinId[] = OYINLAR.map((o) => o.id);

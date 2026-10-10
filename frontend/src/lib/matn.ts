@@ -555,6 +555,7 @@ const S = {
   oyinGrafikAria: ["{nom}, oxirgi natijalar: {sonlar}. Rekord {rekord}.", "{nom}, последние результаты: {sonlar}. Рекорд {rekord}."],
   oyinBoshqa: ["Boshqa o'yinlar", "Другие игры"],
   oyinDostlar: ["Do'stlar bilan", "С друзьями"],
+  oyinDostlarIzoh: ["{n} ta o'yin · xona kodi bilan", "{n} игры · по коду комнаты"],
 
   /* ---------------- Imtihon: DTM va Milliy sertifikat (yangi dizayn) ---------------- */
   imtTayyorgarlik: ["Imtihonga tayyorgarlik", "Подготовка к экзамену"],

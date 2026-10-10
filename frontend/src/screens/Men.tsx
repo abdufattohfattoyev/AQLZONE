@@ -34,7 +34,7 @@ import { TILLAR, til, tilniAlmashtir } from "../lib/til";
 import { obuna, yoruglikniOqi, yoruglikniQoy } from "../lib/yoruglik";
 import type { Yoruglik } from "../lib/yoruglik";
 import {
-  yolAnketa, yolDokon, yolKichkintoy, yolNishon, yolOtaOna, yolReyting, yolSozlama,
+  yolAnketa, yolKichkintoy, yolNishon, yolOtaOna, yolReyting, yolSozlama,
 } from "../lib/yollar";
 import { Tanlov, TanlovVaraq } from "../components/Varaq";
 import { PremiumQator } from "../components/PremiumVaraq";
@@ -146,7 +146,8 @@ export function Men({ onYol }: Props) {
           on={() => onYol(yolReyting())} />
         <Qator ic="miya" nom={t("nishonlar")} qiymat={`${nishon.olingan} / ${nishon.jami}`}
           on={() => onYol(yolNishon(kurs))} />
-        <Qator ic="palette" nom={t("tabDokon")} on={() => onYol(yolDokon(kurs))} />
+        {/* Do'kon qatori olib tashlandi (2026-10-10): 25 kunda 7 kishi
+            kirgan, boshqacha ko'rinishda qayta quriladi. Manzil ishlaydi. */}
         {/* O'qituvchi sinfi — o'quvchi kod bilan qo'shiladi, o'qituvchi panel ochadi. */}
         <Qator ic="map" nom={t("sinfSarlavha")} on={() => onYol("/sinflar")} />
         {/* Shaxsiy taklif havolasi (`core/taklif.py`) — Telegram "ulashish"

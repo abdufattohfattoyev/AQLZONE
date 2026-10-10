@@ -15,8 +15,13 @@
  *   Yakka o'yinlar har kartada OXIRGI natija, haftalik o'sish va oxirgi
  *                 7 natijaning kichik grafigi (`lib/oyin/grafik.ts`):
  *                 ko'k — oxirgi, oltin — shu yettitaning eng yaxshisi
- *   Boshqa        son ovi, karvon yo'li, tulki shaharchasi
- *   Do'stlar bilan xona o'yinlari va haftalik jadval
+ *   Mantiq        izdosh, qoida ovi, strelka yo'li
+ *   Boshqa        do'stlar bilan (xona o'yinlari varaqda), son ovi,
+ *                 karvon yo'li, tulki shaharchasi
+ *
+ * 2026-10-10 ("ortiqchasini olib tashla"): qidiruv tugmasi, "24" o'yini
+ * (Son ovi bilan bir xil), haftalik jadval qatori va alohida "Do'stlar
+ * bilan" bo'limi olib tashlandi — 21 ta narsa 16 taga tushdi.
  *
  * Tablar olib tashlandi: jamoaviy o'yinlar pastda, bitta surishda —
  * tab ularni ko'pchilikdan butunlay yashirardi. Rangli (to'q sariq,
@@ -36,7 +41,8 @@ import { qoidaRekord } from "./QoidaOvi";
 import { strelkaOtilgan } from "./Strelka";
 import { EmojiBelgi } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
-import { OYINLAR } from "../lib/oyin";
+import { KORINADIGAN_OYINLAR } from "../lib/oyin";
+import { TanlovVaraq } from "../components/Varaq";
 import type { Oyin, OyinId } from "../lib/oyin/tur";
 import { maydonNatija, oxirgilar } from "../lib/oyin/rekord";
 import { grafik, haftalikFarq, G } from "../lib/oyin/grafik";
@@ -52,7 +58,7 @@ const BELGI: Record<OyinId, string> = {
 };
 
 export function Oyinlar({
-  onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onMantiq, onShaharcha, onKarvon, onJadval, onDuel, onJamoa, onQidiruv,
+  onBack, onOyin, onMaydon, onKunlikSon, onSonOvi, onMantiq, onShaharcha, onKarvon, onDuel, onJamoa,
 }: {
   onBack: () => void;
   onOyin: (id: string) => void;
@@ -67,13 +73,10 @@ export function Oyinlar({
   onShaharcha: () => void;
   /** Karvon yo'li — Ipak yo'li bo'ylab sarguzasht. */
   onKarvon: () => void;
-  /** Daraja va haftalik jadval. */
-  onJadval: () => void;
   /** Tez o'yin — duel. */
   onDuel: () => void;
   /** Jamoaviy o'yin — xona ochish ekrani. */
   onJamoa: (oyin: XonaOyin) => void;
-  onQidiruv: () => void;
 }) {
   // Bu tab ildizi: Telegram'ning orqaga tugmasi kerak emas (panelda
   // doim besh bo'lim bor). `onBack` faqat eski chaqiruvlar uchun qoldi.
@@ -83,10 +86,11 @@ export function Oyinlar({
   const sonBugun = kunlikSonBugun();
   // Kim qaysi o'yinda — Tez o'yin kartasi va o'yin kartalaridagi `• 2`.
   const jonli = useOyinlarJonli();
+  const [xonaVaraq, setXonaVaraq] = useState(false);
   // O'ynalganlar TEPADA (dizayndagidek): grafigi bor karta — odamning
   // o'z o'yinlari; "hali o'ynalmagan" lar pastda, taklif sifatida.
   const tartib = useMemo(
-    () => [...OYINLAR].sort((a, b) => Number(oxirgilar(b.id).length > 0) - Number(oxirgilar(a.id).length > 0)),
+    () => [...KORINADIGAN_OYINLAR].sort((a, b) => Number(oxirgilar(b.id).length > 0) - Number(oxirgilar(a.id).length > 0)),
     [],
   );
   // "oxirgi · rekord" izohi faqat kamida bitta grafik bo'lsa: yangi
@@ -102,10 +106,8 @@ export function Oyinlar({
                          text-[16px] font-bold text-brand-gold-d" title={t("menTanga")}>
           <span aria-hidden className="size-4 rounded-full bg-brand-gold" />{jamiTanga}
         </span>
-        <button type="button" onClick={onQidiruv} aria-label={t("qidiruvNom")} data-tahlil="O'yin: qidiruv"
-          className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta shadow-clay-sm">
-          <Icon name="search" size={20} />
-        </button>
+        {/* Qidiruv tugmasi olib tashlandi (2026-10-10): o'yinlar bitta
+            sahifaga sig'adi, qidiruv "Bugun" sarlavhasida bor. */}
       </header>
 
       <TezOyin jonli={jonli} onOch={onDuel} />
@@ -149,13 +151,16 @@ export function Oyinlar({
       </Royxat>
       </div>
 
-      {/* Kompyuterda "Boshqa" va "Do'stlar bilan" yonma-yon: to'liq kenglikdagi
-          ro'yxat qatori 1000px ga cho'zilib, yozuv chapda, strelka o'ngda
-          bir-biridan uzoqlashib ketardi. Telefonda `contents` — o'zgarishsiz. */}
-      <div className="contents kom:mt-2 kom:grid kom:grid-cols-2 kom:items-start kom:gap-x-5">
-      <div className="contents kom:flex kom:flex-col kom:gap-3">
-      <h2 className="mt-2 font-display text-[20px] kom:mt-0">{t("oyinBoshqa")}</h2>
+      {/* 2026-10-10: "Do'stlar bilan" alohida bo'lim edi — to'rtta xona
+          o'yini qatori va haftalik jadval. 25 kunda to'rttasiga jami 10
+          kishi, jadvalga 2 kishi kirgan; besh qator sahifani cho'zardi.
+          Endi bitta qator, o'yin varaqda tanlanadi; jadval olib tashlandi
+          (reyting "Men" bo'limida, `/oyinlar/reyting-jadval` ishlaydi). */}
+      <h2 className="mt-2 font-display text-[20px]">{t("oyinBoshqa")}</h2>
+      <div className="contents kom:grid kom:grid-cols-1">
       <Royxat>
+        <Qator belgi="🤝" nom={t("oyinDostlar")} tahlil="O'yin: do'stlar bilan" on={() => setXonaVaraq(true)}
+          izoh={t("oyinDostlarIzoh", { n: Object.keys(XONA_OYINLAR).length })} />
         <Qator belgi="🎯" nom={t("sonOvi")} tahlil="O'yin: son ovi" on={onSonOvi}
           izoh={sonOviBugun() > 0 ? t("sonOviBugun", { n: sonOviBugun() }) : t("sonOviIzoh")} />
         <Qator belgi="🐫" nom={t("karvonTitul")} izoh={t("karvonIzoh")} tahlil="O'yin: karvon yo'li" on={onKarvon} />
@@ -163,20 +168,20 @@ export function Oyinlar({
       </Royxat>
       </div>
 
-      <div className="contents kom:flex kom:flex-col kom:gap-3">
-      <h2 className="mt-2 font-display text-[20px] kom:mt-0">{t("oyinDostlar")}</h2>
-      <Royxat>
-        {(Object.keys(XONA_OYINLAR) as XonaOyin[]).map((k) => {
-          const m = XONA_OYINLAR[k];
-          return (
-            <Qator key={k} belgi={m.emoji} nom={t(m.nom)} tahlil={`O'yin: xona ${k}`} on={() => onJamoa(k)}
-              izoh={`${t(m.izoh)} · ${t("xonaKishi", { min: m.min, max: m.max })}`} />
-          );
-        })}
-        <Qator belgi="🏆" nom={t("tjJadval")} izoh={t("tjJadvalIzoh")} tahlil="O'yin: haftalik jadval" on={onJadval} />
-      </Royxat>
-      </div>
-      </div>
+      {xonaVaraq && (
+        <TanlovVaraq sarlavha={t("oyinDostlar")} onYop={() => setXonaVaraq(false)}>
+          <div className="-mx-1 flex w-full flex-col divide-y divide-track">
+            {(Object.keys(XONA_OYINLAR) as XonaOyin[]).map((k) => {
+              const m = XONA_OYINLAR[k];
+              return (
+                <Qator key={k} belgi={m.emoji} nom={t(m.nom)} tahlil={`O'yin: xona ${k}`}
+                  on={() => { setXonaVaraq(false); onJamoa(k); }}
+                  izoh={`${t(m.izoh)} · ${t("xonaKishi", { min: m.min, max: m.max })}`} />
+              );
+            })}
+          </div>
+        </TanlovVaraq>
+      )}
     </div>
   );
 }

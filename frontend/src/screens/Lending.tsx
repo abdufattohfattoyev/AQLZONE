@@ -29,7 +29,7 @@ import { Logo } from "../components/Logo";
 import { Icon } from "../lib/icons";
 
 import { COURSES, lessonCount } from "../lib/curriculum";
-import { OYINLAR } from "../lib/oyin";
+import { KORINADIGAN_OYINLAR as OYINLAR } from "../lib/oyin";
 import { blokBormi, sinfOf } from "../lib/blok";
 import { botHavolasi, botNomi } from "../lib/api";
 import { TILLAR, til, tilniAlmashtir } from "../lib/til";

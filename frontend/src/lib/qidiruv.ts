@@ -50,7 +50,7 @@ import { FORMULALAR } from "./formulalar";
 import type { IconName } from "./icons";
 import { MAVZULAR, kNom } from "./kichkintoy";
 import { t } from "./matn";
-import { OYINLAR } from "./oyin";
+import { KORINADIGAN_OYINLAR as OYINLAR } from "./oyin";
 import { kursMatn, sinfMatn } from "./tarjima/kurs";
 import { til } from "./til";
 import type { UnitColor } from "./types";

@@ -110,7 +110,7 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolIzdosh, yolQoidaOvi, yolStrelka, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolJadval, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
+  yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolIzdosh, yolQoidaOvi, yolStrelka, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolAi, yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant, yolQabul, yolQabulVariant, yolMantiq, yolMantiqMavzu,
   yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq,
@@ -871,10 +871,8 @@ function OyinlarSahifasi() {
       onMantiq={(o) => nav(o === "izdosh" ? yolIzdosh() : o === "qoida" ? yolQoidaOvi() : yolStrelka())}
       onShaharcha={() => nav(yolShaharcha())}
       onKarvon={() => nav(yolKarvon())}
-      onJadval={() => nav(yolJadval())}
       onDuel={() => nav(yolDuel())}
       onJamoa={(oyin) => nav(yolJamoa(oyin))}
-      onQidiruv={() => nav(yolQidiruv())}
     />
   );
 }

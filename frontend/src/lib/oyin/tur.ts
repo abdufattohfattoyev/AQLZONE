@@ -129,6 +129,11 @@ export interface Oyin {
   izoh: Kalit;
   /** "Qanday o'ynaladi" — daraja tanlash ekranida turadi. */
   qoida: Kalit;
+  /**
+   * Ro'yxatlarda (O'yin bo'limi, qidiruv, lending) ko'rinmaydi, lekin
+   * manzili ishlayveradi — eski havola va rekordlar buzilmasin.
+   */
+  yashirin?: boolean;
   /** Oqim o'yinining savol yasovchisi. Boshqa turlarda bo'lmaydi. */
   gen?: Generator;
   /**
