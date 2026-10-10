@@ -10812,3 +10812,91 @@ class XatoXabarTest(TestCase):
         self.assertEqual(r.status_code, 409)                   # Telegram'siz yoqib bo'lmaydi
         r = self.client.post("/api/v1/kun-savoli", {"yoqilgan": False}, content_type="application/json", **self.h)
         self.assertEqual(r.json(), {"yoqilgan": False})
+
+
+class DuelJonliKuchaytirishTest(DuelAdolatTaklifTest):
+    """
+    Jonli chaqiruvni kuchaytirish (2026-10-10): sinfdoshlar ham tanish,
+    taklif "ko'rildi" belgisi, "Telegram'da chaqirish", javobsiz chaqiruvga
+    bitta eslatma va ulashish kartasi.
+    """
+
+    def sinfga(self):
+        """A — ustoz, B — uning sinfida."""
+        pa, pb = self.profil(self.a), self.profil(self.b)
+        s = MDL.Sinf.objects.create(nom="7-A", kod="SNF7A", ustoz=pa.pupil)
+        MDL.SinfAzo.objects.create(sinf=s, profile=pb)
+        return pa, pb
+
+    def test_sinfdosh_tanish_va_jonli_taklif(self):
+        pa, pb = self.sinfga()
+        self.assertTrue(D.tanishmi(pa, pb))
+        self.assertTrue(D.tanishmi(pb, pa))
+        # Duel o'ynamagan sinfdosh ham ro'yxatda — "Sinfdosh" bo'lib.
+        dostlar = self.client.get("/api/v1/duel/dostlar", **self.b).json()["dostlar"]
+        self.assertEqual(dostlar[0]["profil"], pa.pk)
+        self.assertEqual(dostlar[0]["tur"], "sinf")
+        r = self.taklif(pb)
+        self.assertEqual(r.status_code, 201, r.content)
+
+    def test_boshqa_sinf_notanish(self):
+        pa, pb = self.profil(self.a), self.profil(self.b)
+        boshqa = MDL.Sinf.objects.create(nom="8-B", kod="SNF8B", ustoz=pa.pupil)
+        self.assertFalse(D.tanishmi(pb, pa))
+        MDL.SinfAzo.objects.create(sinf=boshqa, profile=pa)     # o'z sinfiga o'zi — tanish emas
+        self.assertFalse(D.tanishmi(pa, pb))
+
+    def test_taklif_korildi(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        kod = self.taklif(pb).json()["kod"]
+        holat = lambda: self.client.get(f"/api/v1/duel/{kod}/holat", **self.a).json()["taklif"]
+        self.assertFalse(holat()["korildi"])
+        self.client.get("/api/v1/duel/taklif", **self.b)
+        self.assertTrue(holat()["korildi"])
+
+    def test_telegramda_chaqirish_bir_marta(self):
+        self.tanishtir()
+        pb = self.profil(self.b)
+        kod = self.taklif(pb).json()["kod"]
+        with patch.object(D, "_tg_id", return_value="777"), patch.object(D, "fonda") as fonda:
+            r1 = self.post(f"/api/v1/duel/{kod}/botga", {}, self.a)
+            r2 = self.post(f"/api/v1/duel/{kod}/botga", {}, self.a)
+        self.assertEqual(r1.status_code, 200, r1.content)
+        self.assertFalse(r1.json()["avval"])
+        self.assertTrue(r2.json()["avval"])
+        self.assertIsNotNone(Duel.objects.get(kod=kod).xabar_at)
+        # Begona odam chaqira olmaydi.
+        self.assertEqual(self.post(f"/api/v1/duel/{kod}/botga", {}, self.b).status_code, 409)
+
+    def test_eslatma_bir_marta_va_kuniga_bitta(self):
+        pa, pb = self.profil(self.a), self.profil(self.b)
+        eski = timezone.now() - timedelta(hours=5)
+        d1 = D.yangi_duel(pa, kimga=pb)
+        d2 = D.yangi_duel(pa, kimga=pb)
+        Duel.objects.filter(pk__in=[d1.pk, d2.pk]).update(chaqirgan_tugatdi=True, created_at=eski)
+        with patch.object(D, "_tg_id", return_value="777"), \
+                patch("core.xabar.yubor", return_value=("yuborildi", "")) as yubor:
+            call_command("duel_eslatma", stdout=StringIO())
+            call_command("duel_eslatma", stdout=StringIO())
+        self.assertEqual(yubor.call_count, 1)
+        self.assertEqual(Duel.objects.filter(eslatma_at__isnull=False).count(), 1)
+
+    def test_yangi_chaqiruvga_eslatma_yoq(self):
+        pa, pb = self.profil(self.a), self.profil(self.b)
+        d = D.yangi_duel(pa, kimga=pb)
+        Duel.objects.filter(pk=d.pk).update(chaqirgan_tugatdi=True)
+        with patch.object(D, "_tg_id", return_value="777"), \
+                patch("core.xabar.yubor", return_value=("yuborildi", "")) as yubor:
+            call_command("duel_eslatma", stdout=StringIO())
+        yubor.assert_not_called()
+
+    def test_ulashish_kartasi(self):
+        kod = self.post("/api/v1/duel", {"oyin": "jadval"}, self.a).json()["kod"]
+        r = self.client.get(f"/api/v1/duel/{kod}/karta.jpg", HTTP_ACCEPT="image/*")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r["Content-Type"], "image/jpeg")
+        self.assertEqual(self.client.get("/api/v1/duel/YOQ999/karta.jpg").status_code, 404)
+        # Tayyor xabar faqat chaqirganga; sinovda bot yo'q — bo'sh id (mijoz havolaga qaytadi).
+        self.assertEqual(self.post(f"/api/v1/duel/{kod}/ulash", {}, self.a).json(), {"id": ""})
+        self.assertEqual(self.post(f"/api/v1/duel/{kod}/ulash", {}, self.b).status_code, 404)

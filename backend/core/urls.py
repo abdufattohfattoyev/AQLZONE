@@ -134,6 +134,10 @@ urlpatterns = [
     path("duel/<str:kod>/ball", views.duel_ball, name="duel-ball"),
     path("duel/<str:kod>/natija", views.duel_natija, name="duel-natija"),
     path("duel/<str:kod>/yana", views.duel_yana, name="duel-yana"),
+    # Telegram'da ulashish: karta rasmi, tayyor xabar, bot orqali chaqirish.
+    path("duel/<str:kod>/karta.jpg", views.duel_karta, name="duel-karta"),
+    path("duel/<str:kod>/ulash", views.duel_ulash, name="duel-ulash"),
+    path("duel/<str:kod>/botga", views.duel_botga, name="duel-botga"),
 
     # Foydalanuvchi masalalari. Harfli manzillar (`menikilar`)
     # `<int:pk>` dan oldin turishi shart emas — `int` ular bilan

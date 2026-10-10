@@ -2489,6 +2489,20 @@ const S = {
     "O'zingiz o'ynang — natijangiz unga chaqiruv bo'lib boradi",
     "Сыграйте сами — результат придёт ему вызовом",
   ],
+  /* Jonli taklifni kuchaytirish (2026-10-10): ko'rdi, Telegram'da chaqirish, sinfdosh. */
+  duelKorildi: ["{nom} taklifni ko'rdi…", "{nom} увидел приглашение…"],
+  duelKormadi: ["{nom} hali ko'rmadi", "{nom} ещё не увидел"],
+  duelBotgaChaqir: ["Telegram'da chaqirish", "Позвать в Telegram"],
+  duelBotgaIzoh: [
+    "{nom} hozir ilovada emas shekilli. Telegram'da chaqiring — xabar boradi va u keyin o'ynaydi.",
+    "{nom}, похоже, сейчас не в приложении. Позовите в Telegram — придёт сообщение, сыграет позже.",
+  ],
+  duelBotgaKetdi: [
+    "Chaqiruv {nom}ning Telegram'iga ketdi. O'zingiz o'ynab qo'ying — u keyin javob beradi.",
+    "Вызов ушёл в Telegram ({nom}). Сыграйте сами — ответит позже.",
+  ],
+  duelBotgaXato: ["Yuborilmadi — o'zingiz o'ynang, natija unga chaqiruv bo'lib boradi", "Не отправилось — сыграйте сами, результат придёт ему вызовом"],
+  duelSinfdosh: ["Sinfdosh", "Одноклассник"],
   duelTaklifKeldi: ["{nom} sizni bellashuvga chaqiryapti", "{nom} зовёт вас на дуэль"],
   duelTaklifIzoh: [
     "Har kim o'z darajasida yechadi. Ko'p ball to'plagan yutadi.",

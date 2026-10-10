@@ -1585,6 +1585,58 @@ def duel_taklif_javob(request, pk: int):
     return Response({"kod": d.kod, "qabul": qabul})
 
 
+def duel_karta(request, kod: str):
+    """
+    Chaqiruv kartasi (JPEG) — Telegram ulashilgan xabarga shu rasmni
+    o'zi yuklab oladi (`core/duel_ulash.py`). Ochiq: unda ball yo'q,
+    faqat kim chaqirgani va qaysi o'yin.
+    """
+    from django.http import HttpResponse
+
+    from . import duel_ulash as DU
+
+    # Oddiy Django view, DRF emas: Telegram rasmni `Accept: image/*` bilan
+    # so'raydi va DRF'ning kelishuvi unga 406 qaytarardi.
+    from django.http import Http404
+
+    d = Duel.objects.select_related("chaqirgan__pupil").filter(kod=kod).first()
+    if d is None:
+        raise Http404
+    javob = HttpResponse(DU.karta(d, d.chaqirgan.pupil.til or "uz"), content_type="image/jpeg")
+    javob["Cache-Control"] = "public, max-age=86400"
+    return javob
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_ulash(request, kod: str):
+    """
+    Telegram'da ulashish uchun tayyor xabar (`savePreparedInlineMessage`).
+    `{"id": "..."}` — mijoz `WebApp.shareMessage(id)` ni ochadi; bo'sh
+    bo'lsa oddiy `t.me/share/url` ga qaytadi.
+    """
+    from . import duel_ulash as DU
+
+    d = Duel.objects.select_related("chaqirgan__pupil").filter(kod=kod).first()
+    profil = _profil_tanla(request)
+    if d is None or d.chaqirgan_id != profil.pk:
+        return Response({"detail": "topilmadi"}, status=404)
+    return Response({"id": DU.tayyorla(d, profil)})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def duel_botga(request, kod: str):
+    """Jonli taklif javobsiz qoldi — o'sha duel do'stga bot xabari bo'lib boradi."""
+    d = Duel.objects.select_related("kimga__pupil", "qabul__pupil").filter(kod=kod).first()
+    if d is None:
+        return Response({"detail": "topilmadi"}, status=404)
+    ok, sabab = D.botga_chaqir(d, _profil_tanla(request))
+    if not ok:
+        return Response({"detail": sabab, "sabab": sabab}, status=409)
+    return Response({"yuborildi": True, "avval": sabab == "yuborilgan"})
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def duel_taklif_bekor(request):

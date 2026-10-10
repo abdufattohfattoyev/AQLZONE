@@ -80,6 +80,8 @@ interface TgWebApp {
   openLink?(url: string): void;
   openTelegramLink?(url: string): void;
   disableVerticalSwipes?(): void;
+  /** Server tayyorlagan xabarni do'stga ulashish oynasi (Bot API 8.0). */
+  shareMessage?(id: string, cb?: (yuborildi: boolean) => void): void;
   onEvent?(nom: string, cb: () => void): void;
   offEvent?(nom: string, cb: () => void): void;
 }
@@ -455,6 +457,22 @@ export function havolaniOch(url: string): void {
     }
   }
   window.open(url, "_blank", "noopener");
+}
+
+/**
+ * Server tayyorlagan xabarni Telegram'ning ulashish oynasida ochadi
+ * (`WebApp.shareMessage`, 8.0+). `false` — bu mijozda yo'q, chaqiruvchi
+ * oddiy havolaga (`t.me/share/url`) qaytadi.
+ */
+export function tgUlash(id: string): boolean {
+  const w = tgWebApp();
+  if (!id || !w?.shareMessage || !versiyaBor("8.0")) return false;
+  try {
+    w.shareMessage(id);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /* ---------------------------------------------------------- tebranish */

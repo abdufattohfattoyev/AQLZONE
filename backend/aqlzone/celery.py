@@ -212,6 +212,13 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=22, minute=0),
         "args": ("kun_savoli", "hisobot"),
     },
+    # Javobsiz duel chaqiruviga bitta eslatma — har soat, kunduzi
+    # (10:00–20:00): kechasi bolaga xabar yubormaymiz (`duel_eslatma`).
+    "duel-eslatma": {
+        "task": "core.vazifalar.buyruq",
+        "schedule": crontab(minute=40, hour="10-20"),
+        "args": ("duel_eslatma",),
+    },
     # Kanaldagi postlar joyidami — kuniga bir marta yetarli.
     "kanal-tekshiruvi": {
         "task": "core.vazifalar.buyruq",

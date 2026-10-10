@@ -514,6 +514,16 @@ XABAR: dict[str, dict[str, str]] = {
         ),
     },
     "tQabulQilish": {"uz": "⚔️ Qabul qilish", "ru": "⚔️ Принять"},
+    # Telegram'da ulashilgan chaqiruv kartasi ostidagi yozuv (`core/duel_ulash.py`).
+    "duelUlashIzoh": {
+        "uz": "⚔️ <b>{ism} seni bellashuvga chaqirdi!</b>\nBir xil savollar, har kim o'z darajasida. Kim yutadi?",
+        "ru": "⚔️ <b>{ism} вызывает тебя на дуэль!</b>\nОдни вопросы, у каждого свой уровень. Кто победит?",
+    },
+    # Javobsiz chaqiruvga bitta eslatma (`management/commands/duel_eslatma.py`).
+    "duelEslatma": {
+        "uz": "⏳ <b>{ism} hali javobingizni kutyapti!</b>\n\nChaqiruv bugun tugaydi — bir daqiqalik bellashuv.",
+        "ru": "⏳ <b>{ism} всё ещё ждёт твоего ответа!</b>\n\nВызов сегодня истекает — дуэль на минуту.",
+    },
     "duelDurang": {
         "uz": "🤝 <b>Durang!</b>\n\n{raqib} bilan {hisob} — teng chiqdingiz.",
         "ru": "🤝 <b>Ничья!</b>\n\n{raqib} — {hisob}, поровну.",

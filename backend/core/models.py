@@ -871,6 +871,12 @@ class Duel(models.Model):
 
     created_at = models.DateTimeField(default=timezone.now)
     tugadi_at = models.DateTimeField(null=True, blank=True)
+    #: Raqibga bot orqali chaqiruv xabari yuborilgan payt (`duel.chaqiruv_xabari`).
+    #: Bir duelga bitta xabar: "Telegram'da chaqirish" ikki marta bosilsa ham.
+    xabar_at = models.DateTimeField(null=True, blank=True, default=None)
+    #: Javobsiz chaqiruvga eslatma ketgan payt (`management/commands/duel_eslatma.py`).
+    #: Bir duelga bitta eslatma — undan ortig'i bezdiradi.
+    eslatma_at = models.DateTimeField(null=True, blank=True, default=None)
 
     #: Chaqiruv shuncha soatdan keyin kuchini yo'qotadi.
     MUDDAT_SOAT = 24
@@ -998,6 +1004,10 @@ class DuelTaklif(models.Model):
     holat = models.CharField(max_length=10, choices=HOLATLAR, default=KUTYAPTI)
     created_at = models.DateTimeField(default=timezone.now)
     javob_at = models.DateTimeField(null=True, blank=True)
+    #: Taklif do'stning EKRANIDA chiqqan payt — chaqirgan odamning lobbisida
+    #: "Aziz ko'rdi" yozuvi uchun. Ko'rmagan bo'lsa (ilova yopiq, boshqa
+    #: ekranda) — kutishning ma'nosi yo'q, Telegram'da chaqirish yaxshiroq.
+    korildi_at = models.DateTimeField(null=True, blank=True, default=None)
 
     class Meta:
         db_table = "duel_taklif"

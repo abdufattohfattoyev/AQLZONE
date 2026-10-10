@@ -39,7 +39,7 @@ import { avatarBelgi } from "../lib/dokon";
 import { EmojiBelgi, EmojiMatn } from "../lib/hajmli";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
-import { useOrqaga, havolaniOch, tebrat } from "../lib/qobiq";
+import { useOrqaga, havolaniOch, tebrat, tgUlash } from "../lib/qobiq";
 import { useTgHisob } from "../lib/tgHisob";
 import { Kirish } from "../components/Kirish";
 import { useProgress } from "../lib/progress";
@@ -51,8 +51,8 @@ import {
 import { duelDarajaTaklif } from "../lib/oyin/duelDaraja";
 import { tangaHisobi } from "../lib/oyin/rekord";
 import {
-  DuelXato, duelBall, duelBoshla, duelDostlar, duelHolat, duelKorish, duelNatija,
-  onlaynOyinchilar, duelQabul, duelTaklifBekor, duelTaklifYubor, duelTayyor, duelYana,
+  DuelXato, duelBall, duelBoshla, duelBotga, duelDostlar, duelHolat, duelKorish, duelNatija,
+  onlaynOyinchilar, duelQabul, duelTaklifBekor, duelTaklifYubor, duelTayyor, duelUlashId, duelYana,
 } from "../lib/api";
 import type {
   DuelDost, DuelHisob, DuelHolat, DuelJonli, DuelShart, DuelTaklifHolati, DuelYakun, OdamHolat,
@@ -65,6 +65,35 @@ import { UNIT_COLORS } from "../lib/types";
 
 /** Jonli holat necha millisekundda bir so'raladi. */
 const SOROV = 2000;
+
+/**
+ * Chaqiruvni Telegram'da ulashish (2026-10-10).
+ *
+ * Ilgari faqat `t.me/share/url` edi: do'stga matn va uzun havola borardi,
+ * tugma yo'q — 30 kunda havola bilan 35 chaqiruv, 0 qabul. Endi server
+ * tayyorlagan RASMLI KARTA "⚔️ Qabul qilish" tugmasi bilan ketadi
+ * (`WebApp.shareMessage`, `backend/core/duel_ulash.py`).
+ *
+ * Xabar id'si ekran ochilganda OLDINDAN olinadi: bosish va oyna orasida
+ * so'rov kutilmasin (ba'zi mijozlar foydalanuvchi bosmagan payt ochilgan
+ * oynani to'sadi). Eski mijozda yoki id kelmasa — oddiy havola.
+ */
+function useUlash(duel: DuelHolat): () => void {
+  const id = useRef("");
+  useEffect(() => {
+    let bekor = false;
+    void duelUlashId(duel.kod).then((x) => { if (!bekor) id.current = x; });
+    return () => { bekor = true; };
+  }, [duel.kod]);
+  return () => {
+    tebrat("tanlov");
+    if (tgUlash(id.current)) return;
+    havolaniOch(
+      `https://t.me/share/url?url=${encodeURIComponent(duel.havola)}` +
+      `&text=${encodeURIComponent(t("duelUlashMatn"))}`,
+    );
+  };
+}
 
 /**
  * Natija ekranida so'rov necha marta takrorlanadi (≈3 daqiqa).
@@ -510,6 +539,7 @@ function odamlarYig(dostlar: DuelDost[], onlayn: OnlaynOyinchi[]): Odam[] {
         : h.xavf ? t("duelZanjirXavf")
         : (d.onlayn && holatYozuv(d.holat, d.oyin))
           || (h.jami ? t("duelDostHisob", { men: h.men, raqib: h.raqib })
+            : d.tur === "sinf" ? t("duelSinfdosh")
             : d.onlayn ? t("duelHozir") : ""),
     });
   }
@@ -588,6 +618,7 @@ function DostlarRoyxat({ sarlavha, dostlar, onKod, onJonli, onChaqir, yuborilmoq
                   {h.xavf ? t("duelZanjirXavf")
                     : d.onlayn && holatYozuv(d.holat, d.oyin) ? holatYozuv(d.holat, d.oyin)
                     : h.jami ? t("duelDostHisob", { men: h.men, raqib: h.raqib })
+                    : d.tur === "sinf" ? t("duelSinfdosh")
                     : d.onlayn ? t("duelHozir") : ""}
                 </span>
               </span>
@@ -911,6 +942,7 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onBekor, onChiq }: {
   onChiq: () => void;
 }) {
   const oyin = oyinById(duel.oyin);
+  const ulash = useUlash(duel);
   const [holat, setHolat] = useState<DuelJonli | null>(null);
   const [tayyorlanmoqda, setTayyorlanmoqda] = useState(false);
   const boshlandiRef = useRef(false);
@@ -1072,10 +1104,7 @@ function Lobbi({ duel, menChaqirdim, onBoshla, onYolgiz, onBekor, onChiq }: {
         <div className="mt-6 text-left">
           <div className="ml-1 font-display text-[14px]">{t("duelQadam1")}</div>
           <div className="mt-0.5 ml-1 text-[12.5px] text-ink-soft">{t("duelQadam1Izoh")}</div>
-          <button type="button" onClick={() => havolaniOch(
-            `https://t.me/share/url?url=${encodeURIComponent(duel.havola)}` +
-            `&text=${encodeURIComponent(t("duelUlashMatn"))}`,
-          )}
+          <button type="button" onClick={ulash} data-tahlil="Duel: ulashish (lobbi)"
             className="tugma-3d az-yaltir mt-2 flex w-full items-center justify-center gap-2
                        rounded-3xl bg-brand-blue py-3.5 font-display text-[16px] text-white
                        shadow-[0_5px_0_var(--color-brand-blue-d)]">
@@ -1184,6 +1213,19 @@ function TaklifKutish({ duel, taklif, nom, onYolgiz, onBekor, onChiq }: {
   const tugadi = taklif.holat === "rad" || taklif.holat === "otdi" || taklif.holat === "bekor";
   const kutyapti = taklif.holat === "kutyapti" && qolgan > 0;
 
+  /**
+   * "Telegram'da chaqirish" (2026-10-10): jonli taklif faqat do'st ilovada
+   * turgan 15 soniyada ishlaydi. Javob bo'lmasa — o'sha duel uning
+   * Telegram'iga ketadi, u keyin o'ynaydi. Rad etgan odamga taklif qilinmaydi.
+   */
+  const [botga, setBotga] = useState<"" | "band" | "ketdi" | "xato">(taklif.botga ? "ketdi" : "");
+  const botgaYubor = () => {
+    tebrat("tanlov");
+    setBotga("band");
+    duelBotga(duel.kod).then(() => setBotga("ketdi")).catch(() => setBotga("xato"));
+  };
+  const javobsiz = !kutyapti && taklif.holat !== "qabul" && taklif.holat !== "rad";
+
   return (
     <div className="mx-auto flex min-h-ekran w-full max-w-[430px] flex-col px-4 pt-10
                     text-center sm:max-w-[520px]">
@@ -1219,13 +1261,31 @@ function TaklifKutish({ duel, taklif, nom, onYolgiz, onBekor, onChiq }: {
               <div className="h-full rounded-full bg-brand-green transition-[width] duration-1000 ease-linear"
                 style={{ width: `${Math.min(100, (qolgan / 15) * 100)}%` }} />
             </div>
+            {/* Do'st ko'rdimi — kutish ma'noli yoki yo'qligini shu aytadi. Eski
+                server maydonni bermasa, hech narsa yozilmaydi. */}
+            {taklif.korildi !== undefined && (
+              <p className={`mx-auto mt-3 flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] ${
+                taklif.korildi ? "bg-brand-green/15 text-brand-green-d" : "bg-track text-ink-dim"}`}>
+                {taklif.korildi && <Icon name="check" size={14} />}
+                {taklif.korildi ? t("duelKorildi", { nom }) : t("duelKormadi", { nom })}
+              </p>
+            )}
           </>
         )}
 
-        {(tugadi || (!kutyapti && taklif.holat !== "qabul")) && (
-          <p className="mx-auto mt-4 max-w-[320px] text-[13px] leading-snug text-ink-dim">
-            {t("duelTaklifYolgiz")}
+        {botga === "ketdi" ? (
+          <p role="status" className="mx-auto mt-4 flex max-w-[330px] items-start gap-2 rounded-clay bg-brand-green/15
+                                      px-3.5 py-3 text-left text-[13px] leading-snug text-brand-green-d">
+            <Icon name="check" size={16} className="mt-0.5 shrink-0" />
+            {t("duelBotgaKetdi", { nom })}
           </p>
+        ) : (tugadi || (!kutyapti && taklif.holat !== "qabul")) && (
+          <p className="mx-auto mt-4 max-w-[320px] text-[13px] leading-snug text-ink-dim">
+            {javobsiz ? t("duelBotgaIzoh", { nom }) : t("duelTaklifYolgiz")}
+          </p>
+        )}
+        {botga === "xato" && (
+          <p className="mt-2 text-[12.5px] text-ink-dim">{t("duelBotgaXato")}</p>
         )}
       </div>
 
@@ -1246,9 +1306,23 @@ function TaklifKutish({ duel, taklif, nom, onYolgiz, onBekor, onChiq }: {
           </>
         ) : taklif.holat !== "qabul" && (
           <>
+            {/* Javobsiz qolgan bo'lsa birinchi taklif — Telegram'da chaqirish
+                (bitta asosiy tugma). Yuborilgach — o'zim o'ynayman asosiy. */}
+            {javobsiz && botga !== "ketdi" && (
+              <button type="button" onClick={botgaYubor} disabled={botga === "band"}
+                data-tahlil="Duel taklif: Telegram'da chaqirish"
+                className="tugma-3d az-yaltir mb-2 flex w-full items-center justify-center gap-2 rounded-3xl
+                           bg-brand-blue py-4 font-display text-[17px] text-white
+                           shadow-[0_6px_0_var(--color-brand-blue-d)] disabled:opacity-60">
+                <Icon name="send" size={18} />
+                {botga === "band" ? "…" : t("duelBotgaChaqir")}
+              </button>
+            )}
             <button type="button" onClick={onYolgiz} data-tahlil="Duel taklif: o'zim o'ynayman"
-              className="tugma-3d az-yaltir w-full rounded-3xl bg-brand-green py-4 font-display
-                         text-[17px] text-white shadow-[0_6px_0_var(--color-brand-green-d)]">
+              className={javobsiz && botga !== "ketdi"
+                ? "clay-press h-12 w-full rounded-3xl bg-karta font-display text-[15px] text-ink-soft shadow-clay-sm"
+                : `tugma-3d az-yaltir w-full rounded-3xl bg-brand-green py-4 font-display
+                   text-[17px] text-white shadow-[0_6px_0_var(--color-brand-green-d)]`}>
               {t("duelOzimOynayman")}
             </button>
             <button type="button" onClick={onBekor ?? onChiq} data-tahlil="Duel taklif: boshqa odam"
@@ -1448,6 +1522,7 @@ function Bellashuv({ duel, jonli, menChaqirdim, onChiq, onHavola, onYakun }: {
 
 function HavolaEkrani({ duel, onChiq }: { duel: DuelHolat; onChiq: () => void }) {
   const [nusxalandi, setNusxalandi] = useState(false);
+  const ulash = useUlash(duel);
 
   return (
     <div className="mx-auto w-full max-w-[430px] px-4 pt-10 pb-10 text-center sm:max-w-[560px]">
@@ -1467,10 +1542,7 @@ function HavolaEkrani({ duel, onChiq }: { duel: DuelHolat; onChiq: () => void })
         {duel.havola || "—"}
       </div>
 
-      <button type="button" onClick={() => havolaniOch(
-        `https://t.me/share/url?url=${encodeURIComponent(duel.havola)}` +
-        `&text=${encodeURIComponent(t("duelUlashMatn"))}`,
-      )}
+      <button type="button" onClick={ulash} data-tahlil="Duel: ulashish (havola)"
         className="tugma-3d az-yaltir mt-4 flex w-full items-center justify-center gap-2 rounded-3xl
                    bg-brand-blue py-3.5 font-display text-[16px] text-white
                    shadow-[0_5px_0_var(--color-brand-blue-d)]">

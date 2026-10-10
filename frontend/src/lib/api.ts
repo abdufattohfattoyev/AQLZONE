@@ -972,6 +972,10 @@ export type DuelDaraja = 1 | 2 | 3;
 export interface DuelTaklifHolati {
   holat: "kutyapti" | "qabul" | "rad" | "otdi" | "bekor";
   qolgan: number;
+  /** Do'st taklifni ekranida ko'rdimi (eski serverda yo'q). */
+  korildi?: boolean;
+  /** Bot orqali ham chaqirilganmi ("Telegram'da chaqirish"). */
+  botga?: boolean;
 }
 
 export interface DuelHolat {
@@ -1282,6 +1286,8 @@ export interface DuelDost {
   kod: string;
   /** Hozir jonli taklif yuborsa bo'ladimi (tanish, onlayn, chegaradan o'tadi). */
   jonli: boolean;
+  /** `sinf` — duel o'ynamagan sinfdosh (2026-10-10 dan jonli taklif ularga ham). */
+  tur?: "duel" | "sinf";
 }
 
 async function duelGet<T>(url: string): Promise<T | null> {
@@ -1347,6 +1353,17 @@ export const duelTaklifJavob = (
 /** Chaqirgan odam jonli taklifni bekor qiladi — do'stidagi oyna yopiladi. */
 export const duelTaklifBekor = (kod: string): Promise<{ bekor: boolean }> =>
   duelPost("/api/v1/duel/taklif/bekor", { kod });
+
+/**
+ * Telegram'da ulashish uchun tayyor xabar id'si (`backend/core/duel_ulash.py`).
+ * Bo'sh satr — server yasay olmadi, mijoz oddiy havolaga qaytadi.
+ */
+export const duelUlashId = (kod: string): Promise<string> =>
+  duelPost<{ id: string }>(`/api/v1/duel/${kod}/ulash`).then((j) => j.id || "").catch(() => "");
+
+/** Jonli taklif javobsiz qoldi — o'sha duelni do'stga bot xabari bilan yuborish. */
+export const duelBotga = (kod: string): Promise<{ yuborildi: boolean; avval: boolean }> =>
+  duelPost(`/api/v1/duel/${kod}/botga`);
 
 /* ================= JAMOAVIY O'YINLAR — xonalar ================= */
 

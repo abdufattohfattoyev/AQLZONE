@@ -279,7 +279,33 @@ def chaqiruv_xabari(duel: Duel, raqib: Profile) -> bool:
     # qayta ishga tushganda jimgina yo'qolardi va chaqiruv hech
     # qayerga yetib bormasdi — chaqirgan odam esa kutib turardi.
     fonda(telegram_xabar, tg_id, matn, tugma=M("tQabulQilish", til), havola=havola)
+    Duel.objects.filter(pk=duel.pk).update(xabar_at=timezone.now())
+    duel.xabar_at = timezone.now()
     return True
+
+
+def botga_chaqir(duel: Duel, profil: Profile) -> tuple[bool, str]:
+    """
+    "Telegram'da chaqirish" — jonli taklif javobsiz qolganda (2026-10-10).
+
+    Jonli taklif faqat do'st ilovada turgan 15 soniyada ishlaydi. U
+    ko'rmay qolsa, chaqiruv yo'qolmasin: o'sha duel uning Telegram'iga
+    xabar bo'lib boradi va u keyin, o'z vaqtida o'ynaydi. Bir duelga
+    bitta xabar (`xabar_at`) — ikki marta bosish ikki xabar emas.
+    """
+    if duel.chaqirgan_id != profil.pk:
+        return False, "begona"
+    raqib = duel.kimga or duel.qabul
+    if raqib is None:
+        return False, "raqib_yoq"
+    if duel.xabar_at is not None:
+        return True, "yuborilgan"
+    if duel.qabul_tugatdi or duel.muddati_otdimi:
+        return False, "eskirgan"
+    if not chaqiruv_xabari(duel, raqib):
+        return False, "telegram_yoq"
+    Duel.objects.filter(pk=duel.pk).update(xabar_at=timezone.now())
+    return True, ""
 
 
 def natija_xabari(duel: Duel) -> None:
@@ -733,6 +759,31 @@ def _onlaynmi(profil: Profile) -> bool:
     return profil.pupil.sessions.filter(last_seen__gte=chegara).exists()
 
 
+def sinfdosh_idlari(men: Profile) -> set[int]:
+    """
+    Men bilan BIR SINFDA turgan profillar (`Sinf`, `SinfAzo`) — ustoz ham.
+
+    Sinfga faqat ustoz bergan kod bilan qo'shiladi, ya'ni ular bir-birini
+    taniydi: bitta sinfda o'qiydi va ustoz ularni biladi. Jonli taklif
+    doirasi 2026-10-10 dan shular bilan kengaydi — ilgari faqat oldin
+    duel o'ynaganlar edi va bunday juftlik butun ilovada 6 ta edi.
+    """
+    from .models import Sinf, SinfAzo
+
+    sinflar = set(SinfAzo.objects.filter(profile=men).values_list("sinf_id", flat=True))
+    sinflar |= set(Sinf.objects.filter(ustoz_id=men.pupil_id).values_list("pk", flat=True))
+    if not sinflar:
+        return set()
+    ids = set(SinfAzo.objects.filter(sinf_id__in=sinflar).values_list("profile_id", flat=True))
+    for ustoz in set(Sinf.objects.filter(pk__in=sinflar).values_list("ustoz_id", flat=True)):
+        p = Profile.objects.filter(pupil_id=ustoz).order_by("created_at", "pk").values_list("pk", flat=True).first()
+        if p:
+            ids.add(p)
+    # O'z hisobidagi profillar chiqarib tashlanadi: ular bitta telefonda.
+    ids -= set(Profile.objects.filter(pupil_id=men.pupil_id).values_list("pk", flat=True))
+    return ids
+
+
 def tanishmi(a: Profile, b: Profile) -> bool:
     """
     Ikki o'yinchi TANISHmi — ya'ni bir-biri bilan duel o'ynaganmi.
@@ -745,9 +796,10 @@ def tanishmi(a: Profile, b: Profile) -> bool:
     """
     if a.pk == b.pk:
         return False
-    return Duel.objects.filter(
-        Q(chaqirgan=a, qabul=b) | Q(chaqirgan=b, qabul=a),
-    ).exists()
+    if Duel.objects.filter(Q(chaqirgan=a, qabul=b) | Q(chaqirgan=b, qabul=a)).exists():
+        return True
+    # Bir sinfdagilar ham tanish (2026-10-10) — `sinfdosh_idlari`.
+    return b.pk in sinfdosh_idlari(a)
 
 
 def _ochiq_chaqiruv(chaqirgan: Profile, raqib: Profile) -> Duel | None:
@@ -836,6 +888,15 @@ def dostlar(men: Profile) -> list[dict]:
         if len(sheriklar) >= MAX_DOST:
             break
 
+    # Sinfdoshlar — duel o'ynamagan bo'lsa ham ro'yxatda (jonli taklif
+    # ularga ham boradi). Duel tarixidagilar ustun, joy qolsa qo'shiladi.
+    turi = {pk: "duel" for pk in sheriklar}
+    if len(sheriklar) < MAX_DOST:
+        qolgan = [i for i in sinfdosh_idlari(men) if i not in sheriklar]
+        for p in Profile.objects.select_related("pupil").filter(pk__in=qolgan)[:MAX_DOST - len(sheriklar)]:
+            sheriklar[p.pk] = (p, p.created_at)
+            turi[p.pk] = "sinf"
+
     from .onlayn import BOSH, YOQ, holat_xaritasi
     holatlar = holat_xaritasi([s.pupil_id for s, _ in sheriklar.values()])
 
@@ -860,6 +921,8 @@ def dostlar(men: Profile) -> list[dict]:
             "navbat": "men" if menga else "u" if unga else "",
             "kod": ochiq.kod if ochiq else "",
             "jonli": mumkin,
+            # "sinf" — duel o'ynamagan sinfdosh (ro'yxatda "Sinfdosh" yozuvi).
+            "tur": turi.get(sherik.pk, "duel"),
             "oxirgi": oxirgi,
         })
 
@@ -976,6 +1039,9 @@ def kelgan_taklif(profil: Profile) -> DuelTaklif | None:
     t = _faol_taklif(profil)
     if t is None or not t.duel.belgisi_yangimi(chaqirgan=True):
         return None
+    if t.korildi_at is None:
+        # Shu so'rov — oyna do'stning ekranida chiqqan payt.
+        DuelTaklif.objects.filter(pk=t.pk, korildi_at__isnull=True).update(korildi_at=timezone.now())
     return t
 
 
@@ -987,7 +1053,14 @@ def taklif_holati(duel: Duel) -> dict | None:
     holat = t.holat
     if holat == DuelTaklif.KUTYAPTI and t.muddati_otdimi:
         holat = "otdi"
-    return {"holat": holat, "qolgan": t.qolgan_soniya}
+    return {
+        "holat": holat,
+        "qolgan": t.qolgan_soniya,
+        # Do'st ekranida ko'rdimi — "Aziz ko'rdi…" yoki "hali ko'rmadi".
+        "korildi": t.korildi_at is not None,
+        # Bot orqali ham chaqirilganmi ("Telegram'da chaqirish").
+        "botga": duel.xabar_at is not None,
+    }
 
 
 @transaction.atomic
