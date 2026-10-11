@@ -22,8 +22,8 @@ jobs:
       # Sinov uchun ishlab chiqish rejimi: SECRET_KEY talab qilinmaydi.
       DEBUG: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           # Serverdagi obraz bilan bir xil (`Dockerfile`).
           python-version: "3.13"
@@ -41,8 +41,8 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           # Serverdagi obraz bilan bir xil (`Dockerfile`).
           node-version: "22"
