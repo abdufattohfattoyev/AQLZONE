@@ -42,6 +42,7 @@ import base64
 import hashlib
 import html
 import logging
+import re
 import uuid
 from datetime import datetime, time, timedelta
 from pathlib import Path
@@ -250,10 +251,56 @@ qilib matematikaga qaytar.
 - Oddiy matn yoz: LaTeX, jadval va Markdown sarlavhalari ISHLATMA — javob \
 telefonda oddiy matn bo'lib ko'rinadi. Formulalarni x², √(x+1), (a+b)/2, \
 ≤, ≥, π kabi yoz. Qadamlarni "1)", "2)" bilan raqamla.
-- Qisqa va aniq yoz; har qadamda NEGA shunday qilinganini bir gap bilan ayt.
+- Har qadamda NEGA shunday qilinganini bir gap bilan ayt. Uzun suv yozma, \
+lekin tushunish uchun kerak bo'lgan qadamni tashlab ketma.
 - Hisobni tekshir. Ishonching komil bo'lmasa, buni ochiq ayt — taxminni \
 haqiqat qilib ko'rsatma.
-- Mehribon bo'l, lekin ortiqcha maqtama."""
+- Mehribon bo'l, lekin ortiqcha maqtama.
+
+Chuqur o'rgatish tartibi (yechim yoki tushuntirishda):
+1) G'oya — masalaning "kaliti" bir-ikki gapda: qaysi qoida yoki formula va nega aynan u.
+2) Chizma — grafik, geometrik shakl yoki son o'qi tushunishga yordam bersa, \
+albatta chiz (pastdagi qoida bo'yicha).
+3) Qadamlar — "1)", "2)" bilan; har birida nima qilindi va nega.
+4) Tekshirish — javobni boshqa yo'l yoki o'rniga qo'yish bilan bir qatorda tekshir.
+5) Tuzoq — shu turdagi savollarda o'quvchilar ko'p qiladigan xato.
+6) O'zingiz sinab ko'ring — bitta o'xshash, sonlari boshqa savol; javobini \
+YOZMA. O'quvchi javob yozsa — tekshir va xato bo'lsa qayerda adashganini ko'rsat."""
+
+#: Chizma tili. Ilova (`components/AiChizma.tsx`) blokni o'qib aniq SVG
+#: chizadi: model rasm "yasamaydi", faqat koordinatalarni aytadi — shuning
+#: uchun chizma hisob bilan bir xil to'g'ri bo'ladi. `.format` dan
+#: tashqarida qo'shiladi, JSON qavslarini qochirish shart emas.
+CHIZMA = """
+Chizma qoidasi. Chizma kerak bo'lsa, javob ichida alohida qatorlarda shunday blok yoz:
+```chizma
+{ ...JSON... }
+```
+Blok ichida FAQAT bitta to'g'ri JSON, izohsiz. Bitta javobda ko'pi bilan 2 ta chizma. \
+Har chizmadan keyin unda nimaga qarash kerakligini bir gap bilan ayt. Uch tur bor:
+
+1) Funksiya grafigi:
+{"tur":"grafik","x":[-5,5],"y":[-5,5],
+ "funksiyalar":[{"f":"x^2-4","nom":"y = x² − 4"}],
+ "nuqtalar":[{"x":2,"y":0,"nom":"(2; 0)"}]}
+"f" — x ga bog'liq ifoda: + - * / ^, sin cos tan sqrt abs ln log (10 asosli), pi, e; \
+ko'paytirishni * bilan yoz. x va y oraliqlarini muhim nuqtalar ko'rinadigan qilib tanla.
+
+2) Geometrik shakl (koordinatalar o'zing tanlagan, shakl haqiqiy nisbatda bo'lsin):
+{"tur":"geometriya",
+ "nuqtalar":{"A":[0,0],"B":[4,0],"C":[0,3],"H":[1.44,1.92]},
+ "kesmalar":["AB","BC","CA",{"k":"AH","shtrix":true}],
+ "yorliqlar":[{"kesma":"AB","matn":"4"},{"kesma":"CA","matn":"3"}],
+ "burchaklar":[{"uch":"A","a":"B","b":"C","togri":true},{"uch":"B","a":"A","b":"C","matn":"α"}],
+ "aylanalar":[{"markaz":[2,1.5],"r":2.5}]}
+Burchak "uch" nuqtada, "a" va "b" tomonlar orasida; "togri":true — to'g'ri burchak belgisi.
+
+3) Son o'qi (tengsizlik va oraliqlar):
+{"tur":"sonOqi","oraliqlar":[{"dan":-2,"gacha":3,"dan_yopiq":true,"gacha_yopiq":false}],
+ "nuqtalar":[{"x":5,"yopiq":true}]}
+Cheksiz uchi — null: {"dan":null,"gacha":1,"gacha_yopiq":true}.
+
+Chizma faqat tushunishga yordam bersa chiziladi; oddiy arifmetikada kerak emas."""
 
 TUR_KORSATMA = {
     AiSuhbat.XATO: """Vazifa: o'quvchi imtihonda shu savolda xato qildi (yoki javob bermadi).
@@ -286,7 +333,9 @@ TIL_NOMI = {"uz": "o'zbek (lotin yozuvida)", "ru": "rus"}
 
 
 def tizim_korsatmasi(tur: str, til: str) -> str:
-    return UMUMIY.format(til_nomi=TIL_NOMI.get(til, TIL_NOMI["uz"])) + "\n\n" + TUR_KORSATMA[tur]
+    # Reja — jadval kabi matn, chizma kerak emas (va tokenlar tejaladi).
+    chizma = "" if tur == AiSuhbat.REJA else CHIZMA
+    return UMUMIY.format(til_nomi=TIL_NOMI.get(til, TIL_NOMI["uz"])) + chizma + "\n\n" + TUR_KORSATMA[tur]
 
 
 # ------------------------------------------------------------ rasm
@@ -502,6 +551,9 @@ def javob_yoz(xabar_id: int) -> str:
     return AiXabar.TAYYOR
 
 
+#: Javobdagi chizma bloki (`CHIZMA` ko'rsatmasi) — botda ishora bilan almashadi.
+CHIZMA_BLOK = re.compile(r"```chizma\s*[\s\S]*?```")
+
 #: Telegram xabari 4096 belgigacha; HTML qochirishdan keyin ham sig'sin.
 BOT_BOLAK = 3500
 
@@ -538,6 +590,8 @@ def _botga(pupil: Pupil, matn: str | None) -> None:
     if matn is None:
         X.yubor(chat, M("aiXato", pupil.til or "uz"))
         return
+    # Telegram chizmani chiza olmaydi — xom JSON o'rniga qisqa ishora.
+    matn = CHIZMA_BLOK.sub(M("aiChizmaBotda", pupil.til or "uz"), matn)
     for bolak in bolaklarga(matn):
         X.yubor(chat, html.escape(bolak))
 

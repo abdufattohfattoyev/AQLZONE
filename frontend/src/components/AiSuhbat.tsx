@@ -13,6 +13,7 @@
  *
  * Javob oddiy matn (`whitespace-pre-wrap`): server modelga LaTeX va
  * Markdown ishlatmaslikni aytadi, formulalar x², √x ko'rinishida keladi.
+ * Ichidagi ```chizma bloklari esa rasm bo'lib chiziladi (`AiChizma.tsx`).
  */
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,9 @@ import { aiBoshla, aiDavom, aiQayta, aiXatoMatni, useSuhbat } from "../lib/ai";
 import type { AiSuhbat, AiXatoKod, XatoSavol } from "../lib/ai";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
+import type { Kalit } from "../lib/matn";
+import { bolakla } from "../lib/aiChizma";
+import { AiChizma } from "./AiChizma";
 import { tebrat } from "../lib/qobiq";
 import { yolPremium } from "../lib/yollar";
 
@@ -60,15 +64,16 @@ export function AiChat({ id, boshlangich }: { id: number; boshlangich?: AiSuhbat
   if (topilmadi) return <p className="p-4 text-center text-[14.5px] text-ink-dim">{t("aiJavobXato")}</p>;
   if (!s) return <p className="p-4 text-center text-[14.5px] text-ink-dim">{t("yuklanyapti")}</p>;
 
-  const yubor = async () => {
-    const m = matn.trim();
+  const yubor = async (tayyor?: string) => {
+    const m = (tayyor ?? matn).trim();
     if (!m || band || kutilmoqda) return;
     setBand(true);
     setXato(null);
     const r = await aiDavom(s.id, m);
     setBand(false);
-    if (r.ok) { setMatn(""); yangila(r.qiymat); tebrat("tanlov"); } else setXato(r.kod);
+    if (r.ok) { if (tayyor === undefined) setMatn(""); yangila(r.qiymat); tebrat("tanlov"); } else setXato(r.kod);
   };
+  const oxirgiAi = [...s.xabarlar].reverse().find((x) => x.rol === "ai");
   const qayta = async () => {
     setXato(null);
     const r = await aiQayta(s.id);
@@ -124,10 +129,27 @@ export function AiChat({ id, boshlangich }: { id: number; boshlangich?: AiSuhbat
           return (
             <div key={x.id} className="mr-4 self-start rounded-[18px] rounded-bl-md bg-karta px-3.5 py-3
                                        text-[15px] leading-relaxed shadow-clay-sm">
-              <p className="whitespace-pre-wrap break-words">{x.matn}</p>
+              {bolakla(x.matn).map((b, i) => (b.tur === "chizma"
+                ? <AiChizma key={i} c={b.c} />
+                : <p key={i} className="whitespace-pre-wrap break-words">{b.matn}</p>))}
             </div>
           );
         })}
+        {/* Tez javoblar — faqat oxirgi javob tayyor bo'lsa. "Tushunmadim"
+            deb yozish qiyin: odam nimani so'rashni bilmaydi. Uchta tugma
+            ustozning eng ko'p kerak bo'ladigan uchta yo'lini beradi. */}
+        {oxirgiAi?.holat === "tayyor" && s.tur !== "reja" && (
+          <div className="flex flex-wrap gap-2">
+            {(["aiTezSodda", "aiTezChizma", "aiTezMisol"] as const).map((k) => (
+              <button key={k} type="button" disabled={band || kutilmoqda}
+                onClick={() => yubor(t(`${k}Matn` as Kalit))} data-tahlil={`AI: ${k}`}
+                className="clay-press min-h-11 rounded-xl bg-sahna px-3.5 text-[13.5px] font-bold text-ink-soft
+                           shadow-ichki disabled:opacity-50">
+                {t(k)}
+              </button>
+            ))}
+          </div>
+        )}
         <div ref={oxiri} />
       </div>
 
@@ -142,7 +164,7 @@ export function AiChat({ id, boshlangich }: { id: number; boshlangich?: AiSuhbat
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); yubor(); } }}
           className="max-h-32 min-h-12 flex-1 resize-none rounded-2xl bg-karta px-3.5 py-3 text-[15px]
                      shadow-clay-sm outline-none focus:outline-2 focus:outline-brand-blue" />
-        <button type="button" onClick={yubor} disabled={!matn.trim() || band || kutilmoqda}
+        <button type="button" onClick={() => yubor()} disabled={!matn.trim() || band || kutilmoqda}
           aria-label={t("aiYuborish")} title={t("aiYuborish")} data-tahlil="AI: yuborish"
           className="clay-press grid size-12 shrink-0 place-items-center rounded-2xl bg-brand-blue text-white
                      disabled:opacity-45">

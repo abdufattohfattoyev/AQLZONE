@@ -931,6 +931,8 @@ XABAR: dict[str, dict[str, str]] = {
                "ru": "⏳ Ответ на прошлый вопрос ещё пишется — подождите немного."},
     "aiXato": {"uz": "Javob olib bo'lmadi. Savolni qayta yuboring.",
                "ru": "Не удалось получить ответ. Отправьте вопрос ещё раз."},
+    "aiChizmaBotda": {"uz": "[Chizma — ilovada ochib ko'ring]",
+                      "ru": "[Чертёж — откройте в приложении]"},
     "aiRasmXato": {"uz": "Rasmni o'qib bo'lmadi — boshqa rasm yuboring.",
                    "ru": "Не удалось прочитать фото — пришлите другое."},
     "aiChiqdi": {"uz": "AI ustoz o'chdi. Qaytish uchun: /ai",

@@ -2933,6 +2933,21 @@ const S = {
   aiJavobXato: ["Javob olib bo'lmadi.", "Не удалось получить ответ."],
   aiTushuntir: ["AI tushuntirsin", "Объяснить с AI"],
   aiEslatma: ["AI ham adashishi mumkin — muhim joyini tekshiring.", "AI тоже ошибается — проверяйте важное."],
+  aiTezSodda: ["Soddaroq", "Проще"],
+  aiTezSoddaMatn: [
+    "Tushunmadim. Soddaroq, kundalik misol bilan qaytadan tushuntiring.",
+    "Не понял. Объясните проще, на бытовом примере.",
+  ],
+  aiTezChizma: ["Chizmada ko'rsat", "Покажи на чертеже"],
+  aiTezChizmaMatn: [
+    "Shuni chizma (grafik, shakl yoki son o'qi) bilan ko'rsatib tushuntiring.",
+    "Покажите это на чертеже (график, фигура или числовая прямая).",
+  ],
+  aiTezMisol: ["O'xshash misol", "Похожий пример"],
+  aiTezMisolMatn: [
+    "Menga shunga o'xshash bitta misol bering, javobini aytmang — o'zim yechaman.",
+    "Дайте похожий пример без ответа — решу сам.",
+  ],
   aiPremiumSarlavha: ["AI ustoz — Premium'da", "AI-репетитор — в Premium"],
   aiPremiumIzoh: [
     "Imtihondagi har bir xatoingizni qadam-baqadam tushuntiradi, masalani yechishga yordam beradi va zaif mavzularingiz bo'yicha reja tuzadi.",

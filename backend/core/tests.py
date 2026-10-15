@@ -10772,6 +10772,28 @@ class AiUstozTest(TestCase):
         self.assertEqual("\n".join(bolaklar), matn)
         self.assertEqual(AI.bolaklarga("y" * 1200, 500), ["y" * 500, "y" * 500, "y" * 200])
 
+    def test_chizma_korsatmasi(self):
+        """Yechimda chizma qoidasi bor, rejada yo'q (tokenlar tejaladi)."""
+        from . import ai as AI
+
+        self.assertIn("```chizma", AI.tizim_korsatmasi(AiSuhbat.XATO, "uz"))
+        self.assertIn("```chizma", AI.tizim_korsatmasi(AiSuhbat.MASALA, "ru"))
+        self.assertNotIn("```chizma", AI.tizim_korsatmasi(AiSuhbat.REJA, "uz"))
+
+    def test_chizma_botda_ishora(self):
+        """Telegram chizma chiza olmaydi — xom JSON o'rniga qisqa ishora ketadi."""
+        from . import ai as AI
+
+        p = Pupil.objects.create(first_name="Aziza", til="uz")
+        matn = 'G\'oya.\n```chizma\n{"tur":"grafik","x":[-1,1]}\n```\nQadamlar.'
+        with patch("core.premium.tg_id", return_value="5151"), \
+             patch("core.xabar.yubor") as yub:
+            AI._botga(p, matn)
+        yuborilgan = yub.call_args.args[1]
+        self.assertNotIn('"tur"', yuborilgan)
+        self.assertIn("Chizma", yuborilgan)
+        self.assertIn("Qadamlar.", yuborilgan)
+
     # --- bot ---
 
     def tg(self, tg: str = "5151", premium: bool = True) -> Pupil:
