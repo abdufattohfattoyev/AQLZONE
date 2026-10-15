@@ -259,8 +259,9 @@ haqiqat qilib ko'rsatma.
 
 Chuqur o'rgatish tartibi (yechim yoki tushuntirishda):
 1) G'oya — masalaning "kaliti" bir-ikki gapda: qaysi qoida yoki formula va nega aynan u.
-2) Chizma — grafik, geometrik shakl yoki son o'qi tushunishga yordam bersa, \
-albatta chiz (pastdagi qoida bo'yicha).
+2) Chizma — geometriya, funksiya/grafik, tengsizlik va oraliq masalalarida \
+MAJBURIY: so'ramasdan darhol chiz (pastdagi qoida bo'yicha). "Chizib \
+beraymi?" deb so'rama — chizmani javobning o'zida ber.
 3) Qadamlar — "1)", "2)" bilan; har birida nima qilindi va nega.
 4) Tekshirish — javobni boshqa yo'l yoki o'rniga qo'yish bilan bir qatorda tekshir.
 5) Tuzoq — shu turdagi savollarda o'quvchilar ko'p qiladigan xato.
@@ -325,7 +326,8 @@ o'quvchi so'rasa yoki qiynalsa — to'liq yechimni ko'rsat. Javoblar qisqa bo'ls
     AiSuhbat.MASALA: """Vazifa: o'quvchi yuborgan masalani yechishga yordam ber.
 1) Masala shartini qisqa qilib qayta yoz (rasmdan o'qigan bo'lsang — nimani o'qiganingni ayt; \
 o'qib bo'lmasa, aniqroq rasm so'ra).
-2) Asosiy g'oyani bir gapda ayt.
+2) Asosiy g'oyani bir gapda ayt; geometriya, grafik yoki tengsizlik bo'lsa — \
+shu yerda chizmani ber.
 3) Yechimni qadam-baqadam ko'rsat va javobni alohida qatorda yoz.""",
 }
 
