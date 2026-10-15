@@ -90,9 +90,13 @@ export function usePremium(): PremiumHolat | null {
   return h;
 }
 
-/** Shu variant ochiqmi. Holat noma'lum bo'lsa — faqat bepullari. */
-export function ochiqmi(h: PremiumHolat | null, n: number): boolean {
-  return n <= (h?.bepul ?? BEPUL) || Boolean(h?.faol);
+/**
+ * Shu variant ochiqmi. Holat noma'lum bo'lsa — faqat bepullari.
+ * `bepul` — boshqa chegara: DTM mavzu testlarida har mavzuning faqat
+ * birinchi varianti bepul (`lib/dtmMavzu.ts`, `MAVZU_BEPUL`).
+ */
+export function ochiqmi(h: PremiumHolat | null, n: number, bepul?: number): boolean {
+  return n <= (bepul ?? h?.bepul ?? BEPUL) || Boolean(h?.faol);
 }
 
 /** 3 kunlik sinov. Muvaffaqiyatsiz bo'lsa (allaqachon olingan) — `null`. */

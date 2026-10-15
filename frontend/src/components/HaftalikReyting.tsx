@@ -19,6 +19,7 @@ import { Icon } from "../lib/icons";
 import { PanelBelgi } from "../lib/chizma/panelBelgi";
 import type { ImtTur, Reyting, ReytingQator } from "../lib/imtihon";
 import { VARIANTLAR, haftalikReyting, oxirgiJavob } from "../lib/imtihon";
+import { VARIANTLAR as SERT_VARIANTLAR } from "../lib/sertifikat";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
 
@@ -149,7 +150,8 @@ export function ReytingJadval({ tur, boshVariant, strelka, onChiq, onVariantBosh
   const sonlar = r && r !== "xato" ? r.variantlar : {};
   const tanlov: { v: number | null; nom: string }[] = [
     { v: null, nom: t("hrUmumiy") },
-    ...Array.from({ length: VARIANTLAR }, (_, i) => ({ v: i + 1, nom: String(i + 1) })),
+    // DTM da 30, sertifikatda 12 variant — ilgari ikkalasi bitta son edi.
+    ...Array.from({ length: tur === "sert" ? SERT_VARIANTLAR : VARIANTLAR }, (_, i) => ({ v: i + 1, nom: String(i + 1) })),
   ];
   const royxatda = r && r !== "xato" && r.meniki ? r.qatorlar.some((q) => q.men) : true;
 

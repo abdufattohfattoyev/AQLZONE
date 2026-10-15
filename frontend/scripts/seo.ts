@@ -62,6 +62,7 @@ const { tilniQoy } = await import("../src/lib/til.ts");
 const { kursMatn } = await import("../src/lib/tarjima/kurs.ts");
 const { yo } = await import("../src/lib/tarjima/yechim.ts");
 const { OLCHAM, VARIANTLAR: DTM_VARIANT } = await import("../src/lib/imtihon.ts");
+const { DTM_MAVZULAR, MAVZU_OLCHAM, MAVZU_VARIANTLAR } = await import("../src/lib/dtmMavzu.ts");
 const { VARIANTLAR: SERT_VARIANT, DAQIQA: SERT_DAQIQA, TUZILISH } = await import("../src/lib/sertifikat.ts");
 const { QABUL, QABUL_TURLAR, QABUL_VARIANT } = await import("../src/lib/qabul.ts");
 const { lugat } = await import("../src/lib/lugat.ts");
@@ -1735,6 +1736,12 @@ function yasa(ru: boolean): Record<string, Sahifa> {
           + "ko'p xato qilinayotgan mavzular alohida ko'rinadi — shu mavzularni takrorlash mumkin.",
         "После каждого вопроса сразу видно, верно или нет. Средний балл за последние пять попыток и "
           + "темы с частыми ошибками показаны отдельно — их можно повторить."),
+      L(`Mavzular bo'yicha testlar: ${DTM_MAVZULAR.length} ta mavzu (tenglamalar, trigonometriya, logarifm, `
+          + `hosila, stereometriya va boshqalar), har birida ${MAVZU_VARIANTLAR} ta variant — `
+          + `${MAVZU_OLCHAM.savol} savol, ${MAVZU_OLCHAM.daqiqa} daqiqa.`,
+        `Тесты по темам: ${DTM_MAVZULAR.length} тем (уравнения, тригонометрия, логарифмы, `
+          + `производная, стереометрия и другие), в каждой ${MAVZU_VARIANTLAR} вариантов — `
+          + `${MAVZU_OLCHAM.savol} вопросов, ${MAVZU_OLCHAM.daqiqa} минут.`),
     ],
     havolalar: [
       { yol: `${P}/sertifikat`, nom: L("Milliy sertifikat variantlari", "Варианты Национального сертификата") },

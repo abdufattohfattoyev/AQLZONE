@@ -215,16 +215,22 @@ function Holat({ h }: { h: PremiumHolat | null }) {
 }
 
 /**
- * Har imtihonda 12 variant (`lib/imtihon.ts`, `lib/sertifikat.ts`, `lib/qabul.ts`).
- * Son shu yerda yozilgan: o'sha fayllarni import qilish savol generatorlarini
- * ham Premium sahifasiga tortib kelardi.
+ * Variantlar soni: DTM — 30 (`lib/imtihon.ts`), sertifikat va qabul — 12
+ * (`lib/sertifikat.ts`, `lib/qabul.ts`), DTM mavzu testlari — har mavzuda 6
+ * (`lib/dtmMavzu.ts`). Sonlar shu yerda yozilgan: o'sha fayllarni import
+ * qilish savol generatorlarini ham Premium sahifasiga tortib kelardi.
  */
 const JAMI_VARIANT = 12;
+const DTM_VARIANT = 30;
+const MAVZU_VARIANT = 6;
+/** Mavzu testida bepul variant — `lib/dtmMavzu.ts` dagi `MAVZU_BEPUL`. */
+const MAVZU_BEPUL = 1;
 
 /** Bepul va Premium farqi — halol jadval: nima bepul qolishi ham yozilgan. */
 function Farq({ bepul }: { bepul: number }) {
   const qatorlar: { nom: Kalit; b: string; p: string }[] = [
-    { nom: "premFarqDtm", b: t("premTaTa", { n: bepul }), p: t("premTaTa", { n: JAMI_VARIANT }) },
+    { nom: "premFarqDtm", b: t("premTaTa", { n: bepul }), p: t("premTaTa", { n: DTM_VARIANT }) },
+    { nom: "premFarqMavzu", b: t("premMavzuQiymat", { n: MAVZU_BEPUL }), p: t("premMavzuQiymat", { n: MAVZU_VARIANT }) },
     { nom: "premFarqSert", b: t("premTaTa", { n: bepul }), p: t("premTaTa", { n: JAMI_VARIANT }) },
     { nom: "premFarqQabul", b: t("premTaTa", { n: bepul }), p: t("premTaTa", { n: JAMI_VARIANT }) },
     { nom: "premFarqReyting", b: "—", p: "✓" },

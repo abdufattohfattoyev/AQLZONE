@@ -6,7 +6,7 @@
  * 7–11 dan keladi (aks holda bu DTM emas, 11-sinf testi).
  */
 import "./_xotira";
-import { IMTIHON_SINFLAR, imtihonKurslari, sinfOf } from "../src/lib/blok";
+import { IMTIHON_SINFLAR, imtihonKurslari, savolIzi, sinfOf } from "../src/lib/blok";
 import { OLCHAM, VARIANTLAR, variantYasa } from "../src/lib/imtihon";
 
 let xato = 0;
@@ -65,6 +65,26 @@ for (let n = 1; n <= VARIANTLAR; n++) {
   }
 }
 t("har savolning matni, javobi va mavzusi bor", bosh === 0, String(bosh));
+
+/* ---------------- xilma-xillik ---------------- */
+// Variantlar soni oshgani foydali bo'lishi uchun ular bir-birini
+// takrorlamasligi kerak: 20-variant 5-variantning savollarini qaytarsa,
+// "30 ta variant" faqat raqam bo'lib qolardi.
+const sanoq = new Map<string, number>();
+let toliqEmas = 0;
+for (let n = 1; n <= VARIANTLAR; n++) {
+  const v = variantYasa(n);
+  if (!v || v.savollar.length !== OLCHAM.savol) toliqEmas++;
+  for (const s of v?.savollar ?? []) {
+    const k = savolIzi(s.a);
+    sanoq.set(k, (sanoq.get(k) ?? 0) + 1);
+  }
+}
+const jamiSavol = [...sanoq.values()].reduce((a, b) => a + b, 0);
+const takrorUlush = (jamiSavol - sanoq.size) / jamiSavol;
+t(`${VARIANTLAR} variantning hammasida ${OLCHAM.savol} savol`, toliqEmas === 0, String(toliqEmas));
+t("variantlar orasida aynan takrorlangan savol 5% dan kam", takrorUlush < 0.05,
+  `${Math.round(takrorUlush * 100)}%`);
 
 console.log(xato ? `\n❌ ${xato} ta xato` : "\n✅ imtihon: hammasi joyida");
 if (xato) process.exit(1);

@@ -15,8 +15,10 @@ import { t } from "../lib/matn";
 import { BEPUL, ochiqmi, premiumOl, qolganMatn, sinovOl, som, usePremium, useQolgan } from "../lib/premium";
 import { yolPremium } from "../lib/yollar";
 
-export function PremiumVaraq({ n, onYop, onOchildi }: {
+export function PremiumVaraq({ n, bepul, onYop, onOchildi }: {
   n: number;
+  /** Bepul variantlar soni boshqacha bo'lsa (mavzu testlari — 1). */
+  bepul?: number;
   onYop: () => void;
   /** Sinov olindi — variant darhol ochiladi. */
   onOchildi: () => void;
@@ -34,7 +36,7 @@ export function PremiumVaraq({ n, onYop, onOchildi }: {
     <TanlovVaraq sarlavha={t("premVaraqSarlavha", { n })} onYop={onYop}>
       <div className="flex w-full flex-col gap-3">
         <p className="text-[14.5px] leading-snug text-ink-soft">
-          {t("premVaraqIzoh", { bepul: h?.bepul ?? BEPUL, narx: som(h?.narxlar["7kun"] ?? 5000) })}
+          {t("premVaraqIzoh", { bepul: bepul ?? h?.bepul ?? BEPUL, narx: som(h?.narxlar["7kun"] ?? 5000) })}
         </p>
         <button type="button" onClick={() => nav(yolPremium())} data-tahlil="Premium varaq: ko'rish"
           className="tugma-3d min-h-12 rounded-2xl bg-brand-blue px-5 font-display text-[16px] font-bold
@@ -64,7 +66,7 @@ export function QulfBelgi() {
  * havolani bosish mumkin. Holat kelguncha kutiladi (bepul variant esa
  * darhol ochiladi — internetsiz ham); yopiq bo'lsa — Premium sahifasi.
  */
-export function PremiumDarvoza({ n, children }: { n: number; children: ReactNode }) {
+export function PremiumDarvoza({ n, bepul, children }: { n: number; bepul?: number; children: ReactNode }) {
   const h = usePremium();
   const [tayyor, setTayyor] = useState(h !== null);
   useEffect(() => {
@@ -72,7 +74,7 @@ export function PremiumDarvoza({ n, children }: { n: number; children: ReactNode
     premiumOl().finally(() => { if (tirik) setTayyor(true); });
     return () => { tirik = false; };
   }, []);
-  if (ochiqmi(h, n)) return <>{children}</>;
+  if (ochiqmi(h, n, bepul)) return <>{children}</>;
   if (!tayyor) return <div className="p-8 text-center text-[14px] text-ink-dim">{t("yuklanyapti")}</div>;
   return <Navigate to={yolPremium()} replace />;
 }

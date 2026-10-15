@@ -160,12 +160,14 @@ XABAR: dict[str, dict[str, str]] = {
     "dtmHaqida": {
         "uz": (
             "📝 <b>DTM va Milliy sertifikat</b>\n\n"
-            "12 tadan variant, haqiqiy imtihon vaqti bilan. Oxirida — qaysi "
-            "mavzuda yiqilganingiz, har savolning yechimi va shu haftaning reytingi."
+            "DTM — 30 ta aralash variant va 13 mavzu bo'yicha testlar, sertifikat — "
+            "12 variant, haqiqiy imtihon vaqti bilan. Oxirida — qaysi mavzuda "
+            "yiqilganingiz, har savolning yechimi va shu haftaning reytingi."
         ),
         "ru": (
             "📝 <b>ДТМ и Национальный сертификат</b>\n\n"
-            "По 12 вариантов, с реальным временем экзамена. В конце — темы с "
+            "ДТМ — 30 смешанных вариантов и тесты по 13 темам, сертификат — "
+            "12 вариантов, с реальным временем экзамена. В конце — темы с "
             "ошибками, решение каждого вопроса и рейтинг недели."
         ),
     },

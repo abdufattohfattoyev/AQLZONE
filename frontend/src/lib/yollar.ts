@@ -142,6 +142,8 @@ export const yolStrelka = () => "/oyinlar/strelka";
 /** DTM tayyorgarlik — variantlar ro'yxati va bitta variant. */
 export const yolImtihon = () => "/imtihon";
 export const yolImtihonVariant = (n: number) => `/imtihon/${n}`;
+/** DTM mavzu testining varianti (`lib/dtmMavzu.ts`). */
+export const yolImtMavzu = (slug: string, n: number) => `/imtihon/mavzu/${slug}/${n}`;
 /** Milliy sertifikat — xuddi shu qolipda (`lib/sertifikat.ts`). */
 export const yolSertifikat = () => "/sertifikat";
 export const yolSertifikatVariant = (n: number) => `/sertifikat/${n}`;

@@ -26,8 +26,31 @@ from django.utils import timezone
 
 from .models import ImtihonNatija, Profile
 
-#: Variantlar soni — mijozdagi `VARIANTLAR` bilan bir xil.
-VARIANTLAR = 12
+#: DTM aralash variantlari soni — mijozdagi `VARIANTLAR` bilan bir xil
+#: (`frontend/src/lib/imtihon.ts`). Ilgari 12 edi, endi 30.
+VARIANTLAR = 30
+#: Milliy sertifikat variantlari — `frontend/src/lib/sertifikat.ts`.
+#: Ilgari DTM bilan bitta son edi; DTM ko'paygach ajratildi.
+SERT_VARIANTLAR = 12
+
+#: DTM MAVZU TESTLARI (`frontend/src/lib/dtmMavzu.ts`): urinish
+#: `tur="mavzu"`, `kurs=<mavzu slug'i>` bo'lib yoziladi. Alohida jadval
+#: emas — tuzilishi aynan DTM urinishiniki. `kurs` to'ldirilgani uchun
+#: DTM ro'yxati, reyting, AI va o'sish hisobotlari (`kurs=""` filtri)
+#: ularni o'zi chetlaydi.
+MAVZU_TUR = "mavzu"
+MAVZU_SLUGLAR = {
+    "ifodalar", "tenglamalar", "tengsizliklar", "funksiyalar", "progressiyalar",
+    "trigonometriya", "logarifm", "hosila-integral", "ehtimollik", "uchburchaklar",
+    "tortburchak-aylana", "vektorlar", "stereometriya",
+}
+#: Har mavzuda nechta variant — mijozdagi `MAVZU_VARIANTLAR`.
+MAVZU_VARIANTLAR = 6
+#: Har mavzuda nechta variant bepul (egasining qarori, 2026-10-15):
+#: aralashdagi `PREMIUM_BEPUL` emas, 1 — mijozdagi `MAVZU_BEPUL`.
+MAVZU_BEPUL = 1
+#: Mavzu ro'yxatida qancha urinish qaytariladi.
+MAVZU_OXIRGI = 300
 
 #: Sessiya fanlari — talabalar kurslarining manzili
 #: (`frontend/src/lib/curriculum/index.ts`). Boshqa qiymat qabul
@@ -174,8 +197,73 @@ def sessiya_royxat(profil: Profile) -> dict:
     (`frontend/src/lib/sessiya.ts`): eng yaxshi natija va baho u yerda
     hisoblanadi, shuning uchun bu yerda faqat xom ro'yxat.
     """
-    qs = (ImtihonNatija.objects.filter(profile=profil).exclude(kurs="")
+    # `tur=""`: mavzu testlari ham `kurs` bilan yoziladi — sessiyaga tushmasin.
+    qs = (ImtihonNatija.objects.filter(profile=profil, tur="").exclude(kurs="")
           .order_by("-mijoz_vaqt")[:SESSIYA_OXIRGI])
+    return {"natijalar": [{
+        "kurs": n.kurs, "variant": n.variant, "togri": n.togri, "jami": n.jami,
+        "sekund": n.sekund, "vaqt": n.mijoz_vaqt,
+    } for n in qs]}
+
+
+# ------------------------------------------------------------ mavzu testlari
+#
+# DTM ning bitta bo'limi (trigonometriya, stereometriya, …) bo'yicha 15
+# savollik variant. Reytingga kirmaydi: mavzu — tayyorgarlik bosqichi,
+# musobaqa emas. Har mavzuda faqat birinchi variant bepul (`MAVZU_BEPUL`),
+# qolgani Premium bilan.
+
+
+def _mavzu_toza(d: dict) -> dict | None:
+    if not isinstance(d, dict):
+        return None
+    kurs = str(d.get("kurs") or "")
+    if kurs not in MAVZU_SLUGLAR:
+        return None
+    variant = _butun(d.get("variant"), 1, MAVZU_VARIANTLAR)
+    jami = _butun(d.get("jami"), 1, MAX_SAVOL)
+    vaqt = _butun(d.get("vaqt"), 1, 10 ** 14)
+    if variant is None or jami is None or vaqt is None:
+        return None
+    togri = _butun(d.get("togri"), 0, jami)
+    if togri is None:
+        return None
+    sekund = _butun(d.get("sekund"), 0, MAX_SEKUND)
+    return {"variant": variant, "jami": jami, "togri": togri, "kurs": kurs, "tur": MAVZU_TUR,
+            "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt,
+            "mavzular": _mavzular(d.get("mavzular"))}
+
+
+def mavzu_yoz(profil: Profile, urinishlar) -> int:
+    """Mavzu testi urinishlari (takror `vaqt` jimgina tashlanadi)."""
+    if isinstance(urinishlar, dict):
+        urinishlar = [urinishlar]
+    if not isinstance(urinishlar, list):
+        return 0
+    from . import premium as PR
+
+    yangi = 0
+    faol = PR.faolmi(profil.pupil)
+    for d in urinishlar[:MAX_BIR_YOLA]:
+        t = _mavzu_toza(d)
+        if not t or not (faol or t["variant"] <= MAVZU_BEPUL):
+            continue
+        try:
+            with transaction.atomic():
+                ImtihonNatija.objects.create(profile=profil, **t)
+            yangi += 1
+        except IntegrityError:
+            continue
+    return yangi
+
+
+def mavzu_royxat(profil: Profile) -> dict:
+    """
+    Mavzu testlari — hamma mavzu, eng yangisi tepada. Mijoz qurilmadagi
+    nusxani shu bilan ALMASHTIRADI; foiz va eng yaxshisi u yerda hisoblanadi.
+    """
+    qs = (ImtihonNatija.objects.filter(profile=profil, tur=MAVZU_TUR)
+          .order_by("-mijoz_vaqt")[:MAVZU_OXIRGI])
     return {"natijalar": [{
         "kurs": n.kurs, "variant": n.variant, "togri": n.togri, "jami": n.jami,
         "sekund": n.sekund, "vaqt": n.mijoz_vaqt,
@@ -196,7 +284,7 @@ SERT_MAX_SEKUND = 4 * 3600
 def _sert_toza(d: dict) -> dict | None:
     if not isinstance(d, dict):
         return None
-    variant = _butun(d.get("variant"), 1, VARIANTLAR)
+    variant = _butun(d.get("variant"), 1, SERT_VARIANTLAR)
     vaqt = _butun(d.get("vaqt"), 1, 10 ** 14)
     try:
         ball = round(float(d.get("ball")), 1)

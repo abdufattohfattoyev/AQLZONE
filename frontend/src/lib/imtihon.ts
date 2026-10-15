@@ -25,13 +25,19 @@
  * faqat urug', qolganini generatorlar qiladi.
  */
 import { bilanProfil, profilQuery, sorov } from "./api";
-import { blokYasa } from "./blok";
+import { blokYasa, savolIzi } from "./blok";
 import { courseById } from "./curriculum";
 import type { Blok } from "./blok";
 import { kunUrugi, urugBilan } from "./oyin/urug";
 
-/** Nechta variant bor. Ro'yxat uzun bo'lmasin — tanlov ham mehnat. */
-export const VARIANTLAR = 12;
+/**
+ * Nechta variant bor. Ilgari 12 edi — faol tayyorlanayotgan odam ularni
+ * ikki haftada tugatardi va keyin faqat qayta ishlashi qolardi (natija
+ * esa yodlangan savoldan o'sardi). Endi 30: bir oylik tayyorgarlikka
+ * yetadi. Generatorlar 1000 dan ortiq — takror bo'lmasligini
+ * `scripts/imtihon.ts` tekshiradi. Serverdagi `VARIANTLAR` ham shunday.
+ */
+export const VARIANTLAR = 30;
 
 /** Bitta variantning o'lchami — DTM bilan bir xil. */
 export const OLCHAM = { savol: 30, daqiqa: 60 };
@@ -47,9 +53,40 @@ export const variantUrugi = (n: number): number => kunUrugi(`dtm-variant-${n}`, 
  */
 export function variantYasa(n: number): Blok | null {
   if (!Number.isInteger(n) || n < 1 || n > VARIANTLAR) return null;
-  return urugBilan(variantUrugi(n), () =>
-    blokYasa(11, "dtm", { tur: "imtihon" }, OLCHAM));
+  const bor = kesh.get(n);
+  if (bor !== undefined) return bor;
+  let v: Blok | null;
+  if (n <= ESKI_VARIANTLAR) {
+    v = urugBilan(variantUrugi(n), () => blokYasa(11, "dtm", { tur: "imtihon" }, OLCHAM));
+  } else {
+    // Oldingi variantlarda chiqqan savollar chetlanadi. Zaxira bilan
+    // yig'iladi (ba'zi savol qayta yasalganda ham band bo'lib tashlanadi),
+    // ortig'i kesiladi, vaqt esa doim to'liq.
+    const chetla = new Set<string>();
+    for (let k = 1; k < n; k++) for (const s of variantYasa(k)?.savollar ?? []) chetla.add(savolIzi(s.a));
+    const b = urugBilan(variantUrugi(n), () =>
+      blokYasa(11, "dtm", { tur: "imtihon" }, { savol: OLCHAM.savol + 8, daqiqa: OLCHAM.daqiqa }, chetla));
+    v = b && { savollar: b.savollar.slice(0, OLCHAM.savol), daqiqa: OLCHAM.daqiqa };
+  }
+  kesh.set(n, v);
+  return v;
 }
+
+/**
+ * Dastlabki 12 variant — o'zgarmaydi. Ular bilan haftalik reyting va
+ * qurilmada saqlangan javoblar (ko'rib chiqish) bog'langan: savollari
+ * boshqacha bo'lib qolsa, eski javoblar begona savollarga yopishardi.
+ * 13-dan boshlab esa variant OLDINGI hamma variantlarda chiqqan
+ * savollarni qaytarmaydi — 30 ta variant 30 xil test bo'lsin.
+ */
+const ESKI_VARIANTLAR = 12;
+
+/**
+ * Yasalgan variantlar. 30-variantni yasash uchun 1–29 ham kerak
+ * (chetlanadigan savollar) — keshsiz har ochilishda hammasi qaytadan
+ * qurilardi. Savollar o'zgarmas (urug'dan), ya'ni kesh xavfsiz.
+ */
+const kesh = new Map<number, Blok | null>();
 
 /* ------------------------------------------------------------ natija */
 

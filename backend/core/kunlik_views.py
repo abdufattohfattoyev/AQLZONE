@@ -169,6 +169,25 @@ def taklif_holati(request):
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
+def imtihon_mavzu(request):
+    """
+    DTM mavzu testlari (`core/imtihon.py` → mavzu_royxat). POST — qurilmadagi
+    urinishlar, javobda serverdagi to'liq ro'yxat; GET — faqat ro'yxat.
+    """
+    from . import imtihon as IM
+
+    profil = _profil_tanla(request)
+    if request.method == "POST":
+        d = request.data if hasattr(request.data, "get") else {}
+        yangi = IM.mavzu_yoz(profil, d.get("urinishlar", d))
+        javob = IM.mavzu_royxat(profil)
+        javob["yangi"] = yangi
+        return Response(javob)
+    return Response(IM.mavzu_royxat(profil))
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
 def sessiya_natija(request):
     """
     Talabaning sessiya urinishlari — telefon almashsa ham yo'qolmaydi.

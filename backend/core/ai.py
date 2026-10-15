@@ -266,6 +266,10 @@ Kalitdagi javobga qo'shilmasang, buni ochiq ayt va sababini ko'rsat.""",
 - Eng zaif 2–4 mavzudan boshla; har kun uchun 1–2 mavzu va 20–40 daqiqalik aniq ish yoz.
 - Har mavzuda nimani takrorlash kerakligini (formula, qoida, tipik xato) bir qatorda ayt.
 - 7-kunga bitta to'liq variant ishlashni qo'y.
+- O'quvchi DTM balini va qaysi mavzuda necha ball yo'qotganini aytsa — \
+rejani shu ballarni qaytarishga qarat: har mavzu yonida taxminan necha \
+ball qaytarishini yoz va oxirida reja bajarilsa ball qancha o'sishini bir \
+qatorda jamla. Imkonsiz va'da berma.
 - Natijalar bo'lmasa — reja tuzish uchun o'quvchidan maqsadi (DTM yoki sertifikat), \
 imtihon sanasi va qiynaladigan mavzularini so'ra.""",
     AiSuhbat.REPETITOR: """Vazifa: repetitor kabi suhbatlash. Savolni tushunishga yordam ber, \

@@ -96,6 +96,8 @@ urlpatterns = [
 
     # DTM tayyorgarlik — natijalar tarixi (`core/imtihon.py`).
     path("imtihon/natija", kunlik_views.imtihon_natija, name="imtihon-natija"),
+    # DTM mavzu testlari (`core/imtihon.py` → mavzu_royxat).
+    path("imtihon/mavzu", kunlik_views.imtihon_mavzu, name="imtihon-mavzu"),
     # Milliy sertifikat natijalari va ikkalasining haftalik jadvali.
     path("sertifikat/natija", kunlik_views.sertifikat_natija, name="sertifikat-natija"),
     path("imtihon/reyting", kunlik_views.imtihon_reyting, name="imtihon-reyting"),

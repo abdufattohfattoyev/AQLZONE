@@ -42,6 +42,7 @@
  * ichida yashasa, u har yangi tur qo'shilganda kattalashaverardi.
  */
 import { AiNatijaKarta } from "../components/AiKartalar";
+import { FarqKarta } from "../components/FarqKarta";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
@@ -82,6 +83,7 @@ import {
 } from "../lib/imtihon";
 import type { MavzuXato } from "../lib/imtihon";
 import { baho, sessiyaSaqla, sessiyaServerga, sessiyaYasa } from "../lib/sessiya";
+import { mavzuBySlug, mavzuSaqla, mavzuServerga, mavzuYasa } from "../lib/dtmMavzu";
 import { QABUL, ballYaxlit, qabulBallari, qabulSaqla, qabulYasa } from "../lib/qabul";
 import type { QabulTur } from "../lib/qabul";
 
@@ -92,8 +94,14 @@ interface Javob {
 }
 
 export function Blok({
-  sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, sessiya, marafon, qabul, onExit,
+  sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, sessiya, marafon, qabul, mavzuTest, onExit,
 }: {
+  /**
+   * DTM MAVZU TESTI — bitta bo'lim (trigonometriya, …) bo'yicha variant
+   * (`lib/dtmMavzu.ts`). Aralash variantdek bir o'tirishda ishlanadi;
+   * natija qurilmaga va serverga mavzu slug'i bilan yoziladi.
+   */
+  mavzuTest?: { slug: string; n: number };
   /**
    * MAKTABGA QABUL varianti — Prezident yoki ixtisoslashtirilgan maktab
    * (`lib/qabul.ts`). Sessiya kabi bir o'tirishda ishlanadi; natija
@@ -165,7 +173,7 @@ export function Blok({
    */
   // Zaif mavzular mashqi ham "yarim qolgan test" kalitini egallamaydi
   // (to'plamdagi sabab): u oddiy testning davomini yashirib qo'yardi.
-  const alohida = Boolean(toplam || imtihon || sessiya || marafon || qabul) || qamrov.tur === "mavzular";
+  const alohida = Boolean(toplam || imtihon || sessiya || marafon || qabul || mavzuTest) || qamrov.tur === "mavzular";
   const [yarim] = useState(() => (alohida ? null : joriyniOqi()));
   const [tanlov, setTanlov] = useState<"sora" | "davom" | "yangi">(() => {
     const bor = !alohida && joriyniOqi() !== null;
@@ -176,11 +184,13 @@ export function Blok({
   const blok = useMemo(
     () => (marafon ? marafonBlok(marafon.id, marafon.kun, marafon.savol, marafon.daqiqa)
       : qabul ? qabulYasa(qabul.tur, qabul.n)
+      : mavzuTest ? mavzuYasa(mavzuTest.slug, mavzuTest.n)
       : imtihon ? variantYasa(imtihon)
         : sessiya ? sessiyaYasa(sessiya.slug, sessiya.n)
           : toplam ? toplamYasa(toplam) : blokYasa(sinf, uzunlik, qamrov)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sinf, uzunlik, qamrov, urinish, imtihon, sessiya?.slug, sessiya?.n, marafon?.id, marafon?.kun, qabul?.tur, qabul?.n],
+    [sinf, uzunlik, qamrov, urinish, imtihon, sessiya?.slug, sessiya?.n, marafon?.id, marafon?.kun, qabul?.tur, qabul?.n,
+      mavzuTest?.slug, mavzuTest?.n],
   );
 
   // Material topilmadi. Amalda bu deyarli bo'lmaydi (test qulfsiz va
@@ -207,7 +217,7 @@ export function Blok({
     blok={davom ? { savollar: davom.savollar, daqiqa: davom.daqiqa } : blok}
     davom={davom}
     sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam} imtihon={imtihon} sessiya={sessiya}
-    marafon={marafon} qabul={qabul} alohida={alohida}
+    marafon={marafon} qabul={qabul} mavzuTest={mavzuTest} alohida={alohida}
     onQayta={() => { if (!alohida) joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
 }
@@ -281,8 +291,9 @@ function Bosh({ onExit }: { onExit: () => void }) {
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, alohida, onQayta, onExit }: {
+function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, mavzuTest, alohida, onQayta, onExit }: {
   qabul?: { tur: QabulTur; n: number };
+  mavzuTest?: { slug: string; n: number };
   toplam?: Toplam;
   imtihon?: number;
   sessiya?: { slug: string; n: number };
@@ -352,9 +363,14 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
 
   // Jonli panel uchun: qaysi test, nechanchi savol, nechtasi to'g'ri.
   // Natija ekranida signal to'xtaydi — test tugagan.
+  // Mavzu testining nomi: "Trigonometriya · 2-variant".
+  const mavzuNom = mavzuTest
+    ? t("imtMavzuNatija", { mavzu: t(mavzuBySlug(mavzuTest.slug)?.nom ?? "imtBolimMavzu"), n: mavzuTest.n })
+    : null;
+
   useFaollik(tugadi ? null : {
     joy: toplam ? "toplam" : "blok",
-    nom: qabul ? `${t(`qabulTur_${qabul.tur}`)} · ${t("imtihonVariant", { n: qabul.n })}`
+    nom: mavzuNom ? `DTM · ${mavzuNom}` : qabul ? `${t(`qabulTur_${qabul.tur}`)} · ${t("imtihonVariant", { n: qabul.n })}`
       : imtihon ? `${t("imtihonVariant", { n: imtihon })}`
       : sessiya ? `${t("sessiya")} · ${t("imtihonVariant", { n: sessiya.n })}`
       : toplam ? toplam.nom
@@ -403,7 +419,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
     // mashqi — "mashq", qolgan hammasi — aralash test. Aralashda javob
     // berilmagan (ulgurilmagan) savol hisobga kirmaydi: vaqt tugashi
     // bilimsizlik emas.
-    const mashqmi = alohida && !toplam && !imtihon && !sessiya && !marafon && !qabul;
+    const mashqmi = alohida && !toplam && !imtihon && !sessiya && !marafon && !qabul && !mavzuTest;
     ozlashYoz(boblargaYig(blok.savollar
       .map((S, i) => ({ kursId: S.kursId, ui: S.ui, togri: Boolean(toliq[i]?.togri), berildi: toliq[i]?.tanlangan != null }))
       .filter((x) => mashqmi || x.berildi)), mashqmi ? "mashq" : "aralash");
@@ -465,6 +481,30 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
       return;
     }
 
+    // DTM mavzu testi — qurilmaga va serverga (`lib/dtmMavzu.ts`). Xatolar
+    // DTM ning zaif mavzulariga ham qo'shiladi: mavzu testida qoqilgan bob
+    // ro'yxatdagi "ko'p xato qilinayotgan mavzular" da ko'rinsin.
+    if (mavzuTest) {
+      const m = new Map<string, MavzuXato>();
+      blok.savollar.forEach((S, i) => {
+        if (toliq[i]?.togri) return;
+        const k = `${S.kursId}|${S.mavzu}`;
+        m.set(k, { mavzu: S.mavzu, kursId: S.kursId, ui: S.ui, xato: (m.get(k)?.xato ?? 0) + 1 });
+      });
+      mavzuXatoYoz([...m.values()], "dtm");
+      const urinish = {
+        kurs: mavzuTest.slug,
+        variant: mavzuTest.n,
+        togri: toliq.filter((x) => x.togri).length,
+        jami: toliq.length,
+        sekund: Math.round((Date.now() - boshlandi.current) / 1000),
+        vaqt: Date.now(),
+      };
+      mavzuSaqla(urinish);
+      mavzuServerga({ ...urinish, mavzular: [...m.values()].map((x) => ({ m: x.mavzu, x: x.xato })) });
+      return;
+    }
+
     // Marafon kuni — natija marafonga (hisobga birinchi urinish kiradi).
     if (marafon) {
       marafonYubor(marafon, marafon.kun, toliq.filter((x) => x.togri).length, toliq.length,
@@ -510,7 +550,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
     // keyingi safar tugallangan test "davom etasizmi?" bo'lib
     // qaytib chiqardi. Mashq o'z nusxasini yozmagan — begonasini o'chirmaydi.
     if (!alohida) joriyniOchir();
-  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, alohida]);
+  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, mavzuTest, alohida]);
 
   /*
    * Har o'zgarishda yarim qolgan test yoziladi.
@@ -605,7 +645,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
   if (tugadi && korish) {
     return (
       <KoribChiqish
-        sarlavha={qabul ? `${t(`qabulTur_${qabul.tur}`)} · ${t("imtihonVariant", { n: qabul.n })}`
+        sarlavha={mavzuNom ? `DTM · ${mavzuNom}` : qabul ? `${t(`qabulTur_${qabul.tur}`)} · ${t("imtihonVariant", { n: qabul.n })}`
           : imtihon ? `DTM · ${t("imtihonVariant", { n: imtihon })}` : toplam ? toplam.nom : bobNomi ?? `${sinf}-sinf`}
         savollar={dtmSavollari(blok, javoblar.map((x) => (x.tanlangan === null ? null : String(x.tanlangan))))}
         onYop={() => setKorish(false)} />
@@ -618,9 +658,9 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
         imtihon={imtihon} yozildi={yozildi} strelka={ozStrelka}
         ballar={qabul ? qabulBallari(qabul.tur) : null}
         marafon={marafon ? { kun: marafon.kun, holat: marafonHolati } : undefined}
-        nom={qabul ? `${t(`qabulTur_${qabul.tur}`)} · ${t("imtihonVariant", { n: qabul.n })}`
+        nom={mavzuNom ?? (qabul ? `${t(`qabulTur_${qabul.tur}`)} · ${t("imtihonVariant", { n: qabul.n })}`
           : marafon ? t("marafonKunNom", { n: marafon.kun })
-          : imtihon ? t("natijaVariant", { n: imtihon }) : toplam ? toplam.nom : bobNomi ?? t("natijaSarlavha")}
+          : imtihon ? t("natijaVariant", { n: imtihon }) : toplam ? toplam.nom : bobNomi ?? t("natijaSarlavha"))}
         onKorish={() => { tebrat("tanlov"); setKorish(true); window.scrollTo(0, 0); }}
         onQayta={onQayta} onExit={onExit} />
       {oyna}
@@ -829,6 +869,15 @@ function Natija({
       {f >= 80 && <Konfetti />}
       <div className="mb-2"><NatijaSarlavha nom={nom} strelka={strelka} onChiq={onExit} /></div>
 
+      {/* DTM variantida foiz kartasi o'rniga BALL kartasi: ball, o'rtacha
+          va "ballar qayerda" (`components/FarqKarta.tsx`). Ilgari ikkalasi
+          ketma-ket turardi va sahifa juda uzun edi. */}
+      {imtihon ? (
+        <FarqKarta togri={togri} jami={jami}
+          mavzular={mavzular.map((m) => ({
+            nom: kursMatn(m.nom), kursId: m.kursId, ui: m.ui, yoqotgan: m.xato + m.ulgurmadi,
+          }))} />
+      ) : (
       <div className="az-savol rounded-clay bg-karta p-5 text-center shadow-clay">
         <div className="font-display text-[46px] leading-none text-brand-green-d">{f}%</div>
         <div className="mt-1 text-[13px] text-ink-dim">{t("blokNatija", { a: togri, b: jami })}</div>
@@ -855,6 +904,7 @@ function Natija({
           {ulgurmadi > 0 && <Box v={ulgurmadi} l={t("blokUlgurmadi")} c="text-brand-orange-d" />}
         </div>
       </div>
+      )}
 
       {toplam && <Solishtirish toplam={toplam} stat={stat} />}
 
@@ -869,7 +919,10 @@ function Natija({
       )}
 
       {/* Hamma savol — shart, variantlar, tanlangani va to'g'risi. Xato
-          ro'yxati pastda qisqa turadi; bu yerda to'liq ko'rinish. */}
+          ro'yxati pastda qisqa turadi; bu yerda to'liq ko'rinish. DTM da
+          xato bo'lsa bu tugma yo'q: pastdagi AI kartasi xuddi shu ko'rib
+          chiqishni ochadi — ikkita bir xil eshik shovqin edi. */}
+      {!(imtihon && xato > 0) && (
       <button type="button" onClick={onKorish} data-tahlil="Blok: ko'rib chiqish"
         className="clay-press mt-3 flex min-h-[52px] w-full items-center gap-3 rounded-[20px] bg-karta px-4 text-left
                    shadow-clay-sm">
@@ -877,8 +930,9 @@ function Natija({
         <span className="min-w-0 flex-1 font-display text-[16px]">{t("korishTugma")}</span>
         <Icon name="chevron" size={18} className="shrink-0 text-ink-dim" />
       </button>
+      )}
       {imtihon && (
-        <div className="mt-2.5">
+        <div className="mt-3">
           <AiNatijaKarta xato={xato} onOch={onKorish} tahlil="DTM: AI xatolar" />
         </div>
       )}
@@ -899,6 +953,11 @@ function Natija({
         </button>
       )}
 
+      {/* DTM variantida ikkala ro'yxat (mavzular, xatolar) YO'Q: mavzular
+          ball kartasida "ballar qayerda" bo'lib turibdi, xatolar esa
+          "Ko'rib chiqish" da. 30 savollik variantda ular 20+ qator
+          bo'lib, "Yana topshirish" gacha zerikib tushilardi. */}
+      {!imtihon && (<>
       {/* ---- mavzular bo'yicha tahlil ---- */}
       <h2 className="az-kirish mt-6 mb-2 ml-1.5 text-[11px] tracking-widest text-ink-soft uppercase">
         {t("blokTahlil")}
@@ -977,6 +1036,7 @@ function Natija({
           </div>
         </>
       )}
+      </>)}
 
       {/* Marafonda "Yana topshirish" YO'Q: qayta ishlash hisobga kirmaydi va
           javobi ko'rilgan variantni yana ishlatish chalg'itardi. */}

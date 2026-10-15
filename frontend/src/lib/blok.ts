@@ -235,6 +235,18 @@ export function manbalar(c: Course, units: Unit[], faqatUi?: number): Manba[] {
 }
 
 /**
+ * Savolning izi — variantlar orasidagi takrorni topish uchun.
+ *
+ * `prompt|answer` yetmaydi: "Fazoviy vektor uzunligini toping" savoli
+ * har xil vektor bilan ham bir xil `prompt` ga ega. Javob variantlari
+ * (`choices`) olib tashlanadi — ular har safar boshqa tartibda.
+ */
+export function savolIzi(a: Activity): string {
+  const { choices: _, ...qolgani } = a;
+  return JSON.stringify(qolgani);
+}
+
+/**
  * Test yasaydi. Material bo'lmasa `null`.
  *
  * ─────────────── MAVZULAR BO'YICHA TEKIS TARQATISH ───────────────
@@ -259,6 +271,12 @@ export function blokYasa(
    * uzunliklarning hech biriga to'g'ri kelmasligi mumkin.
    */
   boshqa?: { savol: number; daqiqa: number },
+  /**
+   * Chiqmasligi kerak bo'lgan savollar (`savolIzi`) — DTM ning 13+
+   * variantlari oldingi variantlardagi savolni qaytarmasin (`lib/imtihon.ts`).
+   * Shu to'plamga tushgan savol qayta yasaladi, bo'lmasa tashlanadi.
+   */
+  chetla?: ReadonlySet<string>,
 ): Blok | null {
   const kurslar = qamrov.tur === "imtihon" ? imtihonKurslari()
     : qamrov.tur === "mavzular" ? COURSES.filter((c) => qamrov.boblar.some((b) => b.kursId === c.id))
@@ -322,10 +340,11 @@ export function blokYasa(
   // chiqishi mumkin.
   const chiqqan = new Set<string>();
   const savollar: BlokSavol[] = [];
+  const band = (a: Activity) => chiqqan.has(`${a.prompt}|${a.answer}`) || Boolean(chetla?.has(savolIzi(a)));
   for (const m of aralash(tanlangan)) {
     let a = m.gen();
-    for (let k = 0; k < 25 && chiqqan.has(`${a.prompt}|${a.answer}`); k++) a = m.gen();
-    if (chiqqan.has(`${a.prompt}|${a.answer}`)) continue;
+    for (let k = 0; k < 25 && band(a); k++) a = m.gen();
+    if (band(a)) continue;
     chiqqan.add(`${a.prompt}|${a.answer}`);
     savollar.push({ a, kurs: m.kurs, kursId: m.kursId, ui: m.ui, li: m.li, mavzu: m.mavzu });
   }

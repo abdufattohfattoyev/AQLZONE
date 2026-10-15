@@ -15,6 +15,11 @@
  *
  * DTM da javob har savoldan keyin darhol ko'rinadi (sertifikatdan farqi)
  * va bu ekranning pastida yozilgan.
+ *
+ * Variantlar ikki bo'limda: ARALASH (30 ta, butun imtihon — "tayyormanmi?")
+ * va MAVZULAR BO'YICHA (13 mavzu × 6 variant, `components/DtmMavzular.tsx`
+ * — "shu mavzuni yopdimmi?"). Oxirgi tanlangan bo'lim eslab qolinadi:
+ * mavzu bo'yicha ishlayotgan odam har safar almashtirgichni bosmasin.
  */
 import { useEffect, useState } from "react";
 import { ImtihonSarlavha } from "../components/ImtihonTur";
@@ -24,15 +29,28 @@ import { PanelBelgi } from "../lib/chizma/panelBelgi";
 import { marafonHolat } from "../lib/marafon";
 import type { MarafonHolat } from "../lib/marafon";
 import { t } from "../lib/matn";
-import { PremiumQator, QulfBelgi } from "../components/PremiumVaraq";
+import { PremiumQator } from "../components/PremiumVaraq";
+import { VariantTor } from "../components/VariantTor";
 import { useVariantQulf } from "../components/variantQulf";
 import { AiRejaKarta } from "../components/AiKartalar";
 import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
+import { DtmMavzular } from "../components/DtmMavzular";
+import { tebrat } from "../lib/qobiq";
+import { MAVZU_OLCHAM, MAVZU_VARIANTLAR } from "../lib/dtmMavzu";
 import { OLCHAM, VARIANTLAR, daraja, engYaxshi, sinxronla, zaifMavzular } from "../lib/imtihon";
 import type { ServerTarix } from "../lib/imtihon";
 
-export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, onKorish, onMarafon }: {
+type Bolim = "aralash" | "mavzu";
+const BOLIM_KALIT = "azapp_dtm_bolim_v1";
+
+function bolimOqi(): Bolim {
+  try { return localStorage.getItem(BOLIM_KALIT) === "mavzu" ? "mavzu" : "aralash"; } catch { return "aralash"; }
+}
+
+export function Imtihon({ onVariant, onMavzu, onSertifikat, onChiq, onMashq, onReyting, onKorish, onMarafon }: {
   onVariant: (n: number) => void;
+  /** Mavzu testining varianti (`lib/dtmMavzu.ts`). */
+  onMavzu: (slug: string, n: number) => void;
   /** Milliy sertifikat variantlariga o'tish (`components/ImtihonTur.tsx`). */
   onSertifikat: () => void;
   onChiq: () => void;
@@ -74,6 +92,13 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
   const [zaif] = useState(() => zaifMavzular());
   // 4+ variant — Imtihon Premium (`lib/premium.ts`): bosilsa varaq chiqadi.
   const qulf = useVariantQulf(onVariant);
+  const [bolim, setBolim] = useState<Bolim>(bolimOqi);
+  const bolimTanla = (b: Bolim) => {
+    if (b === bolim) return;
+    tebrat("tanlov");
+    setBolim(b);
+    try { localStorage.setItem(BOLIM_KALIT, b); } catch { /* faqat shu safar */ }
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]
@@ -155,35 +180,40 @@ export function Imtihon({ onVariant, onSertifikat, onChiq, onMashq, onReyting, o
       <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-3">
         <h2 className="font-display text-[20px]">{t("imtihonVariantlar")}</h2>
         <span className="text-[13px] text-ink-dim">
-          {t("imtDtmTuzilish", { savol: OLCHAM.savol, daqiqa: OLCHAM.daqiqa })}
+          {bolim === "aralash" ? t("imtDtmTuzilish", { savol: OLCHAM.savol, daqiqa: OLCHAM.daqiqa })
+            : t("imtDtmTuzilish", { savol: MAVZU_OLCHAM.savol, daqiqa: MAVZU_OLCHAM.daqiqa })}
         </span>
       </div>
-      {/* Kompyuterda uch ustun, baland kataklar va natija chizig'i: ilgari
-          telefondagi 60px li 4×3 to'r keng ekranda pastda yarim ekran bo'shliq
-          qoldirardi. Chiziq — o'sha variantdagi eng yaxshi natija. */}
-      <div className="grid grid-cols-4 gap-2 kom:grid-cols-3 kom:gap-3">
-        {Array.from({ length: VARIANTLAR }, (_, i) => i + 1).map((n) => {
-          const eng = engi(n);
-          const yopiq = qulf.yopiqmi(n);
-          return (
-            <button key={n} type="button" onClick={() => qulf.tanla(n)} data-tahlil={`Imtihon: ${n}-variant`}
-              aria-label={t(yopiq ? "premQulfli" : "imtihonVariant", { n })}
-              className="clay-press flex min-h-[60px] flex-col items-center justify-center rounded-[16px] bg-karta
-                         shadow-clay-sm kom:min-h-[124px] kom:gap-1.5 kom:px-5">
-              <span className="font-display text-[18px] leading-tight font-bold kom:text-[30px]">{n}</span>
-              {yopiq ? <QulfBelgi /> : (
-                <span className="text-[12.5px] text-ink-dim kom:text-[14px]">{eng ? `${eng.togri}/${eng.jami}` : "—"}</span>
-              )}
-              <span aria-hidden className="hidden h-1.5 w-full overflow-hidden rounded-full bg-track kom:block">
-                {eng && <span className="block h-full rounded-full bg-brand-blue"
-                  style={{ width: `${(eng.togri / eng.jami) * 100}%` }} />}
-              </span>
-            </button>
-          );
-        })}
+      {/* Aralash / mavzular bo'yicha — imtihon turi almashtirgichi bilan bir xil ko'rinish. */}
+      <div className="flex gap-1 rounded-2xl bg-track p-1" role="group">
+        {(["aralash", "mavzu"] as const).map((b) => (
+          <button key={b} type="button" aria-pressed={bolim === b} data-tahlil={`DTM bo'lim: ${b}`}
+            onClick={() => bolimTanla(b)}
+            className={`min-h-11 flex-1 rounded-xl font-display text-[15px] transition-colors
+                        ${bolim === b ? "bg-karta font-bold text-ink shadow-clay-sm" : "font-semibold text-ink-soft"}`}>
+            {t(b === "aralash" ? "imtBolimAralash" : "imtBolimMavzu")}
+          </button>
+        ))}
       </div>
+      {bolim === "mavzu" ? (
+        <>
+          <DtmMavzular onBoshla={onMavzu} />
+          <p className="text-[13px] leading-snug text-ink-dim">
+            {t("imtMavzuTuzilish", { v: MAVZU_VARIANTLAR, savol: MAVZU_OLCHAM.savol, daqiqa: MAVZU_OLCHAM.daqiqa })}.{" "}
+            {t("imtMavzuPast")}
+          </p>
+        </>
+      ) : (
+      <>
+      {/* To'r sahifalab chiqadi (`components/VariantTor.tsx`): 30 ham, 100 ham
+          telefonda to'rt qatordan oshmaydi. `key` — serverdagi tarix kelgach
+          "keyingi variant" oralig'i qaytadan tanlansin. */}
+      <VariantTor key={tarix ? "server" : "qurilma"} soni={VARIANTLAR} yopiqmi={qulf.yopiqmi} natija={engi}
+        onTanla={qulf.tanla} tahlil="Imtihon" />
 
       <p className="text-[13px] leading-snug text-ink-dim">{t("imtDtmPast")}</p>
+      </>
+      )}
       </div>
       {qulf.varaq}
     </div>

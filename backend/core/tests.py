@@ -9337,6 +9337,65 @@ class SessiyaNatijaTest(TestCase):
         self.assertEqual(j["yangi"], 0)
 
 
+@override_settings(PREMIUM_BEPUL=3)
+class DtmMavzuTest(TestCase):
+    """DTM mavzu testlari: o'z ro'yxati, DTM/sessiya tarixiga tushmaydi, Premium qulfi bor."""
+
+    def kir(self, device: str = "dev-dtmmavzu-1111aaaa2222") -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def yoz(self, h, d):
+        return self.client.post("/api/v1/imtihon/mavzu", d, content_type="application/json", **h).json()
+
+    def test_yoziladi_va_qaytadi(self):
+        h = self.kir()
+        d = {"urinishlar": [
+            {"kurs": "trigonometriya", "variant": 1, "togri": 11, "jami": 15, "sekund": 900, "vaqt": 2000},
+            {"kurs": "stereometriya", "variant": 1, "togri": 7, "jami": 15, "sekund": 1200, "vaqt": 1000},
+        ]}
+        j = self.yoz(h, d)
+        self.assertEqual(j["yangi"], 2)
+        self.assertEqual([x["kurs"] for x in j["natijalar"]], ["trigonometriya", "stereometriya"])
+        # Takror — yangi qator yo'q.
+        self.assertEqual(self.yoz(h, d)["yangi"], 0)
+        self.assertEqual(len(self.client.get("/api/v1/imtihon/mavzu", **h).json()["natijalar"]), 2)
+
+    def test_dtm_va_sessiya_bilan_aralashmaydi(self):
+        h = self.kir()
+        self.yoz(h, {"kurs": "logarifm", "variant": 1, "togri": 9, "jami": 15, "vaqt": 10})
+        self.assertEqual(self.client.get("/api/v1/imtihon/natija", **h).json()["jami"], 0)
+        self.assertEqual(self.client.get("/api/v1/sessiya/natija", **h).json()["natijalar"], [])
+        r = self.client.get("/api/v1/imtihon/reyting?tur=dtm", **h).json()
+        self.assertEqual(r["ishlagan"], 0)
+
+    def test_begona_va_yopiq_yozilmaydi(self):
+        h = self.kir()
+        for d in (
+            {"kurs": "yoq-mavzu", "variant": 1, "togri": 5, "jami": 15, "vaqt": 10},
+            {"kurs": "logarifm", "variant": 7, "togri": 5, "jami": 15, "vaqt": 11},   # bunday variant yo'q
+            {"kurs": "logarifm", "variant": 2, "togri": 5, "jami": 15, "vaqt": 12},   # Premium'siz yopiq (bepul — 1)
+            {"kurs": "logarifm", "variant": 1, "togri": 16, "jami": 15, "vaqt": 13},  # jamidan ko'p
+        ):
+            self.assertEqual(self.yoz(h, d)["yangi"], 0, d)
+        # Mavzu DTM so'rovi orqali ham yozilmaydi.
+        j = self.client.post("/api/v1/imtihon/natija",
+                             {"kurs": "logarifm", "variant": 1, "togri": 5, "jami": 15, "vaqt": 14},
+                             content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 0)
+
+    def test_dtm_30_variant_sertifikat_12(self):
+        h = self.kir()
+        j = self.client.post("/api/v1/imtihon/natija", {"variant": 3, "togri": 20, "jami": 30, "vaqt": 30},
+                             content_type="application/json", **h).json()
+        self.assertEqual(j["yangi"], 1)
+        from core import imtihon as IM
+        self.assertEqual(IM.VARIANTLAR, 30)
+        self.assertIsNone(IM._sert_toza({"variant": 13, "ball": 50, "vaqt": 1}))
+        self.assertIsNotNone(IM._toza({"variant": 30, "togri": 1, "jami": 30, "vaqt": 1}))
+
+
 class YonalishTest(TestCase):
     def test_saqlanadi_va_me_da_qaytadi(self):
         from core import tahlil as TH

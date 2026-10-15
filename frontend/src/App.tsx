@@ -110,12 +110,14 @@ import { darsTugadi as sinovDarsTugadi } from "./lib/sinov";
 import { nishonlar as nishonlarniHisobla } from "./lib/nishon";
 import {
   indeksniOqi, yolTestlar, yolFormulalar, yolHisobot, yolDaftar, yolDars, yolKichkintoy, yolKichkintoyMavzu, yolKurs, yolKurslar,
-  yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolIzdosh, yolQoidaOvi, yolStrelka, yolImtihon, yolImtihonVariant, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
+  yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolIzdosh, yolQoidaOvi, yolStrelka, yolImtihon, yolImtihonVariant, yolImtMavzu, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolAi, yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant, yolQabul, yolQabulVariant, yolMantiq, yolMantiqMavzu,
   yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
+import type { Qamrov } from "./lib/blok";
+import { MAVZU_BEPUL, MAVZU_VARIANTLAR, mavzuBySlug } from "./lib/dtmMavzu";
 import { darajaBormi, darajaKerakmi } from "./lib/daraja";
 import { QABUL_VARIANT, qabulTurmi } from "./lib/qabul";
 import { formulaSinfi } from "./lib/moslash";
@@ -213,6 +215,7 @@ function Yollar() {
       {/* `reyting`, `mashq` — `:n` dan ustun (aniq yo'l doim oldin tanlanadi). */}
       <Route path="/imtihon/reyting" element={<ImtReytingSahifasi tur="dtm" />} />
       <Route path="/imtihon/mashq" element={<ZaifMashqSahifasi tur="dtm" />} />
+      <Route path="/imtihon/mavzu/:slug/:n" element={<ImtihonMavzuSahifasi />} />
       <Route path="/imtihon/:n/tahlil" element={<ImtKorishSahifasi tur="dtm" />} />
       <Route path="/imtihon/:n" element={<ImtihonVariantSahifasi />} />
       <Route path="/sertifikat" element={<SertifikatSahifasi />} />
@@ -950,7 +953,7 @@ function ImtihonSahifasi() {
   // sertifikat tanlangan bo'lsa — to'g'ri o'sha yerga: tayyorlanayotgan
   // odam har safar almashtirgichni bosib o'tirmasin.
   if (oxirgiTur() === "sertifikat") return <Navigate to={yolSertifikat()} replace />;
-  return <Imtihon onVariant={(n) => nav(yolImtihonVariant(n))}
+  return <Imtihon onVariant={(n) => nav(yolImtihonVariant(n))} onMavzu={(slug, n) => nav(yolImtMavzu(slug, n))}
     onSertifikat={() => nav(yolSertifikat(), { replace: true })} onChiq={() => nav(yolTestSinf())}
     onMashq={() => nav(yolImtMashq("dtm"))} onReyting={() => nav(yolImtReyting("dtm"))}
     onKorish={(n) => nav(yolImtKorish("dtm", n))} onMarafon={() => nav("/marafon")} />;
@@ -1060,6 +1063,26 @@ function ImtihonVariantSahifasi() {
   return (
     <PremiumDarvoza n={raqam}>
       <BlokEkran sinf={11} uzunlik="dtm" qamrov={{ tur: "imtihon" }} imtihon={raqam}
+        onExit={() => nav(yolImtihon())} />
+    </PremiumDarvoza>
+  );
+}
+
+/** Mavzu testida qamrov ishlatilmaydi (savollar `mavzuYasa` dan); o'zgarmas obyekt — test har chizishda qayta yasalmasin. */
+const MAVZU_QAMROV: Qamrov = { tur: "imtihon" };
+
+/** DTM mavzu testi — variant (`lib/dtmMavzu.ts`). Noma'lum mavzu yoki raqam — ro'yxatga. */
+function ImtihonMavzuSahifasi() {
+  const nav = useNavigate();
+  const { slug = "", n } = useParams();
+  useTema("bosh");
+  const raqam = Number(n);
+  if (!mavzuBySlug(slug) || !Number.isInteger(raqam) || raqam < 1 || raqam > MAVZU_VARIANTLAR) {
+    return <Navigate to={yolImtihon()} replace />;
+  }
+  return (
+    <PremiumDarvoza n={raqam} bepul={MAVZU_BEPUL}>
+      <BlokEkran key={`${slug}-${raqam}`} sinf={11} uzunlik="dtm" qamrov={MAVZU_QAMROV} mavzuTest={{ slug, n: raqam }}
         onExit={() => nav(yolImtihon())} />
     </PremiumDarvoza>
   );
