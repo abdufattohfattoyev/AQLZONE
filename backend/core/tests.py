@@ -6700,6 +6700,43 @@ class UshlabQolishTest(TestCase):
         self.assertContains(r, "Qaytib keladimi")
         self.assertContains(r, "Kanal posti")
 
+    def test_farq_voronkasi(self):
+        """Kartani ko'rgan → reja bosgan → 14 kun ichida to'lagan; oldingi va rad etilgan chek sanalmaydi."""
+        from . import tahlil as TH
+        hozir = timezone.now()
+        kun = lambda n: hozir - timedelta(days=n)  # noqa: E731
+        faqat_korgan = Pupil.objects.create(first_name="Korgan")
+        toladi = Pupil.objects.create(first_name="Toladi")
+        oldin_olgan = Pupil.objects.create(first_name="Oldin")
+        rad = Pupil.objects.create(first_name="Rad")
+        for p in (faqat_korgan, toladi, oldin_olgan, rad):
+            pr = MDL.Profile.objects.create(pupil=p, name="Men")
+            MDL.ImtihonNatija.objects.create(profile=pr, variant=1, togri=10, jami=30, mijoz_vaqt=1, created_at=kun(10))
+        # Sertifikat natijasi DTM kartasini ko'rgan hisoblanmaydi.
+        sert = Pupil.objects.create(first_name="Sert")
+        MDL.ImtihonNatija.objects.create(profile=MDL.Profile.objects.create(pupil=sert, name="Men"),
+                                         tur="sert", variant=1, togri=10, jami=45, mijoz_vaqt=1,
+                                         created_at=kun(10))
+        # Natijasi serverga yetmagan, lekin kartani ochgan — ko'rish hodisasidan sanaladi.
+        faqat_hodisa = Pupil.objects.create(first_name="Hodisa")
+        MDL.Hodisa.objects.create(pupil=faqat_hodisa, tur="sahifa", yol=TH.FARQ_KORISH, created_at=kun(3))
+        for p in (toladi, oldin_olgan, rad):
+            MDL.Hodisa.objects.create(pupil=p, tur="bosish", nom="DTM: farq AI reja", created_at=kun(10))
+        T = MDL.PremiumTolov
+        T.objects.create(pupil=toladi, tarif="1oy", holat=T.TASDIQLANDI, created_at=kun(8))
+        T.objects.create(pupil=oldin_olgan, tarif="1oy", holat=T.TASDIQLANDI, created_at=kun(12))
+        T.objects.create(pupil=rad, tarif="1oy", holat=T.RAD, created_at=kun(8))
+
+        d = TH.statistika(30)["farq"]
+        self.assertEqual((d["ishlatgan"], d["reja"], d["toladi"]), (5, 3, 1))
+        self.assertEqual((d["reja_foiz"], d["toladi_foiz"], d["umumiy_foiz"]), (60, 33, 20))
+        self.assertEqual(sum(h["ishlatgan"] for h in d["haftalar"]), 5)
+        self.assertEqual(sum(h["toladi"] for h in d["haftalar"]), 1)
+
+        kod = boshqaruv.havola_yasa(ADMIN_ID).rsplit("/", 1)[-1]
+        self.client.get(f"/boshqaruv/havola/{kod}")
+        self.assertContains(self.client.get("/boshqaruv/tahlil"), "DTM farq kartasi Premium sotadimi")
+
     def test_yozish_ruxsat_saqlanadi(self):
         r = self.client.post("/api/v1/auth/device", {"deviceId": "ruxsat-0123456789abcdef"},
                              content_type="application/json")

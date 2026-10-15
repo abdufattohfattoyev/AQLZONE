@@ -22,10 +22,13 @@ import { DTM_MAVZULAR } from "../lib/dtmMavzu";
 import { natijalar } from "../lib/imtihon";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
+import { sahifaYoz } from "../lib/tahlil";
 import { yolAiSuhbat, yolPremium } from "../lib/yollar";
 
 /** Birinchi mutaxassislik fanining bitta savoli. */
 const SAVOL_BALL = 3.1;
+/** Kartani ko'rish hodisasi — serverdagi `tahlil.FARQ_KORISH` bilan bir xil. */
+const FARQ_KORISH = "/imtihon/:id/natija";
 /** Eng ko'p ball olib ketgan uchta mavzu — qolgani "Ko'rib chiqish" da. */
 const QATOR = 3;
 
@@ -90,6 +93,10 @@ export function FarqKarta({ togri, jami, mavzular }: { togri: number; jami: numb
   const qatorlar = useMemo(() => guruhla(mavzular).slice(0, QATOR), [mavzular]);
 
   useEffect(() => {
+    // Kartani KO'RGANLAR — panelda Premium voronkasining boshi. Natija
+    // serverga yetib bormasa ham (internet, kirmagan sayt) ko'rish
+    // yoziladi; ilgari ko'rganlar faqat server natijasidan sanalardi.
+    sahifaYoz(FARQ_KORISH);
     let tirik = true;
     aiHolat().then((x) => { if (tirik) setH(x); }).catch(() => {});
     return () => { tirik = false; };

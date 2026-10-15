@@ -212,6 +212,31 @@ o'sish bo'lmaydi.
     </div>
   </div>
 
+  <!-- DTM FARQ KARTASI — Premium sotadimi (`tahlil.farq_voronkasi`). -->
+  <div class="bolim"><h2>DTM farq kartasi Premium sotadimi</h2><p>to'lov — reja bosgandan keyin 14 kun ichida tasdiqlangan chek; sinov va tanga sanalmaydi</p></div>
+  <div class="olchovlar">
+    <div class="karta olchov"><div class="nom">Kartani ko'rgan</div><div class="son">{{ farq.ishlatgan }}</div>
+      <div class="ost">DTM natijasi ekranini ochgan</div></div>
+    <div class="karta olchov"><div class="nom">"AI reja" bosgan</div><div class="son">{{ farq.reja }}</div>
+      <div class="ost">ko'rganlarning {{ farq.reja_foiz }}%</div></div>
+    <div class="karta olchov"><div class="nom">Premium to'lagan</div><div class="son">{{ farq.toladi }}</div>
+      <div class="ost">reja bosganlarning {{ farq.toladi_foiz }}% · ko'rganlarning {{ farq.umumiy_foiz }}%</div></div>
+  </div>
+  {% if farq.haftalar %}
+    <div class="jadval-quti">
+      <div class="karta-bosh"><h3>Haftalar bo'yicha</h3></div>
+      <table>
+        <thead><tr><th class="keng">Hafta boshi</th><th class="raqam">Ko'rgan</th><th class="raqam">Reja</th><th class="raqam">To'lagan</th></tr></thead>
+        <tbody>
+          {% for h in farq.haftalar %}
+            <tr><td class="keng">{{ h.boshi|date:"d.m" }}</td><td class="raqam">{{ h.ishlatgan }}</td>
+                <td class="raqam">{{ h.reja }}</td><td class="raqam">{{ h.toladi }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
   <div class="bolim"><h2>Nimaga kiradi</h2><p>ko'pi tepada</p></div>
   <div class="setka k2">
     <div class="jadval-quti">

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.db.models import Count
+from django.db.models import Count, Min
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
@@ -506,6 +506,74 @@ def oyin_tahlili(boshi) -> dict:
     }
 
 
+#: Farq kartasidagi reja tugmasi (`frontend/src/components/FarqKarta.tsx`, `data-tahlil`).
+FARQ_REJA = "DTM: farq AI reja"
+#: Karta chizilganda yoziladigan "sahifa" (`FarqKarta.tsx` → `sahifaYoz`).
+FARQ_KORISH = "/imtihon/:id/natija"
+#: Reja tugmasidan keyin shuncha kun ichidagi to'lov kartaga yoziladi.
+FARQ_OYNA = timedelta(days=14)
+
+
+def farq_voronkasi(boshi) -> dict:
+    """
+    Farq kartasi Premium sotadimi: kartani ko'rgan → "AI reja" bosgan →
+    ulardan 14 kun ichida Premium TO'LAGAN (admin tasdiqlagan chek).
+
+    "Ko'rgan" — karta chizilganda yozilgan hodisa (`FARQ_KORISH`): natija
+    serverga yetib bormasa ham sanaladi. Bu hodisa 2026-10-15 dan beri
+    bor, shuning uchun undan oldingi davr uchun serverdagi DTM natijalari
+    ham qo'shiladi (karta har DTM natijasida chiqadi).
+
+    Sinov va tanga almashuvi sanalmaydi — savol "pul to'ladimi". To'lov
+    birinchi reja bosishidan KEYIN bo'lishi shart: oldin Premium olgan
+    odamni karta sotmagan. Haftalar davr boshidan sanaladi.
+    """
+    from .models import ImtihonNatija, PremiumTolov
+
+    bosish = Hodisa.objects.filter(tur=Hodisa.BOSISH, created_at__gte=boshi)
+    dtm = ImtihonNatija.objects.filter(kurs="", tur="", created_at__gte=boshi)
+    korish = Hodisa.objects.filter(tur=Hodisa.SAHIFA, yol=FARQ_KORISH, created_at__gte=boshi)
+    ishlatgan = set(dtm.values_list("profile__pupil", flat=True)) | set(korish.values_list("pupil", flat=True))
+    birinchi_reja = {r["pupil"]: r["v"] for r in
+                     bosish.filter(nom=FARQ_REJA).values("pupil").annotate(v=Min("created_at"))}
+    # Reja bosgan odam kartani albatta ko'rgan (natijasi davrdan oldin bo'lsa ham).
+    ishlatgan |= set(birinchi_reja)
+    tolovlar: dict[int, list] = {}
+    for p, v in (PremiumTolov.objects.filter(pupil__in=birinchi_reja, holat=PremiumTolov.TASDIQLANDI)
+                 .values_list("pupil", "created_at")):
+        tolovlar.setdefault(p, []).append(v)
+    toladi = {p for p, v in birinchi_reja.items()
+              if any(v <= t <= v + FARQ_OYNA for t in tolovlar.get(p, []))}
+
+    def foiz(a: int, b: int) -> int:
+        return round(100 * a / b) if b else 0
+
+    # Haftalik: reja bosgan odam o'zining BIRINCHI bosishi haftasiga tushadi.
+    haftalar = []
+    hozir = timezone.now()
+    h = boshi
+    while h < hozir:
+        oxiri = min(h + timedelta(days=7), hozir)
+        rejachi = {p for p, v in birinchi_reja.items() if h <= v < oxiri}
+        haftalar.append({
+            "boshi": h,
+            "ishlatgan": len(
+                set(dtm.filter(created_at__gte=h, created_at__lt=oxiri).values_list("profile__pupil", flat=True))
+                | set(korish.filter(created_at__gte=h, created_at__lt=oxiri).values_list("pupil", flat=True))),
+            "reja": len(rejachi), "toladi": len(rejachi & toladi),
+        })
+        h = oxiri
+    return {
+        "ishlatgan": len(ishlatgan),
+        "reja": len(birinchi_reja),
+        "reja_foiz": foiz(len(birinchi_reja), len(ishlatgan)),
+        "toladi": len(toladi),
+        "toladi_foiz": foiz(len(toladi), len(birinchi_reja)),
+        "umumiy_foiz": foiz(len(toladi), len(ishlatgan)),
+        "haftalar": list(reversed(haftalar)),
+    }
+
+
 def statistika(kunlar: int = 30) -> dict:
     hozir = timezone.now()
     boshi = hozir - timedelta(days=kunlar)
@@ -598,6 +666,7 @@ def statistika(kunlar: int = 30) -> dict:
         "oxirgilar": oxirgilar,
         "auditoriya": auditoriya(),
         "oyin": oyin_tahlili(boshi),
+        "farq": farq_voronkasi(boshi),
         "qaytish": qaytish(boshi, kunlar_boyicha),
         "manbalar": manbalar(boshi, kunlar_boyicha),
         "chiqishlar": chiqish_nuqtalari(boshi),

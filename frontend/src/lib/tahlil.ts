@@ -113,6 +113,15 @@ function qosh(h: Omit<Hodisa, "vaqt">) {
   navbat.push({ ...h, vaqt: Date.now() });
 }
 
+/**
+ * Marshrutsiz "sahifa" — ekran ichidagi holat (masalan DTM natijasi:
+ * manzil test bilan bir xil `/imtihon/:id`). Panel uni oddiy sahifa
+ * kabi sanaydi (`tahlil.farq_voronkasi` — farq kartasini ko'rganlar).
+ */
+export function sahifaYoz(yol: string): void {
+  qosh({ tur: "sahifa", yol });
+}
+
 function yubor() {
   if (!navbat.length || !isSignedIn()) return;
   const hozir = Date.now();
