@@ -42,6 +42,7 @@ import { TOLAQ_TAKROR } from "./tolaqTakror";
 import { TOLAQ_ANALIZ } from "./tolaqAnaliz";
 import { TOLAQ_GEOMETRIYA } from "./tolaqGeometriya";
 import { TOLAQ_OLIY } from "./tolaqOliy";
+import { TOLAQ_DTM } from "./tolaqDtm";
 
 /** Ikki tildagi matn: [o'zbekcha, ruscha]. */
 export type Juft = [string, string];
@@ -1547,6 +1548,101 @@ const KURSGA: Record<string, Nazariya> = {
     e: ["Bo'lib bo'lmaydigan holatgacha qisqartiring: 12/18 → 6/9 hali oxiri emas, 2/3 gacha.",
       "Сокращайте до несократимой дроби: 12/18 → 6/9 ещё не конец, нужно до 2/3."],
   },
+
+  /* ---- DTM qo'shimcha boblari (`lib/oliy/dtmQoshimcha.ts`). Kurs kaliti bilan:
+     "Qoldiqli bo'lish" 3-sinfda ham bor va u yerdagi karta bolalar uchun. ---- */
+  "algebra7|Qoldiqli bo'lish": {
+    q: ["Bo'linuvchi = bo'luvchi · bo'linma + qoldiq. Qoldiq manfiy emas va har doim bo'luvchidan kichik.",
+      "Делимое = делитель · частное + остаток. Остаток неотрицателен и всегда меньше делителя."],
+    f: ["a = b · q + r,   0 ≤ r < b", "340 = 7 · 48 + 4"],
+    e: ["Bo'linmani (48) qoldiq deb yozmang — so'ralgani r.", "Не путайте частное (48) с остатком — спрашивают r."],
+  },
+  "algebra7|Qoldiqlar ustida amallar": {
+    q: ["Yig'indi va ko'paytmaning qoldig'ini topish uchun sonlarning o'zi kerak emas — qoldiqlari yetadi.",
+      "Чтобы найти остаток суммы или произведения, сами числа не нужны — достаточно их остатков."],
+    f: ["(a + b) mod m = (r₁ + r₂) mod m", "(a · b) mod m = (r₁ · r₂) mod m"],
+    e: ["Natijani yana m ga bo'ling: r₁ = 5, r₂ = 8, m = 9 da 13 javob emas, 13 = 9 + 4 → 4.",
+      "Результат снова делите на m: при r₁ = 5, r₂ = 8, m = 9 ответ не 13, а 13 = 9 + 4 → 4."],
+  },
+  "algebra7|Darajaning oxirgi raqami": {
+    q: ["Darajaning oxirgi raqami faqat asosning oxirgi raqamiga bog'liq va 4 qadamda takrorlanadi.",
+      "Последняя цифра степени зависит только от последней цифры основания и повторяется через 4 шага."],
+    f: ["7: 7, 9, 3, 1, 7, …", "7⁸³:  83 = 4 · 20 + 3  →  3"],
+    e: ["n 4 ga qoldiqsiz bo'linsa, davrning 4-hadi olinadi: 2⁸⁴ → 6, 1 emas.",
+      "Если n делится на 4, берётся 4-й член цикла: 2⁸⁴ → 6, а не 1."],
+  },
+  "algebra7|Bo'luvchilar soni": {
+    q: ["Sonni tub ko'paytuvchilarga ajrating, har ko'rsatkichga 1 qo'shib, ko'paytiring.",
+      "Разложите число на простые множители, к каждому показателю прибавьте 1 и перемножьте."],
+    f: ["N = pᵃ · qᵇ   →   τ(N) = (a + 1)(b + 1)", "360 = 2³ · 3² · 5   →   4 · 3 · 2 = 24"],
+    e: ["Ko'rsatkichlarning o'zini ko'paytirmang: 3 · 2 · 1 = 6 noto'g'ri.",
+      "Не перемножайте сами показатели: 3 · 2 · 1 = 6 — неверно."],
+  },
+  "algebra7|Bo'luvchilar yig'indisi": {
+    q: ["Har tub son uchun 1 dan uning eng katta darajasigacha qo'shing, so'ng natijalarni ko'paytiring.",
+      "Для каждого простого сложите степени от 1 до наибольшей, затем перемножьте результаты."],
+    f: ["σ(pᵃqᵇ) = (1 + p + … + pᵃ)(1 + q + … + qᵇ)", "12 = 2² · 3   →   (1 + 2 + 4)(1 + 3) = 28"],
+    e: ["Yig'indiga 1 ham, sonning o'zi ham kiradi: 1 + 2 + 3 + 4 + 6 + 12 = 28.",
+      "В сумму входят и 1, и само число: 1 + 2 + 3 + 4 + 6 + 12 = 28."],
+  },
+  "algebra9|Ildizlar soni va parametr": {
+    q: ["Ildizlar sonini diskriminant aytadi: D > 0 — ikkita, D = 0 — bitta, D < 0 — yo'q.",
+      "Число корней определяет дискриминант: D > 0 — два, D = 0 — один, D < 0 — нет."],
+    f: ["x² + 6x + a = 0:   D/4 = 9 − a",
+      ["a = 9 — bitta,  a < 9 — ikkita,  a > 9 — yo'q", "a = 9 — один,  a < 9 — два,  a > 9 — нет"]],
+    e: ["Juft b da D/4 = k² − ac qulayroq: hisob kichik, xato kam.", "При чётном b удобнее D/4 = k² − ac: меньше вычислений и ошибок."],
+  },
+  "algebra9|Bosh koeffitsientda parametr": {
+    q: ["x² oldida parametr bo'lsa, avval u nolga teng holatni alohida tekshiring — tenglama chiziqli bo'lib qoladi.",
+      "Если параметр стоит при x², сначала отдельно проверьте случай, когда он равен нулю: уравнение становится линейным."],
+    f: ["(a − 3)x² + 2x + 1 = 0", "a = 3:  2x + 1 = 0;   a ≠ 3:  D/4 = 1 − (a − 3) = 0  →  a = 4"],
+    e: ["Javob ikkita: a = 3 va a = 4. Faqat D = 0 ni yozish — eng ko'p uchraydigan xato.",
+      "Ответ из двух значений: a = 3 и a = 4. Писать только D = 0 — самая частая ошибка."],
+  },
+  "algebra9|Parametr va Viyet teoremasi": {
+    q: ["Bitta ildiz berilsa, ikkinchisini ko'paytmadan, parametrni yig'indidan toping.",
+      "Если дан один корень, второй найдите из произведения, параметр — из суммы."],
+    f: ["x² + px + q = 0:   x₁ + x₂ = −p,   x₁ · x₂ = q", "x² + px + 12 = 0, x₁ = 3  →  x₂ = 4,  p = −7"],
+    e: ["p = −(x₁ + x₂): minusni unutsangiz javob 7 chiqadi.", "p = −(x₁ + x₂): без минуса получится 7."],
+  },
+  "algebra9|Chiziqli tenglamada parametr": {
+    q: ["kx = b: k ≠ 0 — bitta yechim; k = 0, b = 0 — cheksiz ko'p; k = 0, b ≠ 0 — yechim yo'q.",
+      "kx = b: k ≠ 0 — одно решение; k = 0, b = 0 — бесконечно много; k = 0, b ≠ 0 — решений нет."],
+    f: ["(a − 3)x = a² − 9:   a = 3  →  0 · x = 0", "(a − 3)x = a + 2:   a = 3  →  0 · x = 5"],
+    e: ["a = −3 da (a − 3)x = a² − 9 tenglama −6x = 0 bo'ladi — bitta yechim, cheksiz emas.",
+      "При a = −3 уравнение (a − 3)x = a² − 9 даёт −6x = 0 — одно решение, а не бесконечно много."],
+  },
+  "algebra9|Ildizlar ishorasi va parametr": {
+    q: ["Ikkita musbat ildiz uchun uch shart birga: D > 0, x₁ · x₂ > 0, x₁ + x₂ > 0.",
+      "Для двух положительных корней нужны три условия сразу: D > 0, x₁ · x₂ > 0, x₁ + x₂ > 0."],
+    f: ["x² − 6x + a = 0:   9 − a > 0,   a > 0,   6 > 0", "0 < a < 9"],
+    e: ["Faqat D > 0 ni yozib qo'ymang — a manfiy bo'lsa ildizlardan biri manfiy.",
+      "Не ограничивайтесь D > 0 — при отрицательном a один из корней отрицателен."],
+  },
+  "matematika11|Kesik konus yasovchisi": {
+    q: ["Kesik konusning o'q kesimi — teng yonli trapetsiya. Yasovchi — uning yon tomoni.",
+      "Осевое сечение усечённого конуса — равнобедренная трапеция. Образующая — её боковая сторона."],
+    f: ["l² = h² + (R − r)²", "R = 7, r = 4, h = 4:   l = 5"],
+    e: ["(R − r) olinadi, (R + r) emas.", "Берётся (R − r), а не (R + r)."],
+  },
+  "matematika11|Kesik konus yon sirti": {
+    q: ["Yon sirt yasovchi bilan ikkala asos radiuslari yig'indisining ko'paytmasi, π ga ko'paytirilgan.",
+      "Боковая поверхность — π, умноженное на образующую и сумму радиусов оснований."],
+    f: ["S = πl(R + r)", "l = 5, R = 7, r = 4:   S = 55π"],
+    e: ["Balandlik emas, yasovchi qatnashadi.", "Участвует образующая, а не высота."],
+  },
+  "matematika11|Kesik konus hajmi": {
+    q: ["Hajm formulasida uchta had bor: ikkala asos va ularning \"o'rtasi\" Rr.",
+      "В формуле объёма три слагаемых: оба основания и «среднее» Rr."],
+    f: ["V = πh(R² + Rr + r²) / 3", "R = 4, r = 2, h = 3:   V = 28π"],
+    e: ["Rr hadini tushirib qoldirmang va 3 ga bo'lishni unutmang.", "Не теряйте слагаемое Rr и не забывайте делить на 3."],
+  },
+  "matematika11|Kesik piramida hajmi": {
+    q: ["Asoslar yuzalari S₁, S₂ bo'lsa, o'rtadagi had ularning o'rta geometrigi √(S₁S₂).",
+      "Если площади оснований S₁ и S₂, среднее слагаемое — их среднее геометрическое √(S₁S₂)."],
+    f: ["V = h(S₁ + S₂ + √(S₁S₂)) / 3", "a = 4, b = 2, h = 6:   V = 6 · (16 + 4 + 8) / 3 = 56"],
+    e: ["Kvadrat asosda √(S₁S₂) = a · b.", "Для квадратных оснований √(S₁S₂) = a · b."],
+  },
 };
 
 /** Darsning nazariyasi: avval kursga xosi, keyin nom bo'yicha umumiysi. */
@@ -1577,7 +1673,7 @@ export interface Tolaq {
 const TOLAQ: Record<string, Tolaq> = {
   ...TOLAQ_GEOMETRIYA, ...TOLAQ_ALGEBRA, ...TOLAQ_ANALIZ,
   ...TOLAQ_ALGEBRA7, ...TOLAQ_GEOMETRIYA7, ...TOLAQ_ALGEBRA8, ...TOLAQ_GEOMETRIYA8,
-  ...TOLAQ_ALGEBRA9, ...TOLAQ_GEOMETRIYA9, ...TOLAQ_KATTA, ...TOLAQ_TAKROR, ...TOLAQ_OLIY,
+  ...TOLAQ_ALGEBRA9, ...TOLAQ_GEOMETRIYA9, ...TOLAQ_KATTA, ...TOLAQ_TAKROR, ...TOLAQ_OLIY, ...TOLAQ_DTM,
 };
 
 /** 7–11-sinf kurslari: `algebra7`, `geometriya10`, `matematika11`. Quyi sinflarda bir xil nomli dars boshqa narsa haqida. */

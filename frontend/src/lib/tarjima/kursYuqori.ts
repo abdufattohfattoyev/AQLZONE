@@ -430,4 +430,31 @@ export const RU_YUQORI: Record<string, string> = {
     "Математическое ожидание дискретной случайной величины и параметры биномиального распределения.",
   "Tanlanma nimani aytadi": "О чём говорит выборка",
   "Tanlanmaning o'rta qiymati, medianasi va kengligi.": "Среднее значение, медиана и размах выборки.",
+
+  /* =============== DTM qo'shimcha boblari (2026-10-15) =============== */
+  "Bo'linish va qoldiqlar": "Делимость и остатки",
+  "Qoldiq ham ma'lumot": "Остаток — тоже информация",
+  "Katta sonni bo'lmasdan ham qoldig'ini, oxirgi raqamini va bo'luvchilari sonini topish mumkin.":
+    "Остаток, последнюю цифру и число делителей большого числа можно найти, не деля его.",
+  "Qoldiqlar ustida amallar": "Действия с остатками",
+  "Darajaning oxirgi raqami": "Последняя цифра степени",
+  "Bo'luvchilar soni": "Число делителей",
+  "Bo'luvchilar yig'indisi": "Сумма делителей",
+  "Parametrli tenglamalar": "Уравнения с параметром",
+  "Harf turgan koeffitsient": "Коэффициент-буква",
+  "Parametr — bir emas, butun tenglamalar oilasi. Savol: qaysi a da nechta ildiz bo'ladi?":
+    "Параметр — это не одно уравнение, а целое семейство. Вопрос: при каких a сколько корней?",
+  "Ildizlar soni va parametr": "Число корней и параметр",
+  "Bosh koeffitsientda parametr": "Параметр при старшем коэффициенте",
+  "Parametr va Viyet teoremasi": "Параметр и теорема Виета",
+  "Chiziqli tenglamada parametr": "Параметр в линейном уравнении",
+  "Ildizlar ishorasi va parametr": "Знаки корней и параметр",
+  "Kesik konus va kesik piramida": "Усечённый конус и усечённая пирамида",
+  "Uchi kesilgan jism": "Тело со срезанной вершиной",
+  "Konus yoki piramidaning uchini asosga parallel tekislik bilan kesamiz — ikkita asosli jism qoladi.":
+    "Срезаем вершину конуса или пирамиды плоскостью, параллельной основанию, — остаётся тело с двумя основаниями.",
+  "Kesik konus yasovchisi": "Образующая усечённого конуса",
+  "Kesik konus yon sirti": "Боковая поверхность усечённого конуса",
+  "Kesik konus hajmi": "Объём усечённого конуса",
+  "Kesik piramida hajmi": "Объём усечённой пирамиды",
 };

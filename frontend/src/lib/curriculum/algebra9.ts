@@ -18,6 +18,10 @@
  * ko'rinishida: `cos(180° − α) = ?` va to'rtta variant. Bu mashq
  * hisoblashni emas, XOTIRANI qurish uchun — o'sha formulalar keyingi
  * ikki yil davomida har kuni kerak bo'ladi.
+ *
+ * 6-bob (Parametrli tenglamalar) — darslikda yo'q, DTM uchun qo'shilgan
+ * (2026-10-15). Kurs yakunidan keyin turadi: bob tartib raqami progressga
+ * bog'langan.
  */
 import type { Unit } from "../types";
 import { withReviews } from "../types";
@@ -104,6 +108,25 @@ const U: Unit[] = [
         n: "9-sinf algebra kursini takrorlash", ic: "repeat",
         gens: [A.a9Ucha, A.a9Keltirish, A.a9ArifHad, A.a9GeoHad, A.a9Ehtimollik, A.a9KvadratTengsizlik],
       },
+    ],
+  },
+  /*
+   * Kursdan TASHQARI bob — DTM uchun (2026-10-15). Oxirida turadi:
+   * progress bob raqami bilan saqlanadi (`lib/oliy/dtmQoshimcha.ts`).
+   */
+  {
+    u: "6-bob. Parametrli tenglamalar", ic: "scale", color: "purple",
+    intro: {
+      t: "Harf turgan koeffitsient",
+      v: ["x²", "+", "a"],
+      d: "Parametr — bir emas, butun tenglamalar oilasi. Savol: qaysi a da nechta ildiz bo'ladi?",
+    },
+    lessons: [
+      { n: "Ildizlar soni va parametr", ic: "numline", gens: Array(6).fill(A.p9IldizSoni) },
+      { n: "Bosh koeffitsientda parametr", ic: "search", gens: Array(6).fill(A.p9BoshParam) },
+      { n: "Parametr va Viyet teoremasi", ic: "equals", gens: Array(6).fill(A.p9ParamViyet) },
+      { n: "Chiziqli tenglamada parametr", ic: "scale", gens: Array(6).fill(A.p9ParamChiziqli) },
+      { n: "Ildizlar ishorasi va parametr", ic: "sign", gens: Array(6).fill(A.p9ParamIshora) },
     ],
   },
 ];

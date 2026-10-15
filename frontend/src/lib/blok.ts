@@ -85,7 +85,8 @@ export const dtmBormi = (sinf: number): boolean => sinf === 11;
 export type Qamrov =
   | { tur: "hammasi" }
   | { tur: "bob"; kursId: string; ui: number }
-  | { tur: "imtihon" }
+  /** `eski` — 2026-10-15 gacha bo'lgan boblar (`YANGI_BOBLAR` siz): eski variantlar o'zgarmasin. */
+  | { tur: "imtihon"; eski?: boolean }
   /**
    * Bir nechta bob — DTM yoki sertifikatdan keyingi ZAIF MAVZULAR
    * mashqi (`screens/ZaifMashq.tsx`). Boblar turli sinf va kurslardan
@@ -107,6 +108,14 @@ export type Qamrov =
  * baribir yuqori sinf savollari ichida ishlatiladi.
  */
 export const IMTIHON_SINFLAR = [7, 8, 9, 10, 11];
+
+/**
+ * 2026-10-15 da kurslar OXIRIGA qo'shilgan DTM boblari ("kurs|bob").
+ * DTM ning 1–12 variantlari va marafon ularsiz yig'iladi: savollar urug'dan
+ * yasaladi va hovuz o'zgarsa, eski variantlar boshqa savol berib qo'yardi
+ * (saqlangan javoblar, haftalik reyting buzilardi).
+ */
+export const YANGI_BOBLAR = new Set(["algebra7|6", "algebra9|5", "matematika11|6"]);
 
 /* ------------------------------------------------------------- savol */
 
@@ -295,6 +304,11 @@ export function blokYasa(
     hammasi.push(...manbalar(c, c.units, qamrov.ui));
   } else {
     for (const c of kurslar) hammasi.push(...manbalar(c, c.units));
+    if (qamrov.tur === "imtihon" && qamrov.eski) {
+      for (let i = hammasi.length - 1; i >= 0; i--) {
+        if (YANGI_BOBLAR.has(`${hammasi[i]!.kursId}|${hammasi[i]!.ui}`)) hammasi.splice(i, 1);
+      }
+    }
   }
   if (!hammasi.length) return null;
 

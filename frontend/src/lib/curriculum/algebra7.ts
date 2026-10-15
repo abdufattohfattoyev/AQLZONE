@@ -16,6 +16,10 @@
  * Yasashga doir va isbotlashga doir mashqlar bu yerda yo'q — ular
  * daftarda bajariladi. Ilova hisoblash va tanib olishni mashq
  * qildiradi, o'sha ikkisi esa takrorlashni talab qiladi.
+ *
+ * 7-bob (Bo'linish va qoldiqlar) — darslikda yo'q, DTM uchun qo'shilgan
+ * (2026-10-15). Kurs yakunidan keyin turadi: bob tartib raqami progressga
+ * bog'langan.
  */
 import type { Unit } from "../types";
 import { withReviews } from "../types";
@@ -122,6 +126,26 @@ const U: Unit[] = [
         n: "7-sinf algebra kursini takrorlash", ic: "repeat",
         gens: [A.a7Tenglama, A.a7DarajaXossa, A.a7KophadKophad, A.a7Kvadrat, A.a7KasrQisqa, A.a7Kombinatorika],
       },
+    ],
+  },
+  /*
+   * Kursdan TASHQARI bob — DTM uchun (2026-10-15). Oxirida turadi:
+   * progress bob raqami bilan saqlanadi va o'rtaga qo'shilgan bob o'tilgan
+   * darslarni boshqa bobga ko'chirib yuborardi (`lib/oliy/dtmQoshimcha.ts`).
+   */
+  {
+    u: "7-bob. Bo'linish va qoldiqlar", ic: "puzzle", color: "blue",
+    intro: {
+      t: "Qoldiq ham ma'lumot",
+      v: ["a", "=", "bq + r"],
+      d: "Katta sonni bo'lmasdan ham qoldig'ini, oxirgi raqamini va bo'luvchilari sonini topish mumkin.",
+    },
+    lessons: [
+      { n: "Qoldiqli bo'lish", ic: "puzzle", gens: Array(6).fill(A.n7Qoldiq) },
+      { n: "Qoldiqlar ustida amallar", ic: "plus", gens: Array(6).fill(A.n7QoldiqAmal) },
+      { n: "Darajaning oxirgi raqami", ic: "power", gens: Array(6).fill(A.n7OxirgiRaqam) },
+      { n: "Bo'luvchilar soni", ic: "count", gens: Array(6).fill(A.n7BoluvchiSoni) },
+      { n: "Bo'luvchilar yig'indisi", ic: "plus", gens: Array(6).fill(A.n7BoluvchiYigindi) },
     ],
   },
 ];

@@ -18,6 +18,10 @@
  * darslikdagidek: avval hosila va integral, keyin fazoviy jismlar,
  * oxirida ehtimollik — chunki ehtimollik bo'limi ikkala qismdagi
  * hisoblash malakasini talab qiladi.
+ *
+ * 7-bob (Kesik konus va kesik piramida) — DTM uchun qo'shilgan
+ * (2026-10-15). Kurs yakunidan keyin turadi: bob tartib raqami progressga
+ * bog'langan.
  */
 import type { Unit } from "../types";
 import { withReviews } from "../types";
@@ -118,6 +122,24 @@ const U: Unit[] = [
         n: "Yakuniy takrorlash", ic: "trophy",
         gens: [A.y11HosilaKophad, A.y11AniqIntegral, A.s11SilindrHajm, A.s11SharHajm, A.y11Kombinatsiya, A.y11Urinma],
       },
+    ],
+  },
+  /*
+   * Kursdan TASHQARI bob — DTM uchun (2026-10-15). Oxirida turadi:
+   * progress bob raqami bilan saqlanadi (`lib/oliy/dtmQoshimcha.ts`).
+   */
+  {
+    u: "7-bob. Kesik konus va kesik piramida", ic: "cube", color: "green",
+    intro: {
+      t: "Uchi kesilgan jism",
+      v: ["R", "r", "h"],
+      d: "Konus yoki piramidaning uchini asosga parallel tekislik bilan kesamiz — ikkita asosli jism qoladi.",
+    },
+    lessons: [
+      { n: "Kesik konus yasovchisi", ic: "ruler", gens: Array(6).fill(A.s11KesikYasovchi) },
+      { n: "Kesik konus yon sirti", ic: "shape", gens: Array(6).fill(A.s11KesikYonSirt) },
+      { n: "Kesik konus hajmi", ic: "cube", gens: Array(6).fill(A.s11KesikHajm) },
+      { n: "Kesik piramida hajmi", ic: "cube", gens: Array(6).fill(A.s11KesikPiramida) },
     ],
   },
 ];

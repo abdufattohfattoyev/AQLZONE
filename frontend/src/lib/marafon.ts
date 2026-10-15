@@ -48,5 +48,5 @@ export function marafonYubor(
 /** Kunning varianti — DTM qamrovi (7–11 sinf), `savol` ta savol, `daqiqa` daqiqa. */
 export function marafonBlok(id: number, kun: number, savol: number, daqiqa: number): Blok | null {
   return urugBilan(kunUrugi(`marafon-${id}-${kun}`, 7), () =>
-    blokYasa(11, "dtm", { tur: "imtihon" }, { savol, daqiqa }));
+    blokYasa(11, "dtm", { tur: "imtihon", eski: true }, { savol, daqiqa }));
 }

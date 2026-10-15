@@ -205,6 +205,24 @@ const Y = {
   kutilmaQ: ["M(X) = Σ xᵢ pᵢ", "M(X) = Σ xᵢ pᵢ"],
   dispersiyaQ: ["D(X) = M(X²) − M(X)²", "D(X) = M(X²) − M(X)²"],
   kenglikQ: ["R = x_max − x_min", "R = x_max − x_min"],
+
+  /* ---------------- DTM qo'shimcha: qoldiq, parametr, kesik jismlar ---------------- */
+  qoldiqliBolish: ["Bo'linuvchi = bo'luvchi · bo'linma + qoldiq", "Делимое = делитель · частное + остаток"],
+  qoldiqQosh: ["Yig'indining qoldig'i — qoldiqlar yig'indisining qoldig'i", "Остаток суммы — остаток суммы остатков"],
+  qoldiqKop: ["Ko'paytmaning qoldig'i — qoldiqlar ko'paytmasining qoldig'i", "Остаток произведения — остаток произведения остатков"],
+  oxirgiDavr: ["Oxirgi raqamlar 4 qadamda takrorlanadi", "Последние цифры повторяются через 4 шага"],
+  tubYoy: ["Tub ko'paytuvchilarga ajratamiz", "Раскладываем на простые множители"],
+  boluvchiSoniF: ["Har ko'rsatkichga 1 qo'shib, ko'paytiramiz", "К каждому показателю прибавляем 1 и перемножаем"],
+  boluvchiYigindiF: ["Har tub son uchun darajalar yig'indisi, so'ng ko'paytma", "Для каждого простого — сумма степеней, затем произведение"],
+  diskriminant4: ["Diskriminantning choragi: D/4 = k² − ac", "Четверть дискриминанта: D/4 = k² − ac"],
+  dNol: ["Yagona ildiz: D = 0", "Единственный корень: D = 0"],
+  dMusbat: ["Ikki ildiz: D > 0", "Два корня: D > 0"],
+  boshNol: ["Bosh koeffitsient nol bo'lsa — tenglama chiziqli", "Если старший коэффициент 0 — уравнение линейное"],
+  chiziqliParam: ["x oldidagi son nol bo'lishi kerak", "Коэффициент при x должен быть равен 0"],
+  kesikYasovchiF: ["Yasovchi: l² = h² + (R − r)²", "Образующая: l² = h² + (R − r)²"],
+  kesikYonF: ["Yon sirt: S = πl(R + r)", "Боковая поверхность: S = πl(R + r)"],
+  kesikHajmF: ["Kesik konus hajmi", "Объём усечённого конуса"],
+  kesikPiramidaF: ["Kesik piramida hajmi", "Объём усечённой пирамиды"],
 } as const;
 
 export type YechimKalit = keyof typeof Y;

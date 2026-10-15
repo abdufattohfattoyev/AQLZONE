@@ -57,7 +57,7 @@ export function variantYasa(n: number): Blok | null {
   if (bor !== undefined) return bor;
   let v: Blok | null;
   if (n <= ESKI_VARIANTLAR) {
-    v = urugBilan(variantUrugi(n), () => blokYasa(11, "dtm", { tur: "imtihon" }, OLCHAM));
+    v = urugBilan(variantUrugi(n), () => blokYasa(11, "dtm", { tur: "imtihon", eski: true }, OLCHAM));
   } else {
     // Oldingi variantlarda chiqqan savollar chetlanadi. Zaxira bilan
     // yig'iladi (ba'zi savol qayta yasalganda ham band bo'lib tashlanadi),

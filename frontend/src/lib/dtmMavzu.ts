@@ -64,10 +64,10 @@ export interface DtmMavzu {
 export const DTM_MAVZULAR: DtmMavzu[] = [
   { slug: "ifodalar", nom: "dtmM_ifodalar", boblar: [
     ["algebra7", 0, "ifoda"], ["algebra7", 2, "ko'phad"], ["algebra7", 3, "ajratish"],
-    ["algebra7", 4, "kasr"], ["algebra8", 0, "kasr"]] },
+    ["algebra7", 4, "kasr"], ["algebra8", 0, "kasr"], ["algebra7", 6, "qoldiq"]] },
   { slug: "tenglamalar", nom: "dtmM_tenglamalar", boblar: [
     ["algebra7", 1, "tenglama"], ["algebra8", 2, "tenglama"], ["algebra9", 1, "Sistema"],
-    ["algebra10", 2, "tenglama"]] },
+    ["algebra10", 2, "tenglama"], ["algebra9", 5, "Parametr"]] },
   { slug: "tengsizliklar", nom: "dtmM_tengsizliklar", boblar: [["algebra8", 1, "Tengsizlik"]] },
   { slug: "funksiyalar", nom: "dtmM_funksiyalar", boblar: [
     ["algebra9", 0, "funksiya"], ["algebra10", 1, "funksiya"]] },
@@ -90,7 +90,7 @@ export const DTM_MAVZULAR: DtmMavzu[] = [
   { slug: "vektorlar", nom: "dtmM_vektorlar", boblar: [["geometriya8", 2, "vektor"]] },
   { slug: "stereometriya", nom: "dtmM_stereometriya", boblar: [
     ["geometriya10", 1, "Stereometriya"], ["geometriya10", 2, "parallel"], ["geometriya10", 3, "perpendikulyar"],
-    ["matematika11", 3, "Prizma"], ["matematika11", 4, "Piramida"]] },
+    ["matematika11", 3, "Prizma"], ["matematika11", 4, "Piramida"], ["matematika11", 6, "Kesik"]] },
 ];
 
 export const mavzuBySlug = (slug: string): DtmMavzu | null =>
