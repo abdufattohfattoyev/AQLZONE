@@ -108,9 +108,14 @@ def tozala_dars(d: dict) -> dict:
     def ovoz(m: str) -> str:
         return re.sub(r"\b(ctg|tg|tan|sin|cos|alpha|Alpha)\b", lambda x: nom[x.group(1)], m)
 
+    daraja = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+
     def doska(m: str) -> str:
         # "5pi/6" → "5π/6", "2pi k" → "2π k"; oldingi bo'shliqqa tegilmaydi ("+ pi" → "+ π").
-        return re.sub(r"(\d*)pi\b", lambda x: f"{x.group(1)}π", m)
+        m = re.sub(r"(\d*)pi\b", lambda x: f"{x.group(1)}π", m)
+        # "a^2" → "a²", "x^10" → "x¹⁰" — doskada ^ belgisi dars emas, kod ko'rinadi.
+        # Qavsli yoki harfli daraja ("2^(x+1)", "a^n") o'zgarmaydi.
+        return re.sub(r"\^(\d{1,2})(?![\d.])", lambda x: x.group(1).translate(daraja), m)
 
     for s in d.get("sahnalar") or []:
         if isinstance(s.get("aytish"), str):
@@ -121,6 +126,7 @@ def tozala_dars(d: dict) -> dict:
         if isinstance(sv, dict):
             sv["variantlar"] = [doska(str(v)) for v in sv.get("variantlar") or []]
             sv["matn"] = doska(str(sv.get("matn") or ""))
+            sv["izoh"] = doska(str(sv.get("izoh") or ""))
         ch = s.get("chizma")
         # Model ba'zan chizmani suhbatdagidek ```chizma ... ``` MATNI qilib yozadi —
         # undan JSON ajratib olinadi (aks holda ilova uni tashlab ketadi).

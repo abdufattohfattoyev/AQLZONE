@@ -1,0 +1,954 @@
+{
+ "slug": "ifodalar",
+ "darslar": [
+  {
+   "n": 1,
+   "nom": "Algebraik ifodalar: had, koeffitsiyent va daraja",
+   "maqsad": "Dars oxirida o'quvchi algebraik ifodadagi hadlarni ajrata oladi, koeffitsiyent va darajani topadi hamda o'xshash hadlarni ixchamlay oladi.",
+   "sahnalar": [
+    {
+     "aytish": "Bugun algebraik ifodaning eng asosiy uchta tushunchasini o'rganamiz. Ular had, koeffitsiyent va daraja. Bu mavzu keyingi barcha algebraik kasrlar va tenglamalar uchun poydevor bo'ladi.",
+     "yozuv": [
+      "Mavzu: had, koeffitsiyent, daraja",
+      "Maqsad: ajratish, topish, ixchamlash"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Hadlar qo'shish va ayirish bo'yicha ajraladi, chunki aynan shu amallar ifodani bo'laklarga bo'ladi. Bir had ichidagi son qismi koeffitsiyent deyiladi. Hadning darajasi esa undagi harflar ko'rsatkichlari yig'indisidir. O'xshash hadlarda harfiy qism bir xil bo'ladi.",
+     "yozuv": [
+      "Hadlar + va - bo'yicha ajraladi",
+      "3x²y da koeffitsiyent 3",
+      "3x²y ning darajasi 2+1=3",
+      "O'xshash hadlar: bir xil harfiy qism"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Keling, buni ifodada ko'ramiz. Besh iks kvadrat minus uch iks igrek plyus yetti minus iks kvadrat plyus to'rt iks igrek ifodada hadlar plus va minus bo'yicha ajraladi. Shunda besh iks kvadrat va minus iks kvadrat o'xshash, minus uch iks igrek va to'rt iks igrek ham o'xshash bo'ladi.",
+     "yozuv": [
+      "5x² - 3xy + 7 - x² + 4xy",
+      "Hadlar: 5x², -3xy, 7, -x², 4xy",
+      "O'xshashlar: 5x² va -x²",
+      "-3xy va 4xy"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Chizmada tomoni iks bo'lgan kvadratga qarang. Uning yuzi iks kvadrat bo'ladi. Shu sabab iks va iks kvadrat turli darajadagi hadlar, demak ular o'xshash had emas.",
+     "yozuv": [
+      "x va x² bir xil narsa emas",
+      "x uzunlik, x² yuzani bildirishi mumkin"
+     ],
+     "chizma": {
+      "tur": "geometriya",
+      "nuqtalar": {
+       "A": [
+        0,
+        0
+       ],
+       "B": [
+        2,
+        0
+       ],
+       "C": [
+        2,
+        2
+       ],
+       "D": [
+        0,
+        2
+       ]
+      },
+      "kesmalar": [
+       "AB",
+       "BC",
+       "CD",
+       "DA"
+      ],
+      "yorliqlar": [
+       {
+        "kesma": "AB",
+        "matn": "x"
+       },
+       {
+        "kesma": "BC",
+        "matn": "x"
+       }
+      ],
+      "burchaklar": [
+       {
+        "uch": "A",
+        "a": "B",
+        "b": "D",
+        "togri": true
+       },
+       {
+        "uch": "B",
+        "a": "A",
+        "b": "C",
+        "togri": true
+       }
+      ]
+     }
+    },
+    {
+     "aytish": "Endi qisqa tekshiruv qilamiz. To'rt a kvadrat be ga o'xshash hadni tanlang.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "4a²b ga o'xshash hadni tanlang.",
+      "variantlar": [
+       "-3a²b",
+       "5ab²",
+       "2a²",
+       "7a²bc"
+      ],
+      "togri": 0,
+      "izoh": "O'xshash hadlarda harfiy qism aynan bir xil bo'ladi. Bu yerda faqat a²b ko'rinishi saqlangan variant birinchi javob."
+     }
+    },
+    {
+     "aytish": "Endi o'xshash hadlarni ixchamlaymiz. Sakkiz a minus uch a plyus besh minus ikki plyus a ifodada avval a li hadlarni, keyin sonlarni birlashtiramiz. Buni qilish mumkin, chunki bir xil turdagi hadlargina qo'shiladi va ayiriladi.",
+     "yozuv": [
+      "8a - 3a + 5 - 2 + a",
+      "a li hadlar: 8a - 3a + a = 6a",
+      "Sonlar: 5 - 2 = 3"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Demak, ifoda olti a plyus uchga teng bo'ladi. E'tibor bering, biz harfiy qismi bir xil bo'lgan hadlarning faqat koeffitsiyentlarini qo'shdik. Bu ixchamlashning asosiy g'oyasi.",
+     "yozuv": [
+      "8a - 3a + 5 - 2 + a = 6a + 3",
+      "Javob: 6a + 3"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Yana bir misol ko'ramiz. Minus ikki iks kvadrat igrek hadida koeffitsiyent minus ikki, daraja esa uch. Chunki iksning ko'rsatkichi ikki, igrekniki bir, yig'indisi uch bo'ladi. To'qqiz esa o'zgarmas had bo'lib, uning darajasi nol.",
+     "yozuv": [
+      "-2x²y + 5xy - y + 9",
+      "Koeffitsiyentlar: -2, 5, -1, 9",
+      "Darajalar: 3, 2, 1, 0"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Navbatdagi savol. Minus yetti a kub be kvadrat hadining darajasini toping.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "-7a³b² hadining darajasi nechaga teng?",
+      "variantlar": [
+       "5",
+       "6",
+       "3",
+       "2"
+      ],
+      "togri": 0,
+      "izoh": "Had darajasi ko'rsatkichlar yig'indisiga teng. Uch bilan ikki yig'indisi besh bo'ladi."
+     }
+    },
+    {
+     "aytish": "Tipik xatoni ko'raylik. Ikki iks bilan uch iks kvadratni qo'shib, besh iks kub deyish mutlaqo noto'g'ri. Sabab shuki, iks va iks kvadrat o'xshash had emas. Yana esda tuting, minus iks hadining koeffitsiyenti minus bir.",
+     "yozuv": [
+      "Xato: 2x + 3x² = 5x³ emas",
+      "Sabab: o'xshash had emas",
+      "To'g'ri yozuv: 2x + 3x²",
+      "-x da koeffitsiyent -1"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi yakuniy savol. Ifodani ixchamlab, to'g'ri javobni tanlang.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "3m² - 4m + 7 + 5m² + m - 2 ni ixchamlang.",
+      "variantlar": [
+       "8m² - 3m + 5",
+       "8m² - 5m + 5",
+       "2m² - 3m + 9",
+       "8m² + 3m + 5"
+      ],
+      "togri": 0,
+      "izoh": "Kvadratli hadlar uch m kvadrat va besh m kvadrat bo'lib, sakkiz m kvadrat beradi. Chiziqli hadlar minus to'rt m va m bo'lib, minus uch m beradi. Sonlar yig'indisi esa besh."
+     }
+    },
+    {
+     "aytish": "Xulosa qilamiz. Hadlar plus va minus bo'yicha ajraladi. Koeffitsiyent sonli ko'paytuvchi, daraja esa ko'rsatkichlar yig'indisi. O'xshash hadlarning faqat koeffitsiyentlari ustida amal qilib, ifodani ixchamlaymiz.",
+     "yozuv": [
+      "Hadlar: + va - bo'yicha ajraladi",
+      "Koeffitsiyent: sonli ko'paytuvchi",
+      "Daraja: ko'rsatkichlar yig'indisi",
+      "O'xshash hadlar ixchamlanadi"
+     ],
+     "chizma": null
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "nom": "Qavslarni ochish va ko'paytirish formulalari",
+   "maqsad": "Dars oxirida o'quvchi qavslarni to'g'ri ochib, birhad va ko'phadlarni ko'paytira oladi hamda qisqa ko'paytirish formulalarini qo'llay oladi.",
+   "sahnalar": [
+    {
+     "aytish": "Bu mavzu DTMda ifodani tez soddalashtirish uchun kerak. Qavs noto'g'ri ochilsa, keyingi hamma hisob buziladi. Bugun uch tayanchni olamiz: taqsimot qonuni, ko'paytirish va qisqa formulalar.",
+     "yozuv": [
+      "Mavzu: qavslarni ochish",
+      "Nega kerak: soddalashtirish",
+      "Asos: har hadga ko'paytirish"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Birinchi qoida shuki, qavs tashqarisidagi son yoki birhad ichkaridagi har bir hadga alohida ko'payadi. Ishora ham ko'payish bo'yicha tarqaladi. Qavs oldidagi minus aslida minus birga ko'paytirishdir.",
+     "yozuv": [
+      "k(a+b)=ka+kb",
+      "k(a-b)=ka-kb",
+      "-(a+b)=-a-b",
+      "-(a-b)=-a+b"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Nega bu to'g'ri ekanini yuzadan ko'ramiz. Katta kvadratning tomoni a bilan be yig'indisiga teng. Ichkaridagi bo'laklar yig'indisi a kvadrat, ikki a be va be kvadratni beradi.",
+     "yozuv": [
+      "(a+b)² = a²+2ab+b²",
+      "(a-b)² = a²-2ab+b²",
+      "(a-b)(a+b) = a²-b²"
+     ],
+     "chizma": {
+      "tur": "geometriya",
+      "nuqtalar": {
+       "A": [
+        0,
+        0
+       ],
+       "B": [
+        6,
+        0
+       ],
+       "C": [
+        6,
+        6
+       ],
+       "D": [
+        0,
+        6
+       ],
+       "E": [
+        4,
+        0
+       ],
+       "F": [
+        4,
+        6
+       ],
+       "G": [
+        0,
+        4
+       ],
+       "H": [
+        6,
+        4
+       ]
+      },
+      "kesmalar": [
+       "AB",
+       "BC",
+       "CD",
+       "DA",
+       "EF",
+       "GH"
+      ],
+      "yorliqlar": [
+       {
+        "kesma": "AE",
+        "matn": "a"
+       },
+       {
+        "kesma": "EB",
+        "matn": "b"
+       },
+       {
+        "kesma": "AG",
+        "matn": "a"
+       },
+       {
+        "kesma": "GD",
+        "matn": "b"
+       }
+      ],
+      "burchaklar": [
+       {
+        "uch": "A",
+        "a": "B",
+        "b": "D",
+        "togri": true
+       }
+      ],
+      "aylanalar": []
+     }
+    },
+    {
+     "aytish": "Keling, oddiy ifodani ochamiz. Uch iks qavs ichida iks minus ikki degani, uch iks avval iksga, so'ng minus ikkiga ko'payadi. So'ng o'xshash hadlarni birlashtiramiz.",
+     "yozuv": [
+      "3x(x-2)+2x",
+      "= 3x²-6x+2x",
+      "= 3x²-4x"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi ikki qavsni ko'paytiramiz. Birinchi qavsning har bir hadi ikkinchi qavsning har bir hadiga ko'payadi. Keyin o'xshash hadlarni yig'amiz.",
+     "yozuv": [
+      "(x+2)(x+5)",
+      "= x²+5x+2x+10",
+      "= x²+7x+10"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Savol. Minus ikki qavs ichida a minus uch, unga to'rt a qo'shilgan ifodani soddalashtiring.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "-2(a-3)+4a = ?",
+      "variantlar": [
+       "2a+6",
+       "6a+6",
+       "2a-6",
+       "-6a+6"
+      ],
+      "togri": 0,
+      "izoh": "Minus ikki qavs ichidagi ikkala hadga tarqaladi: -2a va +6. So'ng 4a bilan qo'shib, 2a+6 hosil bo'ladi."
+     }
+    },
+    {
+     "aytish": "Bir xil ko'rinishlar qayta uchrasa, formula vaqtni tejaydi. Yig'indining kvadratida o'rta had ikki karra ko'paytmadan keladi. Qo'shma ko'paytmalarda esa o'rta hadlar qisqarib, kvadratlar ayirmasi qoladi.",
+     "yozuv": [
+      "(a+b)² = a²+2ab+b²",
+      "(a-b)² = a²-2ab+b²",
+      "(a-b)(a+b) = a²-b²"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Ikki iks bilan uch yig'indisining kvadratini formulada ochamiz. Avval birinchi hadning kvadrati, keyin ikki karra ko'paytma, oxirida oxirgi hadning kvadrati olinadi. Uchning kvadrati to'qqiz ekanini unutmang.",
+     "yozuv": [
+      "(2x+3)²",
+      "= (2x)²+2·2x·3+3²",
+      "= 4x²+12x+9"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Aralash misolda eng qisqa yo'lni tanlaymiz. Iks minus to'rt bilan iks plus to'rt ko'paytmasi kvadratlar ayirmasidir. So'ng ikkinchi ko'paytmani ochib, o'xshash hadlarni yig'amiz.",
+     "yozuv": [
+      "(x-4)(x+4)+2x(x-1)",
+      "= x²-16+2x²-2x",
+      "= 3x²-2x-16"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Eng ko'p xato binom kvadratida uchraydi. Ba'zi o'quvchilar o'rta hadni unutadi yoki qavs oldidagi minusni noto'g'ri tarqatadi. Tekshiruv savoli bitta: ko'paytirish har bir hadga yetdimi.",
+     "yozuv": [
+      "Noto'g'ri: (a+b)² = a²+b²",
+      "To'g'ri: (a+b)² = a²+2ab+b²",
+      "Noto'g'ri: -(x-3) = -x-3",
+      "To'g'ri: -(x-3) = -x+3"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Savol. Iks minus igrekning iks plus igrekka ko'paytmasi nimaga teng.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "(x-y)(x+y) = ?",
+      "variantlar": [
+       "x²-y²",
+       "x²+y²",
+       "x²-2xy+y²",
+       "2x²-2y²"
+      ],
+      "togri": 0,
+      "izoh": "Ko'ndalang hadlar -xy va +xy bo'lib qisqaradi. Natijada faqat kvadratlar ayirmasi qoladi."
+     }
+    },
+    {
+     "aytish": "Savol. Ikki a plus birning kvadrati minus ikki a minus birning kvadratini soddalashtiring.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "(2a+1)²-(2a-1)² = ?",
+      "variantlar": [
+       "4a",
+       "8a",
+       "8a²",
+       "2"
+      ],
+      "togri": 1,
+      "izoh": "A²-B² = (A-B)(A+B) formulasini oling. Bu yerda A=2a+1 va B=2a-1, shunda natija 2·4a = 8a bo'ladi."
+     }
+    },
+    {
+     "aytish": "Xulosa qilamiz. Har safar avval ko'rinishni taning: oddiy qavsmi, ikki qavsmi yoki tayyor formulami. Keyin har bir hadga ko'paytirib, o'xshash hadlarni yig'ing. Shunda DTM uslubidagi ifodalar ancha tez ishlanadi.",
+     "yozuv": [
+      "1) Har hadga ko'paytir",
+      "2) O'xshash hadlarni yig'",
+      "3) Formulani tanib ol"
+     ],
+     "chizma": null
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "nom": "Algebraik kasrlar: ta'rif, soha va qisqartirish",
+   "maqsad": "Dars oxirida o'quvchi algebraik kasrning ma'noga ega bo'lish sohasini aniqlay oladi, surat va maxrajni ko'paytuvchilarga ajratib kasrni qisqartira oladi.",
+   "sahnalar": [
+    {
+     "aytish": "Algebraik kasr oddiy kasrga o'xshaydi, faqat sonlar o'rnida ifodalar turadi. Bu mavzu DTMda soddalashtirish, tenglama va qiymat topishda juda ko'p uchraydi.",
+     "yozuv": [
+      "Algebraik kasr: A/B, B ≠ 0",
+      "Misol: 2x/(x-3), (a+b)/c",
+      "Asosiy savol: soha va qisqartirish"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Eng birinchi qoida shuki, maxraj nol bo'lmaydi. Chunki nolga bo'lishning ma'nosi yo'q. Demak, avval maxrajni nolga teng qiladigan qiymatlarni topamiz.",
+     "yozuv": [
+      "B(x) ≠ 0",
+      "Soha: maxraj 0 bo'lmaydi",
+      "B(x)=0 bo'lsa, kasr aniqlanmaydi"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Masalan, bir bo'lingan x minus 2 va x plyus 1 ko'paytmasi kasrida 2 va manfiy 1 taqiqlanadi. Son o'qidagi ochiq nuqtalar aynan shu qiymatlarni ko'rsatadi.",
+     "yozuv": [
+      "1/((x-2)(x+1))",
+      "x ≠ 2, x ≠ -1",
+      "Soha: (-∞,-1) ∪ (-1,2) ∪ (2,∞)"
+     ],
+     "chizma": {
+      "tur": "sonOqi",
+      "oraliqlar": [
+       {
+        "dan": null,
+        "gacha": -1,
+        "gacha_yopiq": false
+       },
+       {
+        "dan": -1,
+        "gacha": 2,
+        "dan_yopiq": false,
+        "gacha_yopiq": false
+       },
+       {
+        "dan": 2,
+        "gacha": null,
+        "dan_yopiq": false
+       }
+      ],
+      "nuqtalar": [
+       {
+        "x": -1,
+        "yopiq": false
+       },
+       {
+        "x": 2,
+        "yopiq": false
+       }
+      ]
+     }
+    },
+    {
+     "aytish": "Endi sohani topamiz. Avval maxrajni ko'paytuvchilarga ajratsak, qaysi qiymatlar taqiqlanganini tez ko'ramiz. So'ng maxraj nol bo'lmasin deb yozamiz.",
+     "yozuv": [
+      "(x+3)/(x²-x-6)",
+      "x²-x-6=(x-3)(x+2)",
+      "(x-3)(x+2) ≠ 0",
+      "x ≠ 3, x ≠ -2"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Savol. Besh bo'lingan x kvadrat minus 9 kasrning sohasi qaysi?",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "5/(x²-9) kasrning sohasi qaysi?",
+      "variantlar": [
+       "x ∈ R, x ≠ -3, x ≠ 3",
+       "x ∈ R, x ≠ 3",
+       "x ∈ R, x ≠ -3",
+       "x ∈ R"
+      ],
+      "togri": 0,
+      "izoh": "x²-9=(x-3)(x+3). Maxraj nol bo'lmasligi uchun x=3 va x=-3 chiqariladi."
+     }
+    },
+    {
+     "aytish": "Qisqartirishda faqat umumiy ko'paytuvchini qisqartiramiz. Yig'indi yoki ayirmaning ichidan bitta hadni alohida kesib tashlash mumkin emas. Shuning uchun avval ajratish juda muhim.",
+     "yozuv": [
+      "(x²-9)/(x²-3x)",
+      "x²-9=(x-3)(x+3)",
+      "x²-3x=x(x-3)",
+      "Shart: x ≠ 0, x ≠ 3"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi surat va maxrajda bir xil x minus 3 ko'paytuvchisi bor. Uni qisqartiramiz. Lekin eski taqiqlar o'chmaydi, chunki ular boshlang'ich kasrdan kelgan.",
+     "yozuv": [
+      "((x-3)(x+3))/(x(x-3))",
+      "=(x+3)/x",
+      "Javob: (x+3)/x",
+      "bunda x ≠ 0, x ≠ 3"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Yana bir misol ko'ramiz. Avval suratdan umumiy ko'paytuvchini ajratamiz, keyin maxrajni kvadratlar ayirmasi sifatida yozamiz. Shunda umumiy ko'paytuvchi ko'rinadi.",
+     "yozuv": [
+      "(2x²+4x)/(x²-4)",
+      "2x²+4x=2x(x+2)",
+      "x²-4=(x-2)(x+2)",
+      "Shart: x ≠ 2, x ≠ -2"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Bir xil x plyus 2 ko'paytuvchisi qisqaradi. Natija ikki x bo'lingan x minus 2 bo'ladi. Ammo 2 va manfiy 2 baribir taqiqligicha qoladi.",
+     "yozuv": [
+      "(2x(x+2))/((x-2)(x+2))",
+      "=2x/(x-2)",
+      "bunda x ≠ 2, x ≠ -2",
+      "Qisqartirish shartni o'zgartirmaydi"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tipik xato shuki, qisqartirgandan keyin eski taqiq unutib yuboriladi. Masalan, x plyus 2 bo'lingan 2x plyus 4 ifoda ikkidan birga teng, lekin faqat x manfiy 2 bo'lmaganda.",
+     "yozuv": [
+      "(x+2)/(2x+4)",
+      "=(x+2)/(2(x+2))",
+      "=1/2, bunda x ≠ -2",
+      "Xato: shartni yozmaslik"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Savol. x plyus 2 bo'lingan 2x plyus 4 uchun to'g'ri natijani tanlang.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "(x+2)/(2x+4) uchun to'g'ri natijani tanlang.",
+      "variantlar": [
+       "1/2, x ≠ -2",
+       "1/2, x ∈ R",
+       "x/2, x ≠ -2",
+       "1/(x+2), x ≠ -2"
+      ],
+      "togri": 0,
+      "izoh": "2x+4=2(x+2). Umumiy x+2 qisqaradi, lekin boshlang'ich kasr x=-2 da aniqlanmagan."
+     }
+    },
+    {
+     "aytish": "Oxirgi savol. x kvadrat minus 4 bo'lingan x kvadrat plyus x minus 6 kasrni soddalashtirganda qaysi javob chiqadi?",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "(x²-4)/(x²+x-6) ni soddalashtiring.",
+      "variantlar": [
+       "(x+2)/(x+3), x ≠ 2, x ≠ -3",
+       "(x+2)/(x+3), x ≠ -3",
+       "(x-2)/(x+3), x ≠ 2, x ≠ -3",
+       "x+2, x ≠ 2, x ≠ -3"
+      ],
+      "togri": 0,
+      "izoh": "x²-4=(x-2)(x+2), x²+x-6=(x-2)(x+3). x-2 qisqaradi, lekin x=2 va x=-3 taqiqlanadi."
+     }
+    },
+    {
+     "aytish": "Bugun uch tayanch fikrni oldik. Birinchi, maxraj nol bo'lmaydi. Ikkinchi, qisqartirishdan oldin ko'paytuvchilarga ajratamiz. Uchinchi, qisqartirgandan keyin ham eski taqiqlarni saqlaymiz.",
+     "yozuv": [
+      "1) Maxraj ≠ 0",
+      "2) Ajrat va qisqartir",
+      "3) Eski shartni saqla",
+      "DTMda shart juda muhim"
+     ],
+     "chizma": null
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "nom": "Algebraik kasrlar ustida amallar",
+   "maqsad": "Dars oxirida o'quvchi algebraik kasrlarni qo'shish, ayirish, ko'paytirish va bo'lish amallarini umumiy maxraj orqali to'g'ri bajara oladi.",
+   "sahnalar": [
+    {
+     "aytish": "Algebraik kasrlar tenglamalarda, funksiyalarda va DTM savollarida juda ko'p uchraydi. Ularni tez va xatosiz ishlash uchun bitta aniq tartib kerak. Bugun shu tartibni to'rt amal orqali o'rganamiz.",
+     "yozuv": [
+      "Mavzu: algebraik kasrlar ustida amallar",
+      "Maqsad: 4 amalni to'g'ri bajarish"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Qo'shish va ayirishda maxrajlar bir xil bo'lishi kerak. Shuning uchun avval umumiy maxraj topamiz. Bu oddiy kasrlardagi qoida bilan aynan bir xil.",
+     "yozuv": [
+      "a/b ± c/d = (ad ± bc)/bd",
+      "Umumiy maxraj avval topiladi",
+      "b ≠ 0, d ≠ 0"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Ko'paytirishda suratlar o'zaro ko'payadi, maxrajlar ham o'zaro ko'payadi. Bo'lishda esa ikkinchi kasr teskari olinib ko'paytiriladi. Bunga sabab kasrga bo'lish uning teskarisiga ko'paytirish bilan teng.",
+     "yozuv": [
+      "a/b · c/d = ac/bd",
+      "a/b : c/d = ad/bc",
+      "c ≠ 0, b ≠ 0, d ≠ 0"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Har amalni boshlashdan oldin sohani yozib olish foydali. Son o'qida minus bir va bir nuqtalari ochiq qoladi. Demak bu qiymatlarda ifoda ma'noga ega emas.",
+     "yozuv": [
+      "Misol: 1/(x-1) + 2/(x+1)",
+      "Soha: x ≠ -1, x ≠ 1",
+      "Umumiy maxraj: (x-1)(x+1)"
+     ],
+     "chizma": {
+      "tur": "sonOqi",
+      "oraliqlar": [
+       {
+        "dan": null,
+        "gacha": -1,
+        "gacha_yopiq": false
+       },
+       {
+        "dan": -1,
+        "gacha": 1,
+        "dan_yopiq": false,
+        "gacha_yopiq": false
+       },
+       {
+        "dan": 1,
+        "gacha": null,
+        "dan_yopiq": false
+       }
+      ],
+      "nuqtalar": [
+       {
+        "x": -1,
+        "yopiq": false
+       },
+       {
+        "x": 1,
+        "yopiq": false
+       }
+      ]
+     }
+    },
+    {
+     "aytish": "Birinchi misolda umumiy maxraj sifatida iks minus bir va iks plyus bir ko'paytmasini olamiz. Har bir kasrning suratini yetishmagan ko'paytuvchiga ko'paytiramiz.",
+     "yozuv": [
+      "1/(x-1)+2/(x+1)",
+      "= (x+1)/(x²-1) + 2(x-1)/(x²-1)",
+      "= (x+1+2x-2)/(x²-1)"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi o'xshash hadlarni qo'shamiz. Javob uch iks minus bir bo'lingan iks kvadrat minus bir bo'ladi. E'tibor bering, soha o'zgarmaydi.",
+     "yozuv": [
+      "(x+1+2x-2)/(x²-1)",
+      "= (3x-1)/(x²-1)",
+      "x ≠ -1, x ≠ 1"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi siz urinib ko'ring. Uch bo'lingan iksga bir bo'lingan ikki iks qo'shilsa, natija qaysi variant bo'ladi.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "3/x + 1/(2x) = ?",
+      "variantlar": [
+       "7/(2x)",
+       "4/(3x)",
+       "5/(2x)",
+       "2/x"
+      ],
+      "togri": 0,
+      "izoh": "Umumiy maxraj 2x bo'ladi. 3/x kasr 6/(2x) ga teng, so'ng 1/(2x) qo'shiladi va 7/(2x) chiqadi."
+     }
+    },
+    {
+     "aytish": "Endi bo'lish amalli misolni ko'ramiz. Ikkinchi kasrni teskari aylantirib ko'paytiramiz. So'ng hamma ko'phadlarni ko'paytuvchilarga ajratamiz.",
+     "yozuv": [
+      "((x²-4)/(x²+x)) : ((x-2)/x)",
+      "= ((x-2)(x+2)/(x(x+1))) · x/(x-2)",
+      "x ≠ 0, -1, 2"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi umumiy ko'paytuvchilar qisqaradi. Lekin qisqarishdan keyin ham taqiqlangan qiymatlar saqlanadi. Shu sababli iks ikki bo'la olmaydi.",
+     "yozuv": [
+      "((x-2)(x+2)/(x(x+1)))·x/(x-2)",
+      "= (x+2)/(x+1)",
+      "x ≠ 0, -1, 2"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tipik xatoni eslab qoling. Kasrlarni qo'shganda maxrajlarni qo'shib yuborish mumkin emas. Yana qisqartirish faqat ko'paytuvchilar orasida bo'ladi, yig'indi ichida emas.",
+     "yozuv": [
+      "Xato: 1/x + 1/y = 2/(x+y)",
+      "To'g'risi: 1/x + 1/y = (x+y)/xy",
+      "Xato: (x+2)/x = 2",
+      "Qisqartirish faqat ko'paytuvchilarda"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Uchinchi misolda avval qavs ichidagi ayirmani ishlaymiz. U bir bo'lingan iks ko'paytirilgan iks plyus birga teng bo'ladi. So'ng bir xil kasrni o'ziga bo'lamiz va bir hosil bo'ladi.",
+     "yozuv": [
+      "(1/x - 1/(x+1)) : 1/(x(x+1))",
+      "= (1/(x(x+1))) : 1/(x(x+1))",
+      "= 1",
+      "x ≠ 0, -1"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Navbatdagi savol. Ikki iks bo'lingan uch igrekni to'qqiz igrek kvadrat bo'lingan to'rt iks kvadratga ko'paytiring.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "(2x/3y) · (9y²/4x²) = ?",
+      "variantlar": [
+       "3y/(2x)",
+       "3/(2xy)",
+       "3x/(2y)",
+       "y/(2x)"
+      ],
+      "togri": 0,
+      "izoh": "Suratlar va maxrajlar ko'paytiriladi, so'ng x va y qisqaradi. Natija 3y/(2x) bo'ladi, bunda x va y nol emas."
+     }
+    },
+    {
+     "aytish": "Oxirgi savol. Ikki bo'lingan iks plyus birdan bir bo'lingan iks minus bir ayrilsa, qaysi natija chiqadi.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "2/(x+1) - 1/(x-1) = ?",
+      "variantlar": [
+       "(x-3)/(x²-1)",
+       "(x+3)/(x²-1)",
+       "(3x-1)/(x²-1)",
+       "1/(x²-1)"
+      ],
+      "togri": 0,
+      "izoh": "Umumiy maxraj x² minus 1 bo'ladi. Surat 2(x-1) minus (x+1) ga teng, u soddalashib x minus 3 chiqadi."
+     }
+    },
+    {
+     "aytish": "Xulosa shuki, har safar avval sohani tekshirasiz. Qo'shish va ayirishda umumiy maxraj topasiz, bo'lishda esa teskarisiga ko'paytirasiz. Oxirida qisqartirib, taqiqlangan qiymatlarni saqlab qolasiz.",
+     "yozuv": [
+      "1) Avval soha",
+      "2) ± da umumiy maxraj",
+      "3) · da surat va maxraj ko'payadi",
+      "4) : da teskarisiga ko'paytiriladi"
+     ],
+     "chizma": null
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "nom": "DTM darajasidagi aralash masalalar: soddalashtirish, tenglik va qiymat topish",
+   "maqsad": "Dars oxirida o'quvchi algebraik ifodalar va kasrlar ishtirokidagi murakkab DTM uslubidagi aralash savollarni bosqichma-bosqich soddalashtirib, qiymat topish va ayniy tengliklarni tekshirishni bajara oladi.",
+   "sahnalar": [
+    {
+     "aytish": "Bugun biz DTM uslubidagi aralash masalalarni yechamiz. Bunday savollarda tezlikdan oldin tartib muhim bo'ladi. Avval sohani topamiz, keyin soddalashtiramiz, undan so'ng tenglik yoki qiymatni tekshiramiz.",
+     "yozuv": [
+      "DTM aralash masalalar",
+      "1) soha",
+      "2) soddalashtirish",
+      "3) tenglik va qiymat"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Asosiy qoida to'rtta. Birinchi qadam ma'noga ega bo'lish sohasini yozish. Ikkinchi qadam ko'paytuvchilarga ajratish. Uchinchi qadam umumiy maxraj yoki qisqartirish. To'rtinchi qadamgina qiymat qo'yish yoki tenglikni xulosa qilish.",
+     "yozuv": [
+      "1) MEO: maxraj ≠ 0",
+      "2) a²-b²=(a-b)(a+b)",
+      "3) Qisqartirish faqat ko'paytuvchida",
+      "4) Tenglik umumiy sohada qaraladi"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Mana bu son o'qida taqiqlangan nuqtalar ko'rsatilgan. Agar maxraj nol bo'lsa, o'sha nuqta sohadan chiqadi. Demak ifoda soddalashsa ham, dastlabki cheklov saqlanib qoladi. Shu joy DTMda eng ko'p unutib yuboriladi.",
+     "yozuv": [
+      "MEO misol: x ≠ -1, x ≠ 1",
+      "Soha uch bo'lakka ajraladi"
+     ],
+     "chizma": {
+      "tur": "sonOqi",
+      "oraliqlar": [
+       {
+        "dan": null,
+        "gacha": -1,
+        "gacha_yopiq": false
+       },
+       {
+        "dan": -1,
+        "gacha": 1,
+        "dan_yopiq": false,
+        "gacha_yopiq": false
+       },
+       {
+        "dan": 1,
+        "gacha": null,
+        "dan_yopiq": false
+       }
+      ],
+      "nuqtalar": [
+       {
+        "x": -1,
+        "yopiq": false
+       },
+       {
+        "x": 1,
+        "yopiq": false
+       }
+      ]
+     }
+    },
+    {
+     "aytish": "Birinchi misolda ko'paytmani soddalashtiramiz. Avval iks kvadrat minus birni kvadratlar ayirmasi formulasi bilan ajratamiz. Shundan keyin bir xil ko'paytuvchilarni qisqartirish mumkin bo'ladi.",
+     "yozuv": [
+      "E=(x²-1)/(x-1) · 1/(x+1)",
+      "x²-1=(x-1)(x+1)",
+      "E=((x-1)(x+1))/((x-1)(x+1))"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Natija birga teng bo'ldi. Lekin juda muhim joy shuki, dastlabki soha saqlanadi. Shuning uchun iks birda ham, minus birda ham bu ifoda aniqlanmaydi. Masalan iks uch bo'lsa, qiymat bir bo'ladi.",
+     "yozuv": [
+      "E = 1,  x ≠ 1, -1",
+      "x=3 bo'lsa, E=1"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi o'zingiz urinib ko'ring. Iks kvadrat minus to'rt bo'lingan iks minus ikki, ko'paytirilsin bir bo'lingan iks plyus ikki. Soddalashgan ko'rinishni tanlang.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "(x²-4)/(x-2) · 1/(x+2) ifodaning soddalashgan ko'rinishi",
+      "variantlar": [
+       "1",
+       "x+2",
+       "x-2",
+       "(x+2)/(x-2)"
+      ],
+      "togri": 0,
+      "izoh": "x²-4=(x-2)(x+2). Ko'paytuvchilar qisqaradi va natija 1 bo'ladi. MEO: x ≠ 2, -2."
+     }
+    },
+    {
+     "aytish": "Endi ayniy tenglikni tekshiramiz. Chap tomonda kasrlarni ayirish uchun umumiy maxraj olamiz. Maxraj iks minus bir bilan iks plyus birning ko'paytmasi bo'ladi.",
+     "yozuv": [
+      "A=1/(x-1)-1/(x+1)",
+      "A=((x+1)-(x-1))/(x²-1)",
+      "A=2/(x²-1)"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Chap tomon o'ng tomonga aynan teng chiqdi. Demak bu ayniy tenglik umumiy sohada rost. Umumiy soha degani ikkala tomonda ham maxraj nol bo'lmaydigan barcha qiymatlar degani.",
+     "yozuv": [
+      "1/(x-1)-1/(x+1)=2/(x²-1)",
+      "x ≠ -1, x ≠ 1",
+      "Ayniy tenglik umumiy sohada rost"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tipik xatoni ko'raylik. Ba'zi o'quvchilar suratdagi hadni maxraj bilan bekor qiladi. Bu noto'g'ri, chunki qisqartirish faqat ko'paytuvchilar orasida bo'ladi. Yig'indi yoki ayirmada avval ajratish kerak.",
+     "yozuv": [
+      "Xato: (x+2)/x = 2",
+      "To'g'risi: (x+2)/x = 1 + 2/x",
+      "Qisqartirish faqat ko'paytuvchida"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Uchinchi tur masala qiymat topishdir. Agar a plyus bir bo'lingan a uchga teng bo'lsa, har ikki tomonni kvadratga ko'taramiz. Shunda izlanayotgan ifoda tayyor ajralib chiqadi.",
+     "yozuv": [
+      "a + 1/a = 3",
+      "(a + 1/a)² = a² + 2 + 1/a²",
+      "a² + 1/a² = 3² - 2 = 7"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Savol. Bir bo'lingan iks minus bir, minus bir bo'lingan iks plyus bir nimaga teng? To'g'ri javobni tanlang.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "x ≠ ±1 bo'lganda 1/(x-1)-1/(x+1) nimaga teng?",
+      "variantlar": [
+       "2/(x²-1)",
+       "2x/(x²-1)",
+       "-2/(x²-1)",
+       "1/(x²-1)"
+      ],
+      "togri": 0,
+      "izoh": "Umumiy maxraj x²-1 bo'ladi. Surat (x+1)-(x-1)=2, shuning uchun natija 2/(x²-1)."
+     }
+    },
+    {
+     "aytish": "Yana bir DTMcha savol. Agar a plyus bir bo'lingan a uchga teng bo'lsa, a kub plyus bir bo'lingan a kubni toping. Formula bilan tez yechiladi.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "a + 1/a = 3 bo'lsa, a³ + 1/a³ ni toping",
+      "variantlar": [
+       "18",
+       "21",
+       "24",
+       "27"
+      ],
+      "togri": 0,
+      "izoh": "(a+1/a)³=a³+3(a+1/a)+1/a³. Demak 27=izlanayotgan qiymat+9, shundan javob 18."
+     }
+    },
+    {
+     "aytish": "Xulosa qilamiz. Aralash masalada eng avval sohani yozing. Keyin ajrating, umumiy maxraj oling va faqat shundan keyin qiymat qo'ying. Shu tartib sizni xatodan saqlaydi va DTMda vaqt yutadi.",
+     "yozuv": [
+      "MEO -> ajratish -> umumiy maxraj",
+      "Qisqartirish faqat ko'paytuvchida",
+      "Tenglik umumiy sohada tekshiriladi",
+      "Qiymat topishda formuladan foydalaning"
+     ],
+     "chizma": null
+    }
+   ]
+  }
+ ]
+}
