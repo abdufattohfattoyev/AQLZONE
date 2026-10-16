@@ -10,6 +10,7 @@
  */
 import { bolakla, tahlil, tekshir } from "../src/lib/aiChizma";
 import { ovozBolaklari, tekshirDars } from "../src/lib/jonliDars";
+import { jadval, model, qisman } from "../src/lib/chizmaModel";
 
 let xato = 0;
 const shikoyat = (gap: string) => {
@@ -111,6 +112,22 @@ const dars = tekshirDars({ n: 1, nom: "Sinus", sahnalar: [
 ] });
 if (!dars || dars.sahnalar.length !== 2 || dars.sahnalar[0].chizma || dars.sahnalar[1].savol) shikoyat(`dars: ${JSON.stringify(dars)}`);
 else console.log("  ✓ jonli dars: buzilgan chizma, savol va sahna tashlandi");
+
+console.log("\n--- jonli doska modeli ---");
+const gm = model(tekshir('{"tur":"grafik","x":[-3,3],"y":[-1,9],"funksiyalar":[{"f":"x^2","nom":"y = x²"}],'
+  + '"nuqtalar":[{"x":1,"y":1,"nom":"(1;1)"},{"x":2,"y":4}]}')!)!;
+const turlar2 = gm.qadamlar.map((e) => e.tur);
+const birinchiNuqta = turlar2.indexOf("nuqta");
+const egri = gm.qadamlar.findIndex((e) => e.tur === "chiziq" && e.rang === "urgu");
+if (turlar2[0] !== "chiziq" || birinchiNuqta < 0 || egri < birinchiNuqta) shikoyat(`grafik tartibi: ${turlar2.join(",")}`);
+else console.log("  ✓ grafik: o'qlar → nuqtalar → egri chiziq");
+const vaqt = jadval(gm.qadamlar);
+if (Math.abs(vaqt[vaqt.length - 1]!.gacha - 1) > 1e-9) shikoyat("vaqt jadvali 1 da tugamaydi");
+const yarim = qisman([[[0, 0], [10, 0], [10, 10]]], 0.5);
+if (JSON.stringify(yarim.qalam) !== "[10,0]" || yarim.qismlar[0]!.length !== 2) shikoyat(`qisman: ${JSON.stringify(yarim)}`);
+const chorak = qisman([[[0, 0], [10, 0]], [[0, 5], [10, 5]]], 0.75);
+if (JSON.stringify(chorak.qalam) !== "[5,5]" || chorak.qismlar.length !== 2) shikoyat(`qisman (bo'laklar): ${JSON.stringify(chorak)}`);
+else console.log("  ✓ qisman chizish: qalam uzunlik bo'yicha yuradi");
 
 if (tekshir('{"tur":"rasm"}') || tekshir("[]") || tekshir("null")) shikoyat("noma'lum tur qabul qilindi");
 

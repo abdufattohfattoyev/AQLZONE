@@ -2946,6 +2946,13 @@ const S = {
   darsKeyingiSahna: ["Keyingi", "Далее"],
   darsOvoz: ["Ovoz", "Звук"],
   darsTugma: ["Jonli dars", "Живой урок"],
+  darsQadam: ["{n}-qadam / {jami}", "шаг {n} / {jami}"],
+  darsQaytaSahna: ["Qaytadan", "Заново"],
+  darsSora: ["Yana so'rang…", "Спросите ещё…"],
+  darsSoraMatn: [
+    "«{dars}» jonli darsini ko'ryapman. Shu joyida: {joy}. Savolim: {savol}",
+    "Смотрю живой урок «{dars}». В этом месте: {joy}. Мой вопрос: {savol}",
+  ],
   aiXatoQayerda: [
     "Imtihondan keyin «Ko'rib chiqish»da savol ostidagi «AI tushuntirsin» tugmasini bosing.",
     "После экзамена в «Разборе» нажмите «Объяснить с AI» под вопросом.",

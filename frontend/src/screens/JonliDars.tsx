@@ -13,14 +13,15 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AiChizma } from "../components/AiChizma";
+import { JonliDoska, KATAK } from "../components/JonliDoska";
+import { aiBoshla } from "../lib/ai";
 import { mavzuBySlug } from "../lib/dtmMavzu";
 import { mavzuDarslari, ovozBolaklari, ovozManzil } from "../lib/jonliDars";
 import type { Dars, MavzuDarslari, Sahna } from "../lib/jonliDars";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { tebrat, useOrqaga } from "../lib/qobiq";
-import { yolDarsMashq, yolJonliDars } from "../lib/yollar";
+import { yolAiSuhbat, yolDarsMashq, yolJonliDars, yolPremium } from "../lib/yollar";
 
 const QOBIQ = "mx-auto flex min-h-ekran w-full max-w-[560px] flex-col px-4 pt-3 pb-4 min-[360px]:px-[18px]";
 
@@ -142,6 +143,12 @@ function Pleyer({ slug, dars, keyingi, onChiq, onKeyingi, onMashq }: {
   const [ijro, setIjro] = useState(true);
   const [ovozli, setOvozli] = useState(true);
   const [javob, setJavob] = useState<Record<number, number>>({});
+  /** Hozir aytilayotgan gap (subtitrda faqat shu — videodagidek). */
+  const [bolak, setBolak] = useState(0);
+  /** Sahnani qaytadan boshlash — ovoz ham, chizish ham noldan. */
+  const [qayta, setQayta] = useState(0);
+  /** Doskada chizish jarayoni (0..1) — `JonliDoska`. */
+  const [chizT, setChizT] = useState(0);
   const audio = useRef<HTMLAudioElement | null>(null);
   const taymer = useRef<number | undefined>(undefined);
   const jami = dars.sahnalar.length;
@@ -176,6 +183,7 @@ function Pleyer({ slug, dars, keyingi, onChiq, onKeyingi, onMashq }: {
     const navbat = () => {
       if (bekor) return;
       if (i >= bolaklar.length) { tugadi(); return; }
+      setBolak(i);
       const bolak = bolaklar[i++]!;
       if (!ovozli) { taymer.current = window.setTimeout(navbat, oqishVaqti(bolak)); return; }
       const a = audio.current ?? new Audio();
@@ -188,7 +196,31 @@ function Pleyer({ slug, dars, keyingi, onChiq, onKeyingi, onMashq }: {
     // Yozuv va chizma ko'rinib olsin, keyin ovoz.
     taymer.current = window.setTimeout(navbat, bolaklar.length ? 350 : 1800);
     return () => { bekor = true; toxtat(); };
-  }, [S, ijro, ovozli, toxtat]);
+  }, [S, ijro, ovozli, toxtat, qayta]);
+
+  // Yangi sahna yoki "qayta" — subtitr va doska noldan.
+  useEffect(() => { setBolak(0); setChizT(0); }, [idx, qayta]);
+
+  /**
+   * Doskada chizish vaqti — ovozdan tezroq (gapning ~80% ida tugaydi):
+   * o'quvchi oxirgi gapda tayyor rasmga qaraydi. Pauzada to'xtaydi.
+   */
+  const chizishMs = S ? Math.max(2500, Math.min(10000, S.aytish.length * 48)) : 0;
+  useEffect(() => {
+    if (!S || S.savol || !ijro || chizT >= 1) return;
+    // Pauzadan keyin to'xtagan joydan davom etadi; 1 ga yetganda sikl tugaydi.
+    let v = chizT;
+    let oldingi = performance.now();
+    let kadr = requestAnimationFrame(function yur(hozir) {
+      v = Math.min(1, v + (hozir - oldingi) / chizishMs);
+      oldingi = hozir;
+      setChizT(v);
+      if (v < 1) kadr = requestAnimationFrame(yur);
+    });
+    return () => cancelAnimationFrame(kadr);
+    // chizT ataylab yo'q: har kadrda effekt qayta ulanmasin.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [S, ijro, chizishMs, idx, qayta]);
 
   useEffect(() => () => toxtat(), [toxtat]);
 
@@ -256,103 +288,141 @@ function Pleyer({ slug, dars, keyingi, onChiq, onKeyingi, onMashq }: {
 
   /* ---- sahna ---- */
   const tanlangan = javob[idx];
+  const bolaklar = ovozBolaklari(S.aytish);
   return (
     <div className={QOBIQ}>
-      <Tepa onChiq={onChiq} idx={idx} jami={jami} />
-      <section key={idx} className="az-kirish flex flex-1 flex-col gap-3 rounded-clay bg-karta p-4 shadow-clay-sm
-                                     min-[360px]:p-5" aria-live="polite">
-        {S.yozuv.map((q, i) => (
-          <p key={i} className="az-kirish font-display text-[18px] leading-snug min-[360px]:text-[19px]"
-            style={{ animationDelay: `${i * 0.9}s` } as React.CSSProperties}>
-            {q}
-          </p>
-        ))}
-        {S.chizma && (
-          <div className="az-kirish" style={{ animationDelay: `${S.yozuv.length * 0.9}s` }}>
-            <AiChizma c={S.chizma} />
-          </div>
-        )}
-        {/* Subtitr — ovozda aytilayotgan gap. Videodagidek: ovozsiz joyda
-            (avtobus, dars) ham tushuntirish yo'qolmasin. Savolda yo'q —
-            savol matni allaqachon doskada. */}
-        {S.aytish && !S.savol && (
-          <p className="mt-auto rounded-xl bg-sahna px-3.5 py-2.5 text-[14.5px] leading-snug text-ink-soft shadow-ichki">
-            {S.aytish}
-          </p>
-        )}
-        {S.savol && (
-          <div className="flex flex-col gap-2.5">
-            <p className="text-[16px] font-bold leading-snug">{S.savol.matn}</p>
-            <div className="grid grid-cols-2 gap-2">
-              {S.savol.variantlar.map((v, i) => {
-                const bu = tanlangan === i;
-                const togri = i === S.savol!.togri;
-                const rang = tanlangan === undefined ? "bg-sahna shadow-ichki"
-                  : togri ? "bg-brand-green text-white" : bu ? "bg-brand-red text-white" : "bg-sahna opacity-60";
-                return (
-                  <button key={i} type="button" disabled={tanlangan !== undefined} data-tahlil="Jonli dars: javob"
-                    onClick={() => { setJavob((j) => ({ ...j, [idx]: i })); tebrat(togri ? "togri" : "xato"); }}
-                    className={`clay-press min-h-12 rounded-xl px-3 font-display text-[16px] ${rang}`}>
-                    {v}
-                  </button>
-                );
-              })}
-            </div>
-            {tanlangan !== undefined && (
-              <>
-                {S.savol.izoh && <p className="text-[14.5px] leading-snug text-ink-soft">{S.savol.izoh}</p>}
-                <button type="button" onClick={() => otish(idx + 1)} data-tahlil="Jonli dars: savoldan keyin"
-                  className="tugma-3d min-h-12 rounded-2xl bg-brand-green font-display text-[16px] text-white
-                             shadow-[0_5px_0_var(--color-brand-green-d)]">
-                  {t("darsDavom")}
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </section>
+      <Tepa onChiq={onChiq} idx={idx} jami={jami} nom={dars.nom} />
 
-      {/* Boshqaruv: orqaga · to'xtatish · oldinga, chetda ovoz. */}
-      <div className="relative mt-3 flex items-center justify-center gap-3">
-        <Tugma ik="chevron" burchak nom={t("darsOldingi")} on={() => otish(idx - 1)} />
+      {S.savol ? (
+        <section key={idx} className="az-kirish flex flex-1 flex-col gap-3 rounded-clay bg-karta p-4 shadow-clay-sm
+                                       min-[360px]:p-5" style={KATAK} aria-live="polite">
+          <p className="font-display text-[18px] leading-snug">{S.savol.matn}</p>
+          <div className="grid grid-cols-2 gap-2">
+            {S.savol.variantlar.map((v, i) => {
+              const bu = tanlangan === i;
+              const togri = i === S.savol!.togri;
+              const rang = tanlangan === undefined ? "bg-sahna shadow-ichki"
+                : togri ? "bg-brand-green text-white" : bu ? "bg-brand-red text-white" : "bg-sahna opacity-60";
+              return (
+                <button key={i} type="button" disabled={tanlangan !== undefined} data-tahlil="Jonli dars: javob"
+                  onClick={() => { setJavob((j) => ({ ...j, [idx]: i })); tebrat(togri ? "togri" : "xato"); }}
+                  className={`clay-press min-h-12 rounded-xl px-3 font-display text-[16px] ${rang}`}>
+                  {v}
+                </button>
+              );
+            })}
+          </div>
+          {tanlangan !== undefined && (
+            <>
+              {S.savol.izoh && <p className="text-[14.5px] leading-snug text-ink-soft">{S.savol.izoh}</p>}
+              <button type="button" onClick={() => otish(idx + 1)} data-tahlil="Jonli dars: savoldan keyin"
+                className="tugma-3d min-h-12 rounded-2xl bg-brand-green font-display text-[16px] text-white
+                           shadow-[0_5px_0_var(--color-brand-green-d)]">
+                {t("darsDavom")}
+              </button>
+            </>
+          )}
+        </section>
+      ) : (
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <JonliDoska key={`${idx}-${qayta}`} yozuv={S.yozuv} chizma={S.chizma} t={chizT} />
+          {/* Subtitr — faqat hozir aytilayotgan gap, doska ustida (videodagidek).
+              Ovozsiz joyda (avtobus, dars) ham tushuntirish yo'qolmaydi. */}
+          {bolaklar[bolak] && (
+            <p aria-live="polite"
+              className="absolute inset-x-3 bottom-3 rounded-2xl bg-ink/85 px-4 py-2.5 text-center text-[14.5px]
+                         leading-snug text-karta backdrop-blur-sm">
+              {bolaklar[bolak]}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Boshqaruv: oldingi · qayta · to'xtatish · keyingi · ovoz. */}
+      <div className="mt-3 flex items-center justify-center gap-2.5 min-[360px]:gap-3.5">
+        <Tugma nom={t("darsOldingi")} on={() => otish(idx - 1)}><Icon name="chevron" size={18} className="rotate-180" /></Tugma>
+        <Tugma nom={t("darsQaytaSahna")} on={() => { toxtat(); setQayta((x) => x + 1); setIjro(true); }}>
+          <Icon name="repeat" size={18} />
+        </Tugma>
         <button type="button" onClick={() => { setIjro((x) => !x); tebrat("tanlov"); }}
           aria-label={ijro ? t("darsPauza") : t("darsDavom")} data-tahlil="Jonli dars: pauza"
           className="clay-press grid size-14 place-items-center rounded-full bg-brand-blue text-white">
           <Icon name={ijro ? "pause" : "play"} size={24} />
         </button>
-        <Tugma ik="chevron" nom={t("darsKeyingiSahna")} on={() => otish(idx + 1)} />
-        <button type="button" onClick={() => setOvozli((x) => !x)} aria-pressed={!ovozli}
-          aria-label={t("darsOvoz")} data-tahlil="Jonli dars: ovoz"
-          className={`clay-press absolute right-0 grid size-11 place-items-center rounded-full bg-karta shadow-clay-sm ${ovozli ? "text-ink" : "text-ink-dim line-through opacity-60"}`}>
-          <Icon name="ovoz" size={18} />
-        </button>
+        <Tugma nom={t("darsKeyingiSahna")} on={() => otish(idx + 1)}><Icon name="chevron" size={18} /></Tugma>
+        <Tugma nom={t("darsOvoz")} on={() => setOvozli((x) => !x)} bosilgan={!ovozli}>
+          <Icon name="ovoz" size={18} className={ovozli ? "" : "opacity-40"} />
+        </Tugma>
       </div>
+
+      <YanaSora dars={dars} sahna={S} />
     </div>
   );
 }
 
-function Tepa({ onChiq, idx, jami }: { onChiq: () => void; idx: number; jami: number }) {
+/**
+ * "Yana so'rang" — dars ustida savol: AI ustoz suhbati shu dars va sahna
+ * konteksti bilan ochiladi (Premium yoki AI sinovi). O'quvchi tushunmagan
+ * joyini o'sha zahoti so'raydi, darsni qidirib yurmaydi.
+ */
+function YanaSora({ dars, sahna }: { dars: Dars; sahna: Sahna }) {
+  const nav = useNavigate();
+  const [matn, setMatn] = useState("");
+  const [band, setBand] = useState(false);
+  const yubor = async () => {
+    const m = matn.trim();
+    if (!m || band) return;
+    setBand(true);
+    const kontekst = [sahna.yozuv.join("; "), sahna.aytish].filter(Boolean).join(" — ");
+    const r = await aiBoshla("repetitor", { matn: t("darsSoraMatn", { dars: dars.nom, joy: kontekst.slice(0, 600), savol: m }) });
+    setBand(false);
+    nav(r.ok ? yolAiSuhbat(r.qiymat.id) : yolPremium());
+  };
+  return (
+    <form className="mt-3 flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); yubor(); }}>
+      <input value={matn} onChange={(e) => setMatn(e.target.value)} maxLength={500} placeholder={t("darsSora")}
+        aria-label={t("darsSora")}
+        className="min-h-12 min-w-0 flex-1 rounded-2xl bg-karta px-4 text-[15px] shadow-clay-sm outline-none
+                   focus:outline-2 focus:outline-brand-blue" />
+      <button type="submit" disabled={!matn.trim() || band} aria-label={t("aiYuborish")} data-tahlil="Jonli dars: savol"
+        className="clay-press grid size-12 shrink-0 place-items-center rounded-2xl bg-brand-blue/10 text-brand-blue-t
+                   disabled:opacity-45">
+        <Icon name="send" size={19} />
+      </button>
+    </form>
+  );
+}
+
+function Tepa({ onChiq, idx, jami, nom }: { onChiq: () => void; idx: number; jami: number; nom?: string }) {
   return (
     <header className="mb-3 flex min-h-11 items-center gap-3">
       <button type="button" onClick={onChiq} aria-label={t("yopish")}
         className="clay-press grid size-11 shrink-0 place-items-center rounded-[14px] bg-karta shadow-clay-sm">
         <Icon name="close" size={18} />
       </button>
-      <div className="flex flex-1 gap-1" aria-hidden>
-        {Array.from({ length: jami }, (_, i) => (
-          <span key={i} className={`h-1.5 flex-1 rounded-full ${i < idx ? "bg-brand-blue" : i === idx ? "bg-brand-blue/60" : "bg-track"}`} />
-        ))}
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        {/* Dars nomi va qadam — qayerdaligini bir qarashda bildiradi. */}
+        {nom && idx >= 0 && idx < jami && (
+          <p className="truncate text-[13.5px] leading-tight">
+            <b className="font-display">{nom}</b>
+            <span className="text-ink-dim"> · {t("darsQadam", { n: idx + 1, jami })}</span>
+          </p>
+        )}
+        <div className="flex gap-1" aria-hidden>
+          {Array.from({ length: jami }, (_, i) => (
+            <span key={i} className={`h-1.5 flex-1 rounded-full ${i < idx ? "bg-brand-blue" : i === idx ? "bg-brand-blue/60" : "bg-track"}`} />
+          ))}
+        </div>
       </div>
     </header>
   );
 }
 
-function Tugma({ ik, nom, on, burchak = false }: { ik: "chevron"; nom: string; on: () => void; burchak?: boolean }) {
+function Tugma({ nom, on, bosilgan, children }: { nom: string; on: () => void; bosilgan?: boolean; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={on} aria-label={nom} title={nom}
+    <button type="button" onClick={on} aria-label={nom} title={nom} aria-pressed={bosilgan}
       className="clay-press grid size-11 place-items-center rounded-full bg-karta shadow-clay-sm">
-      <Icon name={ik} size={18} className={burchak ? "rotate-180" : ""} />
+      {children}
     </button>
   );
 }
-
