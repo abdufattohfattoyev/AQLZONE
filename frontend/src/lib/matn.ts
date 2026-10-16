@@ -2933,6 +2933,8 @@ const S = {
   aiJavobXato: ["Javob olib bo'lmadi.", "Не удалось получить ответ."],
   aiTushuntir: ["AI tushuntirsin", "Объяснить с AI"],
   aiEslatma: ["AI ham adashishi mumkin — muhim joyini tekshiring.", "AI тоже ошибается — проверяйте важное."],
+  aiRejaKun: ["{n}-kun", "День {n}"],
+  aiRejaDaq: ["{n} daqiqa", "{n} мин"],
   aiTezSodda: ["Soddaroq", "Проще"],
   aiTezSoddaMatn: [
     "Tushunmadim. Soddaroq, kundalik misol bilan qaytadan tushuntiring.",

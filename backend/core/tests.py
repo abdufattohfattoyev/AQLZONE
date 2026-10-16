@@ -10773,12 +10773,24 @@ class AiUstozTest(TestCase):
         self.assertEqual(AI.bolaklarga("y" * 1200, 500), ["y" * 500, "y" * 500, "y" * 200])
 
     def test_chizma_korsatmasi(self):
-        """Yechimda chizma qoidasi bor, rejada yo'q (tokenlar tejaladi)."""
+        """Chizma qoidasi hamma turda; rejada "reja" chizmasi majburiy."""
         from . import ai as AI
 
         self.assertIn("```chizma", AI.tizim_korsatmasi(AiSuhbat.XATO, "uz"))
         self.assertIn("```chizma", AI.tizim_korsatmasi(AiSuhbat.MASALA, "ru"))
-        self.assertNotIn("```chizma", AI.tizim_korsatmasi(AiSuhbat.REJA, "uz"))
+        self.assertIn('"tur":"reja"', AI.tizim_korsatmasi(AiSuhbat.REJA, "uz"))
+
+    def test_reja_botda_matn(self):
+        """Botda reja chizmasi yo'qolmaydi — kunma-kun ro'yxat bo'lib ketadi."""
+        from . import ai as AI
+
+        matn = ('Reja:\n```chizma\n{"tur":"reja","kunlar":[{"kun":"1-kun","ishlar":'
+                '[{"mavzu":"Logarifm","daqiqa":30},{"mavzu":"Progressiya","daqiqa":20}]}]}\n```\nOmad!')
+        chiqdi = AI.chizmasiz(matn, "[ilovada]")
+        self.assertIn("1-kun: Logarifm — 30′; Progressiya — 20′", chiqdi)
+        self.assertNotIn("[ilovada]", chiqdi)
+        self.assertEqual(AI.chizmasiz('```chizma\n{"tur":"grafik"}\n```', "[ilovada]"), "[ilovada]")
+        self.assertEqual(AI.chizmasiz("```chizma\n{buzuq\n```", "[ilovada]"), "")
 
     def test_chizma_botda_ishora(self):
         """Telegram chizma chiza olmaydi — xom JSON o'rniga qisqa ishora ketadi."""

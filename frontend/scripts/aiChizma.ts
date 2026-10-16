@@ -83,6 +83,14 @@ const oqi = tekshir('{"tur":"sonOqi","oraliqlar":[{"dan":null,"gacha":1,"gacha_y
 if (oqi?.tur !== "sonOqi" || oqi.oraliqlar.length !== 1) shikoyat("son o'qi: teskari oraliq tashlanishi kerak edi");
 else console.log("  ✓ son o'qi");
 
+const reja = tekshir(JSON.stringify({ tur: "reja", kunlar: [
+  { kun: "1-kun", ishlar: [{ mavzu: "Planimetriya", daqiqa: 35 }, { mavzu: "", daqiqa: 5 }, { mavzu: "Ifodalar", daqiqa: 9999 }] },
+  { kun: "2-kun", ishlar: [] },
+] }));
+if (reja?.tur !== "reja" || reja.kunlar.length !== 1 || reja.kunlar[0].ishlar.length !== 2
+    || reja.kunlar[0].ishlar[1].daqiqa !== 240) shikoyat(`reja: ${JSON.stringify(reja)}`);
+else console.log("  ✓ reja: bo'sh mavzu va bo'sh kun tashlandi, daqiqa chegaralandi");
+
 if (tekshir('{"tur":"rasm"}') || tekshir("[]") || tekshir("null")) shikoyat("noma'lum tur qabul qilindi");
 
 console.log(xato ? `\n❌ ${xato} ta xato\n` : "\n✅ AI chizmalari: hammasi joyida\n");

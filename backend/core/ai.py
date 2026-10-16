@@ -278,7 +278,9 @@ Chizma qoidasi. Chizma kerak bo'lsa, javob ichida alohida qatorlarda shunday blo
 { ...JSON... }
 ```
 Blok ichida FAQAT bitta to'g'ri JSON, izohsiz. Bitta javobda ko'pi bilan 2 ta chizma. \
-Har chizmadan keyin unda nimaga qarash kerakligini bir gap bilan ayt. Uch tur bor:
+Har chizmadan keyin unda nimaga qarash kerakligini bir gap bilan ayt. \
+Matndan "rasm" yasama ([ ... ] ---> [ ... ], ASCII chiziqlar) — rasm faqat \
+chizma bloki bilan. To'rt tur bor:
 
 1) Funksiya grafigi:
 {"tur":"grafik","x":[-5,5],"y":[-5,5],
@@ -301,6 +303,10 @@ Burchak "uch" nuqtada, "a" va "b" tomonlar orasida; "togri":true — to'g'ri bur
  "nuqtalar":[{"x":5,"yopiq":true}]}
 Cheksiz uchi — null: {"dan":null,"gacha":1,"gacha_yopiq":true}.
 
+4) Tayyorgarlik rejasi (kunlar, har kunda 1–4 ish, daqiqa bilan):
+{"tur":"reja","kunlar":[{"kun":"1-kun","ishlar":[{"mavzu":"Planimetriya: uchburchaklar","daqiqa":35},\
+{"mavzu":"Algebraik ifodalar","daqiqa":20}]}]}
+
 Chizma faqat tushunishga yordam bersa chiziladi; oddiy arifmetikada kerak emas."""
 
 TUR_KORSATMA = {
@@ -311,6 +317,9 @@ mumkinligini — bir-ikki gapda ayt.
 3) Oxirida shunday savollar uchun bitta qisqa maslahat ber.
 Kalitdagi javobga qo'shilmasang, buni ochiq ayt va sababini ko'rsat.""",
     AiSuhbat.REJA: """Vazifa: o'quvchining natijalari asosida 7 kunlik shaxsiy tayyorgarlik rejasini tuz.
+- Rejani DOIM bitta "reja" chizmasi bilan ber (7 kun, har kunda ishlar va daqiqalar), \
+undan keyin qisqa matnda har mavzuda nimani takrorlash kerakligini yoz — kunlarni \
+matnda qayta sanab chiqma.
 - Eng zaif 2–4 mavzudan boshla; har kun uchun 1–2 mavzu va 20–40 daqiqalik aniq ish yoz.
 - Har mavzuda nimani takrorlash kerakligini (formula, qoida, tipik xato) bir qatorda ayt.
 - 7-kunga bitta to'liq variant ishlashni qo'y.
@@ -335,9 +344,10 @@ TIL_NOMI = {"uz": "o'zbek (lotin yozuvida)", "ru": "rus"}
 
 
 def tizim_korsatmasi(tur: str, til: str) -> str:
-    # Reja — jadval kabi matn, chizma kerak emas (va tokenlar tejaladi).
-    chizma = "" if tur == AiSuhbat.REJA else CHIZMA
-    return UMUMIY.format(til_nomi=TIL_NOMI.get(til, TIL_NOMI["uz"])) + chizma + "\n\n" + TUR_KORSATMA[tur]
+    # Chizma qoidasi HAMMA turda. Ilgari rejada yo'q edi (tokenlar tejalsin
+    # deb) — "rasm bilan chiz" deyilganda model matndan strelkali "rasm"
+    # yasardi. Endi reja o'zi "reja" chizmasi bilan beriladi.
+    return UMUMIY.format(til_nomi=TIL_NOMI.get(til, TIL_NOMI["uz"])) + CHIZMA + "\n\n" + TUR_KORSATMA[tur]
 
 
 # ------------------------------------------------------------ rasm
@@ -554,7 +564,35 @@ def javob_yoz(xabar_id: int) -> str:
 
 
 #: Javobdagi chizma bloki (`CHIZMA` ko'rsatmasi) — botda ishora bilan almashadi.
-CHIZMA_BLOK = re.compile(r"```chizma\s*[\s\S]*?```")
+CHIZMA_BLOK = re.compile(r"```chizma\s*([\s\S]*?)```")
+
+
+def chizmasiz(matn: str, ishora: str) -> str:
+    """
+    Telegram uchun: chizma bloklari matnga aylanadi. Reja — kunma-kun
+    ro'yxat (botdagi odam rejasiz qolmasin), grafik va shakl — qisqa
+    ishora ("ilovada ko'ring"), chunki ularni matnda ko'rsatib bo'lmaydi.
+    """
+    import json
+
+    def almashtir(m: re.Match) -> str:
+        try:
+            d = json.loads(m.group(1))
+        except ValueError:
+            return ""
+        if isinstance(d, dict) and d.get("tur") == "reja":
+            qatorlar = []
+            for k in (d.get("kunlar") or [])[:14]:
+                if not isinstance(k, dict):
+                    continue
+                ishlar = [f"{i.get('mavzu')} — {i.get('daqiqa')}′" if i.get("daqiqa") else str(i.get("mavzu"))
+                          for i in (k.get("ishlar") or [])[:4] if isinstance(i, dict) and i.get("mavzu")]
+                if ishlar:
+                    qatorlar.append(f"{k.get('kun') or ''}: " + "; ".join(ishlar))
+            return "\n".join(qatorlar)
+        return ishora
+
+    return CHIZMA_BLOK.sub(almashtir, matn)
 
 #: Telegram xabari 4096 belgigacha; HTML qochirishdan keyin ham sig'sin.
 BOT_BOLAK = 3500
@@ -592,8 +630,7 @@ def _botga(pupil: Pupil, matn: str | None) -> None:
     if matn is None:
         X.yubor(chat, M("aiXato", pupil.til or "uz"))
         return
-    # Telegram chizmani chiza olmaydi — xom JSON o'rniga qisqa ishora.
-    matn = CHIZMA_BLOK.sub(M("aiChizmaBotda", pupil.til or "uz"), matn)
+    matn = chizmasiz(matn, M("aiChizmaBotda", pupil.til or "uz"))
     for bolak in bolaklarga(matn):
         X.yubor(chat, html.escape(bolak))
 

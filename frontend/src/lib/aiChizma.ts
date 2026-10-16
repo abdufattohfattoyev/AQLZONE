@@ -56,7 +56,17 @@ export interface SonOqi {
   nuqtalar: { x: number; yopiq: boolean; nom: string }[];
 }
 
-export type Chizma = Grafik | Geometriya | SonOqi;
+/**
+ * Tayyorgarlik rejasi — kunlar va har kundagi ishlar (daqiqa bilan).
+ * Ilgari reja suhbatida chizma yo'q edi va "rasm bilan chiz" deyilganda
+ * model `[ ... ] ---> [ ... ]` kabi matnli "rasm" yasardi.
+ */
+export interface Reja {
+  tur: "reja";
+  kunlar: { kun: string; ishlar: { mavzu: string; daqiqa: number }[] }[];
+}
+
+export type Chizma = Grafik | Geometriya | SonOqi | Reja;
 
 const son = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x);
 const juft = (x: unknown): x is Nuqta2 => Array.isArray(x) && x.length === 2 && son(x[0]) && son(x[1]);
@@ -127,6 +137,19 @@ export function tekshir(xom: string): Chizma | null {
     });
     if (!Object.keys(nuqtalar).length) return null;
     return { tur: "geometriya", nuqtalar, kesmalar, yorliqlar, burchaklar, aylanalar };
+  }
+
+  if (d.tur === "reja") {
+    const kunlar = royxat(d.kunlar).flatMap((k) => {
+      const o = k as Record<string, unknown>;
+      const ishlar = royxat(o?.ishlar).slice(0, 4).flatMap((i) => {
+        const w = i as Record<string, unknown>;
+        const mavzu = matnOl(w?.mavzu, 48);
+        return mavzu ? [{ mavzu, daqiqa: son(w.daqiqa) ? Math.max(0, Math.min(240, Math.round(w.daqiqa))) : 0 }] : [];
+      });
+      return ishlar.length ? [{ kun: matnOl(o.kun, 16), ishlar }] : [];
+    });
+    return kunlar.length ? { tur: "reja", kunlar } : null;
   }
 
   if (d.tur === "sonOqi") {
