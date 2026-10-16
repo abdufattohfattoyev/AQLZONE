@@ -5,7 +5,7 @@
  * noto'g'ri bo'lsa — masalan bola havolani qo'lda o'zgartirsa yoki kurs
  * o'chirilgan bo'lsa — bo'sh ekran o'rniga tushunarli sahifa ko'rsatiladi.
  */
-import { Suspense, lazy, useEffect, useMemo } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Panel, TepagaQayt, panelKerakmi } from "./components/Panel";
 import { Kutish } from "./components/Kutish";
@@ -118,6 +118,7 @@ import {
 import { blokBormi, sinfOf } from "./lib/blok";
 import type { Qamrov } from "./lib/blok";
 import { MAVZU_BEPUL, MAVZU_VARIANTLAR, mavzuBySlug } from "./lib/dtmMavzu";
+import { rejaVazifa, vazifaBoblari } from "./lib/aiReja";
 import { darajaBormi, darajaKerakmi } from "./lib/daraja";
 import { QABUL_VARIANT, qabulTurmi } from "./lib/qabul";
 import { formulaSinfi } from "./lib/moslash";
@@ -236,6 +237,7 @@ function Yollar() {
       <Route path="/ai" element={<AiBoshSahifasi />} />
       <Route path="/ai/yangi/:tur" element={<AiYangiSahifasi />} />
       <Route path="/ai/:id" element={<AiSuhbatSahifasi />} />
+      <Route path="/reja/:kalit/:slug" element={<RejaVazifaSahifasi />} />
       <Route path="/mantiq" element={<MantiqSahifasi />} />
       <Route path="/mantiq/:id" element={<MantiqMavzuSahifasi />} />
       <Route path="/qabul/:tur/:n" element={<QabulVariantSahifasi />} />
@@ -1126,6 +1128,30 @@ function AiSuhbatSahifasi() {
   const raqam = Number(id);
   if (!Number.isInteger(raqam) || raqam < 1) return <Navigate to={yolAi()} replace />;
   return <AiSahifa key={raqam} id={raqam} onBack={orqaga} />;
+}
+
+/**
+ * AI reja vazifasi: rejadagi ish mavzusidan 10 savol (`lib/aiReja.ts`).
+ * Natija tugashi bilan serverga yoziladi — bosh sahifadagi karta uni
+ * belgilaydi, 60% dan kam bo'lsa ertaga yana beradi.
+ */
+function RejaVazifaSahifasi() {
+  const nav = useNavigate();
+  const { kalit = "", slug = "" } = useParams();
+  useTema("bosh");
+  const mavzuSlug = slug === "aralash" ? "" : slug;
+  // Blok qamrovni useMemo kaliti qiladi — har chizishda yangi obyekt
+  // berilsa, savollar qayta yasalardi.
+  const qamrov = useMemo(() => ({ tur: "mavzular" as const, boblar: vazifaBoblari(mavzuSlug) }), [mavzuSlug]);
+  const yakun = useCallback((togri: number, jami: number) => {
+    rejaVazifa(kalit, togri, jami).catch(() => {});
+  }, [kalit]);
+  if (!/^\d+-\d+$/.test(kalit) || !qamrov.boblar.length) return <Navigate to={yolBosh()} replace />;
+  const nom = mavzuSlug ? t(mavzuBySlug(mavzuSlug)?.nom ?? "rejaAralash") : t("rejaAralash");
+  return (
+    <BlokEkran key={kalit} sinf={11} uzunlik="qisqa" qamrov={qamrov} bobNomi={t("rejaVazifaNom", { m: nom })}
+      onYakun={yakun} onExit={() => nav(yolBosh())} />
+  );
 }
 
 /** Prezident va ixtisoslashtirilgan maktablarga tayyorlov (`screens/Qabul.tsx`). */

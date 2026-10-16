@@ -15,7 +15,8 @@ import { sorov, xatoKodi } from "./api";
 import { t } from "./matn";
 import type { Kalit } from "./matn";
 
-export type AiTur = "xato" | "reja" | "repetitor" | "masala";
+/** `dars` — AI reja bo'yicha kunlik dars, faqat bosh sahifadan (`lib/aiReja.ts`). */
+export type AiTur = "xato" | "reja" | "repetitor" | "masala" | "dars";
 
 export interface AiXabar {
   id: number;
@@ -32,8 +33,8 @@ export interface AiSuhbatQisqa {
 }
 
 export interface AiSuhbat extends AiSuhbatQisqa {
-  /** Faqat `xato` turida — tushuntirilayotgan savol. */
-  kontekst: { savol?: string; togri?: string; sizniki?: string };
+  /** `xato` — tushuntirilayotgan savol; `dars` — rejadagi ish (mavzu, slug, kalit). */
+  kontekst: { savol?: string; togri?: string; sizniki?: string; mavzu?: string; slug?: string; kalit?: string };
   rasm: boolean;
   xabarlar: AiXabar[];
 }

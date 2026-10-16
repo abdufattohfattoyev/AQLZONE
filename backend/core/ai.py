@@ -235,6 +235,11 @@ def _kontekst_matni(s: AiSuhbat, til: str) -> str:
             qatorlar.append("Eng ko'p xato qilingan mavzular (xatolar soni):")
             qatorlar += [f"  {z['mavzu']} — {z['xato']}" for z in k["zaif"]]
         return "\n".join(qatorlar)
+    if s.tur == AiSuhbat.DARS:
+        qator = f"Rejadagi bugungi mavzu: {k.get('mavzu', '')}"
+        if k.get("daqiqa"):
+            qator += f" (ajratilgan vaqt: {k['daqiqa']} daqiqa)"
+        return qator
     return ""
 
 
@@ -338,6 +343,15 @@ o'qib bo'lmasa, aniqroq rasm so'ra).
 2) Asosiy g'oyani bir gapda ayt; geometriya, grafik yoki tengsizlik bo'lsa — \
 shu yerda chizmani ber.
 3) Yechimni qadam-baqadam ko'rsat va javobni alohida qatorda yoz.""",
+    AiSuhbat.DARS: """Vazifa: rejadagi bugungi mavzu bo'yicha DARS o'ti — o'quvchi \
+undan keyin shu mavzudan 10 ta DTM savolini ishlaydi.
+1) G'oya: mavzu nima haqida va DTM da qanday savollar keladi — 2–3 gap.
+2) Asosiy formulalar va qoidalar — qisqa ro'yxat, har biri bir qatorda.
+3) Chizma — mavzu imkon bersa, albatta.
+4) Ikkita yechilgan misol (DTM darajasida, osondan o'rtaga), har biri qadam-baqadam.
+5) Tuzoqlar — 2–3 ta tipik xato.
+"O'zingiz sinab ko'ring" savolini YOZMA — vazifa ilovada beriladi. Ko'pi bilan \
+450 so'z. O'quvchi savol bersa — oddiy ustozdek javob ber.""",
 }
 
 TIL_NOMI = {"uz": "o'zbek (lotin yozuvida)", "ru": "rus"}
@@ -347,7 +361,13 @@ def tizim_korsatmasi(tur: str, til: str) -> str:
     # Chizma qoidasi HAMMA turda. Ilgari rejada yo'q edi (tokenlar tejalsin
     # deb) — "rasm bilan chiz" deyilganda model matndan strelkali "rasm"
     # yasardi. Endi reja o'zi "reja" chizmasi bilan beriladi.
-    return UMUMIY.format(til_nomi=TIL_NOMI.get(til, TIL_NOMI["uz"])) + CHIZMA + "\n\n" + TUR_KORSATMA[tur]
+    matn = UMUMIY.format(til_nomi=TIL_NOMI.get(til, TIL_NOMI["uz"])) + CHIZMA + "\n\n" + TUR_KORSATMA[tur]
+    if tur == AiSuhbat.REJA:
+        # Reja bosh sahifada kunlik ishga aylanadi — har ish DTM mavzusiga bog'lansin.
+        from . import ai_reja
+
+        matn += "\n" + ai_reja.korsatma()
+    return matn
 
 
 # ------------------------------------------------------------ rasm
@@ -405,6 +425,8 @@ def _rasm_baytlari(nom: str) -> bytes | None:
 def _sarlavha(s: AiSuhbat, matn: str) -> str:
     if s.tur == AiSuhbat.XATO:
         return _qisqa((s.kontekst or {}).get("savol"), 120)
+    if s.tur == AiSuhbat.DARS:
+        return _qisqa((s.kontekst or {}).get("mavzu"), 120)
     return _qisqa(matn.splitlines()[0] if matn else "", 120)
 
 
@@ -429,6 +451,10 @@ def boshla(pupil: Pupil, tur: str, matn: str = "", kontekst=None, rasm: str = ""
         kontekst = xato_konteksti(kontekst)
     elif tur == AiSuhbat.REJA:
         kontekst = reja_konteksti(pupil)
+    elif tur == AiSuhbat.DARS:
+        # Faqat `ai_reja.dars` dan — kontekstni server o'zi yasaydi.
+        if not isinstance(kontekst, dict) or not kontekst.get("mavzu"):
+            raise AiXato("bosh")
     else:
         kontekst = {}
         if not matn and not (tur == AiSuhbat.MASALA and rasm):
@@ -558,6 +584,14 @@ def javob_yoz(xabar_id: int) -> str:
     AiXabar.objects.filter(pk=ai.pk).update(holat=AiXabar.TAYYOR, matn=matn,
                                             kirish_token=kirish, chiqish_token=chiqish)
     AiSuhbat.objects.filter(pk=s.pk).update(yangilangan_at=timezone.now())
+    if s.tur == AiSuhbat.REJA:
+        # Reja bosh sahifadagi kunlik ishga aylanadi (`core/ai_reja.py`).
+        from . import ai_reja
+
+        try:
+            ai_reja.javobdan_saqla(s, matn)
+        except Exception:                            # noqa: BLE001 — javob baribir yetib borsin
+            log.exception("AI reja saqlanmadi (suhbat #%s)", s.pk)
     if s.manba == AiSuhbat.BOT:
         _botga(ai.pupil, matn)
     return AiXabar.TAYYOR
@@ -652,7 +686,8 @@ def suhbat_toliq(s: AiSuhbat) -> dict:
         if h == AiXabar.KUTILMOQDA and hozir - x.created_at > OSILIB_QOLGAN:
             h = AiXabar.XATO
         xabarlar.append({"id": x.pk, "rol": x.rol, "matn": x.matn, "holat": h})
-    return {**_suhbat_qisqa(s), "kontekst": s.kontekst if s.tur == AiSuhbat.XATO else {},
+    kontekst = s.kontekst if s.tur in (AiSuhbat.XATO, AiSuhbat.DARS) else {}
+    return {**_suhbat_qisqa(s), "kontekst": kontekst,
             "rasm": bool(s.rasm), "xabarlar": xabarlar}
 
 

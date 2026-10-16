@@ -62,6 +62,7 @@ import { SINOV_SAVOL, qolganSoat, sinovBajarilgan } from "../lib/kunlikSinov";
 import { bugungiSoni } from "../lib/takrorlash";
 import { kunKaliti, qaytish } from "../lib/zanjir";
 import { Qaytish, ZanjirTiklash } from "../components/Qaytish";
+import { AiRejaBugun } from "../components/AiRejaBugun";
 import {
   HAFTA_MAQSAD, HAFTA_TANGA, darsBugunmi, faolKunlar, haftaYoli, joriyZanjir, rekordniYangila,
   salomVaqti, sandiqOchilganmi, sandiqniOch,
@@ -396,6 +397,10 @@ export function Bosh({
                      min-[360px]:px-[18px] min-[360px]:pt-5 sm:max-w-[560px] md:max-w-[1120px] md:gap-6 md:px-8
                      md:pt-7 ${kompyuter ? "pb-14" : ""}`}>
       {sarlavha}
+      {/* AI reja bo'yicha bugungi ish — reja bor odamda (abituriyent) eng
+          muhim narsa, shuning uchun sarlavhadan keyin darhol. Reja yo'q
+          bo'lsa karta o'zi chiqmaydi (`components/AiRejaBugun.tsx`). */}
+      <AiRejaBugun />
       <div className={`grid items-stretch gap-4 min-[360px]:gap-5 md:gap-6 ${
         yangi ? "" : "md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]"}`}>
         <AsosiyKarta amal={amal} />

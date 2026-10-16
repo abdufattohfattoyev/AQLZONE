@@ -25,7 +25,7 @@ import type { Kalit } from "../lib/matn";
 import { bolakla } from "../lib/aiChizma";
 import { AiChizma } from "./AiChizma";
 import { tebrat } from "../lib/qobiq";
-import { yolPremium } from "../lib/yollar";
+import { yolPremium, yolRejaVazifa } from "../lib/yollar";
 
 /** Premiumsiz odamga — nima olishini aytadigan karta va bitta asosiy tugma. */
 export function AiPremiumTaklif() {
@@ -50,6 +50,7 @@ export function AiPremiumTaklif() {
 /** Xabarlar va yozish maydoni. */
 export function AiChat({ id, boshlangich }: { id: number; boshlangich?: AiSuhbat | null }) {
   const { s, yangila, kutilmoqda, topilmadi } = useSuhbat(id, boshlangich);
+  const nav = useNavigate();
   const [matn, setMatn] = useState("");
   const [xato, setXato] = useState<AiXatoKod | null>(null);
   const [band, setBand] = useState(false);
@@ -135,6 +136,17 @@ export function AiChat({ id, boshlangich }: { id: number; boshlangich?: AiSuhbat
             </div>
           );
         })}
+        {/* Reja darsi — tushuntirishdan keyin vazifa. Yashil: "davom etish"
+            ma'nosi (dizayn qoidasi); suhbat o'z joyida qoladi, savol
+            berish mumkin, lekin keyingi qadam doim ko'rinib turadi. */}
+        {s.tur === "dars" && s.kontekst.kalit && oxirgiAi?.holat === "tayyor" && (
+          <button type="button" data-tahlil="AI: dars → vazifa"
+            onClick={() => { tebrat("tanlov"); nav(yolRejaVazifa(s.kontekst.kalit ?? "", s.kontekst.slug ?? "")); }}
+            className="tugma-3d min-h-12 rounded-2xl bg-brand-green font-display text-[16px] text-white
+                       shadow-[0_4px_0_var(--color-brand-green-d)]">
+            {t("rejaTushundim")}
+          </button>
+        )}
         {/* Tez javoblar — faqat oxirgi javob tayyor bo'lsa. "Tushunmadim"
             deb yozish qiyin: odam nimani so'rashni bilmaydi. Uchta tugma
             ustozning eng ko'p kerak bo'ladigan uchta yo'lini beradi. */}

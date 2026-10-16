@@ -26,6 +26,9 @@ urlpatterns = [
     path("ai/suhbat", views.ai_yangi, name="ai-yangi"),
     path("ai/suhbat/<int:pk>", views.ai_suhbat, name="ai-suhbat"),
     path("ai/suhbat/<int:pk>/qayta", views.ai_qayta, name="ai-qayta"),
+    path("ai/reja", views.ai_reja, name="ai-reja"),
+    path("ai/reja/dars", views.ai_reja_dars, name="ai-reja-dars"),
+    path("ai/reja/vazifa", views.ai_reja_vazifa, name="ai-reja-vazifa"),
     path("profiles", views.profiles, name="profiles"),
     path("profiles/<int:pk>", views.profile_detail, name="profile-detail"),
     # Do'kondan kiyilgan bezak — joriy profilga yoziladi.

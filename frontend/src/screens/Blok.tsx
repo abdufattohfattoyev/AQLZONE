@@ -94,8 +94,13 @@ interface Javob {
 }
 
 export function Blok({
-  sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, sessiya, marafon, qabul, mavzuTest, onExit,
+  sinf, uzunlik, qamrov, bobNomi, davomEt = false, toplam, imtihon, sessiya, marafon, qabul, mavzuTest, onYakun, onExit,
 }: {
+  /**
+   * Test tugaganda — to'g'ri va jami. AI reja vazifasi natijani shu bilan
+   * serverga yozadi (`screens/RejaVazifa.tsx`).
+   */
+  onYakun?: (togri: number, jami: number) => void;
   /**
    * DTM MAVZU TESTI — bitta bo'lim (trigonometriya, …) bo'yicha variant
    * (`lib/dtmMavzu.ts`). Aralash variantdek bir o'tirishda ishlanadi;
@@ -217,7 +222,7 @@ export function Blok({
     blok={davom ? { savollar: davom.savollar, daqiqa: davom.daqiqa } : blok}
     davom={davom}
     sinf={sinf} uzunlik={uzunlik} bobNomi={bobNomi} toplam={toplam} imtihon={imtihon} sessiya={sessiya}
-    marafon={marafon} qabul={qabul} mavzuTest={mavzuTest} alohida={alohida}
+    marafon={marafon} qabul={qabul} mavzuTest={mavzuTest} alohida={alohida} onYakun={onYakun}
     onQayta={() => { if (!alohida) joriyniOchir(); setUrinish((u) => u + 1); tebrat("tanlov"); }}
     onExit={onExit} />;
 }
@@ -291,7 +296,10 @@ function Bosh({ onExit }: { onExit: () => void }) {
 
 /* ==================== testning o'zi ==================== */
 
-function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, mavzuTest, alohida, onQayta, onExit }: {
+function Oyna({
+  blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, mavzuTest, alohida, onYakun, onQayta, onExit,
+}: {
+  onYakun?: (togri: number, jami: number) => void;
   qabul?: { tur: QabulTur; n: number };
   mavzuTest?: { slug: string; n: number };
   toplam?: Toplam;
@@ -391,6 +399,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
     while (toliq.length < blok.savollar.length) toliq.push({ tanlangan: null, togri: false });
     setJavoblar(toliq);
     setTugadi(true);
+    onYakun?.(toliq.filter((x) => x.togri).length, toliq.length);
     natijaSaqla({
       vaqt: new Date().toISOString(),
       sinf,
@@ -550,7 +559,7 @@ function Oyna({ blok, davom, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, m
     // keyingi safar tugallangan test "davom etasizmi?" bo'lib
     // qaytib chiqardi. Mashq o'z nusxasini yozmagan — begonasini o'chirmaydi.
     if (!alohida) joriyniOchir();
-  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, mavzuTest, alohida]);
+  }, [blok.savollar, sinf, uzunlik, bobNomi, toplam, imtihon, sessiya, marafon, qabul, mavzuTest, alohida, onYakun]);
 
   /*
    * Har o'zgarishda yarim qolgan test yoziladi.

@@ -10571,8 +10571,14 @@ class AiUstozTest(TestCase):
     def tearDown(self):
         self.bot.api = self._eski
 
+    #: Berilsa — soxta AI keyingi javobda shu matnni qaytaradi (reja chizmasi uchun).
+    keyingi_javob: str | None = None
+
     def _soxta_ai(self, tizim, xabarlar, pupil_id, tur):
         self.chaqiruvlar.append((tizim, xabarlar, tur))
+        if self.keyingi_javob is not None:
+            matn, self.keyingi_javob = self.keyingi_javob, None
+            return matn, 120, 80
         return f"Javob #{len(self.chaqiruvlar)}", 120, 80
 
     def kir(self, premium: bool = True, device: str = "dev-ai-ustoz-1111aaaa") -> tuple[dict, Pupil]:
@@ -10771,6 +10777,75 @@ class AiUstozTest(TestCase):
         self.assertTrue(all(len(b) <= 500 for b in bolaklar))
         self.assertEqual("\n".join(bolaklar), matn)
         self.assertEqual(AI.bolaklarga("y" * 1200, 500), ["y" * 500, "y" * 500, "y" * 200])
+
+    # --- reja → bosh sahifadagi kunlik ish ---
+
+    REJA_JAVOB = ('Reja:\n```chizma\n{"tur":"reja","kunlar":['
+                  '{"kun":"1-kun","ishlar":[{"mavzu":"Trigonometrik tenglamalar","daqiqa":35,"slug":"trigonometriya"},'
+                  '{"mavzu":"Nomalum","daqiqa":10,"slug":"yoq-slug"}]},'
+                  '{"kun":"2-kun","ishlar":[{"mavzu":"Logarifm","daqiqa":30,"slug":"logarifm"}]}]}\n```\nOmad!')
+
+    def _reja(self):
+        h, p = self.kir()
+        self.keyingi_javob = self.REJA_JAVOB
+        self.assertEqual(self.yangi(h, tur="reja").status_code, 201)
+        return h, p
+
+    def test_reja_kunlik_ish(self):
+        """Reja javobi saqlanadi; bugun — 1-kun ishlari, noma'lum slug bo'shatiladi."""
+        h, _ = self._reja()
+        self.assertIn("trigonometriya", self.chaqiruvlar[0][0])        # slug ro'yxati ko'rsatmada
+        r = self.client.get("/api/v1/ai/reja", **h).json()["reja"]
+        self.assertEqual((r["kun"], r["jami"], r["tugadi"]), (1, 2, False))
+        self.assertEqual([i["kalit"] for i in r["ishlar"]], ["0-0", "0-1"])
+        self.assertEqual([i["slug"] for i in r["ishlar"]], ["trigonometriya", ""])
+
+    def test_reja_yoq(self):
+        h, _ = self.kir()
+        self.assertIsNone(self.client.get("/api/v1/ai/reja", **h).json()["reja"])
+
+    def test_reja_dars_bir_marta(self):
+        """Dars bir marta yaratiladi: qayta bosish yangi AI javobi (pul) emas."""
+        h, _ = self._reja()
+        r1 = self.client.post("/api/v1/ai/reja/dars", {"kalit": "0-0"}, content_type="application/json", **h)
+        self.assertEqual(r1.status_code, 201)
+        self.assertEqual(r1.json()["tur"], "dars")
+        self.assertEqual(r1.json()["kontekst"]["slug"], "trigonometriya")
+        chaqiruv = len(self.chaqiruvlar)
+        r2 = self.client.post("/api/v1/ai/reja/dars", {"kalit": "0-0"}, content_type="application/json", **h)
+        self.assertEqual(r2.json()["id"], r1.json()["id"])
+        self.assertEqual(len(self.chaqiruvlar), chaqiruv)
+        self.assertIn("Trigonometrik", self.chaqiruvlar[-1][1][0]["content"])
+        bugun = self.client.get("/api/v1/ai/reja", **h).json()["reja"]
+        self.assertEqual(bugun["ishlar"][0]["dars"], r1.json()["id"])
+        self.assertEqual(self.client.post("/api/v1/ai/reja/dars", {"kalit": "9-9"},
+                                          content_type="application/json", **h).status_code, 400)
+
+    def test_darsni_tashqaridan_ochib_bolmaydi(self):
+        h, _ = self.kir()
+        self.assertEqual(self.yangi(h, tur="dars", matn="x", kontekst={"mavzu": "x"}).status_code, 400)
+
+    def test_reja_vazifa_otmasa_ertaga_ham(self):
+        """60% dan kam — keyingi kunda ham ro'yxatda; o'tilgach yo'qoladi; eng yaxshisi qoladi."""
+        from datetime import date as _date
+
+        h, _ = self._reja()
+        v = lambda t, j: self.client.post("/api/v1/ai/reja/vazifa", {"kalit": "0-0", "togri": t, "jami": j},
+                                          content_type="application/json", **h)
+        self.assertEqual(v(4, 10).status_code, 200)
+        ertaga = timezone.localdate() + timedelta(days=1)
+        with patch("core.ai_reja._bugun", return_value=ertaga):
+            r = self.client.get("/api/v1/ai/reja", **h).json()["reja"]
+            self.assertEqual(r["kun"], 2)
+            self.assertEqual([(i["kalit"], i["otgan"]) for i in r["ishlar"]], [("0-0", True), ("1-0", False)])
+            v(8, 10)
+            v(2, 10)                                   # yomonroq urinish eng yaxshisini o'chirmaydi
+            r = self.client.get("/api/v1/ai/reja", **h).json()["reja"]
+            self.assertEqual([i["kalit"] for i in r["ishlar"]], ["1-0"])
+        with patch("core.ai_reja._bugun", return_value=ertaga + timedelta(days=5)):
+            self.assertTrue(self.client.get("/api/v1/ai/reja", **h).json()["reja"]["tugadi"])
+        self.assertEqual(v(11, 10).status_code, 400)
+        self.assertIsInstance(_date.today(), _date)
 
     def test_chizma_korsatmasi(self):
         """Chizma qoidasi hamma turda; rejada "reja" chizmasi majburiy."""

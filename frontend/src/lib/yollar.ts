@@ -152,6 +152,8 @@ export const yolPremium = () => "/premium";
 /** AI ustoz — Premium egalariga (`screens/Ai.tsx`). */
 export const yolAi = () => "/ai";
 export const yolAiSuhbat = (id: number) => `/ai/${id}`;
+/** AI reja vazifasi — `kalit` ("kun-ish") va DTM mavzusi (bo'sh slug — `aralash`). */
+export const yolRejaVazifa = (kalit: string, slug: string) => `/reja/${kalit}/${slug || "aralash"}`;
 /** Yangi suhbat yozish maydoni — birinchi savol yuborilgach `yolAiSuhbat` ga. */
 export const yolAiYangi = (tur: "repetitor" | "masala") => `/ai/yangi/${tur}`;
 

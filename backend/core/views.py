@@ -2467,6 +2467,9 @@ def ai_yangi(request):
     from . import ai as AI
 
     d = request.data
+    if d.get("tur") == "dars":
+        # Dars faqat rejadan (`ai_reja_dars`) — kontekstni server yasaydi.
+        return _ai_xato(AI.AiXato("tur"))
     kontekst = d.get("kontekst")
     if isinstance(kontekst, str):
         try:
@@ -2506,6 +2509,42 @@ def ai_suhbat(request, pk: int):
         except AI.AiXato as e:
             return _ai_xato(e)
     return Response(AI.suhbat_toliq(s))
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def ai_reja(request):
+    """Bosh sahifa: AI reja bo'yicha bugungi ishlar (`core/ai_reja.py`). Reja yo'q — `{"reja": null}`."""
+    from . import ai_reja as R
+
+    return Response({"reja": R.bugun(request.user)})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def ai_reja_dars(request):
+    """`{kalit}` — ish bo'yicha AI dars (bor bo'lsa — o'sha suhbat)."""
+    from . import ai as AI
+    from . import ai_reja as R
+
+    try:
+        s = R.dars(request.user, str(request.data.get("kalit") or ""))
+    except AI.AiXato as e:
+        return _ai_xato(e)
+    return Response(AI.suhbat_toliq(s), status=201)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def ai_reja_vazifa(request):
+    """`{kalit, togri, jami}` — vazifa natijasi; yangilangan bugungi ro'yxat qaytadi."""
+    from . import ai_reja as R
+
+    d = request.data
+    r = R.vazifa(request.user, str(d.get("kalit") or ""), d.get("togri"), d.get("jami"))
+    if r is None:
+        return Response({"detail": "bosh", "kod": "bosh"}, status=400)
+    return Response({"reja": r})
 
 
 @api_view(["POST"])

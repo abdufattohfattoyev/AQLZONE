@@ -2392,8 +2392,10 @@ class AiSuhbat(models.Model):
     REJA = "reja"
     REPETITOR = "repetitor"
     MASALA = "masala"
+    #: Reja bo'yicha kunlik dars — bosh sahifadan (`core/ai_reja.py`).
+    DARS = "dars"
     TURLAR = [(XATO, "xatoni tushuntirish"), (REJA, "zaif mavzular rejasi"),
-              (REPETITOR, "repetitor"), (MASALA, "masala yechimi")]
+              (REPETITOR, "repetitor"), (MASALA, "masala yechimi"), (DARS, "reja bo'yicha dars")]
     ILOVA = "ilova"
     BOT = "bot"
     MANBALAR = [(ILOVA, "ilova"), (BOT, "bot")]
