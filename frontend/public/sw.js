@@ -110,6 +110,26 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
+  // --- Jonli darslar (`/darslar/*.json`): avval tarmoq ---
+  // Nomida xesh yo'q va ular ilova versiyasisiz yangilanadi (xato
+  // tuzatilsa, yangi mavzu qo'shilsa). "Avval kesh" bo'lsa, telefonda
+  // eski dars abadiy qolardi. Internetsiz — oxirgi ko'rilgan nusxa.
+  if (url.pathname.startsWith("/darslar/")) {
+    e.respondWith(
+      (async () => {
+        const kesh = await caches.open(QOBIQ);
+        try {
+          const javob = await fetch(s);
+          if (javob.status === 200) kesh.put(s, javob.clone());
+          return javob;
+        } catch {
+          return (await kesh.match(s)) ?? new Response("null", { status: 503 });
+        }
+      })()
+    );
+    return;
+  }
+
   // --- Qolgan fayllar: avval kesh ---
   e.respondWith(
     (async () => {

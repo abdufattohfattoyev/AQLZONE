@@ -71,6 +71,8 @@ const Sinflar = lazy(() => import("./screens/Sinf").then((m) => ({ default: m.Si
 const SinfQoshil = lazy(() => import("./screens/Sinf").then((m) => ({ default: m.SinfQoshil })));
 const SinfSahifa = lazy(() => import("./screens/Sinf").then((m) => ({ default: m.SinfSahifa })));
 const BlokEkran = lazy(() => import("./screens/Blok").then((m) => ({ default: m.Blok })));
+const DarsRoyxat = lazy(() => import("./screens/JonliDars").then((m) => ({ default: m.DarsRoyxat })));
+const DarsPleyer = lazy(() => import("./screens/JonliDars").then((m) => ({ default: m.DarsPleyer })));
 const Duel = lazy(() => import("./screens/Duel").then((m) => ({ default: m.Duel })));
 const DuelQabul = lazy(() => import("./screens/Duel").then((m) => ({ default: m.DuelQabul })));
 const JamoaOchish = lazy(() => import("./screens/Xona").then((m) => ({ default: m.JamoaOchish })));
@@ -113,7 +115,7 @@ import {
   yolDuel, yolDuelKod, yolSozlama, yolJamoa, yolXona, yolKunlikSon, yolSonOvi, yolIzdosh, yolQoidaOvi, yolStrelka, yolImtihon, yolImtihonVariant, yolImtMavzu, yolSertifikat, yolSertifikatVariant, yolShaharcha, yolKarvon, yolMaydon, yolOyin, yolOyinDaraja, yolOyinlar, yolQidiruv, yolSinov, yolDaraja,
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolAi, yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant, yolQabul, yolQabulVariant, yolMantiq, yolMantiqMavzu,
-  yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq,
+  yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq, yolDarslar,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import type { Qamrov } from "./lib/blok";
@@ -238,6 +240,9 @@ function Yollar() {
       <Route path="/ai/yangi/:tur" element={<AiYangiSahifasi />} />
       <Route path="/ai/:id" element={<AiSuhbatSahifasi />} />
       <Route path="/reja/:kalit/:slug" element={<RejaVazifaSahifasi />} />
+      <Route path="/dars/:slug" element={<DarsRoyxatSahifasi />} />
+      <Route path="/dars/:slug/mashq" element={<DarsMashqSahifasi />} />
+      <Route path="/dars/:slug/:n" element={<DarsPleyerSahifasi />} />
       <Route path="/mantiq" element={<MantiqSahifasi />} />
       <Route path="/mantiq/:id" element={<MantiqMavzuSahifasi />} />
       <Route path="/qabul/:tur/:n" element={<QabulVariantSahifasi />} />
@@ -1128,6 +1133,45 @@ function AiSuhbatSahifasi() {
   const raqam = Number(id);
   if (!Number.isInteger(raqam) || raqam < 1) return <Navigate to={yolAi()} replace />;
   return <AiSahifa key={raqam} id={raqam} onBack={orqaga} />;
+}
+
+/** Jonli dars — mavzu darslari ro'yxati (`screens/JonliDars.tsx`). */
+function DarsRoyxatSahifasi() {
+  const nav = useNavigate();
+  const { slug = "" } = useParams();
+  useTema("bosh");
+  if (!mavzuBySlug(slug)) return <Navigate to={yolBosh()} replace />;
+  return <DarsRoyxat slug={slug} onChiq={() => nav(-1)} />;
+}
+
+/**
+ * Bitta jonli dars. Birinchisi bepul, qolgani Premium (`PremiumDarvoza`) —
+ * DTM mavzu testlaridagi kabi: odam usulni tatib ko'radi, davomi pulli.
+ */
+function DarsPleyerSahifasi() {
+  const nav = useNavigate();
+  const { slug = "", n } = useParams();
+  useTema("bosh");
+  const raqam = Number(n);
+  if (!mavzuBySlug(slug) || !Number.isInteger(raqam) || raqam < 1) return <Navigate to={yolBosh()} replace />;
+  return (
+    <PremiumDarvoza n={raqam} bepul={1}>
+      <DarsPleyer key={`${slug}-${raqam}`} slug={slug} n={raqam} onChiq={() => nav(yolDarslar(slug))} />
+    </PremiumDarvoza>
+  );
+}
+
+/** Mavzu mashqi — dars ortidan 10 savol (reja vazifasidek, lekin natija rejaga yozilmaydi). */
+function DarsMashqSahifasi() {
+  const nav = useNavigate();
+  const { slug = "" } = useParams();
+  useTema("bosh");
+  const qamrov = useMemo(() => ({ tur: "mavzular" as const, boblar: vazifaBoblari(slug) }), [slug]);
+  if (!mavzuBySlug(slug) || !qamrov.boblar.length) return <Navigate to={yolBosh()} replace />;
+  return (
+    <BlokEkran key={slug} sinf={11} uzunlik="qisqa" qamrov={qamrov}
+      bobNomi={t("rejaVazifaNom", { m: t(mavzuBySlug(slug)!.nom) })} onExit={() => nav(yolDarslar(slug))} />
+  );
 }
 
 /**

@@ -163,7 +163,7 @@ def bugun(pupil: Pupil) -> dict | None:
         i = kunlar[ki]["ishlar"][ii]
         h = holat.get(f"{ki}-{ii}") or {}
         return {"kalit": f"{ki}-{ii}", "mavzu": i["mavzu"], "daqiqa": i["daqiqa"], "slug": i["slug"],
-                "dars": h.get("s"), "vazifa": h.get("v"), "otgan": otgan}
+                "dars": h.get("s"), "korildi": bool(h.get("j")), "vazifa": h.get("v"), "otgan": otgan}
 
     # Oldingi kunlardan: ishlangan, lekin o'tilmagan vazifalar.
     for ki in range(min(max(indeks, 0), len(kunlar))):
@@ -219,6 +219,15 @@ def dars(pupil: Pupil, kalit: str) -> AiSuhbat:
         "reja": s.pk, "kalit": kalit, "mavzu": i["mavzu"], "daqiqa": i["daqiqa"], "slug": i["slug"]})
     _holat_yoz(s, kalit, s=yangi.pk)
     return yangi
+
+
+def korildi(pupil: Pupil, kalit: str) -> bool:
+    """Ish bo'yicha JONLI DARS ochildi — tushuntirish qadami bajarilgan (AI suhbatsiz)."""
+    s = _oxirgi(pupil)
+    if s is None or _ish_ol(s, kalit) is None:
+        return False
+    _holat_yoz(s, kalit, j=True)
+    return True
 
 
 def vazifa(pupil: Pupil, kalit: str, togri, jami) -> dict | None:

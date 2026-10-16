@@ -14,30 +14,44 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { aiBoshla } from "../lib/ai";
-import { otdimi, rejaDars, rejaOl, VAZIFA_SAVOL } from "../lib/aiReja";
+import { otdimi, rejaDars, rejaKorildi, rejaOl, VAZIFA_SAVOL } from "../lib/aiReja";
+import { darsliMavzular } from "../lib/jonliDars";
 import type { RejaBugun, RejaIsh } from "../lib/aiReja";
 import { xatoKodi } from "../lib/api";
 import { Icon } from "../lib/icons";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
-import { yolAiSuhbat, yolPremium, yolRejaVazifa } from "../lib/yollar";
+import { yolAiSuhbat, yolDarslar, yolPremium, yolRejaVazifa } from "../lib/yollar";
 
 export function AiRejaBugun() {
   const nav = useNavigate();
   const [r, setR] = useState<RejaBugun | null>(null);
   const [band, setBand] = useState<string | null>(null);
 
+  // Qaysi mavzularda jonli dars bor — tushuntirish avval o'shanga olib boradi.
+  const [jonli, setJonli] = useState<string[]>([]);
+
   useEffect(() => {
     let tirik = true;
     rejaOl().then((x) => { if (tirik) setR(x); }).catch(() => {});
+    darsliMavzular().then((x) => { if (tirik) setJonli(x); });
     return () => { tirik = false; };
   }, []);
 
   if (!r) return null;
 
-  /** Dars: bor bo'lsa — o'sha suhbat, yo'q bo'lsa server yaratadi. Premiumsiz — Premium sahifasi. */
+  /**
+   * Tushuntirish: mavzuda JONLI DARS bo'lsa — o'sha (ovozli, chizmali,
+   * hamma uchun bir xil — AI javobi sarflanmaydi). Bo'lmasa — AI dars:
+   * bor bo'lsa o'sha suhbat, yo'q bo'lsa server yaratadi. Premiumsiz — Premium.
+   */
   const tushuntir = async (i: RejaIsh) => {
     tebrat("tanlov");
+    if (i.slug && jonli.includes(i.slug)) {
+      rejaKorildi(i.kalit).catch(() => {});
+      nav(yolDarslar(i.slug));
+      return;
+    }
     if (i.dars) { nav(yolAiSuhbat(i.dars)); return; }
     setBand(i.kalit);
     try {
@@ -73,7 +87,7 @@ export function AiRejaBugun() {
   }
 
   const jami = r.ishlar.length * 2;
-  const qilingan = r.ishlar.reduce((s, i) => s + (i.dars ? 1 : 0) + (otdimi(i.vazifa) ? 1 : 0), 0);
+  const qilingan = r.ishlar.reduce((s, i) => s + (i.dars || i.korildi ? 1 : 0) + (otdimi(i.vazifa) ? 1 : 0), 0);
   const tayyor = qilingan === jami;
   const sarlavha = t("rejaSarlavha", { n: Math.min(r.kun, r.jami) });
 
@@ -105,9 +119,9 @@ export function AiRejaBugun() {
               </div>
               {!otdi && (
                 <div className="grid grid-cols-2 gap-2">
-                  <Qadam bajarildi={Boolean(i.dars)} band={band === i.kalit} keyingi={!i.dars}
+                  <Qadam bajarildi={Boolean(i.dars || i.korildi)} band={band === i.kalit} keyingi={!i.dars && !i.korildi}
                     matn={t("rejaTushuntirish")} on={() => tushuntir(i)} tahlil="Bugun: AI reja tushuntirish" />
-                  <Qadam bajarildi={false} keyingi={Boolean(i.dars)}
+                  <Qadam bajarildi={false} keyingi={Boolean(i.dars || i.korildi)}
                     matn={i.vazifa ? t("rejaQayta", { a: i.vazifa[0], b: i.vazifa[1] }) : t("rejaVazifa", { n: VAZIFA_SAVOL })}
                     on={() => { tebrat("tanlov"); nav(yolRejaVazifa(i.kalit, i.slug)); }} tahlil="Bugun: AI reja vazifa" />
                 </div>

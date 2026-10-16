@@ -271,6 +271,14 @@ function SonOqiSvg({ c }: { c: SonOqi }) {
   const sx = (v: number) => 14 + ((v - a) / (b - a)) * (W - 28);
   // Faqat model aytgan sonlar yoziladi — to'liq shkala son o'qini chalkashtirardi.
   const belgilar = [...new Set(qiymatlar)];
+  // Uchning nomi (π/4) berilgan bo'lsa — o'nli son (0,79) o'rniga shu yoziladi:
+  // trigonometriyada 0,79 o'quvchiga hech narsa demaydi.
+  const nomlar = new Map<number, string>();
+  for (const o of c.oraliqlar) {
+    if (o.dan !== null && o.danNom) nomlar.set(o.dan, o.danNom);
+    if (o.gacha !== null && o.gachaNom) nomlar.set(o.gacha, o.gachaNom);
+  }
+  for (const n of c.nuqtalar) if (n.nom) nomlar.set(n.x, n.nom);
 
   return (
     <svg viewBox={`0 0 ${W} ${HH}`} className="w-full" role="img">
@@ -293,7 +301,7 @@ function SonOqiSvg({ c }: { c: SonOqi }) {
       })}
       {c.nuqtalar.map((n, i) => <Uch key={i} x={sx(n.x)} yopiq={n.yopiq} y={Y} />)}
       <g fill="currentColor" fontSize={12.5} textAnchor="middle" className="font-bold">
-        {belgilar.map((v) => <text key={v} x={sx(v)} y={Y + 26}>{sonYoz(v)}</text>)}
+        {belgilar.map((v) => <text key={v} x={sx(v)} y={Y + 26}>{nomlar.get(v) ?? sonYoz(v)}</text>)}
       </g>
     </svg>
   );

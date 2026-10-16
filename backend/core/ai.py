@@ -307,6 +307,7 @@ Burchak "uch" nuqtada, "a" va "b" tomonlar orasida; "togri":true — to'g'ri bur
 {"tur":"sonOqi","oraliqlar":[{"dan":-2,"gacha":3,"dan_yopiq":true,"gacha_yopiq":false}],
  "nuqtalar":[{"x":5,"yopiq":true}]}
 Cheksiz uchi — null: {"dan":null,"gacha":1,"gacha_yopiq":true}.
+Uchga nom berish mumkin (π li sonlarda albatta): {"dan":0.785,"dan_nom":"π/4","gacha":3.1416,"gacha_nom":"π"}.
 
 4) Tayyorgarlik rejasi (kunlar, har kunda 1–4 ish, daqiqa bilan):
 {"tur":"reja","kunlar":[{"kun":"1-kun","ishlar":[{"mavzu":"Planimetriya: uchburchaklar","daqiqa":35},\

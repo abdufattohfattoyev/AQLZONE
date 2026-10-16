@@ -12,7 +12,10 @@
  * soni — pastdagi bitta izohda, har qatorda emas.
  */
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
+import { darsliMavzular } from "../lib/jonliDars";
+import { yolDarslar } from "../lib/yollar";
 import { t } from "../lib/matn";
 import { tebrat } from "../lib/qobiq";
 import {
@@ -33,6 +36,15 @@ export function DtmMavzular({ onBoshla }: { onBoshla: (slug: string, n: number) 
   }, []);
 
   const [ochiq, setOchiq] = useState<string | null>(null);
+  // Jonli darsi bor mavzular — ochilgan qatorda variantlardan oldin "Jonli dars"
+  // chiqadi: test ishlashdan oldin mavzuni o'rganish yo'li.
+  const nav = useNavigate();
+  const [jonli, setJonli] = useState<string[]>([]);
+  useEffect(() => {
+    let tirik = true;
+    darsliMavzular().then((x) => { if (tirik) setJonli(x); });
+    return () => { tirik = false; };
+  }, []);
   // Premium qulfi variant RAQAMI bo'yicha: har mavzuda faqat birinchisi
   // bepul (`MAVZU_BEPUL`). Qaysi mavzu ekanini qulf bilmaydi — ref'da turadi.
   const slugRef = useRef("");
@@ -67,6 +79,16 @@ export function DtmMavzular({ onBoshla }: { onBoshla: (slug: string, n: number) 
 
             {ochilgan && (
               <div className="px-3 pb-3">
+                {jonli.includes(m.slug) && (
+                  <button type="button" onClick={() => { tebrat("tanlov"); nav(yolDarslar(m.slug)); }}
+                    data-tahlil={`DTM mavzu: jonli dars ${m.slug}`}
+                    className="clay-press mb-2.5 flex min-h-11 w-full items-center gap-2 rounded-xl bg-brand-blue/10 px-3.5
+                               text-left text-[14.5px] font-bold text-brand-blue-t">
+                    <Icon name="play" size={17} className="shrink-0" />
+                    <span className="min-w-0 flex-1">{t("darsTugma")}</span>
+                    <Icon name="chevron" size={16} className="shrink-0" />
+                  </button>
+                )}
                 <VariantTor soni={MAVZU_VARIANTLAR} sahifa={12} ichki yopiqmi={qulf.yopiqmi}
                   natija={(n) => mavzuEng(royxat, m.slug, n)} tahlil={`DTM mavzu: ${m.slug}`}
                   onTanla={(n) => { slugRef.current = m.slug; qulf.tanla(n); }} />

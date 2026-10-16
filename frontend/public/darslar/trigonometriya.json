@@ -1,0 +1,1069 @@
+{
+ "slug": "trigonometriya",
+ "darslar": [
+  {
+   "n": 1,
+   "nom": "Trigonometrik funksiyalar va asosiy qiymatlar",
+   "maqsad": "Dars oxirida o‘quvchi burchakni gradus va radianlarda ifodalab, sin, cos, tg, ctg ning asosiy qiymatlarini topa oladi.",
+   "sahnalar": [
+    {
+     "aytish": "Trigonometriya geometriya, fizika va testlarda juda ko‘p uchraydi. Burchakni to‘g‘ri o‘qisangiz, qiymatni tez topasiz. Bugun gradus, radian va asosiy trigonometrik qiymatlarni mustahkam olamiz.",
+     "yozuv": [
+      "Mavzu: Trigonometrik funksiyalar",
+      "Maqsad: gradus, radian, asosiy qiymatlar",
+      "Natija: sin, cos, tg, ctg ni topish"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Gradus va radian bir burchakning ikki xil o‘lchovidir. To‘la aylanish 360 gradusga, shu burchak 2 pi radianga teng. Demak 180 gradus pi radian bo‘ladi va qolgan o‘tkazishlar shundan keladi.",
+     "yozuv": [
+      "360° = 2π rad",
+      "180° = π rad",
+      "α° = α·π/180 rad",
+      "β rad = β·180°/π"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Markazi koordinata boshida bo‘lgan radiusi 1 aylana birlik aylana deyiladi. OX yo‘nalishidan alfa burchak olib aylana ustidagi P nuqtani olamiz. Radius 1 bo‘lgani uchun P nuqtaning x koordinatasi kosinus, y koordinatasi sinus bo‘ladi. Chizmada 60 gradus uchun nuqta birinchi chorakda, ya’ni x musbat va y musbat.",
+     "yozuv": [
+      "Birlik aylana: r = 1",
+      "P(cos α; sin α)",
+      "I chorak: x musbat, y musbat",
+      "tg α = y/x, ctg α = x/y"
+     ],
+     "chizma": {
+      "tur": "geometriya",
+      "nuqtalar": {
+       "x′": [
+        -1.2,
+        0
+       ],
+       "x": [
+        1.2,
+        0
+       ],
+       "y′": [
+        0,
+        -1.2
+       ],
+       "y": [
+        0,
+        1.2
+       ],
+       "O": [
+        0,
+        0
+       ],
+       "A": [
+        1,
+        0
+       ],
+       "P": [
+        0.5,
+        0.866
+       ],
+       "H": [
+        0.5,
+        0
+       ]
+      },
+      "kesmalar": [
+       "x′x",
+       "y′y",
+       "OA",
+       "OP",
+       "OH",
+       {
+        "k": "PH",
+        "shtrix": true
+       }
+      ],
+      "yorliqlar": [
+       {
+        "kesma": "OP",
+        "matn": "1"
+       },
+       {
+        "kesma": "OH",
+        "matn": "cos α"
+       },
+       {
+        "kesma": "PH",
+        "matn": "sin α"
+       }
+      ],
+      "burchaklar": [
+       {
+        "uch": "O",
+        "a": "A",
+        "b": "P",
+        "matn": "60°"
+       }
+      ],
+      "aylanalar": [
+       {
+        "markaz": [
+         0,
+         0
+        ],
+        "r": 1
+       }
+      ]
+     }
+    },
+    {
+     "aytish": "Asosiy burchaklar nol, 30, 45, 60 va 90 gradusdir. Sinus qiymatlari kichikdan kattaga o‘sadi, kosinus esa aksincha kamayadi. Shu jadvalni yod olsangiz, ko‘p savol bir necha soniyada ishlanadi.",
+     "yozuv": [
+      "α: 0° 30° 45° 60° 90°",
+      "sin α: 0 1/2 √2/2 √3/2 1",
+      "cos α: 1 √3/2 √2/2 1/2 0",
+      "Esla: sin ↑, cos ↓"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tangens sinusning kosinusga nisbatidir. Kotangens esa kosinusning sinusga nisbatidir. Shuning uchun kosinus nol bo‘lsa tangens aniqlanmaydi, sinus nol bo‘lsa kotangens aniqlanmaydi.",
+     "yozuv": [
+      "tg α = sin α / cos α",
+      "ctg α = cos α / sin α",
+      "tg: 0, √3/3, 1, √3, aniqlanmagan",
+      "ctg: aniqlanmagan, √3, 1, √3/3, 0"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Birinchi misol. 150 gradusni radianga o‘tkazish uchun pi bo‘lingan 180 ga ko‘paytiramiz. 150 bilan 180 qisqaradi va 5 pi bo‘lingan 6 chiqadi. 7 pi bo‘lingan 6 radianni gradusga o‘tkazsak 210 gradus bo‘ladi.",
+     "yozuv": [
+      "150° = 150·π/180 = 5π/6",
+      "7π/6 = 7π/6·180°/π = 210°"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Savol. 240 gradus radianda nimaga teng?",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "240° = ?",
+      "variantlar": [
+       "4π/3",
+       "3π/4",
+       "5π/6",
+       "7π/6"
+      ],
+      "togri": 0,
+      "izoh": "240° ni π/180 ga ko‘paytiramiz. 240π/180 qisqarib 4π/3 bo‘ladi."
+     }
+    },
+    {
+     "aytish": "Ikkinchi misol. 30 gradus uchun sinus 1 bo‘lingan 2, kosinus ildiz ostida 3 bo‘lingan 2. Tangensni topish uchun sinusni kosinusga bo‘lamiz va ildiz ostida 3 bo‘lingan 3 olamiz. Kotangens esa buning teskarisi, ya’ni ildiz ostida 3.",
+     "yozuv": [
+      "30° uchun:",
+      "sin 30° = 1/2, cos 30° = √3/2",
+      "tg 30° = (1/2)/(√3/2) = √3/3",
+      "ctg 30° = √3"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Uchinchi misol. 135 gradus 180 gradusdan 45 gradus kam, demak tayanch burchak 45 gradus. Bu ikkinchi chorak, shuning uchun sinus musbat, kosinus manfiy bo‘ladi. Shu sabab sinus ildiz ostida 2 bo‘lingan 2, kosinus esa manfiy ildiz ostida 2 bo‘lingan 2. Tangens va kotangens ham manfiy birga teng bo‘ladi.",
+     "yozuv": [
+      "135° = 180° - 45°",
+      "II chorak: sin +, cos -",
+      "sin 135° = √2/2, cos 135° = -√2/2",
+      "tg 135° = -1, ctg 135° = -1"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tipik xato shuki, 30 gradusni pi bo‘lingan 30 deb yozishadi. Aslida 30 gradus pi bo‘lingan 6 ga teng. Yana bir xato, 90 gradusda tangens bor deb o‘ylash. Kosinus nol bo‘lgani uchun u yerda tangens aniqlanmaydi.",
+     "yozuv": [
+      "Xato 1: 30° = π/30 emas",
+      "To‘g‘risi: 30° = π/6",
+      "Xato 2: tg 90° mavjud emas",
+      "Chorak ishorasini tekshir"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tekshiruv savoli. 150 gradusning sinusini toping.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "sin 150° = ?",
+      "variantlar": [
+       "1/2",
+       "√3/2",
+       "-1/2",
+       "-√3/2"
+      ],
+      "togri": 0,
+      "izoh": "150° = 180° - 30°. Ikkinchi chorakda sinus musbat bo‘ladi, shuning uchun sin 150° = sin 30° = 1/2."
+     }
+    },
+    {
+     "aytish": "Yakuniy savol. 5 pi bo‘lingan 3 burchakning kosinusini toping.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "cos 5π/3 = ?",
+      "variantlar": [
+       "1/2",
+       "-1/2",
+       "√3/2",
+       "-√3/2"
+      ],
+      "togri": 0,
+      "izoh": "5π/3 bu 300° ga teng. To‘rtinchi chorakda kosinus musbat va tayanch burchak 60° bo‘lgani uchun qiymat 1/2 bo‘ladi."
+     }
+    },
+    {
+     "aytish": "Xulosa qilamiz. Gradus va radian o‘rtasida 180 gradus teng pi radian bog‘lanish bor. Birlik aylanada kosinus x koordinata, sinus y koordinata bo‘ladi. Asosiy burchaklar jadvali va chorak ishoralari keyingi darslarning poydevori.",
+     "yozuv": [
+      "180° = π rad",
+      "P(cos α; sin α)",
+      "tg α = sin α / cos α",
+      "Asosiy burchaklar: 0°, 30°, 45°, 60°, 90°"
+     ],
+     "chizma": null
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "nom": "Trigonometrik ayniyatlar va formulalar",
+   "maqsad": "Dars oxirida o‘quvchi asosiy trigonometrik ayniyatlar hamda keltirish formulalaridan foydalanib ifodalarni soddalashtira oladi.",
+   "sahnalar": [
+    {
+     "aytish": "Bugun trigonometrik ayniyatlar va keltirish formulalarini ishlatamiz. Bu formulalar uzun ifodani bir ikki qadamda soddalashtiradi. DTM da vaqtni aynan shu joy tejaydi.",
+     "yozuv": [
+      "Trigonometrik ayniyatlar",
+      "va keltirish formulalari",
+      "Nega kerak: tez soddalashtirish"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Asosiy tayanch ayniyat sinus kvadrat iks plyus kosinus kvadrat iks teng bir. Shu tenglikni kosinus kvadratga bo'lsak, bir plyus tangens kvadrat iks teng bir bo'lingan kosinus kvadrat iks chiqadi. Shu tenglikni sinus kvadratga bo'lsak, bir plyus kotangens kvadrat iks teng bir bo'lingan sinus kvadrat iks chiqadi.",
+     "yozuv": [
+      "sin²x + cos²x = 1",
+      "1 + tg²x = 1/cos²x",
+      "1 + ctg²x = 1/sin²x"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Nega birinchi ayniyat to'g'ri. Birlik aylanasida nuqtaning gorizontal koordinatasi kosinus alfa, vertikal koordinatasi sinus alfa bo'ladi. Pifagor teoremasi bo'yicha radius kvadrati birga teng, demak sinus kvadrat alfa plyus kosinus kvadrat alfa teng bir.",
+     "yozuv": [
+      "P(cos α; sin α)",
+      "OP = 1",
+      "sin²α + cos²α = 1"
+     ],
+     "chizma": {
+      "tur": "geometriya",
+      "nuqtalar": {
+       "x′": [
+        -1.4,
+        0
+       ],
+       "x": [
+        1.4,
+        0
+       ],
+       "y′": [
+        0,
+        -1.4
+       ],
+       "y": [
+        0,
+        1.4
+       ],
+       "O": [
+        0,
+        0
+       ],
+       "A": [
+        1,
+        0
+       ],
+       "P": [
+        0.8,
+        0.6
+       ],
+       "H": [
+        0.8,
+        0
+       ]
+      },
+      "kesmalar": [
+       "x′x",
+       "y′y",
+       "OP",
+       {
+        "k": "PH",
+        "shtrix": true
+       },
+       {
+        "k": "OH",
+        "shtrix": true
+       }
+      ],
+      "yorliqlar": [
+       {
+        "kesma": "OH",
+        "matn": "cos α"
+       },
+       {
+        "kesma": "PH",
+        "matn": "sin α"
+       }
+      ],
+      "burchaklar": [
+       {
+        "uch": "O",
+        "a": "A",
+        "b": "P",
+        "matn": "α"
+       }
+      ],
+      "aylanalar": [
+       {
+        "markaz": [
+         0,
+         0
+        ],
+        "r": 1
+       }
+      ]
+     }
+    },
+    {
+     "aytish": "Birinchi misolni soddalashtiramiz. Bir minus kosinus kvadrat iks ni sinus iks ga bo'lingan ifodani ko'raylik. Yuqoridagi bir minus kosinus kvadrat iks o'rniga sinus kvadrat iks yozamiz.",
+     "yozuv": [
+      "A = (1 - cos²x)/sin x",
+      "1 - cos²x = sin²x",
+      "A = sin²x/sin x"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi sinus kvadrat iks ni sinus iks ga qisqartiramiz. Natija sinus iks bo'ladi. Faqat boshlang'ich ifodada sinus iks nol bo'lmasligi kerak.",
+     "yozuv": [
+      "A = sin x",
+      "Shart: sin x ≠ 0"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Savol. Bir minus sinus kvadrat iks nimaga teng. To'g'ri javobni tanlang.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "1 - sin²x = ?",
+      "variantlar": [
+       "cos²x",
+       "sin²x",
+       "1/cos²x",
+       "tg²x"
+      ],
+      "togri": 0,
+      "izoh": "Asosiy ayniyatdan sin²x + cos²x = 1. Shundan 1 - sin²x = cos²x."
+     }
+    },
+    {
+     "aytish": "Endi keltirish formulalariga o'tamiz. Pi yarim yoki uch pi yarim atrofida funksiya nomi almashadi. Pi yoki ikki pi atrofida esa nom saqlanadi. Ishora esa burchak qaysi chorakka tushishiga qarab olinadi.",
+     "yozuv": [
+      "Keltirish formulalari",
+      "π/2 ± x → sin ↔ cos, tg ↔ ctg",
+      "π ± x, 2π ± x → nom saqlanadi",
+      "Ishora chorakka qarab olinadi"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Ikkinchi misol. Sinus qavs ichida pi minus iks plyus kosinus qavs ichida pi plyus iks ni soddalashtiramiz. Pi atrofida nom saqlanadi, shuning uchun sinus sinuscha qoladi, kosinus kosinuscha qoladi.",
+     "yozuv": [
+      "B = sin(π - x) + cos(π + x)",
+      "sin(π - x) = sin x",
+      "cos(π + x) = -cos x"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi chorak bo'yicha ishorani tekshiramiz. Pi minus iks ikkinchi chorakda, u yerda sinus musbat. Pi plyus iks uchinchi chorakda, u yerda kosinus manfiy. Demak javob sinus iks minus kosinus iks.",
+     "yozuv": [
+      "B = sin x + (-cos x)",
+      "B = sin x - cos x"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Uchinchi misolni ko'raylik. Bir plyus tangens kvadrat iks ko'paytirilgan kosinus kvadrat iks ni soddalashtiramiz. Ayniyatga ko'ra bir plyus tangens kvadrat iks bir bo'lingan kosinus kvadrat iks. Kosinus kvadrat iks lar qisqarib, natija bir chiqadi.",
+     "yozuv": [
+      "C = (1 + tg²x)cos²x",
+      "1 + tg²x = 1/cos²x",
+      "C = (1/cos²x)cos²x = 1"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tipik xato shuki, pi minus iks ko'rinsa darrov manfiy deb yuborishadi. Aslida ikkinchi chorakda sinus musbat, shuning uchun sinus qavs ichida pi minus iks teng sinus iks. Yana bir xato, pi yarim minus iks da nom almashishini unutish.",
+     "yozuv": [
+      "Xato: sin(π - x) = -sin x",
+      "To'g'risi: sin(π - x) = sin x",
+      "Yana: sin(π/2 - x) = cos x"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Savol. Bir plyus tangens kvadrat iks nimaga teng. To'g'ri javobni tanlang.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "1 + tg²x = ?",
+      "variantlar": [
+       "1/sin²x",
+       "1/cos²x",
+       "sin²x",
+       "cos²x"
+      ],
+      "togri": 1,
+      "izoh": "sin²x + cos²x = 1 ni cos²x ga bo'lsak, 1 + tg²x = 1/cos²x bo'ladi."
+     }
+    },
+    {
+     "aytish": "Yakuniy savol. Sinus qavs ichida pi bo'lingan ikki minus iks nimaga teng. To'g'ri javobni tanlang.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "sin(π/2 - x) = ?",
+      "variantlar": [
+       "cos x",
+       "-cos x",
+       "sin x",
+       "-sin x"
+      ],
+      "togri": 0,
+      "izoh": "Pi bo'lingan ikki atrofida funksiya nomi almashadi. Birinchi chorakda ishora musbat bo'lgani uchun sin(π/2 - x) = cos x."
+     }
+    },
+    {
+     "aytish": "Xulosa qilamiz. Avval asosiy ayniyatni eslaysiz, keyin kerak bo'lsa undan tangens va kotangens ayniyatini chiqarasiz. Keltirishda esa nom almashadimi va ishora qanday bo'lishini chorak orqali tekshirasiz. Shu ikki qadam ifodani tez soddalashtiradi.",
+     "yozuv": [
+      "Asosiy tayanch: sin²x + cos²x = 1",
+      "Bo'lishdan: 1 + tg²x va 1 + ctg²x",
+      "Keltirishda: nom va ishora",
+      "Chorakni tekshir, so'ng soddalashtir"
+     ],
+     "chizma": null
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "nom": "Trigonometrik tenglamalar va tengsizliklar",
+   "maqsad": "Dars oxirida o‘quvchi sodda va o‘rta darajadagi trigonometrik tenglama hamda tengsizliklarni umumiy yechim bilan yecha oladi.",
+   "sahnalar": [
+    {
+     "aytish": "Bugun trigonometrik tenglama va tengsizliklarni yechamiz. Bu mavzu DTMda ko'p tushadi, chunki unda formula, grafik va davriylik birlashadi. Maqsad umumiy yechimni to'g'ri yozish.",
+     "yozuv": [
+      "Trigonometrik tenglama va tengsizliklar",
+      "DTMda ko'p uchraydi",
+      "Kalit: davriylik + tayanch burchak"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Eng muhim g'oya davriylikdir. Sinus va kosinusda davr ikki pi, tangens va kotangensda davr bir pi bo'ladi. Chunki grafik aynan shu uzunlikdan keyin takrorlanadi. Bir davrdagi yechimlarni topib, keyin mos davrni qo'shamiz.",
+     "yozuv": [
+      "sin x = a  →  x = α+2πk yoki π-α+2πk",
+      "cos x = a  →  x = ±α+2πk",
+      "tg x = a   →  x = α+πk",
+      "ctg x = a  →  x = α+πk"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Birinchi misolda ikki sinus iks minus bir teng nolni olaylik. Avval tenglamani sinus iks teng bir ikkinchiga keltiramiz. Grafikda bir davrda ikkita kesishish chiqadi.",
+     "yozuv": [
+      "Misol 1: 2sin x - 1 = 0",
+      "sin x = 1/2",
+      "0 ≤ x < 2π da: π/6, 5π/6"
+     ],
+     "chizma": {
+      "tur": "grafik",
+      "x": [
+       0,
+       6.4
+      ],
+      "y": [
+       -1.5,
+       1.5
+      ],
+      "funksiyalar": [
+       {
+        "f": "sin(x)",
+        "nom": "y = sin x"
+       },
+       {
+        "f": "0.5",
+        "nom": "y = 1/2"
+       }
+      ],
+      "nuqtalar": [
+       {
+        "x": 0.5236,
+        "y": 0.5,
+        "nom": "(π/6; 1/2)"
+       },
+       {
+        "x": 2.618,
+        "y": 0.5,
+        "nom": "(5π/6; 1/2)"
+       }
+      ]
+     }
+    },
+    {
+     "aytish": "Sinus bir ikkinchiga teng bo'ladigan tayanch burchak pi bo'lingan olti. Sinus birinchi va ikkinchi chorakda bir xil musbat qiymat oladi. Shuning uchun umumiy yechim ikki tarmoqdan iborat bo'ladi. Bu yerda ka butun son.",
+     "yozuv": [
+      "Umumiy yechim:",
+      "x = π/6 + 2πk",
+      "x = 5π/6 + 2πk",
+      "k ∈ Z"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tezkor savol. Kosinus iks minus birga teng bo'lsa, umumiy yechim qaysi?",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "cos x = -1 ning umumiy yechimini toping.",
+      "variantlar": [
+       "x = π + 2πk",
+       "x = π/2 + 2πk",
+       "x = 2πk",
+       "x = 3π/2 + 2πk"
+      ],
+      "togri": 0,
+      "izoh": "Kosinus faqat π burchakda minus bir bo'ladi. Kosinusning davri 2π, shuning uchun x = π + 2πk."
+     }
+    },
+    {
+     "aytish": "Ikkinchi misolda kvadrat tenglama ko'rinyapti. Shuning uchun kosinus iks o'rniga te deb belgilash qulay. Bu usul murakkab ko'rinishni oddiy kvadrat tenglamaga aylantiradi.",
+     "yozuv": [
+      "Misol 2: 2cos²x - 3cos x + 1 = 0",
+      "t = cos x",
+      "2t² - 3t + 1 = 0",
+      "(2t - 1)(t - 1) = 0"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Te uchun ikki ildiz chiqadi. Ikkalasi ham minus bir bilan bir orasida, demak ikkalasi ham mumkin. Endi har bir qiymat uchun kosinus tenglamasining umumiy yechimini yozamiz.",
+     "yozuv": [
+      "t = 1/2 yoki t = 1",
+      "cos x = 1/2  →  x = ±π/3 + 2πk",
+      "cos x = 1    →  x = 2πk",
+      "Javob: x = 2πk, ±π/3 + 2πk"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi tengsizlikka o'tamiz. Sinus iks bir ikkinchidan katta bo'lsa, grafikda sinus chizig'i gorizontal chiziqdan yuqorida yotgan joylar olinadi. Kesishishlar chegarani beradi.",
+     "yozuv": [
+      "Misol 3: sin x > 1/2",
+      "Kesishishlar: π/6 va 5π/6",
+      "Yuqori qism yechim beradi"
+     ],
+     "chizma": {
+      "tur": "grafik",
+      "x": [
+       0,
+       6.4
+      ],
+      "y": [
+       -1.5,
+       1.5
+      ],
+      "funksiyalar": [
+       {
+        "f": "sin(x)",
+        "nom": "y = sin x"
+       },
+       {
+        "f": "0.5",
+        "nom": "y = 1/2"
+       }
+      ],
+      "nuqtalar": [
+       {
+        "x": 0.5236,
+        "y": 0.5,
+        "nom": "(π/6; 1/2)"
+       },
+       {
+        "x": 2.618,
+        "y": 0.5,
+        "nom": "(5π/6; 1/2)"
+       }
+      ]
+     }
+    },
+    {
+     "aytish": "Bir davrda yechim pi bo'lingan olti bilan besh pi bo'lingan olti orasida bo'ladi. Belgimiz qat'iy katta, shu sabab chegara nuqtalari kirmaydi. Keyin har bir oraliqqa ikki pi ka qo'shamiz.",
+     "yozuv": [
+      "π/6 + 2πk < x < 5π/6 + 2πk",
+      "yoki x ∈ (π/6+2πk, 5π/6+2πk)",
+      "k ∈ Z"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Eng ko'p xato umumiy yechimdagi davrni unutishdir. Yana qat'iy katta va katta yoki teng farqi ko'p adashtiradi. Almashtirishda te ning mumkin qiymatlarini ham tekshirish kerak.",
+     "yozuv": [
+      "Tipik xatolar",
+      "1) 2πk yoki πk ni unutish",
+      "2) > bo'lsa chegarani qo'shish",
+      "3) t = cos x da |t| ≤ 1 ni tekshirmaslik"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Yakuniy savol bir. Tangens iks minus birga teng bo'lsa, umumiy yechim qaysi?",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "tg x = -1 ning umumiy yechimini toping.",
+      "variantlar": [
+       "x = -π/4 + πk",
+       "x = -π/4 + 2πk",
+       "x = π/4 + πk",
+       "x = 3π/4 + 2πk"
+      ],
+      "togri": 0,
+      "izoh": "Tangensning davri π. tg x = -1 uchun tayanch burchak -π/4, shuning uchun x = -π/4 + πk."
+     }
+    },
+    {
+     "aytish": "Yakuniy savol ikki. Sinus iks noldan katta yoki teng bo'lishi uchun iks qaysi oraliqlarda yotadi?",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "sin x ≥ 0 ning umumiy yechimini toping.",
+      "variantlar": [
+       "x ∈ [2πk, π+2πk]",
+       "x ∈ (0+2πk, π+2πk)",
+       "x ∈ [π+2πk, 2π+2πk]",
+       "x ∈ [-π/2+2πk, π/2+2πk]"
+      ],
+      "togri": 0,
+      "izoh": "Sinus nol yoki musbat bo'ladigan qism yuqori yarim davradir. Shuning uchun x bir davrda noldan π gacha, keyin 2πk bilan takrorlanadi."
+     }
+    },
+    {
+     "aytish": "Xulosa qilamiz. Avval tenglamani asosiy ko'rinishga keltiring, so'ng tayanch burchakni toping. Tenglamada umumiy yechimni davr bilan yozing, tengsizlikda esa kerakli oraliqlarni tanlang. Shu tartib DTMda tez va ishonchli ishlaydi.",
+     "yozuv": [
+      "Algoritm:",
+      "1) Asosiy ko'rinishga keltir",
+      "2) Tayanch burchakni top",
+      "3) Davr bilan umumiy yechim yoz",
+      "4) Tengsizlikda oraliqni tanla"
+     ],
+     "chizma": null
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "nom": "Trigonometrik funksiyalarning grafigi va xossalari",
+   "maqsad": "Dars oxirida o‘quvchi sin, cos, tg, ctg funksiyalarining grafigi, davriyligi, aniqlanish sohasi va qiymatlar to‘plamiga oid masalalarni ishlay oladi.",
+   "sahnalar": [
+    {
+     "aytish": "Grafikni ko‘rgan o‘quvchi ko‘p savolni bir qarashda yechadi. Davr, maksimum, minimum va taqiqlangan nuqtalar grafikdan darhol bilinadi. DTMda bu mavzu tenglama va tengsizliklarga ham tayanch bo‘ladi.",
+     "yozuv": [
+      "4-dars: Grafik va xossalar",
+      "Grafik -> davr, D, E",
+      "DTMda tez tahlil"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Avval to‘rtta asosiy xossani jamlaymiz. Sinus va kosinus barcha haqiqiy sonlarda aniqlangan, chunki ular birlik aylana koordinatalaridan olinadi. Tangens va kotangens esa ayrim nuqtalarda aniqlanmaydi, chunki maxraj nol bo‘ladi.",
+     "yozuv": [
+      "sin x: D=R, E=[-1;1], T=2π",
+      "cos x: D=R, E=[-1;1], T=2π",
+      "tg x: D=R\\{π/2+πk}, E=R, T=π",
+      "ctg x: D=R\\{πk}, E=R, T=π"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Bu yerda sinus va kosinusning bir davri aniq ko‘rinadi. Sinus noldan boshlanib ko‘tariladi, kosinus esa birdan boshlanadi. Ikkalasining ham qiymati minus bir bilan bir orasida qoladi.",
+     "yozuv": [
+      "sin x va cos x",
+      "T = 2π",
+      "D = R, E = [-1;1]"
+     ],
+     "chizma": {
+      "tur": "grafik",
+      "x": [
+       -7,
+       7
+      ],
+      "y": [
+       -1.5,
+       1.5
+      ],
+      "funksiyalar": [
+       {
+        "f": "sin(x)",
+        "nom": "y = sin x"
+       },
+       {
+        "f": "cos(x)",
+        "nom": "y = cos x"
+       }
+      ],
+      "nuqtalar": []
+     }
+    },
+    {
+     "aytish": "Tangens va kotangensning har bir bo‘lagi pi uzunlikdan keyin takrorlanadi. Tangensda uzilishlar kosinus nol bo‘lgan joylarda, kotangensda esa sinus nol bo‘lgan joylarda chiqadi. Kotangens grafigida nol nuqtalar pi ikkining biri plyus pi kay ko‘rinishida.",
+     "yozuv": [
+      "tg x va ctg x",
+      "T = π",
+      "D(tg)=R\\{π/2+πk}",
+      "D(ctg)=R\\{πk}"
+     ],
+     "chizma": {
+      "tur": "grafik",
+      "x": [
+       -4,
+       4
+      ],
+      "y": [
+       -5,
+       5
+      ],
+      "funksiyalar": [
+       {
+        "f": "tan(x)",
+        "nom": "y = tg x"
+       },
+       {
+        "f": "cos(x)/sin(x)",
+        "nom": "y = ctg x"
+       }
+      ],
+      "nuqtalar": []
+     }
+    },
+    {
+     "aytish": "Savol. Tangens funksiyasining davri nechaga teng.",
+     "savol": {
+      "matn": "tg x funksiyasining davri:",
+      "variantlar": [
+       "π",
+       "2π",
+       "π/2",
+       "4π"
+      ],
+      "togri": 0,
+      "izoh": "tg(x+π)=tg x. Shuning uchun eng kichik musbat davr π."
+     }
+    },
+    {
+     "aytish": "Misol bir. Tangens uchun avval qayerda maxraj nol bo‘lishini topamiz. Kosinus nol bo‘lsa, funksiya aniqlanmaydi. Qolgan barcha joyda tangens istalgan haqiqiy qiymatni oladi.",
+     "yozuv": [
+      "Misol 1: y = tg x",
+      "cos x = 0 => x = π/2 + πk",
+      "D = R\\{π/2 + πk}",
+      "E = R"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Misol ikki. Grafiklarning kesishishi degani, bir xil iksda qiymatlar teng degani. Shuning uchun sinus iks teng kosinus iks deb yozamiz. Kosinus nol bo‘lmagan holatda bu tenglama tangens iks teng birga keladi.",
+     "yozuv": [
+      "Misol 2: sin x = cos x",
+      "cos x ≠ 0 => tg x = 1",
+      "x = π/4 + πk"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi umumiy yechimdan berilgan oraliqni ajratamiz. Nol dan ikki pi gacha faqat ikki nuqta tushadi. Demak, kesishishlar pi to‘rtdan biri va besh pi to‘rtdan birida bo‘ladi.",
+     "yozuv": [
+      "0 ≤ x ≤ 2π",
+      "x = π/4, 5π/4",
+      "Kesishishlar soni: 2"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Misol uch. Kotangensning davri pi, chunki sinus ham, kosinus ham pi ga siljiganda ishorasini almashtiradi va nisbat o‘zgarmaydi. Nol bo‘lishi uchun surat nol, maxraj esa nol emas bo‘lishi kerak. Shuning uchun yechimlar pi ikkining biri plyus pi kay.",
+     "yozuv": [
+      "Misol 3: y = ctg x",
+      "T = π",
+      "ctg x = 0 => cos x = 0",
+      "x = π/2 + πk"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tipik xato shuki, ko‘pchilik kotangensning taqiqlangan nuqtalarini tangensniki bilan almashtiradi. Eslang, kotangensda maxraj sinus. Demak, iks pi kay bo‘lsa aniqlanmaydi, pi ikkining biri plyus pi kay bo‘lsa esa nol bo‘ladi.",
+     "yozuv": [
+      "Xato: D(ctg)=R\\{π/2+πk}",
+      "To‘g‘risi: D=R\\{πk}",
+      "Nollari: x=π/2+πk"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Savol. Kosinus funksiyasining qiymatlar to‘plamini tanlang.",
+     "savol": {
+      "matn": "cos x ning E si:",
+      "variantlar": [
+       "[-1;1]",
+       "R",
+       "(-1;1)",
+       "[0;1]"
+      ],
+      "togri": 0,
+      "izoh": "Kosinus grafigi eng pastda minus birga, eng yuqorida birga yetadi. Shuning uchun qiymatlar to‘plami yopiq kesma bo‘ladi."
+     }
+    },
+    {
+     "aytish": "Savol. Nol dan ikki pi gacha oraliqda sinus iks teng kosinus iks tenglama nechta yechimga ega.",
+     "savol": {
+      "matn": "0 ≤ x ≤ 2π da sin x = cos x nechta yechimga ega?",
+      "variantlar": [
+       "1",
+       "2",
+       "3",
+       "4"
+      ],
+      "togri": 1,
+      "izoh": "Umumiy yechim x = π/4 + πk. Berilgan oraliqda x = π/4 va x = 5π/4, ya’ni 2 ta yechim bor."
+     }
+    },
+    {
+     "aytish": "Xulosa qilib, sinus va kosinus barcha haqiqiy sonlarda aniqlangan va qiymatlari minus bir bilan bir orasida. Tangens va kotangensning davri pi, qiymatlar to‘plami esa barcha haqiqiy sonlar. Grafikni ko‘rish odati sizga DTM savollarida vaqt yutadi.",
+     "yozuv": [
+      "sin, cos: T=2π, E=[-1;1]",
+      "tg, ctg: T=π, E=R",
+      "D ni maxraj nol bilan tekshir",
+      "Grafikdan savolni tez ko‘r"
+     ],
+     "chizma": null
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "nom": "DTM usulidagi murakkab va aralash trigonometrik masalalar",
+   "maqsad": "Dars oxirida o‘quvchi formulalar, ayniyatlar, grafiklar va tenglamalarni birlashtirgan DTM dagi murakkab aralash savollarni tez va to‘g‘ri yecha oladi.",
+   "sahnalar": [
+    {
+     "aytish": "DTM da trigonometrik savol ko‘pincha bitta bob emas, bir nechta g‘oyani birlashtiradi. Shuning uchun tez yo‘l tanlash juda muhim. Bugun ifoda, grafik va tenglamani bitta zanjirda ishlatamiz.",
+     "yozuv": [
+      "DTM usuli: aralash trigonometrik masalalar",
+      "Maqsad: tez tanish, tez soddalashtirish,",
+      "to‘g‘ri yechimni topish"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Asosiy usul uch qadamdan iborat. Birinchi qadam, hamma narsani sinus va kosinus tiliga o‘tkazish. Ikkinchi qadam, ayniyat bilan soddalashtirish. Uchinchi qadam, oraliq va davriylikni tekshirish.",
+     "yozuv": [
+      "tg x + ctg x = 1/(sin x cos x)",
+      "sin²x + cos²x = 1",
+      "sin 2x = 2sin x cos x",
+      "Usul: bir til -> ayniyat -> oraliq"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Grafik tenglama va qiymatni birlashtiradi. Sinus iks teng birdan ikki bo‘lingan tenglama noldan ikki pigacha ikki nuqtada bajariladi. Grafikda aynan shu ikki kesishish nuqtasiga qarang.",
+     "yozuv": [
+      "y = sin x",
+      "y = 1/2",
+      "Kesishish: π/6 va 5π/6"
+     ],
+     "chizma": {
+      "tur": "grafik",
+      "x": [
+       0,
+       6.5
+      ],
+      "y": [
+       -1.5,
+       1.5
+      ],
+      "funksiyalar": [
+       {
+        "f": "sin(x)",
+        "nom": "y = sin x"
+       },
+       {
+        "f": "0.5",
+        "nom": "y = 1/2"
+       }
+      ],
+      "nuqtalar": [
+       {
+        "x": 0.523599,
+        "y": 0.5,
+        "nom": "(π/6; 1/2)"
+       },
+       {
+        "x": 2.617994,
+        "y": 0.5,
+        "nom": "(5π/6; 1/2)"
+       }
+      ]
+     }
+    },
+    {
+     "aytish": "Birinchi aralash misolni olaylik. Tangens iks plyus kotangens iks ni sinus va kosinus orqali yozamiz. Suratda sinus iks kvadrat plyus kosinus iks kvadrat hosil bo‘ladi, u esa birga teng. Shunda butun ifoda birga tushadi.",
+     "yozuv": [
+      "A = (tg x + ctg x)sin x cos x",
+      "= (sin x/cos x + cos x/sin x)sin x cos x",
+      "= (sin²x + cos²x)/(sin x cos x) * sin x cos x",
+      "= 1"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Tez savol. Bir minus kosinus ikki iks ni sinus iksga bo‘lganda, sinus iks nol bo‘lmasa, qaysi ko‘rinish chiqadi.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "Agar B = (1 - cos 2x)/sin x va sin x ≠ 0 bo‘lsa, B ning soddalashgan ko‘rinishi qaysi?",
+      "variantlar": [
+       "2sin x",
+       "sin x",
+       "2cos x",
+       "ctg x"
+      ],
+      "togri": 0,
+      "izoh": "1 - cos 2x = 2sin²x. So‘ng sin x ga bo‘lsak, 2sin x chiqadi."
+     }
+    },
+    {
+     "aytish": "Endi tenglamaga o‘tamiz. Ko‘rinishi murakkab bo‘lsa ham, sinus iksni vaqtincha bitta o‘zgaruvchi deb olamiz. Shunda oddiy kvadrat tenglama hosil bo‘ladi va ko‘paytuvchilarga ajraladi.",
+     "yozuv": [
+      "2sin²x - 3sin x + 1 = 0",
+      "t = sin x",
+      "2t² - 3t + 1 = 0",
+      "(2t - 1)(t - 1) = 0"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Demak ikki holat bor. Birinchi holatda sinus iks yarim bo‘ladi, bu noldan ikki pigacha ikkita nuqta beradi. Ikkinchi holatda sinus iks bir bo‘ladi, bu bitta nuqta beradi. Natijada jami uchta yechim chiqadi.",
+     "yozuv": [
+      "sin x = 1/2 yoki sin x = 1",
+      "x = π/6, 5π/6, π/2",
+      "0 ≤ x < 2π"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Nazorat savoli. Oldingi tenglamaning noldan ikki pigacha nechta yechimi bor.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "0 ≤ x < 2π oraliqda 2sin²x - 3sin x + 1 = 0 tenglamaning nechta yechimi bor?",
+      "variantlar": [
+       "2",
+       "3",
+       "4",
+       "5"
+      ],
+      "togri": 1,
+      "izoh": "2sin²x - 3sin x + 1 = 0 dan sin x = 1/2 yoki 1. [0,2π) da mos ravishda 2 ta va 1 ta yechim bor, jami 3 ta."
+     }
+    },
+    {
+     "aytish": "Uchinchi misolda tengsizlikni yechamiz. Kosinus musbat bo‘lishi birlik aylanasida birinchi va to‘rtinchi chorakka to‘g‘ri keladi. Avval ikki iks uchun oraliqni yozamiz, keyin ikki ga bo‘lamiz.",
+     "yozuv": [
+      "cos 2x > 0",
+      "2x ∈ (-π/2 + 2πk, π/2 + 2πk)",
+      "x ∈ (-π/4 + πk, π/4 + πk)",
+      "Kesma: [-π/2, π]"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Endi umumiy yechimni berilgan kesma bilan kesishamiz. Son o‘qida ikkita bo‘lak qoladi. O‘ng tomondagi pi nuqtasi kiradi, chunki kosinus ikki pi birga teng. Son o‘qida ochiq va yopiq uchlarga diqqat qiling.",
+     "yozuv": [
+      "x ∈ (-π/4, π/4) ∪ (3π/4, π]"
+     ],
+     "chizma": {
+      "tur": "sonOqi",
+      "oraliqlar": [
+       {
+        "dan": -0.785398,
+        "gacha": 0.785398,
+        "dan_yopiq": false,
+        "gacha_yopiq": false,
+        "dan_nom": "−π/4",
+        "gacha_nom": "π/4"
+       },
+       {
+        "dan": 2.356194,
+        "gacha": 3.141593,
+        "dan_yopiq": false,
+        "gacha_yopiq": true,
+        "dan_nom": "3π/4",
+        "gacha_nom": "π"
+       }
+      ],
+      "nuqtalar": []
+     }
+    },
+    {
+     "aytish": "Eng ko‘p xato bo‘linayotgan ifoda qachon nol bo‘lishini unutishdir. Masalan sinus iks yoki kosinus iksga bo‘lsangiz, nol bo‘ladigan nuqtalarni oldin tekshiring. Aks holda ortiqcha yoki yo‘qolgan yechim chiqadi.",
+     "yozuv": [
+      "Tipik xato:",
+      "sin x yoki cos x ga bo‘lishdan oldin",
+      "sin x = 0, cos x = 0 ni tekshir",
+      "Aniqlanish sohasini yoz"
+     ],
+     "chizma": null
+    },
+    {
+     "aytish": "Yakuniy DTM savoli. Sinus iks teng kosinus ikki iks tenglamaning noldan ikki pigacha nechta yechimi bor.",
+     "yozuv": [],
+     "chizma": null,
+     "savol": {
+      "matn": "0 ≤ x < 2π oraliqda sin x = cos 2x tenglamaning nechta yechimi bor?",
+      "variantlar": [
+       "2",
+       "3",
+       "4",
+       "5"
+      ],
+      "togri": 1,
+      "izoh": "cos 2x = 1 - 2sin²x. Shundan 2sin²x + sin x - 1 = 0 bo‘ladi, ya’ni sin x = 1/2 yoki -1. [0,2π) da jami 3 ta yechim bor."
+     }
+    },
+    {
+     "aytish": "Xulosa juda sodda. Aralash trigonometrik masalada birinchi ish, hamma narsani bitta tilga keltirish. Keyin ayniyat, grafik yoki davriylikdan foydalanish kerak. Oxirida esa oraliq va taqiqlangan nuqtalarni albatta tekshirasiz.",
+     "yozuv": [
+      "1) Bir tilga keltir",
+      "2) Ayniyat bilan och",
+      "3) Grafik yoki davriylikni qo‘lla",
+      "4) Oraliqni va xatoni tekshir"
+     ],
+     "chizma": null
+    }
+   ]
+  }
+ ]
+}

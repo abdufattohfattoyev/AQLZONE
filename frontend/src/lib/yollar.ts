@@ -152,6 +152,10 @@ export const yolPremium = () => "/premium";
 /** AI ustoz — Premium egalariga (`screens/Ai.tsx`). */
 export const yolAi = () => "/ai";
 export const yolAiSuhbat = (id: number) => `/ai/${id}`;
+/** Jonli dars: mavzu darslari ro'yxati, bitta dars va mavzu mashqi (`screens/JonliDars.tsx`). */
+export const yolDarslar = (slug: string) => `/dars/${slug}`;
+export const yolJonliDars = (slug: string, n: number) => `/dars/${slug}/${n}`;
+export const yolDarsMashq = (slug: string) => `/dars/${slug}/mashq`;
 /** AI reja vazifasi — `kalit` ("kun-ish") va DTM mavzusi (bo'sh slug — `aralash`). */
 export const yolRejaVazifa = (kalit: string, slug: string) => `/reja/${kalit}/${slug || "aralash"}`;
 /** Yangi suhbat yozish maydoni — birinchi savol yuborilgach `yolAiSuhbat` ga. */

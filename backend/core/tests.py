@@ -9,6 +9,7 @@ bu yerda xato bo'lsa bolaning natijasi yo'qoladi) va begona kalitlarni rad etish
 import hashlib
 import hmac
 import json
+import re
 import threading
 from datetime import timedelta
 from io import StringIO
@@ -10820,6 +10821,29 @@ class AiUstozTest(TestCase):
         self.assertEqual(bugun["ishlar"][0]["dars"], r1.json()["id"])
         self.assertEqual(self.client.post("/api/v1/ai/reja/dars", {"kalit": "9-9"},
                                           content_type="application/json", **h).status_code, 400)
+
+    def test_reja_jonli_dars_korildi(self):
+        """Jonli dars ochilsa — tushuntirish qadami AI suhbatsiz bajarilgan hisoblanadi."""
+        h, _ = self._reja()
+        chaqiruv = len(self.chaqiruvlar)
+        r = self.client.post("/api/v1/ai/reja/korildi", {"kalit": "0-1"}, content_type="application/json", **h)
+        self.assertEqual(r.status_code, 200)
+        ishlar = self.client.get("/api/v1/ai/reja", **h).json()["reja"]["ishlar"]
+        self.assertEqual([i["korildi"] for i in ishlar], [False, True])
+        self.assertEqual(len(self.chaqiruvlar), chaqiruv)
+        self.assertEqual(self.client.post("/api/v1/ai/reja/korildi", {"kalit": "x"},
+                                          content_type="application/json", **h).status_code, 400)
+
+    def test_jonli_dars_bolaklari(self):
+        """Ovoz bo'laklari — mijozdagi `ovozBolaklari` bilan bir xil (scripts/aiChizma.ts dagi misollar)."""
+        from core.management.commands.jonli_dars import bolaklar
+
+        self.assertEqual(bolaklar("Salom.  Bugun   sinus!  Tayyormisiz?"), ["Salom.", "Bugun sinus!", "Tayyormisiz?"])
+        uzun = "Birinchi qism, " + "so'z " * 50 + "oxiri."
+        b = bolaklar(uzun)
+        self.assertTrue(all(len(x) <= 190 for x in b))
+        self.assertEqual(" ".join(b), re.sub(r"\s+", " ", uzun).strip())
+        self.assertEqual([len(x) for x in b], [189, 81])
 
     def test_darsni_tashqaridan_ochib_bolmaydi(self):
         h, _ = self.kir()

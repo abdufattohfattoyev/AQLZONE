@@ -2536,6 +2536,17 @@ def ai_reja_dars(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+def ai_reja_korildi(request):
+    """`{kalit}` — ish bo'yicha jonli dars ochildi (tushuntirish qadami)."""
+    from . import ai_reja as R
+
+    if not R.korildi(request.user, str(request.data.get("kalit") or "")):
+        return Response({"detail": "bosh", "kod": "bosh"}, status=400)
+    return Response({"ok": True})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def ai_reja_vazifa(request):
     """`{kalit, togri, jami}` — vazifa natijasi; yangilangan bugungi ro'yxat qaytadi."""
     from . import ai_reja as R

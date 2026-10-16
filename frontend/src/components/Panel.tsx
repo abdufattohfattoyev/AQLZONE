@@ -113,6 +113,10 @@ const YOPIQ = [
   // (`/kichkintoy`) esa oddiy sahifa — u yerda panel qoladi.
   /^\/kichkintoy\/[^/]+$/,
   /^\/kirish\//,                 // botdagi havola
+  // Jonli dars — o'z boshqaruvi (to'xtatish, oldinga) pastda; dars mashqi va
+  // AI reja vazifasi — blok test, javob tugmalari pastda.
+  /^\/dars\/[^/]+\/(\d+|mashq)$/,
+  /^\/reja\//,
   // Anketani qayta to'ldirish — to'liq ekran. Ilgari u `/men` da edi;
   // endi `/men` — "Men" bo'limining o'zi va u yerda panel kerak.
   /^\/men\/anketa$/,

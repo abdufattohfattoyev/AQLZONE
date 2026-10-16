@@ -23,6 +23,8 @@ export interface RejaIsh {
   slug: string;
   /** Boshlangan AI dars suhbati. */
   dars: number | null;
+  /** Mavzuning jonli darsi ochilgan (`screens/JonliDars.tsx`) — tushuntirish shu bilan ham bajariladi. */
+  korildi: boolean;
   /** Eng yaxshi vazifa natijasi `[to'g'ri, jami]`. */
   vazifa: [number, number] | null;
   /** Oldingi kundan o'tmay qolgan ish. */
@@ -44,6 +46,8 @@ export const rejaOl = (): Promise<RejaBugun | null> =>
   sorov<{ reja: RejaBugun | null }>("/api/v1/ai/reja").then((r) => r.reja);
 
 export const rejaDars = (kalit: string): Promise<AiSuhbat> => sorov<AiSuhbat>("/api/v1/ai/reja/dars", { kalit });
+
+export const rejaKorildi = (kalit: string): Promise<unknown> => sorov("/api/v1/ai/reja/korildi", { kalit });
 
 export const rejaVazifa = (kalit: string, togri: number, jami: number): Promise<RejaBugun | null> =>
   sorov<{ reja: RejaBugun | null }>("/api/v1/ai/reja/vazifa", { kalit, togri, jami }).then((r) => r.reja);

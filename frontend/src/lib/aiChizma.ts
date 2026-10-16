@@ -52,7 +52,10 @@ export interface Geometriya {
 
 export interface SonOqi {
   tur: "sonOqi";
-  oraliqlar: { dan: number | null; gacha: number | null; danYopiq: boolean; gachaYopiq: boolean }[];
+  /** `danNom`/`gachaNom` — uchning yozuvi ("π/4"); bo'lmasa son o'zi yoziladi. */
+  oraliqlar: {
+    dan: number | null; gacha: number | null; danYopiq: boolean; gachaYopiq: boolean; danNom: string; gachaNom: string;
+  }[];
   nuqtalar: { x: number; yopiq: boolean; nom: string }[];
 }
 
@@ -159,7 +162,8 @@ export function tekshir(xom: string): Chizma | null {
       const gacha = son(o?.gacha) ? o.gacha : null;
       if (dan === null && gacha === null) return [];
       if (dan !== null && gacha !== null && dan > gacha) return [];
-      return [{ dan, gacha, danYopiq: o.dan_yopiq === true, gachaYopiq: o.gacha_yopiq === true }];
+      return [{ dan, gacha, danYopiq: o.dan_yopiq === true, gachaYopiq: o.gacha_yopiq === true,
+        danNom: matnOl(o.dan_nom, 12), gachaNom: matnOl(o.gacha_nom, 12) }];
     });
     const nuqtalar = royxat(d.nuqtalar).flatMap((n) => {
       const o = n as Record<string, unknown>;
