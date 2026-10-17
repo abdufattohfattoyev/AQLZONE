@@ -96,6 +96,9 @@ class Command(BaseCommand):
         parser.add_argument("--sinov", action="store_true")
         parser.add_argument("--holat", action="store_true")
         parser.add_argument("--instagram", action="store_true", help="Instagram kaliti ishlayaptimi")
+        # Egasi aytganda yangi rolikni shu kunning o'zida ikkinchi bo'lib chiqarish
+        # uchun (2026-10-17, "Kirish yo'li"). Beat bu bayroqsiz yuradi — kuniga bitta.
+        parser.add_argument("--majbur", action="store_true", help="bugun chiqqan bo'lsa ham yuborish")
 
     def handle(self, *args, **o):
         if o["instagram"]:
@@ -113,7 +116,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"  {v.name}  —  {(malumot(v).get('matn') or '').splitlines()[:1]}")
             return
 
-        if bugun_chiqdimi():
+        if bugun_chiqdimi() and not o["majbur"]:
             self.stdout.write("bugun rolik allaqachon chiqqan — yuborilmaydi")
             return
         if not roy:
