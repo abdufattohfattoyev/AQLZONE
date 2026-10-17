@@ -34,11 +34,12 @@ import { courseById } from "../lib/curriculum";
 import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
-import { yolImtMashq, yolImtReyting, yolMavzu } from "../lib/yollar";
+import { yolImtMashq, yolImtReyting, yolMavzu, yolSertifikatVariant } from "../lib/yollar";
+import { KeyingiVariant } from "../components/KeyingiVariant";
 import { useFaollik } from "../lib/faollik";
 import type { SJavob, SSavol, SVariant } from "../lib/sertifikat";
 import {
-  BALL, DAQIQA, HARFLAR, berilgan, daraja, joriyniOchir, joriyniOqi, joriyniSaqla, keyingiDaraja,
+  BALL, DAQIQA, HARFLAR, VARIANTLAR, berilgan, daraja, joriyniOchir, joriyniOqi, joriyniSaqla, keyingiDaraja,
   maksBall, natijaSaqla, savolBali, serverga, sonTogrimi, variantYasa, yaxlit,
 } from "../lib/sertifikat";
 import { javobSaqla, mavzuXatoYoz } from "../lib/imtihon";
@@ -748,15 +749,20 @@ function Natija({ v, javoblar, sekund, yozildi, strelka, onKorish, onQayta, onEx
         </>
       )}
 
-      <button type="button" onClick={onQayta} data-tahlil="Sertifikat: qayta ishlash"
-        className="tugma-3d mt-3 min-h-[54px] w-full rounded-2xl bg-brand-blue font-display text-[18px] font-bold
-                   text-white shadow-[0_4px_0_var(--color-brand-blue-d)]">
-        {t("sertQayta")}
-      </button>
-      <button type="button" onClick={onExit} data-tahlil="Sertifikat: variantlarga"
-        className="clay-press min-h-11 w-full font-display text-[16px] font-semibold text-ink-soft">
-        {t("sertVariantlarga")}
-      </button>
+      {/* Asosiy tugma — keyingi variant (`KeyingiVariant.tsx` da nega).
+          Ilgari bu yerda "Qayta ishlash" ko'k edi; endi u ikkinchi darajali. */}
+      <div className="mt-3"><KeyingiVariant n={v.n} soni={VARIANTLAR} tahlil="Sertifikat"
+        onOch={(k) => nav(yolSertifikatVariant(k))} /></div>
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" onClick={onQayta} data-tahlil="Sertifikat: qayta ishlash"
+          className="clay-press min-h-12 rounded-2xl bg-track px-2 font-display text-[15px] text-ink-soft">
+          {t("sertQayta")}
+        </button>
+        <button type="button" onClick={onExit} data-tahlil="Sertifikat: variantlarga"
+          className="clay-press min-h-12 rounded-2xl bg-track px-2 font-display text-[15px] text-ink-soft">
+          {t("sertVariantlarga")}
+        </button>
+      </div>
 
       {yechimda?.a.yechim && (
         <Yechim qadamlar={yechimda.a.yechim} javob={String(yechimda.a.answer)} onYop={() => setYechimda(null)} />

@@ -3098,6 +3098,7 @@ const S = {
   sertTogriJavob: ["To'g'ri: {j}", "Верно: {j}"],
   sertSizniki: ["siz: {j}", "вы: {j}"],
   sertQayta: ["Qayta ishlash", "Решить заново"],
+  natijaKeyingi: ["{n}-variantni boshlash", "Начать вариант {n}"],
   sertVariantlarga: ["Variantlarga qaytish", "К вариантам"],
   sertTestlar: ["Milliy sertifikat va DTM", "Нацсертификат и ДТМ"],
   sertTestlarIzoh: ["Imtihon formatidagi variantlar, vaqt bilan", "Варианты в формате экзамена, на время"],

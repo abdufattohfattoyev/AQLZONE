@@ -65,7 +65,7 @@ import { t } from "../lib/matn";
 import { kursMatn } from "../lib/tarjima/kurs";
 import { tebrat, useOrqaga } from "../lib/qobiq";
 import { tovush } from "../lib/ovoz";
-import { yolImtMashq, yolImtReyting, yolMavzu } from "../lib/yollar";
+import { yolImtMashq, yolImtReyting, yolImtihonVariant, yolMavzu } from "../lib/yollar";
 import { KoribChiqish } from "../components/KoribChiqish";
 import { boblargaYig, natijaYoz as ozlashYoz } from "../lib/ozlashtirish";
 import { ReytingKarta } from "../components/HaftalikReyting";
@@ -79,8 +79,9 @@ import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
 import { useFaollik } from "../lib/faollik";
 import {
-  javobSaqla, mavzuXatoYoz, natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa,
+  VARIANTLAR, javobSaqla, mavzuXatoYoz, natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa,
 } from "../lib/imtihon";
+import { KeyingiVariant } from "../components/KeyingiVariant";
 import type { MavzuXato } from "../lib/imtihon";
 import { baho, sessiyaSaqla, sessiyaServerga, sessiyaYasa } from "../lib/sessiya";
 import { mavzuBySlug, mavzuSaqla, mavzuServerga, mavzuYasa } from "../lib/dtmMavzu";
@@ -1055,6 +1056,23 @@ function Natija({
                      shadow-[0_6px_0_var(--color-brand-blue-d)]">
           {t("marafonQaytish")}
         </button>
+      ) : imtihon ? (
+        // DTM variantida asosiy tugma — keyingi variant (`KeyingiVariant.tsx`
+        // da nega). "Yana topshirish" va "Chiqish" ikkinchi darajali.
+        <>
+          <div className="mt-6"><KeyingiVariant n={imtihon} soni={VARIANTLAR} tahlil="DTM"
+            onOch={(k) => nav(yolImtihonVariant(k))} /></div>
+          <div className="mt-2.5 grid grid-cols-2 gap-2">
+            <button type="button" onClick={onQayta} data-tahlil="DTM: yana topshirish"
+              className="clay-press min-h-12 rounded-2xl bg-track px-2 font-display text-[15px] text-ink-soft">
+              {t("blokYana")}
+            </button>
+            <button type="button" onClick={onExit} data-tahlil="DTM: chiqish"
+              className="clay-press min-h-12 rounded-2xl bg-track px-2 font-display text-[15px] text-ink-soft">
+              {t("blokChiqish")}
+            </button>
+          </div>
+        </>
       ) : (
         <>
           <button type="button" onClick={onQayta}

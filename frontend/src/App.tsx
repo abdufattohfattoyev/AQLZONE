@@ -1069,7 +1069,9 @@ function ImtihonVariantSahifasi() {
   if (!Number.isInteger(raqam) || raqam < 1) return <Navigate to={yolImtihon()} replace />;
   return (
     <PremiumDarvoza n={raqam}>
-      <BlokEkran sinf={11} uzunlik="dtm" qamrov={{ tur: "imtihon" }} imtihon={raqam}
+      {/* `key` — natijadagi "keyingi variant" shu sahifaning o'zida raqamni
+          almashtiradi; holat yangidan boshlanmasa, eski natija qolardi. */}
+      <BlokEkran key={raqam} sinf={11} uzunlik="dtm" qamrov={{ tur: "imtihon" }} imtihon={raqam}
         onExit={() => nav(yolImtihon())} />
     </PremiumDarvoza>
   );
