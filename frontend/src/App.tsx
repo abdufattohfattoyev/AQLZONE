@@ -60,6 +60,7 @@ const QoidaOvi = lazy(() => import("./screens/QoidaOvi").then((m) => ({ default:
 const Strelka = lazy(() => import("./screens/Strelka").then((m) => ({ default: m.Strelka })));
 const Imtihon = lazy(() => import("./screens/Imtihon").then((m) => ({ default: m.Imtihon })));
 const Sertifikat = lazy(() => import("./screens/Sertifikat").then((m) => ({ default: m.Sertifikat })));
+const KirishYoli = lazy(() => import("./screens/KirishYoli").then((m) => ({ default: m.KirishYoli })));
 const SertifikatTest = lazy(() => import("./screens/SertifikatTest").then((m) => ({ default: m.SertifikatTest })));
 const Sessiya = lazy(() => import("./screens/Sessiya").then((m) => ({ default: m.Sessiya })));
 const ImtReyting = lazy(() => import("./screens/ImtihonQoshimcha").then((m) => ({ default: m.ImtReyting })));
@@ -218,6 +219,7 @@ function Yollar() {
       {/* `reyting`, `mashq` — `:n` dan ustun (aniq yo'l doim oldin tanlanadi). */}
       <Route path="/imtihon/reyting" element={<ImtReytingSahifasi tur="dtm" />} />
       <Route path="/imtihon/mashq" element={<ZaifMashqSahifasi tur="dtm" />} />
+      <Route path="/imtihon/maqsad" element={<KirishSahifasi />} />
       <Route path="/imtihon/mavzu/:slug/:n" element={<ImtihonMavzuSahifasi />} />
       <Route path="/imtihon/:n/tahlil" element={<ImtKorishSahifasi tur="dtm" />} />
       <Route path="/imtihon/:n" element={<ImtihonVariantSahifasi />} />
@@ -964,6 +966,13 @@ function ImtihonSahifasi() {
     onSertifikat={() => nav(yolSertifikat(), { replace: true })} onChiq={() => nav(yolTestSinf())}
     onMashq={() => nav(yolImtMashq("dtm"))} onReyting={() => nav(yolImtReyting("dtm"))}
     onKorish={(n) => nav(yolImtKorish("dtm", n))} onMarafon={() => nav("/marafon")} />;
+}
+
+/** Kirish yo'li — maqsad OTM va unga qancha qolgani (`lib/kirish.ts`). */
+function KirishSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <KirishYoli onChiq={() => nav(yolImtihon())} />;
 }
 
 /** Milliy sertifikat — variantlar ro'yxati (`lib/sertifikat.ts`). */

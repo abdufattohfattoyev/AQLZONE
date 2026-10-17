@@ -35,6 +35,7 @@ import { useVariantQulf } from "../components/variantQulf";
 import { AiRejaKarta } from "../components/AiKartalar";
 import { ZaifYorliqlar } from "../components/ZaifYorliqlar";
 import { DtmMavzular } from "../components/DtmMavzular";
+import { KirishKarta } from "../components/KirishKarta";
 import { tebrat } from "../lib/qobiq";
 import { MAVZU_OLCHAM, MAVZU_VARIANTLAR } from "../lib/dtmMavzu";
 import { OLCHAM, VARIANTLAR, daraja, engYaxshi, sinxronla, zaifMavzular } from "../lib/imtihon";
@@ -169,6 +170,10 @@ export function Imtihon({ onVariant, onMavzu, onSertifikat, onChiq, onMashq, onR
           </>
         )}
       </div>
+
+      {/* Kirish yo'li — "kira olamanmi?" (`lib/kirish.ts`). Natija bo'lmasa ham
+          ko'rinadi: maqsadni oldindan tanlab qo'ysa bo'ladi. */}
+      <KirishKarta foiz={d ? d.foiz : null} />
 
       {/* AI ustoz — natija bor bo'lsagina: reja natijalardan tuziladi. */}
       {d && <AiRejaKarta tahlil="DTM: AI reja" />}
