@@ -52,6 +52,12 @@ app.autodiscover_tasks()
 #: kerakli soatni o'zlari kutardi. Endi kutish kerak emas va
 #: `--soat` ham berilmaydi.
 app.conf.beat_schedule = {
+    # OpenAI krediti tugagan bo'lsa — qaytganini tekshiradi (`core.ai.kredit_tekshir`).
+    # AI ishlab turganda hech narsa qilmaydi va pul ketmaydi.
+    "ai-kredit": {
+        "task": "core.vazifalar.ai_kredit",
+        "schedule": crontab(minute="*/30"),
+    },
     # Kunlik son xabari — 17:30, umumiy eslatmadan OLDIN. Sabab:
     # o'ynaydigan odamga jumboq haqidagi xabar foydaliroq, umumiy
     # eslatma esa uni `eslatma_at` bo'yicha o'tkazib yuboradi (ya'ni

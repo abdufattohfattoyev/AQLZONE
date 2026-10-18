@@ -95,6 +95,14 @@ def telegram_xabar(self, chat_id: str, matn: str, **maydonlar) -> str:
     return holat
 
 
+@shared_task(name="core.vazifalar.ai_kredit")
+def ai_kredit() -> str:
+    """OpenAI krediti qaytdimi — `core.ai.kredit_tekshir` (jadvalda har 30 daqiqa)."""
+    from . import ai
+
+    return ai.kredit_tekshir()
+
+
 @shared_task(name="core.vazifalar.ai_javob", acks_late=False)
 def ai_javob(xabar_id: int) -> str:
     """

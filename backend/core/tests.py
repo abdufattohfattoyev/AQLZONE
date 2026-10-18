@@ -10732,11 +10732,21 @@ class AiUstozTest(TestCase):
         self.assertFalse(self.client.get("/api/v1/ai", **h).json()["yoqilgan"])
         self.assertFalse(self.client.get("/api/v1/premium", **h).json()["ai"])
         self.assertEqual(self.yangi(h, tur="repetitor", matn="Yana").status_code, 503)
-        # Muddat o'tgach (kesh kaliti yo'qoldi) — AI o'zi qaytadi, admin ikkinchi marta bezovta qilinmaydi.
         from core import ai as AI
-        cache.delete(AI.KREDIT_KALIT)
-        AI._kredit_tugadi()
-        self.assertEqual(len([m for c, m in self.xabarlar if c == "900" and "OpenAI" in m]), 1)
+        AI._kredit_tugadi()                          # ikkinchi marta — admin bezovta qilinmaydi
+        self.assertEqual(len([m for c, m in self.xabarlar if c == "900" and "krediti tugadi" in m]), 1)
+
+        # Fon tekshiruvi: kredit hali yo'q — o'chiq qoladi; qaytdi — AI o'zi yoqiladi.
+        with override_settings(OPENAI_API_KEY="k"), patch("openai.OpenAI") as soxta:
+            soxta.return_value.chat.completions.create.side_effect = Tugadi("429")
+            self.assertEqual(AI.kredit_tekshir(), "hali tugagan")
+            self.assertFalse(AI.yoqilganmi())
+            soxta.return_value.chat.completions.create.side_effect = None
+            self.assertEqual(AI.kredit_tekshir(), "qaytdi")
+            self.assertTrue(AI.yoqilganmi())
+            self.assertEqual(AI.kredit_tekshir(), "kerak emas")   # ishlab turganda so'rov yo'q
+        self.assertEqual(soxta.return_value.chat.completions.create.call_count, 2)
+        self.assertTrue(any("OpenAI ishlayapti" in m for c, m in self.xabarlar if c == "900"))
 
     def test_oddiy_xato_ai_ni_ochirmaydi(self):
         h, _ = self.kir()

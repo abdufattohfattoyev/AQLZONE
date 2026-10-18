@@ -82,14 +82,17 @@ class AiXato(Exception):
         self.holat = self.HOLAT.get(kod, 400)
 
 
-#: OpenAI krediti tugaganda shu kalit qo'yiladi — AI shuncha vaqt "o'chiq".
+#: OpenAI krediti tugaganda shu kalit qo'yiladi — AI "o'chiq".
 #: Nega: 2026-10-16 da kredit tugadi, lekin kalit bor edi va `yoqilgan`
 #: true qaytardi — Premium sahifasi AI'ni sotib turdi, tugmalar esa xato
 #: berdi. Endi kredit tugashi bilan hamma eshik (Premium jadvali, AI
-#: kartalari, natijadagi reja tugmasi) yashirinadi. Muddat o'tgach keyingi
-#: so'rov qayta sinaydi: kredit to'ldirilgan bo'lsa — AI o'zi qaytadi.
+#: kartalari, natijadagi reja tugmasi) yashirinadi.
+#:
+#: Kalit MUDDATSIZ: muddatli bo'lsa (ilk variantda 1 soat) trafik kam
+#: paytda AI keyingi xatogacha yana sotilib turardi. O'rniga fon vazifasi
+#: har 30 daqiqada 1 tokenlik so'rov bilan tekshiradi (`kredit_tekshir`):
+#: kredit to'ldirilgan bo'lsa — kalit o'chadi va AI o'zi qaytadi.
 KREDIT_KALIT = "ai:kredit_tugadi"
-KREDIT_TEKSHIRUV = 3600
 
 
 def yoqilganmi() -> bool:
@@ -113,19 +116,46 @@ def _kredit_tugadi() -> None:
     """AI'ni vaqtincha o'chiradi va adminga BIR marta aytadi (kalit yangi qo'yilgandagina)."""
     from django.core.cache import cache
 
-    if not cache.add(KREDIT_KALIT, 1, KREDIT_TEKSHIRUV):
+    if not cache.add(KREDIT_KALIT, 1, None):
         return
-    log.warning("AI: OpenAI krediti tugagan — %s s ga o'chirildi", KREDIT_TEKSHIRUV)
-    if cache.add("ai:kredit_xabar", 1, 24 * 3600):
-        from . import xabar as X
+    log.warning("AI: OpenAI krediti tugagan — AI o'chirildi")
+    _adminga("🤖 <b>OpenAI krediti tugadi</b>\n\nAI ustoz va AI reja vaqtincha yashirildi "
+             "(Premium sahifasida ham). Kredit to'ldirilgach yarim soat ichida o'zi qaytadi.")
 
-        for tg_id in [str(x) for x in getattr(settings, "ADMIN_TG", []) if x]:
-            try:
-                X.yubor(tg_id, "🤖 <b>OpenAI krediti tugadi</b>\n\nAI ustoz va AI reja vaqtincha "
-                               "yashirildi (Premium sahifasida ham). Kredit to'ldirilgach bir soat "
-                               "ichida o'zi qaytadi.")
-            except Exception:                        # noqa: BLE001
-                pass
+
+def _adminga(matn: str) -> None:
+    from . import xabar as X
+
+    for tg_id in [str(x) for x in getattr(settings, "ADMIN_TG", []) if x]:
+        try:
+            X.yubor(tg_id, matn)
+        except Exception:                            # noqa: BLE001
+            pass
+
+
+def kredit_tekshir() -> str:
+    """
+    Fon vazifasi (har 30 daqiqa): AI o'chiq bo'lsa — 1 tokenlik so'rov.
+    O'tsa — kalit o'chadi. Kredit hali yo'q bo'lsa — jim (xabar allaqachon ketgan).
+    """
+    from django.core.cache import cache
+
+    if not settings.OPENAI_API_KEY or not cache.get(KREDIT_KALIT):
+        return "kerak emas"
+    from openai import OpenAI
+
+    try:
+        OpenAI(api_key=settings.OPENAI_API_KEY, timeout=30, max_retries=0).chat.completions.create(
+            model=settings.OPENAI_MODEL, messages=[{"role": "user", "content": "1"}], max_completion_tokens=16)
+    except Exception as e:                           # noqa: BLE001
+        if _kredit_tugadimi(e):
+            return "hali tugagan"
+        # Boshqa xato (tarmoq, model) — kredit masalasi emas: AI'ni qaytaramiz,
+        # haqiqiy so'rov xato bersa, `javob_yoz` uni o'zi qayta belgilaydi.
+        log.warning("AI kredit tekshiruvi: boshqa xato — %s", e)
+    cache.delete(KREDIT_KALIT)
+    _adminga("🤖 <b>OpenAI ishlayapti</b>\n\nAI ustoz va AI reja yana ko'rinadi.")
+    return "qaytdi"
 
 
 # ------------------------------------------------------------ chegara
