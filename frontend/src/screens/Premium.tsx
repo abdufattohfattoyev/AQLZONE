@@ -67,6 +67,11 @@ export function Premium({ onBack, onOchildi }: { onBack: () => void; onOchildi: 
   };
 
   const narx = h?.narxlar[tarif];
+  // Sinov mumkin bo'lsa — u ekranning ASOSIY taklifi (tepada, to'ldirilgan tugma),
+  // to'lov esa ikkinchi darajali. Nega: 30 kunda sinov olgan 3 kishi bor, chek
+  // yuborgan — 2; karta raqamiga pul o'tkazish begona ilovaga ishonch talab
+  // qiladi, sinov esa bir bosish. Ilgari sinov sahifaning eng tagida edi.
+  const sinovBirinchi = !!h?.sinov_mumkin && !h.faol && !h.kutilmoqda;
 
   return (
     <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-5 pb-10 min-[360px]:px-[18px]">
@@ -84,9 +89,24 @@ export function Premium({ onBack, onOchildi }: { onBack: () => void; onOchildi: 
 
       <Holat h={h} />
 
-      <Farq bepul={h?.bepul ?? BEPUL} />
+      {sinovBirinchi && h && (
+        <section className="flex flex-col gap-2.5 rounded-clay bg-karta p-5 shadow-clay" aria-label={t("premSinovSarlavha", { n: h.sinov_kun })}>
+          <h2 className="font-display text-[22px] leading-tight">{t("premSinovSarlavha", { n: h.sinov_kun })}</h2>
+          <p className="text-[14.5px] leading-snug text-ink-soft">{t("premSinovIzoh")}</p>
+          <button type="button" onClick={sinov} disabled={band} data-tahlil="Premium: sinov (tepada)"
+            className="tugma-3d mt-1 min-h-[54px] rounded-2xl bg-brand-blue px-5 font-display text-[17px] font-bold
+                       text-white shadow-[0_4px_0_var(--color-brand-blue-d)] disabled:opacity-60">
+            {t("premSinovBoshla")}
+          </button>
+          {xato && <p role="alert" className="text-center text-[13.5px] font-semibold text-ink-soft">{xato}</p>}
+        </section>
+      )}
 
-      <h2 className="mt-1 font-display text-[19px]">{h?.faol ? t("premUzaytirish") : t("premTarif")}</h2>
+      <Farq bepul={h?.bepul ?? BEPUL} ai={h?.ai !== false} />
+
+      <h2 className="mt-1 font-display text-[19px]">
+        {h?.faol ? t("premUzaytirish") : sinovBirinchi ? t("premYokiTolov") : t("premTarif")}
+      </h2>
       <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label={t("premTarif")}>
         {TARIFLAR.map((k) => {
           const n = h?.narxlar[k];
@@ -137,12 +157,15 @@ export function Premium({ onBack, onOchildi }: { onBack: () => void; onOchildi: 
             onChange={(e) => yukla(e.target.files?.[0])} />
           <button type="button" onClick={() => fayl.current?.click()} disabled={!h?.karta || band}
             data-tahlil="Premium: chek yuklash"
-            className="tugma-3d min-h-12 rounded-2xl bg-brand-blue px-5 font-display text-[16px] font-bold text-white
-                       shadow-[0_4px_0_var(--color-brand-blue-d)] disabled:opacity-60">
+            // Bir ekranda bitta asosiy tugma: sinov tepada bo'lsa, chek — neytral.
+            className={sinovBirinchi
+              ? "clay-press min-h-12 rounded-2xl bg-track px-5 font-display text-[16px] font-bold text-ink disabled:opacity-60"
+              : `tugma-3d min-h-12 rounded-2xl bg-brand-blue px-5 font-display text-[16px] font-bold text-white
+                 shadow-[0_4px_0_var(--color-brand-blue-d)] disabled:opacity-60`}>
             {band ? t("premYuklanmoqda") : t("premChekYukla")}
           </button>
           <p className="-mt-1 text-center text-[12.5px] leading-snug text-ink-dim">{t("premChekIzoh")}</p>
-          {xato && <p role="alert" className="text-center text-[13.5px] font-semibold text-ink-soft">{xato}</p>}
+          {xato && !sinovBirinchi && <p role="alert" className="text-center text-[13.5px] font-semibold text-ink-soft">{xato}</p>}
 
           <div className="flex flex-col">
             <button type="button" onClick={botda} data-tahlil="Premium: botda yuborish"
@@ -159,7 +182,9 @@ export function Premium({ onBack, onOchildi }: { onBack: () => void; onOchildi: 
         </>
       )}
 
-      {h?.sinov_mumkin && (
+      {/* Pastdagi sinov tugmasi — faqat tepadagi kartasi chiqmagan holda (masalan,
+          chek tekshirilayotganda sinov ham mumkin bo'lsa). */}
+      {h?.sinov_mumkin && !sinovBirinchi && (
         <button type="button" onClick={sinov} disabled={band} data-tahlil="Premium: sinov"
           className="clay-press min-h-11 rounded-2xl bg-karta text-[14.5px] font-bold text-ink-soft shadow-clay-sm
                      disabled:opacity-60">
@@ -227,7 +252,7 @@ const MAVZU_VARIANT = 6;
 const MAVZU_BEPUL = 1;
 
 /** Bepul va Premium farqi — halol jadval: nima bepul qolishi ham yozilgan. */
-function Farq({ bepul }: { bepul: number }) {
+function Farq({ bepul, ai }: { bepul: number; ai: boolean }) {
   const qatorlar: { nom: Kalit; b: string; p: string }[] = [
     { nom: "premFarqDtm", b: t("premTaTa", { n: bepul }), p: t("premTaTa", { n: DTM_VARIANT }) },
     { nom: "premFarqMavzu", b: t("premMavzuQiymat", { n: MAVZU_BEPUL }), p: t("premMavzuQiymat", { n: MAVZU_VARIANT }) },
@@ -235,7 +260,9 @@ function Farq({ bepul }: { bepul: number }) {
     { nom: "premFarqQabul", b: t("premTaTa", { n: bepul }), p: t("premTaTa", { n: JAMI_VARIANT }) },
     { nom: "premFarqReyting", b: "—", p: "✓" },
     { nom: "premFarqTahlil", b: t("premFarqTahlil_", { n: bepul }), p: t("premFarqTahlil_", { n: JAMI_VARIANT }) },
-    { nom: "premFarqAi", b: "—", p: "✓" },
+    // AI qatori faqat AI ISHLAYOTGANDA: ishlamaydigan narsani sotmaymiz
+    // (2026-10-16 da OpenAI krediti tugaganda jadvalda turib qolgan edi).
+    ...(ai ? [{ nom: "premFarqAi" as Kalit, b: "—", p: "✓" }] : []),
     { nom: "premFarqDars", b: t("premFarqDarsQiymat"), p: t("premFarqDarsQiymat") },
   ];
   return (

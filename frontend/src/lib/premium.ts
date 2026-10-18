@@ -36,6 +36,8 @@ export interface PremiumHolat {
   ishlangan: number;
   sinov_mumkin: boolean;
   sinov_kun: number;
+  /** AI ishlayaptimi (kalit bor va kredit tugamagan). Eski serverda yo'q — `undefined`. */
+  ai?: boolean;
   bepul: number;
   narxlar: Record<Tarif, number>;
   kunlar: Record<Tarif, number>;

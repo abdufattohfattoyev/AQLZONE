@@ -10718,6 +10718,32 @@ class AiUstozTest(TestCase):
         self.assertEqual([x["holat"] for x in j["xabarlar"]], ["tayyor", "tayyor"])
         self.assertEqual(AiXabar.objects.filter(rol=AiXabar.AI).count(), 1)
 
+    @override_settings(ADMIN_TG=["900"])
+    def test_kredit_tugasa_ai_yashirinadi_va_admin_bir_marta_biladi(self):
+        """OpenAI "pul tugadi" — AI o'chiq ko'rinadi (Premium jadvalida ham), admin bir marta xabar oladi."""
+        class Tugadi(Exception):
+            code = "insufficient_quota"
+            body = {"code": "credit_balance_exhausted"}
+
+        h, _ = self.kir()
+        self.assertTrue(self.client.get("/api/v1/premium", **h).json()["ai"])
+        with patch("core.ai._chaqir", side_effect=Tugadi("429 You have no credits remaining")):
+            self.yangi(h, tur="repetitor", matn="Salom")
+        self.assertFalse(self.client.get("/api/v1/ai", **h).json()["yoqilgan"])
+        self.assertFalse(self.client.get("/api/v1/premium", **h).json()["ai"])
+        self.assertEqual(self.yangi(h, tur="repetitor", matn="Yana").status_code, 503)
+        # Muddat o'tgach (kesh kaliti yo'qoldi) — AI o'zi qaytadi, admin ikkinchi marta bezovta qilinmaydi.
+        from core import ai as AI
+        cache.delete(AI.KREDIT_KALIT)
+        AI._kredit_tugadi()
+        self.assertEqual(len([m for c, m in self.xabarlar if c == "900" and "OpenAI" in m]), 1)
+
+    def test_oddiy_xato_ai_ni_ochirmaydi(self):
+        h, _ = self.kir()
+        with patch("core.ai._chaqir", side_effect=RuntimeError("tarmoq")):
+            self.yangi(h, tur="repetitor", matn="Salom")
+        self.assertTrue(self.client.get("/api/v1/ai", **h).json()["yoqilgan"])
+
     @override_settings(AI_KUNLIK_JAMI=1)
     def test_butun_ilova_chegarasi(self):
         h, _ = self.kir()

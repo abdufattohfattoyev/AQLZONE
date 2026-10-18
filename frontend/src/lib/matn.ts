@@ -3068,6 +3068,17 @@ const S = {
   premBotda: ["Telegram bot orqali yuborish", "Отправить через Telegram-бота"],
   premAdmin: ["Admin bilan bog'lanish", "Связаться с админом"],
   premSinov: ["{n} kun bepul sinab ko'rish", "Попробовать {n} дня бесплатно"],
+  premSinovSarlavha: ["{n} kun — hammasi bepul", "{n} дня — всё бесплатно"],
+  premSinovIzoh: [
+    "Hamma variantlar, mavzu testlari va tahlil ochiladi. Karta ham, chek ham kerak emas — bitta bosish.",
+    "Откроются все варианты, тесты по темам и разбор. Ни карты, ни чека — одно нажатие.",
+  ],
+  premSinovBoshla: ["Bepul boshlash", "Начать бесплатно"],
+  premYokiTolov: ["Yoki darhol oling", "Или оформите сразу"],
+  premVaraqSinovIzoh: [
+    "Birinchi {bepul} ta variant bepul. Qolganini {n} kun bepul ochib ko'ring — karta kerak emas.",
+    "Первые {bepul} варианта бесплатны. Остальные откройте на {n} дня бесплатно — без карты.",
+  ],
   premSinovXato: ["Sinov allaqachon olingan", "Пробный период уже использован"],
   premYopiq: ["To'lov hozircha qabul qilinmayapti — birozdan keyin qayting",
     "Оплата пока не принимается — загляните чуть позже"],

@@ -36,17 +36,29 @@ export function PremiumVaraq({ n, bepul, onYop, onOchildi }: {
     <TanlovVaraq sarlavha={t("premVaraqSarlavha", { n })} onYop={onYop}>
       <div className="flex w-full flex-col gap-3">
         <p className="text-[14.5px] leading-snug text-ink-soft">
-          {t("premVaraqIzoh", { bepul: bepul ?? h?.bepul ?? BEPUL, narx: som(h?.narxlar["7kun"] ?? 5000) })}
+          {h?.sinov_mumkin
+            ? t("premVaraqSinovIzoh", { bepul: bepul ?? h.bepul ?? BEPUL, n: h.sinov_kun })
+            : t("premVaraqIzoh", { bepul: bepul ?? h?.bepul ?? BEPUL, narx: som(h?.narxlar["7kun"] ?? 5000) })}
         </p>
-        <button type="button" onClick={() => nav(yolPremium())} data-tahlil="Premium varaq: ko'rish"
-          className="tugma-3d min-h-12 rounded-2xl bg-brand-blue px-5 font-display text-[16px] font-bold
-                     text-white shadow-[0_4px_0_var(--color-brand-blue-d)]">
-          {t("premKorish")}
-        </button>
-        {h?.sinov_mumkin && (
-          <button type="button" onClick={sinov} disabled={band} data-tahlil="Premium varaq: sinov"
-            className="clay-press min-h-11 rounded-2xl text-[14.5px] font-bold text-brand-blue-t disabled:opacity-60">
-            {t("premSinov", { n: h.sinov_kun })}
+        {/* Sinov mumkin bo'lsa — u asosiy tugma: bir bosishda shu variant ochiladi.
+            Ilgari asosiy tugma "Premium'ni ko'rish" edi va sinov ostida yozuv bo'lib turardi. */}
+        {h?.sinov_mumkin ? (
+          <>
+            <button type="button" onClick={sinov} disabled={band} data-tahlil="Premium varaq: sinov"
+              className="tugma-3d min-h-12 rounded-2xl bg-brand-blue px-5 font-display text-[16px] font-bold
+                         text-white shadow-[0_4px_0_var(--color-brand-blue-d)] disabled:opacity-60">
+              {t("premSinovBoshla")}
+            </button>
+            <button type="button" onClick={() => nav(yolPremium())} data-tahlil="Premium varaq: ko'rish"
+              className="clay-press min-h-11 rounded-2xl text-[14.5px] font-bold text-brand-blue-t">
+              {t("premKorish")}
+            </button>
+          </>
+        ) : (
+          <button type="button" onClick={() => nav(yolPremium())} data-tahlil="Premium varaq: ko'rish"
+            className="tugma-3d min-h-12 rounded-2xl bg-brand-blue px-5 font-display text-[16px] font-bold
+                       text-white shadow-[0_4px_0_var(--color-brand-blue-d)]">
+            {t("premKorish")}
           </button>
         )}
       </div>

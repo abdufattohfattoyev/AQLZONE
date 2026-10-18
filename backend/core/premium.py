@@ -118,6 +118,12 @@ def admin_havola() -> str:
     return f"https://t.me/{bot}" if bot else ""
 
 
+def _ai_ishlayaptimi() -> bool:
+    from . import ai
+
+    return ai.yoqilganmi()
+
+
 def holat(pupil: Pupil) -> dict:
     """`GET /api/v1/premium` va `/me` dagi `premium` maydoni."""
     hozir = timezone.now()
@@ -151,6 +157,8 @@ def holat(pupil: Pupil) -> dict:
         # tekin oyga aylanardi.
         "sinov_mumkin": pupil.premium_sinov_at is None and pupil.premium_gacha is None,
         "sinov_kun": settings.PREMIUM_SINOV_KUN,
+        # AI ishlayaptimi — ishlamasa Premium sahifasi uni sotmaydi (`ai.yoqilganmi`).
+        "ai": _ai_ishlayaptimi(),
         "bepul": bepul_variant(),
         "narxlar": narxlar(),
         "kunlar": TARIF_KUN,

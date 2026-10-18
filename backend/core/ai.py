@@ -82,8 +82,50 @@ class AiXato(Exception):
         self.holat = self.HOLAT.get(kod, 400)
 
 
+#: OpenAI krediti tugaganda shu kalit qo'yiladi — AI shuncha vaqt "o'chiq".
+#: Nega: 2026-10-16 da kredit tugadi, lekin kalit bor edi va `yoqilgan`
+#: true qaytardi — Premium sahifasi AI'ni sotib turdi, tugmalar esa xato
+#: berdi. Endi kredit tugashi bilan hamma eshik (Premium jadvali, AI
+#: kartalari, natijadagi reja tugmasi) yashirinadi. Muddat o'tgach keyingi
+#: so'rov qayta sinaydi: kredit to'ldirilgan bo'lsa — AI o'zi qaytadi.
+KREDIT_KALIT = "ai:kredit_tugadi"
+KREDIT_TEKSHIRUV = 3600
+
+
 def yoqilganmi() -> bool:
-    return bool(settings.OPENAI_API_KEY)
+    if not settings.OPENAI_API_KEY:
+        return False
+    from django.core.cache import cache
+
+    return not cache.get(KREDIT_KALIT)
+
+
+def _kredit_tugadimi(e: Exception) -> bool:
+    """OpenAI "pul tugadi" xatosi — `insufficient_quota` / `credit_balance_exhausted`."""
+    kod = getattr(e, "code", None)
+    tana = getattr(e, "body", None)
+    if isinstance(tana, dict):
+        kod = kod or tana.get("code") or tana.get("type")
+    return kod in ("insufficient_quota", "credit_balance_exhausted") or "insufficient_quota" in str(e)
+
+
+def _kredit_tugadi() -> None:
+    """AI'ni vaqtincha o'chiradi va adminga BIR marta aytadi (kalit yangi qo'yilgandagina)."""
+    from django.core.cache import cache
+
+    if not cache.add(KREDIT_KALIT, 1, KREDIT_TEKSHIRUV):
+        return
+    log.warning("AI: OpenAI krediti tugagan — %s s ga o'chirildi", KREDIT_TEKSHIRUV)
+    if cache.add("ai:kredit_xabar", 1, 24 * 3600):
+        from . import xabar as X
+
+        for tg_id in [str(x) for x in getattr(settings, "ADMIN_TG", []) if x]:
+            try:
+                X.yubor(tg_id, "🤖 <b>OpenAI krediti tugadi</b>\n\nAI ustoz va AI reja vaqtincha "
+                               "yashirildi (Premium sahifasida ham). Kredit to'ldirilgach bir soat "
+                               "ichida o'zi qaytadi.")
+            except Exception:                        # noqa: BLE001
+                pass
 
 
 # ------------------------------------------------------------ chegara
@@ -576,8 +618,10 @@ def javob_yoz(xabar_id: int) -> str:
     s, til = ai.suhbat, ai.pupil.til or "uz"
     try:
         matn, kirish, chiqish = _chaqir(tizim_korsatmasi(s.tur, til), _xabarlar(s, til), ai.pupil_id, s.tur)
-    except Exception:                                # noqa: BLE001
+    except Exception as e:                           # noqa: BLE001
         log.exception("AI javobi olinmadi (xabar #%s)", xabar_id)
+        if _kredit_tugadimi(e):
+            _kredit_tugadi()
         AiXabar.objects.filter(pk=ai.pk).update(holat=AiXabar.XATO)
         if s.manba == AiSuhbat.BOT:
             _botga(ai.pupil, None)
