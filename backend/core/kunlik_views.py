@@ -186,6 +186,56 @@ def imtihon_mavzu(request):
     return Response(IM.mavzu_royxat(profil))
 
 
+def _diag_xato(e) -> Response:
+    return Response({"detail": e.sabab, "sabab": e.sabab}, status=e.kod)
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def diagnostika(request):
+    """
+    Bilim xaritasi (`core/diagnostika.py`). GET — sahifa holati; POST —
+    urinishni yozish (aniqlashtirishdan keyin o'sha `vaqt` bilan yangilanadi),
+    javobda yangi holat.
+    """
+    from . import diagnostika as DG
+
+    profil = _profil_tanla(request)
+    if request.method == "POST":
+        try:
+            DG.yoz(profil, request.data if hasattr(request.data, "get") else {})
+        except DG.DiagXato as e:
+            return _diag_xato(e)
+    return Response(DG.holat(profil))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def diagnostika_reja(request):
+    """Shaxsiy reja yasash — faqat Premium (server tekshiradi)."""
+    from . import diagnostika as DG
+
+    profil = _profil_tanla(request)
+    try:
+        reja = DG.reja_yasa(profil, DG._butun(request.data.get("kun"), 1, 60))
+    except DG.DiagXato as e:
+        return _diag_xato(e)
+    return Response(DG.reja_json(reja))
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def diagnostika_belgi(request):
+    """Reja vazifasini qo'lda belgilash."""
+    from . import diagnostika as DG
+
+    d = request.data
+    try:
+        return Response(DG.reja_belgila(_profil_tanla(request), d.get("reja"), d.get("i"), d.get("ok") is True))
+    except DG.DiagXato as e:
+        return _diag_xato(e)
+
+
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def sessiya_natija(request):

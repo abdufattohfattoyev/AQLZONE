@@ -102,6 +102,10 @@ urlpatterns = [
     path("imtihon/natija", kunlik_views.imtihon_natija, name="imtihon-natija"),
     # DTM mavzu testlari (`core/imtihon.py` → mavzu_royxat).
     path("imtihon/mavzu", kunlik_views.imtihon_mavzu, name="imtihon-mavzu"),
+    # Bilim xaritasi — diagnostika va shaxsiy reja (`core/diagnostika.py`).
+    path("diagnostika", kunlik_views.diagnostika, name="diagnostika"),
+    path("diagnostika/reja", kunlik_views.diagnostika_reja, name="diagnostika-reja"),
+    path("diagnostika/reja/belgi", kunlik_views.diagnostika_belgi, name="diagnostika-belgi"),
     # Milliy sertifikat natijalari va ikkalasining haftalik jadvali.
     path("sertifikat/natija", kunlik_views.sertifikat_natija, name="sertifikat-natija"),
     path("imtihon/reyting", kunlik_views.imtihon_reyting, name="imtihon-reyting"),

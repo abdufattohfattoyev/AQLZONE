@@ -146,6 +146,8 @@ export const yolImtihonVariant = (n: number) => `/imtihon/${n}`;
 export const yolImtMavzu = (slug: string, n: number) => `/imtihon/mavzu/${slug}/${n}`;
 /** Kirish yo'li — maqsad OTM va unga qancha qolgani (`lib/kirish.ts`). */
 export const yolKirish = () => "/imtihon/maqsad";
+/** Bilim xaritasi — DTM mavzulari bo'yicha diagnostika (`lib/diagnostika.ts`). */
+export const yolDiagnostika = () => "/imtihon/diagnostika";
 /** Milliy sertifikat — xuddi shu qolipda (`lib/sertifikat.ts`). */
 export const yolSertifikat = () => "/sertifikat";
 export const yolSertifikatVariant = (n: number) => `/sertifikat/${n}`;

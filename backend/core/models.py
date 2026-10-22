@@ -2556,3 +2556,72 @@ class KunSavoliJavob(models.Model):
         db_table = "kun_savoli_javob"
         constraints = [models.UniqueConstraint(fields=["savol", "pupil"], name="kun_savoli_bir_odam")]
         indexes = [models.Index(fields=["yuborilgan_at"])]
+
+
+class Diagnostika(models.Model):
+    """
+    Bilim xaritasi — bitta diagnostika urinishi (`core/diagnostika.py`).
+
+    ─────────────────── NEGA XOM SONLAR SAQLANADI ───────────────────
+
+    Bazada faqat "qaysi mavzuda nechta savoldan nechtasi to'g'ri" turadi
+    (`mavzular`). Foiz, "kuchli/zaif" va tavsiya — hammasi o'qilganda
+    hisoblanadi. Chegara (masalan "70% dan yuqori — kuchli") o'zgarsa,
+    eski natijalar ham yangi qoida bilan ko'rinadi va migratsiya kerak
+    bo'lmaydi.
+
+    ─────────────────── ANIQLASHTIRISH ───────────────────
+
+    Qisqa bosqichdan keyin natija DARHOL yoziladi (odam aniqlashtirishdan
+    voz kechib chiqib ketsa ham taxminiy natija qolsin). Aniqlashtirish
+    o'sha `mijoz_vaqt` bilan qayta yuboradi va qator YANGILANADI —
+    ikkinchi urinish bo'lib qolmaydi.
+    """
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="diagnostikalar")
+    #: Topshirilgan paytdagi bosqich (`Pupil.anketa_sinf`) — keyin sinf
+    #: o'zgarsa ham natija qaysi sinfda olingani ko'rinsin.
+    sinf = models.SmallIntegerField(default=-1)
+    #: `[{"s": slug, "t": to'g'ri, "j": jami, "b": [{"k": "algebra9|3", "t": 1, "j": 2}]}]`
+    #: `b` — shu mavzuning qaysi bobidan savol tushgani: tavsiya aynan
+    #: xato qilingan bobning darsiga olib boradi.
+    mavzular = models.JSONField(default=list)
+    #: Aniqlashtirish bosqichi ham o'tildimi.
+    aniq = models.BooleanField(default=False)
+    sekund = models.IntegerField(default=0)
+    mijoz_vaqt = models.BigIntegerField()
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "diagnostika"
+        constraints = [
+            models.UniqueConstraint(fields=["profile", "mijoz_vaqt"], name="diagnostika_bir_urinish"),
+        ]
+        indexes = [models.Index(fields=["profile", "-created_at"]), models.Index(fields=["created_at"])]
+
+
+class OquvReja(models.Model):
+    """
+    Shaxsiy o'quv reja — 7, 14 yoki 30 kun (`core/diagnostika.py` → reja_yasa).
+
+    Vazifalar JSON ro'yxatda, alohida jadvalda emas: reja bir marta
+    yasaladi, keyin faqat "bajarildi" belgisi o'zgaradi. Test vazifalari
+    belgini o'zi oladi — o'sha mavzu testi reja boshlangandan keyin
+    ishlangan bo'lsa (`ImtihonNatija`), qo'lda bosish shart emas.
+
+    Profilda FAQAT oxirgi reja faol: yangisi yasalsa, eskisi tarix bo'lib qoladi.
+    """
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="oquv_rejalar")
+    diagnostika = models.ForeignKey(Diagnostika, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name="rejalar")
+    kun = models.SmallIntegerField()
+    #: `[{"kun": 1, "tur": "dars"|"test"|"aralash"|"qayta", "s": slug, "bob": "algebra9|3",
+    #:   "v": variant, "ok": bool}]`
+    vazifalar = models.JSONField(default=list)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "oquv_reja"
+        indexes = [models.Index(fields=["profile", "-created_at"])]

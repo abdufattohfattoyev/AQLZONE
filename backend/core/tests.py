@@ -11306,3 +11306,199 @@ class DuelJonliKuchaytirishTest(DuelAdolatTaklifTest):
         # Tayyor xabar faqat chaqirganga; sinovda bot yo'q — bo'sh id (mijoz havolaga qaytadi).
         self.assertEqual(self.post(f"/api/v1/duel/{kod}/ulash", {}, self.a).json(), {"id": ""})
         self.assertEqual(self.post(f"/api/v1/duel/{kod}/ulash", {}, self.b).status_code, 404)
+
+
+class DiagnostikaTest(TestCase):
+    """Bilim xaritasi (`core/diagnostika.py`): hisob, yozish, Premium huquqi, reja."""
+
+    def kir(self, device: str = "dev-diagnostika-1111aaaa2222") -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    @staticmethod
+    def mavzular(natija: dict | None = None, jami: int = 2) -> list[dict]:
+        """Hamma 13 mavzu; `natija` — slug → to'g'ri soni (bo'lmasa hammasi to'g'ri)."""
+        from core import diagnostika as DG
+        r = []
+        for s in DG.MAVZULAR:
+            t = (natija or {}).get(s, jami)
+            r.append({"s": s, "t": t, "j": jami,
+                      "b": [{"k": "algebra9|3", "t": min(t, 1), "j": 1},
+                            {"k": "algebra10|2", "t": max(t - 1, 0), "j": jami - 1}]})
+        return r
+
+    def yubor(self, h, mavzular, vaqt=1000, **qosh):
+        return self.client.post("/api/v1/diagnostika", {"vaqt": vaqt, "mavzular": mavzular, "sekund": 600, **qosh},
+                                content_type="application/json", **h)
+
+    def _premium(self):
+        from core.models import Pupil
+        Pupil.objects.update(premium_gacha=timezone.now() + timedelta(days=30))
+
+    def test_mavzular_imtihon_bilan_bir_xil(self):
+        from core import diagnostika as DG, imtihon as IM
+        self.assertEqual(set(DG.MAVZULAR), IM.MAVZU_SLUGLAR)
+
+    def test_hisob_qoidalari(self):
+        from core import diagnostika as DG
+        self.assertEqual(DG.daraja(70), "kuchli")
+        self.assertEqual(DG.daraja(69), "orta")
+        self.assertEqual(DG.daraja(40), "orta")
+        self.assertEqual(DG.daraja(39), "zaif")
+        # 1/2 — taxmin bo'lishi mumkin; 2/2, 0/2 va 4+ savol — aniq.
+        self.assertFalse(DG.aniqmi(1, 2))
+        self.assertTrue(DG.aniqmi(2, 2))
+        self.assertTrue(DG.aniqmi(0, 2))
+        self.assertTrue(DG.aniqmi(2, 4))
+        self.assertEqual(DG.umumiy([{"t": 1, "j": 2}, {"t": 2, "j": 2}]), 75)
+        h = DG.mavzu_holati({"s": "logarifm", "t": 1, "j": 3,
+                             "b": [{"k": "a|1", "t": 1, "j": 1}, {"k": "a|2", "t": 0, "j": 2}]})
+        self.assertEqual((h["foiz"], h["daraja"], h["zaifBoblar"]), (33, "zaif", ["a|2"]))
+
+    def test_yoziladi_va_natija_hisoblanadi(self):
+        h = self.kir()
+        r = self.yubor(h, self.mavzular({"logarifm": 0, "vektorlar": 1, "stereometriya": 0}))
+        self.assertEqual(r.status_code, 200)
+        j = r.json()
+        o = j["oxirgi"]
+        self.assertEqual(j["soni"], 1)
+        self.assertEqual(len(o["mavzular"]), 13)
+        self.assertEqual(o["umumiy"], round((10 * 100 + 50) / 13))
+        self.assertEqual(o["taxminiy"], 1)                                # vektorlar 1/2
+        self.assertEqual(o["takror"], ["logarifm", "stereometriya", "vektorlar"])  # eng zaifi oldin
+        self.assertNotIn("logarifm", o["kuchli"])
+        self.assertIsNotNone(j["keyingi"])
+        # Bepul: tarix, solishtirish va reja berilmaydi.
+        self.assertFalse(j["premium"])
+        self.assertEqual(j["tarix"], [])
+        self.assertIsNone(j["oldingi"])
+        self.assertIsNone(j["reja"])
+
+    def test_aniqlashtirish_yangilaydi_ikkinchi_urinish_emas(self):
+        from core.models import Diagnostika
+        h = self.kir()
+        self.yubor(h, self.mavzular({"vektorlar": 1}))
+        aniq = self.mavzular()
+        for m in aniq:
+            if m["s"] == "vektorlar":
+                m.update({"t": 3, "j": 4, "b": [{"k": "geometriya8|2", "t": 3, "j": 4}]})
+        j = self.yubor(h, aniq, aniq=True).json()
+        self.assertEqual(Diagnostika.objects.count(), 1)
+        self.assertTrue(j["oxirgi"]["aniq"])
+        self.assertEqual(j["oxirgi"]["taxminiy"], 0)
+        # Eski (kamroq savolli) nusxa qayta kelsa — yangisini ezmaydi.
+        self.yubor(h, self.mavzular({"vektorlar": 1}))
+        vek = next(m for m in Diagnostika.objects.get().mavzular if m["s"] == "vektorlar")
+        self.assertEqual(vek["j"], 4)
+
+    def test_yaroqsiz_rad_etiladi(self):
+        h = self.kir()
+        toliq = self.mavzular()
+        for yomon in (
+            toliq[:12],                                            # bitta mavzu yo'q
+            [*toliq[:12], {"s": "yoq-mavzu", "t": 1, "j": 2}],     # begona mavzu
+            [{**toliq[0], "t": 3}, *toliq[1:]],                    # jamidan ko'p
+            [{**toliq[0], "j": 99, "t": 1}, *toliq[1:]],           # juda ko'p savol
+            "buzuq",
+        ):
+            self.assertEqual(self.yubor(h, yomon).status_code, 400, yomon)
+        # Boblar yig'indisi mos kelmasa — boblar tashlanadi, natija qoladi.
+        j = self.yubor(h, [{**toliq[0], "t": 0, "b": [{"k": "a|1", "t": 0, "j": 1}]}, *toliq[1:]]).json()
+        self.assertEqual(j["oxirgi"]["mavzular"][0]["zaifBoblar"], [])
+
+    def test_boshqa_odam_natijasini_kormaydi(self):
+        h1 = self.kir("dev-diagnostika-aaaa1111bbbb")
+        h2 = self.kir("dev-diagnostika-cccc2222dddd")
+        self.yubor(h1, self.mavzular({"logarifm": 0}))
+        j = self.client.get("/api/v1/diagnostika", **h2).json()
+        self.assertIsNone(j["oxirgi"])
+        self.assertEqual(j["soni"], 0)
+
+    def test_reja_faqat_premium(self):
+        h = self.kir()
+        self.yubor(h, self.mavzular({"logarifm": 0}))
+        r = self.client.post("/api/v1/diagnostika/reja", {"kun": 7}, content_type="application/json", **h)
+        self.assertEqual(r.status_code, 403)
+        r = self.client.post("/api/v1/diagnostika/reja/belgi", {"reja": 1, "i": 0, "ok": True},
+                             content_type="application/json", **h)
+        self.assertEqual(r.status_code, 403)
+
+    def test_reja_tuzilishi(self):
+        h = self.kir()
+        self.yubor(h, self.mavzular({"logarifm": 0, "trigonometriya": 0, "vektorlar": 1, "funksiyalar": 1}))
+        self._premium()
+        self.assertEqual(self.client.post("/api/v1/diagnostika/reja", {"kun": 10},
+                                          content_type="application/json", **h).status_code, 400)
+        for kun in (7, 14, 30):
+            j = self.client.post("/api/v1/diagnostika/reja", {"kun": kun},
+                                 content_type="application/json", **h).json()
+            v = j["vazifalar"]
+            self.assertEqual(len(v), kun)
+            self.assertEqual([x["kun"] for x in v], list(range(1, kun + 1)))
+            self.assertEqual(v[-1]["tur"], "qayta")
+            self.assertTrue(all(x["tur"] == "aralash" for x in v[6:-1:7]))
+            # Eng zaif mavzudan boshlanadi: avval dars (xato bob bilan), keyin test.
+            # Teng foizda — DTM tartibi (trigonometriya logarifmdan oldin).
+            self.assertEqual((v[0]["tur"], v[0]["s"]), ("dars", "trigonometriya"))
+            self.assertEqual(v[0]["bob"], "algebra10|2")  # xatosi teng — kalit tartibida
+            self.assertEqual((v[1]["tur"], v[1]["s"], v[1]["v"]), ("test", "trigonometriya", 1))
+            self.assertEqual(v[2]["s"], "logarifm")
+            # Kuchli mavzular rejaga kirmaydi.
+            self.assertTrue({x.get("s") for x in v} <= {None, "trigonometriya", "logarifm", "vektorlar", "funksiyalar"})
+            # Bitta mavzuda bir variant ikki marta berilmaydi (variant soni yetguncha).
+            juft = [(x["s"], x["v"]) for x in v if x["tur"] == "test"]
+            self.assertEqual(len(juft), len(set(juft)))
+        holat = self.client.get("/api/v1/diagnostika", **h).json()
+        self.assertEqual(holat["reja"]["kun"], 30)  # oxirgisi faol
+
+    def test_reja_bajarilishi(self):
+        h = self.kir()
+        self.yubor(h, self.mavzular({"logarifm": 0}))
+        self._premium()
+        j = self.client.post("/api/v1/diagnostika/reja", {"kun": 7}, content_type="application/json", **h).json()
+        self.assertEqual(j["bajarildi"], 0)
+        self.assertEqual(j["bugun"], 1)
+        # Dars — qo'lda belgilanadi.
+        j = self.client.post("/api/v1/diagnostika/reja/belgi", {"reja": j["id"], "i": 0, "ok": True},
+                             content_type="application/json", **h).json()
+        self.assertTrue(j["vazifalar"][0]["ok"])
+        # Test — mavzu testi natijasi kelsa o'zi bajarilgan bo'ladi.
+        self.client.post("/api/v1/imtihon/mavzu",
+                         {"kurs": "logarifm", "variant": 1, "togri": 9, "jami": 15, "vaqt": 77},
+                         content_type="application/json", **h)
+        j = self.client.get("/api/v1/diagnostika", **h).json()["reja"]
+        self.assertTrue(j["vazifalar"][1]["ok"])
+        self.assertEqual(j["bajarildi"], 2)
+        # Qayta diagnostika — oxirgi vazifa bajariladi, tarix va solishtirish chiqadi.
+        j = self.yubor(h, self.mavzular(), vaqt=2000).json()
+        self.assertTrue(j["reja"]["vazifalar"][-1]["ok"])
+        self.assertEqual(len(j["tarix"]), 2)
+        self.assertEqual(j["oldingi"]["mavzular"]["logarifm"], 100)
+        # Boshqa odamning rejasini belgilab bo'lmaydi.
+        h2 = self.kir("dev-diagnostika-eeee3333ffff")
+        self._premium()
+        r = self.client.post("/api/v1/diagnostika/reja/belgi", {"reja": j["reja"]["id"], "i": 0, "ok": False},
+                             content_type="application/json", **h2)
+        self.assertEqual(r.status_code, 404)
+
+    def test_panel_statistikasi_ismsiz(self):
+        from core import diagnostika as DG
+        h = self.kir()
+        self.yubor(h, self.mavzular({"logarifm": 0}))
+        s = DG.panel_statistika(30)
+        self.assertEqual(s["soni"], 1)
+        self.assertEqual(s["mavzular"][0]["slug"], "logarifm")
+        self.assertNotIn("ism", json.dumps(s))
+
+    @override_settings(ADMIN_TG=[ADMIN_ID], BOSHQARUV_YONIQ=True)
+    def test_boshqaruv_sahifasi(self):
+        h = self.kir()
+        self.yubor(h, self.mavzular({"logarifm": 0}))
+        # Kirmagan — kirish sahifasi, statistika emas.
+        self.assertNotContains(self.client.get("/boshqaruv/diagnostika"), "Ko&#x27;rsatkichli va logarifmik")
+        kod = boshqaruv.havola_yasa(ADMIN_ID).rsplit("/", 1)[-1]
+        self.client.get(f"/boshqaruv/havola/{kod}")
+        r = self.client.get("/boshqaruv/diagnostika")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Ko&#x27;rsatkichli va logarifmik")

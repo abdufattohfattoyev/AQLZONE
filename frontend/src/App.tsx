@@ -61,6 +61,7 @@ const Strelka = lazy(() => import("./screens/Strelka").then((m) => ({ default: m
 const Imtihon = lazy(() => import("./screens/Imtihon").then((m) => ({ default: m.Imtihon })));
 const Sertifikat = lazy(() => import("./screens/Sertifikat").then((m) => ({ default: m.Sertifikat })));
 const KirishYoli = lazy(() => import("./screens/KirishYoli").then((m) => ({ default: m.KirishYoli })));
+const Diagnostika = lazy(() => import("./screens/Diagnostika").then((m) => ({ default: m.Diagnostika })));
 const SertifikatTest = lazy(() => import("./screens/SertifikatTest").then((m) => ({ default: m.SertifikatTest })));
 const Sessiya = lazy(() => import("./screens/Sessiya").then((m) => ({ default: m.Sessiya })));
 const ImtReyting = lazy(() => import("./screens/ImtihonQoshimcha").then((m) => ({ default: m.ImtReyting })));
@@ -220,6 +221,7 @@ function Yollar() {
       <Route path="/imtihon/reyting" element={<ImtReytingSahifasi tur="dtm" />} />
       <Route path="/imtihon/mashq" element={<ZaifMashqSahifasi tur="dtm" />} />
       <Route path="/imtihon/maqsad" element={<KirishSahifasi />} />
+      <Route path="/imtihon/diagnostika" element={<DiagnostikaSahifasi />} />
       <Route path="/imtihon/mavzu/:slug/:n" element={<ImtihonMavzuSahifasi />} />
       <Route path="/imtihon/:n/tahlil" element={<ImtKorishSahifasi tur="dtm" />} />
       <Route path="/imtihon/:n" element={<ImtihonVariantSahifasi />} />
@@ -973,6 +975,13 @@ function KirishSahifasi() {
   const nav = useNavigate();
   useTema("bosh");
   return <KirishYoli onChiq={() => nav(yolImtihon())} />;
+}
+
+/** Bilim xaritasi — DTM mavzulari bo'yicha diagnostika (`lib/diagnostika.ts`). */
+function DiagnostikaSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Diagnostika onChiq={() => nav(yolImtihon())} />;
 }
 
 /** Milliy sertifikat — variantlar ro'yxati (`lib/sertifikat.ts`). */

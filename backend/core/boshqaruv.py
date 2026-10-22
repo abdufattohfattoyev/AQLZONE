@@ -1520,6 +1520,22 @@ def premium(request):
                   PR.panel_statistika(davr(request)) | bolim("premium") | {"xabar": xabar})
 
 
+def diagnostika(request):
+    """
+    Bilim xaritasi (`core/diagnostika.py`): nechta odam o'tdi, nechtasi
+    oxirigacha yetdi, qaysi mavzuda xato ko'p, rejalar bajarilyaptimi.
+    Faqat umumlashtirilgan sonlar — hech kimning natijasi alohida ko'rinmaydi.
+    """
+    from . import diagnostika as DG
+
+    if not _yoniq():
+        raise Http404
+    if not kirganmi(request):
+        return kirish(request)
+    return render(request, "boshqaruv/diagnostika.html",
+                  DG.panel_statistika(davr(request)) | bolim("diagnostika"))
+
+
 def premium_chek(request, pk: int):
     """
     Chek rasmi — faqat adminga. Saytdan kelgani diskdan, botdan kelgani

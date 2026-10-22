@@ -1,0 +1,53 @@
+{% extends "boshqaruv/qobiq.html" %}
+{% block sarlavha %}Diagnostika{% endblock %}
+{% block sahifa_nomi %}Bilim xaritasi{% endblock %}
+{% block sahifa_izoh %}so'nggi {{ kunlar }} kun · faqat umumiy sonlar, hech kimning natijasi alohida ko'rinmaydi{% endblock %}
+
+{% comment %}
+Uch savol: odamlar diagnostikani OXIRIGACHA ishlayaptimi, qaysi mavzu eng
+ko'p yiqitadi (kontent shu yerga kerak), rejalar bajarilyaptimi.
+Baholash qoidalari `core/diagnostika.py` boshida (KUCHLI, ZAIF, QISQA).
+{% endcomment %}
+
+{% block asboblar %}
+  <nav class="davr" aria-label="Davr">
+    <a class="{% if kunlar == 7 %}faol{% endif %}" href="?kun=7">7 kun</a>
+    <a class="{% if kunlar == 30 %}faol{% endif %}" href="?kun=30">30 kun</a>
+    <a class="{% if kunlar == 90 %}faol{% endif %}" href="?kun=90">90 kun</a>
+  </nav>
+{% endblock %}
+
+{% block ichki %}
+<div class="oqim">
+  <div class="olchovlar">
+    <div class="karta olchov urgu"><div class="nom">Diagnostikalar</div><div class="son">{{ soni }}</div>
+      <div class="ost">{{ odamlar }} odam · {{ aniq }} tasi aniqlashtirilgan</div></div>
+    <div class="karta olchov"><div class="nom">Yakunlash</div>
+      <div class="son">{% if yakunlash is not None %}{{ yakunlash }}%{% else %}—{% endif %}</div>
+      <div class="ost">boshlagan {{ boshlagan }} odamdan</div></div>
+    <div class="karta olchov"><div class="nom">O'rtacha natija</div>
+      <div class="son">{% if ortacha is not None %}{{ ortacha }}%{% else %}—{% endif %}</div>
+      <div class="ost">kuchli {{ darajalar.kuchli }} · o'rta {{ darajalar.orta }} · zaif {{ darajalar.zaif }} (mavzu natijalari)</div></div>
+    <div class="karta olchov"><div class="nom">O'quv rejalar</div><div class="son">{{ rejalar }}</div>
+      <div class="ost">bajarilish: {% if reja_bajarilish is not None %}{{ reja_bajarilish }}%{% else %}—{% endif %}</div></div>
+  </div>
+
+  <div class="bolim"><h2>Mavzular</h2><p>to'g'ri javob foizi · eng zaifi tepada</p></div>
+  <div class="karta">
+    {% for m in mavzular %}
+      <div class="bar">
+        <div class="bar-bosh"><span class="nom">{{ m.nom }}</span><b class="son">{{ m.savol }}</b><span class="foiz">{{ m.foiz }}%</span></div>
+        <div class="chiziqcha"><span style="width:{{ m.foiz }}%"></span></div>
+      </div>
+    {% empty %}
+      <p class="juda-xira">Hali diagnostika yo'q.</p>
+    {% endfor %}
+  </div>
+
+  <div class="bolim"><h2>Qoidalar</h2><p>`core/diagnostika.py` da o'zgartiriladi — eski natijalarga ham darhol ta'sir qiladi</p></div>
+  <div class="karta">
+    Kuchli — {{ qoidalar.kuchli }}% va undan yuqori · zaif — {{ qoidalar.zaif }}% dan past ·
+    qisqa bosqich: har mavzudan {{ qoidalar.qisqa }} savol · reja bo'lmasa keyingi tekshiruv {{ qoidalar.qayta_kun }} kundan keyin
+  </div>
+</div>
+{% endblock %}
