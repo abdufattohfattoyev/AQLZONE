@@ -79,7 +79,7 @@ import type { Statistika, Toplam } from "../lib/toplam";
 import { natijaYubor, toplamYasa } from "../lib/toplam";
 import { useFaollik } from "../lib/faollik";
 import {
-  VARIANTLAR, javobSaqla, mavzuXatoYoz, natijaSaqla as imtihonSaqla, serverga as imtihonServerga, variantYasa,
+  VARIANTLAR, javobSaqla, mavzuXatoYoz, natijaSaqla as imtihonSaqla, savolJavob, serverga as imtihonServerga, variantYasa,
 } from "../lib/imtihon";
 import { KeyingiVariant } from "../components/KeyingiVariant";
 import type { MavzuXato } from "../lib/imtihon";
@@ -511,7 +511,11 @@ function Oyna({
         vaqt: Date.now(),
       };
       mavzuSaqla(urinish);
-      mavzuServerga({ ...urinish, mavzular: [...m.values()].map((x) => ({ m: x.mavzu, x: x.xato })) });
+      mavzuServerga({
+        ...urinish,
+        mavzular: [...m.values()].map((x) => ({ m: x.mavzu, x: x.xato })),
+        javoblar: blok.savollar.map((S, i) => savolJavob(S, toliq[i]?.tanlangan ?? null, Boolean(toliq[i]?.togri))),
+      });
       return;
     }
 
@@ -548,7 +552,11 @@ function Oyna({
       // serverga. Server takrorni `vaqt` bo'yicha o'zi tashlaydi.
       imtihonSaqla(urinish);
       setYozildi({
-        tayyor: imtihonServerga({ ...urinish, mavzular: [...m.values()].map((x) => ({ m: x.mavzu, x: x.xato })) }),
+        tayyor: imtihonServerga({
+          ...urinish,
+          mavzular: [...m.values()].map((x) => ({ m: x.mavzu, x: x.xato })),
+          javoblar: blok.savollar.map((S, i) => savolJavob(S, toliq[i]?.tanlangan ?? null, Boolean(toliq[i]?.togri))),
+        }),
         vaqt: urinish.vaqt,
       });
       // Javoblar — keyinroq ro'yxatdan "Ko'rib chiqish" ochilsin.

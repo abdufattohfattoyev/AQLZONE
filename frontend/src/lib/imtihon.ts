@@ -28,6 +28,7 @@ import { bilanProfil, profilQuery, sorov } from "./api";
 import { blokYasa, savolIzi } from "./blok";
 import { courseById } from "./curriculum";
 import type { Blok } from "./blok";
+import type { Activity } from "./activity";
 import { kunUrugi, urugBilan } from "./oyin/urug";
 
 /**
@@ -181,8 +182,40 @@ export async function sinxronla(): Promise<ServerTarix> {
  * kartasi urinish yozilgandan KEYIN so'raladi, aks holda odam o'zini
  * jadvalda ko'rmasdi.
  */
-export function serverga(n: ImtihonNatija & { mavzular?: { m: string; x: number }[] }): Promise<void> {
+export function serverga(
+  n: ImtihonNatija & { mavzular?: { m: string; x: number }[]; javoblar?: SavolJavob[] },
+): Promise<void> {
   return sorov("/api/v1/imtihon/natija", bilanProfil({ ...n })).then(() => {}, () => {});
+}
+
+/**
+ * Bitta savolga berilgan javob — urinish bilan serverga boradi
+ * (`ImtihonNatija.javoblar`). Ismsiz statistika uchun: qaysi savol va
+ * qaysi bobda ko'p xato qilinadi. Savol matni ham ketadi — savollar
+ * mijozda yasaladi, server ularni raqamdan tiklay olmaydi.
+ */
+export interface SavolJavob {
+  /** Bob nomi. */
+  m: string;
+  /** Kurs id'si. */
+  k: string;
+  /** Savol matni. */
+  s: string;
+  /** To'g'ri javob. */
+  to: string;
+  /** Berilgan javob; `null` — javob berilmagan. */
+  j: string | null;
+  t: 0 | 1;
+}
+
+export function savolJavob(
+  S: { mavzu: string; kursId: string; a: Activity }, j: unknown, togri: boolean,
+): SavolJavob {
+  const matn = "text" in S.a && typeof S.a.text === "string" ? `${S.a.prompt} ${S.a.text}` : S.a.prompt;
+  return {
+    m: S.mavzu, k: S.kursId, s: matn, to: String(S.a.answer),
+    j: j === null || j === undefined || j === "" ? null : String(j), t: togri ? 1 : 0,
+  };
 }
 
 /* ------------------------------------------------------ haftalik reyting */

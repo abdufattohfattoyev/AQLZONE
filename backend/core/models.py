@@ -2098,6 +2098,13 @@ class ImtihonNatija(models.Model):
     #: o'qituvchi paneli (`core/sinf.py`) sinfning zaif mavzularini
     #: ko'rsatishi uchun serverga ham keladi.
     mavzular = models.JSONField(default=list, blank=True)
+    #: Har savolga javob, tartib bilan (`core/imtihon.py` → `_javoblar`):
+    #: `[{"m": bob, "k": kurs, "s": savol matni, "to": to'g'ri javob,
+    #: "j": berilgan javob yoki null, "t": 1/0}]`. Savol matni ham
+    #: yoziladi: savollar mijozda yasaladi va sertifikatda aralashtiriladi,
+    #: ya'ni raqamdan savolni qayta tiklab bo'lmaydi. Ismsiz statistika
+    #: uchun — "qaysi savolda ko'p xato qilinadi".
+    javoblar = models.JSONField(default=list, blank=True)
     sekund = models.IntegerField(default=0)
     mijoz_vaqt = models.BigIntegerField()
     created_at = models.DateTimeField(default=timezone.now)

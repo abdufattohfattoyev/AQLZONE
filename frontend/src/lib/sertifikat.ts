@@ -33,6 +33,7 @@ import { bilanProfil, sorov } from "./api";
 import { imtihonKurslari, manbalar, sinfOf, blokYasa } from "./blok";
 import type { BlokSavol, Manba } from "./blok";
 import { courseById } from "./curriculum";
+import type { SavolJavob } from "./imtihon";
 import { kunUrugi, urugBilan } from "./oyin/urug";
 import { RASMIY_RAQAM, rasmiyVariant } from "./sertRasmiy";
 
@@ -361,7 +362,7 @@ export function natijaSaqla(n: SNatija): void {
  * `togri`/`jami` — to'liq ball olingan topshiriqlar, ixtiyoriy.
  */
 export function serverga(
-  n: SNatija & { togri?: number; jami?: number; mavzular?: { m: string; x: number }[] },
+  n: SNatija & { togri?: number; jami?: number; mavzular?: { m: string; x: number }[]; javoblar?: SavolJavob[] },
 ): Promise<void> {
   return sorov("/api/v1/sertifikat/natija", bilanProfil({ ...n })).then(() => {}, () => {});
 }

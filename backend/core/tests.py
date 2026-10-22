@@ -7826,6 +7826,23 @@ class ImtihonNatijaTest(TestCase):
         self.assertEqual(j["eng_yaxshi"]["3"], {"togri": 18, "jami": 30})
         self.assertEqual(j["ortacha"], 60)
 
+    def test_har_savol_javobi_yoziladi(self):
+        """Ismsiz statistika uchun: qaysi savolda nima tanlandi."""
+        h = self.kir()
+        javoblar = [
+            {"m": "4-bob. Progressiyalar", "k": "algebra-9", "s": "a₁=2, d=3. a₅ = ?", "to": "14", "j": "11", "t": 0},
+            {"m": "2-bob. Kasrlar", "k": "algebra-7", "s": "x" * 900, "to": "3", "j": None, "t": 1},
+            "buzuq",
+        ]
+        self.yubor({"variant": 1, "togri": 1, "jami": 2, "vaqt": 77, "javoblar": javoblar[:2]}, h)
+        n = MDL.ImtihonNatija.objects.get()
+        self.assertEqual(n.javoblar[0], javoblar[0])
+        self.assertEqual(len(n.javoblar[1]["s"]), 300)          # qisqartiriladi
+        self.assertIsNone(n.javoblar[1]["j"])
+        # Buzuq ro'yxat natijani to'smaydi — faqat javoblar bo'sh qoladi.
+        self.yubor({"variant": 1, "togri": 1, "jami": 2, "vaqt": 78, "javoblar": javoblar}, h)
+        self.assertEqual(MDL.ImtihonNatija.objects.get(mijoz_vaqt=78).javoblar, [])
+
     def test_takror_yuborish_ikki_qator_bolmaydi(self):
         """Internet qaytganda telefon qayta yuboradi — bu ikkinchi urinish emas."""
         h = self.kir()

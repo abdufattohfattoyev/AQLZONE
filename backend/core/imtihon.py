@@ -93,6 +93,31 @@ def _mavzular(x) -> list[dict]:
     return r
 
 
+def _qisqa(x, n: int) -> str:
+    return x[:n] if isinstance(x, str) else ""
+
+
+def _javoblar(x) -> list[dict]:
+    """
+    Har savol javobi `[{"m", "k", "s", "to", "j", "t"}]` — tekshirilgan,
+    qisqartirilgan. Buzuq kelsa bo'sh ro'yxat (natija baribir yoziladi).
+    Sertifikatda ochiq savol ikki qator (a, b) — shuning uchun `MAX_SAVOL`
+    dan ko'proq bo'lishi mumkin.
+    """
+    if not isinstance(x, list):
+        return []
+    r = []
+    for q in x[:2 * MAX_SAVOL]:
+        if not isinstance(q, dict):
+            return []
+        j = q.get("j")
+        r.append({"m": _qisqa(q.get("m"), 120), "k": _qisqa(q.get("k"), 40),
+                  "s": _qisqa(q.get("s"), 300), "to": _qisqa(q.get("to"), 80),
+                  "j": _qisqa(j, 80) if isinstance(j, str) else None,
+                  "t": 1 if q.get("t") in (1, True) else 0})
+    return r
+
+
 def _toza(d: dict) -> dict | None:
     """Bitta urinishni tekshiradi. Yaroqsiz bo'lsa — `None` (jimgina tashlanadi)."""
     if not isinstance(d, dict):
@@ -111,7 +136,7 @@ def _toza(d: dict) -> dict | None:
         return None
     return {"variant": variant, "jami": jami, "togri": togri, "kurs": kurs,
             "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt,
-            "mavzular": _mavzular(d.get("mavzular"))}
+            "mavzular": _mavzular(d.get("mavzular")), "javoblar": _javoblar(d.get("javoblar"))}
 
 
 def _ochiq_variant(profil: Profile):
@@ -231,7 +256,7 @@ def _mavzu_toza(d: dict) -> dict | None:
     sekund = _butun(d.get("sekund"), 0, MAX_SEKUND)
     return {"variant": variant, "jami": jami, "togri": togri, "kurs": kurs, "tur": MAVZU_TUR,
             "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt,
-            "mavzular": _mavzular(d.get("mavzular"))}
+            "mavzular": _mavzular(d.get("mavzular")), "javoblar": _javoblar(d.get("javoblar"))}
 
 
 def mavzu_yoz(profil: Profile, urinishlar) -> int:
@@ -297,7 +322,7 @@ def _sert_toza(d: dict) -> dict | None:
     sekund = _butun(d.get("sekund"), 0, SERT_MAX_SEKUND)
     return {"variant": variant, "jami": jami, "togri": togri, "ball": ball, "tur": "sert",
             "sekund": sekund if sekund is not None else 0, "mijoz_vaqt": vaqt,
-            "mavzular": _mavzular(d.get("mavzular"))}
+            "mavzular": _mavzular(d.get("mavzular")), "javoblar": _javoblar(d.get("javoblar"))}
 
 
 def sert_yoz(profil: Profile, urinishlar) -> int:

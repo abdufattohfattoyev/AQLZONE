@@ -28,6 +28,7 @@
 import { bilanProfil, sorov } from "./api";
 import { blokYasa } from "./blok";
 import type { Blok } from "./blok";
+import type { SavolJavob } from "./imtihon";
 import type { Kalit } from "./matn";
 import { kunUrugi, urugBilan } from "./oyin/urug";
 
@@ -182,6 +183,8 @@ export async function mavzuSinxronla(): Promise<MavzuNatija[]> {
 }
 
 /** Bitta tugagan urinish. Xato bo'lsa jim — keyingi sinxronlash yetkazadi. */
-export function mavzuServerga(n: MavzuNatija & { mavzular?: { m: string; x: number }[] }): void {
+export function mavzuServerga(
+  n: MavzuNatija & { mavzular?: { m: string; x: number }[]; javoblar?: SavolJavob[] },
+): void {
   void sorov("/api/v1/imtihon/mavzu", bilanProfil({ ...n })).catch(() => {});
 }

@@ -42,7 +42,7 @@ import {
   BALL, DAQIQA, HARFLAR, VARIANTLAR, berilgan, daraja, joriyniOchir, joriyniOqi, joriyniSaqla, keyingiDaraja,
   maksBall, natijaSaqla, savolBali, serverga, sonTogrimi, variantYasa, yaxlit,
 } from "../lib/sertifikat";
-import { javobSaqla, mavzuXatoYoz } from "../lib/imtihon";
+import { javobSaqla, mavzuXatoYoz, savolJavob } from "../lib/imtihon";
 import type { MavzuXato } from "../lib/imtihon";
 import { sertSavollari } from "../lib/korish";
 import { KoribChiqish } from "../components/KoribChiqish";
@@ -162,7 +162,9 @@ function Oyna({ v, onQayta, onExit }: { v: SVariant; onQayta: () => void; onExit
       .map((q) => ({ kursId: q.s.kursId, ui: q.s.ui, togri: q.togri }))), "aralash");
     // Mavzular serverga ham — o'qituvchi paneli uchun (`core/sinf.py`).
     const mavzular = [...m.values()].map((x) => ({ m: x.mavzu, x: x.xato }));
-    setYozildi({ tayyor: serverga({ variant: v.n, ball, sekund, vaqt, togri: toliq, jami, mavzular }), vaqt });
+    // Har topshiriq javobi (ochiq savol — a va b alohida) — ismsiz statistika uchun.
+    const javoblar = sertSavollari(v, j).map((q) => savolJavob(q.s, q.berildi ? q.sizniki : null, q.togri));
+    setYozildi({ tayyor: serverga({ variant: v.n, ball, sekund, vaqt, togri: toliq, jami, mavzular, javoblar }), vaqt });
     api.postResult({
       grade: 11,
       unit: SERT_JOY,
