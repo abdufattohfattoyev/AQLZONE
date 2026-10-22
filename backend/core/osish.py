@@ -65,6 +65,11 @@ def start_manbasi(matn: str) -> str:
     param = matn.split(" ", 1)[1].strip() if " " in matn.strip() else ""
     if not param:
         return ""
+    # `/start reklama_tgads1` — har reklama o'z nomi bilan sanaladi, shunda
+    # hisobotda qaysi e'lon odam olib kelgani alohida ko'rinadi.
+    if param.startswith("reklama_"):
+        nom = "".join(c for c in param[8:] if c.isalnum())[:15]
+        return f"reklama:{nom}" if nom else "reklama"
     for bosh, manba in START_MANBA:
         if param.startswith(bosh):
             return manba
@@ -353,7 +358,8 @@ def hisobot_matni(bugun: date | None = None) -> str:
     q.append("\n<b>🤖 Bot</b>")
     q.append(f"/start: {_farq(j['start'], o['start'])}")
     for m, n in sorted(j["start_manba"].items(), key=lambda x: -x[1])[:5]:
-        q.append(f"• {e(MANBA_NOMI.get(m, m))}: {n}")
+        nomi = f"reklama «{m[8:]}»" if m.startswith("reklama:") else MANBA_NOMI.get(m, m)
+        q.append(f"• {e(nomi)}: {n}")
     if j["shart"]:
         q.append(f"Kanal sharti: {j['shart']} → a'zo bo'ldi {j['otdi']} ({_foiz(j['otdi'], j['shart'])}%)")
 
