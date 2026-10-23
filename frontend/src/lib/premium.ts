@@ -39,6 +39,8 @@ export interface PremiumHolat {
   /** AI ishlayaptimi (kalit bor va kredit tugamagan). Eski serverda yo'q — `undefined`. */
   ai?: boolean;
   bepul: number;
+  /** DTM boshlanishi (ISO) — abituriyent hisoblagichi. Eski serverda yo'q. */
+  dtm_sana?: string;
   narxlar: Record<Tarif, number>;
   kunlar: Record<Tarif, number>;
   /** Bo'sh — to'lov hozircha yopiq (serverda karta sozlanmagan). */

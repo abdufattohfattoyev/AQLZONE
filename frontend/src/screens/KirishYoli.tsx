@@ -14,9 +14,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NatijaSarlavha } from "../components/NatijaSarlavha";
 import { Icon } from "../lib/icons";
-import { DTM_MAVZULAR } from "../lib/dtmMavzu";
-import type { DtmMavzu } from "../lib/dtmMavzu";
-import { daraja, sinxronla, zaifMavzular } from "../lib/imtihon";
+import { zaifDtm } from "../lib/dtmMavzu";
+import { daraja, sinxronla } from "../lib/imtihon";
 import { BOSHQA_BOSHI, MAKS, ballYoz, hisobla, maqsadOqi, maqsadSaqla, matemMaks, yonalishlar } from "../lib/kirish";
 import type { Maqsad, Yonalish } from "../lib/kirish";
 import { t } from "../lib/matn";
@@ -25,22 +24,6 @@ import { yolImtMashq, yolImtMavzu, yolImtihonVariant } from "../lib/yollar";
 
 /** Qidiruvda ko'rsatiladigan eng ko'p qator — ro'yxat telefonda cho'zilib ketmasin. */
 const CHEK = 40;
-
-/**
- * Oxirgi urinishlardagi zaif boblar → DTM mavzulari (xatolari qo'shilib).
- * Bob ro'yxatda bo'lmasa (`ui` yo'q eski yozuv) — tashlab ketiladi.
- */
-function zaifDtm(): { slug: string; nom: DtmMavzu["nom"]; xato: number }[] {
-  const m = new Map<string, { slug: string; nom: DtmMavzu["nom"]; xato: number }>();
-  for (const z of zaifMavzular(20)) {
-    const d = DTM_MAVZULAR.find((d) => d.boblar.some(([k, ui]) => k === z.kursId && ui === z.ui));
-    if (!d) continue;
-    const bor = m.get(d.slug) ?? { slug: d.slug, nom: d.nom, xato: 0 };
-    bor.xato += z.xato;
-    m.set(d.slug, bor);
-  }
-  return [...m.values()].sort((a, b) => b.xato - a.xato).slice(0, 3);
-}
 
 /** "Toshkent axborot texnologiyalari universiteti" → "tatu". */
 const qisqa = (s: string) =>

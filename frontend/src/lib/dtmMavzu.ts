@@ -28,6 +28,7 @@
 import { bilanProfil, sorov } from "./api";
 import { blokYasa } from "./blok";
 import type { Blok } from "./blok";
+import { zaifMavzular } from "./imtihon";
 import type { SavolJavob } from "./imtihon";
 import type { Kalit } from "./matn";
 import { kunUrugi, urugBilan } from "./oyin/urug";
@@ -96,6 +97,23 @@ export const DTM_MAVZULAR: DtmMavzu[] = [
 
 export const mavzuBySlug = (slug: string): DtmMavzu | null =>
   DTM_MAVZULAR.find((m) => m.slug === slug) ?? null;
+
+/**
+ * Oxirgi urinishlardagi zaif boblar → DTM mavzulari (xatolari qo'shilib).
+ * KirishYoli va abituriyent bosh sahifasi (bugungi test) ikkalasi ishlatadi.
+ * Bob ro'yxatda bo'lmasa (`ui` yo'q eski yozuv) — tashlab ketiladi.
+ */
+export function zaifDtm(): { slug: string; nom: DtmMavzu["nom"]; xato: number }[] {
+  const m = new Map<string, { slug: string; nom: DtmMavzu["nom"]; xato: number }>();
+  for (const z of zaifMavzular(20)) {
+    const d = DTM_MAVZULAR.find((d) => d.boblar.some(([k, ui]) => k === z.kursId && ui === z.ui));
+    if (!d) continue;
+    const bor = m.get(d.slug) ?? { slug: d.slug, nom: d.nom, xato: 0 };
+    bor.xato += z.xato;
+    m.set(d.slug, bor);
+  }
+  return [...m.values()].sort((a, b) => b.xato - a.xato).slice(0, 3);
+}
 
 /** Mavzu varianti urug'i — aralash variantlarnikidan boshqa nom: to'qnashmasin. */
 export const mavzuUrugi = (slug: string, n: number): number => kunUrugi(`dtm-mavzu-${slug}-${n}`, 7);

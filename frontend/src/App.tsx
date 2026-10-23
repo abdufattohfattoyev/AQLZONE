@@ -13,7 +13,7 @@ import { NotFound } from "./screens/NotFound";
 import { Anketa } from "./components/Anketa";
 import { OqishQobiq } from "./components/OqishQobiq";
 import { rejimdanChiq, useKichkintoyRejim } from "./lib/kichkintoyRejim";
-import { joriyKurs, profilKursi, useProfil } from "./lib/profil";
+import { joriyKurs, profilKursi, useProfil, yolOf } from "./lib/profil";
 
 /* ---------------------------------------------------------------- ekranlar
  *
@@ -31,6 +31,7 @@ import { joriyKurs, profilKursi, useProfil } from "./lib/profil";
  * Service Worker keshida qoladi.
  */
 const Bosh = lazy(() => import("./screens/Bosh").then((m) => ({ default: m.Bosh })));
+const Abituriyent = lazy(() => import("./screens/Abituriyent").then((m) => ({ default: m.Abituriyent })));
 const Dashboard = lazy(() => import("./screens/Dashboard").then((m) => ({ default: m.Dashboard })));
 const TestSinf = lazy(() => import("./screens/TestSinf").then((m) => ({ default: m.TestSinf })));
 const Home = lazy(() => import("./screens/Home").then((m) => ({ default: m.Home })));
@@ -306,8 +307,12 @@ function BoshSahifasi() {
   const nav = useNavigate();
   const kichkintoy = useKichkintoyRejim();
   useTema("bosh");
+  const prof = useProfil();
   // Kichkintoy rejimida ilova to'g'ridan-to'g'ri bolaning ekranida ochiladi.
   if (kichkintoy) return <Navigate to={yolKichkintoy()} replace />;
+  // Abituriyentga "Bugun" (dars, kunlik son, sandiq) emas — DTM bosh
+  // sahifasi: hisoblagich, maqsad va bugungi test (`screens/Abituriyent.tsx`).
+  if (yolOf(prof) === "abiturient") return <Abituriyent />;
   return (
     <Bosh
       progressOf={progressOf}

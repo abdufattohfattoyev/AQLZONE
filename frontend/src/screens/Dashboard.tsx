@@ -186,7 +186,7 @@ export function Dashboard({
       {ozim.length > 0 && (
         <>
           <Sarlavha kech={kech(50)}>{t("darslarSizning")}</Sarlavha>
-          <div className={`grid gap-2.5 ${ozim.length > 1 ? "sm:grid-cols-2" : ""}`}>
+          <div className={`grid grid-cols-1 gap-2.5 ${ozim.length > 1 ? "sm:grid-cols-2" : ""}`}>
             {ozim.map((c, i) => (
               <KursKarta key={c.id} c={c} i={i} progressOf={progressOf} onOpen={onOpen} />
             ))}
@@ -202,7 +202,7 @@ export function Dashboard({
           {/* Maktabgacha kurs KENG karta bo'lib qoladi: u bitta va uni
               ikkiga bo'lingan setkaga qo'ysak, yonida bo'sh joy turardi.
               Kengligi ham vazifasiga mos — bu bo'limning bosh kursi. */}
-          <div className={`grid gap-2.5 ${maktabgacha.length > 1 ? "sm:grid-cols-2" : ""}`}>
+          <div className={`grid grid-cols-1 gap-2.5 ${maktabgacha.length > 1 ? "sm:grid-cols-2" : ""}`}>
             {maktabgacha.map((c, i) => (
               <KursKarta key={c.id} c={c} i={i} progressOf={progressOf} onOpen={onOpen} />
             ))}
@@ -233,7 +233,7 @@ export function Dashboard({
       {oliy.length > 0 && !ozim.some((c) => oliy.includes(c)) && (
         <>
           <Sarlavha kech={kech(300)}>{t("oliyBolim")}</Sarlavha>
-          <div className={`grid gap-2.5 ${oliy.length > 1 ? "sm:grid-cols-2" : ""}`}>
+          <div className={`grid grid-cols-1 gap-2.5 ${oliy.length > 1 ? "sm:grid-cols-2" : ""}`}>
             {oliy.map((c, i) => (
               <KursKarta key={c.id} c={c} i={i + sinflar.length} progressOf={progressOf} onOpen={onOpen} />
             ))}

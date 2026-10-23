@@ -160,6 +160,9 @@ def holat(pupil: Pupil) -> dict:
         # AI ishlayaptimi — ishlamasa Premium sahifasi uni sotmaydi (`ai.yoqilganmi`).
         "ai": _ai_ishlayaptimi(),
         "bepul": bepul_variant(),
+        # DTM boshlanishi — abituriyent bosh sahifasidagi hisoblagich. Rasmiy
+        # sana e'lon qilinganda faqat `.env` almashtiriladi, ilova emas.
+        "dtm_sana": settings.DTM_SANA,
         "narxlar": narxlar(),
         "kunlar": TARIF_KUN,
         "karta": settings.PREMIUM_KARTA,

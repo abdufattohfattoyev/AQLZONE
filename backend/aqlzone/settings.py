@@ -492,6 +492,11 @@ PREMIUM_CHEK_PAPKA = env("PREMIUM_CHEK_PAPKA", str(Path("/data") / "premium_chek
                          if Path("/data").exists() else str(BASE_DIR / "premium_chek"))
 PREMIUM_SINOV_KUN = int(env("PREMIUM_SINOV_KUN", "3"))
 PREMIUM_BEPUL = int(env("PREMIUM_BEPUL", "3"))
+# DTM kirish testlari boshlanishi — abituriyent bosh sahifasidagi "N kun
+# qoldi". 2027 sanasi hali e'lon qilinmagan (2026-10-23): 2026 yilda testlar
+# 14–23 iyulda, birinchi smena 08:00 da edi, shuning uchun taxminan shu kun.
+# UZBMB e'lon qilganda `.env` da almashtiriladi.
+DTM_SANA = env("DTM_SANA", "2027-07-14T08:00:00+05:00")
 
 # ---------------------------------------------------------- AI ustoz
 #

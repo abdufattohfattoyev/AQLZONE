@@ -43,6 +43,7 @@ import { Logo } from "./Logo";
 import { TilTugma } from "./TilTugma";
 import { YoruglikTugma } from "./YoruglikTugma";
 import { faolTab, type TabId } from "../lib/tab";
+import { useProfil, yolOf } from "../lib/profil";
 import {
   yolAi, yolBosh, yolImtihon, yolKurslar, yolMen, yolOyinlar, yolQidiruv, yolReyting, yolSertifikat,
 } from "../lib/yollar";
@@ -131,6 +132,9 @@ export function Panel() {
   // (`lib/maket.ts`). Tugmalar o'sha — faqat joyi va ko'rinishi boshqa.
   const kompyuter = useKompyuter();
   const faol = faolTab(pathname);
+  // Abituriyentning bosh sahifasi "Bugun" emas, DTM tayyorgarligi
+  // (`screens/Abituriyent.tsx`) — tugma nomi ham shunga mos.
+  const abituriyent = yolOf(useProfil()) === "abiturient";
 
   /**
    * Tugma bosilganda: bo'limning BOSH sahifasiga.
@@ -149,7 +153,7 @@ export function Panel() {
   };
 
   const tablar: { id: TabId; ic: PanelBelgiNom; nom: string; yol: string }[] = [
-    { id: "bugun", ic: "uy", nom: t("tabBugun"), yol: yolBosh() },
+    { id: "bugun", ic: "uy", nom: t(abituriyent ? "tabBosh" : "tabBugun"), yol: yolBosh() },
     { id: "oqish", ic: "xarita", nom: t("tabOqish"), yol: yolKurslar() },
     // O'yin ENG O'RTADA — paneldagi eng oson yetiladigan joy.
     { id: "oyin", ic: "oyin", nom: t("tabOyin"), yol: yolOyinlar() },
