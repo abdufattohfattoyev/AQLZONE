@@ -1814,3 +1814,63 @@
   .az-lend-suz, .az-lend-kir { animation: none; }
   .az-lend-vaqt { animation: none; transform: scaleX(1); }
 }
+
+/* ---------- Kubik — jonli dars ustozi (`components/Kubik.tsx`) ----------
+   Holat `data-holat` da; har holatda qaysi bo'lak ko'rinishi shu yerda. */
+.kubik .kubik-koz-xursand, .kubik .kubik-og-gap, .kubik .kubik-og-kulgi, .kubik .kubik-og-o,
+.kubik .kubik-og-dalda, .kubik .kubik-qol-ch-korsat, .kubik .kubik-qol-ch-tepa, .kubik .kubik-qol-o-iyak,
+.kubik .kubik-qol-o-tepa, .kubik .kubik-fikr, .kubik .kubik-yulduz { display: none; }
+.kubik .kubik-qorachiq, .kubik .kubik-qosh { transform-box: fill-box; transform-origin: center; transition: transform .25s; }
+.kubik .kubik-koz { transform-box: fill-box; transform-origin: center; animation: kubik-pirpir 4.4s infinite; }
+.kubik .kubik-tana { animation: kubik-nafas 3.2s ease-in-out infinite; }
+.kubik .kubik-og { transform-box: fill-box; transform-origin: center top; }
+
+.kubik[data-holat=gapir] .kubik-og-oddiy { display: none; }
+.kubik[data-holat=gapir] .kubik-og-gap { display: inline; }
+.kubik[data-holat=gapir] .kubik-og, .kubik[data-holat=korsat] .kubik-og { animation: kubik-gapir 1.9s infinite; }
+.kubik[data-holat=gapir] .kubik-tana { animation: kubik-bosh 2.4s ease-in-out infinite; }
+
+.kubik[data-holat=korsat] .kubik-og-oddiy, .kubik[data-holat=korsat] .kubik-qol-ch-past { display: none; }
+.kubik[data-holat=korsat] .kubik-og-gap, .kubik[data-holat=korsat] .kubik-qol-ch-korsat { display: inline; }
+.kubik[data-holat=korsat] .kubik-qorachiq { transform: translateX(-5px); }
+.kubik[data-holat=korsat] .kubik-tana { animation: none; transform: rotate(-3deg); transform-origin: 120px 240px; }
+
+.kubik[data-holat=oyla] .kubik-og-oddiy, .kubik[data-holat=oyla] .kubik-qol-o-past { display: none; }
+.kubik[data-holat=oyla] .kubik-og-o, .kubik[data-holat=oyla] .kubik-qol-o-iyak,
+.kubik[data-holat=oyla] .kubik-fikr { display: inline; }
+.kubik[data-holat=oyla] .kubik-qorachiq { transform: translate(4px, -5px); }
+.kubik[data-holat=oyla] .kubik-qosh-o { transform: translateY(-5px) rotate(6deg); }
+.kubik[data-holat=oyla] .kubik-fikr { animation: kubik-suz 2.4s ease-in-out infinite; }
+
+.kubik[data-holat=xursand] .kubik-koz-oddiy, .kubik[data-holat=xursand] .kubik-og-oddiy,
+.kubik[data-holat=xursand] .kubik-qol-ch-past, .kubik[data-holat=xursand] .kubik-qol-o-past { display: none; }
+.kubik[data-holat=xursand] .kubik-koz-xursand, .kubik[data-holat=xursand] .kubik-og-kulgi,
+.kubik[data-holat=xursand] .kubik-qol-ch-tepa, .kubik[data-holat=xursand] .kubik-qol-o-tepa,
+.kubik[data-holat=xursand] .kubik-yulduz { display: inline; }
+.kubik[data-holat=xursand] .kubik-sakra { animation: kubik-sakra .7s ease-in-out infinite; }
+.kubik[data-holat=xursand] .kubik-yulduz path {
+  transform-box: fill-box; transform-origin: center; animation: kubik-yiltira .9s ease-in-out infinite alternate;
+}
+.kubik[data-holat=xursand] .kubik-yulduz path:nth-child(2) { animation-delay: .3s; }
+.kubik[data-holat=xursand] .kubik-yulduz path:nth-child(3) { animation-delay: .6s; }
+
+.kubik[data-holat=dalda] .kubik-og-oddiy { display: none; }
+.kubik[data-holat=dalda] .kubik-og-dalda { display: inline; }
+.kubik[data-holat=dalda] .kubik-qosh-ch { transform: rotate(-14deg); }
+.kubik[data-holat=dalda] .kubik-qosh-o { transform: rotate(14deg); }
+.kubik[data-holat=dalda] .kubik-tana { animation: kubik-bosh 1.6s ease-in-out infinite; }
+
+@keyframes kubik-pirpir { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
+@keyframes kubik-nafas { 50% { transform: translateY(-3px); } }
+@keyframes kubik-bosh { 30% { transform: rotate(1.6deg); } 70% { transform: rotate(-1.6deg); } }
+@keyframes kubik-gapir {
+  0%, 100% { transform: scaleY(.35); } 10% { transform: scaleY(1); } 20% { transform: scaleY(.5); }
+  32% { transform: scaleY(1.05); } 44% { transform: scaleY(.4); } 56% { transform: scaleY(.95); }
+  68% { transform: scaleY(.45); } 80% { transform: scaleY(.9); } 90% { transform: scaleY(.4); }
+}
+@keyframes kubik-sakra { 50% { transform: translateY(-14px); } }
+@keyframes kubik-suz { 50% { transform: translateY(-4px); } }
+@keyframes kubik-yiltira { from { transform: scale(.6); opacity: .5; } to { transform: scale(1.15); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .kubik * { animation: none !important; }
+}

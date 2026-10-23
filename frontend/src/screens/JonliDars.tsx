@@ -14,6 +14,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { JonliDoska, KATAK } from "../components/JonliDoska";
+import { Kubik } from "../components/Kubik";
+import type { KubikHolat } from "../components/Kubik";
 import { aiBoshla } from "../lib/ai";
 import { mavzuBySlug } from "../lib/dtmMavzu";
 import { mavzuDarslari, ovozBolaklari, ovozManzil } from "../lib/jonliDars";
@@ -230,9 +232,7 @@ function Pleyer({ slug, dars, keyingi, onChiq, onKeyingi, onMashq }: {
       <div className={QOBIQ}>
         <Tepa onChiq={onChiq} idx={-1} jami={jami} />
         <div className="m-auto flex w-full flex-col items-center gap-4 text-center">
-          <span className="grid size-20 place-items-center rounded-full bg-brand-blue/10 text-brand-blue-t">
-            <Icon name="play" size={34} />
-          </span>
+          <Kubik holat="tingla" className="h-auto w-[112px]" />
           <div>
             <p className="text-[13px] font-bold text-ink-dim">{t("darsRaqam", { n: dars.n })}</p>
             <h1 className="mt-1 font-display text-[24px] leading-tight">{dars.nom}</h1>
@@ -289,6 +289,15 @@ function Pleyer({ slug, dars, keyingi, onChiq, onKeyingi, onMashq }: {
   /* ---- sahna ---- */
   const tanlangan = javob[idx];
   const bolaklar = ovozBolaklari(S.aytish);
+  // Kubik dars bilan birga yashaydi: doskaga yozilayotganda ishora qiladi,
+  // keyin gapiradi, savolda o'ylaydi, javobga qarab quvonadi yoki dalda beradi.
+  const togriJavob = S.savol && tanlangan === S.savol.togri;
+  const kubikHolat: KubikHolat = S.savol
+    ? tanlangan === undefined ? "oyla" : togriJavob ? "xursand" : "dalda"
+    : !ijro ? "tingla" : chizT < 1 ? "korsat" : "gapir";
+  const kubikGap = S.savol
+    ? t(tanlangan === undefined ? "kubikOyla" : togriJavob ? "kubikBarakalla" : "kubikDalda")
+    : bolaklar[bolak] ?? "";
   return (
     <div className={QOBIQ}>
       <Tepa onChiq={onChiq} idx={idx} jami={jami} nom={dars.nom} />
@@ -326,17 +335,10 @@ function Pleyer({ slug, dars, keyingi, onChiq, onKeyingi, onMashq }: {
       ) : (
         <div className="relative flex min-h-0 flex-1 flex-col">
           <JonliDoska key={`${idx}-${qayta}`} yozuv={S.yozuv} chizma={S.chizma} t={chizT} />
-          {/* Subtitr — faqat hozir aytilayotgan gap, doska ustida (videodagidek).
-              Ovozsiz joyda (avtobus, dars) ham tushuntirish yo'qolmaydi. */}
-          {bolaklar[bolak] && (
-            <p aria-live="polite"
-              className="absolute inset-x-3 bottom-3 rounded-2xl bg-ink/85 px-4 py-2.5 text-center text-[14.5px]
-                         leading-snug text-karta backdrop-blur-sm">
-              {bolaklar[bolak]}
-            </p>
-          )}
         </div>
       )}
+
+      <KubikGap holat={kubikHolat} matn={kubikGap} />
 
       {/* Boshqaruv: oldingi · qayta · to'xtatish · keyingi · ovoz. */}
       <div className="mt-3 flex items-center justify-center gap-2.5 min-[360px]:gap-3.5">
@@ -356,6 +358,24 @@ function Pleyer({ slug, dars, keyingi, onChiq, onKeyingi, onMashq }: {
       </div>
 
       <YanaSora dars={dars} sahna={S} />
+    </div>
+  );
+}
+
+/**
+ * Kubik va uning gapi — doska OSTIDA, bitta qatorda: telefonda doskani
+ * yopmaydi, subtitr esa personajning o'z so'zi bo'lib o'qiladi (videodagidek
+ * faqat hozirgi gap). Ovozsiz joyda ham tushuntirish yo'qolmaydi.
+ */
+function KubikGap({ holat, matn }: { holat: KubikHolat; matn: string }) {
+  return (
+    <div className="mt-2 flex items-end gap-1">
+      <p aria-live="polite"
+        className={`mb-2.5 min-h-[50px] min-w-0 flex-1 rounded-2xl rounded-br-[6px] bg-ink/90 px-3.5 py-2.5 text-[14px]
+                    leading-snug text-karta min-[360px]:text-[14.5px] ${matn ? "" : "opacity-0"}`}>
+        {matn}
+      </p>
+      <Kubik holat={holat} className="h-auto w-[84px] shrink-0 min-[400px]:w-[96px]" />
     </div>
   );
 }

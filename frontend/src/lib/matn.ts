@@ -3072,6 +3072,9 @@ const S = {
   darsQadam: ["{n}-qadam / {jami}", "шаг {n} / {jami}"],
   darsQaytaSahna: ["Qaytadan", "Заново"],
   darsSora: ["Yana so'rang…", "Спросите ещё…"],
+  kubikOyla: ["Qani, o'ylab ko'ring — qaysi biri to'g'ri?", "Подумайте — какой ответ верный?"],
+  kubikBarakalla: ["Barakalla! Aynan shunday.", "Отлично! Именно так."],
+  kubikDalda: ["Hechqisi yo'q! Izohni o'qing — keyingisida albatta topasiz.", "Ничего страшного! Прочитайте пояснение — в следующий раз получится."],
   darsSoraMatn: [
     "«{dars}» jonli darsini ko'ryapman. Shu joyida: {joy}. Savolim: {savol}",
     "Смотрю живой урок «{dars}». В этом месте: {joy}. Мой вопрос: {savol}",
