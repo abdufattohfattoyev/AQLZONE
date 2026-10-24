@@ -223,6 +223,27 @@ const Y = {
   kesikYonF: ["Yon sirt: S = πl(R + r)", "Боковая поверхность: S = πl(R + r)"],
   kesikHajmF: ["Kesik konus hajmi", "Объём усечённого конуса"],
   kesikPiramidaF: ["Kesik piramida hajmi", "Объём усечённой пирамиды"],
+
+  /* ---------------- DTM geometriya: uchburchak va aylana (2026-10-24) ---------------- */
+  bissektrisaXossa: ["Bissektrisa qarshi tomonni yon tomonlarga proporsional bo'ladi",
+    "Биссектриса делит противоположную сторону пропорционально прилежащим сторонам"],
+  medianaF: ["Mediana uzunligi formulasi", "Формула длины медианы"],
+  medianaKesish: ["Medianalar kesishish nuqtasida uchidan boshlab 2 : 1 nisbatda bo'linadi",
+    "Медианы в точке пересечения делятся в отношении 2 : 1, считая от вершины"],
+  geron: ["Geron formulasi: S = √(p(p − a)(p − b)(p − c))", "Формула Герона: S = √(p(p − a)(p − b)(p − c))"],
+  ichkiF: ["Ichki chizilgan aylana radiusi: r = S / p", "Радиус вписанной окружности: r = S / p"],
+  ichkiToriF: ["To'g'ri burchakli uchburchakda r = (a + b − c) / 2", "В прямоугольном треугольнике r = (a + b − c) / 2"],
+  tashqiToriF: ["Tashqi aylana markazi — gipotenuza o'rtasi: R = c / 2",
+    "Центр описанной окружности — середина гипотенузы: R = c / 2"],
+  tashqiSinusF: ["Sinuslar teoremasi: a / sin A = 2R", "Теорема синусов: a / sin A = 2R"],
+  vatarlarF: ["Kesishuvchi vatarlar kesmalarining ko'paytmalari teng", "Произведения отрезков пересекающихся хорд равны"],
+  urinmaF: ["Urinma kvadrati kesuvchining tashqi qismi bilan butun kesuvchining ko'paytmasiga teng",
+    "Квадрат касательной равен произведению внешней части секущей на всю секущую"],
+  trapAylanaF: ["Ichki aylana chizilgan to'rtburchakda qarama-qarshi tomonlar yig'indilari teng",
+    "В описанном четырёхугольнике суммы противоположных сторон равны"],
+  trapBalandlikF: ["Teng yonli trapetsiyada h = 2r = √(a · b)", "В равнобедренной трапеции h = 2r = √(a · b)"],
+  aylanaKanon: ["Aylana tenglamasi: markaz (a; b), radius R", "Уравнение окружности: центр (a; b), радиус R"],
+  toliqKvAjrat: ["x va y bo'yicha to'liq kvadrat ajratamiz", "Выделяем полные квадраты по x и по y"],
 } as const;
 
 export type YechimKalit = keyof typeof Y;

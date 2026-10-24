@@ -6,7 +6,7 @@
  * Savollar serverda saqlanmaydi — faqat natija.
  */
 import { bilanProfil, profilQuery, sorov } from "./api";
-import { blokYasa } from "./blok";
+import { ESKI_HOVUZ, blokYasa } from "./blok";
 import type { Blok } from "./blok";
 import { kunUrugi, urugBilan } from "./oyin/urug";
 
@@ -48,5 +48,5 @@ export function marafonYubor(
 /** Kunning varianti — DTM qamrovi (7–11 sinf), `savol` ta savol, `daqiqa` daqiqa. */
 export function marafonBlok(id: number, kun: number, savol: number, daqiqa: number): Blok | null {
   return urugBilan(kunUrugi(`marafon-${id}-${kun}`, 7), () =>
-    blokYasa(11, "dtm", { tur: "imtihon", eski: true }, { savol, daqiqa }));
+    blokYasa(11, "dtm", { tur: "imtihon", boblarsiz: ESKI_HOVUZ }, { savol, daqiqa }));
 }

@@ -1,7 +1,9 @@
 /**
  * TO'LIQ DARSLAR — DTM uchun qo'shilgan boblar (2026-10-15):
  * 7-sinf "Bo'linish va qoldiqlar", 9-sinf "Parametrli tenglamalar",
- * 11-sinf "Kesik konus va kesik piramida" (`lib/oliy/dtmQoshimcha.ts`).
+ * 11-sinf "Kesik konus va kesik piramida" (`lib/oliy/dtmQoshimcha.ts`);
+ * 2026-10-24 — 9-sinf geometriya "Uchburchak va aylanalar", "Aylana:
+ * vatar, urinma, tenglama" (`lib/oliy/dtmGeometriya.ts`).
  *
  * Kalitlar KURS bilan ("algebra7|..."): "Qoldiqli bo'lish" 3-sinfda ham
  * bor va u yerda bolalar uchun boshqa matn kerak. Misollardagi hamma son
@@ -378,6 +380,213 @@ export const TOLAQ_DTM: Record<string, Tolaq> = {
     x: [
       ["√(S₁S₂) hadini tushirish.", "Терять слагаемое √(S₁S₂)."],
       ["(S₁ + S₂)/2 · h — prizma kabi hisoblash.", "Считать как призму: (S₁ + S₂)/2 · h."],
+    ],
+  },
+
+  /* ============ 9-sinf geometriya: uchburchak va aylanalar (2026-10-24) ============ */
+  "geometriya9|Bissektrisa xossasi": {
+    t: [
+      { h: ["Bissektrisa tomonni qanday bo'ladi", "Как биссектриса делит сторону"],
+        p: ["AD — A burchak bissektrisasi bo'lsa, u BC tomonni teng emas, yonidagi tomonlarga proporsional bo'ladi: BD : DC = AB : AC. Kattaroq tomonga yopishgan bo'lak ham kattaroq. Shuning uchun BD = BC · AB / (AB + AC).",
+          "Если AD — биссектриса угла A, она делит BC не пополам, а пропорционально прилежащим сторонам: BD : DC = AB : AC. К большей стороне прилегает больший отрезок. Поэтому BD = BC · AB / (AB + AC)."] },
+    ],
+    f: [
+      { n: ["Bissektrisa xossasi", "Свойство биссектрисы"], f: "BD : DC = AB : AC" },
+      { n: ["Bo'lak", "Отрезок"], f: "BD = BC · AB / (AB + AC)" },
+    ],
+    s: [
+      ["Qaysi bo'lak qaysi tomonga yopishganini aniqlang: BD — AB ga.", "Определите, какой отрезок к какой стороне прилегает: BD — к AB."],
+      ["BC ni AB : AC nisbatda bo'ling.", "Разделите BC в отношении AB : AC."],
+    ],
+    m: [
+      { s: ["AB = 6, AC = 9, BC = 10. BD = ?", "AB = 6, AC = 9, BC = 10. BD = ?"], y: ["BD : DC = 6 : 9", "BD = 10 · 6 / 15"], j: "4" },
+      { s: ["AB = 8, AC = 12, BC = 15. BD = ?", "AB = 8, AC = 12, BC = 15. BD = ?"], y: ["BD = 15 · 8 / 20"], j: "6" },
+    ],
+    x: [
+      ["Bissektrisa tomonni teng bo'ladi deb o'ylash — bu mediana.", "Думать, что биссектриса делит сторону пополам, — это медиана."],
+      ["Nisbatni teskari olish: BD = BC · AC / (AB + AC).", "Переворачивать отношение: BD = BC · AC / (AB + AC)."],
+    ],
+  },
+
+  "geometriya9|Uchburchak medianasi": {
+    t: [
+      { h: ["Mediana uzunligi", "Длина медианы"],
+        p: ["AM mediana BC tomonning o'rtasiga tushadi. Uning uzunligi mₐ = ½√(2b² + 2c² − a²), bunda a — mediana tushgan tomon. Formula parallelogrammdan kelib chiqadi: uchburchakni M nuqtaga nisbatan aks ettirsak, diagonallari 2mₐ va a bo'lgan parallelogramm hosil bo'ladi.",
+          "Медиана AM приходит в середину стороны BC. Её длина mₐ = ½√(2b² + 2c² − a²), где a — сторона, к которой проведена медиана. Формула следует из параллелограмма: отразив треугольник относительно M, получим параллелограмм с диагоналями 2mₐ и a."] },
+      { h: ["Medianalar kesishishi", "Пересечение медиан"],
+        p: ["Uchala mediana bitta G nuqtada kesishadi va u har bir medianani uchidan boshlab 2 : 1 nisbatda bo'ladi. Ya'ni AG medianining 2/3 qismi, GM — 1/3 qismi.",
+          "Три медианы пересекаются в одной точке G, которая делит каждую в отношении 2 : 1, считая от вершины. То есть AG — 2/3 медианы, GM — 1/3."] },
+    ],
+    f: [
+      { n: ["Mediana", "Медиана"], f: "mₐ = ½ · √(2b² + 2c² − a²)" },
+      { n: ["Kesishish nuqtasi", "Точка пересечения"], f: "AG = ⅔ · AM,   GM = ⅓ · AM" },
+      { n: ["Gipotenuzaga mediana", "Медиана к гипотенузе"], f: "m = c / 2" },
+    ],
+    s: [
+      ["Mediana qaysi tomonga tushganini aniqlang — u a.", "Определите сторону, к которой проведена медиана, — это a."],
+      ["2b² + 2c² − a² ni hisoblab, ildiz chiqaring.", "Вычислите 2b² + 2c² − a² и извлеките корень."],
+      ["Natijani 2 ga bo'ling.", "Разделите результат на 2."],
+    ],
+    m: [
+      { s: ["BC = 10, AC = AB = 13. AM = ?", "BC = 10, AC = AB = 13. AM = ?"], y: ["2 · 169 + 2 · 169 − 100 = 576", "AM = ½ · 24"], j: "12" },
+      { s: ["AM = 18, G — medianalar kesishgan nuqta. AG = ?", "AM = 18, G — точка пересечения медиан. AG = ?"], y: ["AG = ⅔ · 18"], j: "12" },
+    ],
+    x: [
+      ["2 ga bo'lishni unutish.", "Забывать делить на 2."],
+      ["a ni yon tomonlardan biri deb olish — a doim mediana tushgan tomon.", "Брать за a боковую сторону — a всегда сторона, к которой проведена медиана."],
+      ["Kesishishda 1 : 1 deb o'ylash.", "Считать, что медианы делятся 1 : 1."],
+    ],
+  },
+
+  "geometriya9|Ichki chizilgan aylana": {
+    t: [
+      { h: ["Uchburchakka ichki chizilgan aylana", "Окружность, вписанная в треугольник"],
+        p: ["Markazi — bissektrisalar kesishgan nuqta, aylana uchala tomonga urinadi. Uchburchakni markazdan uchlarga tortilgan kesmalar bilan uchta bo'lakka bo'lsak, har birining balandligi r. Yuzlar yig'indisi S = r · (a + b + c)/2 = r · p, bundan r = S / p.",
+          "Центр — точка пересечения биссектрис, окружность касается всех трёх сторон. Разрезав треугольник отрезками из центра к вершинам на три части, получим высоты r у каждой. Сумма площадей S = r · (a + b + c)/2 = r · p, отсюда r = S / p."] },
+    ],
+    f: [
+      { n: ["Umumiy formula", "Общая формула"], f: "r = S / p,   p = (a + b + c) / 2" },
+      { n: ["Geron formulasi", "Формула Герона"], f: "S = √(p(p − a)(p − b)(p − c))" },
+      { n: ["To'g'ri burchakli", "Прямоугольный"], f: "r = (a + b − c) / 2" },
+    ],
+    s: [
+      ["Yarim perimetr p ni toping.", "Найдите полупериметр p."],
+      ["Yuzni toping (Geron yoki katetlar orqali).", "Найдите площадь (по Герону или через катеты)."],
+      ["r = S / p.", "r = S / p."],
+    ],
+    m: [
+      { s: ["Tomonlar 13, 14, 15. r = ?", "Стороны 13, 14, 15. r = ?"], y: ["p = 21", "S = √(21 · 8 · 7 · 6) = 84", "r = 84 / 21"], j: "4" },
+      { s: ["Katetlar 6 va 8. r = ?", "Катеты 6 и 8. r = ?"], y: ["c = 10", "r = (6 + 8 − 10) / 2"], j: "2" },
+    ],
+    x: [
+      ["To'liq perimetrga bo'lish.", "Делить на весь периметр."],
+      ["Ichki radius bilan tashqi radiusni (c/2) adashtirish.", "Путать вписанный радиус с описанным (c/2)."],
+    ],
+  },
+
+  "geometriya9|Tashqi chizilgan aylana": {
+    t: [
+      { h: ["Uchburchakka tashqi chizilgan aylana", "Окружность, описанная около треугольника"],
+        p: ["Aylana uchburchakning uchala uchidan o'tadi, markazi — tomonlarga o'tkazilgan o'rta perpendikulyarlar kesishgan nuqta. To'g'ri burchakli uchburchakda gipotenuza diametr bo'ladi (diametrga tiralgan burchak 90°), shuning uchun R = c/2. Umumiy holda sinuslar teoremasi: a / sin A = 2R.",
+          "Окружность проходит через все три вершины, центр — точка пересечения серединных перпендикуляров. В прямоугольном треугольнике гипотенуза — диаметр (вписанный угол, опирающийся на диаметр, равен 90°), поэтому R = c/2. В общем случае — теорема синусов: a / sin A = 2R."] },
+    ],
+    f: [
+      { n: ["To'g'ri burchakli", "Прямоугольный"], f: "R = c / 2" },
+      { n: ["Sinuslar teoremasi", "Теорема синусов"], f: "a / sin A = 2R" },
+      { n: ["Yuz orqali", "Через площадь"], f: "R = abc / (4S)" },
+    ],
+    s: [
+      ["To'g'ri burchakli bo'lsa — gipotenuzani toping va 2 ga bo'ling.", "Если прямоугольный — найдите гипотенузу и разделите на 2."],
+      ["Tomon va qarshisidagi burchak berilsa — a / sin A = 2R.", "Если дана сторона и противолежащий угол — a / sin A = 2R."],
+    ],
+    m: [
+      { s: ["Katetlar 6 va 8. R = ?", "Катеты 6 и 8. R = ?"], y: ["c = √(36 + 64) = 10", "R = 10 / 2"], j: "5" },
+      { s: ["BC = 7, ∠A = 30°. R = ?", "BC = 7, ∠A = 30°. R = ?"], y: ["2R = 7 / sin 30° = 14"], j: "7" },
+    ],
+    x: [
+      ["2R ni javob deb yozish.", "Записывать 2R как ответ."],
+      ["Burchakni tomonga qarshi emas, yonidagi burchakdan olish.", "Брать прилежащий угол вместо противолежащего."],
+    ],
+  },
+
+  "geometriya9|Kesishuvchi vatarlar": {
+    t: [
+      { h: ["Vatarlar teoremasi", "Теорема о хордах"],
+        p: ["AB va CD vatarlar E nuqtada kesishsa, AE · EB = CE · ED. Sababi: ACE va DBE uchburchaklar o'xshash — bitta yoyga tiralgan ichki chizilgan burchaklar teng, vertikal burchaklar ham teng.",
+          "Если хорды AB и CD пересекаются в точке E, то AE · EB = CE · ED. Причина: треугольники ACE и DBE подобны — вписанные углы, опирающиеся на одну дугу, равны, вертикальные углы тоже."] },
+    ],
+    f: [{ n: ["Vatarlar", "Хорды"], f: "AE · EB = CE · ED" }],
+    s: [
+      ["Har bir vatarning ikki bo'lagini ajrating.", "Выделите два отрезка каждой хорды."],
+      ["Ko'paytmalarni tenglang va noma'lumni toping.", "Приравняйте произведения и найдите неизвестное."],
+    ],
+    m: [
+      { s: "AE = 4,  EB = 6,  CE = 3", y: ["4 · 6 = 3 · ED", "ED = 24 / 3"], j: "8" },
+      { s: "AE = 5,  EB = 8,  CE = 10", y: ["ED = 40 / 10"], j: "4" },
+    ],
+    x: [
+      ["Bo'laklarni qo'shish: AE + EB = CE + ED.", "Складывать отрезки: AE + EB = CE + ED."],
+      ["Bitta vatarning bo'lagini ikkinchisiniki bilan juftlash.", "Объединять в пару отрезки разных хорд."],
+    ],
+  },
+
+  "geometriya9|Urinma va kesuvchi": {
+    t: [
+      { h: ["Urinma va kesuvchi teoremasi", "Теорема о касательной и секущей"],
+        p: ["Aylanadan tashqaridagi M nuqtadan MT urinma va aylanani A, B nuqtalarda kesuvchi o'tkazilgan (A yaqinroq). U holda MT² = MA · MB. Bu yerda MB — butun kesuvchi, MA — uning tashqi qismi. Bitta nuqtadan o'tkazilgan ikki urinma esa teng.",
+          "Из точки M вне окружности проведены касательная MT и секущая, пересекающая окружность в A и B (A ближе). Тогда MT² = MA · MB. Здесь MB — вся секущая, MA — её внешняя часть. Две касательные из одной точки равны."] },
+    ],
+    f: [
+      { n: ["Urinma va kesuvchi", "Касательная и секущая"], f: "MT² = MA · MB" },
+      { n: ["Ikki kesuvchi", "Две секущие"], f: "MA · MB = MC · MD" },
+      { n: ["Ikki urinma", "Две касательные"], f: "MT₁ = MT₂" },
+    ],
+    s: [
+      ["Butun kesuvchini toping: MB = MA + AB.", "Найдите всю секущую: MB = MA + AB."],
+      ["MT² = MA · MB dan noma'lumni toping.", "Из MT² = MA · MB найдите неизвестное."],
+    ],
+    m: [
+      { s: "MA = 4,  AB = 5", y: ["MB = 9", "MT² = 4 · 9 = 36"], j: "MT = 6" },
+      { s: "MT = 12,  MA = 8", y: ["MB = 144 / 8 = 18", "AB = 18 − 8"], j: "AB = 10" },
+    ],
+    x: [
+      ["MA · AB olish — ichki vatar emas, butun kesuvchi kerak.", "Брать MA · AB — нужна вся секущая, а не хорда."],
+      ["MB ni topib, AB ga o'tmaslik.", "Найти MB и не перейти к AB."],
+    ],
+  },
+
+  "geometriya9|Trapetsiya va aylana": {
+    t: [
+      { h: ["Ichki aylana chizilgan to'rtburchak", "Описанный четырёхугольник"],
+        p: ["To'rtburchakka aylana ichki chizilishi uchun qarama-qarshi tomonlar yig'indilari teng bo'lishi kerak: AB + CD = BC + AD. Sababi — bitta uchdan o'tkazilgan ikki urinma kesmasi teng. Trapetsiyada bu asoslar yig'indisi yon tomonlar yig'indisiga teng degani.",
+          "В четырёхугольник можно вписать окружность, только если суммы противоположных сторон равны: AB + CD = BC + AD. Причина — отрезки касательных из одной вершины равны. Для трапеции это значит: сумма оснований равна сумме боковых сторон."] },
+      { h: ["Teng yonli trapetsiya", "Равнобедренная трапеция"],
+        p: ["Asoslari a va b bo'lgan teng yonli trapetsiyaga aylana ichki chizilsa, yon tomon c = (a + b)/2. Balandlik tushirsak, h² = c² − ((b − a)/2)² = ab, ya'ni h = √(ab). Balandlik — aylana diametri, r = h/2. Tashqi aylana esa faqat teng yonli trapetsiyaga chiziladi.",
+          "Если в равнобедренную трапецию с основаниями a и b вписана окружность, боковая сторона c = (a + b)/2. Опустив высоту: h² = c² − ((b − a)/2)² = ab, то есть h = √(ab). Высота — диаметр окружности, r = h/2. Описать окружность можно только около равнобедренной трапеции."] },
+    ],
+    f: [
+      { n: ["Ichki aylana sharti", "Условие вписанной окружности"], f: "a + b = c + d" },
+      { n: ["Yon tomon", "Боковая сторона"], f: "c = (a + b) / 2" },
+      { n: ["Balandlik va radius", "Высота и радиус"], f: "h = 2r = √(ab)" },
+    ],
+    s: [
+      ["Qarama-qarshi tomonlar yig'indilarini tenglang.", "Приравняйте суммы противоположных сторон."],
+      ["Teng yonli trapetsiyada h = √(ab), r = h/2.", "В равнобедренной трапеции h = √(ab), r = h/2."],
+    ],
+    m: [
+      { s: ["Asoslar 2 va 8. Yon tomon va r?", "Основания 2 и 8. Боковая сторона и r?"], y: ["c = (2 + 8) / 2 = 5", "h = √16 = 4"], j: "c = 5,  r = 2" },
+      { s: ["AB = 7, BC = 9, CD = 10. AD = ?", "AB = 7, BC = 9, CD = 10. AD = ?"], y: ["AB + CD = BC + AD", "AD = 17 − 9"], j: "8" },
+    ],
+    x: [
+      ["Radius o'rniga balandlikni yozish.", "Записывать высоту вместо радиуса."],
+      ["Qo'shni tomonlarni juftlash: AB + BC = CD + AD.", "Объединять соседние стороны: AB + BC = CD + AD."],
+    ],
+  },
+
+  "geometriya9|Aylana tenglamasi": {
+    t: [
+      { h: ["Aylana — teng masofadagi nuqtalar", "Окружность — точки на равном расстоянии"],
+        p: ["Markazi M(a; b), radiusi R bo'lgan aylananing har bir (x; y) nuqtasi M dan R masofada: (x − a)² + (y − b)² = R². Tenglama ochilgan ko'rinishda (x² + y² + Dx + Ey + F = 0) berilsa, x va y bo'yicha to'liq kvadrat ajratib, yana shu ko'rinishga keltiramiz.",
+          "Каждая точка (x; y) окружности с центром M(a; b) и радиусом R находится на расстоянии R от M: (x − a)² + (y − b)² = R². Если уравнение дано в раскрытом виде (x² + y² + Dx + Ey + F = 0), выделяем полные квадраты по x и по y и приводим к этому виду."] },
+    ],
+    f: [
+      { n: ["Kanonik ko'rinish", "Каноническое уравнение"], f: "(x − a)² + (y − b)² = R²" },
+      { n: ["To'liq kvadrat", "Полный квадрат"], f: "x² − 4x = (x − 2)² − 4" },
+      { n: ["Umumiy ko'rinishdan", "Из общего вида"], f: "R² = (D/2)² + (E/2)² − F" },
+    ],
+    s: [
+      ["x li hadlarni va y li hadlarni guruhlang.", "Сгруппируйте члены с x и с y."],
+      ["Har biridan to'liq kvadrat ajrating, ortiqcha sonni o'ngga o'tkazing.", "Выделите полные квадраты, лишнее число перенесите вправо."],
+      ["Markaz — qavs ichidagi sonlar teskari ishora bilan, R — o'ng tomonning ildizi.", "Центр — числа в скобках с обратным знаком, R — корень из правой части."],
+    ],
+    m: [
+      { s: "(x − 2)² + (y + 3)² = 25", y: ["a = 2,  b = −3", "R = √25"], j: "M(2; −3),  R = 5" },
+      { s: "x² + y² − 4x + 6y − 12 = 0", y: ["(x − 2)² − 4 + (y + 3)² − 9 − 12 = 0", "(x − 2)² + (y + 3)² = 25"], j: "R = 5" },
+    ],
+    x: [
+      ["Markaz ishorasini qavsdagidek qoldirish: (x + 3)² → a = −3, 3 emas.", "Оставлять знак как в скобке: (x + 3)² → a = −3, а не 3."],
+      ["R² ni radius deb yozish.", "Записывать R² как радиус."],
+      ["To'liq kvadrat ajratganda qo'shilgan sonni o'ng tomonga o'tkazmaslik.", "Не переносить вправо число, добавленное при выделении квадрата."],
     ],
   },
 };

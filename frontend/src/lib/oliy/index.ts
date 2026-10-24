@@ -13,3 +13,4 @@ export * from "./fazo";
 export * from "./talaba";
 export * from "./talaba2";
 export * from "./dtmQoshimcha";
+export * from "./dtmGeometriya";

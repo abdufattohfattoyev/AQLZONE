@@ -25,7 +25,7 @@
  * faqat urug', qolganini generatorlar qiladi.
  */
 import { bilanProfil, profilQuery, sorov } from "./api";
-import { blokYasa, savolIzi } from "./blok";
+import { ESKI_HOVUZ, KECH_BOBLAR, blokYasa, savolIzi } from "./blok";
 import { courseById } from "./curriculum";
 import type { Blok } from "./blok";
 import type { Activity } from "./activity";
@@ -58,7 +58,7 @@ export function variantYasa(n: number): Blok | null {
   if (bor !== undefined) return bor;
   let v: Blok | null;
   if (n <= ESKI_VARIANTLAR) {
-    v = urugBilan(variantUrugi(n), () => blokYasa(11, "dtm", { tur: "imtihon", eski: true }, OLCHAM));
+    v = urugBilan(variantUrugi(n), () => blokYasa(11, "dtm", { tur: "imtihon", boblarsiz: ESKI_HOVUZ }, OLCHAM));
   } else {
     // Oldingi variantlarda chiqqan savollar chetlanadi. Zaxira bilan
     // yig'iladi (ba'zi savol qayta yasalganda ham band bo'lib tashlanadi),
@@ -66,7 +66,7 @@ export function variantYasa(n: number): Blok | null {
     const chetla = new Set<string>();
     for (let k = 1; k < n; k++) for (const s of variantYasa(k)?.savollar ?? []) chetla.add(savolIzi(s.a));
     const b = urugBilan(variantUrugi(n), () =>
-      blokYasa(11, "dtm", { tur: "imtihon" }, { savol: OLCHAM.savol + 8, daqiqa: OLCHAM.daqiqa }, chetla));
+      blokYasa(11, "dtm", { tur: "imtihon", boblarsiz: KECH_BOBLAR }, { savol: OLCHAM.savol + 8, daqiqa: OLCHAM.daqiqa }, chetla));
     v = b && { savollar: b.savollar.slice(0, OLCHAM.savol), daqiqa: OLCHAM.daqiqa };
   }
   kesh.set(n, v);

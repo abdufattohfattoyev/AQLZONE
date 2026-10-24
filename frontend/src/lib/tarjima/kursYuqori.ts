@@ -457,4 +457,22 @@ export const RU_YUQORI: Record<string, string> = {
   "Kesik konus yon sirti": "Боковая поверхность усечённого конуса",
   "Kesik konus hajmi": "Объём усечённого конуса",
   "Kesik piramida hajmi": "Объём усечённой пирамиды",
+
+  /* =============== DTM geometriya: uchburchak va aylana (2026-10-24) =============== */
+  "Uchburchak va aylanalar": "Треугольник и окружности",
+  "Uchburchak ichida va tashqarisida": "Внутри и вокруг треугольника",
+  "Bissektrisa, mediana va uchburchakka chizilgan ikki aylana — DTM ning doimiy savollari.":
+    "Биссектриса, медиана и две окружности треугольника — постоянные вопросы ДТМ.",
+  "Bissektrisa xossasi": "Свойство биссектрисы",
+  "Uchburchak medianasi": "Медиана треугольника",
+  "Ichki chizilgan aylana": "Вписанная окружность",
+  "Tashqi chizilgan aylana": "Описанная окружность",
+  "Aylana: vatar, urinma, tenglama": "Окружность: хорда, касательная, уравнение",
+  "Aylanadagi kesmalar": "Отрезки в окружности",
+  "Vatar, urinma va kesuvchi kesmalari ko'paytmalar orqali bog'langan; aylana tenglamasi esa markaz va radiusni beradi.":
+    "Отрезки хорд, касательных и секущих связаны через произведения; уравнение окружности даёт центр и радиус.",
+  "Kesishuvchi vatarlar": "Пересекающиеся хорды",
+  "Urinma va kesuvchi": "Касательная и секущая",
+  "Trapetsiya va aylana": "Трапеция и окружность",
+  "Aylana tenglamasi": "Уравнение окружности",
 };

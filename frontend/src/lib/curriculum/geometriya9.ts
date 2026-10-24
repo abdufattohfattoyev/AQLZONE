@@ -7,6 +7,10 @@
  *   III bob. Aylana uzunligi va doira yuzi (36–47)
  *   IV bob. Uchburchak va aylanadagi metrik munosabatlar (48–55)
  *
+ * 5- va 6-bob (uchburchak va aylanalar; vatar, urinma, aylana tenglamasi)
+ * — darslikda bir-ikki mashq, DTM da esa doim bor; 2026-10-24 da qo'shilgan.
+ * Kurs yakunidan keyin turadi: bob tartib raqami progressga bog'langan.
+ *
  * ─────────────── O'XSHASHLIK — YILNING ASOSIY G'OYASI ───────────────
  *
  * 8-sinfda ikki shakl TENG bo'lishi mumkin edi. 9-sinfda yangi, kuchliroq
@@ -84,6 +88,38 @@ const U: Unit[] = [
         n: "9-sinf geometriya kursini takrorlash", ic: "repeat",
         gens: [G.g9OxshashTomon, G.g9Kosinuslar, G.g9AylanaUzunlik, G.g9Sektor, G.g9Proporsional, G.g9Muntazam],
       },
+    ],
+  },
+  /*
+   * Kursdan TASHQARI boblar — DTM uchun (2026-10-24). Oxirida turadi:
+   * progress bob raqami bilan saqlanadi (`lib/oliy/dtmGeometriya.ts`).
+   */
+  {
+    u: "5-bob. Uchburchak va aylanalar", ic: "triangle", color: "green",
+    intro: {
+      t: "Uchburchak ichida va tashqarisida",
+      v: ["r", "=", "S / p"],
+      d: "Bissektrisa, mediana va uchburchakka chizilgan ikki aylana — DTM ning doimiy savollari.",
+    },
+    lessons: [
+      { n: "Bissektrisa xossasi", ic: "angle", gens: Array(6).fill(G.g9dBissektrisa) },
+      { n: "Uchburchak medianasi", ic: "ruler", gens: Array(6).fill(G.g9dMediana) },
+      { n: "Ichki chizilgan aylana", ic: "circle", gens: Array(6).fill(G.g9dIchkiAylana) },
+      { n: "Tashqi chizilgan aylana", ic: "circle", gens: Array(6).fill(G.g9dTashqiAylana) },
+    ],
+  },
+  {
+    u: "6-bob. Aylana: vatar, urinma, tenglama", ic: "circle", color: "purple",
+    intro: {
+      t: "Aylanadagi kesmalar",
+      v: ["MT²", "=", "MA · MB"],
+      d: "Vatar, urinma va kesuvchi kesmalari ko'paytmalar orqali bog'langan; aylana tenglamasi esa markaz va radiusni beradi.",
+    },
+    lessons: [
+      { n: "Kesishuvchi vatarlar", ic: "times", gens: Array(6).fill(G.g9dVatarlar) },
+      { n: "Urinma va kesuvchi", ic: "ruler", gens: Array(6).fill(G.g9dUrinma) },
+      { n: "Trapetsiya va aylana", ic: "shape", gens: Array(6).fill(G.g9dTrapetsiyaAylana) },
+      { n: "Aylana tenglamasi", ic: "grid", gens: Array(6).fill(G.g9dAylanaTenglama) },
     ],
   },
 ];

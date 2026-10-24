@@ -1643,6 +1643,62 @@ const KURSGA: Record<string, Nazariya> = {
     f: ["V = h(S₁ + S₂ + √(S₁S₂)) / 3", "a = 4, b = 2, h = 6:   V = 6 · (16 + 4 + 8) / 3 = 56"],
     e: ["Kvadrat asosda √(S₁S₂) = a · b.", "Для квадратных оснований √(S₁S₂) = a · b."],
   },
+
+  /* ---- DTM geometriya boblari (`lib/oliy/dtmGeometriya.ts`, 2026-10-24). Kurs kaliti
+     bilan: "Bissektrisa" 7-sinfda burchak haqida, bu yerda — tomonni bo'lishi haqida. ---- */
+  "geometriya9|Bissektrisa xossasi": {
+    q: ["Bissektrisa qarshi tomonni yonidagi tomonlarga proporsional bo'laklarga bo'ladi.",
+      "Биссектриса делит противоположную сторону на части, пропорциональные прилежащим сторонам."],
+    f: ["BD : DC = AB : AC", "AB = 6, AC = 9, BC = 10:   BD = 10 · 6 / 15 = 4"],
+    e: ["BD — AB ga yopishgan bo'lak: nisbatni teskari olsangiz DC chiqadi.",
+      "BD прилегает к AB: перепутав отношение, получите DC."],
+  },
+  "geometriya9|Uchburchak medianasi": {
+    q: ["Mediana uchni qarshi tomon o'rtasi bilan tutashtiradi. Uzunligi uchala tomon orqali topiladi.",
+      "Медиана соединяет вершину с серединой противоположной стороны. Её длина выражается через три стороны."],
+    f: ["mₐ = ½ · √(2b² + 2c² − a²)", ["Kesishish nuqtasi: AG : GM = 2 : 1", "Точка пересечения: AG : GM = 2 : 1"]],
+    e: ["Ildizdan keyin 2 ga bo'lishni unutmang: b = c = 13, a = 10 da √576 = 24, mediana — 12.",
+      "Не забудьте разделить на 2: при b = c = 13, a = 10 √576 = 24, медиана — 12."],
+  },
+  "geometriya9|Ichki chizilgan aylana": {
+    q: ["Ichki chizilgan aylana radiusi — yuzni yarim perimetrga bo'lish.",
+      "Радиус вписанной окружности — площадь, делённая на полупериметр."],
+    f: ["r = S / p", ["To'g'ri burchakli: r = (a + b − c) / 2", "Прямоугольный: r = (a + b − c) / 2"], "13, 14, 15:   S = 84,  p = 21,  r = 4"],
+    e: ["p — YARIM perimetr: to'liq perimetrga bo'lsangiz javob ikki marta kichik chiqadi.",
+      "p — ПОЛУпериметр: деление на весь периметр даёт ответ вдвое меньше."],
+  },
+  "geometriya9|Tashqi chizilgan aylana": {
+    q: ["To'g'ri burchakli uchburchakda tashqi aylana markazi gipotenuza o'rtasida; umumiy holda sinuslar teoremasi yordam beradi.",
+      "В прямоугольном треугольнике центр описанной окружности — середина гипотенузы; в общем случае помогает теорема синусов."],
+    f: ["R = c / 2", "a / sin A = 2R", "R = abc / (4S)"],
+    e: ["a / sin A ga teng bo'lgani 2R, R emas: BC = 7, ∠A = 30° da R = 7.",
+      "a / sin A равно 2R, а не R: при BC = 7, ∠A = 30° R = 7."],
+  },
+  "geometriya9|Kesishuvchi vatarlar": {
+    q: ["Ikki vatar kesishsa, birining bo'laklari ko'paytmasi ikkinchisinikiga teng.",
+      "Если две хорды пересекаются, произведение отрезков одной равно произведению отрезков другой."],
+    f: ["AE · EB = CE · ED", "4 · 6 = 3 · ED   →   ED = 8"],
+    e: ["Bo'laklar qo'shilmaydi, ko'paytiriladi.", "Отрезки не складывают, а перемножают."],
+  },
+  "geometriya9|Urinma va kesuvchi": {
+    q: ["Bitta nuqtadan urinma va kesuvchi o'tkazilsa, urinma kvadrati tashqi qism bilan butun kesuvchining ko'paytmasiga teng.",
+      "Если из точки проведены касательная и секущая, квадрат касательной равен произведению внешней части на всю секущую."],
+    f: ["MT² = MA · MB", "MA = 4, AB = 5:   MB = 9,  MT = √36 = 6"],
+    e: ["MB — butun kesuvchi (MA + AB), faqat ichki vatar AB emas.", "MB — вся секущая (MA + AB), а не только хорда AB."],
+  },
+  "geometriya9|Trapetsiya va aylana": {
+    q: ["To'rtburchakka aylana ichki chizilsa, qarama-qarshi tomonlar yig'indilari teng. Teng yonli trapetsiyada bundan yon tomon va balandlik chiqadi.",
+      "Если в четырёхугольник вписана окружность, суммы противоположных сторон равны. В равнобедренной трапеции отсюда — боковая сторона и высота."],
+    f: ["a + b = c + d", ["Teng yonli: c = (a + b) / 2,   h = 2r = √(ab)", "Равнобедренная: c = (a + b) / 2,   h = 2r = √(ab)"], "a = 2, b = 8:   c = 5,  h = 4,  r = 2"],
+    e: ["√(ab) — balandlik, radius uning yarmi.", "√(ab) — высота, радиус вдвое меньше."],
+  },
+  "geometriya9|Aylana tenglamasi": {
+    q: ["(x − a)² + (y − b)² = R² — markazi (a; b), radiusi R bo'lgan aylana. Qavs ichidagi ishora markaz koordinatasiga teskari.",
+      "(x − a)² + (y − b)² = R² — окружность с центром (a; b) и радиусом R. Знак в скобке противоположен координате центра."],
+    f: ["(x − 2)² + (y + 3)² = 25   →   M(2; −3),  R = 5",
+      "x² + y² − 4x + 6y − 12 = 0   →   (x − 2)² + (y + 3)² = 25"],
+    e: ["O'ng tomonda R², radius emas: 25 → R = 5.", "Справа R², а не радиус: 25 → R = 5."],
+  },
 };
 
 /** Darsning nazariyasi: avval kursga xosi, keyin nom bo'yicha umumiysi. */

@@ -85,10 +85,11 @@ export const DTM_MAVZULAR: DtmMavzu[] = [
   { slug: "uchburchaklar", nom: "dtmM_uchburchaklar", boblar: [
     ["geometriya7", 0, "Boshlang'ich"], ["geometriya7", 1, "Burchak"], ["geometriya7", 2, "uchburchak"],
     ["geometriya7", 3, "Parallel"], ["geometriya7", 4, "burchak"], ["geometriya8", 1, "uchburchak"],
-    ["geometriya9", 0, "O'xshash"], ["geometriya9", 1, "teorema"], ["geometriya9", 3, "Metrik"]] },
+    ["geometriya9", 0, "O'xshash"], ["geometriya9", 1, "teorema"], ["geometriya9", 3, "Metrik"],
+    ["geometriya9", 4, "Uchburchak"]] },
   { slug: "tortburchak-aylana", nom: "dtmM_tortburchak", boblar: [
     ["geometriya8", 0, "To'rtburchak"], ["geometriya8", 3, "Yuz"], ["geometriya8", 4, "Aylana"],
-    ["geometriya9", 2, "Aylana"]] },
+    ["geometriya9", 2, "Aylana"], ["geometriya9", 5, "Aylana"]] },
   { slug: "vektorlar", nom: "dtmM_vektorlar", boblar: [["geometriya8", 2, "vektor"]] },
   { slug: "stereometriya", nom: "dtmM_stereometriya", boblar: [
     ["geometriya10", 1, "Stereometriya"], ["geometriya10", 2, "parallel"], ["geometriya10", 3, "perpendikulyar"],
