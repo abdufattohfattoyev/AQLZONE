@@ -17,23 +17,32 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "../lib/icons";
+import type { IconName } from "../lib/icons";
 import { t } from "../lib/matn";
+import type { Kalit } from "../lib/matn";
+import { til } from "../lib/til";
+import { royxat as toplamRoyxat, type Toplam } from "../lib/toplam";
+import { matndanSavollar } from "../lib/quizMatn";
+import { RostTanla } from "../components/QuizJavob";
 import { havolaniOch, tebrat, useOrqaga } from "../lib/qobiq";
 import { xatoKodi } from "../lib/api";
 import { HARFLAR } from "../components/Variantlar";
 import { Tanlov } from "../components/Varaq";
 import type { Bob } from "../lib/blok";
 import {
-  BAZA_SINFLAR, MAX_SAVOL, MAX_MATN, MAX_VARIANT, MAX_VARIANT_MATN, MIN_VARIANT, VAQTLAR,
-  bazaBoblari, bazadanYasa, bosh, kodTozala, quizOch, quizOchir, quizSaqla, quizYarat, quizlarim,
-  savolQisqa, savolTayyor, jonliOch,
+  BAZA_SINFLAR, DTM_VARIANT, MAX_JUFT, MAX_SAVOL, MAX_MATN, MAX_TARTIB, MAX_VARIANT, MAX_VARIANT_MATN, MIN_JUFT, MIN_TARTIB,
+  MIN_VARIANT, SAVOL_TURLARI, VAQTLAR,
+  aiBoshla, aiHolat, aiIsh, bazaBoblari, bazadanYasa, bosh, jonliOch, kodTozala, quizOch, quizOchir, quizSaqla,
+  quizYarat, quizlarim, savolQisqa, savolTayyor, tayyorTest, turgaOtkaz,
 } from "../lib/quiz";
+import type { AiHolat, AiIsh, OyinTur, SavolTur, TayyorManba } from "../lib/quiz";
 import type { Activity } from "../lib/activity";
 import { QuestionView, sahnaBor } from "../components/QuestionView";
 import { kursMatn } from "../lib/tarjima/kurs";
 import type { QuizQisqa, QuizToliq, Rejim, Savol } from "../lib/quiz";
-import { yolQuizKod } from "../lib/yollar";
+import { yolPremium, yolQuizKod } from "../lib/yollar";
 
 export const QOBIQ = "mx-auto flex w-full max-w-[430px] flex-col gap-3.5 px-4 pt-4 pb-10 min-[360px]:px-[18px] "
   + "sm:max-w-[560px] kom:max-w-[720px] kom:px-8 kom:pt-8";
@@ -166,10 +175,17 @@ export function QuizMuharrir({ id, onSaqlandi, onChiq }: {
   const [rejim, setRejim] = useState<Rejim>("oz");
   const [savollar, setSavollar] = useState<Savol[]>([]);
   /** Ochiq varaq: savol tartibi (`-1` — yangi savol) yoki bazadan qo'shish. */
-  const [varaq, setVaraq] = useState<number | "baza" | "tur" | null>(null);
+  const [varaq, setVaraq] = useState<number | "baza" | "tur" | "matn" | "ai" | "fayl" | null>(null);
   const [ketmoqda, setKetmoqda] = useState(false);
   const [xato, setXato] = useState("");
   const [ozgardi, setOzgardi] = useState(false);
+  /**
+   * AI ishlayaptimi. O'chiq bo'lsa (kalit yo'q yoki kredit tugagan) AI
+   * qatorlari umuman ko'rinmaydi — `ai.py` dagi qoida: ishlamaydigan
+   * eshik ko'rsatilmaydi. Premium emasligi esa varaq ichida aytiladi.
+   */
+  const [aiBor, setAiBor] = useState(false);
+  useEffect(() => { aiHolat().then((x) => setAiBor(x.yoqilgan), () => {}); }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -207,8 +223,11 @@ export function QuizMuharrir({ id, onSaqlandi, onChiq }: {
         && !window.confirm(t("quizNatijaOchadi", { n: eski.ishlagan }))) return;
     setKetmoqda(true);
     setXato("");
-    const d = { nom: nom.trim(), rejim, savollar: savollar.map((s) => ({ ...s, matn: s.matn.trim(), javob: s.javob.trim(),
-      variantlar: s.tur === "variant" ? s.variantlar.map((v) => v.trim()).filter(Boolean) : [] })) };
+    const d = { nom: nom.trim(), rejim, savollar: savollar.map((s) => ({
+      ...s, matn: s.matn.trim(), javob: s.javob.trim(),
+      variantlar: s.tur === "variant" || s.tur === "tartib" ? s.variantlar.map((v) => v.trim()).filter(Boolean) : [],
+      ...(s.juftlar ? { juftlar: s.juftlar.map(([a, b]) => [a.trim(), b.trim()] as [string, string]) } : {}),
+    })) };
     try {
       const q = eski ? await quizSaqla(eski.id, d) : await quizYarat(d);
       tebrat("yutuq");
@@ -267,10 +286,15 @@ export function QuizMuharrir({ id, onSaqlandi, onChiq }: {
                   <span className="block truncate text-[15px]">{savolQisqa(s) || t("quizSavolBosh")}</span>
                   <span className={`block truncate text-[12.5px] ${savolTayyor(s) ? "text-ink-dim" : "text-brand-red"}`}>
                     {savolTayyor(s)
-                      ? `${t(s.tur === "yozma" ? "quizTurYozma" : "quizTurVariant")}${rejim === "jonli" ? ` · ${s.vaqt} ${t("quizSoniya")}` : ""}`
+                      ? `${t(TUR_NOMI[s.tur])}${rejim === "jonli" ? ` · ${s.vaqt} ${t("quizSoniya")}` : ""}`
                       : t("quizChala")}
                   </span>
                 </span>
+                {/* Istisnolar belgilanadi: oltin savol (amber — mukofot) va AI yozgani. */}
+                {s.oltin && rejim === "jonli" && <Icon name="star" size={16} className="shrink-0 text-brand-gold-d" />}
+                {s.ai && (
+                  <span className="shrink-0 rounded-md bg-track px-1.5 py-0.5 text-[11px] font-bold text-ink-soft">AI</span>
+                )}
                 <Icon name="pencil" size={16} className="shrink-0 text-ink-dim" />
               </button>
             </li>
@@ -301,11 +325,21 @@ export function QuizMuharrir({ id, onSaqlandi, onChiq }: {
 
       {varaq === "tur" && (
         <Varaq sarlavha={t("quizSavolQosh")} onYop={() => setVaraq(null)}>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="flex flex-col gap-2">
             <TurKarta ic="pencil" nom={t("quizOzimYozaman")} izoh={t("quizOzimYozamanIzoh")}
               on={() => setVaraq(-1)} tahlil="Quiz: o'zim yozaman" />
             <TurKarta ic="search" nom={t("quizBazadan")} izoh={t("quizBazadanIzoh")}
               on={() => setVaraq("baza")} tahlil="Quiz: bazadan" />
+            <TurKarta ic="menu" nom={t("quizMatndan")} izoh={t("quizMatndanIzoh")}
+              on={() => setVaraq("matn")} tahlil="Quiz: matndan" />
+            {aiBor && (
+              <>
+                <TurKarta ic="phone" nom={t("quizFayldan")} izoh={t("quizFayldanIzoh")}
+                  on={() => setVaraq("fayl")} tahlil="Quiz: rasm yoki PDF" />
+                <TurKarta ic="star" nom={t("quizAiYasaydi")} izoh={t("quizAiYasaydiIzoh")}
+                  on={() => setVaraq("ai")} tahlil="Quiz: AI yasaydi" />
+              </>
+            )}
           </div>
         </Varaq>
       )}
@@ -331,19 +365,35 @@ export function QuizMuharrir({ id, onSaqlandi, onChiq }: {
         <BazaVaraq joy={MAX_SAVOL - savollar.length}
           onQosh={(s) => { qoshish(s); setVaraq(null); tebrat("tanlov"); }} onYop={() => setVaraq(null)} />
       )}
+      {varaq === "matn" && (
+        <MatnVaraq joy={MAX_SAVOL - savollar.length}
+          onQosh={(s) => { qoshish(s); setVaraq(null); tebrat("tanlov"); }} onYop={() => setVaraq(null)} />
+      )}
+      {(varaq === "ai" || varaq === "fayl") && (
+        <AiVaraq fayl={varaq === "fayl"} joy={MAX_SAVOL - savollar.length}
+          onQosh={(s) => { qoshish(s); setVaraq(null); tebrat("yutuq"); }} onYop={() => setVaraq(null)} />
+      )}
     </div>
   );
 }
 
+/** Savol turining nomi — ro'yxat qatori va tur tanlagichda. */
+const TUR_NOMI: Record<SavolTur, Kalit> = {
+  variant: "quizTurVariant", yozma: "quizTurYozma", rost: "quizTurRost", tartib: "quizTurTartib", juftlash: "quizTurJuft",
+};
+
 function TurKarta({ ic, nom, izoh, on, tahlil }: {
-  ic: "pencil" | "search"; nom: string; izoh: string; on: () => void; tahlil: string;
+  ic: IconName; nom: string; izoh: string; on: () => void; tahlil: string;
 }) {
   return (
     <button type="button" onClick={on} data-tahlil={tahlil}
-      className="clay-press flex flex-col items-start gap-1.5 rounded-2xl bg-sahna p-3.5 text-left ring-1 ring-track">
-      <Icon name={ic} size={22} className="text-brand-blue-t" />
-      <span className="font-display text-[16px] leading-tight">{nom}</span>
-      <span className="text-[12.5px] leading-snug text-ink-dim">{izoh}</span>
+      className="clay-press flex min-h-[60px] items-center gap-3 rounded-2xl bg-sahna px-3.5 py-2.5 text-left ring-1 ring-track">
+      <Icon name={ic} size={22} className="shrink-0 text-brand-blue-t" />
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[16px] leading-tight">{nom}</span>
+        <span className="block text-[12.5px] leading-snug text-ink-dim">{izoh}</span>
+      </span>
+      <Icon name="chevron" size={16} className="shrink-0 text-ink-dim" />
     </button>
   );
 }
@@ -417,15 +467,18 @@ function SavolVaraq({ boshlangich, jonli, tartib, jami, onSaqla, onOchir, onSur,
       {/* Bazadan olingan savol — generator yozgan: matni va variantlari
           tahrirlanadi, chizmasi esa o'sha holicha qoladi. */}
       {!s.a && (
-        <div role="radiogroup" aria-label={t("quizTur")} className="shadow-ichki flex rounded-2xl bg-sahna p-1">
-          {(["variant", "yozma"] as const).map((r) => (
-            <button key={r} type="button" role="radio" aria-checked={s.tur === r} onClick={() => setS({ ...s, tur: r })}
-              className={`clay-press min-h-11 flex-1 rounded-xl px-2 text-[14px] font-bold ${
-                s.tur === r ? "bg-karta text-brand-blue-t shadow-clay-sm" : "text-ink-soft"}`}>
-              {t(r === "yozma" ? "quizTurYozma" : "quizTurVariant")}
-            </button>
+        <div role="radiogroup" aria-label={t("quizTur")} className="flex flex-wrap gap-1.5">
+          {SAVOL_TURLARI.map((r) => (
+            <Tanlov key={r} faol={s.tur === r} on={() => { if (s.tur !== r) { setS(turgaOtkaz(s, r)); setTogriI(0); } }}>
+              {t(TUR_NOMI[r])}
+            </Tanlov>
           ))}
         </div>
+      )}
+      {s.ai && (
+        <p className="shadow-ichki rounded-2xl bg-sahna px-3.5 py-2.5 text-[13px] leading-snug text-ink-soft">
+          {t("quizAiTekshir")}
+        </p>
       )}
 
       {/* Bazadan olingan savolning chizmasi (formula, soat, shakl) — yechuvchi
@@ -482,6 +535,16 @@ function SavolVaraq({ boshlangich, jonli, tartib, jami, onSaqla, onOchir, onSur,
             {takror ? t("quizVariantTakror") : t("quizTogriIzoh")}
           </p>
         </div>
+      ) : s.tur === "rost" ? (
+        <div className="flex flex-col gap-1.5">
+          <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizRostSorov")}</span>
+          <RostTanla value={s.javob} togri={null} onChange={(v) => setS({ ...s, javob: v })} />
+        </div>
+      ) : s.tur === "tartib" ? (
+        <RoyxatMaydon nom={t("quizTartibElementlar")} izoh={t("quizTartibYozIzoh")} qiymat={s.variantlar}
+          min={MIN_TARTIB} max={MAX_TARTIB} onChange={(v) => setS({ ...s, variantlar: v })} raqamli />
+      ) : s.tur === "juftlash" ? (
+        <JuftMaydon qiymat={s.juftlar ?? []} onChange={(j) => setS({ ...s, juftlar: j })} />
       ) : (
         <label className="flex flex-col gap-1.5">
           <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizJavob")}</span>
@@ -503,6 +566,23 @@ function SavolVaraq({ boshlangich, jonli, tartib, jami, onSaqla, onOchir, onSur,
           ))}
         </div>
       </div>
+
+      {/* Oltin savol — faqat jonli o'yinda ma'noli (ball ikki baravar). */}
+      {jonli && (
+        <button type="button" role="switch" aria-checked={Boolean(s.oltin)} onClick={() => setS({ ...s, oltin: !s.oltin })}
+          data-tahlil="Quiz: oltin savol"
+          className="clay-press flex min-h-[52px] items-center gap-3 rounded-2xl bg-sahna px-3.5 py-2 text-left ring-1 ring-track">
+          <Icon name="star" size={20} className={s.oltin ? "text-brand-gold-d" : "text-ink-dim"} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-bold">{t("quizOltin")}</span>
+            <span className="block text-[12.5px] text-ink-dim">{t("quizOltinIzoh")}</span>
+          </span>
+          <span className={`flex h-7 w-12 shrink-0 items-center rounded-full p-1 transition-colors ${
+            s.oltin ? "justify-end bg-brand-gold" : "justify-start bg-track"}`}>
+            <span className="size-5 rounded-full bg-white shadow-clay-sm" />
+          </span>
+        </button>
+      )}
 
       {(onSur || onOchir) && (
         <div className="flex items-center gap-1 pt-1">
@@ -532,77 +612,357 @@ function SavolVaraq({ boshlangich, jonli, tartib, jami, onSaqla, onOchir, onSur,
   );
 }
 
-/** Bazadan — sinf, bob va nechta savol. Savollar shu zahoti yasalib, ro'yxatga tushadi. */
+/**
+ * Bazadan — ikki yo'l:
+ *   mavzu       sinf → bob → nechta savol (generatordan)
+ *   to'liq test sinf testi, DTM varianti yoki test to'plami — bir bosishda
+ * Savollar shu zahoti yasalib, ro'yxatga tushadi.
+ */
 function BazaVaraq({ joy, onQosh, onYop }: { joy: number; onQosh: (s: Savol[]) => void; onYop: () => void }) {
+  const [bolim, setBolim] = useState<"mavzu" | "toliq">("mavzu");
   const [sinf, setSinf] = useState(9);
   const [bob, setBob] = useState<Bob | null>(null);
   const [soni, setSoni] = useState(5);
   const [yoq, setYoq] = useState(false);
+  const [manba, setManba] = useState<TayyorManba | null>(null);
+  const [toplamlar, setToplamlar] = useState<Toplam[] | null>(null);
+  const [yuklanmoqda, setYuklanmoqda] = useState(false);
   const boblar = useMemo(() => bazaBoblari(sinf), [sinf]);
   /** Bir sinfda ikki fan bo'lsa (algebra va geometriya) — bob ostida fan nomi. */
   const ikkiFan = new Set(boblar.map((b) => b.kursId)).size > 1;
   const n = Math.min(soni, joy);
 
-  const qosh = () => {
-    if (!bob) return;
-    const s = bazadanYasa(sinf, bob, n, 20);
+  useEffect(() => {
+    if (bolim !== "toliq" || toplamlar !== null) return;
+    toplamRoyxat().then((x) => setToplamlar(x.royxat), () => setToplamlar([]));
+  }, [bolim, toplamlar]);
+
+  const qosh = async () => {
+    setYoq(false);
+    if (bolim === "mavzu") {
+      if (!bob) return;
+      const s = bazadanYasa(sinf, bob, n, 20);
+      if (!s.length) { setYoq(true); return; }
+      onQosh(s);
+      return;
+    }
+    if (!manba || yuklanmoqda) return;
+    setYuklanmoqda(true);
+    const s = (await tayyorTest(manba, 20).catch(() => [])).slice(0, joy);
+    setYuklanmoqda(false);
     if (!s.length) { setYoq(true); return; }
     onQosh(s);
   };
+  const bir = (a: TayyorManba | null, b: TayyorManba) => JSON.stringify(a) === JSON.stringify(b);
 
   return (
     <Varaq sarlavha={t("quizBazadan")} onYop={onYop}
       past={(
-        <button type="button" disabled={!bob || n < 1} onClick={qosh} data-tahlil="Quiz: bazadan qo'shish"
-          className={ASOSIY}>
+        <button type="button" onClick={() => void qosh()} data-tahlil="Quiz: bazadan qo'shish"
+          disabled={bolim === "mavzu" ? !bob || n < 1 : !manba || yuklanmoqda} className={ASOSIY}>
+          {bolim === "mavzu" ? t("quizBazaQosh", { n })
+            : yuklanmoqda ? t("quizYuklanmoqda") : t("quizToliqQosh")}
+        </button>
+      )}>
+      <div role="radiogroup" aria-label={t("quizBazadan")} className="shadow-ichki flex shrink-0 rounded-2xl bg-sahna p-1">
+        {(["mavzu", "toliq"] as const).map((r) => (
+          <button key={r} type="button" role="radio" aria-checked={bolim === r} onClick={() => { setBolim(r); setYoq(false); }}
+            className={`clay-press min-h-11 flex-1 rounded-xl px-2 text-[14px] font-bold ${
+              bolim === r ? "bg-karta text-brand-blue-t shadow-clay-sm" : "text-ink-soft"}`}>
+            {t(r === "mavzu" ? "quizMavzuBoyicha" : "quizToliqTest")}
+          </button>
+        ))}
+      </div>
+
+      {bolim === "mavzu" ? (
+        <>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizSinf")}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {BAZA_SINFLAR.map((x) => (
+                <Tanlov key={x} faol={sinf === x} on={() => { setSinf(x); setBob(null); setYoq(false); }}>
+                  {t("quizSinfN", { n: x })}
+                </Tanlov>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizMavzu")}</span>
+            <div className="flex flex-col divide-y divide-track overflow-hidden rounded-2xl bg-sahna ring-1 ring-track ring-inset">
+              {boblar.map((b) => {
+                const faol = bob?.kursId === b.kursId && bob.ui === b.ui;
+                return (
+                  <button key={`${b.kursId}-${b.ui}`} type="button" aria-pressed={faol}
+                    onClick={() => { setBob(b); setYoq(false); }}
+                    className={`clay-press flex min-h-12 items-center gap-2.5 px-3.5 py-2 text-left ${faol ? "bg-brand-blue/10" : ""}`}>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-[14.5px] leading-snug ${faol ? "font-bold text-brand-blue-t" : ""}`}>
+                        {kursMatn(b.nom).replace(/^\d+-bob\.\s*|^Глава \d+\.\s*/, "")}
+                      </span>
+                      {/* Sinf tepada tanlangan — bu yerda faqat fan ("Algebra"). */}
+                      {ikkiFan && (
+                        <span className="block text-[12px] text-ink-dim">
+                          {kursMatn(b.kursNomi).replace(/^\d+[-\s]?(sinf|класс)\s*/i, "")}
+                        </span>
+                      )}
+                    </span>
+                    {faol && <Icon name="check" size={18} className="shrink-0 text-brand-blue-t" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizNechta")}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {[3, 5, 10].map((x) => (
+                <Tanlov key={x} faol={soni === x} on={() => setSoni(x)}>{x}</Tanlov>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="px-1 text-[13px] leading-snug text-ink-dim">{t("quizToliqIzoh", { n: joy })}</p>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizSinfTesti")}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {BAZA_SINFLAR.map((x) => (
+                <Tanlov key={x} faol={bir(manba, { tur: "sinf", sinf: x })} on={() => setManba({ tur: "sinf", sinf: x })}>
+                  {t("quizSinfN", { n: x })}
+                </Tanlov>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizDtmVariant")}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {Array.from({ length: DTM_VARIANT }, (_, k) => k + 1).map((x) => (
+                <Tanlov key={x} faol={bir(manba, { tur: "dtm", n: x })} on={() => setManba({ tur: "dtm", n: x })}>{x}</Tanlov>
+              ))}
+            </div>
+          </div>
+          {toplamlar && toplamlar.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizToplamlar")}</span>
+              <div className="flex flex-col divide-y divide-track overflow-hidden rounded-2xl bg-sahna ring-1 ring-track ring-inset">
+                {toplamlar.map((x) => {
+                  const m: TayyorManba = { tur: "toplam", sinf: x.sinf, urug: x.urug, savol: x.savol, daqiqa: x.daqiqa };
+                  const faol = bir(manba, m);
+                  return (
+                    <button key={x.id} type="button" aria-pressed={faol} onClick={() => setManba(m)}
+                      className={`clay-press flex min-h-12 items-center gap-2.5 px-3.5 py-2 text-left ${faol ? "bg-brand-blue/10" : ""}`}>
+                      <span className={`min-w-0 flex-1 text-[14.5px] leading-snug ${faol ? "font-bold text-brand-blue-t" : ""}`}>
+                        {x.nom}
+                      </span>
+                      <span className="shrink-0 text-[12.5px] text-ink-dim">{t("quizSavolSoni", { n: x.savol })}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+      {yoq && <p className="text-center text-[14px] text-ink-dim">{t("quizBazaYoq")}</p>}
+    </Varaq>
+  );
+}
+
+/**
+ * Ro'yxat maydoni — tartiblash elementlari (TO'G'RI tartibda yoziladi).
+ * `raqamli` — chap tomonda tartib raqami: muallif nimani yozayotganini ko'rsin.
+ */
+function RoyxatMaydon({ nom, izoh, qiymat, min, max, onChange, raqamli = false }: {
+  nom: string; izoh: string; qiymat: string[]; min: number; max: number; onChange: (v: string[]) => void; raqamli?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="px-1 text-[13px] font-bold text-ink-dim">{nom}</span>
+      {qiymat.map((v, i) => (
+        <div key={i} className="flex items-center gap-2">
+          {raqamli && (
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-track font-display text-[15px] text-ink-soft">
+              {i + 1}
+            </span>
+          )}
+          <input value={v} onChange={(e) => onChange(qiymat.map((x, k) => (k === i ? e.target.value.slice(0, MAX_VARIANT_MATN) : x)))}
+            className={`${MAYDON} h-11 min-w-0 flex-1`} aria-label={`${nom} ${i + 1}`} />
+          {qiymat.length > min && (
+            <button type="button" onClick={() => onChange(qiymat.filter((_, k) => k !== i))} aria-label={t("quizVariantOchir")}
+              className="clay-press grid size-11 shrink-0 place-items-center rounded-xl text-ink-dim">
+              <Icon name="close" size={15} />
+            </button>
+          )}
+        </div>
+      ))}
+      {qiymat.length < max && (
+        <button type="button" onClick={() => onChange([...qiymat, ""])}
+          className="clay-press flex min-h-11 items-center gap-2 self-start px-1 text-[14.5px] font-bold text-brand-blue-t">
+          <Icon name="plus" size={16} />{t("quizVariantQosh")}
+        </button>
+      )}
+      <p className="px-1 text-[12.5px] leading-snug text-ink-dim">{izoh}</p>
+    </div>
+  );
+}
+
+/** Juftlar maydoni — har qatorda chap va o'ng. */
+function JuftMaydon({ qiymat, onChange }: { qiymat: [string, string][]; onChange: (v: [string, string][]) => void }) {
+  const ozgar = (i: number, k: 0 | 1, v: string) =>
+    onChange(qiymat.map((j, n) => (n === i ? (k === 0 ? [v.slice(0, MAX_VARIANT_MATN), j[1]] : [j[0], v.slice(0, MAX_VARIANT_MATN)]) : j)));
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizJuftlar")}</span>
+      {qiymat.map(([a, b], i) => (
+        <div key={i} className="flex items-center gap-1.5">
+          <input value={a} onChange={(e) => ozgar(i, 0, e.target.value)} placeholder={t("quizJuftChap")}
+            className={`${MAYDON} h-11 min-w-0 flex-1 px-2.5`} aria-label={`${t("quizJuftChap")} ${i + 1}`} />
+          <Icon name="chevron" size={14} className="shrink-0 text-ink-dim" />
+          <input value={b} onChange={(e) => ozgar(i, 1, e.target.value)} placeholder={t("quizJuftOng")}
+            className={`${MAYDON} h-11 min-w-0 flex-1 px-2.5`} aria-label={`${t("quizJuftOng")} ${i + 1}`} />
+          {qiymat.length > MIN_JUFT && (
+            <button type="button" onClick={() => onChange(qiymat.filter((_, k) => k !== i))} aria-label={t("quizVariantOchir")}
+              className="clay-press grid size-10 shrink-0 place-items-center rounded-xl text-ink-dim">
+              <Icon name="close" size={14} />
+            </button>
+          )}
+        </div>
+      ))}
+      {qiymat.length < MAX_JUFT && (
+        <button type="button" onClick={() => onChange([...qiymat, ["", ""]])}
+          className="clay-press flex min-h-11 items-center gap-2 self-start px-1 text-[14.5px] font-bold text-brand-blue-t">
+          <Icon name="plus" size={16} />{t("quizJuftQosh")}
+        </button>
+      )}
+      <p className="px-1 text-[12.5px] leading-snug text-ink-dim">{t("quizJuftYozIzoh")}</p>
+    </div>
+  );
+}
+
+/** Matndan — ko'chirib qo'yilgan test darhol tahlil qilinadi va natija oldindan ko'rinadi. */
+function MatnVaraq({ joy, onQosh, onYop }: { joy: number; onQosh: (s: Savol[]) => void; onYop: () => void }) {
+  const [matn, setMatn] = useState("");
+  const natija = useMemo(() => matndanSavollar(matn), [matn]);
+  const n = Math.min(natija.savollar.length, joy);
+  return (
+    <Varaq sarlavha={t("quizMatndan")} onYop={onYop}
+      past={(
+        <button type="button" disabled={n < 1} onClick={() => onQosh(natija.savollar.slice(0, joy))}
+          data-tahlil="Quiz: matndan qo'shish" className={ASOSIY}>
           {t("quizBazaQosh", { n })}
         </button>
       )}>
+      <p className="px-1 text-[13px] leading-snug text-ink-dim">{t("quizMatnIzoh")}</p>
+      <textarea value={matn} onChange={(e) => setMatn(e.target.value.slice(0, 30000))} rows={10}
+        placeholder={"1. 2x + 6 = 14. x = ?\nA) 3  B) 4*  C) 5\n\n2. ...\n\nJavoblar: 1-B, 2-C"}
+        aria-label={t("quizMatndan")}
+        className={`${MAYDON} min-h-[200px] shrink-0 resize-y py-3 font-mono text-[14px] leading-snug`} />
+      {matn.trim() !== "" && (
+        <p className={`px-1 text-[13.5px] ${natija.savollar.length ? "text-ink-soft" : "text-brand-red"}`}>
+          {natija.savollar.length
+            ? t(natija.chala ? "quizMatnTopildiChala" : "quizMatnTopildi", { n: natija.savollar.length, c: natija.chala })
+            : t("quizMatnTopilmadi")}
+        </p>
+      )}
+    </Varaq>
+  );
+}
+
+/**
+ * AI — mavzudan yasaydi yoki rasm/PDF dagi testni o'qiydi (`core/quiz_ai.py`).
+ * Faqat Premium: boshqalarga varaq nima qilishini aytadi va Premium'ga yo'l ko'rsatadi.
+ */
+function AiVaraq({ fayl: faylRejim, joy, onQosh, onYop }: {
+  fayl: boolean; joy: number; onQosh: (s: Savol[]) => void; onYop: () => void;
+}) {
+  const nav = useNavigate();
+  const [holat, setHolat] = useState<AiHolat | null | "xato">(null);
+  const [matn, setMatn] = useState("");
+  const [soni, setSoni] = useState(10);
+  const [fayl, setFayl] = useState<File | null>(null);
+  const [ish, setIsh] = useState<AiIsh | null>(null);
+  const [xato, setXato] = useState("");
+
+  useEffect(() => { aiHolat().then(setHolat, () => setHolat("xato")); }, []);
+
+  // Ish fonda yuradi — tayyor bo'lguncha har 2 soniyada so'raymiz.
+  useEffect(() => {
+    if (!ish || ish.holat !== "kutilmoqda") return;
+    const id = setInterval(() => {
+      aiIsh(ish.id).then((x) => {
+        setIsh(x);
+        if (x.holat === "tayyor") onQosh(x.savollar.slice(0, joy));
+        if (x.holat === "xato") setXato(t("quizAiXato"));
+      }, () => {});
+    }, 2000);
+    return () => clearInterval(id);
+  }, [ish, joy, onQosh]);
+
+  const n = Math.min(soni, joy);
+  const kutilmoqda = ish?.holat === "kutilmoqda";
+  const tayyor = faylRejim ? fayl !== null : matn.trim().length >= 3;
+  const boshla = async () => {
+    if (!tayyor || kutilmoqda) return;
+    setXato("");
+    try {
+      setIsh(await aiBoshla(matn.trim(), n, til(), fayl ?? undefined));
+    } catch (e) {
+      const k = xatoKodi(e);
+      setXato(t(k === 429 ? "quizAiChegara" : k === 400 ? "quizAiFayl" : "quizAiXato"));
+    }
+  };
+
+  const sarlavha = t(faylRejim ? "quizFayldan" : "quizAiYasaydi");
+  if (holat === null) return <Varaq sarlavha={sarlavha} onYop={onYop}><Holat matn={t("quizYuklanmoqda")} /></Varaq>;
+  if (holat === "xato" || !holat.yoqilgan) {
+    return <Varaq sarlavha={sarlavha} onYop={onYop}><Holat matn={t("quizAiYopiq")} /></Varaq>;
+  }
+  if (!holat.premium) {
+    return (
+      <Varaq sarlavha={sarlavha} onYop={onYop}
+        past={<button type="button" onClick={() => nav(yolPremium())} data-tahlil="Quiz: AI premium" className={ASOSIY}>
+          {t("quizAiPremiumTugma")}</button>}>
+        <div className="flex flex-col items-center gap-2 py-3 text-center">
+          <Icon name="lock" size={28} className="text-brand-gold-d" />
+          <span className="font-display text-[17px]">{t("quizAiPremium")}</span>
+          <span className="text-[13.5px] leading-snug text-ink-dim">{t(faylRejim ? "quizFayldanIzohUzun" : "quizAiIzohUzun")}</span>
+        </div>
+      </Varaq>
+    );
+  }
+
+  return (
+    <Varaq sarlavha={sarlavha} onYop={onYop}
+      past={(
+        <button type="button" disabled={!tayyor || kutilmoqda || holat.qolgan < 1} onClick={() => void boshla()}
+          data-tahlil={faylRejim ? "Quiz: AI fayl" : "Quiz: AI mavzu"} className={ASOSIY}>
+          {kutilmoqda ? t("quizAiYozmoqda") : t(faylRejim ? "quizAiOqi" : "quizAiYasa")}
+        </button>
+      )}>
+      <p className="px-1 text-[13px] leading-snug text-ink-dim">{t(faylRejim ? "quizFayldanIzohUzun" : "quizAiIzohUzun")}</p>
+      {faylRejim && (
+        <label className="clay-press flex min-h-[64px] cursor-pointer items-center gap-3 rounded-2xl bg-sahna px-3.5 py-2
+                          ring-1 ring-track">
+          <Icon name="plus" size={20} className="shrink-0 text-brand-blue-t" />
+          <span className="min-w-0 flex-1 truncate text-[15px]">{fayl ? fayl.name : t("quizFaylTanla")}</span>
+          <input type="file" accept="image/*,application/pdf" className="sr-only" disabled={kutilmoqda}
+            onChange={(e) => setFayl(e.target.files?.[0] ?? null)} />
+        </label>
+      )}
+      <textarea value={matn} onChange={(e) => setMatn(e.target.value.slice(0, 1000))} rows={faylRejim ? 2 : 4}
+        disabled={kutilmoqda}
+        placeholder={t(faylRejim ? "quizFaylIzohJoy" : "quizAiMavzuJoy")} aria-label={sarlavha}
+        className={`${MAYDON} shrink-0 resize-none py-3 leading-snug`} />
       <div className="flex flex-col gap-1.5">
-        <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizSinf")}</span>
+        <span className="px-1 text-[13px] font-bold text-ink-dim">{t(faylRejim ? "quizKopiBilan" : "quizNechta")}</span>
         <div className="flex flex-wrap gap-1.5">
-          {BAZA_SINFLAR.map((x) => (
-            <Tanlov key={x} faol={sinf === x} on={() => { setSinf(x); setBob(null); setYoq(false); }}>
-              {t("quizSinfN", { n: x })}
-            </Tanlov>
-          ))}
+          {[5, 10, 20, 30].map((x) => <Tanlov key={x} faol={soni === x} on={() => setSoni(x)}>{x}</Tanlov>)}
         </div>
       </div>
-      <div className="flex flex-col gap-1.5">
-        <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizMavzu")}</span>
-        <div className="flex flex-col divide-y divide-track overflow-hidden rounded-2xl bg-sahna ring-1 ring-track ring-inset">
-          {boblar.map((b) => {
-            const faol = bob?.kursId === b.kursId && bob.ui === b.ui;
-            return (
-              <button key={`${b.kursId}-${b.ui}`} type="button" aria-pressed={faol}
-                onClick={() => { setBob(b); setYoq(false); }}
-                className={`clay-press flex min-h-12 items-center gap-2.5 px-3.5 py-2 text-left ${faol ? "bg-brand-blue/10" : ""}`}>
-                <span className="min-w-0 flex-1">
-                  <span className={`block text-[14.5px] leading-snug ${faol ? "font-bold text-brand-blue-t" : ""}`}>
-                    {kursMatn(b.nom).replace(/^\d+-bob\.\s*|^Глава \d+\.\s*/, "")}
-                  </span>
-                  {/* Sinf tepada tanlangan — bu yerda faqat fan ("Algebra"). */}
-                  {ikkiFan && (
-                    <span className="block text-[12px] text-ink-dim">
-                      {kursMatn(b.kursNomi).replace(/^\d+[-\s]?(sinf|класс)\s*/i, "")}
-                    </span>
-                  )}
-                </span>
-                {faol && <Icon name="check" size={18} className="shrink-0 text-brand-blue-t" />}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizNechta")}</span>
-        <div className="flex flex-wrap gap-1.5">
-          {[3, 5, 10].map((x) => (
-            <Tanlov key={x} faol={soni === x} on={() => setSoni(x)}>{x}</Tanlov>
-          ))}
-        </div>
-      </div>
-      {yoq && <p className="text-center text-[14px] text-ink-dim">{t("quizBazaYoq")}</p>}
+      <p className="px-1 text-[12.5px] text-ink-dim">{t("quizAiQolgan", { n: holat.qolgan, k: holat.kunlik })}</p>
+      {kutilmoqda && <p className="az-suzish text-center text-[14px] text-ink-soft">{t("quizAiKutIzoh")}</p>}
+      {xato && <p className="text-center text-[14px] text-brand-red">{xato}</p>}
     </Varaq>
   );
 }
@@ -615,6 +975,7 @@ export function QuizSahifa({ id, onTahrir, onJonli, onYech, onChiq }: {
   const [q, setQ] = useState<QuizToliq | null | "xato">(null);
   const [nusxa, setNusxa] = useState(false);
   const [ochilmoqda, setOchilmoqda] = useState(false);
+  const [rejimVaraq, setRejimVaraq] = useState(false);
 
   useEffect(() => {
     let tirik = true;
@@ -629,12 +990,11 @@ export function QuizSahifa({ id, onTahrir, onJonli, onYech, onChiq }: {
   const nusxala = async () => {
     try { await navigator.clipboard.writeText(q.kod); setNusxa(true); tebrat("tanlov"); } catch { /* kod ko'rinib turibdi */ }
   };
-  const jonliBoshla = async () => {
-    if (q.jonli) { onJonli(q.jonli); return; }
+  const jonliBoshla = async (tur: OyinTur, jamoa: number) => {
     if (ochilmoqda) return;
     setOchilmoqda(true);
     try {
-      const o = await jonliOch(q.id);
+      const o = await jonliOch(q.id, tur, jamoa);
       tebrat("tanlov");
       onJonli(o.id);
     } catch {
@@ -670,7 +1030,8 @@ export function QuizSahifa({ id, onTahrir, onJonli, onYech, onChiq }: {
         </button>
         {jonli ? (
           <>
-            <button type="button" onClick={jonliBoshla} disabled={ochilmoqda} data-tahlil="Quiz: jonli boshlash"
+            <button type="button" onClick={() => (q.jonli ? onJonli(q.jonli) : setRejimVaraq(true))} disabled={ochilmoqda}
+              data-tahlil="Quiz: jonli boshlash"
               className={ASOSIY}>
               <span className="flex items-center justify-center gap-2">
                 <Icon name="play" size={18} />{t(q.jonli ? "quizJonliDavom" : "quizJonliBoshla")}
@@ -717,6 +1078,10 @@ export function QuizSahifa({ id, onTahrir, onJonli, onYech, onChiq }: {
         )
       )}
       {jonli && <p className="px-1 text-[13px] leading-snug text-ink-dim">{t("quizJonliIzoh")}</p>}
+      {rejimVaraq && (
+        <RejimVaraq ketmoqda={ochilmoqda} onYop={() => setRejimVaraq(false)}
+          onBoshla={(tur, n) => void jonliBoshla(tur, n)} />
+      )}
 
       <div className="flex flex-col items-center gap-0.5 pt-1">
         {!jonli && (
@@ -731,5 +1096,59 @@ export function QuizSahifa({ id, onTahrir, onJonli, onYech, onChiq }: {
         </button>
       </div>
     </div>
+  );
+}
+
+/** Jamoa belgisi va nomi — 3 rang qoidasi tufayli jamoalar RANG bilan emas, SHAKL bilan ajraladi. */
+export const JAMOA_BELGI: IconName[] = ["triangle", "circle", "cube", "star"];
+export const jamoaNomi = (j: number) => t(`quizJamoa${j}` as Kalit);
+
+/**
+ * Jonli o'yin rejimi — o'yin OCHILISHIDAN oldin tanlanadi: kirganlar
+ * qaysi jamoaga tushishi va omon qolish qoidasi boshidan ma'lum bo'lsin.
+ */
+function RejimVaraq({ ketmoqda, onBoshla, onYop }: {
+  ketmoqda: boolean; onBoshla: (tur: OyinTur, jamoa: number) => void; onYop: () => void;
+}) {
+  const [tur, setTur] = useState<OyinTur>("oddiy");
+  const [jamoa, setJamoa] = useState(2);
+  const TURLAR: { tur: OyinTur; ic: IconName; nom: Kalit; izoh: Kalit }[] = [
+    { tur: "oddiy", ic: "trophy", nom: "quizOyinOddiy", izoh: "quizOyinOddiyIzoh" },
+    { tur: "jamoa", ic: "parent", nom: "quizOyinJamoa", izoh: "quizOyinJamoaIzoh" },
+    { tur: "omon", ic: "flame", nom: "quizOyinOmon", izoh: "quizOyinOmonIzoh" },
+  ];
+  return (
+    <Varaq sarlavha={t("quizRejimTanla")} onYop={onYop}
+      past={(
+        <button type="button" disabled={ketmoqda} onClick={() => onBoshla(tur, jamoa)} data-tahlil={`Quiz: jonli ochish ${tur}`}
+          className={ASOSIY}>
+          {t("quizOyinniOch")}
+        </button>
+      )}>
+      <div role="radiogroup" aria-label={t("quizRejimTanla")} className="flex flex-col gap-2">
+        {TURLAR.map((x) => {
+          const faol = tur === x.tur;
+          return (
+            <button key={x.tur} type="button" role="radio" aria-checked={faol} onClick={() => setTur(x.tur)}
+              className={`clay-press flex min-h-[64px] items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left ${
+                faol ? "bg-brand-blue/10 ring-2 ring-brand-blue" : "bg-sahna ring-1 ring-track"}`}>
+              <Icon name={x.ic} size={22} className={`shrink-0 ${faol ? "text-brand-blue-t" : "text-ink-dim"}`} />
+              <span className="min-w-0 flex-1">
+                <span className={`block font-display text-[16px] leading-tight ${faol ? "text-brand-blue-t" : ""}`}>{t(x.nom)}</span>
+                <span className="block text-[12.5px] leading-snug text-ink-dim">{t(x.izoh)}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {tur === "jamoa" && (
+        <div className="flex flex-col gap-1.5">
+          <span className="px-1 text-[13px] font-bold text-ink-dim">{t("quizJamoaSoni")}</span>
+          <div className="flex flex-wrap gap-1.5">
+            {[2, 3, 4].map((n) => <Tanlov key={n} faol={jamoa === n} on={() => setJamoa(n)}>{n}</Tanlov>)}
+          </div>
+        </div>
+      )}
+    </Varaq>
   );
 }

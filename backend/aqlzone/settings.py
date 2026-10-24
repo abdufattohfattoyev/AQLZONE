@@ -225,7 +225,7 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 # bir vaqtda so'raganda duel chaqiruvi va Premium xabarlari shu javoblar
 # orqasida kutib qolardi. Eager rejimda (lokal, sinov) yo'nalish
 # e'tiborga olinmaydi.
-CELERY_TASK_ROUTES = {"core.vazifalar.ai_javob": {"queue": "ai"}}
+CELERY_TASK_ROUTES = {"core.vazifalar.ai_javob": {"queue": "ai"}, "core.vazifalar.quiz_ai": {"queue": "ai"}}
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"

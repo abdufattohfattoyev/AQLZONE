@@ -119,6 +119,14 @@ def ai_javob(xabar_id: int) -> str:
     return ai.javob_yoz(xabar_id)
 
 
+@shared_task(name="core.vazifalar.quiz_ai", acks_late=False)
+def quiz_ai(ish_id: int) -> str:
+    """AI quiz yasash (`core.quiz_ai.bajar`) — `ai_javob` dagi sabablar bilan qayta urinishsiz."""
+    from . import quiz_ai as QA
+
+    return QA.bajar(ish_id)
+
+
 def fonda(vazifa, *args, **kwargs) -> None:
     """
     Vazifani navbatga qo'yadi — navbat bo'lmasa, joyida bajaradi.

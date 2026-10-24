@@ -2307,8 +2307,16 @@ class QuizOyin(models.Model):
     NATIJA = "natija"
     TUGADI = "tugadi"
 
+    #: O'yin turi (`quiz.py` dagi "Uch rejim").
+    ODDIY = "oddiy"
+    JAMOA = "jamoa"
+    OMON = "omon"
+
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="oyinlar")
     holat = models.CharField(max_length=8, default=KUTISH)
+    tur = models.CharField(max_length=8, default=ODDIY)
+    #: Jamoaviy jangda nechta jamoa (2–4); boshqasida 0.
+    jamoa_soni = models.SmallIntegerField(default=0)
     #: Joriy savol tartibi; kutishda −1.
     joriy = models.SmallIntegerField(default=-1)
     #: Savol ochilgan payt (`time.time()`) — ball shundan hisoblanadi.
@@ -2340,6 +2348,10 @@ class QuizQatnash(models.Model):
     togri = models.SmallIntegerField(default=0)
     ball = models.IntegerField(default=0)
     sekund = models.IntegerField(default=0)
+    #: Jamoaviy jangda — jamoa raqami (0 dan).
+    jamoa = models.SmallIntegerField(null=True, blank=True)
+    #: Omon qolishda — qaysi savolda chiqdi; −1 — kech kirgan tomoshabin.
+    chiqdi = models.SmallIntegerField(null=True, blank=True)
     #: Oxirgi so'rov — jonli o'yinda "hozir ekran oldida nechta odam".
     belgi = models.DateTimeField(default=timezone.now)
     created_at = models.DateTimeField(default=timezone.now)
@@ -2352,6 +2364,40 @@ class QuizQatnash(models.Model):
                                     name="quiz_oz_bir_odam"),
         ]
         indexes = [models.Index(fields=["quiz", "oyin", "-togri"])]
+
+
+class QuizAiIsh(models.Model):
+    """
+    AI quiz yasash ishi — mavzudan, rasmdan yoki PDF dan (`core/quiz_ai.py`).
+
+    `AiSuhbat` dan alohida: bu suhbat emas, bir martalik ish va natijasi
+    savollar ro'yxati. Model javobi 10–60 soniya oladi, shuning uchun
+    `ai.py` dagidek fonda yuradi va mijoz qatorni so'rab turadi.
+    """
+
+    KUTILMOQDA = "kutilmoqda"
+    TAYYOR = "tayyor"
+    XATO = "xato"
+
+    pupil = models.ForeignKey(Pupil, on_delete=models.CASCADE, related_name="quiz_ai_ishlari")
+    #: "mavzu" — matn bo'yicha yasaydi; "fayl" — rasm/PDF dagi testni o'qiydi.
+    tur = models.CharField(max_length=8)
+    matn = models.TextField(blank=True, default="")
+    soni = models.SmallIntegerField(default=10)
+    til = models.CharField(max_length=4, default="uz")
+    #: `AI_RASM_PAPKA` dagi fayl nomi; `fayl_tur` — "rasm" yoki "pdf".
+    fayl = models.CharField(max_length=80, blank=True, default="")
+    fayl_tur = models.CharField(max_length=4, blank=True, default="")
+    holat = models.CharField(max_length=12, default=KUTILMOQDA)
+    savollar = models.JSONField(default=list)
+    xato = models.CharField(max_length=40, blank=True, default="")
+    kirish_token = models.IntegerField(default=0)
+    chiqish_token = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "quiz_ai_ish"
+        indexes = [models.Index(fields=["pupil", "-created_at"])]
 
 
 class Marafon(models.Model):

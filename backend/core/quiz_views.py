@@ -83,10 +83,12 @@ def quiz_topshir(request, kod: str):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def quiz_jonli(request, qid: int):
-    """Muallif yangi jonli o'yin ochadi."""
+    """Muallif yangi jonli o'yin ochadi: `{tur: oddiy|jamoa|omon, jamoa_soni}`."""
     profil = _profil_tanla(request)
+    d = _d(request)
     try:
-        return Response(Q.oyin_json(Q.jonli_och(profil, qid), profil), status=201)
+        return Response(Q.oyin_json(Q.jonli_och(profil, qid, d.get("tur"), d.get("jamoa_soni")), profil),
+                        status=201)
     except Q.QuizXato as e:
         return _xato(e)
 
@@ -129,3 +131,36 @@ def oyin_amal(request, oid: int, amal: str):
         return _xato(e)
     o.refresh_from_db()
     return Response(Q.oyin_json(o, profil))
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def quiz_ai(request):
+    """
+    GET — AI ochiqmi va bugun nechta qoldi; POST — yangi ish:
+    `{matn, soni, til}` yoki multipart `fayl` (rasm/PDF) bilan.
+    """
+    from . import quiz_ai as QA
+
+    profil = _profil_tanla(request)
+    if request.method == "GET":
+        return Response(QA.holat(profil.pupil))
+    d = _d(request)
+    try:
+        ish = QA.boshla(profil.pupil, d.get("matn", ""), d.get("soni"), d.get("til") or profil.pupil.til,
+                        request.FILES.get("fayl"))
+    except Q.QuizXato as e:
+        return _xato(e)
+    return Response(QA.ish_json(ish), status=201)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def quiz_ai_ish(request, iid: int):
+    from . import quiz_ai as QA
+    from .models import QuizAiIsh
+
+    ish = QuizAiIsh.objects.filter(pk=iid, pupil=_profil_tanla(request).pupil).first()
+    if ish is None:
+        return Response({"detail": "topilmadi", "sabab": "topilmadi"}, status=404)
+    return Response(QA.ish_json(ish))

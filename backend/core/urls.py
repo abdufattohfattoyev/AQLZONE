@@ -123,6 +123,8 @@ urlpatterns = [
     path("sinf/<int:sid>/<str:amal>", sinf_views.sinf_amal, name="sinf-amal"),
     # Foydalanuvchi quizi: o'z tezligida va jonli (`core/quiz.py`).
     path("quizlar", quiz_views.quizlar, name="quizlar"),
+    path("quiz/ai", quiz_views.quiz_ai, name="quiz-ai"),
+    path("quiz/ai/<int:iid>", quiz_views.quiz_ai_ish, name="quiz-ai-ish"),
     path("quiz/<int:qid>", quiz_views.quiz_bitta, name="quiz"),
     path("quiz/<int:qid>/jonli", quiz_views.quiz_jonli, name="quiz-jonli"),
     path("quiz/<int:qid>/ochir", quiz_views.quiz_ochir, name="quiz-ochir"),

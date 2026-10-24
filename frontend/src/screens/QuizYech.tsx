@@ -25,10 +25,11 @@ import { MasalaMatn } from "../components/MasalaMatn";
 import { QuestionView, sahnaBor, shartSahnada } from "../components/QuestionView";
 import type { Activity, ChoiceKind } from "../lib/activity";
 import {
-  TAXALLUS_UZUN, oyinAmal, oyinHolat, oyinJavob, oyinKir, quizKod, quizTopshir, savolQisqa, soat,
+  TAXALLUS_UZUN, javobTayyor, oyinAmal, oyinHolat, oyinJavob, oyinKir, quizKod, quizTopshir, savolQisqa, soat,
 } from "../lib/quiz";
-import type { OchiqSavol, Oyin, QuizOchiq, ReytingQator, Topshiriq } from "../lib/quiz";
-import { ASOSIY, IKKINCHI, QOBIQ, Sarlavha, quizUlash } from "./Quiz";
+import type { Javob, OchiqSavol, Oyin, QuizOchiq, ReytingQator, TogriJavob, Topshiriq } from "../lib/quiz";
+import { JavobKorinish, JuftTanla, RostTanla, TartibTanla } from "../components/QuizJavob";
+import { ASOSIY, IKKINCHI, JAMOA_BELGI, QOBIQ, Sarlavha, jamoaNomi, quizUlash } from "./Quiz";
 
 /** Jonli o'yin holati shuncha millisekundda bir so'raladi (`xona.py` dagi kabi). */
 const SORASH_MS = 1500;
@@ -70,6 +71,35 @@ function Shart({ s, ixcham = false }: { s: OchiqSavol; ixcham?: boolean }) {
       <MasalaMatn matn={s.matn} katta />
     </div>
   );
+}
+
+/**
+ * Javob berish qismi — variantdan tashqari turlar uchun (variantni har
+ * ekran o'zicha chizadi: o'z tezligida ustun, jonlida 2×2).
+ */
+function YangiTurJavob({ s, javob, onChange }: { s: OchiqSavol; javob: Javob | null; onChange: (j: Javob | null) => void }) {
+  if (s.tur === "rost") {
+    return <RostTanla value={typeof javob === "string" ? javob : null} onChange={(v) => onChange(v)} />;
+  }
+  if (s.tur === "tartib") {
+    return <TartibTanla items={s.variantlar} value={Array.isArray(javob) ? javob : []}
+      onChange={(v) => onChange(v.length ? v : null)} />;
+  }
+  if (s.tur === "juftlash") {
+    const chap = s.chap ?? [];
+    return <JuftTanla chap={chap} ong={s.ong ?? []} value={Array.isArray(javob) ? javob : chap.map(() => "")}
+      onChange={(v) => onChange(v.map((x) => x ?? ""))} />;
+  }
+  return null;
+}
+
+/**
+ * Javobni ko'rsatish uchun shaklga keltiradi: juftlashda yechuvchining
+ * javobi — chap tartibidagi o'nglar ro'yxati, ko'rsatishda esa juftlar.
+ */
+function korinish(s: OchiqSavol | undefined, j: Javob | TogriJavob | null): Javob | TogriJavob | null {
+  if (!s || s.tur !== "juftlash" || !Array.isArray(j) || Array.isArray(j[0])) return j;
+  return (s.chap ?? []).map((c, k) => [c, String((j as string[])[k] ?? "")] as [string, string]);
 }
 
 const Holat = ({ matn }: { matn: string }) => (
@@ -208,13 +238,13 @@ export function QuizKod({ kod, onJonli, onMeniki, onChiq }: {
 
 function OzYechish({ q, onTugadi, onChiq }: { q: QuizOchiq; onTugadi: (n: Topshiriq) => void; onChiq: () => void }) {
   const [i, setI] = useState(0);
-  const [javoblar, setJavoblar] = useState<(string | null)[]>(() => q.savollar.map(() => null));
+  const [javoblar, setJavoblar] = useState<(Javob | null)[]>(() => q.savollar.map(() => null));
   const [ketmoqda, setKetmoqda] = useState(false);
   const [xato, setXato] = useState(false);
   const boshi = useRef(Date.now());
   const [qolgan, setQolgan] = useState(q.soniya);
 
-  const topshir = useCallback(async (j: (string | null)[]) => {
+  const topshir = useCallback(async (j: (Javob | null)[]) => {
     if (ketmoqda) return;
     setKetmoqda(true);
     setXato(false);
@@ -245,7 +275,8 @@ function OzYechish({ q, onTugadi, onChiq }: { q: QuizOchiq; onTugadi: (n: Topshi
   const s = q.savollar[i]!;
   const javob = javoblar[i];
   const oxirgi = i === q.savollar.length - 1;
-  const belgila = (v: string | null) => setJavoblar(javoblar.map((x, k) => (k === i ? v : x)));
+  // Funksional yangilanish: ketma-ket tez bosishlar bir-birini yo'qotmasin.
+  const belgila = (v: Javob | null) => setJavoblar((eski) => eski.map((x, k) => (k === i ? v : x)));
   const shoshilinch = qolgan <= 30;
 
   return (
@@ -266,7 +297,7 @@ function OzYechish({ q, onTugadi, onChiq }: { q: QuizOchiq; onTugadi: (n: Topshi
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-karta/60">
         <div className="h-full rounded-full bg-brand-green transition-[width] duration-300"
-          style={{ width: `${(javoblar.filter((x) => x !== null && x !== "").length / q.savollar.length) * 100}%` }} />
+          style={{ width: `${(javoblar.filter((x, k) => javobTayyor(q.savollar[k]!, x)).length / q.savollar.length) * 100}%` }} />
       </div>
 
       <div key={i} className="az-savol flex flex-col gap-3">
@@ -286,8 +317,10 @@ function OzYechish({ q, onTugadi, onChiq }: { q: QuizOchiq; onTugadi: (n: Topshi
               );
             })}
           </div>
+        ) : s.tur !== "yozma" ? (
+          <YangiTurJavob s={s} javob={javob ?? null} onChange={belgila} />
         ) : (
-          <input value={javob ?? ""} onChange={(e) => belgila(e.target.value.slice(0, 100))}
+          <input value={typeof javob === "string" ? javob : ""} onChange={(e) => belgila(e.target.value.slice(0, 100))}
             placeholder={t("quizJavobYoz")} aria-label={t("quizJavobYoz")} inputMode="text" autoComplete="off"
             className="h-14 rounded-2xl border-2 border-track bg-karta px-4 font-display text-[20px] outline-none
                        placeholder:font-sans placeholder:text-[16px] placeholder:text-ink-dim focus:border-brand-blue" />
@@ -351,9 +384,14 @@ function OzNatija({ q, n, onQayta, onChiq }: { q: QuizOchiq; n: Topshiriq; onQay
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[14.5px]">{k + 1}. {q.savollar[k] ? savolQisqa(q.savollar[k]) : ""}</span>
-              {!x.togri && (
-                <span className="block text-[13px] text-ink-dim">
-                  {x.sizniki ? `${t("quizSizniki")}: ${x.sizniki} · ` : ""}{t("quizTogriJavob")}: <b className="text-ink">{x.javob}</b>
+              {!x.togri && q.savollar[k] && (
+                <span className="flex flex-col gap-0.5 text-[13px] text-ink-dim">
+                  {x.sizniki !== null && (
+                    <span>{t("quizSizniki")}: <JavobKorinish tur={q.savollar[k].tur} ixcham
+                      javob={korinish(q.savollar[k], x.sizniki)} /></span>
+                  )}
+                  <span className="text-ink">{t("quizTogriJavob")}: <JavobKorinish tur={q.savollar[k].tur} ixcham
+                    javob={x.javob} /></span>
                 </span>
               )}
             </span>
@@ -379,7 +417,7 @@ export function QuizJonli({ id, onChiq }: { id: number; onChiq: () => void }) {
   /** So'rov olingan paytdagi `qolgan` va shu payt — soat oraliqda o'zi yursin. */
   const [olindi, setOlindi] = useState(0);
   const [hozir, setHozir] = useState(Date.now());
-  const [yuborildi, setYuborildi] = useState<string | null>(null);
+  const [yuborildi, setYuborildi] = useState<Javob | null>(null);
 
   const qabul = useCallback((x: Oyin) => { setO(x); setOlindi(Date.now()); }, []);
 
@@ -402,7 +440,7 @@ export function QuizJonli({ id, onChiq }: { id: number; onChiq: () => void }) {
 
   const qolgan = o.qolgan === null ? null : Math.max(0, o.qolgan - (hozir - olindi) / 1000);
   const amal = (a: "keyingi" | "tugat") => { tebrat("tanlov"); oyinAmal(id, a).then(qabul, () => {}); };
-  const javobBer = (j: string) => {
+  const javobBer = (j: Javob) => {
     if (yuborildi !== null || !o.savol) return;
     setYuborildi(j);
     tebrat("tanlov");
@@ -433,7 +471,7 @@ function KirishOyna({ o, onKir, onChiq }: { o: Oyin; onKir: (ism: string) => Pro
   };
   return (
     <div className={QOBIQ}>
-      <Sarlavha nom={o.nom} izoh={t("quizSavolSoni", { n: o.jami })} onChiq={onChiq} />
+      <Sarlavha nom={o.nom} izoh={`${t("quizSavolSoni", { n: o.jami })} · ${t(OYIN_TUR_NOMI[o.tur])}`} onChiq={onChiq} />
       <form className="flex flex-col gap-3 rounded-clay bg-karta p-5 shadow-clay-sm"
         onSubmit={(e) => { e.preventDefault(); kir(); }}>
         <label className="flex flex-col gap-1.5">
@@ -448,10 +486,14 @@ function KirishOyna({ o, onKir, onChiq }: { o: Oyin; onKir: (ism: string) => Pro
           {t("quizKirish")}
         </button>
       </form>
-      {o.holat !== "kutish" && <p className="px-1 text-center text-[13px] text-ink-dim">{t("quizKechKirdi")}</p>}
+      {o.holat !== "kutish" && (
+        <p className="px-1 text-center text-[13px] text-ink-dim">{t(o.tur === "omon" ? "quizKechTomosha" : "quizKechKirdi")}</p>
+      )}
     </div>
   );
 }
+
+const OYIN_TUR_NOMI = { oddiy: "quizOyinOddiy", jamoa: "quizOyinJamoa", omon: "quizOyinOmon" } as const;
 
 function VaqtChizigi({ qolgan, jami }: { qolgan: number | null; jami: number }) {
   const ulush = qolgan === null ? 0 : Math.min(1, qolgan / jami);
@@ -461,6 +503,16 @@ function VaqtChizigi({ qolgan, jami }: { qolgan: number | null; jami: number }) 
       <div className={`h-full rounded-full transition-[width] duration-300 ease-linear ${ulush < 0.25 ? "bg-brand-red" : "bg-brand-blue"}`}
         style={{ width: `${ulush * 100}%` }} />
     </div>
+  );
+}
+
+/** Jamoa belgisi va nomi — bir qatorda. */
+function JamoaYorliq({ j, kichik = false }: { j: number; kichik?: boolean }) {
+  return (
+    <span className={`inline-flex min-w-0 items-center gap-1.5 ${kichik ? "text-[13px]" : "text-[15px] font-bold"}`}>
+      <Icon name={JAMOA_BELGI[j] ?? "circle"} size={kichik ? 14 : 17} className="shrink-0 text-brand-blue-t" />
+      <span className="truncate">{jamoaNomi(j)}</span>
+    </span>
   );
 }
 
@@ -481,12 +533,28 @@ function OyinTepa({ o, qolgan, onChiq }: { o: Oyin; qolgan: number | null; onChi
           <Icon name="clock" size={15} />{Math.ceil(qolgan)}
         </span>
       )}
+      {/* Omon qolish — hali o'yindagilar soni: o'yinning asosiy hayajoni shu. */}
+      {o.tirik !== null && (
+        <span className="flex items-center gap-1 text-[13px] font-bold text-ink-soft tabular-nums" title={t("quizQoldi")}>
+          <Icon name="flame" size={15} />{o.tirik}
+        </span>
+      )}
       {o.mening && o.holat !== "kutish" && (
         <span className="ml-auto flex items-center gap-1 font-display text-[16px] text-brand-gold-d tabular-nums">
           <Icon name="star" size={16} />{o.mening.ball}
         </span>
       )}
     </div>
+  );
+}
+
+/** Oltin savol yorlig'i — amber (mukofot ma'nosi). */
+function OltinYorliq() {
+  return (
+    <span className="az-kirish inline-flex items-center gap-1.5 self-center rounded-full bg-brand-gold/15 px-3 py-1
+                     text-[13px] font-bold text-brand-gold-d">
+      <Icon name="star" size={14} />{t("quizOltinX2")}
+    </span>
   );
 }
 
@@ -520,6 +588,69 @@ function JonliVariantlar({ s, onTanla, tanlangan, togri, taqsimot }: {
   );
 }
 
+/**
+ * Boshlovchi ekranidagi javob qismi. Savol ochiqligida — faqat elementlar
+ * (javob emas); yopilgach — to'g'ri javob va variantlarda kim nimani tanlagani.
+ */
+function BoshlovchiJavob({ o, s }: { o: Oyin; s: OchiqSavol }) {
+  const togri = o.holat === "natija" ? o.togriJavob : null;
+  if (s.tur === "variant") {
+    return <JonliVariantlar s={s} togri={typeof togri === "string" ? togri : null}
+      taqsimot={o.holat === "natija" ? o.taqsimot : null} />;
+  }
+  if (s.tur === "rost") {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <RostTanla value={null} togri={typeof togri === "string" ? togri : null} katta />
+        {o.holat === "natija" && o.taqsimot && (
+          <div className="grid grid-cols-2 text-center font-display text-[14px] text-ink-soft tabular-nums">
+            <span>{o.taqsimot[0] ?? 0}</span><span>{o.taqsimot[1] ?? 0}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+  if (o.holat === "natija") {
+    return (
+      <div className="rounded-2xl bg-brand-green px-4 py-3 text-center text-[17px] text-white">
+        <JavobKorinish tur={s.tur} javob={togri} />
+      </div>
+    );
+  }
+  // Tartib va juftlash elementlari — sinf o'qib tursin, tartib aralash.
+  const elementlar = s.tur === "juftlash" ? [...(s.chap ?? []), ...(s.ong ?? [])] : s.variantlar;
+  return (
+    <div className="flex flex-wrap justify-center gap-2">
+      {elementlar.map((x) => (
+        <span key={x} className="rounded-2xl bg-karta px-3.5 py-2 font-display text-[17px] shadow-clay-sm">{x}</span>
+      ))}
+    </div>
+  );
+}
+
+/** Jamoalar jadvali — o'rtacha ball ustunlari (amber: ball). */
+function Jamoalar({ o }: { o: Oyin }) {
+  if (!o.jamoalar) return null;
+  const eng = Math.max(1, ...o.jamoalar.map((j) => j.ball));
+  return (
+    <section className="flex flex-col gap-2 rounded-clay bg-karta p-3.5 shadow-clay-sm">
+      {o.jamoalar.map((j) => (
+        <div key={j.jamoa} className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <JamoaYorliq j={j.jamoa} />
+            <span className="text-[12.5px] text-ink-dim">{t("quizJamoaOdam", { n: j.odam })}</span>
+            <span className="ml-auto font-display text-[16px] tabular-nums">{j.ball}</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-track">
+            <div className="h-full rounded-full bg-brand-gold transition-[width] duration-500" style={{ width: `${(j.ball / eng) * 100}%` }} />
+          </div>
+        </div>
+      ))}
+      <p className="text-[12px] leading-snug text-ink-dim">{t("quizJamoaOrtacha")}</p>
+    </section>
+  );
+}
+
 function Boshlovchi({ o, qolgan, onAmal, onChiq }: {
   o: Oyin; qolgan: number | null; onAmal: (a: "keyingi" | "tugat") => void; onChiq: () => void;
 }) {
@@ -528,7 +659,7 @@ function Boshlovchi({ o, qolgan, onAmal, onChiq }: {
   if (o.holat === "kutish") {
     return (
       <div className={QOBIQ}>
-        <Sarlavha nom={o.nom} izoh={t("quizBoshlovchi")} onChiq={onChiq} />
+        <Sarlavha nom={o.nom} izoh={`${t("quizBoshlovchi")} · ${t(OYIN_TUR_NOMI[o.tur])}`} onChiq={onChiq} />
         {/* Kod — proyektorda ham o'qilsin: ekranning eng katta yozuvi. */}
         <div className="flex flex-col items-center gap-1 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
           <span className="text-[13px] font-bold text-ink-dim">{t("quizKodAyting")}</span>
@@ -536,6 +667,11 @@ function Boshlovchi({ o, qolgan, onAmal, onChiq }: {
           <button type="button" onClick={() => quizUlash(o.nom, o.kod, o.havola)}
             className="clay-press min-h-11 px-3 text-[14px] font-bold text-brand-blue-t">{t("quizHavolaYubor")}</button>
         </div>
+        {o.tur !== "oddiy" && (
+          <p className="shadow-ichki rounded-2xl bg-sahna px-3.5 py-2.5 text-[13.5px] leading-snug text-ink-soft">
+            {t(o.tur === "jamoa" ? "quizOyinJamoaIzoh" : "quizOyinOmonIzoh")}
+          </p>
+        )}
         <div className="flex flex-col gap-2 rounded-clay bg-karta p-4 shadow-clay-sm">
           <span className="font-display text-[17px]">{t("quizKirdi", { n: o.odam })}</span>
           {o.ismlar && o.ismlar.length > 0 ? (
@@ -546,6 +682,15 @@ function Boshlovchi({ o, qolgan, onAmal, onChiq }: {
             </div>
           ) : <span className="text-[13.5px] text-ink-dim">{t("quizKimdirKirsin")}</span>}
         </div>
+        {o.jamoalar && o.odam > 0 && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-1">
+            {o.jamoalar.slice().sort((a, b) => a.jamoa - b.jamoa).map((j) => (
+              <span key={j.jamoa} className="flex items-center gap-1.5">
+                <JamoaYorliq j={j.jamoa} kichik /><span className="text-[13px] text-ink-dim tabular-nums">{j.odam}</span>
+              </span>
+            ))}
+          </div>
+        )}
         <button type="button" disabled={o.odam === 0} onClick={() => onAmal("keyingi")} data-tahlil="Quiz jonli: boshlash"
           className={ASOSIY}>{t("quizBoshlash")}</button>
       </div>
@@ -555,28 +700,31 @@ function Boshlovchi({ o, qolgan, onAmal, onChiq }: {
   if (o.holat === "tugadi") return <Yakun o={o} onChiq={onChiq} />;
 
   const s = o.savol!;
-  const oxirgi = o.joriy + 1 >= o.jami;
+  const oxirgi = o.joriy + 1 >= o.jami || (o.tur === "omon" && o.holat === "natija" && (o.tirik ?? 0) <= 1);
   return (
     <div className={`${QOBIQ} min-h-dvh pb-6`}>
       <OyinTepa o={o} qolgan={qolgan} onChiq={onChiq} />
       {o.holat === "savol" && <VaqtChizigi qolgan={qolgan} jami={s.vaqt} />}
       <div key={o.joriy} className="az-savol flex flex-col gap-3">
+        {s.oltin && <OltinYorliq />}
         <Shart s={s} />
-        {s.tur === "variant"
-          ? <JonliVariantlar s={s} togri={o.togriJavob} taqsimot={o.holat === "natija" ? o.taqsimot : null} />
-          : o.holat === "natija" && (
-            <div className="rounded-2xl bg-brand-green px-4 py-3 text-center font-display text-[20px] text-white">{o.togriJavob}</div>
-          )}
+        <BoshlovchiJavob o={o} s={s} />
       </div>
       {o.holat === "savol" ? (
-        <p className="text-center text-[14px] text-ink-soft">{t("quizJavobBerdi", { n: o.javobBerdi, j: o.odam })}</p>
+        <p className="text-center text-[14px] text-ink-soft">
+          {t("quizJavobBerdi", { n: o.javobBerdi, j: o.tirik ?? o.odam })}
+        </p>
       ) : (
-        o.reyting && o.reyting.length > 0 && (
-          <section className="flex flex-col gap-1.5">
-            <h2 className="px-1 font-display text-[16px]">{t("quizEngYaxshi")}</h2>
-            <ReytingRoyxat reyting={o.reyting} />
-          </section>
-        )
+        <>
+          {o.tur === "omon" && <p className="text-center font-display text-[17px]">{t("quizQoldiN", { n: o.tirik ?? 0 })}</p>}
+          <Jamoalar o={o} />
+          {o.tur !== "jamoa" && o.reyting && o.reyting.length > 0 && (
+            <section className="flex flex-col gap-1.5">
+              <h2 className="px-1 font-display text-[16px]">{t("quizEngYaxshi")}</h2>
+              <ReytingRoyxat reyting={o.reyting} />
+            </section>
+          )}
+        </>
       )}
       <div className="mt-auto flex flex-col gap-1 pt-2">
         <button type="button" onClick={() => onAmal("keyingi")} className={ASOSIY}
@@ -592,20 +740,31 @@ function Boshlovchi({ o, qolgan, onAmal, onChiq }: {
 }
 
 function Ishtirokchi({ o, qolgan, yuborildi, onJavob, onChiq }: {
-  o: Oyin; qolgan: number | null; yuborildi: string | null; onJavob: (j: string) => void; onChiq: () => void;
+  o: Oyin; qolgan: number | null; yuborildi: Javob | null; onJavob: (j: Javob) => void; onChiq: () => void;
 }) {
   const [yozma, setYozma] = useState("");
-  useEffect(() => { setYozma(""); }, [o.joriy]);
+  /** Tartib va juftlash — avval yig'iladi, keyin "Yuborish" bilan ketadi. */
+  const [qoralama, setQoralama] = useState<Javob | null>(null);
+  useEffect(() => { setYozma(""); setQoralama(null); }, [o.joriy]);
+
+  const jamoa = o.mening?.jamoa ?? null;
+  const chiqdi = o.mening?.chiqdi ?? null;
 
   if (o.holat === "kutish") {
     return (
       <div className={QOBIQ}>
-        <Sarlavha nom={o.nom} onChiq={onChiq} />
+        <Sarlavha nom={o.nom} izoh={t(OYIN_TUR_NOMI[o.tur])} onChiq={onChiq} />
         <div className="flex flex-col items-center gap-3 rounded-clay bg-karta p-6 text-center shadow-clay-sm">
           <span className="az-suzish grid size-16 place-items-center rounded-full bg-brand-green/15 text-brand-green">
             <Icon name="check" size={30} />
           </span>
           <span className="font-display text-[20px]">{t("quizSizOyindasiz")}</span>
+          {jamoa !== null && (
+            <span className="flex flex-col items-center gap-1">
+              <span className="text-[13px] text-ink-dim">{t("quizSizningJamoa")}</span>
+              <JamoaYorliq j={jamoa} />
+            </span>
+          )}
           <span className="text-[14px] leading-snug text-ink-dim">{t("quizBoshlovchiKutIzoh")}</span>
           <span className="text-[13px] text-ink-dim">{t("quizKirdi", { n: o.odam })}</span>
         </div>
@@ -620,6 +779,9 @@ function Ishtirokchi({ o, qolgan, yuborildi, onJavob, onChiq }: {
 
   if (o.holat === "natija") {
     const togri = o.mening?.togrimi;
+    const bonus = o.mening?.bonus ?? 0;
+    // Shu savolda chiqqan — alohida, aniq xabar: endi u tomoshabin.
+    const hozirChiqdi = o.tur === "omon" && chiqdi === o.joriy;
     return (
       <div className={`${QOBIQ} min-h-dvh pb-6`}>
         <OyinTepa o={o} qolgan={null} onChiq={onChiq} />
@@ -627,7 +789,13 @@ function Ishtirokchi({ o, qolgan, yuborildi, onJavob, onChiq }: {
           // Kech kirgan — bu savolni ko'rmagan: qizil "xato" emas, neytral karta.
           <div className="az-kirish flex flex-col items-center gap-1.5 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
             <Icon name="clock" size={30} className="text-brand-blue-t" />
-            <span className="font-display text-[19px]">{t("quizKechKeldi")}</span>
+            <span className="font-display text-[19px]">{t(o.tur === "omon" ? "quizTomoshabin" : "quizKechKeldi")}</span>
+          </div>
+        ) : chiqdi !== null && !hozirChiqdi ? (
+          <div className="az-kirish flex flex-col items-center gap-1.5 rounded-clay bg-karta p-5 text-center shadow-clay-sm">
+            <Icon name="play" size={28} className="text-ink-dim" />
+            <span className="font-display text-[18px]">{t("quizTomoshabin")}</span>
+            <span className="text-[14px] text-ink-soft">{t("quizTogriJavob")}: <JavobKorinish tur={s.tur} javob={o.togriJavob} /></span>
           </div>
         ) : (
           <div className={`az-kirish flex flex-col items-center gap-1.5 rounded-clay p-5 text-center text-white shadow-clay ${
@@ -636,33 +804,63 @@ function Ishtirokchi({ o, qolgan, yuborildi, onJavob, onChiq }: {
             <span className="font-display text-[22px]">
               {togri ? t("quizTogri", { b: o.mening?.oxirgiBall ?? 0 }) : berildi === null ? t("quizUlgurmadi") : t("quizXato")}
             </span>
-            {!togri && <span className="text-[14.5px] text-white/90">{t("quizTogriJavob")}: <b>{o.togriJavob}</b></span>}
+            {togri && s.oltin && <span className="text-[13.5px] text-white/90">{t("quizOltinX2")}</span>}
+            {!togri && (
+              <span className="text-[14.5px] text-white/90">{t("quizTogriJavob")}: <JavobKorinish tur={s.tur} javob={o.togriJavob} /></span>
+            )}
+            {hozirChiqdi && <span className="mt-1 font-display text-[16px]">{t("quizSizChiqdingiz")}</span>}
           </div>
         )}
-        {o.orin && (
+        {/* Seriya — ketma-ket to'g'ri javoblar va bonusi (amber: mukofot). */}
+        {togri && (o.mening?.seriya ?? 0) >= 2 && (
+          <div className="az-kirish flex items-center gap-2.5 rounded-2xl bg-karta px-3.5 py-2.5 shadow-clay-sm">
+            <Icon name="flame" size={20} className="text-brand-gold-d" />
+            <span className="min-w-0 flex-1 text-[14.5px] font-bold">{t("quizSeriya", { n: o.mening?.seriya ?? 0 })}</span>
+            {bonus > 0 && <span className="font-display text-[15px] text-brand-gold-d tabular-nums">+{bonus}</span>}
+          </div>
+        )}
+        {jamoa !== null && (
+          <p className="flex items-center justify-center gap-2 text-[14px]">
+            <JamoaYorliq j={jamoa} kichik />
+            <span className="text-ink-dim">
+              {t("quizJamoaOrin", { n: (o.jamoalar ?? []).findIndex((j) => j.jamoa === jamoa) + 1, j: o.jamoalar?.length ?? 0 })}
+            </span>
+          </p>
+        )}
+        {o.tur === "omon" && <p className="text-center font-display text-[17px]">{t("quizQoldiN", { n: o.tirik ?? 0 })}</p>}
+        {o.tur !== "omon" && o.orin && (
           <p className="text-center font-display text-[18px]">{t("quizOrin", { n: o.orin, j: o.odam })}</p>
         )}
-        {o.reyting && <ReytingRoyxat reyting={o.reyting} />}
+        {o.tur === "jamoa" ? <Jamoalar o={o} /> : o.reyting && <ReytingRoyxat reyting={o.reyting} />}
         <p className="mt-auto text-center text-[13.5px] text-ink-dim">{t("quizKeyingiKut")}</p>
       </div>
     );
   }
 
   // Savol ochiq.
+  const yuborish = (j: Javob | null) => { if (j !== null && javobTayyor(s, j)) onJavob(j); };
   return (
     <div className={`${QOBIQ} min-h-dvh pb-6`}>
       <OyinTepa o={o} qolgan={qolgan} onChiq={onChiq} />
       <VaqtChizigi qolgan={qolgan} jami={s.vaqt} />
       <div key={o.joriy} className="az-savol flex flex-col gap-3">
+        {s.oltin && <OltinYorliq />}
         <Shart s={s} ixcham />
-        {berildi !== null ? (
+        {chiqdi !== null ? (
+          <div className="flex flex-col items-center gap-2 rounded-clay bg-karta p-6 text-center shadow-clay-sm">
+            <span className="font-display text-[18px]">{t("quizTomoshabin")}</span>
+            <span className="text-[13.5px] text-ink-dim">{t("quizTomoshaIzoh")}</span>
+          </div>
+        ) : berildi !== null ? (
           <div className="flex flex-col items-center gap-2 rounded-clay bg-karta p-6 text-center shadow-clay-sm">
             <span className="font-display text-[18px]">{t("quizQabulQilindi")}</span>
             <span className="text-[13.5px] text-ink-dim">{t("quizBoshqalarKut")}</span>
           </div>
         ) : s.tur === "variant" ? (
           <JonliVariantlar s={s} onTanla={onJavob} />
-        ) : (
+        ) : s.tur === "rost" ? (
+          <RostTanla value={null} onChange={onJavob} katta />
+        ) : s.tur === "yozma" ? (
           <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); if (yozma.trim()) onJavob(yozma.trim()); }}>
             <input value={yozma} onChange={(e) => setYozma(e.target.value.slice(0, 100))} autoFocus
               placeholder={t("quizJavobYoz")} aria-label={t("quizJavobYoz")} autoComplete="off"
@@ -670,6 +868,13 @@ function Ishtirokchi({ o, qolgan, yuborildi, onJavob, onChiq }: {
                          placeholder:font-sans placeholder:text-[16px] placeholder:text-ink-dim focus:border-brand-blue" />
             <button type="submit" disabled={!yozma.trim()} className={ASOSIY}>{t("quizYuborish")}</button>
           </form>
+        ) : (
+          <>
+            <YangiTurJavob s={s} javob={qoralama} onChange={setQoralama} />
+            <button type="button" disabled={!javobTayyor(s, qoralama)} onClick={() => yuborish(qoralama)} className={ASOSIY}>
+              {t("quizYuborish")}
+            </button>
+          </>
         )}
       </div>
     </div>
@@ -679,9 +884,20 @@ function Ishtirokchi({ o, qolgan, yuborildi, onJavob, onChiq }: {
 function Yakun({ o, onChiq }: { o: Oyin; onChiq: () => void }) {
   const reyting = o.reyting ?? [];
   const meniki = reyting.find((r) => r.men);
+  const golibJamoa = o.jamoalar?.[0];
   return (
     <div className={QOBIQ}>
       <Sarlavha nom={o.nom} izoh={t("quizYakun")} onChiq={onChiq} />
+      {/* Jamoaviy jangda asosiy natija — g'olib jamoa. */}
+      {golibJamoa && (
+        <div className="az-kirish flex flex-col items-center gap-1.5 rounded-clay bg-brand-gold/15 p-5 text-center">
+          <Icon name="trophy" size={30} className="text-brand-gold-d" />
+          <span className="text-[13px] font-bold text-brand-gold-d">{t("quizGolibJamoa")}</span>
+          <span className="font-display text-[22px]"><JamoaYorliq j={golibJamoa.jamoa} /></span>
+          <span className="text-[13px] text-ink-soft tabular-nums">{t("quizJamoaBall", { n: golibJamoa.ball })}</span>
+        </div>
+      )}
+      <Jamoalar o={o} />
       {reyting.length > 0 ? <Shohsupa reyting={reyting} /> : <Holat matn={t("quizHechKim")} />}
       {meniki && meniki.orin > 3 && (
         <p className="text-center font-display text-[18px]">{t("quizOrin", { n: meniki.orin, j: reyting.length })}</p>
