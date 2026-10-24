@@ -63,7 +63,7 @@ const { kursMatn } = await import("../src/lib/tarjima/kurs.ts");
 const { yo } = await import("../src/lib/tarjima/yechim.ts");
 const { OLCHAM, VARIANTLAR: DTM_VARIANT } = await import("../src/lib/imtihon.ts");
 const { DTM_MAVZULAR, MAVZU_OLCHAM, MAVZU_VARIANTLAR } = await import("../src/lib/dtmMavzu.ts");
-const { VARIANTLAR: SERT_VARIANT, DAQIQA: SERT_DAQIQA, TUZILISH } = await import("../src/lib/sertifikat.ts");
+const { VARIANTLAR: SERT_VARIANT, DAQIQA: SERT_DAQIQA, TUZILISH, DARAJA_SHKALA } = await import("../src/lib/sertifikat.ts");
 const { QABUL, QABUL_TURLAR, QABUL_VARIANT } = await import("../src/lib/qabul.ts");
 const { lugat } = await import("../src/lib/lugat.ts");
 const { mantiqMavzular } = await import("../src/lib/mantiq.ts");
@@ -169,6 +169,11 @@ function yasa(ru: boolean): Record<string, Sahifa> {
     "@context": "https://schema.org", "@type": "BreadcrumbList",
     itemListElement: qadamlar.map((q, i) => ({ "@type": "ListItem", position: i + 1, name: q.nom, item: ASOS + q.yol })),
   });
+  /** Sahifaning `savollar` idan FAQPage — matn bir joyda yoziladi. */
+  const faqLd = (savollar: { s: string; j: string }[]) => ({
+    "@context": "https://schema.org", "@type": "FAQPage",
+    mainEntity: savollar.map((q) => ({ "@type": "Question", name: q.s, acceptedAnswer: { "@type": "Answer", text: q.j } })),
+  });
   const BOSH: Havola = { yol: P || "/", nom: BREND };
   const kursNomi = (c: Course) => km(c.title);
   const fNom = (b: (typeof FORMULALAR)[number]) => L(b.nom, b.ru);
@@ -260,6 +265,11 @@ function yasa(ru: boolean): Record<string, Sahifa> {
         qatorlar: u.lessons.map((l, li) => ({ yol: `${yol}/${ui + 1}-bob/${li + 1}-dars`, nom: darsNomi(l.n) })),
       })),
       havolalar: [
+        // Sinf testlari sahifasi (pastda yasaladi) — "N-sinf matematika test".
+        ...(c.grade >= 1 && (c.grade <= 11 || (c.grade > 100 && c.grade < 200)) ? [{
+          yol: `${P}/matematika-test/${c.grade % 100}-sinf`,
+          nom: L(`${c.grade % 100}-sinf matematika testlari`, `Тесты по математике, ${c.grade % 100} класс`),
+        }] : []),
         { yol: `${P}/formulalar`, nom: L("Matematika formulalari", "Формулы по математике") },
         { yol: `${P}/imtihon`, nom: L("DTM test variantlari", "Варианты тестов DTM") },
       ],
@@ -1647,6 +1657,133 @@ function yasa(ru: boolean): Record<string, Sahifa> {
     muhim: 0.8,
   };
 
+  /* ------------------------------------------------- sinf testlari (BSB, CHSB) */
+
+  /*
+   * "5-sinf matematika test", "6-sinf matematika BSB", "7-sinf algebra CHSB
+   * javoblari" — maktab o'quvchisi va ustoz eng ko'p yozadigan so'rovlar.
+   * Har chorak oxirida (CHSB sanalari) ular keskin oshadi va hozir ularni
+   * PDF tarqatadigan yangilik saytlari egallagan.
+   *
+   * Bizning kurs sahifamiz bu so'rovga mos kelmaydi: uning sarlavhasi
+   * "onlayn darslar", unda "test", "BSB", "CHSB" so'zlari yo'q. Shu bo'lim
+   * sinf bo'yicha bitta sahifa beradi: boblar (BSB aynan bob bo'yicha
+   * o'tadi), har bobdan namunaviy savol javobi bilan va bob testlariga havola.
+   *
+   * Rasmiy topshiriqlar NUSXALANMAYDI va sahifa o'zini rasmiy deb
+   * tanishtirmaydi — savollar shu sinf darslarining o'z generatorlaridan.
+   */
+  const SINF_TEST_H: Havola = { yol: `${P}/matematika-test`, nom: L("Sinflar bo'yicha matematika testlari", "Тесты по математике по классам") };
+  const sinfTestYol = (n: number) => `${P}/matematika-test/${n}-sinf`;
+  const sinflar = qator(11);
+  for (const n of sinflar) {
+    const kurslar = COURSES.filter((c) => c.grade === n || c.grade === n + 100);
+    if (!kurslar.length) continue;
+    const yol = sinfTestYol(n);
+    const fan = n >= 7 && n <= 10 ? L("algebra va geometriya", "алгебра и геометрия") : L("matematika", "математика");
+    const chorak = n >= 5;
+    // Har bobdan bittadan savol — sahifa bobma-bob "test" bo'ladi va
+    // 1-bobdagi bir xil turdagi savollar bilan to'lib qolmaydi.
+    const mis: Misol[] = [];
+    for (const c of kurslar) {
+      c.units.forEach((u, ui) => {
+        const l = u.lessons[Math.min(1, u.lessons.length - 1)];
+        if (!l || mis.length >= 10) return;
+        const m = misollar(`${yol}/${c.slug}/${ui}`, l.gens)[0];
+        if (m) mis.push({ ...m, s: `${bobNomi(km(u.u))}: ${m.s}` });
+      });
+    }
+    const boblar = kurslar.flatMap((c) => c.units.map((u, ui) => ({ c, u, ui })));
+    const savollar = [
+      { s: L(`${n}-sinf matematikadan qaysi mavzular o'tiladi?`, `Какие темы проходят по математике в ${n} классе?`),
+        j: boblar.map(({ u }) => bobNomi(km(u.u))).join(", ") + "." },
+      ...(chorak ? [{
+        s: L("BSB va CHSB nima?", "Что такое BSB и CHSB?"),
+        j: L("BSB — bo'lim (bob) bo'yicha summativ baholash, CHSB — chorak bo'yicha summativ baholash. Ikkalasi ham "
+            + "o'tilgan boblar mavzularidan test shaklida o'tadi.",
+          "BSB — суммативное оценивание по разделу (главе), CHSB — суммативное оценивание за четверть. Оба проходят "
+            + "в форме теста по темам пройденных глав."),
+      }] : []),
+      { s: L(`${n}-sinf matematika testiga qanday tayyorlanish mumkin?`, `Как подготовиться к тесту по математике за ${n} класс?`),
+        j: L("Kerakli bobni oching: har darsda qisqa tushuntirish va mashq bor, bob oxirida esa test. Javob darhol "
+            + "tekshiriladi, xato qilingan savollar keyin qayta so'raladi.",
+          "Откройте нужную главу: в каждом уроке короткое объяснение и упражнения, в конце главы — тест. Ответ "
+            + "проверяется сразу, ошибки потом повторяются.") },
+    ];
+    const kursNomlar = kurslar.map(kursNomi).join(L(" va ", " и "));
+    sahifalar[yol] = {
+      sarlavha: L(`${n}-sinf matematika test${chorak ? " — BSB va CHSB" : "lari"}, javoblari bilan | ${BREND}`,
+        `Тест по математике ${n} класс${chorak ? " — BSB и CHSB" : ""}, с ответами | ${BREND}`),
+      tavsif: qisqa(L(
+        `${n}-sinf ${fan} testlari boblar bo'yicha${chorak ? " (BSB va CHSB ga tayyorgarlik)" : ""}: namunaviy savollar `
+          + `javobi va yechimi bilan, ${boblar.length} ta bob testi onlayn. Javob darhol tekshiriladi.`,
+        `Тесты по математике за ${n} класс по главам${chorak ? " (подготовка к BSB и CHSB)" : ""}: примеры вопросов `
+          + `с ответами и решениями, ${boblar.length} тестов по главам онлайн. Ответ проверяется сразу.`)),
+      h1: L(`${n}-sinf matematika testlari`, `Тесты по математике, ${n} класс`),
+      matn: [
+        L(`${kursNomlar}: ${boblar.length} ta bob, darslik tartibida. Har bob oxirida test bor`
+            + `${chorak ? " — BSB aynan shu bob mavzulari bo'yicha o'tadi, CHSB esa chorakdagi bir nechta bobni qamraydi" : ""}.`,
+          `${kursNomlar}: ${boblar.length} глав в порядке учебника. В конце каждой главы есть тест`
+            + `${chorak ? " — BSB проходит именно по темам главы, а CHSB охватывает несколько глав четверти" : ""}.`),
+        L("Quyida har bobdan bittadan namunaviy savol — javobi va yechimi ochiladi. Bular rasmiy topshiriq emas: "
+            + "savollar shu sinf darslaridan, har safar yangi sonlar bilan tuziladi.",
+          "Ниже — по одному примеру вопроса из каждой главы, ответ и решение раскрываются. Это не официальные задания: "
+            + "вопросы взяты из уроков этого класса и каждый раз составляются с новыми числами."),
+      ],
+      ...(mis.length ? { misollar: mis, misol_sarlavha: L("Namunaviy test savollari", "Примеры тестовых вопросов") } : {}),
+      savollar, savol_sarlavha: L("Savol va javob", "Вопросы и ответы"),
+      tugma: { yol: `${P}/kurs/${kurslar[0]!.slug}`, nom: L("Testni boshlash", "Начать тест") },
+      guruhlar: kurslar.map((c) => ({
+        nom: L(`${kursNomi(c)} — boblar`, `${kursNomi(c)} — главы`),
+        qatorlar: c.units.map((u, ui) => ({
+          yol: `${P}/kurs/${c.slug}/${ui + 1}-bob/1-dars`,
+          nom: L(`${ui + 1}-bob. ${bobNomi(u.u)}`, `Глава ${ui + 1}. ${bobNomi(km(u.u))}`),
+        })),
+      })),
+      havolalar: [
+        SINF_TEST_H,
+        ...sinflar.filter((x) => x !== n && Math.abs(x - n) <= 2).map((x) => ({ yol: sinfTestYol(x), nom: L(`${x}-sinf matematika test`, `Тест по математике ${x} класс`) })),
+        ...(n >= 9 ? [{ yol: `${P}/imtihon`, nom: L("DTM test variantlari", "Варианты тестов DTM") }] : []),
+        ...(n === 4 ? [{ yol: `${P}/qabul`, nom: L("Prezident maktabi qabul testlari", "Приёмные тесты в президентские школы") }] : []),
+      ],
+      statik: true,
+      ld: [
+        yolak([BOSH, SINF_TEST_H, { yol, nom: L(`${n}-sinf`, `${n} класс`) }]),
+        faqLd(savollar),
+        ...(mis.length ? [{
+          "@context": "https://schema.org", "@type": "Quiz", name: L(`${n}-sinf matematika testi`, `Тест по математике, ${n} класс`),
+          inLanguage: L("uz", "ru"), educationalLevel: L(`${n}-sinf`, `${n} класс`),
+          hasPart: mis.map((m) => ({
+            "@type": "Question", name: m.k ? `${m.s} ${m.k}` : m.s,
+            acceptedAnswer: { "@type": "Answer", text: String(m.j) },
+          })),
+        }] : []),
+      ],
+      muhim: 0.85,
+    };
+  }
+  sahifalar[SINF_TEST_H.yol] = {
+    sarlavha: L(`Matematika testlari 1–11-sinf — BSB, CHSB va bob testlari | ${BREND}`,
+      `Тесты по математике 1–11 класс — BSB, CHSB и тесты по главам | ${BREND}`),
+    tavsif: L("Har sinf uchun matematika testlari: boblar bo'yicha namunaviy savollar javobi va yechimi bilan, BSB va CHSB "
+        + "ga tayyorgarlik, onlayn bob testlari. 1-sinfdan 11-sinfgacha.",
+      "Тесты по математике для каждого класса: примеры вопросов по главам с ответами и решениями, подготовка к BSB и "
+        + "CHSB, онлайн-тесты по главам. С 1 по 11 класс."),
+    h1: L("Sinflar bo'yicha matematika testlari", "Тесты по математике по классам"),
+    matn: [L("Sinfni tanlang: sahifada o'sha sinfning boblari, har bobdan namunaviy savol va bob testiga havola bor.",
+      "Выберите класс: на странице главы этого класса, пример вопроса из каждой главы и ссылка на тест главы.")],
+    guruhlar: [{ nom: L("Sinflar", "Классы"),
+      qatorlar: sinflar.filter((n) => sahifalar[sinfTestYol(n)]).map((n) => ({ yol: sinfTestYol(n), nom: L(`${n}-sinf matematika testlari`, `Тесты по математике, ${n} класс`) })) }],
+    havolalar: [
+      { yol: `${P}/imtihon`, nom: L("DTM test variantlari", "Варианты тестов DTM") },
+      { yol: `${P}/sertifikat`, nom: L("Milliy sertifikat", "Национальный сертификат") },
+      DARSLAR,
+    ],
+    statik: true,
+    ld: [yolak([BOSH, SINF_TEST_H])],
+    muhim: 0.9,
+  };
+
   /* -------------------------------------------------------------- bo'limlar */
 
   sahifalar[P || "/"] = {
@@ -1671,6 +1808,7 @@ function yasa(ru: boolean): Record<string, Sahifa> {
     ],
     havolalar: [
       { yol: `${P}/darslar`, nom: L("Barcha darslar", "Все уроки") },
+      SINF_TEST_H,
       { yol: `${P}/imtihon`, nom: L("DTM test variantlari", "Варианты тестов DTM") },
       { yol: `${P}/sertifikat`, nom: L("Milliy sertifikat", "Национальный сертификат") },
       { yol: `${P}/formulalar`, nom: L("Matematika formulalari", "Формулы по математике") },
@@ -1719,12 +1857,35 @@ function yasa(ru: boolean): Record<string, Sahifa> {
   };
 
   const yuqoriKurslar = COURSES.filter((c) => c.grade >= 7 && c.grade < 300).map((c) => ({ yol: `${P}/kurs/${c.slug}`, nom: kursNomi(c) }));
+  // "Blok test" — abituriyentlar DTM testini shunday ataydi va aynan shu
+  // so'z bilan izlaydi ("matematika blok test", "dtm blok test online").
+  // Raqobatchi saytlar sarlavhasida turadi, bizda esa umuman yo'q edi.
+  const dtmSavollar = [
+    { s: L("DTM matematika testida nechta savol bo'ladi?", "Сколько вопросов в тесте DTM по математике?"),
+      j: L(`Bitta fan bloki — ${OLCHAM.savol} ta savol. Bu yerdagi har variant ham ${OLCHAM.savol} savol va ${OLCHAM.daqiqa} daqiqa.`,
+        `Один предметный блок — ${OLCHAM.savol} вопросов. Каждый вариант здесь тоже ${OLCHAM.savol} вопросов и ${OLCHAM.daqiqa} минут.`) },
+    { s: L("Matematika blok testini onlayn qayerda ishlash mumkin?", "Где решать блок-тест по математике онлайн?"),
+      j: L(`Aql Zone'da ${DTM_VARIANT} ta to'liq variant va ${DTM_MAVZULAR.length} ta mavzu bo'yicha testlar bor. `
+          + "Javob darhol tekshiriladi, oxirida ball va xato qilingan mavzular ko'rsatiladi.",
+        `В Aql Zone ${DTM_VARIANT} полных вариантов и тесты по ${DTM_MAVZULAR.length} темам. `
+          + "Ответ проверяется сразу, в конце — балл и темы с ошибками.") },
+    { s: L("DTM matematikaga qaysi mavzulardan savol tushadi?", "Какие темы входят в тест DTM по математике?"),
+      j: L("7–11-sinf algebra va geometriyasi: tenglama va tengsizliklar, funksiyalar, progressiyalar, trigonometriya, "
+          + "logarifm, hosila va integral, planimetriya va stereometriya.",
+        "Алгебра и геометрия 7–11 классов: уравнения и неравенства, функции, прогрессии, тригонометрия, "
+          + "логарифмы, производная и интеграл, планиметрия и стереометрия.") },
+    { s: L("DTM testiga qanday tayyorlanish kerak?", "Как готовиться к тесту DTM?"),
+      j: L("Avval mavzu testlari bilan zaif mavzuni topib, formulalarni takrorlang, keyin to'liq variantni vaqt bilan "
+          + "yeching. Har urinishdan keyin xato qilingan mavzular ko'rsatiladi.",
+        "Сначала найдите слабые темы с помощью тестов по темам, повторите формулы, затем решайте полный вариант на время. "
+          + "После каждой попытки показываются темы с ошибками.") },
+  ];
   sahifalar[`${P}/imtihon`] = {
-    sarlavha: L(`DTM matematika test variantlari onlayn — ${DTM_VARIANT} variant | ${BREND}`,
-      `Тесты DTM по математике онлайн — ${DTM_VARIANT} вариантов | ${BREND}`),
-    tavsif: qisqa(L(`DTM matematika bo'yicha ${DTM_VARIANT} ta variant: ${OLCHAM.savol} savol, ${OLCHAM.daqiqa} daqiqa, `
+    sarlavha: L(`DTM matematika test variantlari va blok testlar onlayn — ${DTM_VARIANT} variant | ${BREND}`,
+      `Тесты DTM по математике и блок-тесты онлайн — ${DTM_VARIANT} вариантов | ${BREND}`),
+    tavsif: qisqa(L(`DTM matematika blok testi: ${DTM_VARIANT} ta variant, ${OLCHAM.savol} savol, ${OLCHAM.daqiqa} daqiqa, `
         + "haqiqiy format. Javob darhol ko'rinadi, o'rtacha ballingiz va zaif mavzularingiz ko'rsatiladi. Bepul.",
-      `${DTM_VARIANT} вариантов DTM по математике: ${OLCHAM.savol} вопросов, ${OLCHAM.daqiqa} минут, `
+      `Блок-тест DTM по математике: ${DTM_VARIANT} вариантов, ${OLCHAM.savol} вопросов, ${OLCHAM.daqiqa} минут, `
         + "реальный формат. Ответ виден сразу, показываются средний балл и слабые темы. Бесплатно.")),
     h1: L("DTM matematika test variantlari", "Варианты тестов DTM по математике"),
     matn: [
@@ -1748,10 +1909,33 @@ function yasa(ru: boolean): Record<string, Sahifa> {
       { yol: `${P}/formulalar`, nom: L("Matematika formulalari", "Формулы по математике") },
       ...yuqoriKurslar,
     ],
-    ld: [yolak([BOSH, { yol: `${P}/imtihon`, nom: L("DTM testlari", "Тесты DTM") }])],
+    savollar: dtmSavollar,
+    ld: [yolak([BOSH, { yol: `${P}/imtihon`, nom: L("DTM testlari", "Тесты DTM") }]), faqLd(dtmSavollar)],
     muhim: 0.95,
   };
 
+  const sertJami = TUZILISH.y1 + TUZILISH.y2 + TUZILISH.o;
+  const sertC = DARAJA_SHKALA[0]!;
+  const sertSavollar = [
+    { s: L("Milliy sertifikat matematika imtihonida nechta topshiriq bor?", "Сколько заданий в экзамене Национального сертификата по математике?"),
+      j: L(`${sertJami} ta: ${TUZILISH.y1} ta yopiq test, ${TUZILISH.y2} ta moslashtirish va ${TUZILISH.o} ta ochiq javobli `
+          + `(a va b qismli) topshiriq. Vaqt — ${SERT_DAQIQA / 60} soat.`,
+        `${sertJami}: ${TUZILISH.y1} закрытых тестов, ${TUZILISH.y2} на соответствие и ${TUZILISH.o} с открытым ответом `
+          + `(части a и b). Время — ${SERT_DAQIQA / 60} ч.`) },
+    { s: L("Milliy sertifikatda A+ olish uchun necha ball kerak?", "Сколько баллов нужно для A+ в Национальном сертификате?"),
+      j: L(`Taxminan: ${[...DARAJA_SHKALA].reverse().map((x) => `${x.d} — ${String(x.ball).replace(".", ",")}`).join(", ")} ball (100 ballik). `
+          + "Rasmiy natija Rasch modeli bo'yicha hisoblanadi, shuning uchun chegara har sinovda biroz farq qiladi.",
+        `Примерно: ${[...DARAJA_SHKALA].reverse().map((x) => `${x.d} — ${String(x.ball).replace(".", ",")}`).join(", ")} баллов (из 100). `
+          + "Официальный результат считается по модели Раша, поэтому границы немного меняются от сессии к сессии.") },
+    { s: L("Sertifikat olish uchun eng kam necha ball kerak?", "Какой минимальный балл для получения сертификата?"),
+      j: L(`Eng past daraja ${sertC.d} — taxminan ${String(sertC.ball).replace(".", ",")} ball. Undan past natijada sertifikat berilmaydi.`,
+        `Низший уровень ${sertC.d} — примерно ${String(sertC.ball).replace(".", ",")} балла. Ниже этого сертификат не выдаётся.`) },
+    { s: L("Milliy sertifikatga qanday tayyorlanish kerak?", "Как готовиться к Национальному сертификату?"),
+      j: L(`Rasmiy tuzilishdagi ${SERT_VARIANT} ta variantni vaqt bilan yeching: har biridan keyin taxminiy daraja va qaysi `
+          + "topshiriqda ball yo'qotilgani ko'rinadi. Ochiq javobli topshiriqlarga alohida e'tibor bering — ular eng ko'p ball beradi.",
+        `Решайте ${SERT_VARIANT} вариантов официальной структуры на время: после каждого виден примерный уровень и задания, `
+          + "где потеряны баллы. Особое внимание — заданиям с открытым ответом: они дают больше всего баллов.") },
+  ];
   sahifalar[`${P}/sertifikat`] = {
     sarlavha: L(`Milliy sertifikat matematika — ${SERT_VARIANT} variant, onlayn test | ${BREND}`,
       `Национальный сертификат по математике — ${SERT_VARIANT} вариантов, онлайн-тест | ${BREND}`),
@@ -1770,11 +1954,19 @@ function yasa(ru: boolean): Record<string, Sahifa> {
         "Результат по 100-балльной шкале с примерным уровнем (C, C+, B, B+, A, A+). Ответы сохраняются — "
           + "можно продолжить с того же места."),
     ],
+    // "milliy sertifikat matematika necha ball A+", "B+ necha ball" — imtihondan
+    // keyin eng ko'p yoziladigan savol. Shkala `sertifikat.ts` dan olinadi.
+    jadval: {
+      nom: L("Taxminiy daraja shkalasi (100 ballik)", "Примерная шкала уровней (из 100)"),
+      bosh: [L("Daraja", "Уровень"), L("Kamida ball", "Минимум баллов")],
+      qatorlar: DARAJA_SHKALA.map((x) => [x.d, String(x.ball).replace(".", ",")]).reverse(),
+    },
+    savollar: sertSavollar,
     havolalar: [
       { yol: `${P}/imtihon`, nom: L("DTM test variantlari", "Варианты тестов DTM") },
       { yol: `${P}/formulalar`, nom: L("Matematika formulalari", "Формулы по математике") },
     ],
-    ld: [yolak([BOSH, { yol: `${P}/sertifikat`, nom: L("Milliy sertifikat", "Национальный сертификат") }])],
+    ld: [yolak([BOSH, { yol: `${P}/sertifikat`, nom: L("Milliy sertifikat", "Национальный сертификат") }]), faqLd(sertSavollar)],
     muhim: 0.95,
   };
 
@@ -1786,6 +1978,8 @@ function yasa(ru: boolean): Record<string, Sahifa> {
     matn: [L("Har bobning testi va tayyor test to'plamlari: javob darhol tekshiriladi, xatolar tahlil qilinadi.",
       "Тест по каждой главе и готовые сборники: ответ проверяется сразу, ошибки разбираются.")],
     havolalar: [
+      SINF_TEST_H,
+      ...sinflar.filter((n) => sahifalar[sinfTestYol(n)]).map((n) => ({ yol: sinfTestYol(n), nom: L(`${n}-sinf matematika test`, `Тест по математике ${n} класс`) })),
       { yol: `${P}/imtihon`, nom: L("DTM test variantlari", "Варианты тестов DTM") },
       { yol: `${P}/sertifikat`, nom: L("Milliy sertifikat", "Национальный сертификат") },
       ...kursHavolalari,
