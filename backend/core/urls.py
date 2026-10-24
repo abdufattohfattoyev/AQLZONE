@@ -8,6 +8,7 @@ from . import karvon_views
 from . import kunlik_views
 from . import sinf_views
 from . import marafon_views
+from . import quiz_views
 
 urlpatterns = [
     path("auth/telegram", views.auth_telegram, name="auth-telegram"),
@@ -120,6 +121,15 @@ urlpatterns = [
     path("sinf/kod/<str:kod>", sinf_views.sinf_kod, name="sinf-kod"),
     path("sinf/<int:sid>", sinf_views.sinf_bitta, name="sinf"),
     path("sinf/<int:sid>/<str:amal>", sinf_views.sinf_amal, name="sinf-amal"),
+    # Foydalanuvchi quizi: o'z tezligida va jonli (`core/quiz.py`).
+    path("quizlar", quiz_views.quizlar, name="quizlar"),
+    path("quiz/<int:qid>", quiz_views.quiz_bitta, name="quiz"),
+    path("quiz/<int:qid>/jonli", quiz_views.quiz_jonli, name="quiz-jonli"),
+    path("quiz/<int:qid>/ochir", quiz_views.quiz_ochir, name="quiz-ochir"),
+    path("quiz/kod/<str:kod>", quiz_views.quiz_kod, name="quiz-kod"),
+    path("quiz/kod/<str:kod>/topshir", quiz_views.quiz_topshir, name="quiz-topshir"),
+    path("quiz/oyin/<int:oid>", quiz_views.oyin_holat, name="quiz-oyin"),
+    path("quiz/oyin/<int:oid>/<str:amal>", quiz_views.oyin_amal, name="quiz-oyin-amal"),
     # Talabaning sessiya urinishlari (`core/imtihon.py` → sessiya_royxat).
     path("sessiya/natija", kunlik_views.sessiya_natija, name="sessiya-natija"),
     path("shaharcha", shaharcha_views.shaharcha, name="shaharcha"),

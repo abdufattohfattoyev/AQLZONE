@@ -32,6 +32,7 @@
  * `test_3`     — test to'plami posti (`core/test_toplam.py`)
  * `testlar`    — to'plam postidagi «Boshqa testlar» tugmasi
  * `xona_4827`  — jamoaviy o'yin xonasi (`core/xona.py`)
+ * `quiz_ABC234` — foydalanuvchi quizi (`core/quiz.py`)
  * boshqasi     — duel chaqiruvi, ya'ni eski xatti-harakat
  *
  * Oxiridagi `-k` — kanal postidan kelgani (`masala_12-k`). Manzilga
@@ -47,7 +48,7 @@ import { useNavigate } from "react-router-dom";
 import { boshParametri } from "../lib/qobiq";
 import { MASALA_BOSH, ROYXAT_PARAM } from "../lib/ulash";
 import { kanalBelgisiz } from "../lib/tahlil";
-import { yolDuelKod, yolMasala, yolMasalalar, yolTestSinf, yolToplam, yolXona, yolKunlikSon, yolKarvon, yolPremium } from "../lib/yollar";
+import { yolDuelKod, yolMasala, yolMasalalar, yolTestSinf, yolToplam, yolXona, yolKunlikSon, yolKarvon, yolPremium, yolQuizKod } from "../lib/yollar";
 
 /** Ishlatilgan kod shu yerda qoladi — sessiya davomida. */
 const KALIT = "az_duel_kod";
@@ -77,6 +78,11 @@ function manzil(xom: string): string | null {
   if (kod.startsWith("xona_")) {
     const xona = kod.slice("xona_".length);
     return /^\d{4,8}$/.test(xona) ? yolXona(xona) : null;
+  }
+  // Foydalanuvchi quizi: `quiz_ABC234` (`core/quiz.py` → `havola`).
+  if (kod.startsWith("quiz_")) {
+    const q = kod.slice("quiz_".length).toUpperCase();
+    return /^[A-Z0-9]{6}$/.test(q) ? yolQuizKod(q) : null;
   }
   if (kod.startsWith(MASALA_BOSH)) {
     const raqam = Number(kod.slice(MASALA_BOSH.length));

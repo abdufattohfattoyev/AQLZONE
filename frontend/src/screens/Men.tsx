@@ -34,7 +34,7 @@ import { TILLAR, til, tilniAlmashtir } from "../lib/til";
 import { obuna, yoruglikniOqi, yoruglikniQoy } from "../lib/yoruglik";
 import type { Yoruglik } from "../lib/yoruglik";
 import {
-  yolAnketa, yolKichkintoy, yolNishon, yolOtaOna, yolReyting, yolSozlama,
+  yolAnketa, yolKichkintoy, yolNishon, yolOtaOna, yolQuizlar, yolReyting, yolSozlama,
 } from "../lib/yollar";
 import { Tanlov, TanlovVaraq } from "../components/Varaq";
 import { PremiumQator } from "../components/PremiumVaraq";
@@ -152,6 +152,8 @@ export function Men({ onYol }: Props) {
         <TangaPremiumQator />
         {/* O'qituvchi sinfi — o'quvchi kod bilan qo'shiladi, o'qituvchi panel ochadi. */}
         <Qator ic="map" nom={t("sinfSarlavha")} on={() => onYol("/sinflar")} />
+        {/* Quiz — savollar to'plab, kod/havola bilan yechtirish (`screens/Quiz.tsx`). */}
+        <Qator ic="savol" nom={t("quizSarlavha")} on={() => onYol(yolQuizlar())} />
         {/* Shaxsiy taklif havolasi (`core/taklif.py`) — Telegram "ulashish"
             oynasida; qiymat — shu havola bilan kelganlar soni. */}
         {taklif && (

@@ -108,6 +108,11 @@ const YOPIQ = [
   /^\/duel\//,
   // Jamoaviy o'yin xonasi — o'yinda soat yuradi va boshqalar kutib turadi.
   /^\/xona\//,
+  // Quiz: yechish va jonli o'yin — soat yuradi, javob tugmalari pastda;
+  // muharrirda esa "Saqlash" tugmasi pastda qotib turadi.
+  /^\/q\//,
+  /^\/jonli\//,
+  /^\/quiz\/(yangi|\d+\/tahrir)$/,
   // Kichkintoylar albomi — 2–5 yosh. Bo'lim ichida pastdagi besh
   // tugma faqat chalg'itadi: bu yoshdagi bola ularni bexosdan bosadi
   // va o'zi ochgan rasmlardan chiqib ketadi. Bo'limning KIRISH ekrani

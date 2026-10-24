@@ -2233,6 +2233,127 @@ class SinfAzo(models.Model):
         constraints = [models.UniqueConstraint(fields=["sinf", "profile"], name="sinf_azo_bir")]
 
 
+class Quiz(models.Model):
+    """
+    FOYDALANUVCHI YIG'GAN QUIZ — kod yoki havola bilan ochiladi (`core/quiz.py`).
+
+    ─────────────────── NEGA TASDIQSIZ ───────────────────
+
+    `Masala` admin tasdig'idan o'tadi, chunki u OCHIQ ro'yxatga chiqadi.
+    Quizning ochiq ro'yxati yo'q: uni faqat muallif kodni bergan odam
+    ochadi — sinfdoshlar, do'stlar, o'quvchilar. Tasdiq navbati bu yerda
+    faqat to'siq bo'lardi: o'qituvchi ertangi darsga quiz yig'adi va
+    ertalabgacha kutolmaydi.
+
+    ─────────────────── SAVOLLAR BAZADA ───────────────────
+
+    `TestToplam` dan farqli o'laroq savollar SAQLANADI. Ikki sabab:
+    muallif o'zi yozgan savolni generator bilan qayta yasab bo'lmaydi va
+    javobni SERVER tekshirishi kerak — jonli o'yinda ball va reyting
+    mijoz aytgan songa qolsa, birinchi o'rin o'yin emas, aldov bo'lardi.
+
+    Har savol (`quiz.savol_tozala` tekshiradi):
+
+        tur        "variant" yoki "yozma"
+        matn       shart (bazadan olinganda — generatorning `prompt`i)
+        variantlar 2–6 ta (yozmada bo'sh)
+        javob      to'g'ri javob MATNI — variant raqami emas (`MasalaYangi`
+                   dagi sabab: tartib o'zgarsa javob boshqa variantga
+                   jimgina ko'chib qolmasin)
+        vaqt       soniya — jonli o'yinda shu savolga
+        a          ixtiyoriy: bazadan olingan savolning chizmasi
+                   (`QuestionView` uchun, javobsiz)
+    """
+
+    OZ = "oz"
+    JONLI = "jonli"
+    REJIMLAR = [(OZ, "O'z tezligida"), (JONLI, "Jonli")]
+
+    muallif = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="quizlar")
+    #: 6 belgi, `sinf.KOD_HARF` dan — doskaga yoziladi, og'zaki aytiladi.
+    kod = models.CharField(max_length=8, unique=True)
+    nom = models.CharField(max_length=80)
+    rejim = models.CharField(max_length=8, choices=REJIMLAR, default=OZ)
+    savollar = models.JSONField(default=list)
+    #: Sanoqlar shu yerda — `TestToplam` dagi sababdan (har ochilishda COUNT emas).
+    ishlagan_soni = models.IntegerField(default=0)
+    togri_jami = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "quiz"
+        indexes = [models.Index(fields=["muallif", "-updated_at"])]
+
+    @property
+    def ortacha(self) -> float:
+        if not self.ishlagan_soni:
+            return 0.0
+        return round(self.togri_jami / self.ishlagan_soni, 1)
+
+
+class QuizOyin(models.Model):
+    """
+    Jonli o'yin — Kahoot kabi: hamma bir vaqtda, savollarni BOSHLOVCHI suradi.
+
+    Bitta quiz ko'p marta o'ynalishi mumkin (har darsda yangi sinf), shuning
+    uchun o'yin quizdan alohida. Vaqt `xona.py` dagidek har so'rovda suriladi
+    — fon jarayoni yo'q.
+    """
+
+    KUTISH = "kutish"
+    SAVOL = "savol"
+    #: Savol yopildi: to'g'ri javob va qisqa reyting ko'rinadi.
+    NATIJA = "natija"
+    TUGADI = "tugadi"
+
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="oyinlar")
+    holat = models.CharField(max_length=8, default=KUTISH)
+    #: Joriy savol tartibi; kutishda −1.
+    joriy = models.SmallIntegerField(default=-1)
+    #: Savol ochilgan payt (`time.time()`) — ball shundan hisoblanadi.
+    savol_vaqt = models.FloatField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    tugadi_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "quiz_oyin"
+
+
+class QuizQatnash(models.Model):
+    """
+    Bir odamning bitta quizdagi natijasi.
+
+    `oyin` bo'lsa — jonli o'yin ishtirokchisi; bo'lmasa — o'z tezligida
+    yechgan. O'z tezligida faqat BIRINCHI urinish saqlanadi (`TestIshlash`
+    dagi sabab): ikkinchi marta savollar o'sha, javoblar esa ma'lum.
+
+    `javoblar` — har savolga {"j": javob, "t": to'g'rimi, "b": ball, "s": soniya}.
+    """
+
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="qatnashlar")
+    oyin = models.ForeignKey(QuizOyin, on_delete=models.CASCADE, null=True, blank=True,
+                             related_name="qatnashlar")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="quiz_qatnashlari")
+    ism = models.CharField(max_length=40, default="")
+    javoblar = models.JSONField(default=list)
+    togri = models.SmallIntegerField(default=0)
+    ball = models.IntegerField(default=0)
+    sekund = models.IntegerField(default=0)
+    #: Oxirgi so'rov — jonli o'yinda "hozir ekran oldida nechta odam".
+    belgi = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "quiz_qatnash"
+        constraints = [
+            models.UniqueConstraint(fields=["oyin", "profile"], name="quiz_oyin_bir_odam"),
+            models.UniqueConstraint(fields=["quiz", "profile"], condition=models.Q(oyin__isnull=True),
+                                    name="quiz_oz_bir_odam"),
+        ]
+        indexes = [models.Index(fields=["quiz", "oyin", "-togri"])]
+
+
 class Marafon(models.Model):
     """
     DTM MARAFONI — N kun, har kuni bitta "kun varianti" (`core/marafon.py`).

@@ -73,6 +73,11 @@ const MarafonKun = lazy(() => import("./screens/Marafon").then((m) => ({ default
 const Sinflar = lazy(() => import("./screens/Sinf").then((m) => ({ default: m.Sinflar })));
 const SinfQoshil = lazy(() => import("./screens/Sinf").then((m) => ({ default: m.SinfQoshil })));
 const SinfSahifa = lazy(() => import("./screens/Sinf").then((m) => ({ default: m.SinfSahifa })));
+const Quizlarim = lazy(() => import("./screens/Quiz").then((m) => ({ default: m.Quizlarim })));
+const QuizMuharrir = lazy(() => import("./screens/Quiz").then((m) => ({ default: m.QuizMuharrir })));
+const QuizSahifa = lazy(() => import("./screens/Quiz").then((m) => ({ default: m.QuizSahifa })));
+const QuizKod = lazy(() => import("./screens/QuizYech").then((m) => ({ default: m.QuizKod })));
+const QuizJonli = lazy(() => import("./screens/QuizYech").then((m) => ({ default: m.QuizJonli })));
 const BlokEkran = lazy(() => import("./screens/Blok").then((m) => ({ default: m.Blok })));
 const DarsRoyxat = lazy(() => import("./screens/JonliDars").then((m) => ({ default: m.DarsRoyxat })));
 const DarsPleyer = lazy(() => import("./screens/JonliDars").then((m) => ({ default: m.DarsPleyer })));
@@ -119,6 +124,7 @@ import {
   yolMasala, yolMasalaMuallif, yolMasalaYangi, yolMasalalar, yolMasalalarim,
   yolAi, yolMen, yolBosh, yolToplamlar, yolXatolar, yolTestSinf, yolToplam, yolSessiya, yolSessiyaVariant, yolQabul, yolQabulVariant, yolMantiq, yolMantiqMavzu,
   yolImtKorish, yolImtMashq, yolImtReyting, yolMavzu, yolMavzuMashq, yolDarslar,
+  yolQuiz, yolQuizJonli, yolQuizKod, yolQuizlar, yolQuizTahrir, yolQuizYangi,
 } from "./lib/yollar";
 import { blokBormi, sinfOf } from "./lib/blok";
 import type { Qamrov } from "./lib/blok";
@@ -237,6 +243,13 @@ function Yollar() {
       <Route path="/sinflar" element={<SinflarSahifasi />} />
       <Route path="/sinf/qoshil/:kod" element={<SinfQoshilSahifasi />} />
       <Route path="/sinf/:id" element={<SinfSahifasi />} />
+      {/* Quiz (`lib/quiz.ts`). `yangi` — `:id` dan OLDIN. */}
+      <Route path="/quiz" element={<QuizlarimSahifasi />} />
+      <Route path="/quiz/yangi" element={<QuizMuharrirSahifasi />} />
+      <Route path="/quiz/:id" element={<QuizSahifasi />} />
+      <Route path="/quiz/:id/tahrir" element={<QuizMuharrirSahifasi />} />
+      <Route path="/q/:kod" element={<QuizKodSahifasi />} />
+      <Route path="/jonli/:id" element={<QuizJonliSahifasi />} />
       <Route path="/sessiya" element={<SessiyaSahifasi />} />
       <Route path="/qabul" element={<QabulSahifasi />} />
       <Route path="/premium" element={<PremiumSahifasi />} />
@@ -1033,6 +1046,54 @@ function SinfSahifasi() {
   const n = Number(id);
   if (!Number.isInteger(n) || n < 1) return <Navigate to="/sinflar" replace />;
   return <SinfSahifa key={n} id={n} onChiq={() => nav("/sinflar")} />;
+}
+
+function QuizlarimSahifasi() {
+  const nav = useNavigate();
+  useTema("bosh");
+  return <Quizlarim onYangi={() => nav(yolQuizYangi())} onOch={(id) => nav(yolQuiz(id))}
+    onKod={(kod) => nav(yolQuizKod(kod))} onChiq={() => nav(yolMen())} />;
+}
+
+/** Yangi quiz yoki tahrirlash — `:id` bo'lsa tahrir. */
+function QuizMuharrirSahifasi() {
+  const nav = useNavigate();
+  const { id } = useParams();
+  useTema("bosh");
+  const n = id === undefined ? undefined : Number(id);
+  if (n !== undefined && (!Number.isInteger(n) || n < 1)) return <Navigate to={yolQuizlar()} replace />;
+  return <QuizMuharrir key={n ?? "yangi"} id={n} onSaqlandi={(q) => nav(yolQuiz(q), { replace: true })}
+    onChiq={() => nav(n ? yolQuiz(n) : yolQuizlar())} />;
+}
+
+function QuizSahifasi() {
+  const nav = useNavigate();
+  const { id } = useParams();
+  useTema("bosh");
+  const n = Number(id);
+  if (!Number.isInteger(n) || n < 1) return <Navigate to={yolQuizlar()} replace />;
+  return <QuizSahifa key={n} id={n} onTahrir={() => nav(yolQuizTahrir(n))} onJonli={(o) => nav(yolQuizJonli(o))}
+    onYech={(kod) => nav(yolQuizKod(kod))} onChiq={() => nav(yolQuizlar())} />;
+}
+
+/** Kod yoki havola bilan kelgan yechuvchi. Jonli o'yin ochiq bo'lsa — o'yinga. */
+function QuizKodSahifasi() {
+  const nav = useNavigate();
+  const { kod } = useParams();
+  useTema("bosh");
+  const k = (kod ?? "").toUpperCase();
+  const jonli = useCallback((o: number) => nav(yolQuizJonli(o), { replace: true }), [nav]);
+  return <QuizKod key={k} kod={k} onJonli={jonli} onMeniki={(id) => nav(yolQuiz(id))}
+    onChiq={() => nav(yolBosh())} />;
+}
+
+function QuizJonliSahifasi() {
+  const nav = useNavigate();
+  const { id } = useParams();
+  useTema("bosh");
+  const n = Number(id);
+  if (!Number.isInteger(n) || n < 1) return <Navigate to={yolBosh()} replace />;
+  return <QuizJonli key={n} id={n} onChiq={() => nav(yolBosh())} />;
 }
 
 /** DTM/sertifikat — haftalik reyting. `?variant=5` bo'lsa o'sha variant ochiq. */

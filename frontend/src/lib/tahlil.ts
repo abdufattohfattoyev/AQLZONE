@@ -104,7 +104,7 @@ export function yolniUmumlashtir(yol: string): string {
     .split("?")[0]
     .replace(/\/kurs\/([^/]+)\/\d+\/\d+$/, "/kurs/$1/dars")
     .replace(/\/\d+(?=\/|$)/g, "/:id")
-    .replace(/^\/(kirish|duel)\/[^/]+$/, "/$1/:kod")
+    .replace(/^\/(kirish|duel|q)\/[^/]+$/, "/$1/:kod")
     .slice(0, 80);
 }
 
@@ -147,7 +147,7 @@ function yubor() {
  * AI ustoz (`/ai`) ham shu ro'yxatda: u yerdagi yozuvlar — odamning o'z
  * savollari va suhbat sarlavhalari, ularni tahlilga yozish kerak emas.
  */
-const SAVOL_EKRANI = /^\/(kurs\/[^/]+\/(dars|sinov|daraja|daftar|testlar)|oyinlar\/.+|toplam\/|masalalar\/:id|kichkintoy\/|xona\/|imtihon\/|qabul\/|mantiq\/|sertifikat\/|sessiya\/|mavzu\/|ai(\/|$))/;
+const SAVOL_EKRANI = /^\/(kurs\/[^/]+\/(dars|sinov|daraja|daftar|testlar)|oyinlar\/.+|toplam\/|masalalar\/:id|kichkintoy\/|xona\/|q\/|jonli\/|imtihon\/|qabul\/|mantiq\/|sertifikat\/|sessiya\/|mavzu\/|ai(\/|$))/;
 
 /** Bosilgan elementning odam o'qiydigan nomi. */
 function tugmaNomi(el: Element, yol: string): string {

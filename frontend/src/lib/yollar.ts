@@ -95,6 +95,22 @@ export const yolMasalalarim = () => "/masalalar/menikilar";
 export const yolMasala = (id: number) => `/masalalar/${id}`;
 export const yolMasalaMuallif = (profilId: number) => `/masalalar/muallif/${profilId}`;
 
+/**
+ * Quiz — foydalanuvchi yig'adigan savollar (`lib/quiz.ts`).
+ *
+ * Muallif tomoni `/quiz/...` da, yechuvchi tomoni esa ATAYLAB qisqa
+ * manzilda: `/q/<kod>` havola bo'lib ulashiladi va kod doskaga yoziladi.
+ * Jonli o'yin — `/jonli/<id>`: boshlovchi ham, ishtirokchi ham o'sha
+ * manzilda, ekran kim ekaniga qarab o'zgaradi.
+ */
+export const yolQuizlar = () => "/quiz";
+/** `<id>` dan OLDIN kelishi shart (App.tsx). */
+export const yolQuizYangi = () => "/quiz/yangi";
+export const yolQuiz = (id: number) => `/quiz/${id}`;
+export const yolQuizTahrir = (id: number) => `/quiz/${id}/tahrir`;
+export const yolQuizKod = (kod: string) => `/q/${kod}`;
+export const yolQuizJonli = (id: number) => `/jonli/${id}`;
+
 /** Reyting — kim qancha yulduz yig'gan. Kursdan tashqarida: hammasi birga. */
 export const yolReyting = () => "/reyting";
 

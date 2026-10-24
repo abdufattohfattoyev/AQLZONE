@@ -11519,3 +11519,169 @@ class DiagnostikaTest(TestCase):
         r = self.client.get("/boshqaruv/diagnostika")
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "Ko&#x27;rsatkichli va logarifmik")
+
+
+class QuizTest(TestCase):
+    """Foydalanuvchi quizi: tekshiruv, javob yashirinligi, o'z tezligida va jonli (`core/quiz.py`)."""
+
+    SAVOLLAR = [
+        {"tur": "variant", "matn": "2x + 6 = 14, x = ?", "variantlar": ["4", "5", "6"], "javob": "4", "vaqt": 20},
+        {"tur": "yozma", "matn": "Kvadrat tomoni 3 sm. Yuzi?", "javob": "9 sm²", "vaqt": 30},
+        # Bazadan olingan savol: chizma bilan, ichida javob ham bor — u saqlanmasligi kerak.
+        {"tur": "variant", "matn": "Hisoblang", "variantlar": ["12", "13"], "javob": "12", "vaqt": 10,
+         "a": {"type": "eqn", "prompt": "Hisoblang", "text": "5 + 7", "answer": 12, "choices": [12, 13]}},
+    ]
+
+    def kir(self, device: str) -> dict:
+        r = self.client.post("/api/v1/auth/device", {"deviceId": device, "platform": "web"},
+                             content_type="application/json")
+        return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['token']}"}
+
+    def yarat(self, h, **qosh):
+        return self.client.post("/api/v1/quizlar", {"nom": "Tenglamalar", "savollar": self.SAVOLLAR, **qosh},
+                                content_type="application/json", **h)
+
+    def test_tekshiruv(self):
+        from . import quiz as Q
+
+        h = self.kir("dev-quiz-tekshir-1111")
+        self.assertEqual(self.yarat(h, nom="A").json()["sabab"], "nom_qisqa")
+        self.assertEqual(self.client.post("/api/v1/quizlar", {"nom": "Bo'sh", "savollar": []},
+                                          content_type="application/json", **h).json()["sabab"], "savol_yoq")
+        # To'g'ri javob variantlar orasida bo'lishi shart.
+        with self.assertRaises(Q.QuizXato):
+            Q.savol_tozala({"matn": "?", "variantlar": ["1", "2"], "javob": "3"})
+        # `rasmiy` chizmasi (SVG matni) va `url(` — saqlanmaydi.
+        s = Q.savol_tozala({"matn": "?", "variantlar": ["1", "2"], "javob": "1",
+                            "a": {"type": "rasmiy", "rasm": "<svg onload=alert(1)>"}})
+        self.assertNotIn("a", s)
+        s = Q.savol_tozala({"matn": "?", "variantlar": ["1", "2"], "javob": "1",
+                            "a": {"type": "rang", "rang": "url(https://x.uz/a.png)"}})
+        self.assertNotIn("a", s)
+        # Noma'lum vaqt — standart.
+        self.assertEqual(Q.savol_tozala({"matn": "?", "tur": "yozma", "javob": "1", "vaqt": 7})["vaqt"], 20)
+
+    def test_oz_tezligida(self):
+        muallif, ali, vali = (self.kir(f"dev-quiz-oz-{x}-1111") for x in ("muallif", "ali", "vali"))
+        q = self.yarat(muallif).json()
+        self.assertEqual(len(q["kod"]), 6)
+        self.assertNotIn("answer", json.dumps(q["savollar"][2]["a"]))
+
+        # Yechuvchiga javob ketmaydi — na savolda, na chizmada.
+        ochiq = self.client.get(f"/api/v1/quiz/kod/{q['kod'].lower()}", **ali).json()
+        self.assertEqual(ochiq["savol"], 3)
+        self.assertEqual(ochiq["soniya"], 60)
+        self.assertNotIn("javob", json.dumps(ochiq["savollar"]))
+        self.assertIsNone(ochiq["mening"])
+
+        url = f"/api/v1/quiz/kod/{q['kod']}/topshir"
+        r = self.client.post(url, {"javoblar": ["4", "9", "13"], "sekund": 40},
+                             content_type="application/json", **ali).json()
+        self.assertEqual((r["togri"], r["jami"], r["birinchi"]), (2, 3, True))
+        self.assertEqual([x["togri"] for x in r["tahlil"]], [True, True, False])
+        self.assertEqual(r["tahlil"][2]["javob"], "12")
+
+        # Ikkinchi urinish sanoqqa kirmaydi.
+        r = self.client.post(url, {"javoblar": ["4", "9", "12"], "sekund": 30},
+                             content_type="application/json", **ali).json()
+        self.assertFalse(r["birinchi"])
+        self.assertEqual(r["mening"]["togri"], 2)
+        self.client.post(url, {"javoblar": ["5", "", "12"], "sekund": 50}, content_type="application/json", **vali)
+        # Muallif o'zi sanalmaydi.
+        self.client.post(url, {"javoblar": ["4", "9", "12"]}, content_type="application/json", **muallif)
+
+        m = self.client.get(f"/api/v1/quiz/{q['id']}", **muallif).json()
+        self.assertEqual(m["ishlagan"], 2)
+        self.assertEqual([n["togri"] for n in m["natijalar"]], [2, 1])
+        self.assertEqual(self.client.get(f"/api/v1/quiz/{q['id']}", **ali).status_code, 404)
+
+        # Savollar o'zgarsa — eski natijalar o'chadi; faqat nom o'zgarsa — qoladi.
+        self.client.post(f"/api/v1/quiz/{q['id']}", {"nom": "Yangi nom"}, content_type="application/json", **muallif)
+        self.assertEqual(self.client.get(f"/api/v1/quiz/{q['id']}", **muallif).json()["ishlagan"], 2)
+        yangi = self.SAVOLLAR[:2]
+        m = self.client.post(f"/api/v1/quiz/{q['id']}", {"savollar": yangi},
+                             content_type="application/json", **muallif).json()
+        self.assertEqual((m["ishlagan"], m["natijalar"], m["savol"]), (0, [], 2))
+
+        # Begona o'chira olmaydi, muallif — o'chiradi va kod endi ochilmaydi.
+        self.assertEqual(self.client.post(f"/api/v1/quiz/{q['id']}/ochir", **ali).status_code, 404)
+        self.client.post(f"/api/v1/quiz/{q['id']}/ochir", **muallif)
+        self.assertEqual(self.client.get(f"/api/v1/quiz/kod/{q['kod']}", **ali).status_code, 404)
+
+    def test_jonli(self):
+        from . import quiz as Q
+
+        muallif, ali, vali = (self.kir(f"dev-quiz-jonli-{x}-1111") for x in ("muallif", "ali", "vali"))
+        q = self.yarat(muallif, rejim="jonli").json()
+        # Jonli rejimda savollar o'yindan oldin ko'rinmaydi va o'z tezligida topshirib bo'lmaydi.
+        ochiq = self.client.get(f"/api/v1/quiz/kod/{q['kod']}", **ali).json()
+        self.assertEqual(ochiq["savollar"], [])
+        self.assertIsNone(ochiq["jonli"])
+        self.assertEqual(self.client.post(f"/api/v1/quiz/kod/{q['kod']}/topshir", {"javoblar": []},
+                                          content_type="application/json", **ali).status_code, 400)
+
+        o = self.client.post(f"/api/v1/quiz/{q['id']}/jonli", **muallif).json()
+        self.assertTrue(o["boshlovchi"])
+        self.assertEqual(self.client.get(f"/api/v1/quiz/kod/{q['kod']}", **ali).json()["jonli"], o["id"])
+        oyin = f"/api/v1/quiz/oyin/{o['id']}"
+        # Hech kim kirmagan — boshlab bo'lmaydi; boshlovchi o'zi ishtirokchi emas.
+        self.assertEqual(self.client.post(f"{oyin}/keyingi", **muallif).json()["sabab"], "hech_kim")
+        self.assertEqual(self.client.post(f"{oyin}/kir", **muallif).json()["sabab"], "boshlovchi")
+        # Taxallus: bir xili raqam bilan ajratiladi; nomsiz profilga oldindan hech narsa yozilmaydi.
+        self.assertEqual(self.client.get(oyin, **ali).json()["ism"], "")
+        for h in (ali, vali):
+            self.client.post(f"{oyin}/kir", {"ism": "  Ali  "}, content_type="application/json", **h)
+        k = self.client.get(oyin, **muallif).json()
+        self.assertEqual((k["odam"], k["ismlar"]), (2, ["Ali", "Ali 2"]))
+        # Faqat boshlovchi suradi.
+        self.assertEqual(self.client.post(f"{oyin}/keyingi", **ali).status_code, 403)
+
+        t0 = 1_000_000.0
+        with patch.object(Q, "_hozir", return_value=t0):
+            s = self.client.post(f"{oyin}/keyingi", **muallif).json()
+        self.assertEqual((s["holat"], s["joriy"]), ("savol", 0))
+        self.assertNotIn("javob", json.dumps(s["savol"]))
+
+        # Ali darhol to'g'ri, Vali 10 soniyada xato.
+        with patch.object(Q, "_hozir", return_value=t0):
+            r = self.client.post(f"{oyin}/javob", {"i": 0, "javob": "4"}, content_type="application/json", **ali).json()
+        self.assertIsNone(r["mening"]["togrimi"])          # savol ochiqligida aytilmaydi
+        self.assertEqual(r["mening"]["ball"], 0)           # ball ham — u ham javobni oshkor qilardi
+        self.assertIsNone(r["togriJavob"])
+        with patch.object(Q, "_hozir", return_value=t0):
+            self.assertEqual(self.client.post(f"{oyin}/javob", {"i": 0, "javob": "5"},
+                                              content_type="application/json", **ali).json()["sabab"], "berilgan")
+        with patch.object(Q, "_hozir", return_value=t0 + 10):
+            self.client.post(f"{oyin}/javob", {"i": 0, "javob": "5"}, content_type="application/json", **vali)
+            # Hamma javob berdi — savol o'zi yopiladi.
+            n = self.client.get(oyin, **ali).json()
+        self.assertEqual(n["holat"], "natija")
+        self.assertEqual(n["togriJavob"], "4")
+        self.assertEqual(n["taqsimot"], [1, 1, 0])
+        self.assertEqual((n["mening"]["togrimi"], n["mening"]["oxirgiBall"], n["orin"]), (True, 1000, 1))
+
+        # 2-savol: hech kim javob bermaydi — vaqt tugagach yopiladi; kech javob rad etiladi.
+        with patch.object(Q, "_hozir", return_value=t0 + 20):
+            self.client.post(f"{oyin}/keyingi", **muallif)
+        with patch.object(Q, "_hozir", return_value=t0 + 20 + 30 + Q.KECHIKISH + 1):
+            self.assertEqual(self.client.post(f"{oyin}/javob", {"i": 1, "javob": "9"},
+                                              content_type="application/json", **vali).json()["sabab"], "vaqt")
+            self.assertEqual(self.client.get(oyin, **muallif).json()["holat"], "natija")
+
+        # 3-savol, keyin tugash.
+        with patch.object(Q, "_hozir", return_value=t0 + 100):
+            self.client.post(f"{oyin}/keyingi", **muallif)
+        with patch.object(Q, "_hozir", return_value=t0 + 105):
+            self.client.post(f"{oyin}/javob", {"i": 2, "javob": "12"}, content_type="application/json", **vali)
+            self.client.post(f"{oyin}/keyingi", **muallif)            # savolni yopish
+            oxir = self.client.post(f"{oyin}/keyingi", **muallif).json()
+        self.assertEqual(oxir["holat"], "tugadi")
+        self.assertEqual([(x["ism"] != "", x["ball"]) for x in oxir["reyting"]], [(True, 1000), (True, 750)])
+        self.assertIsNone(self.client.get(f"/api/v1/quiz/kod/{q['kod']}", **ali).json()["jonli"])
+
+    def test_ball(self):
+        from . import quiz as Q
+
+        self.assertEqual(Q.ball_hisobla(0, 20), 1000)
+        self.assertEqual(Q.ball_hisobla(10, 20), 750)
+        self.assertEqual(Q.ball_hisobla(25, 20), 500)
